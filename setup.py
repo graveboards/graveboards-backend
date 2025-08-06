@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from datetime import timedelta
 
 from app.redis import RedisClient
@@ -6,11 +7,14 @@ from app.database import PostgresqlDB
 from app.security.api_key import generate_api_key
 from app.enums import RoleName
 from app.utils import aware_utcnow
-from app.logger import logger
+from app.logging import setup_logging
 from app.config import ADMIN_USER_IDS, MASTER_QUEUE_NAME, MASTER_QUEUE_DESCRIPTION, DEBUG, PRIMARY_ADMIN_USER_ID, PRIVILEGED_USER_IDS
 
 
 async def setup():
+    setup_logging()
+    logger = logging.getLogger("maintenance")
+
     rc = RedisClient()
     db = PostgresqlDB()
 
@@ -49,14 +53,13 @@ async def setup():
             await db.add_queue(user_id=5099768, name="Net0's BN Queue", description="Net0's BN modding queue", session=session)
 
         if DEBUG:
-            logger.info(f"[{__name__}] Fresh database set up successfully!")
+            logger.info(f"Fresh database set up successfully!")
 
     if DEBUG:
-        logger.info(f"[{__name__}] Primary API key: {(await db.get_api_key(user_id=PRIMARY_ADMIN_USER_ID)).key}")
+        logger.info(f"Primary API key: {(await db.get_api_key(user_id=PRIMARY_ADMIN_USER_ID)).key}")
 
     await rc.aclose()
     await db.close()
-
 
 if __name__ == "__main__":
     asyncio.run(setup())

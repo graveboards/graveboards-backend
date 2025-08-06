@@ -1,0 +1,38 @@
+version: 1
+disable_existing_loggers: False
+
+formatters:
+    standard:
+        style: "{"
+        format: "{asctime} | {levelname:<8} | {name:<14} | {message}"
+        datefmt: "%Y-%m-%d %H:%M:%S"
+
+handlers:
+    console:
+        class: logging.StreamHandler
+        formatter: standard
+        stream: ext://sys.stdout
+    file:
+        class: logging.handlers.RotatingFileHandler
+        formatter: standard
+        filename: "instance/logs/uvicorn.log"
+        maxBytes: 10_000_000
+        backupCount: 3
+        encoding: utf8
+
+loggers:
+    uvicorn:
+        level: INFO
+        handlers: [console, file]
+        propagate: False
+    uvicorn.error:
+        level: INFO
+        handlers: [console, file]
+        propagate: False
+    uvicorn.access:
+        level: INFO
+        handlers: [console, file]
+        propagate: False
+    root:
+        level: WARNING
+        handlers: [console]

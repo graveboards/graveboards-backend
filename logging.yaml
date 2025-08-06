@@ -1,0 +1,85 @@
+version: 1
+disable_existing_loggers: False
+
+formatters:
+    standard:
+        style: "{"
+        format: "{asctime} | {levelname:<8} | {name:<11} | {message}"
+        datefmt: "%Y-%m-%d %H:%M:%S"
+    colored:
+        (): colorlog.ColoredFormatter
+        style: "{"
+        format: "{log_color}{asctime} | {levelname:<8} | {name:<11} | {message}"
+        datefmt: "%Y-%m-%d %H:%M:%S"
+        log_colors:
+            DEBUG: white
+            INFO: green
+            WARNING: yellow
+            ERROR: red
+            CRITICAL: bold_red
+
+handlers:
+    console:
+        class: logging.StreamHandler
+        formatter: colored
+        stream: ext://sys.stdout
+    app_file:
+        class: logging.handlers.RotatingFileHandler
+        formatter: standard
+        filename: "instance/logs/app.log"
+        maxBytes: 10_000_000
+        backupCount: 3
+        encoding: utf8
+    daemon_file:
+        class: logging.handlers.RotatingFileHandler
+        formatter: standard
+        filename: "instance/logs/daemon.log"
+        maxBytes: 10_000_000
+        backupCount: 3
+        encoding: utf8
+    database_file:
+        class: logging.handlers.RotatingFileHandler
+        formatter: standard
+        filename: "instance/logs/database.log"
+        maxBytes: 10_000_000
+        backupCount: 3
+        encoding: utf8
+    redis_file:
+        class: logging.handlers.RotatingFileHandler
+        formatter: standard
+        filename: "instance/logs/redis.log"
+        maxBytes: 10_000_000
+        backupCount: 3
+        encoding: utf8
+    maintenance_file:
+        class: logging.handlers.RotatingFileHandler
+        formatter: standard
+        filename: "instance/logs/maintenance.log"
+        maxBytes: 10_000_000
+        backupCount: 3
+        encoding: utf8
+
+loggers:
+    app:
+        level: INFO
+        handlers: [console, app_file]
+        propagate: False
+    daemon:
+        level: INFO
+        handlers: [console, daemon_file]
+        propagate: False
+    database:
+        level: INFO
+        handlers: [console, database_file]
+        propagate: False
+    redis:
+        level: INFO
+        handlers: [console, redis_file]
+        propagate: False
+    maintenance:
+        level: INFO
+        handlers: [console, maintenance_file]
+        propagate: False
+    root:
+        level: WARNING
+        handlers: [console]

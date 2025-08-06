@@ -1,18 +1,23 @@
 import asyncio
+import logging
 from contextlib import asynccontextmanager
 
 from connexion.middleware import ConnexionMiddleware
 
 from app.redis import RedisClient
 from app.database import PostgresqlDB
-from app.logger import logger
 from app.config import DISABLE_SECURITY
+from app.logging import setup_logging
 from daemon.service_daemon import ServiceDaemon
 from daemon.services import ServiceClass
 
 
 @asynccontextmanager
 async def lifespan(app: ConnexionMiddleware):
+    setup_logging()
+    logger = logging.getLogger(__name__)
+    logger.info("Start of app lifespan")
+
     if DISABLE_SECURITY:
         logger.warning("Security has been disabled!")
 
@@ -42,3 +47,4 @@ async def lifespan(app: ConnexionMiddleware):
 
         from app.redis.pool import connection_pool
         connection_pool.close()
+        logger.info("End of app lifespan")
