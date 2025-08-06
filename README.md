@@ -67,7 +67,15 @@ Thank you for getting this far. If you liked the project and you believe in its 
 
 Frontend: https://github.com/FlavioAngnes/graveboards-frontend
 
-## Installation
+## Quickstart (Docker)
+
+1. Close the repository: `git clone https://github.com/pianosuki/graveboards.git && cd graveboards`
+2. Ensure docker is installed and running on your system
+3. Launch `run.bat`
+4. Follow the instructions to automatically fill out `.env.docker`
+5. The backend should now be running on http://localhost:8000
+
+## Installation (Non-docker)
 
 ### Prerequisites
 

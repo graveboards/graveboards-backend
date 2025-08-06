@@ -8,7 +8,7 @@ from app.security.api_key import generate_api_key
 from app.database.enums import RoleName
 from app.utils import aware_utcnow
 from app.logging import setup_logging
-from app.config import ADMIN_USER_IDS, MASTER_QUEUE_NAME, MASTER_QUEUE_DESCRIPTION, DEBUG, PRIMARY_ADMIN_USER_ID, PRIVILEGED_USER_IDS
+from app.config import ADMIN_USER_IDS, MASTER_QUEUE_NAME, MASTER_QUEUE_DESCRIPTION, PRIMARY_ADMIN_USER_ID, PRIVILEGED_USER_IDS
 
 
 async def setup():
@@ -52,11 +52,10 @@ async def setup():
             await db.add_queue(user_id=PRIMARY_ADMIN_USER_ID, name=MASTER_QUEUE_NAME, description=MASTER_QUEUE_DESCRIPTION, session=session)
             await db.add_queue(user_id=5099768, name="Net0's BN Queue", description="Net0's BN modding queue", session=session)
 
-        if DEBUG:
-            logger.info(f"Fresh database set up successfully!")
+        logger.debug(f"Fresh database set up successfully!")
 
-    if DEBUG:
-        logger.info(f"Primary API key: {(await db.get_api_key(user_id=PRIMARY_ADMIN_USER_ID)).key}")
+    logger.debug(f"Primary admin user ID: {PRIMARY_ADMIN_USER_ID}")
+    logger.debug(f"Primary API key: {(await db.get_api_key(user_id=PRIMARY_ADMIN_USER_ID)).key}")
 
     await rc.aclose()
     await db.close()

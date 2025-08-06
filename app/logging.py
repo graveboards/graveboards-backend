@@ -18,7 +18,7 @@ def setup_logging():
     os.makedirs(LOGS_DIR, exist_ok=True)
 
     if DEBUG:
-        for name in {"app", "daemon"}:
+        for name in {"app", "daemon", "maintenance"}:
             config["loggers"][name]["level"] = logging.DEBUG
 
     logging.config.dictConfig(config)

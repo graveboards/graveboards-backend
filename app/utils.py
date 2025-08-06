@@ -1,5 +1,6 @@
 import uuid
 import hashlib
+import os
 from datetime import datetime, timezone
 from io import BytesIO
 from typing import Any
@@ -53,3 +54,17 @@ def get_nested_value(data: dict[str, Any], path: str) -> Any:
             raise KeyError(f"Key '{key}' not found in {value}")
 
     return value
+
+
+def parse_user_ids(env_var: str, required: bool = False) -> list[int]:
+    value = os.getenv(env_var, "")
+
+    if not value.strip():
+        if required:
+            raise ValueError(f"{env_var} must be provided in .env (at least one ID)")
+
+        return []
+    try:
+        return [int(uid.strip()) for uid in value.split(",") if uid.strip()]
+    except ValueError:
+        raise ValueError(f"{env_var} must contain only comma-separated integers")

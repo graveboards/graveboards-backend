@@ -2,6 +2,8 @@ import os
 
 from dotenv import load_dotenv
 
+from .utils import parse_user_ids
+
 load_dotenv()
 
 DEBUG = os.getenv("DEBUG", "false").lower() in ("true", "1", "yes")
@@ -47,13 +49,8 @@ OAUTH_CONFIGURATION = {
     "token_endpoint_auth_method": "client_secret_basic"
 }
 
-_admin_user_ids = os.getenv("ADMIN_USER_IDS", []).split(",")
-ADMIN_USER_IDS = {int(user_id.strip()) for user_id in _admin_user_ids or {}}
-
-if not ADMIN_USER_IDS:
-    raise ValueError("ADMIN_USER_IDS must be provided in .env (at least one ID)")
-
-PRIVILEGED_USER_IDS = {int(user_id.strip()) for user_id in os.getenv("PRIVILEGED_USER_IDS", set()).split(",")}
-PRIMARY_ADMIN_USER_ID = int(_admin_user_ids[0].strip())
+ADMIN_USER_IDS = set(_admin_user_ids := parse_user_ids("ADMIN_USER_IDS", required=True))
+PRIVILEGED_USER_IDS = set(parse_user_ids("PRIVILEGED_USER_IDS"))
+PRIMARY_ADMIN_USER_ID = _admin_user_ids[0]
 MASTER_QUEUE_NAME = "Graveboards Queue"
 MASTER_QUEUE_DESCRIPTION = "Master queue for beatmaps to receive leaderboards"
