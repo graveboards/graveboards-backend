@@ -25,9 +25,9 @@ async def lifespan(app: ConnexionMiddleware):
     db = PostgresqlDB()
 
     daemon_app = ServiceDaemon(rc, db)
-    daemon_app.register_service(ServiceClass.SCORE_FETCHER)
     daemon_app.register_service(ServiceClass.PROFILE_FETCHER)
     daemon_app.register_service(ServiceClass.QUEUE_REQUEST_HANDLER)
+    # daemon_app.register_service(ServiceClass.SCORE_FETCHER)  # Disabled until database is set up to handle lazer scores, need further clarity overall
 
     task = asyncio.create_task(daemon_app.run(), name="Daemon Task")
 

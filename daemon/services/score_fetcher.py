@@ -11,14 +11,13 @@ from app.database.models import ScoreFetcherTask
 from app.redis import ChannelName
 from app.utils import aware_utcnow
 from app.config import PRIMARY_ADMIN_USER_ID
-from app.decorators import auto_retry
+from .decorators import auto_retry
 from .enums import RuntimeTaskName
 from .service import Service
 
-logger = logging.getLogger(__name__)
-
 SCORE_FETCHER_INTERVAL_HOURS = 24
 PENDING_TASK_TIMEOUT_SECONDS = 60
+logger = logging.getLogger(__name__)
 
 
 class ScoreFetcher(Service):
@@ -65,15 +64,21 @@ class ScoreFetcher(Service):
                 logger.warning(f"Task {task_id} was not found in the database after waiting")
                 continue
 
-            async with self.task_condition:
-                self.load_task(task)
-                self.task_condition.notify()
+            if task.enabled:
+                async with self.task_condition:
+                    self.load_task(task)
+                    self.task_condition.notify()
+
+                info = {"id": task.id, "user_id": task.user_id}
+                logger.debug(f"Loaded task: {info}")
 
     async def preload_tasks(self):
         tasks = await self.db.get_score_fetcher_tasks(enabled=True)
 
         for task in tasks:
             self.load_task(task)
+
+        logger.debug(f"Preloaded tasks: ({len(tasks)})")
 
     def load_task(self, task: ScoreFetcherTask):
         if not task.enabled:
@@ -126,13 +131,17 @@ class ScoreFetcher(Service):
         if not (task := await self.db.get_score_fetcher_task(id=task_id)):
             raise ValueError(f"Task with ID '{task_id}' not found")
 
-        scores = await self.oac.get_user_scores(task.user_id, ScoreType.RECENT)
+        user_id = task.user_id
+        scores = await self.oac.get_user_scores(user_id, ScoreType.RECENT)
 
         for score in scores:
             if not await self.score_is_submittable(score):
                 continue
 
-            await api.scores.post(score, user=PRIMARY_ADMIN_USER_ID)
+            _, status_code = await api.scores.post(score, user=PRIMARY_ADMIN_USER_ID)
+
+            if status_code == 201:
+                logger.debug(f"Added score {score["id"]} for user {user_id}")
 
     async def score_is_submittable(self, score: dict) -> bool:
         return bool(await self.db.get_leaderboard(beatmap_id=score["beatmap"]["id"]))

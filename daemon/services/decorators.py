@@ -6,14 +6,19 @@ from typing import Callable, Any, Awaitable
 MAX_ATTEMPTS = 5
 
 
-def auto_retry(max_attempts: int = MAX_ATTEMPTS, retry_exceptions: tuple[type[Exception]] = (TimeoutError,), backoff_strategy: Callable[[int], float] = lambda attempt_no: attempt_no ** 2):
+def auto_retry(
+        max_attempts: int = MAX_ATTEMPTS,
+        retry_exceptions: tuple[type[Exception]] = (TimeoutError,),
+        backoff_strategy: Callable[[int], float] = lambda attempt_no: attempt_no ** 2
+):
     def decorator(func: Callable[..., Awaitable[Any]]):
         if not asyncio.iscoroutinefunction(func):
             raise ValueError(f"Function '{func.__name__}' must be async to use @auto_retry")
 
+        logger = logging.getLogger(func.__module__)
+
         @wraps(func)
         async def wrapper(*args, **kwargs) -> Awaitable[Any]:
-            logger = logging.getLogger(func.__module__)
             result: Any = None
             last_exception: Exception | None = None
 
@@ -29,7 +34,11 @@ def auto_retry(max_attempts: int = MAX_ATTEMPTS, retry_exceptions: tuple[type[Ex
                         break
 
                     delay = backoff_strategy(attempt)
-                    logger.warning(f"Attempt {attempt}/{max_attempts} failed for {func.__name__}: {e} | Retrying in {delay:.2f} seconds")
+                    exception_type = f"{e.__class__.__module__}.{e.__class__.__name__}"
+                    logger.warning(
+                        f"Attempt {attempt}/{max_attempts} failed for {func.__name__}. Retrying in {delay:.2f} seconds",
+                        extra={"exception": exception_type}
+                    )
                     await asyncio.sleep(backoff_strategy(attempt))
 
             if last_exception:
