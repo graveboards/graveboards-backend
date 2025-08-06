@@ -5,9 +5,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 DEBUG = os.getenv("DEBUG", "false").lower() in ("true", "1", "yes")
-DISABLE_SECURITY = os.getenv("DEBUG", "false").lower() in ("true", "1", "yes")
+DISABLE_SECURITY = os.getenv("DISABLE_SECURITY", "false").lower() in ("true", "1", "yes")
 
-SPEC_DIR = os.path.abspath("api/v1")
+SPEC_DIR = os.path.abspath("api/v1/spec")
+OPENAPI_ENTRYPOINT = os.path.join(SPEC_DIR, "openapi.yaml")
+DEFAULT_MODULE_NAME = "api.v1"
 INSTANCE_DIR = os.path.abspath("instance")
 
 FRONTEND_BASE_URL = os.getenv("BASE_URL", "http://localhost:3000")

@@ -1,10 +1,11 @@
 import yaml
-import os
 
-from .config import SPEC_DIR, DISABLE_SECURITY
+from connexion.spec import resolve_refs
 
-with open(os.path.join(SPEC_DIR, "openapi.yaml"), "r") as f:
-    openapi_spec = yaml.full_load(f)
+from .config import SPEC_DIR, OPENAPI_ENTRYPOINT, DISABLE_SECURITY
+
+with open(OPENAPI_ENTRYPOINT, "r") as f:
+    openapi_spec = resolve_refs(yaml.full_load(f), base_uri=f"{SPEC_DIR}/")
 
 if DISABLE_SECURITY:
     openapi_spec.pop("security", None)

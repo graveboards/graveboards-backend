@@ -8,7 +8,7 @@ from starlette.middleware.gzip import GZipMiddleware
 from .lifespan import lifespan
 from .spec import openapi_spec
 from .error_handlers import forbidden
-from .config import SPEC_DIR
+from .config import SPEC_DIR, DEFAULT_MODULE_NAME
 
 connexion_app = AsyncApp(__name__, specification_dir=SPEC_DIR, lifespan=lifespan)
 
@@ -23,5 +23,5 @@ connexion_app.add_middleware(
     GZipMiddleware,
     position=MiddlewarePosition.BEFORE_EXCEPTION
 )
-connexion_app.add_api(openapi_spec, resolver=RestyResolver("api.v1"))
+connexion_app.add_api(openapi_spec, resolver=RestyResolver(DEFAULT_MODULE_NAME))
 connexion_app.add_error_handler(Forbidden, forbidden)
