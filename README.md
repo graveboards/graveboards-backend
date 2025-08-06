@@ -89,32 +89,32 @@ Frontend: https://github.com/FlavioAngnes/graveboards-frontend
 
 3. Install the dependencies:
     ```bash
-    pip install -r requirements.txt  # On Windows comment out uvloop first
+    pip install -r requirements.txt
     ```
 
 4. Create the `.env` file:
     ```
     DEBUG=true
-    BASE_URL=<frontend-base-url>  # http://localhost:4200
+    DISABLE_SECURITY=false
+    BASE_URL=<frontend-base-url>  # http://localhost:3000
     JWT_SECRET_KEY=<private-encryption-key>
     JWT_ALGORITHM=<symmetric-algorithm>  # HS256
     ADMIN_USER_IDS=<comma-delimmed-osu-user-ids>  # 2,124493,873961 ...
     
-    OSU_CLIENT_ID=<osu-OAuth-client-id>
-    OSU_CLIENT_SECRET=<osu-OAuth-client-secret>
+    OSU_CLIENT_ID=<osu-oauth-client-id>
+    OSU_CLIENT_SECRET=<osu-oauth-client-secret>
     
     POSTGRESQL_HOST=<db-host>  # localhost
     POSTGRESQL_PORT=<db-port>  # 5432
     POSTGRESQL_USERNAME=<db-username>  # postgres
     POSTGRESQL_PASSWORD=<db-password>
-    POSTGRESQL_DATABASE=<db-dbname>  # postgres
+    POSTGRESQL_DATABASE=<db-dbname>
     
     REDIS_HOST=<redis-host>  # localhost
     REDIS_PORT=<redis-port>  # 6379
-    REDIS_USERNAME=<redis-acl-username>  # default
+    REDIS_USERNAME=<redis-acl-username>
     REDIS_PASSWORD=<redis-acl-password>
     REDIS_DB=<redis-db-number>  # 0
-    REDIS_SSL=<boolean>  # false
     ```
 
 5. Run the application:
