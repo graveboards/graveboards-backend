@@ -1,18 +1,23 @@
-from contextlib import contextmanager
+import logging
+import asyncio
+from contextlib import contextmanager, asynccontextmanager
 
 from redis import Redis
 from redis.asyncio import Redis as AsyncRedis
 
-from app.logger import logger
 from app.config import REDIS_CONFIGURATION
+from app.exceptions import RedisLockTimeoutError
+from .constants import LOCK_EXPIRY, LOCK_ACQUISITION_RETRY_INTERVAL, LOCK_ACQUISITION_TIMEOUT
 
 REDIS_BASE_URL = f"redis://{REDIS_CONFIGURATION["username"]}:***@{REDIS_CONFIGURATION["host"]}:{REDIS_CONFIGURATION["port"]}/{REDIS_CONFIGURATION["db"]}"
+
+logger = logging.getLogger("redis")
 
 
 class RedisClient(AsyncRedis):
     def __init__(self):
         super().__init__(**REDIS_CONFIGURATION)
-        logger.info(f"[{self.__class__.__name__}] Connected to Redis at '{REDIS_BASE_URL}'")
+        logger.info(f"Connected to Redis at '{REDIS_BASE_URL}'")
 
     async def paginate_scan(self, pattern: str, limit: int = None, offset: int = 0, type_: str = None) -> list[str]:
         keys = []
@@ -29,6 +34,24 @@ class RedisClient(AsyncRedis):
             keys.append(key)
 
         return keys
+
+    @asynccontextmanager
+    async def lock_ctx(self, key: str, expiry: int = LOCK_EXPIRY, timeout: float = LOCK_ACQUISITION_TIMEOUT, retry_interval: float = LOCK_ACQUISITION_RETRY_INTERVAL):
+        deadline = asyncio.get_event_loop().time() + timeout
+
+        while True:
+            if await self.set(key, "locked", ex=expiry, nx=True):
+                break
+
+            if asyncio.get_event_loop().time() > deadline:
+                raise RedisLockTimeoutError(key, timeout)
+
+            await asyncio.sleep(retry_interval)
+
+        try:
+            yield
+        finally:
+            await self.delete(key)
 
 
 @contextmanager
