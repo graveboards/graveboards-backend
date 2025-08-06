@@ -15,6 +15,10 @@ from app.redis.models import QueueRequestHandlerTask
 from app.config import ADMIN_USER_IDS, DISABLE_SECURITY
 from . import listings, tasks
 
+_LOADING_OPTIONS = {
+    "user_profile": False,
+    "queue": False
+}
 
 async def search(**kwargs):  # TODO: Need to redo this since /requests/listings is a thing now
     db: PostgresqlDB = request.state.db
@@ -32,7 +36,7 @@ async def search(**kwargs):  # TODO: Need to redo this since /requests/listings 
         kwargs["user_id"] = requested_user_id
 
     requests = await db.get_requests(
-        _exclude_lazy=True,
+        _loading_options=_LOADING_OPTIONS,
         **kwargs
     )
     requests_data = [
@@ -50,7 +54,7 @@ async def get(request_id: int):
 
     request_ = await db.get_request(
         id=request_id,
-        _exclude_lazy=True
+        _loading_options=_LOADING_OPTIONS
     )
 
     if not request_:

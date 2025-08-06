@@ -7,6 +7,10 @@ from app.security import role_authorization
 from app.enums import RoleName
 from . import snapshots
 
+_LOADING_OPTIONS = {
+    "scores": False
+}
+
 
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
@@ -14,7 +18,7 @@ async def search(**kwargs):
     prime_query_kwargs(kwargs)
 
     leaderboards = await db.get_leaderboards(
-        _exclude_lazy=True,
+        _loading_options=_LOADING_OPTIONS,
         **kwargs
     )
     leaderboards_data = [
@@ -32,7 +36,7 @@ async def get(beatmap_id: int):
 
     leaderboard = await db.get_leaderboard(
         beatmap_id=beatmap_id,
-        _exclude_lazy=True,
+        _loading_options=_LOADING_OPTIONS,
         _reversed=True
     )
 

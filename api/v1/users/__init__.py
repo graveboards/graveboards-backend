@@ -7,6 +7,16 @@ from app.enums import RoleName
 from app.security import role_authorization
 from app.security.overrides import matching_user_id_override
 
+_LOADING_OPTIONS = {
+    "profile": True,
+    "roles": True,
+    "scores": False,
+    "tokens": False,
+    "queues": False,
+    "requests": False,
+    "beatmapsets": False
+}
+
 
 @role_authorization(RoleName.ADMIN)
 async def search(**kwargs):
@@ -15,8 +25,7 @@ async def search(**kwargs):
     prime_query_kwargs(kwargs)
 
     users = await db.get_users(
-        _auto_eager_loads={"profile", "roles"},
-        _exclude={"scores", "tokens", "queues", "requests", "beatmaps", "beatmapsets"},
+        _loading_options=_LOADING_OPTIONS,
         **kwargs
     )
     users_data = [
@@ -37,8 +46,7 @@ async def get(user_id: int, **kwargs):
 
     user = await db.get_user(
         id=user_id,
-        _auto_eager_loads={"profile", "roles"},
-        _exclude={"scores", "tokens", "queues", "requests", "beatmaps", "beatmapsets"}
+        _loading_options=_LOADING_OPTIONS
     )
 
     if not user:

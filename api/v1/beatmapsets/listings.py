@@ -3,7 +3,22 @@ from connexion import request
 from api.utils import pop_auth_info
 from app.database import PostgresqlDB
 from app.database.schemas import BeatmapsetListingSchema, BeatmapSnapshotSchema
-from app.search import SearchEngine
+
+_LOADING_OPTIONS = {
+    "beatmapset_snapshot": {
+        "options": {
+            "beatmap_snapshots": {
+                "options": {
+                    "owner_profiles": True,
+                    "beatmapset_snapshots": False,
+                    "leaderboard": False
+                }
+            },
+            "beatmapset_tags": True,
+            "user_profile": True
+        }
+    }
+}
 
 
 async def search(**kwargs):

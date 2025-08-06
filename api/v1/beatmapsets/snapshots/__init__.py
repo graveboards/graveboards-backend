@@ -5,6 +5,12 @@ from app.database import PostgresqlDB
 from app.database.schemas import BeatmapsetSnapshotSchema
 from . import zip
 
+_LOADING_OPTIONS = {
+    "beatmapset_tags": False,
+    "beatmap_snapshots": False,
+    "user_profile": False
+}
+
 
 async def search(beatmapset_id: int, **kwargs):
     db: PostgresqlDB = request.state.db
@@ -13,8 +19,7 @@ async def search(beatmapset_id: int, **kwargs):
 
     beatmapset_snapshots = await db.get_beatmapset_snapshots(
         beatmapset_id=beatmapset_id,
-        _auto_eager_loads={"tags"},
-        _exclude={"beatmap_snapshots", "user_profile"},
+        _loading_options=_LOADING_OPTIONS,
         **kwargs
     )
     beatmapset_snapshots_data = [
@@ -33,8 +38,7 @@ async def get(beatmapset_id: int, snapshot_number: int):
     beatmapset_snapshot = await db.get_beatmapset_snapshot(
         beatmapset_id=beatmapset_id,
         snapshot_number=snapshot_number,
-        _auto_eager_loads={"tags"},
-        _exclude={"beatmap_snapshots", "user_profile"}
+        _loading_options=_LOADING_OPTIONS
     )
 
     if not beatmapset_snapshot:

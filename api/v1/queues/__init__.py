@@ -4,8 +4,12 @@ from api.utils import prime_query_kwargs, bleach_body
 from app.database import PostgresqlDB
 from app.database.schemas import QueueSchema
 from app.security import role_authorization
-from app.security.overrides import matching_user_id_override, queue_owner_override
-from app.enums import RoleName
+_LOADING_OPTIONS = {
+    "requests": False,
+    "managers": False,
+    "user_profile": False,
+    "manager_profiles": False
+}
 
 
 async def search(**kwargs):
@@ -14,8 +18,7 @@ async def search(**kwargs):
     prime_query_kwargs(kwargs)
 
     queues = await db.get_queues(
-        _auto_eager_loads={"user_profile", "manager_profiles"},
-        _exclude={"requests", "managers"},
+        _loading_options=_LOADING_OPTIONS,
         **kwargs
     )
     queues_data = [
@@ -33,8 +36,7 @@ async def get(queue_id: int):
 
     queue = await db.get_queue(
         id=queue_id,
-        _auto_eager_loads={"user_profile", "manager_profiles"},
-        _exclude={"requests", "managers"}
+        _loading_options=_LOADING_OPTIONS,
     )
 
     if not queue:

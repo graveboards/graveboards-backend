@@ -5,6 +5,11 @@ from app.database import PostgresqlDB
 from app.database.schemas import BeatmapSchema
 from . import snapshots
 
+_LOADING_OPTIONS = {
+    "snapshots": False,
+    "leaderboards": False
+}
+
 
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
@@ -12,7 +17,7 @@ async def search(**kwargs):
     prime_query_kwargs(kwargs)
 
     beatmaps = await db.get_beatmaps(
-        _exclude_lazy=True,
+        _loading_options=_LOADING_OPTIONS,
         **kwargs
     )
     beatmaps_data = [

@@ -5,6 +5,13 @@ from app.database import PostgresqlDB
 from app.database.schemas import BeatmapSnapshotSchema
 from . import osu
 
+_LOADING_OPTIONS = {
+    "beatmapset_snapshots": False,
+    "beatmap_tags": True,
+    "leaderboard": False,
+    "owner_profiles": False
+}
+
 
 async def search(beatmap_id: int, **kwargs):
     db: PostgresqlDB = request.state.db
@@ -13,7 +20,7 @@ async def search(beatmap_id: int, **kwargs):
 
     beatmap_snapshots = await db.get_beatmap_snapshots(
         beatmap_id=beatmap_id,
-        _exclude_lazy=True,
+        _loading_options=_LOADING_OPTIONS,
         **kwargs
     )
     beatmap_snapshots_data = [
@@ -32,7 +39,7 @@ async def get(beatmap_id: int, snapshot_number: int):
     beatmap_snapshot = await db.get_beatmap_snapshot(
         beatmap_id=beatmap_id,
         snapshot_number=snapshot_number,
-        _exclude_lazy=True
+        _loading_options=_LOADING_OPTIONS
     )
 
     if not beatmap_snapshot:

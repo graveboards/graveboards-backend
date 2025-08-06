@@ -10,6 +10,10 @@ from app.security import role_authorization
 from app.enums import RoleName
 from . import listings, snapshots
 
+_LOADING_OPTIONS = {
+    "snapshots": False
+}
+
 
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
@@ -17,7 +21,7 @@ async def search(**kwargs):
     prime_query_kwargs(kwargs)
 
     beatmapsets = await db.get_beatmapsets(
-        _exclude_lazy=True,
+        _loading_options=_LOADING_OPTIONS,
         **kwargs
     )
     beatmapsets_data = [

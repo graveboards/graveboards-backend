@@ -4,6 +4,10 @@ from api.utils import prime_query_kwargs
 from app.database import PostgresqlDB
 from app.database.schemas import LeaderboardSchema
 
+_LOADING_OPTIONS = {
+    "scores": False
+}
+
 
 async def search(beatmap_id: int, **kwargs):
     db: PostgresqlDB = request.state.db
@@ -12,7 +16,7 @@ async def search(beatmap_id: int, **kwargs):
 
     leaderboards = await db.get_leaderboards(
         beatmap_id=beatmap_id,
-        _exclude_lazy=True,
+        _loading_options=_LOADING_OPTIONS,
         **kwargs
     )
     leaderboards_data = [
@@ -39,7 +43,7 @@ async def get(beatmap_id: int, snapshot_number: int):
     leaderboard = await db.get_leaderboard(
         beatmap_id=beatmap_id,
         beatmap_snapshot_id=beatmap_snapshot.id,
-        _exclude_lazy=True
+        _loading_options=_LOADING_OPTIONS
     )
 
     if not leaderboard:

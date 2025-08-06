@@ -14,7 +14,9 @@ async def search(**kwargs):
 
     prime_query_kwargs(kwargs)
 
-    scores = await db.get_scores(**kwargs)
+    scores = await db.get_scores(
+        **kwargs
+    )
     scores_data = [
         ScoreSchema.model_validate(score).model_dump()
         for score in scores

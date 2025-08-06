@@ -15,6 +15,6 @@ async def queue_owner_override(_db: PostgresqlDB, authenticated_user_id_lookup: 
     if not from_request:
         queue = await _db.get_queue(id=kwargs["queue_id"])
     else:
-        queue = (await _db.get_request(id=kwargs["request_id"], _auto_eager_loads={"queue"})).queue
+        queue = (await _db.get_request(id=kwargs["request_id"], _loading_options={"queue": True})).queue
 
     return authenticated_user_id == queue.user_id

@@ -5,6 +5,40 @@ from app.database import PostgresqlDB
 from app.database.schemas import RequestListingSchema, BeatmapSnapshotSchema
 from app.search import SearchEngine
 
+_LOADING_OPTIONS = {
+    "request": {
+        "options": {
+            "user_profile": False,
+            "queue": {
+                "options": {
+                    "requests": False,
+                    "managers": False,
+                    "user_profile": False,
+                    "manager_profiles": False
+                }
+            }
+        }
+    },
+    "beatmapset_listing": {
+        "options": {
+            "beatmapset_snapshot": {
+                "options": {
+                    "beatmap_snapshots": {
+                        "options": {
+                            "beatmapset_snapshots": False,
+                            "beatmap_tags": True,
+                            "leaderboard": False,
+                            "owner_profiles": False
+                        }
+                    },
+                    "beatmapset_tags": True,
+                    "user_profile": False
+                }
+            }
+        }
+    },
+    "queue_listing": False
+}
 
 async def search(**kwargs):  # TODO: Improve security
     db: PostgresqlDB = request.state.db
