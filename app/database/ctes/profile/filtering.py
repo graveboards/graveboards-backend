@@ -2,25 +2,41 @@ from typing import Any
 
 from sqlalchemy.sql import select
 from sqlalchemy.sql.selectable import CTE
+from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
 
-from app.database.models import Profile, BeatmapsetSnapshot
+from app.database.models import BeatmapsetSnapshot, Request
+from app.search.enums import Scope
 
 
-def profile_filtering_cte_factory(profile_column: Any) -> CTE:
-    if profile_column.class_ is not Profile:
-        raise ValueError(f"Column belongs to invalid model: {profile_column.class_.__name__}. Must belong to Profile")
+def profile_filtering_cte_factory(target: InstrumentedAttribute | QueryableAttribute[Any], scope: Scope) -> CTE:
+    field_name = target.key
 
-    column_name = str(profile_column).split(".")[-1]
-
-    return (
-        select(
-            BeatmapsetSnapshot.id.label("beatmapset_snapshot_id"),
-            profile_column.label("target")
-        )
-        .join(
-            Profile,
-            Profile.user_id == BeatmapsetSnapshot.user_id
-        )
-        .distinct(BeatmapsetSnapshot.id)
-        .cte(f"profile_{column_name}_filter_cte")
+    base_query = select(
+        BeatmapsetSnapshot.id.label("beatmapset_snapshot_id"),
+        target.label("target")
     )
+
+    match scope:
+        case Scope.BEATMAPS:
+            ...
+        case Scope.BEATMAPSETS:
+            return (
+                base_query
+                .select_from(BeatmapsetSnapshot)
+                .join(BeatmapsetSnapshot.user_profile)
+                .distinct(BeatmapsetSnapshot.id)
+                .cte(f"beatmapset_profile_{field_name}_filter_cte")
+            )
+        case Scope.QUEUES:
+            ...
+        case Scope.REQUESTS:
+            return (
+                base_query
+                .select_from(BeatmapsetSnapshot)
+                .join(Request, Request.beatmapset_id == BeatmapsetSnapshot.beatmapset_id)
+                .join(Request.user_profile)
+                .distinct(BeatmapsetSnapshot.id)
+                .cte(f"request_profile_{field_name}_filter_cte")
+            )
+        case _:
+            raise ValueError(f"Unsupported scope for profile filtering: {scope}")
