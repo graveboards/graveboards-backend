@@ -169,8 +169,8 @@ class D(_D):
 
     @session_manager
     async def delete_tag(self, session: AsyncSession = None, **kwargs) -> bool:
-        return await self._delete_instance(ModelClass.TAG, session, **kwargs)
+        return await self._delete_instance(ModelClass.BEATMAPSET_TAG, session, **kwargs)
 
     @session_manager
     async def delete_tags(self, session: AsyncSession = None, **kwargs) -> int:
-        return await self._delete_instances(ModelClass.TAG, session, **kwargs)
+        return await self._delete_instances(ModelClass.BEATMAPSET_TAG, session, **kwargs)

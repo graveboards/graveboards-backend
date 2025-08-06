@@ -1,9 +1,7 @@
 import secrets
 
-from app.database.models import ApiKey
+from app.database.models.api_key import ApiKey, API_KEY_LENGTH
 from app.utils import aware_utcnow
-
-API_KEY_LENGTH = 32
 
 
 def generate_api_key() -> str:

@@ -94,5 +94,9 @@ class U(_U):
         return await self._update_instance(ModelClass.REQUEST, session, primary_key, **kwargs)
 
     @session_manager
-    async def update_tag(self, primary_key: int, session: AsyncSession = None, **kwargs) -> Tag:
-        return await self._update_instance(ModelClass.TAG, session, primary_key, **kwargs)
+    async def update_beatmapset_tag(self, primary_key: int, session: AsyncSession = None, **kwargs) -> BeatmapsetTag:
+        return await self._update_instance(ModelClass.BEATMAPSET_TAG, session, primary_key, **kwargs)
+
+    @session_manager
+    async def update_beatmap_tag(self, primary_key: int, session: AsyncSession = None, **kwargs) -> BeatmapTag:
+        return await self._update_instance(ModelClass.BEATMAP_TAG, session, primary_key, **kwargs)

@@ -87,5 +87,9 @@ class C(_C):
         return await self._add_instance(ModelClass.REQUEST, session, **kwargs)
 
     @session_manager
-    async def add_tag(self, session: AsyncSession = None, **kwargs) -> Tag:
-        return await self._add_instance(ModelClass.TAG, session, **kwargs)
+    async def add_beatmapset_tag(self, session: AsyncSession = None, **kwargs) -> BeatmapsetTag:
+        return await self._add_instance(ModelClass.BEATMAPSET_TAG, session, **kwargs)
+
+    @session_manager
+    async def add_beatmap_tag(self, session: AsyncSession = None, **kwargs) -> BeatmapTag:
+        return await self._add_instance(ModelClass.BEATMAP_TAG, session, **kwargs)

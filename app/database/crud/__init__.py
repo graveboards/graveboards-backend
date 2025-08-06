@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy.sql import select, text
 
 from app.database.models import ModelClass, Base
 from .decorators import session_manager, ensure_required
@@ -19,6 +19,11 @@ class CRUD(C, R, U, D, Misc, DatabaseProtocol):
         async with self.engine.begin() as conn:
             await conn.run_sync(Base.metadata.drop_all)
             await conn.run_sync(Base.metadata.create_all)
+
+    async def force_clear_database(self):
+        async with self.engine.begin() as conn:
+            await conn.execute(text("DROP SCHEMA public CASCADE"))
+            await conn.execute(text("CREATE SCHEMA public"))
 
     async def is_empty(self) -> bool:
         async with self.session() as session:
