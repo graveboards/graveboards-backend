@@ -1,418 +1,483 @@
-import json
-from typing import Literal, AsyncGenerator, Generator
+from typing import Union, Optional, Any, Sequence, Generator
 
-from sqlalchemy.sql import select, and_
-from sqlalchemy.sql.selectable import Select
-from sqlalchemy.sql.elements import ColumnClause, BinaryExpression
-from sqlalchemy.sql.expression import CTE
-from sqlalchemy.orm.attributes import InstrumentedAttribute
+from sqlalchemy.sql import and_, select
+from sqlalchemy.sql.selectable import CTE
+from sqlalchemy.sql.functions import func
+from sqlalchemy.sql.elements import BinaryExpression, literal_column
 from sqlalchemy.orm.strategy_options import joinedload, noload, selectinload
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.engine.result import MappingResult
+from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.sql.selectable import Select
 
-from app.database.models import Profile, BeatmapSnapshot, BeatmapsetSnapshot, BeatmapsetListing, Queue, Request, ModelClass
-from app.database.utils import validate_column_value, get_filter_condition
-from app.database.ctes.hashable_cte import HashableCTE
+from app.database.models import (
+    BeatmapListing,
+    BeatmapsetListing,
+    RequestListing,
+    QueueListing,
+    BeatmapsetSnapshot,
+    BeatmapSnapshot,
+    Queue,
+    Request
+)
+from app.database.schemas import (
+    BeatmapListingSchema,
+    BeatmapsetListingSchema,
+    QueueListingSchema,
+    RequestListingSchema
+)
+from app.database.ctes.search_terms_scored import search_terms_scored_ctes_factory, aggregated_beatmap_score_cte_factory
+from app.database.ctes.search_terms_filtered import search_terms_filtered_cte_factory
 from app.database.ctes.bm_ss.sorting import bm_ss_sorting_cte_factory
-from app.database.ctes.search_filter import search_filter_cte_factory
 from app.database.ctes.bm_ss.filtering import bm_ss_filtering_cte_factory
 from app.database.ctes.profile.sorting import profile_sorting_cte_factory
 from app.database.ctes.profile.filtering import profile_filtering_cte_factory
 from app.database.ctes.request.sorting import request_sorting_cte_factory
 from app.database.ctes.request.filtering import request_filtering_cte_factory
-from app.exceptions import TypeValidationError
-from .enums import FilterName, SortOrder, FilterOperator, AdvancedFilterField, SortingField
+from app.database.utils import get_filter_condition
+from app.search.datastructures import ConditionValue, SearchTermsSchema, SortingSchema, FiltersSchema
+from app.search.enums import Scope, SearchableFieldCategory, FilterOperator, ModelField, CATEGORY_NAMES
 
-PaginatedResultsGenerator = AsyncGenerator[list[BeatmapsetListing], AsyncSession]
-FilterDict = dict[str, dict]
+DEFAULT_LIMIT = 50
+DEFAULT_OFFSET = 0
+ResultsType = Union[Sequence[BeatmapListing], Sequence[BeatmapsetListing], ..., Sequence[RequestListing], Sequence[QueueListing]]
+
+SCOPE_MODEL_MAPPING = {
+    Scope.BEATMAPS: BeatmapListing,
+    Scope.BEATMAPSETS: BeatmapsetListing,
+    Scope.SCORES: ...,
+    Scope.QUEUES: QueueListing,
+    Scope.REQUESTS: RequestListing
+}
+
+SCOPE_SCHEMA_MAPPING = {
+    Scope.BEATMAPS: BeatmapListingSchema,
+    Scope.BEATMAPSETS: BeatmapsetListingSchema,
+    Scope.SCORES: ...,
+    Scope.QUEUES: QueueListingSchema,
+    Scope.REQUESTS: RequestListingSchema
+}
+
+SCOPE_EXCLUDE_MAPPING = {
+    Scope.BEATMAPS: ...,
+    Scope.BEATMAPSETS: {
+        "beatmapset_snapshot": {
+            "beatmap_snapshots": {
+                "__all__": {"beatmapset_snapshots", "leaderboard"}
+            }
+        }
+    },
+    Scope.SCORES: ...,
+    Scope.QUEUES: {
+        "queue": {
+            "requests": True,
+            "managers": True
+        },
+        "request_listings": True
+    },
+    Scope.REQUESTS: {
+        "queue_listing": True,
+        "request": {
+            "queue": {"requests", "managers"}
+        },
+        "beatmapset_listing": {
+            "beatmapset_snapshot": {
+                "beatmap_snapshots": {
+                    "__all__": {"beatmapset_snapshots", "leaderboard"}
+                }
+            }
+        }
+    }
+}
 
 
 class SearchEngine:
-    def __init__(self):
-        self._search_query: str = ""
-        self._sorting: list[SortingField] = []
-        self._sort_orders: list[SortOrder] = []
-        self._filters: dict[FilterName, FilterDict] = {filter_name: {} for filter_name in FilterName}
-        self._queue_id: int | None = None
-        self._limit: int = 50
-        self._offset: int = 0
-        self._requests_only: bool = False
+    def __init__(
+        self,
+        scope: Scope,
+        search_terms: SearchTermsSchema | dict[str, Union[str, list[str], bool, dict[str, int]]] = None,
+        sorting: SortingSchema | list[dict[str, str]] = None,
+        filters: FiltersSchema | dict[str, dict[str, Union[dict[str, ConditionValue], ConditionValue, bool, None]]] = None,
+        frontend_mode: bool = False
+    ):
+        self.scope = scope
+        self.frontend_mode = frontend_mode
+        self.schema_class = SCOPE_SCHEMA_MAPPING[scope]
+        self.exclude = SCOPE_EXCLUDE_MAPPING[scope]
 
-        self.query: Select | None = None
+        if isinstance(search_terms, SearchTermsSchema) or search_terms is None:
+            self.search_terms = search_terms
+        elif isinstance(search_terms, dict):
+            self.search_terms = SearchTermsSchema.model_validate(search_terms)
+        else:
+            raise TypeError(f"search_terms must be SearchTermsSchema or dict, got {type(search_terms).__name__}")
 
-    def search(
+        if isinstance(sorting, SortingSchema) or sorting is None:
+            self.sorting = sorting
+        elif isinstance(sorting, list):
+            self.sorting = SortingSchema.model_validate(sorting)
+        else:
+            raise TypeError(f"sorting must be SearchTermsSchema or dict, got {type(search_terms).__name__}")
+
+        if isinstance(filters, FiltersSchema) or filters is None:
+            self.filters = filters
+        elif isinstance(filters, dict):
+            self.filters = FiltersSchema.model_validate(filters)
+        else:
+            raise TypeError(f"filters must be FiltersSchema or dict, got {type(search_terms).__name__}")
+
+        self.query: Optional[Select] = None
+        self._compose_query()
+
+    async def search(
         self,
         session: AsyncSession,
-        search_query: str = None,
-        sorting: list[str] = None,
-        sort_orders: list[str] = None,
-        mapper_filter: str = None,
-        beatmap_filter: str = None,
-        beatmapset_filter: str = None,
-        request_filter: str = None,
-        queue_id: int = None,
-        limit: int = None,
-        offset: int = None,
-        requests_only: bool = False
-    ) -> PaginatedResultsGenerator:
-        if search_query:
-            self.search_query = search_query
-        if sorting:
-            self.sorting = sorting
-        if sort_orders:
-            self.sort_orders = sort_orders
-        if mapper_filter:
-            self.mapper_filter = mapper_filter
-        if beatmap_filter:
-            self.beatmap_filter = beatmap_filter
-        if beatmapset_filter:
-            self.beatmapset_filter = beatmapset_filter
-        if request_filter:
-            self.request_filter = request_filter
-        if queue_id:
-            self.queue_id = queue_id
-        if limit:
-            self._limit = limit
-        if offset:
-            self._offset = offset
-        if requests_only:
-            self._requests_only = requests_only
+        limit: int = DEFAULT_LIMIT,
+        offset: int = DEFAULT_OFFSET,
+        debug: bool = False
+    ) -> ResultsType:
+        if not isinstance(limit, int) or not isinstance(offset, int) or limit < 0 or offset < 0:
+            raise TypeError("Both limit and offset must be a positive integer")
 
-        self.compose_query()
+        page_query = self.query.limit(limit).offset(offset)
+        result = await session.execute(page_query)
 
-        return self.results_generator(session)
-
-    async def results_generator(self, session: AsyncSession) -> PaginatedResultsGenerator:
-        while True:
-            page_query = self.query.limit(self._limit).offset(self._offset)
-
+        if debug and self.search_terms:
+            self.print_score_debug(result.mappings())
             result = await session.execute(page_query)
-            results = result.scalars().all() if not self._requests_only else result.all()
 
-            if not results:
-                break
+        return result.scalars().all()
 
-            yield results
-
-            self._offset += self._limit
-
-    def compose_query(self):
-        if not self._requests_only:
-            self.query = (
-                select(BeatmapsetListing)
-                .join(
-                    BeatmapsetSnapshot,
-                    BeatmapsetSnapshot.id == BeatmapsetListing.beatmapset_snapshot_id
-                )
-            )
-        else:
-            self.query = (
-                select(BeatmapsetListing, Request)
-                .join(
-                    BeatmapsetSnapshot,
-                    BeatmapsetSnapshot.id == BeatmapsetListing.beatmapset_snapshot_id
-                )
-                .join(
-                    Request,
-                    Request.beatmapset_id == BeatmapsetSnapshot.beatmapset_id
-                )
-                .options(
-                    joinedload(Request.user_profile),
-                    joinedload(Request.queue).options(
-                        noload(Queue.requests),
-                        noload(Queue.managers),
-                        joinedload(Queue.user_profile),
-                        selectinload(Queue.manager_profiles)
-                    )
-                )
-            )
-
-        self.query = (
-            self.query.options(
-                joinedload(BeatmapsetListing.beatmapset_snapshot)
-                .selectinload(BeatmapsetSnapshot.beatmap_snapshots)
-                .options(
-                    selectinload(BeatmapSnapshot.owner_profiles),
-                    noload(BeatmapSnapshot.beatmapset_snapshots),
-                    noload(BeatmapSnapshot.leaderboard),
-                ),
-                joinedload(BeatmapsetListing.beatmapset_snapshot).selectinload(BeatmapsetSnapshot.tags),
-                joinedload(BeatmapsetListing.beatmapset_snapshot).joinedload(BeatmapsetSnapshot.user_profile)
-            )
+    def _compose_query(self):
+        beatmap_snapshot_options = (
+            selectinload(BeatmapSnapshot.beatmap_tags),
+            selectinload(BeatmapSnapshot.owner_profiles),
+            noload(BeatmapSnapshot.beatmapset_snapshots),
+            noload(BeatmapSnapshot.leaderboard)
         )
 
-        for idx, sorting_field in enumerate(self.sorting):
-            try:
-                sort_order = self.sort_orders[idx]
-            except IndexError:
-                sort_order = SortOrder.ASCENDING
+        beatmapset_listing_options = (
+            joinedload(BeatmapsetListing.beatmapset_snapshot)
+            .options(
+                selectinload(BeatmapsetSnapshot.beatmap_snapshots)
+                .options(*beatmap_snapshot_options),
+                selectinload(BeatmapsetSnapshot.beatmapset_tags),
+                joinedload(BeatmapsetSnapshot.user_profile)
+            ),
+        )
 
-            self._apply_sorting(sorting_field, sort_order)
+        queue_options = (
+            noload(Queue.requests),
+            noload(Queue.managers),
+            joinedload(Queue.user_profile),
+            selectinload(Queue.manager_profiles)
+        )
 
-        if self.queue_id:
-            request_cte = (
-                select(Request.id, Request.beatmapset_id)
-                .join(Queue, Queue.id == Request.queue_id)
-                .where(Queue.id == self.queue_id)
-                .cte("request_cte")
-            )
+        match self.scope:
+            case Scope.BEATMAPS:
+                self.query = (
+                    select(BeatmapListing)
+                    .join(BeatmapListing.beatmap_snapshot)
+                    .options(
+                        joinedload(BeatmapListing.beatmap_snapshot)
+                        .options(*beatmap_snapshot_options)
+                    )
+                )
+            case Scope.BEATMAPSETS:
+                self.query: Select = (
+                    select(BeatmapsetListing)
+                    .join(BeatmapsetListing.beatmapset_snapshot)
+                    .options(*beatmapset_listing_options)
+                )
+            case Scope.QUEUES:
+                self.query: Select = (
+                    select(QueueListing)
+                    .join(QueueListing.queue)
+                    .join(Queue.user_profile)
+                    .join(QueueListing.request_listings)
+                    .join(RequestListing.beatmapset_listing)
+                    .join(BeatmapsetListing.beatmapset_snapshot)
+                    .options(
+                        joinedload(QueueListing.queue)
+                        .options(*queue_options),
+                        selectinload(QueueListing.request_listings)
+                        .options(
+                            joinedload(RequestListing.request)
+                            .options(
+                                noload(Request.user_profile),
+                                noload(Request.queue)
+                            ),
+                            noload(RequestListing.queue_listing)
+                        )
+                        .joinedload(RequestListing.beatmapset_listing)
+                        .options(*beatmapset_listing_options)
+                    )
+                )
+            case Scope.REQUESTS:
+                self.query: Select = (
+                    select(RequestListing)
+                    .join(RequestListing.request)
+                    .join(RequestListing.beatmapset_listing)
+                    .join(BeatmapsetListing.beatmapset_snapshot)
+                    .options(
+                        joinedload(RequestListing.request)
+                        .options(
+                            joinedload(Request.user_profile),
+                            joinedload(Request.queue)
+                            .options(*queue_options)
+                        ),
+                        joinedload(RequestListing.beatmapset_listing)
+                        .options(*beatmapset_listing_options),
+                        noload(RequestListing.queue_listing)
+                    )
+                )
 
-            if not self._requests_only:
-                self.query = self.query.join(request_cte, request_cte.c.beatmapset_id == BeatmapsetSnapshot.beatmapset_id)
-            else:
-                self.query = self.query.join(request_cte, request_cte.c.id == Request.id)
+        if self.search_terms:
+            self._apply_search_terms()
 
-        if self.search_query:
-            cte = search_filter_cte_factory(self.search_query)
+        if self.sorting:
+            self._apply_sorting()
 
-            self.query = self.query.join(cte, cte.c.beatmapset_snapshot_id == BeatmapsetSnapshot.id)
+        if self.filters:
+            self._apply_filters()
 
-        for filter_name, filter_ in self._filters.items():
-            if not filter_:
-                continue
+    def _apply_search_terms(self):
+        filter_cte = search_terms_filtered_cte_factory(self.scope, self.search_terms)
+        category_score_ctes = search_terms_scored_ctes_factory(self.scope, self.search_terms)
 
-            self._apply_filter(self._filters[filter_name], filter_name.value)
+        match self.scope:
+            case Scope.BEATMAPS:
+                ...
+            case Scope.BEATMAPSETS:
+                beatmap_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAP)
+                beatmapset_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAPSET)
+                aggregated_beatmap_cte = aggregated_beatmap_score_cte_factory(beatmap_cte) if beatmap_cte is not None else None
 
-    @staticmethod
-    def _load_sorting(sorting: list[str]) -> list[SortingField]:
-        sorting_ = []
+                beatmap_score_column = (aggregated_beatmap_cte.c.score if aggregated_beatmap_cte is not None else literal_column("0"))
+                beatmapset_score_column = (beatmapset_cte.c.score if beatmapset_cte is not None else literal_column("0"))
+                total_score_column = (
+                    func.coalesce(beatmap_score_column, 0) +
+                    func.coalesce(beatmapset_score_column, 0)
+                ).label("total_score")
 
-        for sorting_target in sorting:
-            try:
-                sorting_field = getattr(SortingField, sorting_target.replace(".", "__").upper())
-                sorting_.append(sorting_field)
-            except KeyError:
-                raise ValueError(f"Invalid sorting field: '{sorting_target}'")
+                self.query = self.query.join(
+                    filter_cte,
+                    filter_cte.c.id == BeatmapsetSnapshot.id
+                )
 
-        return sorting_
+                if beatmap_cte is not None:
+                    self.query = (
+                        self.query
+                        .outerjoin(
+                            aggregated_beatmap_cte,
+                            aggregated_beatmap_cte.c.id == BeatmapsetSnapshot.id
+                        )
+                        .add_columns(
+                            aggregated_beatmap_cte.c.score_details.label("beatmap_score_details")
+                        )
+                    )
 
-    def _apply_sorting(self, sorting_field: SortingField, sort_order: SortOrder):
-        def apply_cte(rows_ranked: bool = True):
+                if beatmapset_cte is not None:
+                    self.query = (
+                        self.query
+                        .outerjoin(
+                            beatmapset_cte,
+                            beatmapset_cte.c.id == BeatmapsetSnapshot.id
+                        )
+                        .add_columns(
+                            beatmapset_cte.c.score_details.label("beatmapset_score_details")
+                        )
+                    )
+
+                self.query = self.query.add_columns(total_score_column)
+                self.query = self.query.order_by(total_score_column.desc())
+            case Scope.QUEUES:
+                ...
+            case Scope.REQUESTS:
+                beatmap_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAP)
+                beatmapset_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAPSET)
+                request_cte = category_score_ctes.get(SearchableFieldCategory.REQUEST)
+                aggregated_beatmap_cte = aggregated_beatmap_score_cte_factory(beatmap_cte) if beatmap_cte is not None else None
+
+                beatmap_score_column = (aggregated_beatmap_cte.c.score if aggregated_beatmap_cte is not None else literal_column("0"))
+                beatmapset_score_column = (beatmapset_cte.c.score if beatmapset_cte is not None else literal_column("0"))
+                request_score_column = (request_cte.c.score if request_cte is not None else literal_column("0"))
+                total_score_column = (
+                        func.coalesce(beatmap_score_column, 0) +
+                        func.coalesce(beatmapset_score_column, 0) +
+                        func.coalesce(request_score_column, 0)
+                ).label("total_score")
+
+                self.query = self.query.join(
+                    filter_cte,
+                    filter_cte.c.id == Request.id
+                )
+
+                if beatmap_cte is not None:
+                    self.query = (
+                        self.query
+                        .outerjoin(
+                            aggregated_beatmap_cte,
+                            aggregated_beatmap_cte.c.id == BeatmapsetSnapshot.id
+                        )
+                        .add_columns(
+                            aggregated_beatmap_cte.c.score_details.label("beatmap_score_details")
+                        )
+                    )
+
+                if beatmapset_cte is not None:
+                    self.query = (
+                        self.query
+                        .outerjoin(
+                            beatmapset_cte,
+                            beatmapset_cte.c.id == BeatmapsetSnapshot.id
+                        )
+                        .add_columns(
+                            beatmapset_cte.c.score_details.label("beatmapset_score_details")
+                        )
+                    )
+
+                if request_cte is not None:
+                    self.query = (
+                        self.query
+                        .outerjoin(
+                            request_cte,
+                            request_cte.c.id == Request.id
+                        )
+                        .add_columns(
+                            request_cte.c.score_details.label("request_score_details")
+                        )
+                    )
+
+                self.query = self.query.add_columns(total_score_column)
+                self.query = self.query.order_by(total_score_column.desc())
+
+    def _apply_sorting(self):
+        def apply_clause():
+            sorting_clauses.append(sorting_option.order.sort_func(target))
+
+        def apply_sorting_cte(cte: CTE):
+            nonlocal target
+            target = cte.c.target
+
             self.query = (
                 self.query
                 .join(cte, cte.c.beatmapset_snapshot_id == BeatmapsetSnapshot.id)
-                .order_by(sort_order.sort_func(cte.c.target))
+                .where(cte.c.rank == 1)
             )
 
-            if rows_ranked:
-                self.query = self.query.where(cte.c.rank == 1)
+            apply_clause()
 
-        match sorting_field.model_class:
-            case ModelClass.PROFILE:
-                cte = profile_sorting_cte_factory(sorting_field.value, sort_order)
-                apply_cte()
-            case ModelClass.BEATMAP_SNAPSHOT:
-                cte = bm_ss_sorting_cte_factory(sorting_field.value, sort_order)
-                apply_cte()
-            case ModelClass.BEATMAPSET_SNAPSHOT:
-                if isinstance(sorting_field.value, InstrumentedAttribute):
-                    self.query = self.query.order_by(sort_order.sort_func(sorting_field.value))
-                elif isinstance(sorting_field.value, HashableCTE):
-                    cte = sorting_field.value.cte
-                    cte = cte.alias("sorting_" + cte.name)
-                    apply_cte(rows_ranked=False)
-            case ModelClass.REQUEST:
-                cte = request_sorting_cte_factory(sorting_field.value, sort_order)
-                apply_cte()
+        def apply_sorting_option():
+            match category:
+                case SearchableFieldCategory.PROFILE:
+                    cte = profile_sorting_cte_factory(sorting_option, self.scope)
+                    apply_sorting_cte(cte)
+                case SearchableFieldCategory.BEATMAP:
+                    cte = bm_ss_sorting_cte_factory(sorting_option)
+                    apply_sorting_cte(cte)
+                case SearchableFieldCategory.BEATMAPSET:
+                    apply_clause()
+                case SearchableFieldCategory.REQUEST:
+                    cte = request_sorting_cte_factory(sorting_option)
+                    apply_sorting_cte(cte)
 
-    @staticmethod
-    def _load_filter(filter_json: str) -> FilterDict:
-        try:
-            filter_ = json.loads(filter_json)
-        except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON format for filter: {e}")
+        sorting_clauses = []
 
-        if not isinstance(filter_, dict):
-            raise ValueError(f"Invalid filter format: {filter_}. Must be a dict of fields and conditions")
+        for sorting_option in self.sorting:
+            category = SearchableFieldCategory.from_model_class(sorting_option.field.model_class)
+            target = sorting_option.field.target
+            apply_sorting_option()
 
-        return filter_
+        if sorting_clauses:
+            self.query = self.query.order_by(None).order_by(*sorting_clauses)
 
-    def _apply_filter(self, filter_: FilterDict, model_class: ModelClass):
-        def condition_generator(conditions_dict: dict, target: InstrumentedAttribute | ColumnClause, is_aggregated: bool = False) -> Generator[BinaryExpression, None, None]:
-            if not isinstance(conditions_dict, dict):
-                raise ValueError(f"Invalid conditions format for field '{field}': {conditions_dict}. Must be a dict of operators and values")
-
-            for operator_str, value in conditions_dict.items():
-                operator_str = operator_str.lower()
-
-                try:
-                    filter_operator = getattr(FilterOperator, operator_str.upper())
-                except KeyError:
-                    raise ValueError(f"Invalid operator '{operator_str}' for field '{field}' in condition {dict({operator_str: value})}")
-
-                if column_is_column:  # TODO: Validate against hybrid too
-                    try:
-                        validate_column_value(column, value)
-                    except TypeValidationError as e:
-                        raise TypeError(f"Invalid value type for field '{field}' in condition {dict({operator_str: value})}: Expected {e.expected_types}, got {e.value_type.__name__}")
-                    except ValueError as e:
-                        raise e
-
+    def _apply_filters(self):
+        def clause_generator(is_aggregated: bool = False) -> Generator[BinaryExpression, None, None]:
+            for op_str, value in conditions.model_dump(exclude_unset=True, by_alias=True).items():
+                filter_operator = FilterOperator.from_name(op_str)
                 yield get_filter_condition(filter_operator, target, value, is_aggregated=is_aggregated)
 
-        def apply_conditions(target: InstrumentedAttribute | ColumnClause, conditions_dict: dict):
-            for condition in condition_generator(conditions_dict, target):
-                conditions.append(condition)
+        def apply_clauses():
+            for clause in clause_generator():
+                filtering_clauses.append(clause)
 
-        def apply_cte(cte: CTE, conditions_dict: dict):
-            target = cte.columns["target"]
-            apply_conditions(target, conditions_dict)
+        def apply_filter_conditions():
+            nonlocal target
 
-            self.query = self.query.join(cte, BeatmapsetSnapshot.id == cte.c.beatmapset_snapshot_id)
+            match field_category:
+                case SearchableFieldCategory.PROFILE:
+                    cte = profile_filtering_cte_factory(target, self.scope)
+                    target = cte.c.target
+                    self.query = self.query.join(cte, cte.c.beatmapset_snapshot_id == BeatmapsetSnapshot.id)
+                    apply_clauses()
+                case SearchableFieldCategory.BEATMAP:
+                    aggregated_conditions = clause_generator(is_aggregated=True)
+                    cte = bm_ss_filtering_cte_factory(target, aggregated_conditions)
+                    self.query = self.query.join(cte, cte.c.beatmapset_snapshot_id == BeatmapsetSnapshot.id)
+                case SearchableFieldCategory.BEATMAPSET:
+                    apply_clauses()
+                case SearchableFieldCategory.REQUEST:
+                    cte = request_filtering_cte_factory(target)
+                    target = cte.c.target
+                    self.query = self.query.join(cte, cte.c.beatmapset_snapshot_id == BeatmapsetSnapshot.id)
+                    apply_clauses()
 
-        def apply_simple_filter():
-            if column.class_ is Profile:
-                cte = profile_filtering_cte_factory(column)
-                self.query = self.query.join(cte, cte.c.beatmapset_snapshot_id == BeatmapsetSnapshot.id)
-                apply_conditions(cte.c.target, field_value)
-            elif column.class_ is BeatmapSnapshot:
-                aggregated_conditions = condition_generator(field_value, column, is_aggregated=True)
-                cte = bm_ss_filtering_cte_factory(column, aggregated_conditions)
-                self.query = self.query.join(cte, cte.c.beatmapset_snapshot_id == BeatmapsetSnapshot.id)
-            elif column.class_ is Request:
-                cte = request_filtering_cte_factory(column)
-                self.query = self.query.join(cte, cte.c.beatmapset_snapshot_id == BeatmapsetSnapshot.id)
-                apply_conditions(cte.c.target, field_value)
-            else:
-                apply_conditions(column, field_value)
+        filtering_clauses = []
 
-        def apply_advanced_filter():
-            advanced_filter_field = AdvancedFilterField[field.upper()]
+        for category_name, field_filters in self.filters:
+            if field_filters is None:
+                continue
 
-            if isinstance(advanced_filter_field.value, dict):
-                for func_str, conditions_dict in field_value.items():
-                    func_str = func_str.lower()
+            for field_name, conditions in field_filters.root.items():
+                model_field = ModelField.from_category_field(category_name, field_name)
+                field_category = SearchableFieldCategory.from_model_class(model_field.model_class)
+                target = model_field.target
+                apply_filter_conditions()
 
-                    try:
-                        cte = advanced_filter_field.value[func_str]
-                        cte = cte.alias("filtering_" + cte.name)
-                    except KeyError:
-                        raise ValueError(f"Unsupported function '{func_str}' for field '{field}'. Must be one of: {", ".join(advanced_filter_field.value.keys())}")
+        if filtering_clauses:
+            self.query = self.query.where(and_(*filtering_clauses))
 
-                    return apply_cte(cte, conditions_dict)
-            elif isinstance(advanced_filter_field.value, CTE):
-                cte = advanced_filter_field.value
-                return apply_cte(cte, field_value)
-            else:
-                raise ValueError(f"Unknown error occurred while processing field '{field}'. Please let a developer know")
-
-        conditions: list[BinaryExpression] = []
-
-        for field, field_value in filter_.items():
-            field = field.lower()
-            column = getattr(model_class.value, field, None)
-
-            column_is_column = isinstance(column, InstrumentedAttribute)
-            column_is_hybrid = column is not None and field in model_class.value.__annotations__.keys() and field not in model_class.mapper.columns.keys()
-            needs_advanced_filtering = column_is_hybrid and field.upper() in AdvancedFilterField.__members__.keys()
-
-            if not column_is_column and not column_is_hybrid:
-                raise ValueError(f"Field '{field}' not applicable to '{model_class.value.__name__}'")
-
-            if not needs_advanced_filtering:
-                apply_simple_filter()
-            else:
-                apply_advanced_filter()
-
-        if conditions:
-            self.query = self.query.where(and_(*conditions))
-
-    @property
-    def search_query(self) -> str:
-        return self._search_query
-
-    @search_query.setter
-    def search_query(self, search_query_: str):
-        if not isinstance(search_query_, str):
-            raise TypeError(f"Invalid search_query type: {type(search_query_).__name__}. Must be str")
-
-        self._search_query = search_query_
-
-    @property
-    def sorting(self) -> list[SortingField]:
-        return self._sorting
-
-    @sorting.setter
-    def sorting(self, sorting_: list[str]):
-        if not isinstance(sorting_, list) or (isinstance(sorting_, list) and not all(isinstance(sorting_target, str) for sorting_target in sorting_)):
-            raise TypeError(f"Invalid sorting type: {type(sorting_).__name__}. Must be a list of strings")
-
-        self._sorting = self._load_sorting(sorting_)
-
-    @property
-    def sort_orders(self) -> list[SortOrder]:
-        return self._sort_orders
-
-    @sort_orders.setter
-    def sort_orders(self, sort_orders_: list[SortOrder] | list[Literal["asc", "desc"]]):
-        if all(isinstance(sort_order_, SortOrder) for sort_order_ in sort_orders_):
-            self._sort_orders = sort_orders_
-        elif all(isinstance(sort_order_, str) for sort_order_ in sort_orders_):
-            if not all(sort_order_ in (SortOrder.ASCENDING.value, SortOrder.DESCENDING.value) for sort_order_ in sort_orders_):
-                raise ValueError(f"sort_orders as str must only contain '{SortOrder.ASCENDING.value}' or '{SortOrder.DESCENDING.value}'")
-
-            self._sort_orders = [SortOrder(sort_order_) for sort_order_ in sort_orders_]
+    def dump(self, page: ResultsType) -> list[dict[str, Any]]:
+        if self.frontend_mode:
+            include = self.schema_class.FRONTEND_INCLUDE
+            exclude = None
         else:
-            raise TypeError("sort_orders must either only contain SortOrder or only contain str")
+            include = None
+            exclude = self.exclude
 
-    @property
-    def mapper_filter(self) -> dict:
-        return self._filters.get(FilterName.MAPPER)
+        return [
+            self.schema_class.model_validate(model).model_dump(
+                include=include,
+                exclude=exclude
+            )
+            for model in page
+        ]
 
-    @mapper_filter.setter
-    def mapper_filter(self, mapper_filter_json: str):
-        if not isinstance(mapper_filter_json, str):
-            raise TypeError(f"Invalid mapper_filter type: {type(mapper_filter_json).__name__}. Must be str")
+    def print_score_debug(self, result: MappingResult) -> None:
+        model_name = SCOPE_MODEL_MAPPING[self.scope].__name__
+        max_term_length = max(len(term) for term in self.search_terms.terms)
 
-        self._filters[FilterName.MAPPER] = self._load_filter(mapper_filter_json)
+        for row in result:
+            model = row[model_name]
+            total_score = row["total_score"]
+            print(f"\n{"=" * 60}")
+            print(f"{model_name} ID: {model.id} | Total Score: {total_score}")
 
-    @property
-    def beatmap_filter(self) -> dict:
-        return self._filters.get(FilterName.BEATMAP)
+            for category in CATEGORY_NAMES:
+                if (key := f"{category}_score_details") in row and (score_details := row[key]):
+                    print(f"\n[{category.capitalize()} Matches] | Score: {sum(match["score"] for match in score_details)}")
 
-    @beatmap_filter.setter
-    def beatmap_filter(self, beatmap_filter_json: str):
-        if not isinstance(beatmap_filter_json, str):
-            raise TypeError(f"Invalid beatmap_filter type: {type(beatmap_filter_json).__name__}. Must be str")
+                    for match in sorted(score_details, key=lambda x: x["score"], reverse=True):
+                        print(
+                            f"  -> Term: {match["term"]:{max_term_length}} | "
+                            f"Field: {match["field"]:14} | "
+                            f"Pattern: {match["pattern"]:9} | "
+                            f"Score: {match["score"]}"
+                        )
 
-        self._filters[FilterName.BEATMAP] = self._load_filter(beatmap_filter_json)
-
-    @property
-    def beatmapset_filter(self) -> dict:
-        return self._filters.get(FilterName.BEATMAPSET)
-
-    @beatmapset_filter.setter
-    def beatmapset_filter(self, beatmapset_filter_json: str):
-        if not isinstance(beatmapset_filter_json, str):
-            raise TypeError(f"Invalid beatmapset_filter type: {type(beatmapset_filter_json).__name__}. Must be str")
-
-        self._filters[FilterName.BEATMAPSET] = self._load_filter(beatmapset_filter_json)
-
-    @property
-    def request_filter(self) -> dict:
-        return self._filters.get(FilterName.REQUEST)
-
-    @request_filter.setter
-    def request_filter(self, request_filter_json: str):
-        if not isinstance(request_filter_json, str):
-            raise TypeError(f"Invalid request_filter type: {type(request_filter_json).__name__}. Must be str")
-
-        self._filters[FilterName.REQUEST] = self._load_filter(request_filter_json)
-
-    @property
-    def queue_id(self) -> int:
-        return self._queue_id
-
-    @queue_id.setter
-    def queue_id(self, queue_id_: int):
-        if not isinstance(queue_id_, int):
-            raise TypeError(f"Invalid queue_id type: {type(queue_id_).__name__}. Must be int")
-
-        self._queue_id = queue_id_
+            print("=" * 60)
 
     @property
     def compiled_query(self) -> str:
-        if not self.query:
-            raise ValueError("The query is empty")
-
-        return str(self.query.compile(dialect=postgresql.dialect()))
+        return str(self.query.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}))
