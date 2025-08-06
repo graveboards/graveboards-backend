@@ -1,7 +1,7 @@
 from connexion import request
 
 from app.security import role_authorization
-from app.enums import RoleName
+from app.database.enums import RoleName
 from app.redis import Namespace
 from app.redis.models import QueueRequestHandlerTask
 

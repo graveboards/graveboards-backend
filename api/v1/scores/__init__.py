@@ -5,7 +5,7 @@ from app.database import PostgresqlDB
 from app.database.schemas import ScoreSchema
 from app.utils import parse_iso8601
 from app.security import role_authorization
-from app.enums import RoleName
+from app.database.enums import RoleName
 
 
 async def search(**kwargs):

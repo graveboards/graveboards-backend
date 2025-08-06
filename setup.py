@@ -5,7 +5,7 @@ from datetime import timedelta
 from app.redis import RedisClient
 from app.database import PostgresqlDB
 from app.security.api_key import generate_api_key
-from app.enums import RoleName
+from app.database.enums import RoleName
 from app.utils import aware_utcnow
 from app.logging import setup_logging
 from app.config import ADMIN_USER_IDS, MASTER_QUEUE_NAME, MASTER_QUEUE_DESCRIPTION, DEBUG, PRIMARY_ADMIN_USER_ID, PRIVILEGED_USER_IDS

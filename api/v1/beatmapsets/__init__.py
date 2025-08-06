@@ -7,7 +7,7 @@ from app.database import PostgresqlDB
 from app.database.schemas import BeatmapsetSchema
 from app.redis import RedisClient
 from app.security import role_authorization
-from app.enums import RoleName
+from app.database.enums import RoleName
 from . import listings, snapshots
 
 _LOADING_OPTIONS = {

@@ -6,7 +6,7 @@ from connexion import request
 from connexion.exceptions import Forbidden
 
 from app.database import PostgresqlDB
-from app.enums import RoleName
+from app.database.enums import RoleName
 from app.config import DISABLE_SECURITY
 
 

@@ -9,7 +9,7 @@ from app.database import PostgresqlDB
 from app.database.schemas import RequestSchema
 from app.security import role_authorization
 from app.security.overrides import queue_owner_override
-from app.enums import RoleName
+from app.database.enums import RoleName
 from app.redis import Namespace, ChannelName, RedisClient
 from app.redis.models import QueueRequestHandlerTask
 from app.config import ADMIN_USER_IDS, DISABLE_SECURITY

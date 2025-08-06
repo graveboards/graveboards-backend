@@ -3,7 +3,7 @@ from connexion import request
 from api.utils import prime_query_kwargs
 from app.database import PostgresqlDB
 from app.database.schemas import UserSchema
-from app.enums import RoleName
+from app.database.enums import RoleName
 from app.security import role_authorization
 from app.security.overrides import matching_user_id_override
 
