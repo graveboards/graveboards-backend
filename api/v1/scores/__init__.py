@@ -9,7 +9,6 @@ from app.database.enums import RoleName
 
 
 async def search(**kwargs):
-    # TODO: handle filtering
     db: PostgresqlDB = request.state.db
 
     prime_query_kwargs(kwargs)

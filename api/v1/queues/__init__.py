@@ -27,7 +27,7 @@ async def search(**kwargs):
     )
     queues_data = [
         QueueSchema.model_validate(queue).model_dump(
-            exclude={"requests", "managers"}
+            exclude={"requests", "managers", "user_profile", "manager_profiles"}
         )
         for queue in queues
     ]
@@ -47,7 +47,7 @@ async def get(queue_id: int):
         return {"message": f"Queue with ID '{queue_id}' not found"}, 404
 
     queue_data = QueueSchema.model_validate(queue).model_dump(
-        exclude={"requests", "managers"}
+        exclude={"requests", "managers", "user_profile", "manager_profiles"}
     )
 
     return queue_data, 200
@@ -77,6 +77,18 @@ async def patch(queue_id: int, body: dict, **kwargs):
         whitelisted_keys=QueueSchema.model_fields.keys(),
         blacklisted_keys={"id", "user_id", "created_at", "updated_at", "requests", "managers", "user_profile", "manager_profiles"}
     )
-    await db.update_queue(queue_id, **body)
+
+    queue = await db.get_queue(id=queue_id)
+
+    if not queue:
+        return {"message": f"Queue with ID '{queue_id}' not found"}, 404
+
+    delta = {}
+
+    for key, value in body.items():
+        if value != getattr(queue, key):
+            delta[key] = value
+
+    await db.update_queue(queue_id, **delta)
 
     return {"message": "Queue updated successfully!"}, 200

@@ -79,8 +79,8 @@ async def post(body: dict, **kwargs):
     oac = OsuAPIClient(rc)
     beatmapset_dict = await oac.get_beatmapset(beatmapset_id)
 
-    if beatmapset_dict["status"] in ("ranked", "approved", "qualified", "loved"):
-        return {"message": f"The beatmapset is already {beatmapset_dict['status']} on osu!"}, 400
+    if (status := beatmapset_dict["status"]) in {"ranked", "approved", "qualified", "loved"}:
+        return {"message": f"The beatmapset is already {status} on osu!"}, 400
 
     task = QueueRequestHandlerTask(**body)
     task_hash_name = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(task.hashed_id)
@@ -107,8 +107,20 @@ async def patch(request_id: int, body: dict, **kwargs):
     body = bleach_body(
         body,
         whitelisted_keys=RequestSchema.model_fields.keys(),
-        blacklisted_keys={"id", "user_id", "beatmapset_id", "queue_id", "comment", "mv_checked", "created_at", "updated_at", "user_profile", "queue"}
+        blacklisted_keys={"id", "user_id", "beatmapset_id", "queue_id", "created_at", "updated_at", "user_profile", "queue"}
     )
-    await db.update_request(request_id, **body)
+
+    request_ = await db.get_request(id=request_id)
+
+    if not request_:
+        return {"message": f"Request with ID '{request_id}' not found"}, 404
+
+    delta = {}
+
+    for key, value in body.items():
+        if value != getattr(request_, key):
+            delta[key] = value
+
+    await db.update_request(request_id, **delta)
 
     return {"message": "Request updated successfully!"}, 200

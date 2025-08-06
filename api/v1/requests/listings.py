@@ -1,9 +1,15 @@
 from connexion import request
 
-from api.utils import pop_auth_info
+from api.utils import prime_query_kwargs
 from app.database import PostgresqlDB
-from app.database.schemas import RequestListingSchema, BeatmapSnapshotSchema
-from app.search import SearchEngine
+from app.database.schemas import (
+    RequestListingSchema,
+    RequestSchema,
+    BeatmapSnapshotSchema,
+    QueueSchema,
+    BeatmapsetSnapshotSchema
+)
+from app.security import ownership_authorization
 
 _LOADING_OPTIONS = {
     "request": {
@@ -40,35 +46,30 @@ _LOADING_OPTIONS = {
     "queue_listing": False
 }
 
-async def search(**kwargs):  # TODO: Improve security
+
+@ownership_authorization()
+async def search(**kwargs):
     db: PostgresqlDB = request.state.db
 
-    pop_auth_info(kwargs)
+    prime_query_kwargs(kwargs)
 
-    se = SearchEngine()
-
-    async with db.session() as session:
-        try:
-            results_generator = se.search(session, requests_only=True, **kwargs)
-        except (ValueError, TypeError) as e:
-            return {"message": str(e)}, 400
-
-        try:
-            page = await anext(results_generator)
-        except StopAsyncIteration:
-            return [], 200
-
-        context = {
-            "exclusions": {
-                BeatmapSnapshotSchema: {"beatmapset_snapshots", "leaderboard"}
+    request_listings = await db.get_request_listings(
+        _loading_options=_LOADING_OPTIONS,
+        **kwargs
+    )
+    request_listings_data = [
+        RequestListingSchema.model_validate(request_listing).model_dump(
+            context={
+                "exclusions": {
+                    RequestSchema: {"user_profile"},
+                    QueueSchema: {"user_profile", "manager_profiles", "requests", "managers"},
+                    RequestListingSchema: {"queue_listing"},
+                    BeatmapSnapshotSchema: {"owner_profiles", "beatmapset_snapshots", "leaderboard"},
+                    BeatmapsetSnapshotSchema: {"user_profile"}
+                }
             }
-        }
+        )
+        for request_listing in request_listings
+    ]
 
-        page_data = [
-            RequestListingSchema.model_validate((beatmapset_listing.beatmapset_snapshot, request_)).model_dump(
-                context=context
-            )
-            for beatmapset_listing, request_ in page
-        ]
-
-    return page_data, 200
+    return request_listings_data, 200

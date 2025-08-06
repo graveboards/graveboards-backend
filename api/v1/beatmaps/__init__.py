@@ -22,7 +22,7 @@ async def search(**kwargs):
     )
     beatmaps_data = [
         BeatmapSchema.model_validate(beatmap).model_dump(
-            exclude={"leaderboards", "snapshots"}
+            exclude={"snapshots", "leaderboards"}
         )
         for beatmap in beatmaps
     ]

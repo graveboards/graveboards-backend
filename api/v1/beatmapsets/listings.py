@@ -1,6 +1,6 @@
 from connexion import request
 
-from api.utils import pop_auth_info
+from api.utils import prime_query_kwargs
 from app.database import PostgresqlDB
 from app.database.schemas import BeatmapsetListingSchema, BeatmapSnapshotSchema
 
@@ -24,27 +24,21 @@ _LOADING_OPTIONS = {
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
 
-    pop_auth_info(kwargs)
+    prime_query_kwargs(kwargs)
 
-    se = SearchEngine()
-
-    async with db.session() as session:
-        try:
-            results_generator = se.search(session, **kwargs)
-        except (ValueError, TypeError) as e:
-            return {"message": str(e)}, 400
-
-        try:
-            page = await anext(results_generator)
-        except StopAsyncIteration:
-            return [], 200
-
-        context = {
-            "exclusions": {
-                BeatmapSnapshotSchema: {"beatmapset_snapshots", "leaderboard"}
+    beatmapset_listings = await db.get_beatmapset_listings(
+        _loading_options=_LOADING_OPTIONS,
+        **kwargs
+    )
+    beatmapset_listings_data = [
+        BeatmapsetListingSchema.model_validate(beatmapset_listing).model_dump(
+            context={
+                "exclusions": {
+                    BeatmapSnapshotSchema: {"beatmapset_snapshots", "leaderboard"}
+                }
             }
-        }
+        )
+        for beatmapset_listing in beatmapset_listings
+    ]
 
-        page_data = [BeatmapsetListingSchema.model_validate(beatmapset_listing).model_dump(context=context) for beatmapset_listing in page]
-
-    return page_data, 200
+    return beatmapset_listings_data, 200

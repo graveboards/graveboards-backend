@@ -20,7 +20,7 @@ async def search(beatmap_id: int, snapshot_number: int):
     dotosu_file_path = bm.get_path(beatmap_id, snapshot_number)
 
     try:
-        async with aiofiles.open(dotosu_file_path, 'rb') as file:
+        async with aiofiles.open(dotosu_file_path, "rb") as file:
             dotosu_file_data = await file.read()
     except FileNotFoundError:
         return {"message": f"Beatmap .osu file not found: {beatmap_id}/{snapshot_number}.osu"}, 404

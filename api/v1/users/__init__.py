@@ -30,7 +30,7 @@ async def search(**kwargs):
     )
     users_data = [
         UserSchema.model_validate(user).model_dump(
-            exclude={"scores", "tokens", "queues", "requests", "beatmaps", "beatmapsets"}
+            exclude={"scores", "tokens", "queues", "requests", "beatmapsets"}
         )
         for user in users
     ]
@@ -53,7 +53,7 @@ async def get(user_id: int, **kwargs):
         return {"message": f"User with ID '{user_id}' not found"}, 404
 
     user_data = UserSchema.model_validate(user).model_dump(
-        exclude={"scores", "tokens", "queues", "requests", "beatmaps", "beatmapsets"}
+        exclude={"scores", "tokens", "queues", "requests", "beatmapsets"}
     )
 
     return user_data, 200

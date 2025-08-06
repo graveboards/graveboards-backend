@@ -25,7 +25,7 @@ async def search(beatmap_id: int, **kwargs):
     )
     beatmap_snapshots_data = [
         BeatmapSnapshotSchema.model_validate(beatmap_snapshot).model_dump(
-            exclude={"leaderboard", "beatmapset_snapshots"}
+            exclude={"beatmapset_snapshots", "leaderboard", "owner_profiles"}
         )
         for beatmap_snapshot in beatmap_snapshots
     ]
@@ -46,7 +46,7 @@ async def get(beatmap_id: int, snapshot_number: int):
         return {"message": f"BeatmapSnapshot with beatmap_id '{beatmap_id}' and snapshot_number '{snapshot_number}' not found"}, 404
 
     beatmap_snapshot_data = BeatmapSnapshotSchema.model_validate(beatmap_snapshot).model_dump(
-        exclude={"leaderboard", "beatmapset_snapshots"}
+        exclude={"beatmapset_snapshots", "leaderboard", "owner_profiles"}
     )
 
     return beatmap_snapshot_data, 200
