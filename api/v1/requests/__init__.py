@@ -1,5 +1,3 @@
-import json
-
 from connexion import request
 from pydantic import ValidationError
 
@@ -7,12 +5,11 @@ from api.utils import prime_query_kwargs, bleach_body
 from app.osu_api import OsuAPIClient
 from app.database import PostgresqlDB
 from app.database.schemas import RequestSchema
-from app.security import role_authorization
+from app.security import role_authorization, ownership_authorization
 from app.security.overrides import queue_owner_override
 from app.database.enums import RoleName
 from app.redis import Namespace, ChannelName, RedisClient
 from app.redis.models import QueueRequestHandlerTask
-from app.config import ADMIN_USER_IDS, DISABLE_SECURITY
 from . import listings, tasks
 
 _LOADING_OPTIONS = {
@@ -20,20 +17,12 @@ _LOADING_OPTIONS = {
     "queue": False
 }
 
-async def search(**kwargs):  # TODO: Need to redo this since /requests/listings is a thing now
+
+@ownership_authorization()
+async def search(**kwargs):
     db: PostgresqlDB = request.state.db
 
-    requester_user_id = kwargs.get("user")
     prime_query_kwargs(kwargs)
-    request_filter = json.loads(kwargs.pop("request_filter")) if "request_filter" in kwargs else {}
-
-    if "user_id" in request_filter:
-        requested_user_id = request_filter["user_id"]["eq"]
-
-        if not DISABLE_SECURITY and not requester_user_id == requested_user_id and requester_user_id not in ADMIN_USER_IDS:
-            return {"message": f"You are not authorized to access this resource"}, 403
-
-        kwargs["user_id"] = requested_user_id
 
     requests = await db.get_requests(
         _loading_options=_LOADING_OPTIONS,
@@ -49,7 +38,8 @@ async def search(**kwargs):  # TODO: Need to redo this since /requests/listings 
     return requests_data, 200
 
 
-async def get(request_id: int):
+@ownership_authorization()
+async def get(request_id: int, **kwargs):
     db: PostgresqlDB = request.state.db
 
     request_ = await db.get_request(

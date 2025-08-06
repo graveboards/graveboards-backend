@@ -6,7 +6,11 @@ async def matching_user_id_override(authenticated_user_id_lookup: str = "user", 
     authenticated_user_id = get_nested_value(kwargs, authenticated_user_id_lookup)
     resource_user_id = get_nested_value(kwargs, resource_user_id_lookup)
 
-    return authenticated_user_id == resource_user_id
+    return (
+        authenticated_user_id == resource_user_id
+        and authenticated_user_id is not None
+        and resource_user_id is not None
+    )
 
 
 async def queue_owner_override(_db: PostgresqlDB, authenticated_user_id_lookup: str = "user", from_request: bool = False, **kwargs) -> bool:
