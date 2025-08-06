@@ -1,6 +1,8 @@
 #!/bin/sh
 set -e
 
+mkdir -p /app/instance/logs
+
 if [ "$ENV" = "dev" ]; then
   echo "Running in development mode..."
   DB_HOST="graveboards-postgresql-dev"

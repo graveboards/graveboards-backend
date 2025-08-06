@@ -15,4 +15,4 @@ RUN chmod +x /app/entrypoint.sh /app/wait-for-it.sh
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 
-CMD ["uvicorn", "main:connexion_app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:connexion_app", "--host", "0.0.0.0", "--port", "8000", "--log-config", "logging.uvicorn.yaml"]

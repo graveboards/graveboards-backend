@@ -1,66 +1,48 @@
 services:
-  graveboards-redis-dev:
-    image: docker.io/bitnami/redis:latest
-    container_name: graveboards-redis-dev
-    environment:
-      - ALLOW_EMPTY_PASSWORD=yes
-    volumes:
-      - graveboards-redis-dev-data:/bitnami/redis
-    networks:
-      - web
+    graveboards-redis-dev:
+        image: docker.io/bitnami/redis:latest
+        container_name: graveboards-redis-dev
+        environment:
+            - ALLOW_EMPTY_PASSWORD=yes
+        volumes:
+            - graveboards-redis-dev-data:/bitnami/redis
+        networks:
+            - web
 
-  graveboards-postgresql-dev:
-    image: docker.io/bitnami/postgresql:latest
-    container_name: graveboards-postgresql-dev
-    environment:
-      - ALLOW_EMPTY_PASSWORD=yes
-    volumes:
-      - graveboards-postgresql-dev-data:/bitnami/postgresql
-    networks:
-      - web
+    graveboards-postgresql-dev:
+        image: docker.io/bitnami/postgresql:latest
+        container_name: graveboards-postgresql-dev
+        environment:
+            - ALLOW_EMPTY_PASSWORD=yes
+        volumes:
+            - graveboards-postgresql-dev-data:/bitnami/postgresql
+        networks:
+            - web
 
-  graveboards-backend:
-    container_name: graveboards-backend
-    ports:
-      - "8000:8000"
-    env_file:
-      - ./.env.docker
-    environment:
-      ENV: "dev"
-    volumes:
-      - type: bind
-        source: ./instance
-        target: /app/instance
-    build:
-      context: .
-    networks:
-      - web
-    depends_on:
-      - graveboards-postgresql-dev
-      - graveboards-redis-dev
-
-  graveboards-frontend:
-    container_name: graveboards-frontend
-    ports:
-      - "3000:3000"
-    environment:
-      BASE_URL: "http://localhost:3000/"
-      ENV: "dev"
-    volumes:
-      - graveboards-frontend-data:/app
-    build:
-      context: ../graveboards-frontend
-      dockerfile: Dockerfile.dev
-    networks:
-      - web
-    depends_on:
-      - graveboards-backend
+    graveboards-backend:
+        container_name: graveboards-backend
+        ports:
+            - "8000:8000"
+        env_file:
+            - ./.env.docker
+        environment:
+            ENV: "dev"
+        volumes:
+            - type: bind
+              source: ./instance
+              target: /app/instance
+        build:
+            context: .
+        networks:
+            - web
+        depends_on:
+            - graveboards-postgresql-dev
+            - graveboards-redis-dev
 
 volumes:
-  graveboards-redis-dev-data:
-  graveboards-postgresql-dev-data:
-  graveboards-frontend-data:
+    graveboards-redis-dev-data:
+    graveboards-postgresql-dev-data:
 
 networks:
-  web:
-    driver: bridge
+    web:
+        driver: bridge
