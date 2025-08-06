@@ -43,21 +43,26 @@ async def post(body: dict, **kwargs):
 
     try:
         bm = BeatmapManager(rc, db)
-        beatmap_ids = await bm.archive(beatmapset_id)
+        changelog = await bm.archive(beatmapset_id)
     except httpx.HTTPStatusError as e:
         return e.response.json(), e.response.status_code
 
-    if beatmap_ids:
-        response = []
-
-        for beatmap_id in beatmap_ids:
-            snapshot_number = (await db.get_beatmap_snapshot(beatmap_id=beatmap_id, _reversed=True)).snapshot_number
-
-            response.append({
-                "beatmap_id": beatmap_id,
-                "snapshot_number": snapshot_number
-            })
-
-        return response, 201
+    if changelog["snapshotted_beatmapset"] or changelog["snapshotted_beatmaps"]:
+        num_snapshotted_beatmaps = len(changelog["snapshotted_beatmaps"])
+        changelog["message"] = f"Snapshotted {num_snapshotted_beatmaps} beatmaps"
+        status_code = 201
+    elif changelog["updated_beatmapset"] or changelog["updated_beatmaps"]:
+        num_beatmaps = len(changelog["updated_beatmaps"])
+        num_beatmapset_fields = len(changelog["updated_beatmapset"]) - 1 if changelog["updated_beatmapset"] else 0  # Subtract inherent beatmapset_id
+        num_beatmap_fields = sum((len(fields) for fields in changelog["updated_beatmaps"])) - num_beatmaps  # Subtract inherent beatmap_id(s)
+        changelog["message"] = (
+            f"Updated {num_beatmapset_fields} field(s) in the beatmapset "
+            f"and {num_beatmap_fields} field(s) "
+            f"in {num_beatmaps} beatmap(s)"
+        )
+        status_code = 200
     else:
-        return {"message": "The latest versions of all the beatmaps in the beatmapset have already been downloaded, no further action is needed"}, 200
+        changelog["message"] = "The beatmapset and its beatmaps are fully up-to-date"
+        status_code = 200
+
+    return changelog, status_code
