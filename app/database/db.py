@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -10,11 +11,12 @@ from sqlalchemy.exc import SQLAlchemyError
 from asyncpg.connection import Connection
 
 from app.config import POSTGRESQL_CONFIGURATION
-from app.logger import logger
 from .crud import CRUD
 from . import events
 
 DATABASE_URI = URL.create(**POSTGRESQL_CONFIGURATION)
+
+logger = logging.getLogger("database")
 
 
 class PostgresqlDB(CRUD):
@@ -23,7 +25,7 @@ class PostgresqlDB(CRUD):
 
         @event.listens_for(self.engine.sync_engine, "first_connect")
         def on_connect(dbapi_connection: Connection, connection_record: ConnectionPoolEntry):
-            logger.info(f"[{self.__class__.__name__}] Connected to PostgreSQL at '{DATABASE_URI}'")
+            logger.info(f"Connected to PostgreSQL at '{DATABASE_URI}'")
 
     def async_session_generator(self) -> async_sessionmaker[AsyncSession]:
         return async_sessionmaker(self.engine, expire_on_commit=False)
