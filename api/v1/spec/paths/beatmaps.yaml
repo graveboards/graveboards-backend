@@ -1,0 +1,48 @@
+Beatmaps:
+    get:
+        summary: Returns a list of beatmaps stored on the server
+        tags:
+            - Beatmaps
+        parameters:
+            - $ref: "../parameters/query/search.yaml#/Limit"
+            - $ref: "../parameters/query/search.yaml#/Offset"
+        responses:
+            200:
+                description: Successfully retrieved beatmaps
+
+BeatmapById-Snapshots:
+    get:
+        summary: Returns a list of the beatmap's snapshots
+        tags:
+            - Beatmaps
+        parameters:
+            - $ref: "../parameters/path/beatmap.yaml#/BeatmapId"
+            - $ref: "../parameters/query/search.yaml#/Limit"
+            - $ref: "../parameters/query/search.yaml#/Offset"
+        responses:
+            200:
+                description: Successfully retrieved beatmap snapshots
+
+BeatmapById-SnapshotByNumber:
+    get:
+        summary: Returns the beatmap's specified snapshot
+        tags:
+            - Beatmaps
+        parameters:
+            - $ref: "../parameters/path/beatmap.yaml#/BeatmapId"
+            - $ref: "../parameters/path/beatmap.yaml#/BeatmapSnapshotNumber"
+        responses:
+            200:
+                description: Successfully retrieved beatmap snapshot
+
+BeatmapById-SnapshotByNumber-Osu:
+    get:
+        summary: Returns the .osu file of the beatmap's specified snapshot
+        tags:
+            - Beatmaps
+        parameters:
+            - $ref: "../parameters/path/beatmap.yaml#/BeatmapId"
+            - $ref: "../parameters/path/beatmap.yaml#/BeatmapSnapshotNumber"
+        responses:
+            200:
+                description: Successfully retrieved beatmap file

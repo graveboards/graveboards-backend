@@ -1,0 +1,41 @@
+Queue:
+    description: An object representing a queue
+    type: object
+    properties:
+        user_id:
+            type: integer
+        name:
+            type: string
+        description:
+            type: string
+        visibility:
+            $ref: "#/QueueVisibility"
+    required:
+        - user_id
+        - name
+
+QueuePatch:
+    description: An object used to update a queue
+    type: object
+    properties:
+        name:
+            type: string
+        description:
+            type: string
+        is_open:
+            type: boolean
+        visibility:
+            $ref: "#/QueueVisibility"
+
+QueueVisibility:
+    type: integer
+    description: >
+        ### The visibility of the queue
+
+         * 0 = Public
+         * 1 = Unlisted
+         * 2 = Private
+    enum:
+        - 0
+        - 1
+        - 2

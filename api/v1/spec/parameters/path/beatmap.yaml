@@ -1,0 +1,15 @@
+BeatmapId:
+    name: beatmap_id
+    description: osu! beatmap ID
+    in: path
+    required: true
+    schema:
+        type: integer
+
+BeatmapSnapshotNumber:
+    name: snapshot_number
+    description: osu! beatmap snapshot number
+    in: path
+    required: true
+    schema:
+        type: integer

@@ -1,0 +1,43 @@
+Users:
+    get:
+        summary: Returns a list of users
+        tags:
+            - Users
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        parameters:
+            - $ref: "../parameters/query/search.yaml#/Limit"
+            - $ref: "../parameters/query/search.yaml#/Offset"
+        responses:
+            200:
+                description: Successfully retrieved all users
+            401:
+                $ref: "../responses/401.yaml#/UnauthorizedError"
+
+    post:
+        summary: Adds a user
+        tags:
+            - Users
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        requestBody:
+            $ref: "../request_bodies/user.yaml#/User"
+        responses:
+            201:
+                description: Successfully added user
+
+UserById:
+    get:
+        summary: Returns the user
+        tags:
+            - Users
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        parameters:
+            - $ref: "../parameters/path/user.yaml#/UserId"
+        responses:
+            200:
+              description: Successfully retrieved user

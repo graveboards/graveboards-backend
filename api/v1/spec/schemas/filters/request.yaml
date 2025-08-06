@@ -1,0 +1,16 @@
+RequestFilter:
+    description:
+        $ref: "./description.yaml#/FilterDescription"
+    type: object
+    additionalProperties: false
+    properties:
+        comment:
+            $ref: "./fields/index.yaml#/StringField"
+        mv_checked:
+            $ref: "./fields/index.yaml#/BooleanField"
+        created_at:
+            $ref: "./fields/index.yaml#/DatetimeField"
+        updated_at:
+            $ref: "./fields/index.yaml#/DatetimeField"
+        status:
+            $ref: "./fields/index.yaml#/RequestStatusField"

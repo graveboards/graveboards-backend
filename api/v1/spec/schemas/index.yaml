@@ -1,0 +1,3 @@
+# Search
+Search:
+    $ref: "./search/search.yaml#/Search"

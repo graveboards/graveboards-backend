@@ -1,0 +1,32 @@
+FloatConditions:
+    type: object
+    additionalProperties: false
+    properties:
+        eq:
+            $ref: "#/FloatValue"
+        neq:
+            $ref: "#/FloatValue"
+        gt:
+            $ref: "#/FloatValue"
+        lt:
+            $ref: "#/FloatValue"
+        gte:
+            $ref: "#/FloatValue"
+        lte:
+            $ref: "#/FloatValue"
+        in:
+            $ref: "#/FloatContainer"
+        not_in:
+            $ref: "#/FloatContainer"
+        is_null:
+            type: boolean
+
+FloatValue:
+    type: number
+    format: float
+
+FloatContainer:
+    type: array
+    items:
+        $ref: "#/FloatValue"
+    minItems: 1

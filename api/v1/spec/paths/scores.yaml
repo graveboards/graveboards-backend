@@ -1,0 +1,24 @@
+Scores:
+    get:
+        summary: Returns a list of scores
+        tags:
+            - Scores
+        parameters:
+            - $ref: "../parameters/query/search.yaml#/Limit"
+            - $ref: "../parameters/query/search.yaml#/Offset"
+        responses:
+            200:
+                description: Successfully retrieved scores
+
+    post:
+        summary: Adds a score to the latest snapshot of the appropriate beatmap's leaderboard
+        tags:
+            - Scores
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        requestBody:
+            $ref: "../request_bodies/score.yaml#/Score"
+        responses:
+            201:
+                description: Successfully added score

@@ -1,0 +1,96 @@
+BeatmapsetFilter:
+    description:
+        $ref: "./description.yaml#/FilterDescription"
+    type: object
+    additionalProperties: false
+    properties:
+        artist:
+            $ref: "./fields/index.yaml#/StringField"
+        artist_unicode:
+            $ref: "./fields/index.yaml#/StringField"
+        bpm:
+            $ref: "./fields/index.yaml#/FloatField"
+        can_be_hyped:
+            $ref: "./fields/index.yaml#/BooleanField"
+        creator:
+            $ref: "./fields/index.yaml#/UsernameField"
+        deleted_at:
+            $ref: "./fields/index.yaml#/DatetimeField"
+        discussion_enabled:
+            $ref: "./fields/index.yaml#/BooleanField"
+        discussion_locked:
+            $ref: "./fields/index.yaml#/BooleanField"
+        favourite_count:
+            $ref: "./fields/index.yaml#/IntegerField"
+        is_scoreable:
+            $ref: "./fields/index.yaml#/BooleanField"
+        last_updated:
+            $ref: "./fields/index.yaml#/DatetimeField"
+        nsfw:
+            $ref: "./fields/index.yaml#/BooleanField"
+        offset:
+            $ref: "./fields/index.yaml#/IntegerField"
+        play_count:
+            $ref: "./fields/index.yaml#/IntegerField"
+        preview_url:
+            $ref: "./fields/index.yaml#/PreviewUrlField"
+        ranked:
+            $ref: "./fields/index.yaml#/RankedField"
+        rating:
+            $ref: "./fields/index.yaml#/FloatField"
+        source:
+            $ref: "./fields/index.yaml#/StringField"
+        status:
+            $ref: "./fields/index.yaml#/StatusField"
+        spotlight:
+            $ref: "./fields/index.yaml#/BooleanField"
+        submitted_date:
+            $ref: "./fields/index.yaml#/DatetimeField"
+        tags:
+            $ref: "./fields/index.yaml#/StringField"
+        title:
+            $ref: "./fields/index.yaml#/StringField"
+        title_unicode:
+            $ref: "./fields/index.yaml#/StringField"
+        track_id:
+            $ref: "./fields/index.yaml#/IntegerField"
+        video:
+            $ref: "./fields/index.yaml#/BooleanField"
+        availability_download_disabled:
+            $ref: "./fields/index.yaml#/BooleanField"
+        availability_more_information:
+            $ref: "./fields/index.yaml#/StringField"
+        description:
+            $ref: "./fields/index.yaml#/StringField"
+        genre_id:
+            $ref: "./fields/index.yaml#/GenreIdField"
+        genre_name:
+            $ref: "./fields/index.yaml#/GenreNameField"
+        hype_current:
+            $ref: "./fields/index.yaml#/IntegerField"
+        hype_required:
+            $ref: "./fields/index.yaml#/IntegerField"
+        language_id:
+            $ref: "./fields/index.yaml#/LanguageIdField"
+        language_name:
+            $ref: "./fields/index.yaml#/LanguageNameField"
+        nominations_summary_current:
+            $ref: "./fields/index.yaml#/IntegerField"
+        nominations_summary_required_meta_main_ruleset:
+            $ref: "./fields/index.yaml#/IntegerField"
+        nominations_summary_required_meta_non_main_ruleset:
+            $ref: "./fields/index.yaml#/IntegerField"
+        num_difficulties:
+            $ref: "./fields/index.yaml#/IntegerField"
+        sr_gaps_min:
+            $ref: "./fields/index.yaml#/FloatField"
+        sr_gaps_max:
+            $ref: "./fields/index.yaml#/FloatField"
+        sr_gaps_avg:
+            $ref: "./fields/index.yaml#/FloatField"
+        hit_lengths_min:
+            $ref: "./fields/index.yaml#/IntegerField"
+        hit_lengths_max:
+            $ref: "./fields/index.yaml#/IntegerField"
+        hit_lengths_avg:
+            $ref: "./fields/index.yaml#/IntegerField"

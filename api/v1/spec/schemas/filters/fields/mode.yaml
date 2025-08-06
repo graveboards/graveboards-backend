@@ -1,0 +1,37 @@
+ModeConditions:
+    type: object
+    additionalProperties: false
+    properties:
+        eq:
+            $ref: "#/ModeValue"
+        neq:
+            $ref: "#/ModeValue"
+        gt:
+            $ref: "#/ModeValue"
+        lt:
+            $ref: "#/ModeValue"
+        gte:
+            $ref: "#/ModeValue"
+        lte:
+            $ref: "#/ModeValue"
+        in:
+            $ref: "#/ModeContainer"
+        not_in:
+            $ref: "#/ModeContainer"
+        is_null:
+            type: boolean
+
+ModeValue:
+    type: string
+    enum:
+        - fruits
+        - mania
+        - osu
+        - taiko
+    default: osu
+
+ModeContainer:
+    type: array
+    items:
+        $ref: "#/ModeValue"
+    minItems: 1

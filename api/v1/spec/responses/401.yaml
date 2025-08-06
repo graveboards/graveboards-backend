@@ -1,0 +1,6 @@
+UnauthorizedError:
+    description: X-API-KEY or Authorization is missing in the header or invalid
+    headers:
+        WWW-Authenticate:
+            schema:
+                type: string

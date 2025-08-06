@@ -1,0 +1,13 @@
+FilterDescription: >
+    ### Filter object of fields and conditions for the appropriate category
+
+    Supports dicts of relational operators, membership operators, and null check:
+    
+     * **eq**, **neq**, **gt**, **lt**, **gte**, **lte**
+     * **in**, **not_in**
+     * **is_null**
+    
+    Alternatively, supports shorthand via direct values:
+    
+     * *value is not null* -> **eq**
+     * *value is null* -> **is_null**

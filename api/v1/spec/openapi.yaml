@@ -1,0 +1,19 @@
+openapi: 3.0.3
+
+info:
+    title: Graveboards API
+    description: A webapp backend for hosting leaderboards for graveyarded osu! beatmaps.
+    version: 1.0.0
+
+servers:
+    - url: /api/v1
+
+components:
+    securitySchemes:
+        $ref: "./security_schemes/index.yaml"
+
+    schemas:
+        $ref: "./schemas/index.yaml"
+
+paths:
+    $ref: "./paths/index.yaml"

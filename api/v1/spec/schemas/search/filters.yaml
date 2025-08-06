@@ -1,0 +1,24 @@
+Filters:
+    description: >
+        ### Categorized filters for narrowing down the search results
+        
+        Object containing search filter criteria organized by category (e.g., profile, beatmap, beatmapset, request)
+        
+        
+        Each domain contains a filter object with fields and conditions relevant to that type of entity.
+        This structure allows you to compose complex queries with precision
+    type: object
+    additionalProperties: false
+    properties:
+        profile:
+            $ref: "../filters/profile.yaml#/ProfileFilter"
+        beatmap:
+            $ref: "../filters/beatmap.yaml#/BeatmapFilter"
+        beatmapset:
+            $ref: "../filters/beatmapset.yaml#/BeatmapsetFilter"
+#        score:
+#            $ref: "../filters/score.yaml#/ScoreFilter"
+#        queue:
+#            $ref: "../filters/queue.yaml#/QueueFilter"
+        request:
+            $ref: "../filters/request.yaml#/RequestFilter"

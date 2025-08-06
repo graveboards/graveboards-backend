@@ -1,0 +1,69 @@
+Beatmap:
+    description: An object representing an osu! beatmap
+    type: object
+    properties:
+        beatmapset_id:
+            type: integer
+        difficulty_rating:
+            type: number
+            format: float
+        id:
+            type: integer
+        mode:
+            type: string
+        mode_int:
+            type: integer
+        status:
+            type: string
+        total_length:
+            type: integer
+        user_id:
+            type: integer
+        version:
+            type: string
+        accuracy:
+            type: number
+            format: float
+        ar:
+            type: number
+            format: float
+        bpm:
+            type: number
+            format: float
+        convert:
+            type: boolean
+        count_circles:
+            type: integer
+        count_sliders:
+            type: integer
+        count_spinners:
+            type: integer
+        cs:
+            type: number
+            format: float
+        deleted_at:
+            type: string
+            format: date-time
+            nullable: true
+        drain:
+            type: number
+            format: float
+        hit_length:
+            type: integer
+        is_scoreable:
+            type: boolean
+        last_updated:
+            type: string
+            format: date-time
+        passcount:
+            type: integer
+        playcount:
+            type: integer
+        ranked:
+            type: integer
+        url:
+            type: string
+            format: uri
+        checksum:
+            type: string
+            pattern: "^[0-9a-fA-F]{32}$"

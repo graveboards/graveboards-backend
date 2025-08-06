@@ -1,0 +1,73 @@
+Queues:
+    get:
+        summary: Returns a list of queues
+        tags:
+            - Queues
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        parameters:
+            - $ref: "../parameters/query/user.yaml#/UserId"
+            - $ref: "../parameters/query/queue.yaml#/IsOpen"
+            - $ref: "../parameters/query/search.yaml#/Limit"
+            - $ref: "../parameters/query/search.yaml#/Offset"
+        responses:
+            200:
+                description: Successfully retrieved queues
+
+    post:
+        summary: Adds a queue
+        tags:
+            - Queues
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        requestBody:
+            $ref: "../request_bodies/queue.yaml#/Queue"
+        responses:
+            201:
+                description: Successfully added queue
+
+QueueById:
+    get:
+        summary: Returns the specified queue
+        tags:
+            - Queues
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        parameters:
+            - $ref: "../parameters/path/queue.yaml#/QueueId"
+        responses:
+            200:
+                description: Successfully retrieved queue
+
+    patch:
+        summary: Updates a queue
+        tags:
+            - Queues
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        parameters:
+            - $ref: "../parameters/path/queue.yaml#/QueueId"
+        requestBody:
+            $ref: "../request_bodies/queue.yaml#/QueuePatch"
+        responses:
+            200:
+                description: Successfully updated queue
+
+QueueListings:
+    get:
+        summary: Returns a list of queue listings
+        tags:
+            - Queues
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        parameters:
+            - $ref: "../parameters/query/search.yaml#/Limit"
+            - $ref: "../parameters/query/search.yaml#/Offset"
+        responses:
+            200:
+                description: Successfully retrieved queue listings

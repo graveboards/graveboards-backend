@@ -1,0 +1,101 @@
+Requests:
+    get:
+        summary: Returns a list of beatmapset requests
+        tags:
+            - Requests
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        parameters:
+            - $ref: "../parameters/query/queue.yaml#/QueueId"
+            - $ref: "../parameters/query/search.yaml#/Limit"
+            - $ref: "../parameters/query/search.yaml#/Offset"
+        responses:
+            200:
+                description: Successfully retrieved requests
+
+    post:
+        summary: Adds a beatmapset request to a queue
+        tags:
+            - Requests
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        requestBody:
+            $ref: "../request_bodies/request.yaml#/Request"
+        responses:
+            201:
+                description: Successfully added request
+
+RequestById:
+    get:
+        summary: Returns the specified beatmapset request
+        tags:
+            - Requests
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        parameters:
+            - $ref: "../parameters/path/request.yaml#/RequestId"
+        responses:
+            200:
+                description: Successfully retrieved beatmapset request
+
+    patch:
+        summary: Updates a beatmapset request
+        tags:
+            - Requests
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        parameters:
+            - $ref: "../parameters/path/request.yaml#/RequestId"
+        requestBody:
+            $ref: "../request_bodies/request.yaml#/RequestPatch"
+        responses:
+            200:
+                description: Successfully updated beatmapset request
+
+RequestListings:
+    get:
+        summary: Returns a list of beatmapset request listings
+        tags:
+            - Requests
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        parameters:
+            - $ref: "../parameters/query/search.yaml#/Limit"
+            - $ref: "../parameters/query/search.yaml#/Offset"
+        responses:
+            200:
+                description: Successfully retrieved beatmapset request listings
+
+RequestTasks:
+    get:
+        summary: Returns a list of beatmapset request tasks
+        tags:
+            - Requests
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        parameters:
+            - $ref: "../parameters/query/search.yaml#/Limit"
+            - $ref: "../parameters/query/search.yaml#/Offset"
+        responses:
+            200:
+                description: Successfully retrieved beatmapset request tasks
+
+RequestTaskById:
+    get:
+        summary: Returns the specified beatmapset request task
+        tags:
+            - Requests
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        parameters:
+            - $ref: "../parameters/path/request.yaml#/RequestTaskId"
+        responses:
+            200:
+                description: Successfully retrieved beatmapset request task

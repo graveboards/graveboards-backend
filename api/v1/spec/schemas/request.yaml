@@ -1,0 +1,35 @@
+Request:
+    description: An object used to submit a beatmapset request
+    type: object
+    properties:
+        user_id:
+            type: integer
+        beatmapset_id:
+            type: integer
+        queue_id:
+            type: integer
+        comment:
+            type: string
+        mv_checked:
+            type: boolean
+    required:
+        - user_id
+        - beatmapset_id
+        - queue_id
+
+RequestPatch:
+    description: An object used to update the status of a beatmapset request
+    type: object
+    properties:
+        status:
+            type: integer
+            description: >
+                ### The status of the request
+                
+                 * -1 = Rejected
+                 * 0 = Undetermined
+                 * 1 = Accepted
+            enum:
+                - -1
+                - 0
+                - 1

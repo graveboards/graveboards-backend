@@ -1,0 +1,7 @@
+UserId:
+    name: user_id
+    description: Numerical ID representing an osu! user
+    in: path
+    required: true
+    schema:
+        type: integer

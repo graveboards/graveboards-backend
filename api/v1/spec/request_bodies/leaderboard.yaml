@@ -1,0 +1,7 @@
+Leaderboard:
+    description: A JSON payload containing a leaderboard to add to a beatmap
+    required: true
+    content:
+        application/json:
+            schema:
+                $ref: "../schemas/leaderboard.yaml#/Leaderboard"

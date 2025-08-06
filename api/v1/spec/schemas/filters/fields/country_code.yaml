@@ -1,0 +1,37 @@
+CountryCodeConditions:
+    type: object
+    additionalProperties: false
+    properties:
+        eq:
+            $ref: "#/CountryCodeValue"
+        neq:
+            $ref: "#/CountryCodeValue"
+        gt:
+            $ref: "#/CountryCodeValue"
+        lt:
+            $ref: "#/CountryCodeValue"
+        gte:
+            $ref: "#/CountryCodeValue"
+        lte:
+            $ref: "#/CountryCodeValue"
+        in:
+            $ref: "#/CountryCodeContainer"
+        not_in:
+            $ref: "#/CountryCodeContainer"
+        is_null:
+            type: boolean
+        regex:
+            $ref: "../../../regex_pattern.yaml#/RegexPattern"
+        not_regex:
+            $ref: "../../../regex_pattern.yaml#/RegexPattern"
+
+CountryCodeValue:
+    type: string
+    pattern: ^[A-Z]{2}|[a-z]{2}$
+    example: US
+
+CountryCodeContainer:
+    type: array
+    items:
+        $ref: "#/CountryCodeValue"
+    minItems: 1

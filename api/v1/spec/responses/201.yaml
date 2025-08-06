@@ -1,0 +1,11 @@
+AuthenticationSuccess:
+    description: Successfully authenticated user
+    content:
+        application/json:
+            schema:
+                type: object
+                properties:
+                    token:
+                        type: string
+                    user_id:
+                        type: integer

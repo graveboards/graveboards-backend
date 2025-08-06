@@ -1,0 +1,23 @@
+RegexPattern:
+    type: string
+    description: >
+        ### Regular expression pattern string
+        
+        Potentially dangerous features are disallowed:
+        
+         * Lookbehind: `r"\(\?<=.*?\)"`
+         * Negative lookbehind: `r"\(\?<!.*?\)"`
+         * Backreferences like `\1`: `r"\\\d+"`
+         * Named capture groups: `r"\(\?P<.*?>"`
+         * Other fancy constructs: `r"\(\?[^:=!#]"`
+        
+        
+        Suspicious patterns are also disallowed:
+        
+         * Classic ReDoS: `r"\(\s*\.\*\s*\)\+"`
+         * Also suspicious: `r"\(\s*\.\*\s*\)\+"`
+         * Nested greedy quantifiers: `r"\(\s*.+\*\s*\)\+"`
+         * Repeated `(.*){2+}`: `"\(\s*\.\*\s*\)\{2,}"`
+         * Multiple chained `.*`: `r"(\.\*){2,}"`
+    minLength: 1
+    maxLength: 100

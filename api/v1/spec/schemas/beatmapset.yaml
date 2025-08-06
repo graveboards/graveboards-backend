@@ -1,0 +1,20 @@
+Beatmapset:
+    description: An object representing an osu! beatmapset
+    type: object
+    properties:
+        beatmapset_id:
+            type: integer
+    required:
+        - beatmapset_id
+
+GenreId:
+    $ref: "./filters/fields/genre_id.yaml/#GenreIdValue"
+
+GenreName:
+    $ref: "./filters/fields/genre_name.yaml/#GenreNameValue"
+
+LanguageId:
+    $ref: "./filters/fields/language_id.yaml/#LanguageIdValue"
+
+LanguageName:
+    $ref: "./filters/fields/language_name.yaml/#LanguageNameValue"

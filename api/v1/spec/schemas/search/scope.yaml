@@ -1,0 +1,122 @@
+Scope:
+    description: >
+        ### Scope of the search
+        
+        Determines what kind of content will be returned,
+        which search terms field weight categories are relevant,
+        and how sorting/filtering will be related to the target data.
+        Please refer to the lists below for a breakdown of each scope
+        
+        
+        **beatmaps** -> *BeatmapListing*
+        
+        * Relevant search terms field weight categories:
+            * **beatmap**
+            * **beatmapset**
+        
+        * How sorting/filtering is applied:
+            * **profile**
+                * Profile(s) of the owner(s) of the difficulty. Excluded if no owners are set for the difficulty
+            * **beatmap**
+                * Target data
+            * **beatmapset**
+                * Beatmapset of the beatmap
+            * **score**
+                * Scores that are set on the difficulty
+            * **queue**
+                * Queues that the beatmapset of the difficulty is contained in
+            * **request**
+                * Requests that the beatmapset of the difficulty is contained in
+        
+        
+        **beatmapsets** -> *BeatmapsetListing*
+        
+        * Relevant search terms field weight categories:
+            * **beatmap**
+            * **beatmapset**
+
+        * How sorting/filtering is applied:
+            * **profile**
+                * Profile of the beatmapset host
+            * **beatmap**
+                * Difficulties of the beatmapset
+            * **beatmapset**
+                * Target data
+            * **score**
+                * Scores that are set on the beatmapset's difficulties
+            * **queue**
+                * Queues that the beatmapset is contained in
+            * **request**
+                * Requests that the beatmapset is contained in
+        
+        
+        **scores** -> *ScoreListing*
+        
+        * Relevant search terms field weight categories:
+            * **beatmap**
+            * **beatmapset**
+
+        * How sorting/filtering is applied:
+            * **profile**
+                * Profile of the score's submitter
+            * **beatmap**
+                * Difficulty that the score was performed on
+            * **beatmapset**
+                * Beatmapset of the difficulty that the score was performed on
+            * **score**
+                * Target data
+            * **queue**
+                * Queues that the beatmapset of the difficulty that the score was performed on is contained in
+            * **request**
+                * Requests that the beatmapset of the difficulty that the score was performed on is contained in
+        
+        
+        **queues** -> *QueueListing*
+        
+        * Relevant search terms field weight categories:
+            * **beatmap**
+            * **beatmapset**
+            * **queue**
+
+        * How sorting/filtering is applied:
+            * **profile**
+                * Profile(s) of the queue's owner and manager(s)
+            * **beatmap**
+                * Difficulties of the beatmapset contained in the queue
+            * **beatmapset**
+                * Beatmapset contained in the queue
+            * **score**
+                * Scores that are set on the difficulties of the beatmapset contained in the queue
+            * **queue**
+                * Target data
+            * **request**
+                * Requests contained in the queue
+        
+        
+        **requests** -> *RequestListing*
+        
+        * Relevant search terms field weight categories:
+            * **beatmap**
+            * **beatmapset**
+            * **request**
+
+        * How sorting/filtering is applied:
+            * **profile**
+                * Profile of the request's submitter
+            * **beatmap**
+                * Difficulties of the beatmapset of the request
+            * **beatmapset**
+                * Beatmapset of the request
+            * **score**
+                * Scores that are set on the difficulties of the beatmapset of the request
+            * **queue**
+                * Queues that the request are contained in
+            * **request**
+                * Target data
+    type: string
+    enum:
+#        - beatmaps
+        - beatmapsets
+#        - scores
+#        - queues
+        - requests

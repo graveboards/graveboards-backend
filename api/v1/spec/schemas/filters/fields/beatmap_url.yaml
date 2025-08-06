@@ -1,0 +1,37 @@
+BeatmapUrlConditions:
+    type: object
+    additionalProperties: false
+    properties:
+        eq:
+            $ref: "#/BeatmapUrlValue"
+        neq:
+            $ref: "#/BeatmapUrlValue"
+        gt:
+            $ref: "#/BeatmapUrlValue"
+        lt:
+            $ref: "#/BeatmapUrlValue"
+        gte:
+            $ref: "#/BeatmapUrlValue"
+        lte:
+            $ref: "#/BeatmapUrlValue"
+        in:
+            $ref: "#/BeatmapUrlContainer"
+        not_in:
+            $ref: "#/BeatmapUrlContainer"
+        is_null:
+            type: boolean
+        regex:
+            $ref: "../../../regex_pattern.yaml#/RegexPattern"
+        not_regex:
+            $ref: "../../../regex_pattern.yaml#/RegexPattern"
+
+BeatmapUrlValue:
+    type: string
+    pattern: ^https:\/\/osu\.ppy\.sh\/beatmaps\/\d+$
+    example: https://osu.ppy.sh/beatmaps/129891
+
+BeatmapUrlContainer:
+    type: array
+    items:
+        $ref: "#/BeatmapUrlValue"
+    minItems: 1

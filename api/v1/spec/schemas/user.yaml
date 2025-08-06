@@ -1,0 +1,8 @@
+User:
+    description: An object representing an osu! user
+    type: object
+    properties:
+        user_id:
+            type: integer
+    required:
+        - user_id

@@ -1,0 +1,23 @@
+Search:
+    get:
+        summary: Executes a search
+        tags:
+            - Search
+        parameters:
+            - $ref: "../parameters/query/search.yaml#/Q"
+            - $ref: "../parameters/query/search.yaml#/Compressed"
+            - $ref: "../parameters/query/search.yaml#/FrontendMode"
+            - $ref: "../parameters/query/search.yaml#/Limit"
+            - $ref: "../parameters/query/search.yaml#/Offset"
+        responses:
+            200:
+                description: Successfully retrieved search results
+    post:
+        summary: Creates a new search resource
+        tags:
+            - Search
+        requestBody:
+            $ref: "../request_bodies/search.yaml#/Search"
+        responses:
+            201:
+                description: Successfully created new search resource

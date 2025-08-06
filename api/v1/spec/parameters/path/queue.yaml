@@ -1,0 +1,7 @@
+QueueId:
+    name: queue_id
+    description: Numerical ID representing a queue
+    in: path
+    required: true
+    schema:
+        type: integer

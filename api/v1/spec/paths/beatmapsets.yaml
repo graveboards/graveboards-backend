@@ -1,0 +1,75 @@
+Beatmapsets:
+    get:
+        summary: Returns a list of beatmapsets
+        tags:
+            - Beatmapsets
+        parameters:
+            - $ref: "../parameters/query/search.yaml#/Limit"
+            - $ref: "../parameters/query/search.yaml#/Offset"
+        responses:
+            200:
+                description: Successfully retrieved beatmapsets
+
+    post:
+        summary: Downloads all beatmaps in a beatmapset to the server
+        tags:
+            - Beatmapsets
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        requestBody:
+            $ref: "../request_bodies/beatmapset.yaml#/Beatmapset"
+        responses:
+            200:
+                description: All of the latest snapshots of the beatmaps in the beatmapset have already been downloaded
+            201:
+                description: Successfully downloaded entire beatmapset to the server
+
+BeatmapsetById-Snapshots:
+    get:
+        summary: Returns a list of the beatmapset's snapshots
+        tags:
+            - Beatmapsets
+        parameters:
+            - $ref: "../parameters/path/beatmapset.yaml#/BeatmapsetId"
+            - $ref: "../parameters/query/search.yaml#/Limit"
+            - $ref: "../parameters/query/search.yaml#/Offset"
+        responses:
+            200:
+                description: Successfully retrieved beatmapset snapshots
+
+BeatmapsetById-SnapshotByNumber:
+    get:
+        summary: Returns the beatmapset's specified snapshot
+        tags:
+            - Beatmapsets
+        parameters:
+            - $ref: "../parameters/path/beatmapset.yaml#/BeatmapsetId"
+            - $ref: "../parameters/path/beatmapset.yaml#/BeatmapsetSnapshotNumber"
+        responses:
+            200:
+                description: Successfully retrieved beatmapset snapshot
+
+BeatmapsetById-SnapshotByNumber-Zip:
+    get:
+        summary: Returns a .zip of the .osu files of the beatmapset's specified snapshot
+        tags:
+            - Beatmapsets
+        parameters:
+            - $ref: "../parameters/path/beatmapset.yaml#/BeatmapsetId"
+            - $ref: "../parameters/path/beatmapset.yaml#/BeatmapsetSnapshotNumber"
+        responses:
+            200:
+                description: Successfully retrieved zipped beatmap files
+
+BeatmapsetListings:
+    get:
+        summary: Returns a list of beatmapset listings
+        tags:
+            - Beatmapsets
+        parameters:
+            - $ref: "../parameters/query/search.yaml#/Limit"
+            - $ref: "../parameters/query/search.yaml#/Offset"
+        responses:
+            200:
+                description: Successfully retrieved beatmapset listings

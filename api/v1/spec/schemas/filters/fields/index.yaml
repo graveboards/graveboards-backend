@@ -1,0 +1,94 @@
+IntegerField:
+    oneOf:
+        - $ref: "./integer.yaml/#IntegerField"
+        - $ref: "./integer.yaml/#IntegerValue"
+
+FloatField:
+    oneOf:
+        - $ref: "./float.yaml/#FloatConditions"
+        - $ref: "./float.yaml/#FloatValue"
+
+StringField:
+    oneOf:
+        - $ref: "./string.yaml/#StringConditions"
+        - $ref: "./string.yaml/#StringValue"
+
+BooleanField:
+    oneOf:
+        - $ref: "./boolean.yaml/#BooleanConditions"
+        - $ref: "./boolean.yaml/#BooleanValue"
+
+DatetimeField:
+    oneOf:
+        - $ref: "./datetime.yaml/#DatetimeConditions"
+        - $ref: "./datetime.yaml/#DatetimeValue"
+
+UsernameField:
+    oneOf:
+        - $ref: "./username.yaml/#UsernameConditions"
+        - $ref: "./username.yaml/#UsernameValue"
+
+CountryCodeField:
+    oneOf:
+        - $ref: "./country_code.yaml/#CountryCodeConditions"
+        - $ref: "./country_code.yaml/#CountryCodeValue"
+
+ChecksumField:
+    oneOf:
+        - $ref: "./checksum.yaml/#ChecksumConditions"
+        - $ref: "./checksum.yaml/#ChecksumValue"
+
+ModeField:
+    oneOf:
+        - $ref: "./mode.yaml/#ModeConditions"
+        - $ref: "./mode.yaml/#ModeValue"
+
+ModeIntField:
+    oneOf:
+        - $ref: "./mode_int.yaml/#ModeIntConditions"
+        - $ref: "./mode_int.yaml/#ModeIntValue"
+
+RankedField:
+    oneOf:
+        - $ref: "./ranked.yaml/#RankedConditions"
+        - $ref: "./ranked.yaml/#RankedValue"
+
+StatusField:
+    oneOf:
+        - $ref: "./status.yaml/#StatusConditions"
+        - $ref: "./status.yaml/#StatusValue"
+
+BeatmapUrlField:
+    oneOf:
+        - $ref: "./beatmap_url.yaml/#BeatmapUrlConditions"
+        - $ref: "./beatmap_url.yaml/#BeatmapUrlValue"
+
+PreviewUrlField:
+    oneOf:
+        - $ref: "./preview_url.yaml/#PreviewUrlConditions"
+        - $ref: "./preview_url.yaml/#PreviewUrlValue"
+
+GenreIdField:
+    oneOf:
+        - $ref: "./genre_id.yaml/#GenreIdConditions"
+        - $ref: "./genre_id.yaml/#GenreIdValue"
+
+GenreNameField:
+    oneOf:
+        - $ref: "./genre_name.yaml/#GenreNameConditions"
+        - $ref: "./genre_name.yaml/#GenreNameValue"
+
+LanguageIdField:
+    oneOf:
+        - $ref: "./language_id.yaml/#LanguageIdConditions"
+        - $ref: "./language_id.yaml/#LanguageIdValue"
+
+LanguageNameField:
+    oneOf:
+        - $ref: "./language_name.yaml/#LanguageNameConditions"
+        - $ref: "./language_name.yaml/#LanguageNameValue"
+
+RequestStatusField:
+    oneOf:
+        - $ref: "./request_status.yaml/#RequestStatusConditions"
+        - $ref: "./request_status.yaml/#RequestStatusValue"

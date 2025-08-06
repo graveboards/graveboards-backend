@@ -1,0 +1,24 @@
+ProfileFilter:
+    description:
+        $ref: "./description.yaml#/FilterDescription"
+    type: object
+    additionalProperties: false
+    properties:
+        username:
+            $ref: "./fields/index.yaml#/UsernameField"
+        country_code:
+            $ref: "./fields/index.yaml#/CountryCodeField"
+        graveyard_beatmapset_count:
+            $ref: "./fields/index.yaml#/IntegerField"
+        loved_beatmapset_count:
+            $ref: "./fields/index.yaml#/IntegerField"
+        pending_beatmapset_count:
+            $ref: "./fields/index.yaml#/IntegerField"
+        ranked_beatmapset_count:
+            $ref: "./fields/index.yaml#/IntegerField"
+        total_maps:
+            $ref: "./fields/index.yaml#/IntegerField"
+        total_kudosu:
+            $ref: "./fields/index.yaml#/IntegerField"
+        is_restricted:
+            $ref: "./fields/index.yaml#/BooleanField"

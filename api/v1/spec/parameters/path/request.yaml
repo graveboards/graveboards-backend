@@ -1,0 +1,15 @@
+RequestId:
+    name: request_id
+    description: Beatmapset request ID
+    in: path
+    required: true
+    schema:
+        type: integer
+
+RequestTaskId:
+    name: task_id
+    description: Beatmapset request task ID
+    in: path
+    required: true
+    schema:
+        type: integer

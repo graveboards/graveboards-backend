@@ -1,0 +1,8 @@
+AuthorizationCode:
+    description: An object containing an osu! OAuth Authorization Code
+    type: object
+    properties:
+        code:
+            type: string
+    required:
+        - code

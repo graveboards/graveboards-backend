@@ -1,0 +1,47 @@
+LanguageNameConditions:
+    type: object
+    additionalProperties: false
+    properties:
+        eq:
+            $ref: "#/LanguageNameValue"
+        neq:
+            $ref: "#/LanguageNameValue"
+        gt:
+            $ref: "#/LanguageNameValue"
+        lt:
+            $ref: "#/LanguageNameValue"
+        gte:
+            $ref: "#/LanguageNameValue"
+        lte:
+            $ref: "#/LanguageNameValue"
+        in:
+            $ref: "#/LanguageNameContainer"
+        not_in:
+            $ref: "#/LanguageNameContainer"
+        is_null:
+            type: boolean
+
+LanguageNameValue:
+    type: string
+    enum:
+        - Any
+        - Unspecified
+        - English
+        - Japanese
+        - Chinese
+        - Instrumental
+        - Korean
+        - French
+        - German
+        - Swedish
+        - Spanish
+        - Italian
+        - Russian
+        - Polish
+        - Other
+
+LanguageNameContainer:
+    type: array
+    items:
+        $ref: "#/LanguageNameValue"
+    minItems: 1

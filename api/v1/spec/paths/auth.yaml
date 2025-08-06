@@ -1,0 +1,33 @@
+Login:
+    get:
+        summary: Begins the OAuth 2.0 flow
+        tags:
+            - OAuth
+        responses:
+            200:
+                description: Generated authorization URL
+
+Token:
+    get:
+        summary: Retrieve info for a JWT
+        tags:
+            - OAuth
+        parameters:
+            - $ref: "../parameters/query/auth.yaml#/JWT"
+        responses:
+            200:
+                description: Retrieved token info
+            400:
+                description: Must provide token in the query parameters
+            404:
+                description: Token not found
+
+    post:
+        summary: Uses the Authorization Code from the osu! OAuth flow to authenticate a user and issues a JWT
+        tags:
+            - OAuth
+        requestBody:
+            $ref: "../request_bodies/auth.yaml#/AuthorizationCode"
+        responses:
+            201:
+                $ref: "../responses/201.yaml#/AuthenticationSuccess"

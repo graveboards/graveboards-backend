@@ -1,0 +1,31 @@
+IntegerField:
+    type: object
+    additionalProperties: false
+    properties:
+        eq:
+            $ref: "#/IntegerValue"
+        neq:
+            $ref: "#/IntegerValue"
+        gt:
+            $ref: "#/IntegerValue"
+        lt:
+            $ref: "#/IntegerValue"
+        gte:
+            $ref: "#/IntegerValue"
+        lte:
+            $ref: "#/IntegerValue"
+        in:
+            $ref: "#/IntegerContainer"
+        not_in:
+            $ref: "#/IntegerContainer"
+        is_null:
+            type: boolean
+
+IntegerValue:
+    type: integer
+
+IntegerContainer:
+    type: array
+    items:
+        $ref: "#/IntegerValue"
+    minItems: 1

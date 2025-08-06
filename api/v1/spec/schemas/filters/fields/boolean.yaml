@@ -1,0 +1,31 @@
+BooleanConditions:
+    type: object
+    additionalProperties: false
+    properties:
+        eq:
+            $ref: "#/BooleanValue"
+        neq:
+            $ref: "#/BooleanValue"
+        gt:
+            $ref: "#/BooleanValue"
+        lt:
+            $ref: "#/BooleanValue"
+        gte:
+            $ref: "#/BooleanValue"
+        lte:
+            $ref: "#/BooleanValue"
+        in:
+            $ref: "#/BooleanContainer"
+        not_in:
+            $ref: "#/BooleanContainer"
+        is_null:
+            type: boolean
+
+BooleanValue:
+    type: boolean
+
+BooleanContainer:
+    type: array
+    items:
+        $ref: "#/BooleanValue"
+    minItems: 1

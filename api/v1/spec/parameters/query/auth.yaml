@@ -1,0 +1,7 @@
+JWT:
+    name: token
+    description: JWT issued to a user
+    in: query
+    required: true
+    schema:
+        type: string

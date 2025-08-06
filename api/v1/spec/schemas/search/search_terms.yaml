@@ -1,0 +1,52 @@
+SearchTerms:
+    description: >
+        ### Search terms to match
+        
+        Terms can be provided as a single string or an array of strings
+        
+         * Unquoted terms are split by whitespace and matched loosely
+         * Quoted phrases (e.g., **"freedom dive"**) are matched exactly and in order
+         * Extra internal spacing within quoted phrases is preserved
+    type: object
+    additionalProperties: false
+    properties:
+        terms:
+            oneOf:
+                - $ref: "#/SearchTermsString"
+                - $ref: "#/SearchTermPhrases"
+        case_sensitive:
+            type: boolean
+            default: false
+        pattern_multipliers:
+            $ref: "./pattern_multipliers.yaml#/PatternMultipliers"
+        field_weights:
+            $ref: "./field_weights.yaml#/FieldWeights"
+
+SearchTermsString:
+    type: string
+    description: >
+        ### A single string that will be split into search terms
+
+        Quoted substrings will be preserved as exact phrases. For example:
+
+         * **"beatmania iidx 'second heaven'"** -> **["beatmania", "iidx", "second heaven"]**
+         * **"xi 'freedom dive' 'four dimensions'"** -> **["xi", "freedom dive", "four dimensions"]**
+
+SearchTermPhrases:
+    type: array
+    description: >
+        ### An array of search term phrases
+
+        Alternative to providing a single search term string
+    items:
+        $ref: "#/SearchTermPhrase"
+    minItems: 1
+
+SearchTermPhrase:
+    type: string
+    description: >
+        ### A phrase that counts as one search term
+        
+        Whitespace is preserved. For example:
+        
+        * **"tragic love extra"**

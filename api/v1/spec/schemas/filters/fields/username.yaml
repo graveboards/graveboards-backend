@@ -1,0 +1,39 @@
+UsernameConditions:
+    type: object
+    additionalProperties: false
+    properties:
+        eq:
+            $ref: "#/UsernameValue"
+        neq:
+            $ref: "#/UsernameValue"
+        gt:
+            $ref: "#/UsernameValue"
+        lt:
+            $ref: "#/UsernameValue"
+        gte:
+            $ref: "#/UsernameValue"
+        lte:
+            $ref: "#/UsernameValue"
+        in:
+            $ref: "#/UsernameContainer"
+        not_in:
+            $ref: "#/UsernameContainer"
+        is_null:
+            type: boolean
+        regex:
+            $ref: "../../../regex_pattern.yaml#/RegexPattern"
+        not_regex:
+            $ref: "../../../regex_pattern.yaml#/RegexPattern"
+
+UsernameValue:
+    type: string
+    pattern: ^[a-zA-Z0-9_\[\] -]{1,15}$
+    minLength: 1
+    maxLength: 15
+    example: DJPop
+
+UsernameContainer:
+    type: array
+    items:
+        $ref: "#/UsernameValue"
+    minItems: 1

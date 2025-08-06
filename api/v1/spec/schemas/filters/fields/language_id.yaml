@@ -1,0 +1,47 @@
+LanguageIdConditions:
+    type: object
+    additionalProperties: false
+    properties:
+        eq:
+            $ref: "#/LanguageIdValue"
+        neq:
+            $ref: "#/LanguageIdValue"
+        gt:
+            $ref: "#/LanguageIdValue"
+        lt:
+            $ref: "#/LanguageIdValue"
+        gte:
+            $ref: "#/LanguageIdValue"
+        lte:
+            $ref: "#/LanguageIdValue"
+        in:
+            $ref: "#/LanguageIdContainer"
+        not_in:
+            $ref: "#/LanguageIdContainer"
+        is_null:
+            type: boolean
+
+LanguageIdValue:
+    type: integer
+    enum:
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        - 8
+        - 9
+        - 10
+        - 11
+        - 12
+        - 13
+        - 14
+
+LanguageIdContainer:
+    type: array
+    items:
+        $ref: "#/LanguageIdValue"
+    minItems: 1

@@ -1,0 +1,48 @@
+Q:
+    name: q
+    description: >
+        ### Search query JSON string
+        
+        Can include search terms, sorting, and filters. Supports portability via:
+        
+        
+        Serialization -> Brotli compression -> Base64 encoding
+    in: query
+    required: true
+    schema:
+        type: string
+
+Compressed:
+    name: compressed
+    description: Whether or not **q** is compressed
+    in: query
+    schema:
+        type: boolean
+        default: false
+
+FrontendMode:
+    name: frontend_mode
+    description: Whether or not to return only the bare minimum amount of data that's used in the frontend
+    in: query
+    schema:
+        type: boolean
+        default: false
+
+Limit:
+    name: limit
+    description: Pagination limit
+    in: query
+    schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+    example: 50
+
+Offset:
+    name: offset
+    description: Pagination offset
+    in: query
+    schema:
+        type: integer
+        minimum: 0
+    example: 0

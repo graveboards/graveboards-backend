@@ -1,0 +1,24 @@
+Profiles:
+    get:
+        summary: Returns a list of profiles
+        tags:
+            - Profiles
+        parameters:
+            - $ref: "../parameters/query/search.yaml#/Limit"
+            - $ref: "../parameters/query/search.yaml#/Offset"
+        responses:
+            200:
+                description: Successfully retrieved all profiles
+            401:
+                $ref: "../responses/401.yaml#/UnauthorizedError"
+
+ProfileByUserId:
+    get:
+        summary: Returns the profile for the specified user ID
+        tags:
+            - Profiles
+        parameters:
+            - $ref: "../parameters/path/user.yaml#/UserId"
+        responses:
+            200:
+                description: Successfully retrieved user profile

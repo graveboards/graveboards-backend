@@ -1,0 +1,13 @@
+QueueId:
+    name: queue_id
+    description: Numerical ID representing a queue
+    in: query
+    schema:
+        type: integer
+
+IsOpen:
+    name: is_open
+    description: Boolean to determine whether a queue is open or closed
+    in: query
+    schema:
+        type: boolean

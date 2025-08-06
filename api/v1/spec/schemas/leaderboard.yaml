@@ -1,0 +1,10 @@
+Leaderboard:
+    description: An object containing a beatmap ID and snapshot number. Defaults to latest snapshot if no snapshot number is specified
+    type: object
+    properties:
+        beatmap_id:
+            type: integer
+        snapshot_number:
+            type: integer
+    required:
+        - beatmap_id

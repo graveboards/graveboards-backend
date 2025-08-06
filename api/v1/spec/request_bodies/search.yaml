@@ -1,0 +1,7 @@
+Search:
+    description: A JSON payload containing a search query
+    required: true
+    content:
+        application/json:
+            schema:
+                $ref: "../schemas/search/search.yaml#/Search"

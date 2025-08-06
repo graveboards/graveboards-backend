@@ -1,0 +1,37 @@
+PreviewUrlConditions:
+    type: object
+    additionalProperties: false
+    properties:
+        eq:
+            $ref: "#/PreviewUrlValue"
+        neq:
+            $ref: "#/PreviewUrlValue"
+        gt:
+            $ref: "#/PreviewUrlValue"
+        lt:
+            $ref: "#/PreviewUrlValue"
+        gte:
+            $ref: "#/PreviewUrlValue"
+        lte:
+            $ref: "#/PreviewUrlValue"
+        in:
+            $ref: "#/PreviewUrlContainer"
+        not_in:
+            $ref: "#/PreviewUrlContainer"
+        is_null:
+            type: boolean
+        regex:
+            $ref: "../../../regex_pattern.yaml#/RegexPattern"
+        not_regex:
+            $ref: "../../../regex_pattern.yaml#/RegexPattern"
+
+PreviewUrlValue:
+    type: string
+    pattern: ^\/\/b\.ppy\.sh\/preview\/\d+\.mp3$
+    example: //b.ppy.sh/preview/39804.mp3
+
+PreviewUrlContainer:
+    type: array
+    items:
+        $ref: "#/PreviewUrlValue"
+    minItems: 1

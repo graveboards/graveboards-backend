@@ -1,0 +1,136 @@
+Sorting:
+    description:  >
+        ### An ordered array of sorting rules that determines how the search results should be sorted
+        
+        Each item defines a **field** to sort by and the **order**
+        
+        
+        You can provide multiple sorting rules and they will be applied in sequence (i.e., if there are ties in
+        the results with the first sorting layer, the second layer will be applied to those tied results, and so on)
+    type: array
+    items:
+        type: object
+        additionalProperties: false
+        properties:
+            field:
+                $ref: "#/SortingField"
+            order:
+                $ref: "#/SortingOrder"
+        required:
+            - field
+
+SortingField:
+    description: >
+        ### Enum of supported field identifiers for sorting
+        
+        Partitioned by category (e.g., Profile, BeatmapSnapshot, BeatmapsetSnapshot, Queue, Request)
+    type: string
+    enum:
+        - Profile.avatar_url
+        - Profile.username
+        - Profile.country_code
+        - Profile.graveyard_beatmapset_count
+        - Profile.loved_beatmapset_count
+        - Profile.pending_beatmapset_count
+        - Profile.ranked_beatmapset_count
+        - Profile.is_restricted
+        - Profile.total_maps
+        - Profile.total_kudosu
+        - BeatmapSnapshot.beatmap_id
+        - BeatmapSnapshot.user_id
+        - BeatmapSnapshot.accuracy
+        - BeatmapSnapshot.ar
+        - BeatmapSnapshot.bpm
+        - BeatmapSnapshot.checksum
+        - BeatmapSnapshot.count_circles
+        - BeatmapSnapshot.count_sliders
+        - BeatmapSnapshot.count_spinners
+        - BeatmapSnapshot.cs
+        - BeatmapSnapshot.deleted_at
+        - BeatmapSnapshot.difficulty_rating
+        - BeatmapSnapshot.drain
+        - BeatmapSnapshot.hit_length
+        - BeatmapSnapshot.is_scoreable
+        - BeatmapSnapshot.last_updated
+        - BeatmapSnapshot.max_combo
+        - BeatmapSnapshot.mode
+        - BeatmapSnapshot.mode_int
+        - BeatmapSnapshot.passcount
+        - BeatmapSnapshot.playcount
+        - BeatmapSnapshot.ranked
+        - BeatmapSnapshot.status
+        - BeatmapSnapshot.total_length
+        - BeatmapSnapshot.url
+        - BeatmapSnapshot.version
+        - BeatmapsetSnapshot.beatmapset_id
+        - BeatmapsetSnapshot.user_id
+        - BeatmapsetSnapshot.artist
+        - BeatmapsetSnapshot.artist_unicode
+        - BeatmapsetSnapshot.bpm
+        - BeatmapsetSnapshot.can_be_hyped
+        - BeatmapsetSnapshot.creator
+        - BeatmapsetSnapshot.deleted_at
+        - BeatmapsetSnapshot.discussion_enabled
+        - BeatmapsetSnapshot.discussion_locked
+        - BeatmapsetSnapshot.favourite_count
+        - BeatmapsetSnapshot.is_scoreable
+        - BeatmapsetSnapshot.last_updated
+        - BeatmapsetSnapshot.legacy_thread_url
+        - BeatmapsetSnapshot.nsfw
+        - BeatmapsetSnapshot.offset
+        - BeatmapsetSnapshot.play_count
+        - BeatmapsetSnapshot.preview_url
+        - BeatmapsetSnapshot.ranked
+        - BeatmapsetSnapshot.rating
+        - BeatmapsetSnapshot.source
+        - BeatmapsetSnapshot.spotlight
+        - BeatmapsetSnapshot.status
+        - BeatmapsetSnapshot.submitted_date
+        - BeatmapsetSnapshot.tags
+        - BeatmapsetSnapshot.title
+        - BeatmapsetSnapshot.title_unicode
+        - BeatmapsetSnapshot.track_id
+        - BeatmapsetSnapshot.video
+        - BeatmapsetSnapshot.availability_download_disabled
+        - BeatmapsetSnapshot.availability_more_information
+        - BeatmapsetSnapshot.description # Alias for: description_description
+        - BeatmapsetSnapshot.genre_id
+        - BeatmapsetSnapshot.genre_name
+        - BeatmapsetSnapshot.hype_current
+        - BeatmapsetSnapshot.hype_required
+        - BeatmapsetSnapshot.language_id
+        - BeatmapsetSnapshot.language_name
+        - BeatmapsetSnapshot.nominations_summary_current
+        - BeatmapsetSnapshot.nominations_summary_required_meta_main_ruleset
+        - BeatmapsetSnapshot.nominations_summary_required_meta_non_main_ruleset
+        - BeatmapsetSnapshot.num_difficulties
+        - BeatmapsetSnapshot.sr_gaps_min
+        - BeatmapsetSnapshot.sr_gaps_max
+        - BeatmapsetSnapshot.sr_gaps_avg
+        - BeatmapsetSnapshot.hit_lengths_min
+        - BeatmapsetSnapshot.hit_lengths_max
+        - BeatmapsetSnapshot.hit_lengths_avg
+        - Queue.user_id
+        - Queue.name
+        - Queue.description
+        - Queue.created_at
+        - Queue.updated_at
+        - Queue.is_open
+        - Queue.visibility
+        - Request.user_id
+        - Request.beatmapset_id
+        - Request.queue_id
+        - Request.comment
+        - Request.mv_checked
+        - Request.created_at
+        - Request.updated_at
+        - Request.status
+
+SortingOrder:
+    description: >
+        ### Sort direction - **asc** for ascending, **desc** for descending
+        
+        Defaults to **asc** if not provided
+    type: string
+    enum: [ asc, desc ]
+    default: asc

@@ -1,0 +1,10 @@
+ApiKeyAuth:
+    type: apiKey
+    in: header
+    name: X-API-KEY
+    x-apikeyInfoFunc: api.auth.api_key_info
+
+BearerAuth:
+    type: http
+    scheme: bearer
+    x-bearerInfoFunc: api.auth.bearer_info

@@ -1,0 +1,20 @@
+Search:
+    description: >
+        ### Search query (q) object
+        
+        Supports everything from basic searches to powerful complex queries
+    type: object
+    additionalProperties: false
+    properties:
+        scope:
+            $ref: "./scope.yaml#/Scope"
+        search_terms:
+            $ref: "./search_terms.yaml#/SearchTerms"
+        sorting:
+            $ref: "./sorting.yaml#/Sorting"
+        filters:
+            $ref: "./filters.yaml#/Filters"
+        frontend_mode:
+            description: Whether or not to return only the bare minimum amount of data that's used in the frontend
+            type: boolean
+            default: false

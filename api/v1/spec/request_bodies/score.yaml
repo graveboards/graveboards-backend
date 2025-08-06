@@ -1,0 +1,7 @@
+Score:
+    description: Score to add to a leaderboard
+    required: true
+    content:
+        application/json:
+            schema:
+                $ref: "../schemas/score.yaml#/Score"

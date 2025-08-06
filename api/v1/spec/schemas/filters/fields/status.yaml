@@ -1,0 +1,39 @@
+StatusConditions:
+    type: object
+    additionalProperties: false
+    properties:
+        eq:
+            $ref: "#/StatusValue"
+        neq:
+            $ref: "#/StatusValue"
+        gt:
+            $ref: "#/StatusValue"
+        lt:
+            $ref: "#/StatusValue"
+        gte:
+            $ref: "#/StatusValue"
+        lte:
+            $ref: "#/StatusValue"
+        in:
+            $ref: "#/StatusContainer"
+        not_in:
+            $ref: "#/StatusContainer"
+        is_null:
+            type: boolean
+
+StatusValue:
+    type: string
+    enum:
+        - graveyard
+        - wip
+        - pending
+        - Status
+        - approved
+        - qualified
+        - loved
+
+StatusContainer:
+    type: array
+    items:
+        $ref: "#/StatusValue"
+    minItems: 1

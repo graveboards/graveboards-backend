@@ -1,0 +1,39 @@
+RankedConditions:
+    type: object
+    additionalProperties: false
+    properties:
+        eq:
+            $ref: "#/RankedValue"
+        neq:
+            $ref: "#/RankedValue"
+        gt:
+            $ref: "#/RankedValue"
+        lt:
+            $ref: "#/RankedValue"
+        gte:
+            $ref: "#/RankedValue"
+        lte:
+            $ref: "#/RankedValue"
+        in:
+            $ref: "#/RankedContainer"
+        not_in:
+            $ref: "#/RankedContainer"
+        is_null:
+            type: boolean
+
+RankedValue:
+    type: integer
+    enum:
+        - -2
+        - -1
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+
+RankedContainer:
+    type: array
+    items:
+        $ref: "#/RankedValue"
+    minItems: 1

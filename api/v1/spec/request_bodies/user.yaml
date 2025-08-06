@@ -1,0 +1,7 @@
+User:
+    description: A JSON payload containing a user to add
+    required: true
+    content:
+        application/json:
+            schema:
+                $ref: "../schemas/user.yaml#/User"

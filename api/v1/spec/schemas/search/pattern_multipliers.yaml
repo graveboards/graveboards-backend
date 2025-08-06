@@ -1,0 +1,48 @@
+PatternMultipliers:
+    description: >
+        ### Pattern matching relevance multipliers
+
+        This object defines numeric multipliers that adjust the relevance score of search results
+        based on how closely the search terms match specific patterns in text fields
+
+        Each property represents a different type of string match for each term provided:
+
+         * **exact**: The full string matches the term exactly
+         * **prefix**: The string starts with the term
+         * **suffix**: The string ends with the term
+         * **substring**: The string contains the term anywhere within it
+        
+        
+        To exclude a pattern from influencing the search entirely, set it to **null**.
+        This differs from setting a multiplier to **0**,
+        which disables scoring but still allows the pattern to affect filtering.
+        For instance, disabling the **substring** pattern by setting it to **null** ensures that maps containing
+        your searched terms in any field matching that pattern are excluded —
+        unless of course those same terms match other enabled pattern(s) (e.g., **prefix**)
+    type: object
+    additionalProperties: false
+    properties:
+        exact:
+            type: integer
+            nullable: true
+            default: 5
+            minimum: -128
+            maximum: 127
+        prefix:
+            type: integer
+            nullable: true
+            default: 4
+            minimum: -128
+            maximum: 127
+        suffix:
+            type: integer
+            nullable: true
+            default: 3
+            minimum: -128
+            maximum: 127
+        substring:
+            type: integer
+            nullable: true
+            default: 2
+            minimum: -128
+            maximum: 127

@@ -1,0 +1,36 @@
+ChecksumConditions:
+    type: object
+    additionalProperties: false
+    properties:
+        eq:
+            $ref: "#/ChecksumValue"
+        neq:
+            $ref: "#/ChecksumValue"
+        gt:
+            $ref: "#/ChecksumValue"
+        lt:
+            $ref: "#/ChecksumValue"
+        gte:
+            $ref: "#/ChecksumValue"
+        lte:
+            $ref: "#/ChecksumValue"
+        in:
+            $ref: "#/ChecksumContainer"
+        not_in:
+            $ref: "#/ChecksumContainer"
+        is_null:
+            type: boolean
+        regex:
+            $ref: "../../../regex_pattern.yaml#/RegexPattern"
+        not_regex:
+            $ref: "../../../regex_pattern.yaml#/RegexPattern"
+
+ChecksumValue:
+    type: string
+    pattern: "^[a-fA-F0-9]{32}$"
+
+ChecksumContainer:
+    type: array
+    items:
+        $ref: "#/ChecksumValue"
+    minItems: 1

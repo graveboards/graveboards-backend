@@ -1,0 +1,176 @@
+FieldWeights:
+    description: >
+        ### Field weight configuration for relevance scoring
+        
+        This object's properties allow you to fine-tune search relevance by assigning integer weights
+        to searchable fields in each of the following categories:
+        
+         * **beatmap**
+         * **beatmapset**
+         * **queue**
+         * **request**
+        
+        Higher weights increase a field’s influence on the overall relevance score during search.
+        This lets you prioritize more important fields (e.g., **title**, **artist**)
+        over less relevant ones (e.g., **tags**, **source**), depending on your needs.
+        Likewise, setting negative weights on a field will penalize matches in that field
+        
+        
+        Note: Depending on the search scope, some categories may not apply.
+        For example, **queue** field weights are ignored when searching in the **beatmapsets** scope
+        
+        
+        To exclude a field from influencing the search entirely, set it to **null**.
+        You may also omit an entire category with shorthand by supplying null instead of an object.
+        This differs from setting a weight to **0**,
+        which disables scoring but still allows the field to affect filtering.
+        For instance, disabling the **tags** field by setting it to **null** ensures that maps containing
+        your searched terms in that field are excluded —
+        unless of course those same terms appear in one or more other enabled fields (e.g., **source**)
+    type: object
+    additionalProperties: false
+    properties:
+        beatmap:
+            $ref: "#/BeatmapFieldWeights"
+        beatmapset:
+            $ref: "#/BeatmapsetFieldWeights"
+        queue:
+            $ref: "#/QueueFieldWeights"
+        request:
+            $ref: "#/RequestFieldWeights"
+
+BeatmapFieldWeights:
+    description: >
+        ### Beatmap field weights
+        
+        Set numeric weights for searchable fields within beatmaps
+        
+        
+        Available fields:
+        
+         * **version**: Difficulty name of the beatmap (e.g., "Insane", "Tragic Love Extra")
+    type: object
+    nullable: true
+    additionalProperties: false
+    properties:
+        version:
+            type: integer
+            nullable: true
+            default: 2
+            minimum: -128
+            maximum: 127
+
+BeatmapsetFieldWeights:
+    description: >
+        ### Beatmapset field weights
+        
+        Set numeric weights for searchable fields within beatmapsets
+        
+        
+        Available fields:
+        
+         * **title** / **title_unicode**: Song title (ASCII and Unicode)
+         * **artist** / **artist_unicode**: Artist name (ASCII and Unicode)
+         * **creator**: The beatmapset's mapper's username
+         * **source**: Original source of the song
+         * **tags**: Tags added by the mapper
+         * **description**: The beatmapset's description
+    type: object
+    nullable: true
+    additionalProperties: false
+    properties:
+        title:
+            type: integer
+            nullable: true
+            default: 5
+            minimum: -128
+            maximum: 127
+        title_unicode:
+            type: integer
+            nullable: true
+            default: 5
+            minimum: -128
+            maximum: 127
+        artist:
+            type: integer
+            nullable: true
+            default: 4
+            minimum: -128
+            maximum: 127
+        artist_unicode:
+            type: integer
+            nullable: true
+            default: 4
+            minimum: -128
+            maximum: 127
+        creator:
+            type: integer
+            nullable: true
+            default: 3
+            minimum: -128
+            maximum: 127
+        source:
+            type: integer
+            nullable: true
+            default: 2
+            minimum: -128
+            maximum: 127
+        tags:
+            type: integer
+            nullable: true
+            default: 1
+            minimum: -128
+            maximum: 127
+        description:
+            type: integer
+            nullable: true
+            default: 0
+            minimum: -128
+            maximum: 127
+
+QueueFieldWeights:
+    description: >
+        ### Queue field weights
+        
+        Set numeric weights for searchable fields within queues
+        
+        
+        Available fields include:
+        
+         * **name**: Name of the queue
+         * **description**: Description of the queue
+    type: object
+    nullable: true
+    additionalProperties: false
+    properties:
+        name:
+            type: integer
+            nullable: true
+            default: 6
+        description:
+            type: integer
+            nullable: true
+            default: 0
+            minimum: -128
+            maximum: 127
+
+RequestFieldWeights:
+    description: >
+        ### Request field weights
+        
+        Set numeric weights for searchable fields within requests
+        
+        
+        Available fields include:
+        
+         * **comment**: A user's comment attached to the request
+    type: object
+    nullable: true
+    additionalProperties: false
+    properties:
+        comment:
+            type: integer
+            nullable: true
+            default: 0
+            minimum: -128
+            maximum: 127
