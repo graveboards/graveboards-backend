@@ -1,59 +1,39 @@
 @echo off
-setlocal EnableDelayedExpansion
+setlocal EnableExtensions EnableDelayedExpansion
 
-REM Step 1: Create .env.docker if not exists
+REM =========================
+REM Step 1: Create .env.docker (once)
+REM =========================
 if exist ".env.docker" (
     echo .env.docker already exists. Skipping creation.
 ) else (
     echo Creating .env.docker...
 
     REM Generate a 32-character random alphanumeric JWT_SECRET_KEY
-    set CHARS=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
-    set KEY=
-
+    set "CHARS=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+    set "KEY="
     for /L %%i in (1,1,32) do (
         set /A idx=!random! %% 62
-        call set "KEY=!KEY!!CHARS:~!idx!,1!"
+        REM use CALL + doubled % for dynamic substring
+        call set "KEY=%%KEY%%%%CHARS:~!idx!,1%%"
     )
 
-    REM Prompt for OSU credentials
     echo.
     echo You can set up your osu client credentials here: https://osu.ppy.sh/home/account/edit#oauth
     echo Step 1: Click "New OAuth Application +"
-    echo Step 2: Type any name and paste `http://localhost:3000/callback` for the callback url
+    echo Step 2: Type any name and paste ^http://localhost:3000/callback^ for the callback url
     set /p OSU_CLIENT_ID=Please paste your OSU_CLIENT_ID:
     set /p OSU_CLIENT_SECRET=Please paste your OSU_CLIENT_SECRET:
     echo.
-    set /p OSU_USER_ID=Enter your osu! user ID to add yourself as an admin:
+    set /p OSU_USER_ID=Enter your osu user ID to add yourself as an admin:
     echo.
 
-    REM Prompt for DISABLE_SECURITY (accepts y/n or true/false, defaults to false)
+    REM Ask to disable security with CHOICE (Y/N)
     set "DISABLE_SECURITY=false"
-    :ask_security
-    set /p DISABLE_SECURITY_INPUT=Disable security for dev convenience? (y/n) [default: n]:
-    set "DISABLE_SECURITY_INPUT=!DISABLE_SECURITY_INPUT: =!"  REM trim spaces
-    set "DISABLE_SECURITY_INPUT=!DISABLE_SECURITY_INPUT:"=!"  REM remove quotes
-
-    if "!DISABLE_SECURITY_INPUT!"=="" (
-        REM user pressed Enter, default to false
-        goto end_security
-    )
-
-    REM Normalize input
-    set "input_lc="
-    for %%A in (!DISABLE_SECURITY_INPUT!) do set "input_lc=%%~A"
-    set "input_lc=!input_lc:~0,1!"
-
-    if /I "!input_lc!"=="y" (
-        set "DISABLE_SECURITY=true"
-    ) else if /I "!input_lc!"=="n" (
-        set "DISABLE_SECURITY=false"
-    ) else (
-        echo Invalid input. Please enter y or n.
-        goto ask_security
-    )
-
-    :end_security
+    echo Disable security for dev convenience?
+    choice /C YN /M "Choose Y or N (default: N)"
+    if errorlevel 2 set "DISABLE_SECURITY=false"
+    if errorlevel 1 set "DISABLE_SECURITY=true"
 
     > ".env.docker" (
         echo DEBUG=true
@@ -78,35 +58,55 @@ if exist ".env.docker" (
     )
 
     echo.
-    echo ✅ .env.docker created with your credentials and a secure JWT secret.
+    echo [OK] .env.docker created with your credentials and a secure JWT secret.
     echo You have been added to ADMIN_USER_IDS as !OSU_USER_ID!.
-    echo.
-    pause
 )
 
-REM Step 2: Check Docker installation
+REM =========================
+REM Step 2: Check Docker in PATH
+REM =========================
 where docker >nul 2>nul
 if errorlevel 1 (
-    echo ❌ Docker is not installed or not in PATH. Please install Docker Desktop and try again.
+    echo [ERR] Docker is not installed or not in PATH. Install Docker Desktop and try again.
     pause
-    exit /b
+    exit /b 1
 )
 
-REM Step 3: Check if Docker is running
+REM =========================
+REM Step 3: Check Docker daemon running
+REM =========================
 docker info >nul 2>nul
 if errorlevel 1 (
-    echo ❌ Docker daemon is not running. Please start Docker Desktop and try again.
+    echo [ERR] Docker daemon is not running. Start Docker Desktop and try again.
     pause
-    exit /b
+    exit /b 1
 )
 
-REM Step 4: Start Docker Compose
-echo.
-echo 🚀 Starting Docker Compose...
-docker-compose up --build
+REM =========================
+REM Step 4: Pick compose command (v2: "docker compose", fallback: "docker-compose")
+REM =========================
+set "COMPOSE_CMD="
+docker compose version >nul 2>nul && set "COMPOSE_CMD=docker compose"
+if not defined COMPOSE_CMD (
+    where docker-compose >nul 2>nul && set "COMPOSE_CMD=docker-compose"
+)
+if not defined COMPOSE_CMD (
+    echo [ERR] Neither ^"docker compose^" nor ^"docker-compose^" is available.
+    echo      Install Docker Compose v2 or the legacy docker-compose.
+    pause
+    exit /b 1
+)
 
-REM Step 5: Clean up on exit (this section is only reached if not streaming logs interactively)
+REM =========================
+REM Step 5: Launch
+REM =========================
 echo.
-echo 🧹 Shutting down Docker Compose...
-docker-compose down
-pause
+echo Starting services with: %COMPOSE_CMD% up --build
+%COMPOSE_CMD% up --build
+set "RC=%ERRORLEVEL%"
+
+echo.
+echo Shutting down...
+%COMPOSE_CMD% down
+
+exit /b %RC%
