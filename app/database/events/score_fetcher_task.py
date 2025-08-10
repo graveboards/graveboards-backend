@@ -1,3 +1,5 @@
+import logging
+
 from sqlalchemy import event
 from sqlalchemy.orm.attributes import AttributeEventToken
 
@@ -8,9 +10,12 @@ __all__ = [
     "score_fetcher_task_enabled_set"
 ]
 
+logger = logging.getLogger(__name__)
+
 
 @event.listens_for(ScoreFetcherTask.enabled, "set")
 def score_fetcher_task_enabled_set(target: ScoreFetcherTask, value: bool, oldvalue: bool, initiator: AttributeEventToken):
     if value:
         with redis_connection() as rc:
             rc.publish(ChannelName.SCORE_FETCHER_TASKS.value, target.id)
+            logger.debug(f"Published ScoreFetcherTask ID to redis channel '{ChannelName.SCORE_FETCHER_TASKS.value}': {target.id}")

@@ -1,3 +1,5 @@
+import logging
+
 from sqlalchemy import event
 from sqlalchemy.engine.base import Connection
 from sqlalchemy.sql import select, insert, update, func
@@ -9,6 +11,8 @@ __all__ = [
     "beatmapset_snapshot_before_insert",
     "beatmapset_snapshot_after_insert"
 ]
+
+logger = logging.getLogger(__name__)
 
 
 @event.listens_for(BeatmapsetSnapshot, "before_insert")
@@ -24,25 +28,33 @@ def beatmapset_snapshot_before_insert(mapper: Mapper[BeatmapsetSnapshot], connec
 
 @event.listens_for(BeatmapsetSnapshot, "after_insert")
 def beatmapset_snapshot_after_insert(mapper: Mapper[BeatmapsetSnapshot], connection: Connection, target: BeatmapsetSnapshot):
-    select_stmt = (
+    info = {"id": target.id, "beatmapset_id": target.beatmapset_id}
+    logger.debug(f"New BeatmapsetSnapshot detected (after_insert): {info}")
+
+    beatmapset_listing_stmt = (
         select(BeatmapsetListing.id)
         .where(BeatmapsetListing.beatmapset_id == target.beatmapset_id)
     )
 
-    beatmapset_listing_id = connection.scalar(select_stmt)
+    beatmapset_listing_id = connection.scalar(beatmapset_listing_stmt)
 
     if not beatmapset_listing_id:
-        stmt = (
+        insert_beatmapset_listing_stmt = (
             insert(BeatmapsetListing)
             .values(beatmapset_id=target.beatmapset_id, beatmapset_snapshot_id=target.id)
         )
+
+        connection.execute(insert_beatmapset_listing_stmt)
+        logger.debug(f"No existing BeatmapsetListing found, inserted new BeatmapsetListing with beatmapset_snapshot_id={target.id}")
     else:
-        stmt = (
+        update_beatmapset_listing_stmt = (
             update(BeatmapsetListing)
             .where(BeatmapsetListing.id == beatmapset_listing_id)
             .values(beatmapset_snapshot_id=target.id)
         )
 
+        connection.execute(update_beatmapset_listing_stmt)
+        logger.debug(f"Updated existing BeatmapsetListing with beatmapset_snapshot_id={target.id}")
 
     update_request_stmt = (
         update(Request)
