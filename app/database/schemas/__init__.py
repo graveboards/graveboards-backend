@@ -16,9 +16,7 @@ from .beatmapset_listing import BeatmapsetListingSchema
 from .leaderboard import LeaderboardSchema
 from .score import ScoreSchema
 from .queue import QueueSchema
-from .queue_listing import QueueListingSchema
 from .request import RequestSchema
-from .request_listing import RequestListingSchema
 from .beatmapset_tag import BeatmapsetTagSchema
 from .beatmap_tag import BeatmapTagSchema
 from .sub_schemas import *
@@ -40,8 +38,6 @@ BeatmapsetListingSchema.model_rebuild()
 LeaderboardSchema.model_rebuild()
 ScoreSchema.model_rebuild()
 QueueSchema.model_rebuild()
-QueueListingSchema.model_rebuild()
 RequestSchema.model_rebuild()
-RequestListingSchema.model_rebuild()
 BeatmapsetTagSchema.model_rebuild()
 BeatmapTagSchema.model_rebuild()

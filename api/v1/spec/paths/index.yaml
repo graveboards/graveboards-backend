@@ -72,18 +72,12 @@
 /queues/{queue_id}:
     $ref: "./queues.yaml#/QueueById"
 
-/queues/listings:
-    $ref: "./queues.yaml#/QueueListings"
-
 # Requests
 /requests:
     $ref: "./requests.yaml#/Requests"
 
 /requests/{request_id}:
     $ref: "./requests.yaml#/RequestById"
-
-/requests/listings:
-    $ref: "./requests.yaml#/RequestListings"
 
 /requests/tasks:
     $ref: "./requests.yaml#/RequestTasks"

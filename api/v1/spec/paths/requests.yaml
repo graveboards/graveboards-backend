@@ -56,21 +56,6 @@ RequestById:
             200:
                 description: Successfully updated beatmapset request
 
-RequestListings:
-    get:
-        summary: Returns a list of beatmapset request listings
-        tags:
-            - Requests
-        security:
-            - BearerAuth: []
-            - ApiKeyAuth: []
-        parameters:
-            - $ref: "../parameters/query/search.yaml#/Limit"
-            - $ref: "../parameters/query/search.yaml#/Offset"
-        responses:
-            200:
-                description: Successfully retrieved beatmapset request listings
-
 RequestTasks:
     get:
         summary: Returns a list of beatmapset request tasks

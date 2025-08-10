@@ -13,8 +13,6 @@ from sqlalchemy.sql.selectable import Select
 from app.database.models import (
     BeatmapListing,
     BeatmapsetListing,
-    RequestListing,
-    QueueListing,
     BeatmapsetSnapshot,
     BeatmapSnapshot,
     Queue,
@@ -23,8 +21,8 @@ from app.database.models import (
 from app.database.schemas import (
     BeatmapListingSchema,
     BeatmapsetListingSchema,
-    QueueListingSchema,
-    RequestListingSchema
+    QueueSchema,
+    RequestSchema
 )
 from app.database.ctes.search_terms_scored import search_terms_scored_ctes_factory, aggregated_beatmap_score_cte_factory
 from app.database.ctes.search_terms_filtered import search_terms_filtered_cte_factory
@@ -40,22 +38,22 @@ from app.search.enums import Scope, SearchableFieldCategory, FilterOperator, Mod
 
 DEFAULT_LIMIT = 50
 DEFAULT_OFFSET = 0
-ResultsType = Union[Sequence[BeatmapListing], Sequence[BeatmapsetListing], ..., Sequence[RequestListing], Sequence[QueueListing]]
+ResultsType = Union[Sequence[BeatmapListing], Sequence[BeatmapsetListing], ..., Sequence[Queue], Sequence[Request]]
 
 SCOPE_MODEL_MAPPING = {
     Scope.BEATMAPS: BeatmapListing,
     Scope.BEATMAPSETS: BeatmapsetListing,
     Scope.SCORES: ...,
-    Scope.QUEUES: QueueListing,
-    Scope.REQUESTS: RequestListing
+    Scope.QUEUES: Queue,
+    Scope.REQUESTS: Request
 }
 
 SCOPE_SCHEMA_MAPPING = {
     Scope.BEATMAPS: BeatmapListingSchema,
     Scope.BEATMAPSETS: BeatmapsetListingSchema,
     Scope.SCORES: ...,
-    Scope.QUEUES: QueueListingSchema,
-    Scope.REQUESTS: RequestListingSchema
+    Scope.QUEUES: QueueSchema,
+    Scope.REQUESTS: RequestSchema
 }
 
 SCOPE_EXCLUDE_MAPPING = {
@@ -69,24 +67,16 @@ SCOPE_EXCLUDE_MAPPING = {
     },
     Scope.SCORES: ...,
     Scope.QUEUES: {
-        "queue": {
-            "requests": True,
-            "managers": True
-        },
-        "request_listings": True
+        "requests": True,
+        "managers": True
     },
     Scope.REQUESTS: {
-        "queue_listing": True,
-        "request": {
-            "queue": {"requests", "managers"}
-        },
-        "beatmapset_listing": {
-            "beatmapset_snapshot": {
-                "beatmap_snapshots": {
-                    "__all__": {"beatmapset_snapshots", "leaderboard"}
-                }
+        "beatmapset_snapshot": {
+            "beatmap_snapshots": {
+                "__all__": {"beatmapset_snapshots", "leaderboard"}
             }
-        }
+        },
+        "queue": {"requests", "managers"}
     }
 }
 
@@ -156,14 +146,11 @@ class SearchEngine:
             noload(BeatmapSnapshot.leaderboard)
         )
 
-        beatmapset_listing_options = (
-            joinedload(BeatmapsetListing.beatmapset_snapshot)
-            .options(
-                selectinload(BeatmapsetSnapshot.beatmap_snapshots)
-                .options(*beatmap_snapshot_options),
-                selectinload(BeatmapsetSnapshot.beatmapset_tags),
-                joinedload(BeatmapsetSnapshot.user_profile)
-            ),
+        beatmapset_snapshot_options = (
+            selectinload(BeatmapsetSnapshot.beatmap_snapshots)
+            .options(*beatmap_snapshot_options),
+            selectinload(BeatmapsetSnapshot.beatmapset_tags),
+            joinedload(BeatmapsetSnapshot.user_profile)
         )
 
         queue_options = (
@@ -187,48 +174,38 @@ class SearchEngine:
                 self.query: Select = (
                     select(BeatmapsetListing)
                     .join(BeatmapsetListing.beatmapset_snapshot)
-                    .options(*beatmapset_listing_options)
+                    .options(
+                        joinedload(BeatmapsetListing.beatmapset_snapshot)
+                        .options(*beatmapset_snapshot_options)
+                    )
                 )
             case Scope.QUEUES:
                 self.query: Select = (
-                    select(QueueListing)
-                    .join(QueueListing.queue)
+                    select(Queue)
                     .join(Queue.user_profile)
-                    .join(QueueListing.request_listings)
-                    .join(RequestListing.beatmapset_listing)
-                    .join(BeatmapsetListing.beatmapset_snapshot)
+                    .join(Queue.requests)
+                    .join(Request.beatmapset_snapshot)
                     .options(
-                        joinedload(QueueListing.queue)
-                        .options(*queue_options),
-                        selectinload(QueueListing.request_listings)
+                        *queue_options,
+                        selectinload(Queue.requests)
                         .options(
-                            joinedload(RequestListing.request)
-                            .options(
-                                noload(Request.user_profile),
-                                noload(Request.queue)
-                            ),
-                            noload(RequestListing.queue_listing)
+                            noload(Request.user_profile),
+                            noload(Request.queue)
                         )
-                        .joinedload(RequestListing.beatmapset_listing)
-                        .options(*beatmapset_listing_options)
+                        .joinedload(Request.beatmapset_snapshot)
+                        .options(*beatmapset_snapshot_options),
                     )
                 )
             case Scope.REQUESTS:
                 self.query: Select = (
-                    select(RequestListing)
-                    .join(RequestListing.request)
-                    .join(RequestListing.beatmapset_listing)
-                    .join(BeatmapsetListing.beatmapset_snapshot)
+                    select(Request)
+                    .join(Request.beatmapset_snapshot)
                     .options(
-                        joinedload(RequestListing.request)
-                        .options(
-                            joinedload(Request.user_profile),
-                            joinedload(Request.queue)
-                            .options(*queue_options)
-                        ),
-                        joinedload(RequestListing.beatmapset_listing)
-                        .options(*beatmapset_listing_options),
-                        noload(RequestListing.queue_listing)
+                        joinedload(Request.beatmapset_snapshot)
+                        .options(*beatmapset_snapshot_options),
+                        joinedload(Request.user_profile),
+                        joinedload(Request.queue)
+                        .options(*queue_options)
                     )
                 )
 

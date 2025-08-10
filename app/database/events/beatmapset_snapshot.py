@@ -3,7 +3,7 @@ from sqlalchemy.engine.base import Connection
 from sqlalchemy.sql import select, insert, update, func
 from sqlalchemy.orm.mapper import Mapper
 
-from app.database.models import BeatmapsetSnapshot, BeatmapsetListing
+from app.database.models import BeatmapsetSnapshot, BeatmapsetListing, Request
 
 __all__ = [
     "beatmapset_snapshot_before_insert",
@@ -43,4 +43,14 @@ def beatmapset_snapshot_after_insert(mapper: Mapper[BeatmapsetSnapshot], connect
             .values(beatmapset_snapshot_id=target.id)
         )
 
-    connection.execute(stmt)
+
+    update_request_stmt = (
+        update(Request)
+        .where(Request.beatmapset_id == target.beatmapset_id)
+        .values(beatmapset_snapshot_id=target.id)
+    )
+
+    update_request_result = connection.execute(update_request_stmt)
+    logger.debug(f"Updated {update_request_result.rowcount} Request(s) with beatmapset_snapshot_id={target.id}")
+
+

@@ -331,28 +331,12 @@ class R(_R):
         return await self._get_instances(ModelClass.QUEUE, session, **kwargs)
 
     @session_manager
-    async def get_queue_listing(self, session: AsyncSession = None, **kwargs) -> QueueListing | None:
-        return await self._get_instance(ModelClass.QUEUE_LISTING, session, **kwargs)
-
-    @session_manager
-    async def get_queue_listings(self, session: AsyncSession = None, **kwargs) -> list[QueueListing]:
-        return await self._get_instances(ModelClass.QUEUE_LISTING, session, **kwargs)
-
-    @session_manager
     async def get_request(self, session: AsyncSession = None, **kwargs) -> Request | None:
         return await self._get_instance(ModelClass.REQUEST, session, **kwargs)
 
     @session_manager
     async def get_requests(self, session: AsyncSession = None, **kwargs) -> list[Request]:
         return await self._get_instances(ModelClass.REQUEST, session, **kwargs)
-
-    @session_manager
-    async def get_request_listing(self, session: AsyncSession = None, **kwargs) -> RequestListing | None:
-        return await self._get_instance(ModelClass.REQUEST_LISTING, session, **kwargs)
-
-    @session_manager
-    async def get_request_listings(self, session: AsyncSession = None, **kwargs) -> list[RequestListing]:
-        return await self._get_instances(ModelClass.REQUEST_LISTING, session, **kwargs)
 
     @session_manager
     async def get_beatmapset_tag(self, session: AsyncSession = None, **kwargs) -> BeatmapsetTag | None:

@@ -20,9 +20,7 @@ from .beatmapset_listing import BeatmapsetListing
 from .leaderboard import Leaderboard
 from .score import Score
 from .queue import Queue
-from .queue_listing import QueueListing
 from .request import Request
-from .request_listing import RequestListing
 from .beatmapset_tag import BeatmapsetTag
 from .beatmap_tag import BeatmapTag
 
@@ -44,9 +42,7 @@ class ModelClass(Enum):
     LEADERBOARD = Leaderboard
     SCORE = Score
     QUEUE = Queue
-    QUEUE_LISTING = QueueListing
     REQUEST = Request
-    REQUEST_LISTING = RequestListing
     BEATMAPSET_TAG = BeatmapsetTag
     BEATMAP_TAG = BeatmapTag
 

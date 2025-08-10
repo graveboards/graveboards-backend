@@ -1,42 +1,26 @@
 from sqlalchemy import event
 from sqlalchemy.engine.base import Connection
-from sqlalchemy.sql import select, insert
+from sqlalchemy.sql import select
+from sqlalchemy.sql.functions import func
 from sqlalchemy.orm.mapper import Mapper
 
-from app.database.models import Request, RequestListing, BeatmapsetListing, QueueListing
+from app.database.models import Request, BeatmapsetSnapshot
 
 __all__ = [
-    "request_after_insert"
+    "request_before_insert"
 ]
 
 
-@event.listens_for(Request, "after_insert")
-def request_after_insert(mapper: Mapper[Request], connection: Connection, target: Request):
-    beatmapset_listing_id_select_stmt = (
-        select(BeatmapsetListing.id)
-        .where(BeatmapsetListing.beatmapset_id == target.beatmapset_id)
-    )
-    queue_listing_id_select_stmt = (
-        select(QueueListing.id)
-        .where(QueueListing.queue_id == target.queue_id)
+@event.listens_for(Request, "before_insert")
+def request_before_insert(mapper: Mapper[Request], connection: Connection, target: Request):
+    latest_beatmapset_snapshot_id_stmt = (
+        select(func.max(BeatmapsetSnapshot.id))
+        .where(BeatmapsetSnapshot.beatmapset_id == target.beatmapset_id)
     )
 
-    beatmapset_listing_id = connection.scalar(beatmapset_listing_id_select_stmt)
-    queue_listing_id = connection.scalar(queue_listing_id_select_stmt)
+    latest_beatmapset_snapshot_id = connection.scalar(latest_beatmapset_snapshot_id_stmt)
 
-    if not beatmapset_listing_id:
-        raise RuntimeError(f"BeatmapsetListing doesn't exist for beatmapset with id {target.beatmapset_id}")
+    if latest_beatmapset_snapshot_id is None:
+        raise ValueError(f"No BeatmapsetSnapshot found for beatmapset ID {target.beatmapset_id}")
 
-    if not queue_listing_id:
-        raise RuntimeError(f"QueueListing doesn't exist for queue with id {target.queue_id}")
-
-    stmt = (
-        insert(RequestListing)
-        .values(
-            request_id=target.id,
-            beatmapset_listing_id=beatmapset_listing_id,
-            queue_listing_id=queue_listing_id
-        )
-    )
-
-    connection.execute(stmt)
+    target.beatmapset_snapshot_id = latest_beatmapset_snapshot_id

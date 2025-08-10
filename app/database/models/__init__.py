@@ -25,8 +25,6 @@ from .beatmapset_listing import BeatmapsetListing
 from .leaderboard import Leaderboard
 from .score import Score
 from .queue import Queue
-from .queue_listing import QueueListing
 from .request import Request
-from .request_listing import RequestListing
 from .beatmapset_tag import BeatmapsetTag
 from .beatmap_tag import BeatmapTag

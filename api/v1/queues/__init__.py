@@ -6,7 +6,6 @@ from app.database.schemas import QueueSchema
 from app.security import role_authorization
 from app.security.overrides import queue_owner_override
 from app.database.enums import RoleName
-from . import listings
 
 _LOADING_OPTIONS = {
     "requests": False,

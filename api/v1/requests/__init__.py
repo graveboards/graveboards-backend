@@ -10,9 +10,10 @@ from app.security.overrides import queue_owner_override
 from app.database.enums import RoleName
 from app.redis import Namespace, ChannelName, RedisClient
 from app.redis.models import QueueRequestHandlerTask
-from . import listings, tasks
+from . import tasks
 
 _LOADING_OPTIONS = {
+    "beatmapset_snapshot": False,
     "user_profile": False,
     "queue": False
 }
@@ -30,7 +31,7 @@ async def search(**kwargs):
     )
     requests_data = [
         RequestSchema.model_validate(request_).model_dump(
-            exclude={"user_profile", "queue"}
+            exclude={"beatmapset_snapshot", "user_profile", "queue"}
         )
         for request_ in requests
     ]
@@ -51,7 +52,7 @@ async def get(request_id: int, **kwargs):
         return {"message": f"Request with ID '{request_id}' not found"}, 404
 
     request_data = RequestSchema.model_validate(request_).model_dump(
-        exclude={"user_profile", "queue"}
+        exclude={"beatmapset_snapshot", "user_profile", "queue"}
     )
 
     return request_data, 200
@@ -107,7 +108,7 @@ async def patch(request_id: int, body: dict, **kwargs):
     body = bleach_body(
         body,
         whitelisted_keys=RequestSchema.model_fields.keys(),
-        blacklisted_keys={"id", "user_id", "beatmapset_id", "queue_id", "created_at", "updated_at", "user_profile", "queue"}
+        blacklisted_keys={"id", "user_id", "beatmapset_id", "queue_id", "created_at", "updated_at", "beatmapset_snapshot", "user_profile", "queue"}
     )
 
     request_ = await db.get_request(id=request_id)

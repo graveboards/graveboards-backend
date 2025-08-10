@@ -56,18 +56,3 @@ QueueById:
         responses:
             200:
                 description: Successfully updated queue
-
-QueueListings:
-    get:
-        summary: Returns a list of queue listings
-        tags:
-            - Queues
-        security:
-            - BearerAuth: []
-            - ApiKeyAuth: []
-        parameters:
-            - $ref: "../parameters/query/search.yaml#/Limit"
-            - $ref: "../parameters/query/search.yaml#/Offset"
-        responses:
-            200:
-                description: Successfully retrieved queue listings

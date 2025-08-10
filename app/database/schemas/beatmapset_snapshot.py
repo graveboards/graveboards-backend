@@ -1,6 +1,6 @@
 from copy import copy
 from datetime import datetime
-from typing import Optional, Any, TYPE_CHECKING
+from typing import Optional, Any, TYPE_CHECKING, ClassVar
 
 from pydantic.config import ConfigDict
 from pydantic.functional_validators import model_validator
@@ -44,3 +44,20 @@ class BeatmapsetSnapshotSchema(BeatmapsetOsuApiSchema, BaseModelExtra):
             return data_copy
 
         return data
+
+    FRONTEND_INCLUDE: ClassVar = {
+        "artist": True,
+        "artist_unicode": True,
+        "beatmapset_id": True,
+        "beatmap_snapshots": {
+            "__all__": {"difficulty_rating", "total_length", "version"}
+        },
+        "covers": {"cover"},
+        "creator": True,
+        "preview_url": True,
+        "title": True,
+        "title_unicode": True,
+        "user_id": True,
+        "user_profile": {"avatar_url", "username"},
+        "verified": True
+    }
