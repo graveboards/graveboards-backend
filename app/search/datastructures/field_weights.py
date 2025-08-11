@@ -15,7 +15,7 @@ SCOPE_CATEGORIES_MAPPING = {
     Scope.BEATMAPS: [SearchableFieldCategory.BEATMAP],
     Scope.BEATMAPSETS: [SearchableFieldCategory.BEATMAP, SearchableFieldCategory.BEATMAPSET],
     Scope.SCORES: ...,
-    Scope.QUEUES: [SearchableFieldCategory.BEATMAP, SearchableFieldCategory.BEATMAPSET, SearchableFieldCategory.QUEUE],
+    Scope.QUEUES: [SearchableFieldCategory.BEATMAP, SearchableFieldCategory.BEATMAPSET, SearchableFieldCategory.QUEUE, SearchableFieldCategory.REQUEST],
     Scope.REQUESTS: [SearchableFieldCategory.BEATMAP, SearchableFieldCategory.BEATMAPSET, SearchableFieldCategory.REQUEST]
 }
 

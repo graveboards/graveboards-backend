@@ -154,7 +154,6 @@ class SearchEngine:
         )
 
         queue_options = (
-            noload(Queue.requests),
             noload(Queue.managers),
             joinedload(Queue.user_profile),
             selectinload(Queue.manager_profiles)
@@ -183,17 +182,17 @@ class SearchEngine:
                 self.query: Select = (
                     select(Queue)
                     .join(Queue.user_profile)
-                    .join(Queue.requests)
-                    .join(Request.beatmapset_snapshot)
+                    .outerjoin(Queue.requests)
+                    .outerjoin(Request.beatmapset_snapshot)
                     .options(
                         *queue_options,
                         selectinload(Queue.requests)
                         .options(
+                            joinedload(Request.beatmapset_snapshot)
+                            .options(*beatmapset_snapshot_options),
                             noload(Request.user_profile),
                             noload(Request.queue)
                         )
-                        .joinedload(Request.beatmapset_snapshot)
-                        .options(*beatmapset_snapshot_options),
                     )
                 )
             case Scope.REQUESTS:
@@ -205,7 +204,10 @@ class SearchEngine:
                         .options(*beatmapset_snapshot_options),
                         joinedload(Request.user_profile),
                         joinedload(Request.queue)
-                        .options(*queue_options)
+                        .options(
+                            noload(Queue.requests),
+                            *queue_options
+                        )
                     )
                 )
 
@@ -269,7 +271,79 @@ class SearchEngine:
                 self.query = self.query.add_columns(total_score_column)
                 self.query = self.query.order_by(total_score_column.desc())
             case Scope.QUEUES:
-                ...
+                beatmap_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAP)
+                beatmapset_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAPSET)
+                queue_cte = category_score_ctes.get(SearchableFieldCategory.QUEUE)
+                request_cte = category_score_ctes.get(SearchableFieldCategory.REQUEST)
+                aggregated_beatmap_cte = aggregated_beatmap_score_cte_factory(beatmap_cte) if beatmap_cte is not None else None
+
+                beatmap_score_column = (aggregated_beatmap_cte.c.score if aggregated_beatmap_cte is not None else literal_column("0"))
+                beatmapset_score_column = (beatmapset_cte.c.score if beatmapset_cte is not None else literal_column("0"))
+                queue_score_column = (queue_cte.c.score if queue_cte is not None else literal_column("0"))
+                request_score_column = (request_cte.c.score if request_cte is not None else literal_column("0"))
+                total_score_column = (
+                        func.coalesce(beatmap_score_column, 0) +
+                        func.coalesce(beatmapset_score_column, 0) +
+                        func.coalesce(queue_score_column, 0) +
+                        func.coalesce(request_score_column, 0)
+                ).label("total_score")
+
+                self.query = self.query.join(
+                    filter_cte,
+                    filter_cte.c.id == Queue.id
+                )
+
+                if beatmap_cte is not None:
+                    self.query = (
+                        self.query
+                        .outerjoin(
+                            aggregated_beatmap_cte,
+                            aggregated_beatmap_cte.c.id == BeatmapsetSnapshot.id
+                        )
+                        .add_columns(
+                            aggregated_beatmap_cte.c.score_details.label("beatmap_score_details")
+                        )
+                    )
+
+                if beatmapset_cte is not None:
+                    self.query = (
+                        self.query
+                        .outerjoin(
+                            beatmapset_cte,
+                            beatmapset_cte.c.id == BeatmapsetSnapshot.id
+                        )
+                        .add_columns(
+                            beatmapset_cte.c.score_details.label("beatmapset_score_details")
+                        )
+                    )
+
+                if queue_cte is not None:
+                    self.query = (
+                        self.query
+                        .outerjoin(
+                            queue_cte,
+                            queue_cte.c.id == Queue.id
+                        )
+                        .add_columns(
+                            queue_cte.c.score_details.label("queue_score_details")
+                        )
+                    )
+
+                if request_cte is not None:
+                    self.query = (
+                        self.query
+                        .outerjoin(
+                            request_cte,
+                            request_cte.c.id == Request.id
+                        )
+                        .add_columns(
+                            request_cte.c.score_details.label("request_score_details")
+                        )
+                    )
+
+                self.query = self.query.add_columns(total_score_column)
+                self.query = self.query.order_by(total_score_column.desc())
+
             case Scope.REQUESTS:
                 beatmap_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAP)
                 beatmapset_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAPSET)
@@ -434,11 +508,15 @@ class SearchEngine:
     def print_score_debug(self, result: MappingResult) -> None:
         model_name = SCOPE_MODEL_MAPPING[self.scope].__name__
         max_term_length = max(len(term) for term in self.search_terms.terms)
+        spacer_length = 68 + max_term_length
+
+        print("=" * spacer_length)
+        print(f"{"=" * int((spacer_length / 2 - 7))}SEARCH RESULTS{"=" * int((spacer_length / 2 - 7 + (1 if spacer_length % 2 != 0 else 0)))}")
 
         for row in result:
             model = row[model_name]
             total_score = row["total_score"]
-            print(f"\n{"=" * 60}")
+            print(f"{"=" * spacer_length}")
             print(f"{model_name} ID: {model.id} | Total Score: {total_score}")
 
             for category in CATEGORY_NAMES:
@@ -453,7 +531,7 @@ class SearchEngine:
                             f"Score: {match["score"]}"
                         )
 
-            print("=" * 60)
+        print("=" * spacer_length)
 
     @property
     def compiled_query(self) -> str:

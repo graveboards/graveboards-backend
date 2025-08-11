@@ -8,7 +8,8 @@ from app.database.models import (
     beatmap_snapshot_beatmapset_snapshot_association,
     BeatmapSnapshot,
     BeatmapsetSnapshot,
-    Request
+    Request,
+    Queue
 )
 from app.search.enums import Scope
 from app.search.datastructures import SearchTermsSchema, SCOPE_CATEGORIES_MAPPING, CATEGORY_MODEL_FIELDS_MAPPING
@@ -105,6 +106,51 @@ def get_filter_stmt(scope: Scope, category: SearchableFieldCategory, target: Uni
                     )
                 case _:
                     raise ValueError(f"Unsupported category for scope {scope}: {category}")
+        case Scope.QUEUES:
+            match category:
+                case SearchableFieldCategory.BEATMAP:
+                    stmt = (
+                        select(Queue.id)
+                        .join(Queue.requests)
+                        .join(
+                            BeatmapsetSnapshot,
+                            BeatmapsetSnapshot.beatmapset_id == Request.beatmapset_id
+                        )
+                        .join(
+                            beatmap_snapshot_beatmapset_snapshot_association,
+                            beatmap_snapshot_beatmapset_snapshot_association.c.beatmapset_snapshot_id == BeatmapsetSnapshot.id
+                        )
+                        .join(
+                            BeatmapSnapshot,
+                            BeatmapSnapshot.id == beatmap_snapshot_beatmapset_snapshot_association.c.beatmap_snapshot_id
+                        )
+                        .where(getattr(target, like_operator)(pattern))
+                        .distinct()
+                    )
+                case SearchableFieldCategory.BEATMAPSET:
+                    stmt = (
+                        select(Queue.id)
+                        .join(Queue.requests)
+                        .join(
+                            BeatmapsetSnapshot,
+                            BeatmapsetSnapshot.beatmapset_id == Request.beatmapset_id
+                        )
+                        .where(getattr(target, like_operator)(pattern))
+                        .distinct()
+                    )
+                case SearchableFieldCategory.QUEUE:
+                    stmt = (
+                        select(Queue.id)
+                        .where(getattr(target, like_operator)(pattern))
+                        .distinct()
+                    )
+                case SearchableFieldCategory.REQUEST:
+                    stmt = (
+                        select(Queue.id)
+                        .join(Queue.requests)
+                        .where(getattr(target, like_operator)(pattern))
+                        .distinct()
+                    )
         case Scope.REQUESTS:
             match category:
                 case SearchableFieldCategory.BEATMAP:
