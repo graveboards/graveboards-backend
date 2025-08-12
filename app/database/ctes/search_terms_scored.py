@@ -7,7 +7,6 @@ from sqlalchemy.sql.sqltypes import Integer, String
 from sqlalchemy.sql.selectable import CTE, Select, CompoundSelect
 from sqlalchemy.sql.functions import func
 
-from app.database.models import beatmap_snapshot_beatmapset_snapshot_association
 from app.search.enums import Scope
 from app.search.datastructures import SearchTermsSchema, SCOPE_CATEGORIES_MAPPING, CATEGORY_MODEL_FIELDS_MAPPING, CATEGORY_FIELD_GROUPS_MAPPING
 from app.search.enums import SearchableFieldCategory
@@ -21,7 +20,7 @@ def search_terms_scored_ctes_factory(
 ) -> dict[SearchableFieldCategory, CTE]:
     category_score_stmts: dict[SearchableFieldCategory, list[Select]] = defaultdict(list)
 
-    for category, score_stmt in generate_term_score_stmts(scope, search_terms):
+    for category, score_stmt in _generate_term_score_stmts(scope, search_terms):
         category_score_stmts[category].append(score_stmt)
 
     category_score_ctes: dict[SearchableFieldCategory, CTE] = {}
@@ -29,7 +28,7 @@ def search_terms_scored_ctes_factory(
     for category, stmts in category_score_stmts.items():
         unioned = union_all(*stmts)
 
-        processed = process_field_groups(unioned, category, CATEGORY_FIELD_GROUPS_MAPPING).subquery()  # TODO: Allow user to configure FIELD_GROUPS
+        processed = _process_field_groups(unioned, category, CATEGORY_FIELD_GROUPS_MAPPING).subquery()  # TODO: Allow user to configure FIELD_GROUPS
 
         category_score_ctes[category] = (
             select(
@@ -51,7 +50,7 @@ def search_terms_scored_ctes_factory(
     return category_score_ctes
 
 
-def generate_term_score_stmts(
+def _generate_term_score_stmts(
         scope: Scope,
         search_terms: SearchTermsSchema
 ) -> Generator[tuple[SearchableFieldCategory, Select], None, None]:
@@ -122,7 +121,7 @@ def generate_term_score_stmts(
                 yield category, score_stmt
 
 
-def process_field_groups(
+def _process_field_groups(
         base_query: CompoundSelect,
         category: SearchableFieldCategory,
         field_groups_config: dict[SearchableFieldCategory, dict[str, set[str]]]
@@ -156,20 +155,25 @@ def process_field_groups(
     return union_all(non_grouped, *group_queries)
 
 
-def aggregated_beatmap_score_cte_factory(beatmap_cte: CTE) -> CTE:
+def aggregated_child_scores_to_parent_cte_factory(
+    child_score_cte: CTE,
+    mapping_table,
+    mapping_child_fk: str,
+    mapping_parent_fk: str,
+    cte_name: str
+) -> CTE:
     exploded = (
         select(
-            beatmap_snapshot_beatmapset_snapshot_association.c.beatmapset_snapshot_id.label("id"),
-            func.jsonb_array_elements(beatmap_cte.c.score_details).label("entry")
+            getattr(mapping_table.c, mapping_parent_fk).label("id"),
+            func.jsonb_array_elements(child_score_cte.c.score_details).label("entry")
         )
         .select_from(
-            beatmap_cte.join(
-                beatmap_snapshot_beatmapset_snapshot_association,
-                beatmap_snapshot_beatmapset_snapshot_association.c.beatmap_snapshot_id == beatmap_cte.c.id
+            child_score_cte.join(
+                mapping_table,
+                getattr(mapping_table.c, mapping_child_fk) == child_score_cte.c.id
             )
         )
         .subquery()
-
     )
 
     parsed = (
@@ -221,5 +225,5 @@ def aggregated_beatmap_score_cte_factory(beatmap_cte: CTE) -> CTE:
             ).label("score_details")
         )
         .group_by(max_entries.c.id)
-        .cte("aggregated_beatmap_scores_cte")
+        .cte(cte_name)
     )

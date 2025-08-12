@@ -89,6 +89,7 @@ class FiltersSchema(BaseModel):
     profile: Optional[FieldFilters] = None
     beatmap: Optional[FieldFilters] = None
     beatmapset: Optional[FieldFilters] = None
+    queue: Optional[FieldFilters] = None
     request: Optional[FieldFilters] = None
 
     @model_validator(mode="before")
@@ -155,6 +156,10 @@ class FiltersSchema(BaseModel):
             presence |= SearchableFieldCategoryFlag.BEATMAPSET
             chunks.append(self.beatmapset.serialize(SearchableFieldCategory.BEATMAPSET))
 
+        if self.queue:
+            presence |= SearchableFieldCategoryFlag.QUEUE
+            chunks.append(self.queue.serialize(SearchableFieldCategory.QUEUE))
+
         if self.request:
             presence |= SearchableFieldCategoryFlag.REQUEST
             chunks.append(self.request.serialize(SearchableFieldCategory.REQUEST))
@@ -168,7 +173,7 @@ class FiltersSchema(BaseModel):
         presence = struct.unpack_from("!B", data, offset=offset)[0]
         offset += 1
 
-        profile = beatmap = beatmapset = request = None
+        profile = beatmap = beatmapset = queue = request = None
 
         if presence & SearchableFieldCategoryFlag.PROFILE:
             profile, offset = FieldFilters.deserialize(data, offset=offset)
@@ -179,6 +184,9 @@ class FiltersSchema(BaseModel):
         if presence & SearchableFieldCategoryFlag.BEATMAPSET:
             beatmapset, offset = FieldFilters.deserialize(data, offset=offset)
 
+        if presence & SearchableFieldCategoryFlag.QUEUE:
+            queue, offset = FieldFilters.deserialize(data, offset=offset)
+
         if presence & SearchableFieldCategoryFlag.REQUEST:
             request, offset = FieldFilters.deserialize(data, offset=offset)
 
@@ -186,5 +194,6 @@ class FiltersSchema(BaseModel):
             profile=profile,
             beatmap=beatmap,
             beatmapset=beatmapset,
+            queue=queue,
             request=request
         ), offset

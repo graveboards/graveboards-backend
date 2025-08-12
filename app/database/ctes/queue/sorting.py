@@ -7,7 +7,7 @@ from app.search.enums import Scope
 from app.search.datastructures import SortingOption
 
 
-def request_sorting_cte_factory(scope: Scope, sorting_option: SortingOption) -> CTE:
+def queue_sorting_cte_factory(scope: Scope, sorting_option: SortingOption) -> CTE:
     target = sorting_option.field.target
     sorting_order = sorting_option.order
     field_name = sorting_option.field.field_name
@@ -36,8 +36,12 @@ def request_sorting_cte_factory(scope: Scope, sorting_option: SortingOption) -> 
                     Request,
                     Request.beatmapset_id == BeatmapsetSnapshot.beatmapset_id
                 )
+                .join(
+                    Queue,
+                    Queue.id == Request.queue_id
+                )
                 .distinct(BeatmapSnapshot.id)
-                .cte(f"beatmap_request_{field_name}_ranked_cte")
+                .cte(f"beatmap_queue_{field_name}_ranked_cte")
             )
         case Scope.BEATMAPSETS:
             return (
@@ -54,8 +58,12 @@ def request_sorting_cte_factory(scope: Scope, sorting_option: SortingOption) -> 
                     Request,
                     Request.beatmapset_id == BeatmapsetSnapshot.beatmapset_id
                 )
+                .join(
+                    Queue,
+                    Queue.id == Request.queue_id
+                )
                 .distinct(BeatmapsetSnapshot.id)
-                .cte(f"beatmapset_request_{field_name}_ranked_cte")
+                .cte(f"beatmapset_queue_{field_name}_ranked_cte")
             )
         case Scope.QUEUES:
             return (
@@ -68,9 +76,8 @@ def request_sorting_cte_factory(scope: Scope, sorting_option: SortingOption) -> 
                     ).label("rank")
                 )
                 .select_from(Queue)
-                .join(Queue.requests)
                 .distinct(Queue.id)
-                .cte(f"queue_request_{field_name}_ranked_cte")
+                .cte(f"queue_queue_{field_name}_ranked_cte")
             )
         case Scope.REQUESTS:
             return (
@@ -83,8 +90,12 @@ def request_sorting_cte_factory(scope: Scope, sorting_option: SortingOption) -> 
                     ).label("rank")
                 )
                 .select_from(Request)
+                .join(
+                    Queue,
+                    Queue.id == Request.queue_id
+                )
                 .distinct(Request.id)
-                .cte(f"request_request_{field_name}_ranked_cte")
+                .cte(f"request_queue_{field_name}_ranked_cte")
             )
         case _:
-            raise ValueError(f"Unsupported scope for request sorting: {scope}")
+            raise ValueError(f"Unsupported scope for queue sorting: {scope}")

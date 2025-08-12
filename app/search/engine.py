@@ -11,12 +11,14 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql.selectable import Select
 
 from app.database.models import (
+    ModelClass,
     BeatmapListing,
     BeatmapsetListing,
     BeatmapsetSnapshot,
     BeatmapSnapshot,
     Queue,
-    Request
+    Request,
+    beatmap_snapshot_beatmapset_snapshot_association
 )
 from app.database.schemas import (
     BeatmapListingSchema,
@@ -24,14 +26,21 @@ from app.database.schemas import (
     QueueSchema,
     RequestSchema
 )
-from app.database.ctes.search_terms_scored import search_terms_scored_ctes_factory, aggregated_beatmap_score_cte_factory
+from app.database.ctes.search_terms_scored import (
+    search_terms_scored_ctes_factory,
+    aggregated_child_scores_to_parent_cte_factory
+)
 from app.database.ctes.search_terms_filtered import search_terms_filtered_cte_factory
+from app.database.ctes.bms_ss.sorting import bms_ss_sorting_cte_factory
+from app.database.ctes.bms_ss.filtering import bms_ss_filtering_cte_factory
 from app.database.ctes.bm_ss.sorting import bm_ss_sorting_cte_factory
 from app.database.ctes.bm_ss.filtering import bm_ss_filtering_cte_factory
 from app.database.ctes.profile.sorting import profile_sorting_cte_factory
 from app.database.ctes.profile.filtering import profile_filtering_cte_factory
 from app.database.ctes.request.sorting import request_sorting_cte_factory
 from app.database.ctes.request.filtering import request_filtering_cte_factory
+from app.database.ctes.queue.sorting import queue_sorting_cte_factory
+from app.database.ctes.queue.filtering import queue_filtering_cte_factory
 from app.database.utils import get_filter_condition
 from app.search.datastructures import ConditionValue, SearchTermsSchema, SortingSchema, FiltersSchema
 from app.search.enums import Scope, SearchableFieldCategory, FilterOperator, ModelField, CATEGORY_NAMES
@@ -41,11 +50,11 @@ DEFAULT_OFFSET = 0
 ResultsType = Union[Sequence[BeatmapListing], Sequence[BeatmapsetListing], ..., Sequence[Queue], Sequence[Request]]
 
 SCOPE_MODEL_MAPPING = {
-    Scope.BEATMAPS: BeatmapListing,
-    Scope.BEATMAPSETS: BeatmapsetListing,
+    Scope.BEATMAPS: ModelClass.BEATMAP_LISTING,
+    Scope.BEATMAPSETS: ModelClass.BEATMAPSET_LISTING,
     Scope.SCORES: ...,
-    Scope.QUEUES: Queue,
-    Scope.REQUESTS: Request
+    Scope.QUEUES: ModelClass.QUEUE,
+    Scope.REQUESTS: ModelClass.REQUEST
 }
 
 SCOPE_SCHEMA_MAPPING = {
@@ -92,6 +101,7 @@ class SearchEngine:
     ):
         self.scope = scope
         self.frontend_mode = frontend_mode
+        self.model_class = SCOPE_MODEL_MAPPING[scope]
         self.schema_class = SCOPE_SCHEMA_MAPPING[scope]
         self.exclude = SCOPE_EXCLUDE_MAPPING[scope]
 
@@ -181,9 +191,6 @@ class SearchEngine:
             case Scope.QUEUES:
                 self.query: Select = (
                     select(Queue)
-                    .join(Queue.user_profile)
-                    .outerjoin(Queue.requests)
-                    .outerjoin(Request.beatmapset_snapshot)
                     .options(
                         *queue_options,
                         selectinload(Queue.requests)
@@ -230,57 +237,104 @@ class SearchEngine:
             case Scope.BEATMAPSETS:
                 beatmap_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAP)
                 beatmapset_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAPSET)
-                aggregated_beatmap_cte = aggregated_beatmap_score_cte_factory(beatmap_cte) if beatmap_cte is not None else None
+
+                aggregated_beatmap_cte = (
+                    aggregated_child_scores_to_parent_cte_factory(
+                        child_score_cte=beatmap_cte,
+                        mapping_table=beatmap_snapshot_beatmapset_snapshot_association,
+                        mapping_child_fk="beatmap_snapshot_id",
+                        mapping_parent_fk="beatmapset_snapshot_id",
+                        cte_name="aggregated_beatmap_scores_cte",
+                    )
+                    if beatmap_cte is not None
+                    else None
+                )
 
                 beatmap_score_column = (aggregated_beatmap_cte.c.score if aggregated_beatmap_cte is not None else literal_column("0"))
                 beatmapset_score_column = (beatmapset_cte.c.score if beatmapset_cte is not None else literal_column("0"))
+
                 total_score_column = (
                     func.coalesce(beatmap_score_column, 0) +
                     func.coalesce(beatmapset_score_column, 0)
                 ).label("total_score")
 
-                self.query = self.query.join(
-                    filter_cte,
-                    filter_cte.c.id == BeatmapsetSnapshot.id
-                )
+                self.query = self.query.join(filter_cte,filter_cte.c.id == BeatmapsetSnapshot.id)
 
                 if beatmap_cte is not None:
                     self.query = (
                         self.query
-                        .outerjoin(
-                            aggregated_beatmap_cte,
-                            aggregated_beatmap_cte.c.id == BeatmapsetSnapshot.id
-                        )
-                        .add_columns(
-                            aggregated_beatmap_cte.c.score_details.label("beatmap_score_details")
-                        )
+                        .outerjoin(aggregated_beatmap_cte, aggregated_beatmap_cte.c.id == BeatmapsetSnapshot.id)
+                        .add_columns(aggregated_beatmap_cte.c.score_details.label("beatmap_score_details"))
                     )
 
                 if beatmapset_cte is not None:
                     self.query = (
                         self.query
-                        .outerjoin(
-                            beatmapset_cte,
-                            beatmapset_cte.c.id == BeatmapsetSnapshot.id
-                        )
-                        .add_columns(
-                            beatmapset_cte.c.score_details.label("beatmapset_score_details")
-                        )
+                        .outerjoin(beatmapset_cte, beatmapset_cte.c.id == BeatmapsetSnapshot.id)
+                        .add_columns(beatmapset_cte.c.score_details.label("beatmapset_score_details"))
                     )
 
-                self.query = self.query.add_columns(total_score_column)
-                self.query = self.query.order_by(total_score_column.desc())
+                self.query = (
+                    self.query
+                    .add_columns(total_score_column)
+                    .order_by(total_score_column.desc())
+                )
             case Scope.QUEUES:
                 beatmap_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAP)
                 beatmapset_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAPSET)
                 queue_cte = category_score_ctes.get(SearchableFieldCategory.QUEUE)
                 request_cte = category_score_ctes.get(SearchableFieldCategory.REQUEST)
-                aggregated_beatmap_cte = aggregated_beatmap_score_cte_factory(beatmap_cte) if beatmap_cte is not None else None
 
-                beatmap_score_column = (aggregated_beatmap_cte.c.score if aggregated_beatmap_cte is not None else literal_column("0"))
-                beatmapset_score_column = (beatmapset_cte.c.score if beatmapset_cte is not None else literal_column("0"))
+                aggregated_beatmap_cte = (
+                    aggregated_child_scores_to_parent_cte_factory(
+                        child_score_cte=beatmap_cte,
+                        mapping_table=beatmap_snapshot_beatmapset_snapshot_association,
+                        mapping_child_fk="beatmap_snapshot_id",
+                        mapping_parent_fk="beatmapset_snapshot_id",
+                        cte_name="aggregated_beatmap_scores_cte",
+                    )
+                    if beatmap_cte is not None
+                    else None
+                )
+
+                if aggregated_beatmap_cte is not None:
+                    queue_from_beatmap_cte = aggregated_child_scores_to_parent_cte_factory(
+                        aggregated_beatmap_cte,
+                        Request.__table__,
+                        "beatmapset_snapshot_id",
+                        "queue_id",
+                        "queue_aggregated_from_beatmap_scores_cte"
+                    )
+                else:
+                    queue_from_beatmap_cte = None
+
+                if beatmapset_cte is not None:
+                    queue_from_beatmapset_cte = aggregated_child_scores_to_parent_cte_factory(
+                        beatmapset_cte,
+                        Request.__table__,
+                        "beatmapset_snapshot_id",
+                        "queue_id",
+                        "queue_aggregated_from_beatmapset_scores_cte"
+                    )
+                else:
+                    queue_from_beatmapset_cte = None
+
+                if request_cte is not None:
+                    queue_from_request_cte = aggregated_child_scores_to_parent_cte_factory(
+                        request_cte,
+                        Request.__table__,
+                        "id",
+                        "queue_id",
+                        "queue_aggregated_from_request_scores_cte"
+                    )
+                else:
+                    queue_from_request_cte = None
+
+                beatmap_score_column = (queue_from_beatmap_cte.c.score if queue_from_beatmap_cte is not None else literal_column("0"))
+                beatmapset_score_column = (queue_from_beatmapset_cte.c.score if queue_from_beatmapset_cte is not None else literal_column("0"))
                 queue_score_column = (queue_cte.c.score if queue_cte is not None else literal_column("0"))
-                request_score_column = (request_cte.c.score if request_cte is not None else literal_column("0"))
+                request_score_column = (queue_from_request_cte.c.score if queue_from_request_cte is not None else literal_column("0"))
+
                 total_score_column = (
                         func.coalesce(beatmap_score_column, 0) +
                         func.coalesce(beatmapset_score_column, 0) +
@@ -288,120 +342,97 @@ class SearchEngine:
                         func.coalesce(request_score_column, 0)
                 ).label("total_score")
 
-                self.query = self.query.join(
-                    filter_cte,
-                    filter_cte.c.id == Queue.id
-                )
+                self.query = self.query.join(filter_cte, filter_cte.c.id == Queue.id)
 
-                if beatmap_cte is not None:
+                if queue_from_beatmap_cte is not None:
                     self.query = (
                         self.query
-                        .outerjoin(
-                            aggregated_beatmap_cte,
-                            aggregated_beatmap_cte.c.id == BeatmapsetSnapshot.id
-                        )
-                        .add_columns(
-                            aggregated_beatmap_cte.c.score_details.label("beatmap_score_details")
-                        )
+                        .outerjoin(queue_from_beatmap_cte, queue_from_beatmap_cte.c.id == Queue.id)
+                        .add_columns(queue_from_beatmap_cte.c.score_details.label("beatmap_score_details"))
                     )
 
-                if beatmapset_cte is not None:
+                if queue_from_beatmapset_cte is not None:
                     self.query = (
                         self.query
-                        .outerjoin(
-                            beatmapset_cte,
-                            beatmapset_cte.c.id == BeatmapsetSnapshot.id
-                        )
-                        .add_columns(
-                            beatmapset_cte.c.score_details.label("beatmapset_score_details")
-                        )
+                        .outerjoin(queue_from_beatmapset_cte, queue_from_beatmapset_cte.c.id == Queue.id)
+                        .add_columns(queue_from_beatmapset_cte.c.score_details.label("beatmapset_score_details"))
                     )
 
                 if queue_cte is not None:
                     self.query = (
                         self.query
-                        .outerjoin(
-                            queue_cte,
-                            queue_cte.c.id == Queue.id
-                        )
-                        .add_columns(
-                            queue_cte.c.score_details.label("queue_score_details")
-                        )
+                        .outerjoin(queue_cte, queue_cte.c.id == Queue.id)
+                        .add_columns(queue_cte.c.score_details.label("queue_score_details"))
                     )
 
-                if request_cte is not None:
+                if queue_from_request_cte is not None:
                     self.query = (
                         self.query
-                        .outerjoin(
-                            request_cte,
-                            request_cte.c.id == Request.id
-                        )
-                        .add_columns(
-                            request_cte.c.score_details.label("request_score_details")
-                        )
+                        .outerjoin(queue_from_request_cte, queue_from_request_cte.c.id == Queue.id)
+                        .add_columns(queue_from_request_cte.c.score_details.label("request_score_details"))
                     )
 
-                self.query = self.query.add_columns(total_score_column)
-                self.query = self.query.order_by(total_score_column.desc())
+                self.query = (
+                    self.query
+                    .add_columns(total_score_column)
+                    .order_by(total_score_column.desc())
+                )
 
             case Scope.REQUESTS:
                 beatmap_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAP)
                 beatmapset_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAPSET)
                 request_cte = category_score_ctes.get(SearchableFieldCategory.REQUEST)
-                aggregated_beatmap_cte = aggregated_beatmap_score_cte_factory(beatmap_cte) if beatmap_cte is not None else None
+
+                aggregated_beatmap_cte = (
+                    aggregated_child_scores_to_parent_cte_factory(
+                        child_score_cte=beatmap_cte,
+                        mapping_table=beatmap_snapshot_beatmapset_snapshot_association,
+                        mapping_child_fk="beatmap_snapshot_id",
+                        mapping_parent_fk="beatmapset_snapshot_id",
+                        cte_name="aggregated_beatmap_scores_cte",
+                    )
+                    if beatmap_cte is not None
+                    else None
+                )
 
                 beatmap_score_column = (aggregated_beatmap_cte.c.score if aggregated_beatmap_cte is not None else literal_column("0"))
                 beatmapset_score_column = (beatmapset_cte.c.score if beatmapset_cte is not None else literal_column("0"))
                 request_score_column = (request_cte.c.score if request_cte is not None else literal_column("0"))
+
                 total_score_column = (
                         func.coalesce(beatmap_score_column, 0) +
                         func.coalesce(beatmapset_score_column, 0) +
                         func.coalesce(request_score_column, 0)
                 ).label("total_score")
 
-                self.query = self.query.join(
-                    filter_cte,
-                    filter_cte.c.id == Request.id
-                )
+                self.query = self.query.join(filter_cte, filter_cte.c.id == Request.id)
 
                 if beatmap_cte is not None:
                     self.query = (
                         self.query
-                        .outerjoin(
-                            aggregated_beatmap_cte,
-                            aggregated_beatmap_cte.c.id == BeatmapsetSnapshot.id
-                        )
-                        .add_columns(
-                            aggregated_beatmap_cte.c.score_details.label("beatmap_score_details")
-                        )
+                        .outerjoin(aggregated_beatmap_cte, aggregated_beatmap_cte.c.id == BeatmapsetSnapshot.id)
+                        .add_columns(aggregated_beatmap_cte.c.score_details.label("beatmap_score_details"))
                     )
 
                 if beatmapset_cte is not None:
                     self.query = (
                         self.query
-                        .outerjoin(
-                            beatmapset_cte,
-                            beatmapset_cte.c.id == BeatmapsetSnapshot.id
-                        )
-                        .add_columns(
-                            beatmapset_cte.c.score_details.label("beatmapset_score_details")
-                        )
+                        .outerjoin(beatmapset_cte, beatmapset_cte.c.id == BeatmapsetSnapshot.id)
+                        .add_columns(beatmapset_cte.c.score_details.label("beatmapset_score_details"))
                     )
 
                 if request_cte is not None:
                     self.query = (
                         self.query
-                        .outerjoin(
-                            request_cte,
-                            request_cte.c.id == Request.id
-                        )
-                        .add_columns(
-                            request_cte.c.score_details.label("request_score_details")
-                        )
+                        .outerjoin(request_cte, request_cte.c.id == Request.id)
+                        .add_columns(request_cte.c.score_details.label("request_score_details"))
                     )
 
-                self.query = self.query.add_columns(total_score_column)
-                self.query = self.query.order_by(total_score_column.desc())
+                self.query = (
+                    self.query
+                    .add_columns(total_score_column)
+                    .order_by(total_score_column.desc())
+                )
 
     def _apply_sorting(self):
         def apply_clause():
@@ -413,7 +444,7 @@ class SearchEngine:
 
             self.query = (
                 self.query
-                .join(cte, cte.c.beatmapset_snapshot_id == BeatmapsetSnapshot.id)
+                .join(cte, cte.c.id == self.model_class.value.id)
                 .where(cte.c.rank == 1)
             )
 
@@ -422,15 +453,19 @@ class SearchEngine:
         def apply_sorting_option():
             match category:
                 case SearchableFieldCategory.PROFILE:
-                    cte = profile_sorting_cte_factory(sorting_option, self.scope)
+                    cte = profile_sorting_cte_factory(self.scope, sorting_option)
                     apply_sorting_cte(cte)
                 case SearchableFieldCategory.BEATMAP:
-                    cte = bm_ss_sorting_cte_factory(sorting_option)
+                    cte = bm_ss_sorting_cte_factory(self.scope, sorting_option)
                     apply_sorting_cte(cte)
                 case SearchableFieldCategory.BEATMAPSET:
-                    apply_clause()
+                    cte = bms_ss_sorting_cte_factory(self.scope, sorting_option)
+                    apply_sorting_cte(cte)
+                case SearchableFieldCategory.QUEUE:
+                    cte = queue_sorting_cte_factory(self.scope, sorting_option)
+                    apply_sorting_cte(cte)
                 case SearchableFieldCategory.REQUEST:
-                    cte = request_sorting_cte_factory(sorting_option)
+                    cte = request_sorting_cte_factory(self.scope, sorting_option)
                     apply_sorting_cte(cte)
 
         sorting_clauses = []
@@ -458,20 +493,31 @@ class SearchEngine:
 
             match field_category:
                 case SearchableFieldCategory.PROFILE:
-                    cte = profile_filtering_cte_factory(target, self.scope)
+                    cte = profile_filtering_cte_factory(self.scope, target)
                     target = cte.c.target
-                    self.query = self.query.join(cte, cte.c.beatmapset_snapshot_id == BeatmapsetSnapshot.id)
+                    self.query = self.query.join(cte, cte.c.id == self.model_class.value.id)
                     apply_clauses()
                 case SearchableFieldCategory.BEATMAP:
-                    aggregated_conditions = clause_generator(is_aggregated=True)
-                    cte = bm_ss_filtering_cte_factory(target, aggregated_conditions)
-                    self.query = self.query.join(cte, cte.c.beatmapset_snapshot_id == BeatmapsetSnapshot.id)
+                    aggregated_conditions = clause_generator(is_aggregated=True) if self.scope is not Scope.BEATMAPS else None
+                    cte = bm_ss_filtering_cte_factory(self.scope, target, aggregated_conditions=aggregated_conditions)
+                    self.query = self.query.join(cte, cte.c.id == self.model_class.value.id)
+
+                    if aggregated_conditions is None:
+                        apply_clauses()
                 case SearchableFieldCategory.BEATMAPSET:
+                    cte = bms_ss_filtering_cte_factory(self.scope, target)
+                    target = cte.c.target
+                    self.query = self.query.join(cte, cte.c.id == self.model_class.value.id)
+                    apply_clauses()
+                case SearchableFieldCategory.QUEUE:
+                    cte = queue_filtering_cte_factory(self.scope, target)
+                    target = cte.c.target
+                    self.query = self.query.join(cte, cte.c.id == self.model_class.value.id)
                     apply_clauses()
                 case SearchableFieldCategory.REQUEST:
-                    cte = request_filtering_cte_factory(target)
+                    cte = request_filtering_cte_factory(self.scope, target)
                     target = cte.c.target
-                    self.query = self.query.join(cte, cte.c.beatmapset_snapshot_id == BeatmapsetSnapshot.id)
+                    self.query = self.query.join(cte, cte.c.id == self.model_class.value.id)
                     apply_clauses()
 
         filtering_clauses = []
@@ -506,7 +552,7 @@ class SearchEngine:
         ]
 
     def print_score_debug(self, result: MappingResult) -> None:
-        model_name = SCOPE_MODEL_MAPPING[self.scope].__name__
+        model_name = self.model_class.value.__name__
         max_term_length = max(len(term) for term in self.search_terms.terms)
         spacer_length = 68 + max_term_length
 

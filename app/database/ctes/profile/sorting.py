@@ -2,54 +2,76 @@ from sqlalchemy.sql import select
 from sqlalchemy.sql.selectable import CTE
 from sqlalchemy.sql.functions import func
 
-from app.database.models import Profile, BeatmapsetSnapshot, Request
+from app.database.models import BeatmapsetSnapshot, Request, Queue, BeatmapSnapshot
 from app.search.datastructures import SortingOption
 from app.search.enums import Scope
 
 
-def profile_sorting_cte_factory(sorting_option: SortingOption, scope: Scope) -> CTE:
+def profile_sorting_cte_factory(scope: Scope, sorting_option: SortingOption) -> CTE:
     target = sorting_option.field.target
     sorting_order = sorting_option.order
     field_name = sorting_option.field.field_name
 
-    base_query = (
-        select(
-            BeatmapsetSnapshot.id.label("beatmapset_snapshot_id"),
-            target.label("target"),
-            func.row_number().over(
-                partition_by=BeatmapsetSnapshot.id,
-                order_by=sorting_order.sort_func(target)
-            ).label("rank")
-        )
-    )
-
     match scope:
         case Scope.BEATMAPS:
-            ...
+            return (
+                select(
+                    BeatmapSnapshot.id.label("id"),
+                    target.label("target"),
+                    func.row_number().over(
+                        partition_by=BeatmapSnapshot.id,
+                        order_by=sorting_order.sort_func(target)
+                    ).label("rank")
+                )
+                .select_from(BeatmapSnapshot)
+                .join(BeatmapSnapshot.owner_profiles)  # TODO: Needs testing if this works without aggregation
+                .distinct(BeatmapSnapshot.id)
+                .cte(f"beatmap_profile_{field_name}_ranked_cte")
+            )
         case Scope.BEATMAPSETS:
             return (
-                base_query
-                .select_from(BeatmapsetSnapshot)
-                .join(
-                    Profile,
-                    Profile.user_id == BeatmapsetSnapshot.user_id
+                select(
+                    BeatmapsetSnapshot.id.label("id"),
+                    target.label("target"),
+                    func.row_number().over(
+                        partition_by=BeatmapsetSnapshot.id,
+                        order_by=sorting_order.sort_func(target)
+                    ).label("rank")
                 )
+                .select_from(BeatmapsetSnapshot)
+                .join(BeatmapsetSnapshot.user_profile)
                 .distinct(BeatmapsetSnapshot.id)
                 .cte(f"beatmapset_profile_{field_name}_ranked_cte")
             )
         case Scope.QUEUES:
-            ...
+            return (
+                select(
+                    Queue.id.label("id"),
+                    target.label("target"),
+                    func.row_number().over(
+                        partition_by=Queue.id,
+                        order_by=sorting_order.sort_func(target)
+                    ).label("rank")
+                )
+                .select_from(Queue)
+                .join(Queue.user_profile)
+                .distinct(Queue.id)
+                .cte(f"queue_profile_{field_name}_ranked_cte")
+            )
         case Scope.REQUESTS:
             return (
-                base_query
-                .select_from(BeatmapsetSnapshot)
-                .join(
-                    Request,
-                    Request.beatmapset_id == BeatmapsetSnapshot.beatmapset_id
+                select(
+                    Request.id.label("id"),
+                    target.label("target"),
+                    func.row_number().over(
+                        partition_by=Request.id,
+                        order_by=sorting_order.sort_func(target)
+                    ).label("rank")
                 )
+                .select_from(Request)
                 .join(Request.user_profile)
-                .distinct(BeatmapsetSnapshot.id)
+                .distinct(Request.id)
                 .cte(f"request_profile_{field_name}_ranked_cte")
             )
         case _:
-            raise ValueError(f"Unsupported scope for profile filtering: {scope}")
+            raise ValueError(f"Unsupported scope for profile sorting: {scope}")

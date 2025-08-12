@@ -8,7 +8,7 @@ from app.database.models import BeatmapsetSnapshot, Request, Queue, BeatmapSnaps
 from app.search.enums import Scope
 
 
-def request_filtering_cte_factory(scope: Scope, target: InstrumentedAttribute | QueryableAttribute[Any]) -> CTE:
+def bms_ss_filtering_cte_factory(scope: Scope, target: InstrumentedAttribute | QueryableAttribute[Any]) -> CTE:
     field_name = target.key
 
     match scope:
@@ -27,12 +27,7 @@ def request_filtering_cte_factory(scope: Scope, target: InstrumentedAttribute | 
                     BeatmapsetSnapshot,
                     BeatmapsetSnapshot.id == beatmap_snapshot_beatmapset_snapshot_association.c.beatmapset_snapshot_id
                 )
-                .join(
-                    Request,
-                    Request.beatmapset_id == BeatmapsetSnapshot.beatmapset_id
-                )
-                .distinct(BeatmapSnapshot.id)
-                .cte(f"beatmap_request_{field_name}_filter_cte")
+                .cte(f"beatmap_beatmapset_{field_name}_filter_cte")
             )
         case Scope.BEATMAPSETS:
             return (
@@ -41,12 +36,7 @@ def request_filtering_cte_factory(scope: Scope, target: InstrumentedAttribute | 
                     target.label("target")
                 )
                 .select_from(BeatmapsetSnapshot)
-                .join(
-                    Request,
-                    Request.beatmapset_id == BeatmapsetSnapshot.beatmapset_id
-                )
-                .distinct(BeatmapsetSnapshot.id)
-                .cte(f"beatmapset_request_{field_name}_filter_cte")
+                .cte(f"beatmapset_beatmapset_{field_name}_filter_cte")
             )
         case Scope.QUEUES:
             return (
@@ -56,8 +46,8 @@ def request_filtering_cte_factory(scope: Scope, target: InstrumentedAttribute | 
                 )
                 .select_from(Queue)
                 .join(Queue.requests)
-                .distinct(Queue.id)
-                .cte(f"queue_request_{field_name}_filter_cte")
+                .join(Request.beatmapset_snapshot)
+                .cte(f"queue_beatmapset_{field_name}_filter_cte")
             )
         case Scope.REQUESTS:
             return (
@@ -66,7 +56,8 @@ def request_filtering_cte_factory(scope: Scope, target: InstrumentedAttribute | 
                     target.label("target")
                 )
                 .select_from(Request)
-                .cte(f"request_request_{field_name}_filter_cte")
+                .join(Request.beatmapset_snapshot)
+                .cte(f"request_beatmapset_{field_name}_filter_cte")
             )
         case _:
-            raise ValueError(f"Unsupported scope for request filtering: {scope}")
+            raise ValueError(f"Unsupported scope for beatmapset filtering: {scope}")
