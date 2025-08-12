@@ -1,5 +1,5 @@
 import struct
-from typing import Union, Iterator, Any, Optional
+from typing import Iterator, Any, Optional
 from collections.abc import ItemsView
 
 from pydantic.main import BaseModel
@@ -20,18 +20,18 @@ from .conditions import Conditions, ConditionValue
 
 
 class FieldFilters(RootModel):
-    root: dict[str, Union[Conditions, bool, None]]
+    root: dict[str, Conditions]
 
     def __iter__(self) -> Iterator[str]:
         return iter(self.root)
 
-    def __getitem__(self, key: str) -> Union[Conditions, bool, None]:
+    def __getitem__(self, key: str) -> Conditions:
         return self.root[key]
 
     def __len__(self) -> int:
         return len(self.root)
 
-    def items(self) -> ItemsView[str, Union[Conditions, bool, None]]:
+    def items(self) -> ItemsView[str, Conditions]:
         return self.root.items()
 
     def validate_against_sqlalchemy_model(self, category: SearchableFieldCategory):

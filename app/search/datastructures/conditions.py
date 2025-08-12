@@ -302,14 +302,19 @@ class Conditions(BaseModel):
                 zz = Conditions.encode_zigzag(value)
                 return struct.pack("!B", ConditionValueId.SIGNED_VARINT) + Conditions.encode_varint(zz)
         elif isinstance(value, float):
-            half = np.float16(value)
+            with np.errstate(over="ignore"):
+                f16 = np.float16(value)
+                f32 = np.float32(value)
+                f64 = np.float64(value)
 
-            if float(half) == value:
-                return struct.pack("!B", ConditionValueId.HALF_FLOAT) + half.tobytes()
-            elif -3.4e38 <= value <= 3.4e38:
-                return struct.pack("!Bf", ConditionValueId.FLOAT, value)
-
-            return struct.pack("!Bd", ConditionValueId.DOUBLE, value)
+            if float(f16) == value:
+                return struct.pack("!Be", ConditionValueId.HALF_FLOAT, f16)
+            elif float(f32) == value:
+                return struct.pack("!Bf", ConditionValueId.FLOAT, f32)
+            elif float(f64) == value:
+                return struct.pack("!Bd", ConditionValueId.DOUBLE, f64)
+            else:
+                raise ValueError(f"Float {value} cannot be represented as f16, f32, nor f64")
         elif isinstance(value, str):
             encoded = value.encode()
             return struct.pack("!B", ConditionValueId.STR) + Conditions.encode_varint(len(encoded)) + encoded
@@ -337,8 +342,7 @@ class Conditions(BaseModel):
             value, offset = Conditions.decode_varint(data, offset)
             return value, offset
         elif type_id == ConditionValueId.HALF_FLOAT:
-            value = np.frombuffer(data[offset:offset + 2], dtype=np.float16)[0]
-            return float(value), offset + 2
+            return struct.unpack_from("!e", data, offset)[0], offset + 2
         elif type_id == ConditionValueId.FLOAT:
             return struct.unpack_from("!f", data, offset)[0], offset + 4
         elif type_id == ConditionValueId.DOUBLE:
