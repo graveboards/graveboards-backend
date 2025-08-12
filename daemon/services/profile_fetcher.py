@@ -74,17 +74,18 @@ class ProfileFetcher(Service):
 
     async def preload_tasks(self):
         tasks = await self.db.get_profile_fetcher_tasks(enabled=True)
+        missing_profile_user_ids = await self.db.get_users(profile=None, _select="id")
 
         for task in tasks:
-            self.load_task(task)
+            self.load_task(task, now=task.user_id in missing_profile_user_ids)
 
         logger.debug(f"Preloaded tasks: ({len(tasks)})")
 
-    def load_task(self, task: ProfileFetcherTask):
+    def load_task(self, task: ProfileFetcherTask, now: bool = False):
         if not task.enabled:
             return
 
-        if task.last_fetch is not None:
+        if task.last_fetch is not None and not now:
             execution_time = task.last_fetch.replace(tzinfo=timezone.utc) + timedelta(hours=PROFILE_FETCHER_INTERVAL_HOURS)
         else:
             execution_time = aware_utcnow()
