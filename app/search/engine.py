@@ -5,7 +5,7 @@ from sqlalchemy.sql.selectable import CTE
 from sqlalchemy.sql.functions import func
 from sqlalchemy.sql.elements import BinaryExpression, literal_column
 from sqlalchemy.orm.strategy_options import joinedload, noload, selectinload
-from sqlalchemy.engine.result import MappingResult
+from sqlalchemy.engine.row import RowMapping
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql.selectable import Select
@@ -141,12 +141,12 @@ class SearchEngine:
 
         page_query = self.query.limit(limit).offset(offset)
         result = await session.execute(page_query)
+        row_mappings = result.mappings().all()
 
         if debug and self.search_terms:
-            self.print_score_debug(result.mappings())
-            result = await session.execute(page_query)
+            self.print_score_debug(row_mappings)
 
-        return result.scalars().all()
+        return [row_mapping[self.model_class.value.__name__] for row_mapping in row_mappings]
 
     def _compose_query(self):
         beatmap_snapshot_options = (
@@ -551,19 +551,26 @@ class SearchEngine:
             for model in page
         ]
 
-    def print_score_debug(self, result: MappingResult) -> None:
+    def print_score_debug(self, result: Sequence[RowMapping]) -> None:
+        def center_text(text: str, width: int, fill: str = "=") -> str:
+            left = fill * int(width / 2 - len(text) / 2)
+            right = fill * (int(width / 2 - len(text) / 2) + (1 if width % 2 else 0))
+            return f"{left}{text}{right}"
+
         model_name = self.model_class.value.__name__
         max_term_length = max(len(term) for term in self.search_terms.terms)
-        spacer_length = 68 + max_term_length
+        row_width = 68 + max_term_length
 
-        print("=" * spacer_length)
-        print(f"{"=" * int((spacer_length / 2 - 7))}SEARCH RESULTS{"=" * int((spacer_length / 2 - 7 + (1 if spacer_length % 2 != 0 else 0)))}")
+        print("=" * row_width)
+        print(center_text("SEARCH RESULTS", row_width))
+        print("=" * row_width)
 
-        for row in result:
+        for i, row in enumerate(result, start=1):
             model = row[model_name]
             total_score = row["total_score"]
-            print(f"{"=" * spacer_length}")
-            print(f"{model_name} ID: {model.id} | Total Score: {total_score}")
+
+            row_header = f"Result {i} | {model_name} ID: {model.id} | Total Score: {total_score}"
+            print(center_text(row_header, row_width, "-"))
 
             for category in CATEGORY_NAMES:
                 if (key := f"{category}_score_details") in row and (score_details := row[key]):
@@ -577,7 +584,7 @@ class SearchEngine:
                             f"Score: {match["score"]}"
                         )
 
-        print("=" * spacer_length)
+            print("=" * row_width)
 
     @property
     def compiled_query(self) -> str:
