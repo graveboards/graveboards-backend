@@ -14,6 +14,7 @@ from .score_fetcher_task import ScoreFetcherTask
 from .profile_fetcher_task import ProfileFetcherTask
 from .beatmap import Beatmap
 from .beatmap_snapshot import BeatmapSnapshot
+from .beatmap_listing import BeatmapListing
 from .beatmapset import Beatmapset
 from .beatmapset_snapshot import BeatmapsetSnapshot
 from .beatmapset_listing import BeatmapsetListing
@@ -36,6 +37,7 @@ class ModelClass(Enum):
     PROFILE_FETCHER_TASK = ProfileFetcherTask
     BEATMAP = Beatmap
     BEATMAP_SNAPSHOT = BeatmapSnapshot
+    BEATMAP_LISTING = BeatmapListing
     BEATMAPSET = Beatmapset
     BEATMAPSET_SNAPSHOT = BeatmapsetSnapshot
     BEATMAPSET_LISTING = BeatmapsetListing

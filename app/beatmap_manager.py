@@ -165,7 +165,10 @@ class BeatmapManager:
 
                     # Need to find a more elegant solution to updating relationships...
                     beatmap_tags_ = await self._populate_beatmap_tags(beatmap_dict["top_tag_ids"])
-                    owner_profiles_ = await self._populate_owner_profiles(beatmap_dict["owners"])
+                    owners = beatmap_dict["owners"] or {"id": beatmap_dict["user_id"]}
+                    # Always ensure at least one owner in owner_profiles
+                    # Beatmap user_id inherits from beatmapset if no owners specified on the osu! website
+                    owner_profiles_ = await self._populate_owner_profiles(owners)
                     beatmap_tags = await self.db.get_beatmap_tags(_where=BeatmapTag.id.in_([t.id for t in beatmap_tags_]), session=session)
                     owner_profiles = await self.db.get_profiles(_where=Profile.id.in_([p.id for p in owner_profiles_]), session=session)
                     beatmap_snapshot.beatmap_tags = beatmap_tags

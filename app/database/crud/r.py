@@ -42,6 +42,7 @@ class _R:
     @staticmethod
     def _construct_stmt(
             model_class: ModelClass,
+            _select: str | Iterable[str] = None,
             _where: Any | Iterable[Any] = None,
             _reversed: bool = False,
             _loading_options: LoadingOptions = None,
@@ -58,11 +59,26 @@ class _R:
         if _eager_loads and _auto_eager_loads:
             raise ValueError("_eager_loads and _auto_eager_loads are mutually exclusive")
 
-        select_stmt = select(model_class.value).filter_by(**kwargs)
+        if _select is not None:
+            if not isinstance(_select, (list, tuple, set)):
+                _select = [_select]
+
+            column_map = model_class.value.__annotations__
+            targets = []
+
+            for target_name in _select:
+                if target_name not in column_map:
+                    raise ValueError(f"{target_name} is not a valid column nor relationship of {model_class.value}")
+
+                targets.append(getattr(model_class.value, target_name))
+
+            select_stmt = select(*targets).filter_by(**kwargs)
+        else:
+            select_stmt = select(model_class.value).filter_by(**kwargs)
 
         if _where is not None:
-            if not isinstance(_where, Iterable):
-                _where = (_where,)
+            if not isinstance(_where, (list, tuple, set)):
+                _where = [_where]
 
             select_stmt = select_stmt.where(*_where)
 

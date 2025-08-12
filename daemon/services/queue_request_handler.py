@@ -75,7 +75,7 @@ class QueueRequestHandler(Service):
                 exclude={"user_profile", "queue"}
             )
             request = await self.db.add_request(**request_dict)
-            logger.debug(f"Added request {request.id} for beatmapset {request.beatmapset_id} to queue {request.queue_id}")
+            logger.debug(f"Added request id={request.id} for beatmapset {request.beatmapset_id} to queue id={request.queue_id}")
 
             task_hash_name = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(task.hashed_id)
             await self.rc.hset(task_hash_name, "completed_at", aware_utcnow().isoformat())
