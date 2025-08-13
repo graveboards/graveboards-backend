@@ -4,6 +4,12 @@ RequestFilter:
     type: object
     additionalProperties: false
     properties:
+        user_id:
+            $ref: "./fields/index.yaml#/IntegerField"
+        beatmapset_id:
+            $ref: "./fields/index.yaml#/IntegerField"
+        queue_id:
+            $ref: "./fields/index.yaml#/IntegerField"
         comment:
             $ref: "./fields/index.yaml#/StringField"
         mv_checked:

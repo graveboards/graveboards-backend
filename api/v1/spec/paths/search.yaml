@@ -11,7 +11,7 @@ Search:
             - $ref: "../parameters/query/search.yaml#/Offset"
         responses:
             200:
-                description: Successfully retrieved search results
+                $ref: "../responses/200/search_results.yaml#/SearchResults"
     post:
         summary: Creates a new search resource
         tags:

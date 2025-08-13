@@ -1,0 +1,30 @@
+RequestResults:
+    description: Request Search Results
+    type: array
+    items:
+        $ref: "#/Request"
+
+Request:
+    type: object
+    properties:
+        beatmapset_id:
+            type: integer
+        beatmapset_snapshot:
+            $ref: "./beatmapsets.yaml#/BeatmapsetSnapshot"
+        comment:
+            type: string
+        id:
+            type: integer
+        queue:
+            $ref: "./queues.yaml#/Queue"
+        status:
+            $ref: "../filters/fields/request_status.yaml#/RequestStatusValue"
+        user_profile:
+            type: object
+            properties:
+                avatar_url:
+                    type: string
+                user_id:
+                    type: integer
+                username:
+                    type: string

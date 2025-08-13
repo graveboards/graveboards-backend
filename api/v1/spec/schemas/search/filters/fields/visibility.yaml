@@ -1,0 +1,41 @@
+VisibilityConditions:
+    type: object
+    additionalProperties: false
+    properties:
+        eq:
+            $ref: "#/VisibilityValue"
+        neq:
+            $ref: "#/VisibilityValue"
+        gt:
+            $ref: "#/VisibilityValue"
+        lt:
+            $ref: "#/VisibilityValue"
+        gte:
+            $ref: "#/VisibilityValue"
+        lte:
+            $ref: "#/VisibilityValue"
+        in:
+            $ref: "#/VisibilityContainer"
+        not_in:
+            $ref: "#/VisibilityContainer"
+        is_null:
+            type: boolean
+
+VisibilityValue:
+    description: >
+        ### The visibility of the queue
+        
+         * 0 = Public
+         * 1 = Unlisted
+         * 2 = Private
+    type: integer
+    enum:
+        - 0
+        - 1
+        - 2
+
+VisibilityContainer:
+    type: array
+    items:
+        $ref: "#/VisibilityValue"
+    minItems: 1

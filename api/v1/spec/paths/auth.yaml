@@ -30,4 +30,4 @@ Token:
             $ref: "../request_bodies/auth.yaml#/AuthorizationCode"
         responses:
             201:
-                $ref: "../responses/201.yaml#/AuthenticationSuccess"
+                $ref: "../responses/201/authentication_success.yaml#/AuthenticationSuccess"

@@ -1,0 +1,35 @@
+QueueResults:
+    description: Queue Search Results
+    type: array
+    items:
+        $ref: "#/Queue"
+
+Queue:
+    type: object
+    properties:
+        description:
+            type: string
+        id:
+            type: integer
+        is_open:
+            type: boolean
+        manager_profiles:
+            type: array
+            items:
+                $ref: "#/UserProfile"
+        name:
+            type: string
+        user_profile:
+            $ref: "#/UserProfile"
+        visibility:
+            $ref: "../filters/fields/visibility.yaml#/VisibilityValue"
+
+UserProfile:
+    type: object
+    properties:
+        avatar_url:
+            type: string
+        user_id:
+            type: integer
+        username:
+            type: string

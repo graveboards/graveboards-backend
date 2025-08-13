@@ -57,7 +57,6 @@ class BeatmapsetSnapshotSchema(BeatmapsetOsuApiSchema, BaseModelExtra):
         "preview_url": True,
         "title": True,
         "title_unicode": True,
-        "user_id": True,
         "user_profile": {"user_id", "avatar_url", "username"},
         "verified": True
     }

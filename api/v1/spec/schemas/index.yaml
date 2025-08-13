@@ -1,3 +1,12 @@
 # Search
 Search:
     $ref: "./search/search.yaml#/Search"
+
+BeatmapsetResults:
+    $ref: "./search/results/beatmapsets.yaml#/BeatmapsetResults"
+
+QueueResults:
+    $ref: "./search/results/queues.yaml#/QueueResults"
+
+RequestResults:
+    $ref: "./search/results/requests.yaml#/RequestResults"

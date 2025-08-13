@@ -10,7 +10,7 @@ Profiles:
             200:
                 description: Successfully retrieved all profiles
             401:
-                $ref: "../responses/401.yaml#/UnauthorizedError"
+                $ref: "../responses/401/unauthorized_error.yaml#/UnauthorizedError"
 
 ProfileByUserId:
     get:

@@ -21,9 +21,9 @@ StringConditions:
         is_null:
             type: boolean
         regex:
-            $ref: "../../../regex_pattern.yaml#/RegexPattern"
+            $ref: "../../../../regex_pattern.yaml#/RegexPattern"
         not_regex:
-            $ref: "../../../regex_pattern.yaml#/RegexPattern"
+            $ref: "../../../../regex_pattern.yaml#/RegexPattern"
 
 StringValue:
     type: string

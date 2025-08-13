@@ -92,3 +92,8 @@ RequestStatusField:
     oneOf:
         - $ref: "./request_status.yaml/#RequestStatusConditions"
         - $ref: "./request_status.yaml/#RequestStatusValue"
+
+VisibilityField:
+    oneOf:
+        - $ref: "./visibility.yaml/#VisibilityConditions"
+        - $ref: "./visibility.yaml/#VisibilityValue"

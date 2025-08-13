@@ -1,0 +1,57 @@
+BeatmapsetResults:
+    description: Beatmapset Search Results
+    type: array
+    items:
+        $ref: "#/BeatmapsetListing"
+
+BeatmapsetListing:
+    type: object
+    properties:
+        beatmapset_snapshot:
+            $ref: "#/BeatmapsetSnapshot"
+
+BeatmapsetSnapshot:
+    type: object
+    properties:
+        artist:
+            type: string
+        artist_unicode:
+            type: string
+        beatmapset_id:
+            type: integer
+        beatmap_snapshots:
+            type: array
+            items:
+                type: object
+                properties:
+                    difficulty_rating:
+                        type: number
+                        format: float
+                    total_length:
+                        type: integer
+                    version:
+                        type: string
+        covers:
+            type: object
+            properties:
+                cover:
+                    type: string
+        creator:
+            type: string
+        preview_url:
+            type: string
+        title:
+            type: string
+        title_unicode:
+            type: string
+        user_profile:
+            type: object
+            properties:
+                avatar_url:
+                    type: string
+                user_id:
+                    type: integer
+                username:
+                    type: string
+        verified:
+            type: boolean

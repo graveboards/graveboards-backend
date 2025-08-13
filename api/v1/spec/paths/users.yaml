@@ -13,7 +13,7 @@ Users:
             200:
                 description: Successfully retrieved all users
             401:
-                $ref: "../responses/401.yaml#/UnauthorizedError"
+                $ref: "../responses/401/unauthorized_error.yaml#/UnauthorizedError"
 
     post:
         summary: Adds a user

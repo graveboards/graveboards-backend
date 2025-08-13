@@ -31,7 +31,6 @@ class QueueSchema(BaseModel, BaseModelExtra):
 
     FRONTEND_INCLUDE: ClassVar = {
         "id": True,
-        "user_id": True,
         "name": True,
         "description": True,
         "is_open": True,

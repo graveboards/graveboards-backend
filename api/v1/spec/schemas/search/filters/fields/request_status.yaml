@@ -22,11 +22,17 @@ RequestStatusConditions:
             type: boolean
 
 RequestStatusValue:
+    description: >
+        ### The status of the request
+        
+         * -1 = Rejected
+         * 0 = Pending
+         * 1 = Accepted
     type: integer
     enum:
-        - -1 # Rejected
-        - 0 # Pending
-        - 1 # Accepted
+        - -1
+        - 0
+        - 1
 
 RequestStatusContainer:
     type: array

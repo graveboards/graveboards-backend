@@ -22,14 +22,4 @@ RequestPatch:
     type: object
     properties:
         status:
-            type: integer
-            description: >
-                ### The status of the request
-                
-                 * -1 = Rejected
-                 * 0 = Undetermined
-                 * 1 = Accepted
-            enum:
-                - -1
-                - 0
-                - 1
+            $ref: "./search/filters/fields/request_status.yaml#/RequestStatusValue"
