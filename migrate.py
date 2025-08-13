@@ -15,7 +15,7 @@ from setup import setup
 async def migrate():
     setup_logging()
     logger = logging.getLogger("maintenance")
-    logger.info("Starting migration...\n")
+    logger.info("Starting migration...")
 
     rc = RedisClient()
     db = PostgresqlDB()
@@ -32,10 +32,18 @@ async def migrate():
             if not await db.get_beatmapset(id=beatmapset_id):
                 try:
                     bm = BeatmapManager(rc, db)
-                    await bm.archive(beatmapset_id)
+                    changelog = await bm.archive(beatmapset_id)
+                    row["beatmapset_snapshot_id"] = changelog["snapshotted_beatmapset"]["id"]
                 except HTTPStatusError as e:
                     if e.response.status_code == 404:
                         continue
+            else:
+                beatmapset_snapshot = await db.get_beatmapset_snapshot(id=beatmapset_id, _reversed=True)
+
+                if beatmapset_snapshot is None:
+                    raise ValueError(f"BeatmapsetSnapshot for beatmapset {beatmapset_id} not found")
+
+                row["beatmapset_snapshot_id"] = beatmapset_snapshot.id
 
             if not await db.get_request(**row):
                 await db.add_request(**row)
@@ -44,10 +52,9 @@ async def migrate():
             bar = "=" * (progress // 2)
             spaces = " " * (50 - len(bar))
 
-            if __name__ == "__main__":
-                print(f"\r[requests] [{bar}{spaces}] {progress}% ({i}/{total_rows})", end="")
+            logger.info(f"[requests] [{bar}{spaces}] {progress}% ({i}/{total_rows})")
 
-    logger.info("\nMigration complete!")
+    logger.info("Migration complete!")
 
 
 if __name__ == "__main__":
