@@ -31,9 +31,9 @@ def role_authorization(*required_roles: RoleName, one_of: Iterable[RoleName] = N
 
             try:
                 user_id = kwargs["user"]
-            except ValueError:
+            except KeyError:
                 func_path = ".".join((func.__module__, func.__name__))
-                raise KeyError(f"Decorated function '{func_path}' must accept **kwargs to use @role_authorization")
+                raise ValueError(f"Decorated function '{func_path}' must accept **kwargs to use @role_authorization")
 
             user = await db.get_user(id=user_id, _loading_options={"roles": True})
             user_roles = {RoleName(role.name) for role in user.roles}
