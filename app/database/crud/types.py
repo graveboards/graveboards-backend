@@ -1,10 +1,4 @@
-from typing import TypedDict, Literal, Union, NotRequired
+from typing import TypeVar, Mapping, Union
 
-LoadingStrategy = Literal["joinedload", "selectinload", "noload"]
-LoadingOptionsConfig = Union[bool, LoadingStrategy, "LoadingNode"]
-LoadingOptions = dict[str, LoadingOptionsConfig]
-
-
-class LoadingNode(TypedDict):
-    strategy: NotRequired[LoadingStrategy]
-    options: "LoadingOptions"
+AttrName = TypeVar("AttrName", bound=str)
+Include = Mapping[AttrName, Union[bool, "Include[AttrName]"]]

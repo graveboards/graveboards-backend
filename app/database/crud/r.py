@@ -1,14 +1,19 @@
-from typing import Iterable, Any
+from typing import Iterable, Any, Optional, Union
 
 from sqlalchemy.sql import select, desc
+from sqlalchemy.sql.elements import ColumnElement, BinaryExpression
 from sqlalchemy.sql.selectable import Select
-from sqlalchemy.orm.strategy_options import selectinload, joinedload, noload, defer, Load
+from sqlalchemy.orm.attributes import QueryableAttribute
+from sqlalchemy.orm.interfaces import LoaderOption
+from sqlalchemy.orm.relationships import RelationshipProperty
+from sqlalchemy.orm.strategy_options import selectinload, joinedload, noload, Load
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import BaseType, ModelClass, Base
 from app.utils import clamp
 from .decorators import session_manager
-from .types import LoadingStrategy, LoadingOptions, LoadingOptionsConfig
+from .types import Include
+from .utils import is_lazy
 
 QUERY_MIN_LIMIT = 1
 QUERY_MAX_LIMIT = 100
@@ -18,203 +23,299 @@ QUERY_DEFAULT_LIMIT = 50
 class _R:
     @staticmethod
     async def _get_instance(
-            model_class: ModelClass,
-            session: AsyncSession,
-            **kwargs
+        model_class: ModelClass,
+        session: AsyncSession,
+        _select: Union[str, Iterable[str]] = None,
+        _join: Union[Any, Iterable[Any]] = None,
+        _where: Union[Any, Iterable[Any]] = None,
+        _order_by: Union[Any, Iterable[Any]] = None,
+        _reversed: bool = False,
+        _include: Include = None,
+        _offset: int = 0,
+        **kwargs
     ) -> BaseType:
-        select_stmt = _R._construct_stmt(model_class, **kwargs)
+        select_stmt = _R._construct_stmt(model_class, _select, _join, _where, _order_by, _reversed, _include, **kwargs)
+        select_stmt = select_stmt.offset(_offset)
 
         return await session.scalar(select_stmt)
 
     @staticmethod
     async def _get_instances(
-            model_class: ModelClass,
-            session: AsyncSession,
-            _limit: int = QUERY_DEFAULT_LIMIT,
-            _offset: int = 0,
-            **kwargs
+        model_class: ModelClass,
+        session: AsyncSession,
+        _select: Union[str, Iterable[str]] = None,
+        _join: Union[Any, Iterable[Any]] = None,
+        _where: Union[Any, Iterable[Any]] = None,
+        _order_by: Union[Any, Iterable[Any]] = None,
+        _reversed: bool = False,
+        _include: Include = None,
+        _limit: int = QUERY_DEFAULT_LIMIT,
+        _offset: int = 0,
+        **kwargs
     ) -> list[BaseType]:
-        select_stmt = _R._construct_stmt(model_class, **kwargs)
+        select_stmt = _R._construct_stmt(model_class, _select, _join, _where, _order_by, _reversed, _include, **kwargs)
         select_stmt = select_stmt.limit(clamp(_limit, QUERY_MIN_LIMIT, QUERY_MAX_LIMIT)).offset(_offset)
 
         return list((await session.scalars(select_stmt)).all())
 
     @staticmethod
     def _construct_stmt(
-            model_class: ModelClass,
-            _select: str | Iterable[str] = None,
-            _where: Any | Iterable[Any] = None,
-            _reversed: bool = False,
-            _loading_options: LoadingOptions = None,
-            _eager_loads: dict[str, LoadingStrategy] = None,  # Deprecated
-            _auto_eager_loads: Iterable[str] = None,  # Deprecated
-            _exclude: Iterable[str] = None,
-            _exclude_lazy: bool = False,
-            **kwargs
+        model_class: ModelClass,
+        _select: Union[str, Iterable[str]] = None,
+        _join: Union[Any, Iterable[Any]] = None,
+        _where: Union[Any, Iterable[Any]] = None,
+        _order_by: Union[Any, Iterable[Any]] = None,
+        _reversed: bool = False,
+        _include: Include = None,
+        **kwargs
     ) -> Select:
-        if _eager_loads or _auto_eager_loads:
-            raise DeprecationWarning("_eager_loads and _auto_eager_loads are deprecated, use _loading_options instead")
-        if _loading_options and (_eager_loads or _auto_eager_loads):
-            raise ValueError("_loading_options are mutually exclusive to _eager_loads and _auto_eager_loads")
-        if _eager_loads and _auto_eager_loads:
-            raise ValueError("_eager_loads and _auto_eager_loads are mutually exclusive")
-
-        if _select is not None:
-            if not isinstance(_select, (list, tuple, set)):
-                _select = [_select]
-
-            column_map = model_class.value.__annotations__
-            targets = []
-
-            for target_name in _select:
-                if target_name not in column_map:
-                    raise ValueError(f"{target_name} is not a valid column nor relationship of {model_class.value}")
-
-                targets.append(getattr(model_class.value, target_name))
-
-            select_stmt = select(*targets).filter_by(**kwargs)
+        if _select:
+            select_stmt = _R._apply_select(model_class, _select)
         else:
-            select_stmt = select(model_class.value).filter_by(**kwargs)
+            select_stmt = select(model_class.value)
 
-        if _where is not None:
-            if not isinstance(_where, (list, tuple, set)):
-                _where = [_where]
+        if _join is not None:
+            select_stmt = _R._apply_join(select_stmt, _join)
 
-            select_stmt = select_stmt.where(*_where)
+        if _where:
+            select_stmt = _R._apply_where(select_stmt, _where)
 
-        if _reversed:
+        if _order_by is not None:
+            select_stmt = _R._apply_order_by(select_stmt, model_class, _order_by)
+        elif _reversed:
             select_stmt = _R._apply_reversed(select_stmt, model_class)
 
-        if _loading_options:
-            select_stmt = _R._apply_loading_options(select_stmt, model_class, _loading_options)
+        if _include and not _select:
+            select_stmt, included_paths = _R._apply_include(select_stmt, model_class, _include)
 
-        if _eager_loads:
-            select_stmt = _R._apply_eager_loads(select_stmt, model_class, _eager_loads)
+        if not _select:
+            select_stmt = _R._apply_exclude_lazy(select_stmt, model_class, _include)
 
-        if _auto_eager_loads:
-            select_stmt = _R._apply_auto_eager_loads(select_stmt, model_class, _auto_eager_loads)
-
-        if _exclude:
-            select_stmt = _R._apply_exclude(select_stmt, model_class, _exclude)
-
-        if _exclude_lazy:
-            select_stmt = _R._apply_exclude_lazy(select_stmt, model_class)
+        select_stmt = select_stmt.filter_by(**kwargs)
 
         return select_stmt
 
     @staticmethod
-    def _apply_reversed(select_stmt: Select, model_class: ModelClass) -> Select:
+    def _apply_select(
+        model_class: ModelClass,
+        select_: Union[str, Iterable[str]]
+    ) -> Select:
+        if not isinstance(select_, (list, tuple, set)):
+            select_ = [select_]
+
+        model = model_class.value
+        targets = []
+
+        for name in select_:
+            if name not in model_class.all_names:
+                raise ValueError(f"Attribute '{name}' is not a valid column, relationship, nor hybrid property of {model_class.value}")
+
+            if name in model_class.relationship_names:
+                raise ValueError(f"Invalid attribute '{name}': cannot select relationships")
+
+            targets.append(getattr(model, name))
+
+        stmt = select(*targets)
+
+        return stmt
+
+    @staticmethod
+    def _apply_join(
+        select_stmt: Select,
+        join: Union[type[BaseType], tuple[type[BaseType], BinaryExpression], Iterable[type[BaseType]], Iterable[tuple[type[BaseType], BinaryExpression]]]
+    ) -> Select:
+        def is_base(t: Any) -> bool:
+            return isinstance(t, type) and issubclass(t, Base)
+
+        def is_tuple(t: Any) -> bool:
+            return isinstance(t, tuple) and len(t) == 2 and issubclass(t[0], Base) and isinstance(t[1], BinaryExpression)
+
+        if is_base(join):
+            join = [(join,)]
+        elif is_tuple(join):
+            join = [join]
+        elif isinstance(join, (list, tuple, set)):
+            for i, target in enumerate(join):
+                if is_base(target):
+                    join[i] = [(target,)]
+                elif is_tuple(target):
+                    pass
+                else:
+                    raise TypeError(f"Invalid input for join: index={i}, value={target}")
+        else:
+            raise TypeError(f"Invalid input for join: {join}")
+
+        for target in join:
+            select_stmt = select_stmt.join(*target)
+
+        return select_stmt
+
+    @staticmethod
+    def _apply_where(
+        select_stmt: Select,
+        where: Union[Any, Iterable[Any]]
+    ) -> Select:
+        if not isinstance(where, (list, tuple, set)):
+            where = [where]
+
+        return select_stmt.where(*where)
+
+    @staticmethod
+    def _apply_order_by(
+        select_stmt: Select,
+        model_class: ModelClass,
+        order_by: Union[Any, Iterable[Any]]
+    ) -> Select:
+        if not isinstance(order_by, (list, tuple, set)):
+            order_by = [order_by]
+
+        clauses = []
+
+        for item in order_by:
+            if isinstance(item, ColumnElement):
+                clauses.append(item)
+            elif isinstance(item, str):
+                is_desc = item.startswith("-")
+                field = item[1:] if is_desc else item
+
+                if field not in model_class.all_names:
+                    raise ValueError(f"Attribute '{field}' is not a valid column, relationship, nor hybrid property of {model_class.value}")
+
+                if field in model_class.relationship_names:
+                    raise ValueError(f"Invalid attribute '{field}': cannot order by a relationship")
+
+                col = model_class.mapper.attrs[field]
+                clauses.append(col.desc() if is_desc else col.asc())
+            else:
+                raise TypeError(f"Invalid _order_by value: {item!r}")
+
+        return select_stmt.order_by(*clauses)
+
+    @staticmethod
+    def _apply_reversed(
+        select_stmt: Select,
+        model_class: ModelClass
+    ) -> Select:
         return select_stmt.order_by(desc(model_class.mapper.primary_key[0]))
 
     @staticmethod
-    def _apply_eager_loads(select_stmt: Select, model_class: ModelClass, eager_loads: dict[str, LoadingStrategy]) -> Select:
-        load_options = []
+    def _apply_include(
+        select_stmt: Select,
+        model_class: ModelClass,
+        include: Include
+    ) -> tuple[Select, set[str]]:
+        included_paths: set[str] = set()
 
-        for attr_name, strategy in eager_loads.items():
-            if attr_name in model_class.mapper.relationships:
-                attr = model_class.mapper.attrs[attr_name]
+        def parse_node(
+                attr: QueryableAttribute,
+                rel_info: RelationshipProperty,
+                target_model_class: ModelClass,
+                value: Union[bool, Include],
+                path: str
+        ) -> LoaderOption:
+            included_paths.add(path)
 
-                if strategy == "joinedload":
-                    load_options.append(joinedload(attr))
-                elif strategy == "selectinload":
-                    load_options.append(selectinload(attr))
+            if isinstance(value, bool) and value:
+                return selectinload(attr) if rel_info.uselist else joinedload(attr)
+            elif isinstance(value, bool) and not value:
+                return noload(attr)
+            elif isinstance(value, dict):
+                options = parse_includes(target_model_class, value, path)
+                loader = selectinload(attr) if rel_info.uselist else joinedload(attr)
+                return loader.options(*options)
+            else:
+                raise TypeError(f"Invalid value type for nested include '{attr.key}': Expected bool or dict, got {type(value).__name__}")
+
+        def parse_includes(
+            parent_model_class: ModelClass,
+            includes: Include,
+            prefix: str = ""
+        ) -> list[LoaderOption]:
+            options: list[LoaderOption] = []
+
+            for attr_name, value in includes.items():
+                if attr_name in parent_model_class.relationship_names:
+                    attr = parent_model_class.mapper.attrs[attr_name]
+                    rel_info = parent_model_class.mapper.relationships[attr_name]
+                    target_model_class = ModelClass(rel_info.mapper.class_)
+                    path = f"{prefix}.{attr_name}" if prefix else attr_name
+                elif attr_name in parent_model_class.column_names | parent_model_class.hybrid_property_names:
+                    continue  # Ignore columns and hybrid properties
                 else:
-                    raise ValueError(f"Unsupported loading strategy: {strategy}")
-            else:
-                raise ValueError(f"{attr_name} is not a valid relationship in {model_class.value}")
+                    raise ValueError(f"Attribute '{attr_name}' is not a valid relationship, column, nor property of {parent_model_class.value}")
 
-        return select_stmt.options(*load_options)
+                loader = parse_node(attr, rel_info, target_model_class, value, path)
+                options.append(loader)
 
-    @staticmethod
-    def _apply_auto_eager_loads(select_stmt: Select, model_class: ModelClass, relationships: Iterable[str]) -> Select:
-        load_options = []
+            return options
 
-        for attr_name in relationships:
-            if attr_name in model_class.mapper.relationships:
-                attr = model_class.mapper.attrs[attr_name]
-                is_collection = model_class.mapper.relationships[attr_name].uselist
-
-                if is_collection:
-                    load_options.append(selectinload(attr))
-                else:
-                    load_options.append(joinedload(attr))
-            else:
-                raise ValueError(f"{attr_name} is not a valid relationship in {model_class.value}")
-
-        return select_stmt.options(*load_options)
+        load_options = parse_includes(model_class, include)
+        return select_stmt.options(*load_options), included_paths
 
     @staticmethod
-    def _apply_loading_options(select_stmt: Select, model_class: ModelClass, loading_options: LoadingOptions) -> Select:
-        def parse_node(attr_name: str, config: LoadingOptionsConfig, parent_model_class: ModelClass) -> Load:
-            if attr_name not in parent_model_class.mapper.relationships:
-                raise ValueError(f"{attr_name} is not a valid relationship in {parent_model_class.value}")
+    def _apply_exclude_lazy(
+        select_stmt: Select,
+        model_class: ModelClass,
+        include: Include | None
+    ) -> Select:
+        if include is None:
+            include = {}
 
-            attr = parent_model_class.mapper.attrs[attr_name]
-            rel_info = parent_model_class.mapper.relationships[attr_name]
-            target_model_class = ModelClass(rel_info.mapper.class_)
+        def exclude_unincluded(
+            parent_model_class,
+            includes: Include,
+            base_loader: Load = None
+        ):
+            options: list[LoaderOption] = []
 
-            if config is True:
-                strategy = "selectinload" if rel_info.uselist else "joinedload"
-                children = None
-            elif config is False:
-                strategy = "noload"
-                children = None
-            elif isinstance(config, str):
-                strategy = config
-                children = None
-            elif isinstance(config, dict):
-                strategy = config.get("strategy")
-                children = config.get("options")
+            for rel in parent_model_class.mapper.relationships:
+                if not is_lazy(rel):
+                    continue
 
-                if strategy is None:
-                    strategy = "selectinload" if rel_info.uselist else "joinedload"
-            else:
-                raise ValueError(f"Invalid config for relationship '{attr_name}': {config}")
+                attr = parent_model_class.mapper.attrs[rel.key]
 
-            if strategy == "joinedload":
-                loader = joinedload(attr)
-            elif strategy == "selectinload":
-                loader = selectinload(attr)
-            elif strategy == "noload":
-                loader = noload(attr)
-            else:
-                raise ValueError(f"Unsupported loading strategy: {strategy}")
+                loader = (
+                    base_loader.noload(attr)
+                    if base_loader is not None
+                    else noload(attr)
+                )
 
-            if children and strategy != "noload":
-                for child_attr, child_config in children.items():
-                    loader = loader.options(parse_node(child_attr, child_config, target_model_class))
+                if rel.key not in includes:
+                    options.append(loader)
+                    continue
 
-            return loader
+                value = includes[rel.key]
 
-        load_options = [parse_node(attr, config, model_class) for attr, config in loading_options.items()]
+                if value is False or (isinstance(value, dict) and not value):
+                    options.append(loader)
+                    continue
+
+                if value is True:
+                    value = {}  # No sub-relationships of attr are loaded
+
+                next_base = (
+                    base_loader.selectinload(attr)
+                    if rel.uselist
+                    else base_loader.joinedload(attr)
+                ) if base_loader else (
+                    selectinload(attr)
+                    if rel.uselist
+                    else joinedload(attr)
+                )
+
+                target_model_class = ModelClass(rel.mapper.class_)
+                options.extend(
+                    exclude_unincluded(
+                        target_model_class,
+                        value,
+                        next_base
+                    )
+                )
+
+            return options
+
+        load_options = exclude_unincluded(model_class, include)
         return select_stmt.options(*load_options)
-
-    @staticmethod
-    def _apply_exclude(select_stmt: Select, model_class: ModelClass, exclude: Iterable[str]) -> Select:
-        load_options = []
-
-        for attr_name in exclude:
-            if attr_name in model_class.mapper.columns:
-                attr = model_class.mapper.attrs[attr_name]
-                load_options.append(defer(attr))
-            elif attr_name in model_class.mapper.relationships:
-                attr = model_class.mapper.attrs[attr_name]
-                load_options.append(noload(attr))
-            else:
-                raise ValueError(f"{attr_name} is not a valid column nor relationship in {model_class.value}")
-
-        return select_stmt.options(*load_options)
-
-
-    @staticmethod
-    def _apply_exclude_lazy(select_stmt: Select, model_class: ModelClass) -> Select:
-        noload_relationships = [
-            noload(attr)
-            for attr in model_class.mapper.relationships
-            if attr.lazy is True or attr.lazy in {"select", "dynamic", "raise_on_sql"}
-        ]
-
-        return select_stmt.options(*noload_relationships)
 
 
 class R(_R):

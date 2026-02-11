@@ -1,15 +1,12 @@
 from connexion import request
 
-from api.utils import prime_query_kwargs
+from api.utils import build_pydantic_include
+from app.spec import get_include_schema
 from app.database import PostgresqlDB
 from app.database.models import Beatmap, ModelClass
 from app.database.schemas import BeatmapSchema
 from . import snapshots
 
-_LOADING_OPTIONS = {
-    "snapshots": False,
-    "leaderboards": False
-}
 
 
 async def search(**kwargs):
@@ -21,10 +18,18 @@ async def search(**kwargs):
         Beatmap,
         **kwargs
     )
+
+    if not beatmaps:
+        return [], 200, {"Content-Type": "application/json"}
+
+    include = build_pydantic_include(
+        obj=beatmaps[0],
+        include_schema=get_include_schema(ModelClass.BEATMAP),
+        request_include=kwargs.get("_include")
+    )
+
     beatmaps_data = [
-        BeatmapSchema.model_validate(beatmap).model_dump(
-            exclude={"snapshots", "leaderboards"}
-        )
+        BeatmapSchema.model_validate(beatmap).model_dump(include=include)
         for beatmap in beatmaps
     ]
 

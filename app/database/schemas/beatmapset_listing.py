@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, ClassVar
+from typing import Optional
 
 from pydantic.main import BaseModel
 from pydantic.config import ConfigDict
@@ -17,7 +17,3 @@ class BeatmapsetListingSchema(BaseModel, BaseModelExtra):
     updated_at: datetime
 
     beatmapset_snapshot: "BeatmapsetSnapshotSchema"
-
-    FRONTEND_INCLUDE: ClassVar = {
-        "beatmapset_snapshot": BeatmapsetSnapshotSchema.FRONTEND_INCLUDE
-    }

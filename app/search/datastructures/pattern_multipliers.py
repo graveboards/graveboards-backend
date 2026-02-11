@@ -25,7 +25,7 @@ class PatternMultipliers(BaseModel):
         if any(getattr(self, field) is not None for field in self.model_fields):
             return self
 
-        raise AllValuesNullError("PatternMultipliers")
+        raise AllValuesNullError("pattern_multipliers")
 
     def get_patterns(self, term: str) -> list[tuple[PatternName, str, Optional[int]]]:
         return [

@@ -3,6 +3,7 @@ import json
 from connexion import request
 
 from api.utils import pop_auth_info
+from app.patches.validators import validate_include
 from app.database import PostgresqlDB
 from app.redis import RedisClient
 from app.exceptions import (
@@ -10,11 +11,22 @@ from app.exceptions import (
     FieldNotSupportedError,
     FieldConditionValidationError,
     UnknownFieldCategoryError,
-    AllValuesNullError
+    AllValuesNullError,
+    IncludeValidationError,
 )
-from app.search import compress_query, decompress_query, SearchSchema, SearchEngine
+from app.search import compress_query, decompress_query, SearchSchema, SearchEngine, SCOPE_MODEL_MAPPING
+from app.spec import get_include_schema
 
-EXCEPTIONS = (ValueError, TypeError, FieldValidationError, FieldNotSupportedError, FieldConditionValidationError, UnknownFieldCategoryError, AllValuesNullError)
+EXCEPTIONS = (
+    ValueError,
+    TypeError,
+    FieldValidationError,
+    FieldNotSupportedError,
+    FieldConditionValidationError,
+    UnknownFieldCategoryError,
+    AllValuesNullError,
+    IncludeValidationError
+)
 
 
 async def search(**kwargs):
@@ -25,7 +37,7 @@ async def search(**kwargs):
 
     try:
         compressed = kwargs.pop("compressed", False)
-        frontend_mode = kwargs.pop("frontend_mode", False)
+        include = kwargs.pop("include", None)
 
         if compressed:
             q = decompress_query(kwargs.pop("q"))
@@ -34,14 +46,16 @@ async def search(**kwargs):
             q = json.loads(kwargs.pop("q"))
             sq = SearchSchema.model_validate(q)
 
-        se = SearchEngine(sq.scope, search_terms=sq.search_terms, sorting=sq.sorting, filters=sq.filters, frontend_mode=frontend_mode)
+        validate_include(include, get_include_schema(SCOPE_MODEL_MAPPING[sq.scope]))
+
+        se = SearchEngine(sq.scope, search_terms=sq.search_terms, sorting=sq.sorting, filters=sq.filters)
 
         async with db.session() as session:
             page = await se.search(session, **kwargs, debug=True)
     except EXCEPTIONS as e:
         return {"message": str(e)}, 400
 
-    page_data = se.dump(page)
+    page_data = se.dump(page, include=include)
 
     return page_data, 200
 

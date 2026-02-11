@@ -1,19 +1,14 @@
 from connexion import request
 
-from api.utils import prime_query_kwargs, bleach_body
+from api.utils import bleach_body, build_pydantic_include
 from app.database import PostgresqlDB
 from app.database.models import Queue, ModelClass
 from app.database.schemas import QueueSchema
 from app.security import role_authorization
 from app.security.overrides import queue_owner_override
 from app.database.enums import RoleName
+from app.spec import get_include_schema
 
-_LOADING_OPTIONS = {
-    "requests": False,
-    "managers": False,
-    "user_profile": False,
-    "manager_profiles": False
-}
 
 
 async def search(**kwargs):
@@ -25,10 +20,18 @@ async def search(**kwargs):
         Queue,
         **kwargs
     )
+
+    if not queues:
+        return [], 200, {"Content-Type": "application/json"}
+
+    include = build_pydantic_include(
+        obj=queues[0],
+        include_schema=get_include_schema(ModelClass.QUEUE),
+        request_include=kwargs.get("_include")
+    )
+
     queues_data = [
-        QueueSchema.model_validate(queue).model_dump(
-            exclude={"requests", "managers", "user_profile", "manager_profiles"}
-        )
+        QueueSchema.model_validate(queue).model_dump(include=include)
         for queue in queues
     ]
 
@@ -41,17 +44,21 @@ async def get(queue_id: int):
     queue = await db.get(
         Queue,
         id=queue_id,
-        _loading_options=_LOADING_OPTIONS,
+        **kwargs
     )
 
     if not queue:
         return {"message": f"Queue with ID '{queue_id}' not found"}, 404
 
-    queue_data = QueueSchema.model_validate(queue).model_dump(
-        exclude={"requests", "managers", "user_profile", "manager_profiles"}
+    include = build_pydantic_include(
+        obj=queue,
+        include_schema=get_include_schema(ModelClass.QUEUE),
+        request_include=kwargs.get("_include")
     )
 
     return queue_data, 200
+    queue_data = QueueSchema.model_validate(queue).model_dump(include=include)
+
 
 
 # @role_authorization(RoleName.ADMIN, override=matching_user_id_override, override_kwargs={"resource_user_id_lookup": "body.user_id"})  # Disable regular users from adding queues for now
@@ -61,8 +68,7 @@ async def post(body: dict, **kwargs):
 
     body = bleach_body(
         body,
-        whitelisted_keys=QueueSchema.model_fields.keys(),
-        blacklisted_keys={"id", "created_at", "updated_at", "requests", "managers", "user_profile", "manager_profiles"}
+        whitelisted_keys={"user_id", "name", "description", "visibility"}
     )
 
     await db.add(Queue, **body)
@@ -76,8 +82,7 @@ async def patch(queue_id: int, body: dict, **kwargs):
 
     body = bleach_body(
         body,
-        whitelisted_keys=QueueSchema.model_fields.keys(),
-        blacklisted_keys={"id", "user_id", "created_at", "updated_at", "requests", "managers", "user_profile", "manager_profiles"}
+        whitelisted_keys={"name", "description", "visibility", "is_open"}
     )
 
     queue = await db.get(Queue, id=queue_id)

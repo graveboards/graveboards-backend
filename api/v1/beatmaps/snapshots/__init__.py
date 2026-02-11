@@ -1,6 +1,7 @@
 from connexion import request
 
 from api.utils import prime_query_kwargs
+from app.spec import get_include_schema
 from app.database import PostgresqlDB
 from app.database.models import BeatmapSnapshot, ModelClass
 from app.database.schemas import BeatmapSnapshotSchema

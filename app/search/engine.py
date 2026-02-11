@@ -10,8 +10,8 @@ from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql.selectable import Select
 
+from api.utils import build_pydantic_include
 from app.database.models import (
-    ModelClass,
     BeatmapListing,
     BeatmapsetListing,
     BeatmapsetSnapshot,
@@ -19,12 +19,6 @@ from app.database.models import (
     Queue,
     Request,
     beatmap_snapshot_beatmapset_snapshot_association
-)
-from app.database.schemas import (
-    BeatmapListingSchema,
-    BeatmapsetListingSchema,
-    QueueSchema,
-    RequestSchema
 )
 from app.database.ctes.search_terms_scored import (
     search_terms_scored_ctes_factory,
@@ -42,6 +36,7 @@ from app.database.ctes.request.filtering import request_filtering_cte_factory
 from app.database.ctes.queue.sorting import queue_sorting_cte_factory
 from app.database.ctes.queue.filtering import queue_filtering_cte_factory
 from app.database.utils import get_filter_condition
+from app.spec import get_include_schema
 from .datastructures import ConditionValue, SearchTermsSchema, SortingSchema, FiltersSchema
 from .enums import Scope, SearchableFieldCategory, FilterOperator, ModelField, CATEGORY_NAMES
 from .mappings import SCOPE_MODEL_MAPPING, SCOPE_SCHEMA_MAPPING, SCOPE_OPTIONS_MAPPING
@@ -50,30 +45,6 @@ DEFAULT_LIMIT = 50
 DEFAULT_OFFSET = 0
 ResultsType = Union[Sequence[BeatmapListing], Sequence[BeatmapsetListing], ..., Sequence[Queue], Sequence[Request]]
 
-SCOPE_EXCLUDE_MAPPING = {
-    Scope.BEATMAPS: ...,
-    Scope.BEATMAPSETS: {
-        "beatmapset_snapshot": {
-            "beatmap_snapshots": {
-                "__all__": {"beatmapset_snapshots", "leaderboard"}
-            }
-        }
-    },
-    Scope.SCORES: ...,
-    Scope.QUEUES: {
-        "requests": True,
-        "managers": True
-    },
-    Scope.REQUESTS: {
-        "beatmapset_snapshot": {
-            "beatmap_snapshots": {
-                "__all__": {"beatmapset_snapshots", "leaderboard"}
-            }
-        },
-        "queue": {"requests", "managers"}
-    }
-}
-
 
 class SearchEngine:
     def __init__(
@@ -81,14 +52,11 @@ class SearchEngine:
         scope: Scope,
         search_terms: SearchTermsSchema | dict[str, Union[str, list[str], bool, dict[str, int]]] = None,
         sorting: SortingSchema | list[dict[str, str]] = None,
-        filters: FiltersSchema | dict[str, dict[str, Union[dict[str, ConditionValue], ConditionValue, bool, None]]] = None,
-        frontend_mode: bool = False
+        filters: FiltersSchema | dict[str, dict[str, Union[dict[str, ConditionValue], ConditionValue, bool, None]]] = None
     ):
         self.scope = scope
-        self.frontend_mode = frontend_mode
         self.model_class = SCOPE_MODEL_MAPPING[scope]
         self.schema_class = SCOPE_SCHEMA_MAPPING[scope]
-        self.exclude = SCOPE_EXCLUDE_MAPPING[scope]
 
         if isinstance(search_terms, SearchTermsSchema) or search_terms is None:
             self.search_terms = search_terms
@@ -565,19 +533,18 @@ class SearchEngine:
         if filtering_clauses:
             self.query = self.query.where(and_(*filtering_clauses))
 
-    def dump(self, page: ResultsType) -> list[dict[str, Any]]:
-        if self.frontend_mode:
-            include = self.schema_class.FRONTEND_INCLUDE
-            exclude = None
-        else:
-            include = None
-            exclude = self.exclude
+    def dump(self, page: ResultsType, include: dict = None) -> list[dict[str, Any]]:
+        if not page:
+            return []
+
+        include = build_pydantic_include(
+            obj=page[0],
+            include_schema=get_include_schema(SCOPE_MODEL_MAPPING[self.scope]),
+            request_include=include
+        )
 
         return [
-            self.schema_class.model_validate(model).model_dump(
-                include=include,
-                exclude=exclude
-            )
+            self.schema_class.model_validate(model).model_dump(include=include)
             for model in page
         ]
 

@@ -134,3 +134,10 @@ class RedisLockTimeoutError(TimeoutError):
     @property
     def message(self) -> str:
         return f"Could not acquire lock for '{self.key}' after {self.timeout} seconds"
+
+
+class IncludeValidationError(ValueError):
+    def __init__(self, path: Sequence[str], message: str):
+        self.path = path
+        self.message = message
+        super().__init__(f"{'.'.join(path)}: {message}")

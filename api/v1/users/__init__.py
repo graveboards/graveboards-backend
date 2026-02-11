@@ -1,22 +1,14 @@
 from connexion import request
 
-from api.utils import prime_query_kwargs
+from api.utils import build_pydantic_include, bleach_body
 from app.database import PostgresqlDB
 from app.database.models import User, ModelClass
 from app.database.schemas import UserSchema
 from app.database.enums import RoleName
 from app.security import role_authorization
 from app.security.overrides import matching_user_id_override
+from app.spec import get_include_schema
 
-_LOADING_OPTIONS = {
-    "profile": True,
-    "roles": True,
-    "scores": False,
-    "tokens": False,
-    "queues": False,
-    "requests": False,
-    "beatmapsets": False
-}
 
 
 @role_authorization(RoleName.ADMIN)
@@ -29,10 +21,18 @@ async def search(**kwargs):
         User,
         **kwargs
     )
+
+    if not users:
+        return [], 200, {"Content-Type": "application/json"}
+
+    include = build_pydantic_include(
+        obj=users[0],
+        include_schema=get_include_schema(ModelClass.USER),
+        request_include=kwargs.get("_include")
+    )
+
     users_data = [
-        UserSchema.model_validate(user).model_dump(
-            exclude={"scores", "tokens", "queues", "requests", "beatmapsets"}
-        )
+        UserSchema.model_validate(user).model_dump(include=include)
         for user in users
     ]
 
@@ -54,11 +54,15 @@ async def get(user_id: int, **kwargs):
     if not user:
         return {"message": f"User with ID '{user_id}' not found"}, 404
 
-    user_data = UserSchema.model_validate(user).model_dump(
-        exclude={"scores", "tokens", "queues", "requests", "beatmapsets"}
+    include = build_pydantic_include(
+        obj=user,
+        include_schema=get_include_schema(ModelClass.USER),
+        request_include=kwargs.get("_include")
     )
 
-    return user_data, 200
+    user_data = UserSchema.model_validate(user).model_dump(include=include)
+
+    return user_data, 200, {"Content-Type": "application/json"}
 
 
 @role_authorization(RoleName.ADMIN)
@@ -69,6 +73,10 @@ async def post(body: dict, **kwargs):
     if await db.get(User, id=body["user_id"]):
 
         return {"message": f"The user with ID '{user_id}' already exists"}, 409
+    body = bleach_body(
+        body,
+        whitelisted_keys={"user_id"}
+    )
 
     await db.add(User, **body)
 

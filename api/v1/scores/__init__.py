@@ -1,9 +1,10 @@
 from connexion import request
 
-from api.utils import prime_query_kwargs, bleach_body
+from api.utils import bleach_body, build_pydantic_include
 from app.database import PostgresqlDB
 from app.database.models import Score, User, Beatmap, BeatmapSnapshot, Leaderboard, ModelClass
 from app.database.schemas import ScoreSchema
+from app.spec import get_include_schema
 from app.utils import parse_iso8601
 from app.security import role_authorization
 from app.database.enums import RoleName
@@ -18,8 +19,18 @@ async def search(**kwargs):
         Score,
         **kwargs
     )
+
+    if not scores:
+        return [], 200, {"Content-Type": "application/json"}
+
+    include = build_pydantic_include(
+        obj=scores[0],
+        include_schema=get_include_schema(ModelClass.SCORE),
+        request_include=kwargs.get("_include")
+    )
+
     scores_data = [
-        ScoreSchema.model_validate(score).model_dump()
+        ScoreSchema.model_validate(score).model_dump(include=include)
         for score in scores
     ]
 

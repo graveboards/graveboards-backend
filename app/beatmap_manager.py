@@ -117,12 +117,6 @@ class BeatmapManager:
         await self._update_beatmaps(beatmapset_dict["beatmaps"])
 
         checksum = combine_checksums([beatmap["checksum"] for beatmap in beatmapset_dict["beatmaps"]])
-        loading_options = {
-            "beatmap_snapshots": False,
-            "beatmapset_tags": False,
-            "user_profile": False
-        }
-
         beatmapset_snapshot = await self.db.get(
             BeatmapsetSnapshot,
             checksum=checksum,
@@ -144,19 +138,12 @@ class BeatmapManager:
             logger.debug(f"Updated beatmapset: {info}")
 
     async def _update_beatmaps(self, beatmap_dicts: list[dict]):
-        loading_options = {
-            "beatmapset_snapshots": False,
-            "beatmap_tags": True,
-            "leaderboard": False,
-            "owner_profiles": True
-        }
-
         for beatmap_dict in beatmap_dicts:
             async with self.db.session() as session:
                 beatmap_snapshot = await self.db.get(
                     BeatmapSnapshot,
                     checksum=beatmap_dict["checksum"],
-                    _loading_options=loading_options,
+                    _include={"beatmap_tags": True, "owner_profiles": True},
                     session=session
                 )
                 old = BeatmapOsuApiSchema.model_validate(beatmap_snapshot, from_attributes=True).model_dump()
@@ -397,7 +384,7 @@ class BeatmapManager:
 
         return file_path
 
-    async def get_zip(self, beatmapset_id: int, snapshot_number: int) -> BytesIO:
+    async def get_zip(self, beatmapset_id: int, snapshot_number: int = -1) -> BytesIO:
         if snapshot_number < 0:
             offset = abs(snapshot_number) - 1
 
@@ -405,6 +392,7 @@ class BeatmapManager:
                 BeatmapsetSnapshot,
                 beatmapset_id=beatmapset_id,
                 _order_by=BeatmapsetSnapshot.snapshot_number.desc(),
+                _include={"beatmap_snapshots": True},
                 _offset=offset
             )
         else:
@@ -412,6 +400,7 @@ class BeatmapManager:
                 BeatmapsetSnapshot,
                 beatmapset_id=beatmapset_id,
                 snapshot_number=snapshot_number,
+                _include={"beatmap_snapshots": True}
             )
 
         if not beatmapset_snapshot:

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, TYPE_CHECKING, ClassVar
+from typing import Optional, TYPE_CHECKING
 
 from pydantic.main import BaseModel
 from pydantic.config import ConfigDict
@@ -30,20 +30,3 @@ class RequestSchema(BaseModel, BaseModelExtra):
     beatmapset_snapshot: Optional["BeatmapsetSnapshotSchema"] = None
     user_profile: Optional["ProfileSchema"] = None
     queue: Optional["QueueSchema"] = None
-
-    FRONTEND_INCLUDE: ClassVar = {
-        "id": True,
-        "beatmapset_id": True,
-        "user_id": True,
-        "status": True,
-        "comment": True,
-        "beatmapset_snapshot": BeatmapsetSnapshotSchema.FRONTEND_INCLUDE,
-        "user_profile": {"user_id", "avatar_url", "username"},
-        "queue": {
-            "name": True,
-            "user_profile": {"user_id", "avatar_url", "username"},
-            "manager_profiles": {
-                "__all__": {"user_id", "avatar_url", "username"}
-            }
-        }
-    }

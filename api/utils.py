@@ -1,24 +1,152 @@
-from typing import Iterable, Any
-from copy import copy
+from typing import Iterable, Any, Optional, get_origin, get_args, Union, Literal
+
+from pydantic import BaseModel
+
+from app.database.models import BaseType
 
 
 def pop_auth_info(kwargs: dict[str, Any]) -> dict[str, Any]:
     return {key: kwargs.pop(key) for key in ("user", "token_info") if key in kwargs}
 
 
-def prime_query_kwargs(kwargs: dict[str, Any]) -> dict[str, Any]:
+def prime_query_kwargs(kwargs: dict[str, Any]):
     for key, value in list(kwargs.items()):
         match key:
-            case "limit" | "offset" | "reversed":
+            case "limit" | "offset" | "reversed" | "include":
                 kwargs["_" + key] = kwargs.pop(key)
 
-    return pop_auth_info(kwargs)
+
+def bleach_body(
+        body: dict[str, Any],
+        whitelisted_keys: Iterable[str] = None,
+        blacklisted_keys: Iterable[str] = None
+) -> dict[str, Any]:
+    whitelist = set(whitelisted_keys) if whitelisted_keys is not None else None
+    blacklist = set(blacklisted_keys or ())
+
+    if whitelist is not None:
+        if overlap := whitelist & blacklist:
+            raise ValueError(f"Keys cannot be both whitelisted and blacklisted: {sorted(overlap)}")
+
+    return {k: v for k, v in body.items() if k in whitelist and k not in blacklist}
 
 
-def bleach_body(body: dict[str, Any], whitelisted_keys: Iterable[str] = None, blacklisted_keys: Iterable[str] = None) -> dict[str, Any]:
-    bleached_body = {key: body[key] for key in whitelisted_keys if key in body} if whitelisted_keys else copy(body)
+def _extract_default_include(include_schema: dict) -> dict:
+    result = {}
 
-    for key in blacklisted_keys:
-        bleached_body.pop(key, None)
+    if "properties" in include_schema:
+        include_schema = include_schema["properties"]
 
-    return bleached_body
+    for name, schema in include_schema.items():
+        if schema.get("type") == "boolean":
+            result[name] = {
+                "__enabled__": schema.get("default", False),
+                "__schema__": True
+            }
+            continue
+
+        if "oneOf" in schema:
+            obj_schema = next((s for s in schema["oneOf"] if s.get("type") == "object"), None)
+            bool_schema = next((s for s in schema["oneOf"] if s.get("type") == "boolean"), None)
+
+            nested = _extract_default_include(obj_schema) if obj_schema else {}
+
+            result[name] = {
+                "__enabled__": bool_schema.get("default", False) if bool_schema else False,
+                "__schema__": nested
+            }
+
+    return result
+
+
+def _merge_include(defaults: dict, overrides: Optional[dict] = None) -> dict:
+    if overrides is None:
+        return defaults
+
+    merged = {}
+
+    for key, default in defaults.items():
+        if key not in overrides:
+            merged[key] = default
+            continue
+
+        override = overrides[key]
+
+        if override is False:
+            merged[key] = {
+                "__enabled__": False,
+                "__schema__": default["__schema__"]
+            }
+
+        elif override is True:
+            merged[key] = {
+                "__enabled__": True,
+                "__schema__": default["__schema__"]
+            }
+
+        elif isinstance(override, dict):
+            merged[key] = {
+                "__enabled__": True,
+                "__schema__": _merge_include(
+                    default["__schema__"],
+                    override
+                )
+            }
+
+    return merged
+
+
+def _is_collection(obj: BaseType | BaseModel, attr: str) -> bool:
+    try:
+        value = getattr(obj, attr)
+    except Exception:
+        return False
+
+    if value is None:
+        return False
+
+    return isinstance(value, Iterable) and not isinstance(value, (str, bytes, dict))
+
+
+def _build_pydantic_include(obj: BaseType | BaseModel, include_tree: dict) -> dict:
+    result = {}
+
+    for field, meta in include_tree.items():
+        if not meta["__enabled__"]:
+            continue
+
+        schema = meta["__schema__"]
+
+        if schema is True:
+            result[field] = True
+            continue
+
+        if not hasattr(obj, field):
+            continue
+
+        value = getattr(obj, field, None)
+        if value is None:
+            continue
+
+        child_obj = (
+            value[0] if _is_collection(obj, field) and value else value
+        )
+
+        nested = _build_pydantic_include(child_obj, schema)
+
+        if _is_collection(obj, field):
+            result[field] = {"__all__": nested}
+        else:
+            result[field] = nested
+
+    return result
+
+
+def build_pydantic_include(
+    obj: BaseType | BaseModel,
+    include_schema: dict,
+    request_include: Optional[dict] = None,
+):
+    defaults = _extract_default_include(include_schema)
+    merged = _merge_include(defaults, request_include)
+    return _build_pydantic_include(obj, merged)
