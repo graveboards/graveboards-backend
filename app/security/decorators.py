@@ -48,7 +48,7 @@ def role_authorization(*required_roles: RoleName, one_of: Iterable[RoleName] = N
                 (override is None and user_meets_role_requirements) or
                 (override is not None and (await override(**override_kwargs_) or user_meets_role_requirements))
             ):
-                raise Forbidden(detail="User does not have permission to access this resource")
+                raise Forbidden(detail="You are not authorized to access this resource")
 
             return await func(*args, **kwargs)
 
@@ -100,13 +100,14 @@ def ownership_authorization(authorized_user_id_lookup: str = "user", resource_us
 
             if isinstance(data, dict):
                 if not check_item_ownership(data):
-                    return {"message": "You are not authorized to access this resource"}, 403
+                    raise Forbidden(detail="You are not authorized to access this resource")
             else:
                 for item in data:
                     if not isinstance(item, dict):
-                        raise ValueError("All items in list response must be dicts to evaluate ownership")
+                        raise ValueError(f"Invalid result received from function '{func.__name__}', all items in response must be dicts to evaluate ownership")
+
                     if not check_item_ownership(item):
-                        return {"message": "You are not authorized to access this resource"}, 403
+                        raise Forbidden(detail="You are not authorized to access this resource")
 
             return result
 

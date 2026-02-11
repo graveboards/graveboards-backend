@@ -11,9 +11,9 @@ from app.database.models import (
     Request,
     Queue
 )
-from app.search.enums import Scope
-from app.search.datastructures import SearchTermsSchema, SCOPE_CATEGORIES_MAPPING, CATEGORY_MODEL_FIELDS_MAPPING
-from app.search.enums import SearchableFieldCategory
+from app.search.mappings import SCOPE_CATEGORIES_MAPPING, CATEGORY_MODEL_FIELDS_MAPPING
+from app.search.enums import Scope, SearchableFieldCategory
+from app.search.datastructures import SearchTermsSchema
 from .hashable_cte import HashableCTE
 from .utils import extract_cte_target_scalar
 
@@ -151,6 +151,8 @@ def get_filter_stmt(scope: Scope, category: SearchableFieldCategory, target: Uni
                         .where(getattr(target, like_operator)(pattern))
                         .distinct()
                     )
+                case _:
+                    raise ValueError(f"Unsupported category for scope {scope}: {category}")
         case Scope.REQUESTS:
             match category:
                 case SearchableFieldCategory.BEATMAP:

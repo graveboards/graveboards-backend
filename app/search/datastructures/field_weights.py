@@ -9,45 +9,8 @@ from pydantic.functional_validators import model_validator
 from pydantic.config import ConfigDict
 
 from app.exceptions import AllValuesNullError
-from app.search.enums import Scope, ModelField, SearchableFieldCategory
-
-SCOPE_CATEGORIES_MAPPING = {
-    Scope.BEATMAPS: [SearchableFieldCategory.BEATMAP],
-    Scope.BEATMAPSETS: [SearchableFieldCategory.BEATMAP, SearchableFieldCategory.BEATMAPSET],
-    Scope.SCORES: ...,
-    Scope.QUEUES: [SearchableFieldCategory.BEATMAP, SearchableFieldCategory.BEATMAPSET, SearchableFieldCategory.QUEUE, SearchableFieldCategory.REQUEST],
-    Scope.REQUESTS: [SearchableFieldCategory.BEATMAP, SearchableFieldCategory.BEATMAPSET, SearchableFieldCategory.REQUEST]
-}
-
-CATEGORY_MODEL_FIELDS_MAPPING = {
-    SearchableFieldCategory.BEATMAP: {
-        "version": ModelField.BEATMAPSNAPSHOT__VERSION
-    },
-    SearchableFieldCategory.BEATMAPSET: {
-        "title": ModelField.BEATMAPSETSNAPSHOT__TITLE,
-        "title_unicode": ModelField.BEATMAPSETSNAPSHOT__TITLE_UNICODE,
-        "artist": ModelField.BEATMAPSETSNAPSHOT__ARTIST,
-        "artist_unicode": ModelField.BEATMAPSETSNAPSHOT__ARTIST_UNICODE,
-        "creator": ModelField.BEATMAPSETSNAPSHOT__CREATOR,
-        "source": ModelField.BEATMAPSETSNAPSHOT__SOURCE,
-        "tags": ModelField.BEATMAPSETSNAPSHOT__TAGS,
-        "description": ModelField.BEATMAPSETSNAPSHOT__DESCRIPTION__DESCRIPTION
-    },
-    SearchableFieldCategory.QUEUE: {
-        "name": ModelField.QUEUE__NAME,
-        "description": ModelField.QUEUE__DESCRIPTION
-    },
-    SearchableFieldCategory.REQUEST: {
-        "comment": ModelField.REQUEST__COMMENT
-    }
-}
-
-CATEGORY_FIELD_GROUPS_MAPPING = {
-    SearchableFieldCategory.BEATMAPSET: {
-        "title": {"title", "title_unicode"},
-        "artist": {"artist", "artist_unicode"}
-    }
-}
+from app.search.enums import Scope, SearchableFieldCategory
+from app.search.mappings import SCOPE_CATEGORIES_MAPPING
 
 
 class BeatmapFieldWeights(BaseModel):
@@ -110,7 +73,7 @@ class FieldWeights(BaseModel):
             if any(getattr(model, field) is not None for field in model.model_fields):
                 return
 
-        raise AllValuesNullError("FieldWeights")
+        raise AllValuesNullError("field_weights")
 
     def serialize(self, scope: Scope) -> bytes:
         presence = 0

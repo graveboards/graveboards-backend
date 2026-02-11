@@ -51,8 +51,6 @@ class PostgresqlDB(CRUD):
             try:
                 yield session_
                 await session_.commit()
-            except Exception as e:
+            except Exception:
                 await session_.rollback()
-                raise e
-            finally:
-                await session_.close()
+                raise

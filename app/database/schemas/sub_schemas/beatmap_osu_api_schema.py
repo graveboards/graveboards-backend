@@ -5,7 +5,7 @@ from copy import copy
 from pydantic.main import BaseModel
 from pydantic.functional_validators import model_validator, field_validator
 
-from app.osu_api.literals import RankedIntLiteral, RankedStatusLiteral
+from app.osu_api.literals import RankedIntLiteral, RankedStatusLiteral, RulesetLiteral, RulesetIntLiteral
 from .failtimes import FailtimesSchema
 
 
@@ -28,8 +28,8 @@ class BeatmapOsuApiSchema(BaseModel):
     is_scoreable: bool
     last_updated: datetime
     max_combo: int
-    mode: str
-    mode_int: int
+    mode: "RulesetLiteral"
+    mode_int: "RulesetIntLiteral"
     owners: list[dict[Literal["id", "username"], Union[int, str]]] = None
     passcount: int
     playcount: int

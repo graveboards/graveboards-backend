@@ -10,6 +10,7 @@ class UserStatisticsSchema(BaseModel):
     count_miss: int
     level: "LevelSchema"
     global_rank: Optional[int]
+    global_rank_percent: Optional[float]
     global_rank_exp: Optional[int]
     pp: float
     pp_exp: float

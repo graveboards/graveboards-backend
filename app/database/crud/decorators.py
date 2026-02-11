@@ -1,5 +1,5 @@
 from functools import wraps
-from typing import Callable
+from typing import Callable, Awaitable, Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -7,29 +7,17 @@ from app.database.models import ModelClass, BaseType
 from .protocol import DatabaseProtocol
 
 
-def session_manager(func: Callable):
+def session_manager(func: Callable[..., Awaitable[Any]]):
     @wraps(func)
     async def wrapper(self: DatabaseProtocol, *args, **kwargs):
-        ctx = None
-        session = kwargs.get("session", None)
+        session = kwargs.get("session")
 
-        if not session:
-            ctx = self.session()
-            session = await ctx.__aenter__()
+        if session is not None:
+            return await func(self, *args, **kwargs)
+
+        async with self.session() as session:
             kwargs["session"] = session
-
-        try:
-            result = await func(self, *args, **kwargs)
-        except Exception as e:
-            if ctx:
-                await ctx.__aexit__(type(e), e, e.__traceback__)
-
-            raise e
-        else:
-            if ctx:
-                await ctx.__aexit__(None, None, None)
-
-            return result
+            return await func(self, *args, **kwargs)
 
     return wrapper
 

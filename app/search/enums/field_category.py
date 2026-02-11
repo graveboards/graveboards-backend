@@ -9,6 +9,7 @@ class SearchableFieldCategory(Enum):
     BEATMAPSET = "beatmapset", ModelClass.BEATMAPSET_SNAPSHOT
     QUEUE = "queue", ModelClass.QUEUE
     REQUEST = "request", ModelClass.REQUEST
+    # TODO: Add beatmap tags and beatmapset tags
 
     def __init__(self, name: str, model_class: ModelClass):
         self._value_ = name

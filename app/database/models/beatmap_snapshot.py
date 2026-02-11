@@ -69,6 +69,7 @@ class BeatmapSnapshot(Base):
     leaderboard: Mapped["Leaderboard"] = relationship(
         "Leaderboard",
         uselist=False,
+        back_populates="beatmap_snapshot",
         lazy=True
     )
     owner_profiles: Mapped[list["Profile"]] = relationship(

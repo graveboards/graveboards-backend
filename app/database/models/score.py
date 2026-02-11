@@ -32,6 +32,15 @@ class Score(Base):
     statistics: Mapped[dict[str, Optional[int]]] = mapped_column(JSONB, nullable=False)
     type: Mapped[str] = mapped_column(String, nullable=False)
 
+    # Relationships
+    user_profile: Mapped["Profile"] = relationship(
+        "Profile",
+        primaryjoin="foreign(Score.user_id) == remote(Profile.user_id)",
+        uselist=False,
+        overlaps="scores",
+        lazy=True
+    )
+
     __table_args__ = (
         UniqueConstraint("user_id", "beatmap_id", "created_at", name="_user_and_beatmap_and_creation_uc"),
     )

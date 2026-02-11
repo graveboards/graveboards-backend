@@ -9,6 +9,7 @@ load_dotenv()
 DEBUG = os.getenv("DEBUG", "false").lower() in ("true", "1", "yes")
 DISABLE_SECURITY = os.getenv("DISABLE_SECURITY", "false").lower() in ("true", "1", "yes")
 
+API_BASE_PATH = "api/v1/"
 SPEC_DIR = os.path.abspath("api/v1/spec")
 OPENAPI_ENTRYPOINT = os.path.join(SPEC_DIR, "openapi.yaml")
 DEFAULT_MODULE_NAME = "api.v1"

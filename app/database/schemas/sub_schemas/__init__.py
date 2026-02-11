@@ -13,6 +13,7 @@ from .group import GroupSchema
 from .hype import HypeSchema
 from .kudosu import KudosuSchema
 from .language import LanguageSchema
+from .matchmaking_stats import MatchmakingStatsSchema
 from .nominations_summary import NominationsSummarySchema
 from .page import PageSchema
 from .profile_banner import ProfileBannerSchema
@@ -44,6 +45,7 @@ __all__ = [
     "HypeSchema",
     "KudosuSchema",
     "LanguageSchema",
+    "MatchmakingStatsSchema",
     "NominationsSummarySchema",
     "PageSchema",
     "ProfileBannerSchema",

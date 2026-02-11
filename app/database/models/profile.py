@@ -53,6 +53,7 @@ class Profile(Base):
     last_visit: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     loved_beatmapset_count: Mapped[Optional[int]] = mapped_column(Integer)
     mapping_follower_count: Mapped[Optional[int]] = mapped_column(Integer)
+    matchmaking_stats: Mapped[Optional[list[dict[str, Union[int, bool, dict[str, Union[bool, int, str]]]]]]] = mapped_column(JSONB)
     max_blocks: Mapped[Optional[int]] = mapped_column(Integer)
     max_friends: Mapped[Optional[int]] = mapped_column(Integer)
     monthly_playcounts: Mapped[Optional[list[dict[str, Union[date, int]]]]] = mapped_column(JSONB)

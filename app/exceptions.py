@@ -54,7 +54,7 @@ class FieldNotSupportedError(Exception):
 
     @property
     def message(self) -> str:
-        return f"Category {self.category} does not support field '{self.field}'"
+        return f"Category '{self.category}' does not support field '{self.field}'"
 
 
 class FieldConditionValidationError(Exception):
@@ -84,15 +84,15 @@ class UnknownFieldCategoryError(Exception):
 
 
 class AllValuesNullError(Exception):
-    def __init__(self, title: str):
-        self.title = title
+    def __init__(self, origin: str):
+        self.origin = origin
 
     def __str__(self):
         return self.message
 
     @property
     def message(self) -> str:
-        return f"All {self.title} values cannot be None"
+        return f"All {self.origin} values cannot be None"
 
 
 class RestrictedUserError(ValueError):
@@ -107,7 +107,7 @@ class RestrictedUserError(ValueError):
         return f"User {self.user_id} is either restricted, deleted, or otherwise inaccessible"
 
 
-class RateLimitExceeded(Exception):
+class RateLimitExceededError(Exception):
     def __init__(self, next_window: datetime):
         self.next_window = next_window
 

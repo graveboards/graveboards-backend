@@ -2,6 +2,7 @@ from typing import Literal
 
 __all__ = [
     "RulesetLiteral",
+    "RulesetIntLiteral",
     "PlaystyleLiteral",
     "ProfilePageLiteral",
     "RankedIntLiteral",
@@ -13,6 +14,7 @@ __all__ = [
 ]
 
 RulesetLiteral = Literal["fruits", "mania", "osu", "taiko"]
+RulesetIntLiteral = Literal[0, 1, 2, 3]
 PlaystyleLiteral = Literal["mouse", "keyboard", "tablet", "touch"]
 ProfilePageLiteral = Literal[
     "me",

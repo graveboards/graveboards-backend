@@ -2,7 +2,7 @@ from typing import Any, Union, get_origin, get_args, Iterable
 from typing import cast as typing_cast
 
 from sqlalchemy.sql import any_, all_, cast
-from sqlalchemy.sql.elements import ColumnClause, literal, BinaryExpression, BindParameter, CollectionAggregate
+from sqlalchemy.sql.elements import ColumnClause, literal, BinaryExpression, BindParameter, CollectionAggregate, ColumnElement
 from sqlalchemy.sql.functions import func
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.dialects.postgresql import ARRAY
@@ -81,7 +81,7 @@ def get_filter_condition(
         target: InstrumentedAttribute | ColumnClause,
         value: Any,
         is_aggregated: bool = False
-) -> BinaryExpression | BindParameter | CollectionAggregate:
+) -> BinaryExpression | BindParameter | CollectionAggregate | ColumnElement[bool]:
     if not is_aggregated:
         return filter_operator.method(target, value)
 

@@ -2,14 +2,15 @@ from collections import defaultdict
 from typing import Generator
 
 from sqlalchemy.sql import select, cast, union_all
+from sqlalchemy.sql.schema import Table
 from sqlalchemy.sql.elements import literal
 from sqlalchemy.sql.sqltypes import Integer, String
-from sqlalchemy.sql.selectable import CTE, Select, CompoundSelect
+from sqlalchemy.sql.selectable import CTE, Select, CompoundSelect, FromClause
 from sqlalchemy.sql.functions import func
 
-from app.search.enums import Scope
-from app.search.datastructures import SearchTermsSchema, SCOPE_CATEGORIES_MAPPING, CATEGORY_MODEL_FIELDS_MAPPING, CATEGORY_FIELD_GROUPS_MAPPING
-from app.search.enums import SearchableFieldCategory
+from app.search.mappings import SCOPE_CATEGORIES_MAPPING, CATEGORY_MODEL_FIELDS_MAPPING, CATEGORY_FIELD_GROUPS_MAPPING
+from app.search.enums import Scope, SearchableFieldCategory
+from app.search.datastructures import SearchTermsSchema
 from .hashable_cte import HashableCTE
 from .utils import extract_cte_target_scalar
 
@@ -157,7 +158,7 @@ def _process_field_groups(
 
 def aggregated_child_scores_to_parent_cte_factory(
     child_score_cte: CTE,
-    mapping_table,
+    mapping_table: Table | FromClause,
     mapping_child_fk: str,
     mapping_parent_fk: str,
     cte_name: str

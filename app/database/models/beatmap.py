@@ -1,5 +1,3 @@
-from typing import TYPE_CHECKING
-
 from sqlalchemy.sql import select
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import Integer
@@ -11,9 +9,6 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from .base import Base
 from .beatmap_snapshot import BeatmapSnapshot
 
-if TYPE_CHECKING:
-    from .leaderboard import Leaderboard
-
 
 class Beatmap(Base):
     __tablename__ = "beatmaps"
@@ -22,7 +17,6 @@ class Beatmap(Base):
 
     # Relationships
     snapshots: Mapped[list["BeatmapSnapshot"]] = relationship("BeatmapSnapshot", lazy=True)
-    leaderboards: Mapped[list["Leaderboard"]] = relationship("Leaderboard", lazy=True)
 
     # Hybrid annotations
     num_snapshots: Mapped[int]

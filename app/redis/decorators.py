@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 from .rc import RedisClient
 from .enums import Namespace
-from app.exceptions import RateLimitExceeded
+from app.exceptions import RateLimitExceededError
 
 logger = logging.getLogger("redis")
 
@@ -41,7 +41,7 @@ def rate_limit(limit_per_window: int, auto_retry: bool = True):
 
                 if current_count > limit_per_window:
                     if not auto_retry:
-                        raise RateLimitExceeded(window_end)
+                        raise RateLimitExceededError(window_end)
 
                     func_repr = (
                         f"{repr(func)}"

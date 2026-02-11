@@ -19,6 +19,7 @@ class ModelField(Enum):
     PROFILE__IS_RESTRICTED = "is_restricted", ModelClass.PROFILE, Profile.is_restricted
     PROFILE__TOTAL_MAPS = "total_maps", ModelClass.PROFILE, Profile.total_maps
     PROFILE__TOTAL_KUDOSU = "total_kudosu", ModelClass.PROFILE, Profile.total_kudosu
+    # TODO: Profile fields need updating
 
     BEATMAPSNAPSHOT__BEATMAP_ID = "beatmap_id", ModelClass.BEATMAP_SNAPSHOT, BeatmapSnapshot.beatmap_id
     BEATMAPSNAPSHOT__USER_ID = "user_id", ModelClass.BEATMAP_SNAPSHOT, BeatmapSnapshot.user_id

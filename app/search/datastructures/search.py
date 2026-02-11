@@ -4,6 +4,7 @@ from enum import IntFlag, auto, IntEnum
 
 from pydantic.main import BaseModel
 from pydantic.functional_validators import model_validator
+from pydantic.config import ConfigDict
 
 from app.search.enums import ScopeLiteral, Scope
 from .search_terms import SearchTermsSchema
@@ -12,7 +13,9 @@ from .filters import FiltersSchema
 
 
 class ScopeId(IntEnum):
+    BEATMAPS = auto()
     BEATMAPSETS = auto()
+    # SCORES = auto()
     REQUESTS = auto()
     QUEUES = auto()
 
@@ -36,6 +39,8 @@ class SearchFieldFlag(IntFlag):
 
 
 class SearchSchema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     scope: Scope
     search_terms: Optional[SearchTermsSchema] = None
     sorting: Optional[SortingSchema] = None
