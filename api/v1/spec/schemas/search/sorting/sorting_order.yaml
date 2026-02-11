@@ -1,0 +1,8 @@
+SortingOrder:
+    description: >
+        ### Sort direction - **asc** for ascending, **desc** for descending
+        
+        Defaults to **asc** if not provided
+    type: string
+    enum: [ asc, desc ]
+    default: asc
