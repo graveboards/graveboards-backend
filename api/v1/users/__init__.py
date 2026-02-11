@@ -12,7 +12,7 @@ from app.security.overrides import matching_user_id_override
 from app.spec import get_include_schema
 
 
-@api_query(ModelClass.USER)
+@api_query(ModelClass.USER, many=True)
 @role_authorization(RoleName.ADMIN)
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db

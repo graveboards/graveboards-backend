@@ -5,21 +5,34 @@ from pydantic import BaseModel
 from app.database.models import BaseType
 
 
-def pop_auth_info(kwargs: dict[str, Any]) -> dict[str, Any]:
+def pop_auth_info(
+    kwargs: dict[str, Any]
+) -> dict[str, Any]:
     return {key: kwargs.pop(key) for key in ("user", "token_info") if key in kwargs}
 
 
-def prime_query_kwargs(kwargs: dict[str, Any]):
+def prime_query_kwargs(
+    kwargs: dict[str, Any],
+    many: bool = False
+):
+    params = {
+        "include"
+    } if not many else {
+        "include",
+        "limit",
+        "offset",
+        "reversed"
+    }
+
     for key, value in list(kwargs.items()):
-        match key:
-            case "limit" | "offset" | "reversed" | "include":
-                kwargs["_" + key] = kwargs.pop(key)
+        if key in params:
+            kwargs["_" + key] = kwargs.pop(key)
 
 
 def bleach_body(
-        body: dict[str, Any],
-        whitelisted_keys: Iterable[str] = None,
-        blacklisted_keys: Iterable[str] = None
+    body: dict[str, Any],
+    whitelisted_keys: Iterable[str] = None,
+    blacklisted_keys: Iterable[str] = None
 ) -> dict[str, Any]:
     whitelist = set(whitelisted_keys) if whitelisted_keys is not None else None
     blacklist = set(blacklisted_keys or ())
@@ -29,6 +42,57 @@ def bleach_body(
             raise ValueError(f"Keys cannot be both whitelisted and blacklisted: {sorted(overlap)}")
 
     return {k: v for k, v in body.items() if k in whitelist and k not in blacklist}
+
+
+def coerce_value(
+    value: Any,
+    annotation: Any,
+    param_name: str
+):
+    if value is None:
+        return None
+
+    origin = get_origin(annotation)
+    args = get_args(annotation)
+
+    if origin is None:
+        try:
+            return annotation(value)
+        except Exception:
+            raise TypeError(f"Failed to coerce parameter '{param_name}' to {annotation.__name__}")
+
+    if origin is Union and type(None) in args:
+        non_none = next(a for a in args if a is not type(None))
+        return coerce_value(value, non_none, param_name)
+
+    if origin is Union:
+        last_error = None
+
+        for candidate in args:
+            try:
+                return coerce_value(value, candidate, param_name)
+            except Exception as e:
+                last_error = e
+
+        raise TypeError(f"Parameter '{param_name}' does not match any allowed type: {args}") from last_error
+
+    if origin is Literal:
+        if value not in args:
+            raise TypeError(f"Parameter '{param_name}' must be one of {args}")
+
+        return value
+
+    raise TypeError(f"Unsupported type annotation for parameter '{param_name}': {annotation}")
+
+
+def build_pydantic_include(
+    obj: BaseType | BaseModel,
+    include_schema: dict,
+    request_include: Optional[dict] = None
+):
+    defaults = _extract_default_include(include_schema)
+    merged = _merge_include(defaults, request_include)
+    return _format_include(obj, merged)
 
 
 def _extract_default_include(include_schema: dict) -> dict:
@@ -99,7 +163,7 @@ def _merge_include(defaults: dict, overrides: Optional[dict] = None) -> dict:
 def _is_collection(obj: BaseType | BaseModel, attr: str) -> bool:
     try:
         value = getattr(obj, attr)
-    except Exception:
+    except AttributeError:
         return False
 
     if value is None:
@@ -108,7 +172,7 @@ def _is_collection(obj: BaseType | BaseModel, attr: str) -> bool:
     return isinstance(value, Iterable) and not isinstance(value, (str, bytes, dict))
 
 
-def _build_pydantic_include(obj: BaseType | BaseModel, include_tree: dict) -> dict:
+def _format_include(obj: BaseType | BaseModel, include_tree: dict) -> dict:
     result = {}
 
     for field, meta in include_tree.items():
@@ -128,11 +192,9 @@ def _build_pydantic_include(obj: BaseType | BaseModel, include_tree: dict) -> di
         if value is None:
             continue
 
-        child_obj = (
-            value[0] if _is_collection(obj, field) and value else value
-        )
+        child_obj = (value[0] if _is_collection(obj, field) and value else value)
 
-        nested = _build_pydantic_include(child_obj, schema)
+        nested = _format_include(child_obj, schema)
 
         if _is_collection(obj, field):
             result[field] = {"__all__": nested}
@@ -140,49 +202,3 @@ def _build_pydantic_include(obj: BaseType | BaseModel, include_tree: dict) -> di
             result[field] = nested
 
     return result
-
-
-def build_pydantic_include(
-    obj: BaseType | BaseModel,
-    include_schema: dict,
-    request_include: Optional[dict] = None,
-):
-    defaults = _extract_default_include(include_schema)
-    merged = _merge_include(defaults, request_include)
-    return _build_pydantic_include(obj, merged)
-
-
-def coerce_value(value: Any, annotation: Any, param_name: str):
-    if value is None:
-        return None
-
-    origin = get_origin(annotation)
-    args = get_args(annotation)
-
-    if origin is None:
-        try:
-            return annotation(value)
-        except Exception:
-            raise TypeError(f"Failed to coerce parameter '{param_name}' to {annotation.__name__}")
-
-    if origin is Union and type(None) in args:
-        non_none = next(a for a in args if a is not type(None))
-        return coerce_value(value, non_none, param_name)
-
-    if origin is Union:
-        last_error = None
-
-        for candidate in args:
-            try:
-                return coerce_value(value, candidate, param_name)
-            except Exception as e:
-                last_error = e
-
-        raise TypeError(f"Parameter '{param_name}' does not match any allowed type: {args}") from last_error
-
-    if origin is Literal:
-        if value in args:
-            return value
-        raise TypeError(f"Parameter '{param_name}' must be one of {args}")
-
-    raise TypeError(f"Unsupported type annotation for parameter '{param_name}': {annotation}")

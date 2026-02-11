@@ -12,7 +12,7 @@ from . import leaderboard
 from . import scores
 
 
-@api_query(ModelClass.BEATMAP_SNAPSHOT)
+@api_query(ModelClass.BEATMAP_SNAPSHOT, many=True)
 async def search(beatmap_id: int, **kwargs):
     db: PostgresqlDB = request.state.db
 

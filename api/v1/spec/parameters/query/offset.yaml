@@ -1,0 +1,8 @@
+Offset:
+    name: offset
+    description: Pagination offset for the query
+    in: query
+    schema:
+        type: integer
+        minimum: 0
+    example: 0

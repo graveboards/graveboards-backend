@@ -1,0 +1,12 @@
+Reversed:
+    name: reversed
+    description: >
+        Whether or not the results should be reversed
+        
+        
+        Note: this is applied **after** query execution and is only intended for convenience.
+        Use `sorting` if you want to affect the query sent to the database
+    in: query
+    schema:
+        type: boolean
+        default: false

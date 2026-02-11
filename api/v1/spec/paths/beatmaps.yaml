@@ -5,8 +5,9 @@ Beatmaps:
             - Beatmaps
         parameters:
             - $ref: "../parameters/query/include/beatmap.yaml#/BeatmapInclude"
-            - $ref: "../parameters/query/search.yaml#/Limit"
-            - $ref: "../parameters/query/search.yaml#/Offset"
+            - $ref: "../parameters/query/limit.yaml#/Limit"
+            - $ref: "../parameters/query/offset.yaml#/Offset"
+            - $ref: "../parameters/query/reversed.yaml#/Reversed"
         responses:
             200:
                 $ref: "../responses/200/beatmap.yaml#/BeatmapResults"
@@ -37,8 +38,9 @@ BeatmapById-Snapshots:
         parameters:
             - $ref: "../parameters/path/beatmap.yaml#/BeatmapId"
             - $ref: "../parameters/query/include/beatmap_snapshot.yaml#/BeatmapSnapshotInclude"
-            - $ref: "../parameters/query/search.yaml#/Limit"
-            - $ref: "../parameters/query/search.yaml#/Offset"
+            - $ref: "../parameters/query/limit.yaml#/Limit"
+            - $ref: "../parameters/query/offset.yaml#/Offset"
+            - $ref: "../parameters/query/reversed.yaml#/Reversed"
         responses:
             200:
                 $ref: "../responses/200/beatmap_snapshot.yaml#/BeatmapSnapshotResults"
@@ -156,8 +158,9 @@ BeatmapById-SnapshotByNumber-Scores:
             - $ref: "../parameters/path/beatmap.yaml#/BeatmapId"
             - $ref: "../parameters/path/beatmap.yaml#/BeatmapSnapshotNumber"
             - $ref: "../parameters/query/include/score.yaml#/ScoreInclude"
-            - $ref: "../parameters/query/search.yaml#/Limit"
-            - $ref: "../parameters/query/search.yaml#/Offset"
+            - $ref: "../parameters/query/limit.yaml#/Limit"
+            - $ref: "../parameters/query/offset.yaml#/Offset"
+            - $ref: "../parameters/query/reversed.yaml#/Reversed"
         responses:
             200:
                 $ref: "../responses/200/score.yaml#/ScoreResults"
@@ -173,8 +176,9 @@ BeatmapListings:
             - Beatmaps
         parameters:
             - $ref: "../parameters/query/include/beatmap_snapshot.yaml#/BeatmapSnapshotInclude"
-            - $ref: "../parameters/query/search.yaml#/Limit"
-            - $ref: "../parameters/query/search.yaml#/Offset"
+            - $ref: "../parameters/query/limit.yaml#/Limit"
+            - $ref: "../parameters/query/offset.yaml#/Offset"
+            - $ref: "../parameters/query/reversed.yaml#/Reversed"
         responses:
             200:
                 $ref: "../responses/200/beatmap_snapshot.yaml#/BeatmapSnapshotResults"

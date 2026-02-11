@@ -29,12 +29,11 @@ class _R:
         _join: Union[Any, Iterable[Any]] = None,
         _where: Union[Any, Iterable[Any]] = None,
         _order_by: Union[Any, Iterable[Any]] = None,
-        _reversed: bool = False,
         _include: Include = None,
         _offset: int = 0,
         **kwargs
     ) -> BaseType:
-        select_stmt = _R._construct_stmt(model_class, _select, _join, _where, _order_by, _reversed, _include, **kwargs)
+        select_stmt = _R._construct_stmt(model_class, _select, _join, _where, _order_by, _include, **kwargs)
         select_stmt = select_stmt.offset(_offset)
 
         return await session.scalar(select_stmt)
@@ -47,16 +46,21 @@ class _R:
         _join: Union[Any, Iterable[Any]] = None,
         _where: Union[Any, Iterable[Any]] = None,
         _order_by: Union[Any, Iterable[Any]] = None,
-        _reversed: bool = False,
         _include: Include = None,
         _limit: int = QUERY_DEFAULT_LIMIT,
         _offset: int = 0,
+        _reversed: bool = False,
         **kwargs
     ) -> list[BaseType]:
-        select_stmt = _R._construct_stmt(model_class, _select, _join, _where, _order_by, _reversed, _include, **kwargs)
+        select_stmt = _R._construct_stmt(model_class, _select, _join, _where, _order_by, _include, **kwargs)
         select_stmt = select_stmt.limit(clamp(_limit, QUERY_MIN_LIMIT, QUERY_MAX_LIMIT)).offset(_offset)
 
-        return list((await session.scalars(select_stmt)).all())
+        results = list((await session.scalars(select_stmt)).all())
+
+        if _reversed:
+            results.reverse()
+
+        return results
 
     @staticmethod
     def _construct_stmt(
@@ -65,7 +69,6 @@ class _R:
         _join: Union[Any, Iterable[Any]] = None,
         _where: Union[Any, Iterable[Any]] = None,
         _order_by: Union[Any, Iterable[Any]] = None,
-        _reversed: bool = False,
         _include: Include = None,
         **kwargs
     ) -> Select:
@@ -82,8 +85,6 @@ class _R:
 
         if _order_by is not None:
             select_stmt = _R._apply_order_by(select_stmt, model_class, _order_by)
-        elif _reversed:
-            select_stmt = _R._apply_reversed(select_stmt, model_class)
 
         if _include and not _select:
             select_stmt, included_paths = _R._apply_include(select_stmt, model_class, _include)
@@ -190,13 +191,6 @@ class _R:
                 raise TypeError(f"Invalid _order_by value: {item!r}")
 
         return select_stmt.order_by(*clauses)
-
-    @staticmethod
-    def _apply_reversed(
-        select_stmt: Select,
-        model_class: ModelClass
-    ) -> Select:
-        return select_stmt.order_by(desc(model_class.mapper.primary_key[0]))
 
     @staticmethod
     def _apply_include(
@@ -328,7 +322,6 @@ class R(_R):
         _join: Union[Any, Iterable[Any]] = None,
         _where: Union[Any, Iterable[Any]] = None,
         _order_by: Union[Any, Iterable[Any]] = None,
-        _reversed: bool = False,
         _include: Include = None,
         _offset: int = 0,
         **kwargs
@@ -342,7 +335,6 @@ class R(_R):
             _join=_join,
             _where=_where,
             _order_by=_order_by,
-            _reversed=_reversed,
             _include=_include,
             _offset=_offset,
             **kwargs
@@ -357,10 +349,10 @@ class R(_R):
         _join: Union[Any, Iterable[Any]] = None,
         _where: Union[Any, Iterable[Any]] = None,
         _order_by: Union[Any, Iterable[Any]] = None,
-        _reversed: bool = False,
         _include: Include = None,
         _limit: int = QUERY_DEFAULT_LIMIT,
         _offset: int = 0,
+        _reversed: bool = False,
         **kwargs
     ) -> list[BaseType]:
         model_class = ModelClass(model)
@@ -372,9 +364,9 @@ class R(_R):
             _join=_join,
             _where=_where,
             _order_by=_order_by,
-            _reversed=_reversed,
             _include=_include,
             _limit=_limit,
             _offset=_offset,
+            _reversed=_reversed,
             **kwargs
         )

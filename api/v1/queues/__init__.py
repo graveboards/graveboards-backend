@@ -12,7 +12,7 @@ from app.database.enums import RoleName
 from app.spec import get_include_schema
 
 
-@api_query(ModelClass.QUEUE)
+@api_query(ModelClass.QUEUE, many=True)
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
 

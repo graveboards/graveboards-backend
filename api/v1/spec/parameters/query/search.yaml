@@ -19,22 +19,3 @@ Compressed:
     schema:
         type: boolean
         default: false
-
-Limit:
-    name: limit
-    description: Pagination limit
-    in: query
-    schema:
-        type: integer
-        minimum: 1
-        maximum: 100
-    example: 50
-
-Offset:
-    name: offset
-    description: Pagination offset
-    in: query
-    schema:
-        type: integer
-        minimum: 0
-    example: 0

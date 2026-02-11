@@ -1,0 +1,9 @@
+Limit:
+    name: limit
+    description: Pagination limit for the query
+    in: query
+    schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+    example: 50

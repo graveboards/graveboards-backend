@@ -9,7 +9,7 @@ from app.exceptions import NotFound
 from app.spec import get_include_schema
 
 
-@api_query(ModelClass.SCORE)
+@api_query(ModelClass.SCORE, many=True)
 @coerce_arguments(snapshot_number={"latest": -1})
 async def search(beatmap_id: int, snapshot_number: int = -1, **kwargs):
     db: PostgresqlDB = request.state.db

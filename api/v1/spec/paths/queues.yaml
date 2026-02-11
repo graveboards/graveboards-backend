@@ -10,8 +10,9 @@ Queues:
             - $ref: "../parameters/query/user.yaml#/UserId"
             - $ref: "../parameters/query/queue.yaml#/IsOpen"
             - $ref: "../parameters/query/include/queue.yaml#/QueueInclude"
-            - $ref: "../parameters/query/search.yaml#/Limit"
-            - $ref: "../parameters/query/search.yaml#/Offset"
+            - $ref: "../parameters/query/limit.yaml#/Limit"
+            - $ref: "../parameters/query/offset.yaml#/Offset"
+            - $ref: "../parameters/query/reversed.yaml#/Reversed"
         responses:
             200:
                 $ref: "../responses/200/queue.yaml#/QueueResults"

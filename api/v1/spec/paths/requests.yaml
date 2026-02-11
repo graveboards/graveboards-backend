@@ -9,8 +9,9 @@ Requests:
         parameters:
             - $ref: "../parameters/query/queue.yaml#/QueueId"
             - $ref: "../parameters/query/include/request.yaml#/RequestInclude"
-            - $ref: "../parameters/query/search.yaml#/Limit"
-            - $ref: "../parameters/query/search.yaml#/Offset"
+            - $ref: "../parameters/query/limit.yaml#/Limit"
+            - $ref: "../parameters/query/offset.yaml#/Offset"
+            - $ref: "../parameters/query/reversed.yaml#/Reversed"
         responses:
             200:
                 $ref: "../responses/200/request.yaml#/RequestResults"
@@ -98,8 +99,9 @@ RequestTasks:
             - ApiKeyAuth: []
         parameters:
             - $ref: "../parameters/query/include/request.yaml#/RequestTaskInclude"
-            - $ref: "../parameters/query/search.yaml#/Limit"
-            - $ref: "../parameters/query/search.yaml#/Offset"
+            - $ref: "../parameters/query/limit.yaml#/Limit"
+            - $ref: "../parameters/query/offset.yaml#/Offset"
+            - $ref: "../parameters/query/reversed.yaml#/Reversed"
         responses:
             200:
                 $ref: "../responses/200/request.yaml#/RequestTaskResults"

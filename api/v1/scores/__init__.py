@@ -12,7 +12,7 @@ from app.security import role_authorization
 from app.database.enums import RoleName
 
 
-@api_query(ModelClass.SCORE)
+@api_query(ModelClass.SCORE, many=True)
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
 

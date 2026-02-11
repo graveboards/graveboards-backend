@@ -7,17 +7,15 @@ from app.database.models import ModelClass
 from api.utils import pop_auth_info, prime_query_kwargs, coerce_value
 
 
-def api_query(model_class: ModelClass, include_auth_info: bool = False):
+def api_query(model_class: ModelClass, many: bool = False):
     def decorator(func: Callable[..., Awaitable[Any]]):
         if not asyncio.iscoroutinefunction(func):
             raise ValueError(f"Function '{func.__name__}' must be async to use @api_query")
 
         @wraps(func)
         async def wrapper(*args, **kwargs) -> Awaitable[Any]:
-            if not include_auth_info:
-                pop_auth_info(kwargs)
-
-            prime_query_kwargs(kwargs)
+            pop_auth_info(kwargs)
+            prime_query_kwargs(kwargs, many=many)
 
             return await func(*args, **kwargs)
 

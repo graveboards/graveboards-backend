@@ -15,7 +15,7 @@ from app.database.enums import RoleName
 from . import listings, snapshots
 
 
-@api_query(ModelClass.BEATMAPSET)
+@api_query(ModelClass.BEATMAPSET, many=True)
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
 

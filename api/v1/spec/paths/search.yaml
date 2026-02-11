@@ -7,8 +7,9 @@ Search:
             - $ref: "../parameters/query/search.yaml#/Q"
             - $ref: "../parameters/query/search.yaml#/Compressed"
             - $ref: "../parameters/query/include/search.yaml#/SearchInclude"
-            - $ref: "../parameters/query/search.yaml#/Limit"
-            - $ref: "../parameters/query/search.yaml#/Offset"
+            - $ref: "../parameters/query/limit.yaml#/Limit"
+            - $ref: "../parameters/query/offset.yaml#/Offset"
+            - $ref: "../parameters/query/reversed.yaml#/Reversed"
         responses:
             200:
                 $ref: "../responses/200/search.yaml#/SearchResults"

@@ -8,7 +8,7 @@ from app.database.schemas import BeatmapsetSnapshotSchema
 from app.spec import get_include_schema
 
 
-@api_query(ModelClass.BEATMAPSET_SNAPSHOT)
+@api_query(ModelClass.BEATMAPSET_SNAPSHOT, many=True)
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
 

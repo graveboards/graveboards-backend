@@ -17,7 +17,7 @@ from app.spec import get_include_schema
 from . import tasks
 
 
-@api_query(ModelClass.REQUEST)
+@api_query(ModelClass.REQUEST, many=True)
 @ownership_authorization()
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
