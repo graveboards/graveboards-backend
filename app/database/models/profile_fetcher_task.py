@@ -12,6 +12,6 @@ from .base import Base
 class ProfileFetcherTask(Base):
     __tablename__ = "profile_fetcher_tasks"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     last_fetch: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))

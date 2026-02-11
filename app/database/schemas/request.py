@@ -4,6 +4,7 @@ from typing import Optional, TYPE_CHECKING, ClassVar
 from pydantic.main import BaseModel
 from pydantic.config import ConfigDict
 
+from app.database.literals import RequestStatusIntLiteral
 from .base_model_extra import BaseModelExtra
 from .beatmapset_snapshot import BeatmapsetSnapshotSchema
 
@@ -24,7 +25,7 @@ class RequestSchema(BaseModel, BaseModelExtra):
     mv_checked: bool
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-    status: Optional[int] = None
+    status: Optional[RequestStatusIntLiteral] = None
 
     beatmapset_snapshot: Optional["BeatmapsetSnapshotSchema"] = None
     user_profile: Optional["ProfileSchema"] = None

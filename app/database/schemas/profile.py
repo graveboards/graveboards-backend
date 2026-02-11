@@ -15,6 +15,7 @@ from .sub_schemas import (
     CoverSchema,
     DailyChallengeUserStatsSchema,
     KudosuSchema,
+    MatchmakingStatsSchema,
     PageSchema,
     ProfileBannerSchema,
     RankHighestSchema,
@@ -68,6 +69,7 @@ class ProfileSchema(BaseModel, BaseModelExtra):
     loved_beatmapset_count: Optional[int]
     last_visit: Optional[datetime]
     mapping_follower_count: Optional[int]
+    matchmaking_stats: Optional[list["MatchmakingStatsSchema"]]
     max_blocks: Optional[int]
     max_friends: Optional[int]
     monthly_playcounts: Optional[list["UserMonthlyPlaycountSchema"]]

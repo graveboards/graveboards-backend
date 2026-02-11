@@ -80,6 +80,20 @@ def get_filter_stmt(scope: Scope, category: SearchableFieldCategory, target: Uni
                         .distinct()
                         .where(getattr(target, like_operator)(pattern))
                     )
+                case SearchableFieldCategory.BEATMAPSET:
+                    stmt = (
+                        select(BeatmapSnapshot.id)
+                        .join(
+                            beatmap_snapshot_beatmapset_snapshot_association,
+                            beatmap_snapshot_beatmapset_snapshot_association.c.beatmap_snapshot_id == BeatmapSnapshot.id
+                        )
+                        .join(
+                            BeatmapsetSnapshot,
+                            BeatmapsetSnapshot.id == beatmap_snapshot_beatmapset_snapshot_association.c.beatmapset_snapshot_id
+                        )
+                        .where(getattr(target, like_operator)(pattern))
+                        .distinct()
+                    )
                 case _:
                     raise ValueError(f"Unsupported category for scope {scope}: {category}")
         case Scope.BEATMAPSETS:

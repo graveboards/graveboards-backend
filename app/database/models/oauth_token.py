@@ -12,7 +12,7 @@ from .base import Base
 class OAuthToken(Base):
     __tablename__ = "oauth_tokens"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     access_token: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     refresh_token: Mapped[str] = mapped_column(String, nullable=False)
     expires_at: Mapped[int] = mapped_column(Integer, nullable=False)

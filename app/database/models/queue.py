@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 class Queue(Base):
     __tablename__ = "queues"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=aware_utcnow)
@@ -32,6 +32,8 @@ class Queue(Base):
         "Request",
         back_populates="queue",
         overlaps="queue",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
         lazy=True
     )
     managers: Mapped[list["User"]] = relationship(
