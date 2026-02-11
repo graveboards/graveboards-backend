@@ -46,8 +46,8 @@ async def migrate():
 
                 row["beatmapset_snapshot_id"] = beatmapset_snapshot.id
 
-                await db.add_request(**row)
             if not await db.get(Request, **row):
+                await db.add(Request, **row)
 
             progress = int((i / total_rows) * 100)
             bar = "=" * (progress // 2)

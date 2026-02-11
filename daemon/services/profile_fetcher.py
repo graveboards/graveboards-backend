@@ -149,8 +149,8 @@ class ProfileFetcher(Service):
                     context={"jsonify_nested": True}
                 )
 
-                    profile = await self.db.add_profile(**profile_dict)
                 if not (profile := await self.db.get(Profile, user_id=user_id)):
+                    profile = await self.db.add(Profile, **profile_dict)
                     info = {"id": profile.id, "user_id": user_id}
                     logger.debug(f"Fetched and added profile: {info}")
                 else:

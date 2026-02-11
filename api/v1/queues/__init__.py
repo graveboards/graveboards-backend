@@ -64,9 +64,9 @@ async def post(body: dict, **kwargs):
         whitelisted_keys=QueueSchema.model_fields.keys(),
         blacklisted_keys={"id", "created_at", "updated_at", "requests", "managers", "user_profile", "manager_profiles"}
     )
-    await db.add_queue(**body)
 
     return {"message": "Queue added successfully!"}
+    await db.add(Queue, **body)
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)

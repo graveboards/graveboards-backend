@@ -85,7 +85,7 @@ class BeatmapManager:
         )
         beatmapset_snapshot_dict["beatmap_snapshots"] = await self._snapshot_beatmaps(beatmapset_dict["beatmaps"])
         beatmapset_snapshot_dict["beatmapset_tags"] = await self._populate_beatmapset_tags(beatmapset_dict["tags"])
-        beatmapset_snapshot = await self.db.add_beatmapset_snapshot(**beatmapset_snapshot_dict)
+        beatmapset_snapshot = await self.db.add(BeatmapsetSnapshot, **beatmapset_snapshot_dict)
 
         info = {field: getattr(beatmapset_snapshot, field) for field in {"id", "beatmapset_id", "snapshot_number", "checksum"}}
         self._changelog["snapshotted_beatmapset"] = info
@@ -103,7 +103,7 @@ class BeatmapManager:
                 )
                 beatmap_snapshot_dict["beatmap_tags"] = await self._populate_beatmap_tags(beatmap_dict["top_tag_ids"])
                 beatmap_snapshot_dict["owner_profiles"] = await self._populate_owner_profiles(beatmap_dict["owners"])
-                beatmap_snapshot = await self.db.add_beatmap_snapshot(**beatmap_snapshot_dict)
+                beatmap_snapshot = await self.db.add(BeatmapSnapshot, **beatmap_snapshot_dict)
 
                 info = {field: getattr(beatmap_snapshot, field) for field in {"id", "beatmap_id", "snapshot_number", "checksum"}}
                 self._changelog["snapshotted_beatmaps"].append(info)
@@ -197,8 +197,8 @@ class BeatmapManager:
             user_dict = beatmapset_dict["user"]
             await self._populate_profile(user_id, restricted_user_dict=user_dict, is_restricted=True)
 
-            beatmapset = await self.db.add_beatmapset(id=beatmapset_id, user_id=user_id)
         if not await self.db.get(Beatmapset, id=beatmapset_id):
+            await self.db.add(Beatmapset, id=beatmapset_id, user_id=user_id)
             info = {"id": beatmapset_id, "user_id": user_id}
             logger.debug(f"Added beatmapset: {info}")
 
@@ -215,14 +215,14 @@ class BeatmapManager:
         except RestrictedUserError:
             await self._populate_profile(user_id, is_restricted=True)
 
-            beatmap = await self.db.add_beatmap(id=beatmap_id, beatmapset_id=beatmapset_id)
         if not await self.db.get(Beatmap, id=beatmap_id):
+            await self.db.add(Beatmap, id=beatmap_id, beatmapset_id=beatmapset_id)
             info = {"id": beatmap_id, "beatmapset_id": beatmapset_id}
             logger.debug(f"Added beatmap: {info}")
 
     async def _populate_user(self, user_id: int) -> User:
-            user = await self.db.add_user(id=user_id)
         if not (user := await self.db.get(User, id=user_id)):
+            user = await self.db.add(User, id=user_id)
             info = {"id": user_id}
             logger.debug(f"Added user: {info}")
 
@@ -264,7 +264,7 @@ class BeatmapManager:
                     )
 
                 try:
-                    profile = await self.db.add_profile(**profile_dict)
+                    profile = await self.db.add(Profile, **profile_dict)
                     info = {"id": profile.id, "user_id": profile.user_id, "is_restricted": profile.is_restricted}
                     logger.debug(f"Added profile: {info}")
                 except IntegrityError:
@@ -303,8 +303,8 @@ class BeatmapManager:
             return []
 
         for tag_str in tag_strs:
-                beatmapset_tag = await self.db.add_beatmapset_tag(name=tag_str)
             if not (beatmapset_tag := await self.db.get(BeatmapsetTag, name=tag_str)):
+                beatmapset_tag = await self.db.add(BeatmapsetTag, name=tag_str)
                 info = {"id": beatmapset_tag.id, "name": beatmapset_tag.name}
                 logger.debug(f"Added beatmapset tag: {info}")
 
@@ -345,8 +345,8 @@ class BeatmapManager:
         for osu_beatmap_tag in osu_beatmap_tags["tags"]:
             tag_id = osu_beatmap_tag["id"]
 
-                await self.db.add_beatmap_tag(**osu_beatmap_tag)
             if not (beatmap_tag := await self.db.get(BeatmapTag, id=tag_id)):
+                await self.db.add(BeatmapTag, **osu_beatmap_tag)
                 logger.debug(f"Added beatmap tag: {osu_beatmap_tag}")
             else:
                 old_osu_beatmap_tag = BeatmapTagSchema.model_validate(beatmap_tag).model_dump(exclude={"created_at", "updated_at"})

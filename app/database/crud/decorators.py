@@ -22,15 +22,29 @@ def session_manager(func: Callable[..., Awaitable[Any]]):
     return wrapper
 
 
-def ensure_required(func: Callable):
-    @wraps(func)
-    async def wrapper(model_class: ModelClass, session: AsyncSession, **kwargs) -> BaseType:
-        required_columns = model_class.get_required_columns()
-        missing_columns = [col for col in required_columns if col not in kwargs]
+def ensure_required(many: bool = False):
+    def decorator(func: Callable[..., Awaitable[Any]]):
+        @wraps(func)
+        async def wrapper(model_class: ModelClass, session: AsyncSession, *args, **kwargs) -> BaseType:
+            required_columns = model_class.required_columns
 
-        if missing_columns:
-            raise ValueError(f"Missing required columns: {', '.join(missing_columns)}")
+            def get_missing(d_: dict) -> list[str]:
+                return [col for col in required_columns if col not in d_]
 
-        return await func(model_class, session, **kwargs)
+            if not many:
+                missing_columns = get_missing(kwargs)
 
-    return wrapper
+                if missing_columns:
+                    raise ValueError(f"Missing required columns: {", ".join(missing_columns)}")
+            else:
+                for i, d in enumerate(args):
+                    missing_columns = get_missing(d)
+
+                    if missing_columns:
+                        raise ValueError(f"Missing required columns at index {i}: {", ".join(missing_columns)}")
+
+            return await func(model_class, session, *args, **kwargs)
+
+        return wrapper
+
+    return decorator

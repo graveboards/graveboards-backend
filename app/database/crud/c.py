@@ -1,95 +1,93 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.models import *
+from app.database.models import BaseType, ModelClass
 from .decorators import session_manager, ensure_required
 
 
 class _C:
     @staticmethod
-    @ensure_required
-    async def _add_instance(model_class: ModelClass, session: AsyncSession, **kwargs) -> BaseType:
-        instance = model_class.value(**kwargs)
+    @ensure_required()
+    async def _add_instance(
+        model_class: ModelClass,
+        session: AsyncSession,
+        **kwargs
+    ) -> BaseType:
+        if not kwargs and len(model_class.required_columns) > 0:
+            raise ValueError("At least one field must be provided to create an instance")
 
+        model = model_class.value
+
+        instance = model(**kwargs)
         session.add(instance)
         await session.commit()
         await session.refresh(instance)
 
         return instance
 
+    @staticmethod
+    @ensure_required(many=True)
+    async def _add_instances(
+        model_class: ModelClass,
+        session: AsyncSession,
+        *data: dict
+    ) -> list[BaseType]:
+        if not data:
+            return []
+
+        model = model_class.value
+        valid_attrs = model_class.column_names | model_class.relationship_names
+        required_columns_len = len(model_class.required_columns)
+        instances = []
+
+        for i, item in enumerate(data):
+            if not isinstance(item, dict):
+                raise TypeError(f"Item #{i} must be a dict, got {type(item).__name__}")
+
+            if not item and required_columns_len > 0:
+                raise ValueError(f"Item #{i} must contain at least one field")
+
+            for key in item:
+                if key not in valid_attrs:
+                    raise ValueError(f"{model.__name__} has no attribute '{key}'")
+
+            instances.append(model(**item))
+
+        session.add_all(instances)
+        await session.commit()
+
+        for instance in instances:
+            await session.refresh(instance)
+
+        return instances
+
 
 class C(_C):
     @session_manager
-    async def add_user(self, session: AsyncSession = None, **kwargs) -> User:
-        return await self._add_instance(ModelClass.USER, session, **kwargs)
+    async def add(
+        self,
+        model: type[BaseType],
+        session: AsyncSession = None,
+        **kwargs
+    ) -> BaseType:
+        model_class = ModelClass(model)
+
+        return await self._add_instance(
+            model_class,
+            session,
+            **kwargs
+        )
 
     @session_manager
-    async def add_role(self, session: AsyncSession = None, **kwargs) -> Role:
-        return await self._add_instance(ModelClass.ROLE, session, **kwargs)
+    async def add_many(
+        self,
+        model: type[BaseType],
+        *data: dict,
+        session: AsyncSession = None
+    ) -> list[BaseType]:
+        model_class = ModelClass(model)
 
-    @session_manager
-    async def add_profile(self, session: AsyncSession = None, **kwargs) -> Profile:
-        return await self._add_instance(ModelClass.PROFILE, session, **kwargs)
-
-    @session_manager
-    async def add_api_key(self, session: AsyncSession = None, **kwargs) -> ApiKey:
-        return await self._add_instance(ModelClass.API_KEY, session, **kwargs)
-
-    @session_manager
-    async def add_oauth_token(self, session: AsyncSession = None, **kwargs) -> OAuthToken:
-        return await self._add_instance(ModelClass.OAUTH_TOKEN, session, **kwargs)
-
-    @session_manager
-    async def add_jwt(self, session: AsyncSession = None, **kwargs) -> JWT:
-        return await self._add_instance(ModelClass.JWT, session, **kwargs)
-
-    @session_manager
-    async def add_score_fetcher_task(self, session: AsyncSession = None, **kwargs) -> ScoreFetcherTask:
-        return await self._add_instance(ModelClass.SCORE_FETCHER_TASK, session, **kwargs)
-
-    @session_manager
-    async def add_profile_fetcher_task(self, session: AsyncSession = None, **kwargs) -> ProfileFetcherTask:
-        return await self._add_instance(ModelClass.PROFILE_FETCHER_TASK, session, **kwargs)
-
-    @session_manager
-    async def add_beatmap(self, session: AsyncSession = None, **kwargs) -> Beatmap:
-        return await self._add_instance(ModelClass.BEATMAP, session, **kwargs)
-
-    @session_manager
-    async def add_beatmap_snapshot(self, session: AsyncSession = None, **kwargs) -> BeatmapSnapshot:
-        return await self._add_instance(ModelClass.BEATMAP_SNAPSHOT, session, **kwargs)
-
-    @session_manager
-    async def add_beatmapset(self, session: AsyncSession = None, **kwargs) -> Beatmapset:
-        return await self._add_instance(ModelClass.BEATMAPSET, session, **kwargs)
-
-    @session_manager
-    async def add_beatmapset_snapshot(self, session: AsyncSession = None, **kwargs) -> BeatmapsetSnapshot:
-        return await self._add_instance(ModelClass.BEATMAPSET_SNAPSHOT, session, **kwargs)
-
-    @session_manager
-    async def add_beatmapset_listing(self, session: AsyncSession = None, **kwargs) -> BeatmapsetListing:
-        return await self._add_instance(ModelClass.BEATMAPSET_LISTING, session, **kwargs)
-
-    @session_manager
-    async def add_leaderboard(self, session: AsyncSession = None, **kwargs) -> Leaderboard:
-        return await self._add_instance(ModelClass.LEADERBOARD, session, **kwargs)
-
-    @session_manager
-    async def add_score(self, session: AsyncSession = None, **kwargs) -> Score:
-        return await self._add_instance(ModelClass.SCORE, session, **kwargs)
-
-    @session_manager
-    async def add_queue(self, session: AsyncSession = None, **kwargs) -> Queue:
-        return await self._add_instance(ModelClass.QUEUE, session, **kwargs)
-
-    @session_manager
-    async def add_request(self, session: AsyncSession = None, **kwargs) -> Request:
-        return await self._add_instance(ModelClass.REQUEST, session, **kwargs)
-
-    @session_manager
-    async def add_beatmapset_tag(self, session: AsyncSession = None, **kwargs) -> BeatmapsetTag:
-        return await self._add_instance(ModelClass.BEATMAPSET_TAG, session, **kwargs)
-
-    @session_manager
-    async def add_beatmap_tag(self, session: AsyncSession = None, **kwargs) -> BeatmapTag:
-        return await self._add_instance(ModelClass.BEATMAP_TAG, session, **kwargs)
+        return await self._add_instances(
+            model_class,
+            session,
+            *data,
+        )

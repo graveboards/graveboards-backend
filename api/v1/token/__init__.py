@@ -56,15 +56,16 @@ async def post(body: dict):
     user_data = await oac.get_own_data(access_token)
     user_id = user_data["id"]
 
-        await db.add_user(id=user_id)
     if not await db.get(User, id=user_id):
+        await db.add(User, id=user_id)
 
     score_fetcher_task = await db.get(ScoreFetcherTask, user_id=user_id)
 
     if not score_fetcher_task.enabled and score_fetcher_task.last_fetch is None:
         await db.update_score_fetcher_task(score_fetcher_task.id, enabled=True)
 
-    await db.add_oauth_token(
+    await db.add(
+        OAuthToken,
         user_id=user_id,
         access_token=access_token,
         refresh_token=refresh_token,
@@ -73,7 +74,8 @@ async def post(body: dict):
 
     payload = create_token_payload(user_id)
     jwt_str = encode_token(payload)
-    jwt = await db.add_jwt(
+    jwt = await db.add(
+        JWT,
         user_id=user_id,
         token=jwt_str,
         issued_at=payload["iat"],

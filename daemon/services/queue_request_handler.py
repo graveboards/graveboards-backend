@@ -4,6 +4,7 @@ import logging
 from httpx import ConnectTimeout
 
 from app.beatmap_manager import BeatmapManager
+from app.database.models import Request
 from app.database.schemas import RequestSchema
 from app.redis import ChannelName, Namespace
 from app.redis.models import QueueRequestHandlerTask
@@ -74,7 +75,7 @@ class QueueRequestHandler(Service):
             request_dict = RequestSchema.model_validate(task).model_dump(
                 exclude={"user_profile", "queue"}
             )
-            request = await self.db.add_request(**request_dict)
+            request = await self.db.add(Request, **request_dict)
             logger.debug(f"Added request id={request.id} for beatmapset {request.beatmapset_id} to queue id={request.queue_id}")
 
             task_hash_name = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(task.hashed_id)

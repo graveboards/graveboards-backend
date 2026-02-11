@@ -7,7 +7,7 @@ from httpx import ConnectTimeout
 
 from api import v1 as api
 from app.osu_api import OsuAPIClient, ScoreType
-from app.database.models import ScoreFetcherTask
+from app.database.models import ScoreFetcherTask, Leaderboard
 from app.redis import ChannelName
 from app.utils import aware_utcnow
 from app.config import PRIMARY_ADMIN_USER_ID
@@ -73,7 +73,7 @@ class ScoreFetcher(Service):
                 logger.debug(f"Loaded task: {info}")
 
     async def preload_tasks(self):
-        tasks = await self.db.get_score_fetcher_tasks(enabled=True)
+        tasks = await self.db.get_many(ScoreFetcherTask, enabled=True)
 
         for task in tasks:
             self.load_task(task)
@@ -95,7 +95,7 @@ class ScoreFetcher(Service):
         start_time = aware_utcnow()
 
         while (aware_utcnow() - start_time).total_seconds() < timeout:
-            task = await self.db.get_score_fetcher_task(id=task_id)
+            task = await self.db.get(ScoreFetcherTask, id=task_id)
 
             if task:
                 return task
@@ -128,7 +128,7 @@ class ScoreFetcher(Service):
 
     @auto_retry(retry_exceptions=(ConnectTimeout,))
     async def fetch_scores(self, task_id: int):
-        if not (task := await self.db.get_score_fetcher_task(id=task_id)):
+        if not (task := await self.db.get(ScoreFetcherTask, id=task_id)):
             raise ValueError(f"Task with ID '{task_id}' not found")
 
         user_id = task.user_id
@@ -144,4 +144,4 @@ class ScoreFetcher(Service):
                 logger.debug(f"Added score {score["id"]} for user {user_id}")
 
     async def score_is_submittable(self, score: dict) -> bool:
-        return bool(await self.db.get_leaderboard(beatmap_id=score["beatmap"]["id"]))
+        return bool(await self.db.get(Leaderboard, beatmap_id=score["beatmap"]["id"]))

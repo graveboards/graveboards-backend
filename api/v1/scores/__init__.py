@@ -60,6 +60,6 @@ async def post(body: dict, **kwargs):
         whitelisted_keys=ScoreSchema.model_fields.keys(),
         blacklisted_keys={"id"}
     )
-    await db.add_score(**body)
+    await db.add(Score, **body)
 
     return {"message": "Score added successfully!"}, 201
