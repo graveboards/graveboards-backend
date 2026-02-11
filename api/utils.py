@@ -150,3 +150,39 @@ def build_pydantic_include(
     defaults = _extract_default_include(include_schema)
     merged = _merge_include(defaults, request_include)
     return _build_pydantic_include(obj, merged)
+
+
+def coerce_value(value: Any, annotation: Any, param_name: str):
+    if value is None:
+        return None
+
+    origin = get_origin(annotation)
+    args = get_args(annotation)
+
+    if origin is None:
+        try:
+            return annotation(value)
+        except Exception:
+            raise TypeError(f"Failed to coerce parameter '{param_name}' to {annotation.__name__}")
+
+    if origin is Union and type(None) in args:
+        non_none = next(a for a in args if a is not type(None))
+        return coerce_value(value, non_none, param_name)
+
+    if origin is Union:
+        last_error = None
+
+        for candidate in args:
+            try:
+                return coerce_value(value, candidate, param_name)
+            except Exception as e:
+                last_error = e
+
+        raise TypeError(f"Parameter '{param_name}' does not match any allowed type: {args}") from last_error
+
+    if origin is Literal:
+        if value in args:
+            return value
+        raise TypeError(f"Parameter '{param_name}' must be one of {args}")
+
+    raise TypeError(f"Unsupported type annotation for parameter '{param_name}': {annotation}")

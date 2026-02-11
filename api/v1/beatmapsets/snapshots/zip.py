@@ -1,13 +1,15 @@
 from starlette.responses import StreamingResponse
 from connexion import request
 
+from api.decorators import coerce_arguments
 from app.beatmap_manager import BeatmapManager
 from app.database import PostgresqlDB
 from app.redis import RedisClient
 from app.utils import stream_file
 
 
-async def search(beatmapset_id: int, snapshot_number: int):
+@coerce_arguments(snapshot_number={"latest": -1})
+async def search(beatmapset_id: int, snapshot_number: int = -1):
     rc: RedisClient = request.state.rc
     db: PostgresqlDB = request.state.db
 

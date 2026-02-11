@@ -1,6 +1,7 @@
 from connexion import request
 from pydantic import ValidationError
 
+from api.decorators import api_query
 from api.utils import bleach_body, build_pydantic_include
 from app.osu_api import OsuAPIClient
 from app.database import PostgresqlDB
@@ -15,12 +16,10 @@ from app.spec import get_include_schema
 from . import tasks
 
 
-
+@api_query(ModelClass.REQUEST)
 @ownership_authorization()
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
-
-    prime_query_kwargs(kwargs)
 
     requests = await db.get_many(
         Request,
@@ -44,6 +43,7 @@ async def search(**kwargs):
     return requests_data, 200
 
 
+@api_query(ModelClass.REQUEST)
 @ownership_authorization()
 async def get(request_id: int, **kwargs):
     db: PostgresqlDB = request.state.db

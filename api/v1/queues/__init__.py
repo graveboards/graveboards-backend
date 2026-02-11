@@ -1,5 +1,6 @@
 from connexion import request
 
+from api.decorators import api_query
 from api.utils import bleach_body, build_pydantic_include
 from app.database import PostgresqlDB
 from app.database.models import Queue, ModelClass
@@ -10,11 +11,9 @@ from app.database.enums import RoleName
 from app.spec import get_include_schema
 
 
-
+@api_query(ModelClass.QUEUE)
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
-
-    prime_query_kwargs(kwargs)
 
     queues = await db.get_many(
         Queue,
@@ -38,7 +37,8 @@ async def search(**kwargs):
     return queues_data, 200
 
 
-async def get(queue_id: int):
+@api_query(ModelClass.QUEUE)
+async def get(queue_id: int, **kwargs):
     db: PostgresqlDB = request.state.db
 
     queue = await db.get(

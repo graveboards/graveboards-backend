@@ -1,5 +1,6 @@
 from connexion import request
 
+from api.decorators import api_query
 from api.utils import bleach_body, build_pydantic_include
 from app.database import PostgresqlDB
 from app.database.models import Score, User, Beatmap, BeatmapSnapshot, Leaderboard, ModelClass
@@ -10,10 +11,9 @@ from app.security import role_authorization
 from app.database.enums import RoleName
 
 
+@api_query(ModelClass.SCORE)
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
-
-    prime_query_kwargs(kwargs)
 
     scores = await db.get_many(
         Score,

@@ -1,5 +1,6 @@
 from connexion import request
 
+from api.decorators import api_query
 from api.utils import build_pydantic_include
 from app.spec import get_include_schema
 from app.database import PostgresqlDB
@@ -8,11 +9,9 @@ from app.database.schemas import BeatmapSchema
 from . import snapshots
 
 
-
+@api_query(ModelClass.BEATMAP)
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
-
-    prime_query_kwargs(kwargs)
 
     beatmaps = await db.get_many(
         Beatmap,

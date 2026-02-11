@@ -1,5 +1,6 @@
 from connexion import request
 
+from api.decorators import api_query
 from api.utils import build_pydantic_include, bleach_body
 from app.database import PostgresqlDB
 from app.database.models import User, ModelClass
@@ -10,12 +11,10 @@ from app.security.overrides import matching_user_id_override
 from app.spec import get_include_schema
 
 
-
+@api_query(ModelClass.USER)
 @role_authorization(RoleName.ADMIN)
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
-
-    prime_query_kwargs(kwargs)
 
     users = await db.get_many(
         User,
@@ -39,11 +38,10 @@ async def search(**kwargs):
     return users_data, 200
 
 
+@api_query(ModelClass.USER)
 @role_authorization(RoleName.ADMIN, override=matching_user_id_override)
 async def get(user_id: int, **kwargs):
     db: PostgresqlDB = request.state.db
-
-    prime_query_kwargs(kwargs)
 
     user = await db.get(
         User,

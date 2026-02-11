@@ -1,6 +1,6 @@
 from connexion import request
 
-from api.utils import prime_query_kwargs
+from api.decorators import api_query
 from api.utils import build_pydantic_include
 from app.database import PostgresqlDB
 from app.database.models import Profile, ModelClass
@@ -8,10 +8,9 @@ from app.database.schemas import ProfileSchema
 from app.spec import get_include_schema
 
 
+@api_query(ModelClass.PROFILE)
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
-
-    prime_query_kwargs(kwargs)
 
     profiles = await db.get_many(
         Profile,
@@ -35,6 +34,7 @@ async def search(**kwargs):
     return profiles_data, 200
 
 
+@api_query(ModelClass.PROFILE)
 async def get(user_id: int, **kwargs):
     db: PostgresqlDB = request.state.db
 
@@ -53,6 +53,6 @@ async def get(user_id: int, **kwargs):
         request_include=kwargs.get("_include")
     )
 
-    return profile_data, 200
     profile_data = ProfileSchema.model_validate(profile).model_dump(include=include)
 
+    return profile_data, 200, {"Content-Type": "application/json"}

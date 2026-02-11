@@ -1,6 +1,7 @@
 import httpx
 from connexion import request
 
+from api.decorators import api_query
 from api.utils import build_pydantic_include
 from app.spec import get_include_schema
 from app.beatmap_manager import BeatmapManager
@@ -13,11 +14,9 @@ from app.database.enums import RoleName
 from . import listings, snapshots
 
 
-
+@api_query(ModelClass.BEATMAPSET)
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
-
-    prime_query_kwargs(kwargs)
 
     beatmapsets = await db.get_many(
         Beatmapset,

@@ -1,5 +1,6 @@
 from connexion import request
 
+from api.decorators import api_query, coerce_arguments
 from api.utils import build_pydantic_include
 from app.spec import get_include_schema
 from app.database import PostgresqlDB
@@ -8,11 +9,9 @@ from app.database.schemas import BeatmapsetSnapshotSchema
 from . import zip
 
 
-
+@api_query(ModelClass.BEATMAPSET_SNAPSHOT)
 async def search(beatmapset_id: int, **kwargs):
     db: PostgresqlDB = request.state.db
-
-    prime_query_kwargs(kwargs)
 
     beatmapset_snapshots = await db.get_many(
         BeatmapsetSnapshot,
@@ -37,7 +36,9 @@ async def search(beatmapset_id: int, **kwargs):
     return beatmapset_snapshots_data, 200
 
 
-async def get(beatmapset_id: int, snapshot_number: int):
+@api_query(ModelClass.BEATMAPSET_SNAPSHOT)
+@coerce_arguments(snapshot_number={"latest": -1})
+async def get(beatmapset_id: int, snapshot_number: int = -1, **kwargs):
     db: PostgresqlDB = request.state.db
 
     if snapshot_number < 0:

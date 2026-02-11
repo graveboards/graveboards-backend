@@ -4,13 +4,15 @@ import aiofiles
 from starlette.responses import PlainTextResponse
 from connexion import request
 
+from api.decorators import coerce_arguments
 from app.beatmap_manager import BeatmapManager
 from app.database import PostgresqlDB
 from app.database.models import BeatmapSnapshot
 from app.redis import RedisClient
 
 
-async def search(beatmap_id: int, snapshot_number: int):
+@coerce_arguments(snapshot_number={"latest": -1})
+async def search(beatmap_id: int, snapshot_number: int = -1):
     rc: RedisClient = request.state.rc
     db: PostgresqlDB = request.state.db
 
