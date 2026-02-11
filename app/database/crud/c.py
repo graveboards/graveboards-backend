@@ -16,6 +16,11 @@ class _C:
             raise ValueError("At least one field must be provided to create an instance")
 
         model = model_class.value
+        valid_attrs = model_class.column_names | model_class.relationship_names
+
+        for key in kwargs:
+            if key not in valid_attrs:
+                raise ValueError(f"{model.__name__} has no attribute '{key}'")
 
         instance = model(**kwargs)
         session.add(instance)

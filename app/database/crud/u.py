@@ -21,16 +21,17 @@ class _U:
             raise TypeError(f"Primary key must be int, got {type(primary_key).__name__}")
 
         model = model_class.value
+        valid_attrs = model_class.column_names | model_class.relationship_names
         instance = await session.get(model, primary_key)
 
         if instance is None:
             raise ValueError(f"There is no {model.__name__} with the primary key '{primary_key}'")
 
         for key, value in kwargs.items():
-            if hasattr(instance, key):
-                setattr(instance, key, value)
-            else:
-                raise ValueError(f"{model_class.value.__name__} has no attribute '{key}'")
+            if key not in valid_attrs:
+                raise ValueError(f"{model.__name__} has no attribute '{key}'")
+
+            setattr(instance, key, value)
 
         await session.commit()
         await session.refresh(instance)
@@ -59,6 +60,7 @@ class _U:
                 raise TypeError(f"Delta in update #{i} must be dict, got {type(delta).__name__}")
 
         model = model_class.value
+        valid_attrs = model_class.column_names | model_class.relationship_names
         instances = []
 
         for pk, delta in data:
@@ -68,6 +70,9 @@ class _U:
                 raise ValueError(f"There is no {model.__name__} with the primary key '{pk}'")
 
             for key, value in delta.items():
+                if key not in valid_attrs:
+                    raise ValueError(f"{model.__name__} has no attribute '{key}'")
+
                 setattr(instance, key, value)
 
             instances.append(instance)

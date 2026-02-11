@@ -2,6 +2,7 @@ from enum import Enum
 
 from sqlalchemy.orm.mapper import Mapper
 from sqlalchemy.inspection import inspect
+from sqlalchemy.ext.hybrid import HybridExtensionType
 
 from .base import BaseType
 from .user import User
@@ -48,18 +49,6 @@ class ModelClass(Enum):
     BEATMAPSET_TAG = BeatmapsetTag
     BEATMAP_TAG = BeatmapTag
 
-    def get_required_columns(self) -> list[str]:
-        required_columns = []
-
-        for column in self.mapper.columns:
-            if (
-                not column.primary_key and not column.nullable and column.default is None
-                or column.primary_key and not column.autoincrement
-            ):
-                required_columns.append(column.name)
-
-        return required_columns
-
     @property
     def value(self) -> type[BaseType]:
         return self._value_
@@ -67,3 +56,32 @@ class ModelClass(Enum):
     @property
     def mapper(self) -> Mapper[BaseType]:
         return inspect(self.value)
+
+    @property
+    def required_columns(self) -> set[str]:
+        required_columns = set()
+
+        for column in self.mapper.columns:
+            if (
+                not column.primary_key and not column.nullable and column.default is None
+                or column.primary_key and not column.autoincrement
+            ):
+                required_columns.add(column.name)
+
+        return required_columns
+
+    @property
+    def column_names(self) -> set[str]:
+        return {c.key for c in self.mapper.columns}
+
+    @property
+    def relationship_names(self) -> set[str]:
+        return {r.key for r in self.mapper.relationships}
+
+    @property
+    def hybrid_property_names(self) -> set[str]:
+        return {name for name, attr in self.mapper.all_orm_descriptors.items() if attr.extension_type in HybridExtensionType}
+
+    @property
+    def all_names(self) -> set[str]:
+        return self.column_names | self.relationship_names | self.hybrid_property_names

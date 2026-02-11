@@ -1,18 +1,13 @@
 from connexion import request
 
-from api.utils import prime_query_kwargs
+from api.decorators import api_query, coerce_arguments
+from api.utils import build_pydantic_include
 from app.spec import get_include_schema
 from app.database import PostgresqlDB
 from app.database.models import BeatmapSnapshot, ModelClass
 from app.database.schemas import BeatmapSnapshotSchema
 from . import osu
 
-_LOADING_OPTIONS = {
-    "beatmapset_snapshots": False,
-    "beatmap_tags": True,
-    "leaderboard": False,
-    "owner_profiles": False
-}
 
 
 async def search(beatmap_id: int, **kwargs):
@@ -25,10 +20,18 @@ async def search(beatmap_id: int, **kwargs):
         beatmap_id=beatmap_id,
         **kwargs
     )
+
+    if not beatmap_snapshots:
+        return [], 200, {"Content-Type": "application/json"}
+
+    include = build_pydantic_include(
+        obj=beatmap_snapshots[0],
+        include_schema=get_include_schema(ModelClass.BEATMAP_SNAPSHOT),
+        request_include=kwargs.get("_include")
+    )
+
     beatmap_snapshots_data = [
-        BeatmapSnapshotSchema.model_validate(beatmap_snapshot).model_dump(
-            exclude={"beatmapset_snapshots", "leaderboard", "owner_profiles"}
-        )
+        BeatmapSnapshotSchema.model_validate(beatmap_snapshot).model_dump(include=include)
         for beatmap_snapshot in beatmap_snapshots
     ]
 
@@ -59,8 +62,12 @@ async def get(beatmap_id: int, snapshot_number: int):
     if not beatmap_snapshot:
         return {"message": f"BeatmapSnapshot with beatmap_id '{beatmap_id}' and snapshot_number '{snapshot_number}' not found"}, 404
 
-    beatmap_snapshot_data = BeatmapSnapshotSchema.model_validate(beatmap_snapshot).model_dump(
-        exclude={"beatmapset_snapshots", "leaderboard", "owner_profiles"}
+    include = build_pydantic_include(
+        obj=beatmap_snapshot,
+        include_schema=get_include_schema(ModelClass.BEATMAP_SNAPSHOT),
+        request_include=kwargs.get("_include")
     )
 
     return beatmap_snapshot_data, 200
+    beatmap_snapshot_data = BeatmapSnapshotSchema.model_validate(beatmap_snapshot).model_dump(include=include)
+

@@ -19,8 +19,12 @@ class _D:
             raise ValueError("At least one filter must be provided to delete an instance")
 
         model = model_class.value
+        valid_attrs = model_class.column_names | model_class.hybrid_property_names
 
         for key in kwargs:
+            if key not in valid_attrs:
+                raise ValueError(f"{model.__name__} has no attribute '{key}'")
+
         select_stmt = select(model_class.value).filter_by(**kwargs)
 
         rows = (await session.scalars(select_stmt)).all()
@@ -44,9 +48,13 @@ class _D:
             raise ValueError("At least one filter must be provided to delete instances")
 
         model = model_class.value
+        valid_attrs = model_class.column_names | model_class.hybrid_property_names
         conditions = []
 
         for key, value in kwargs.items():
+            if key not in valid_attrs:
+                raise ValueError(f"{model.__name__} has no attribute '{key}'")
+
             attr = getattr(model, key)
 
             if isinstance(value, Iterable) and not isinstance(value, (str, bytes)):
