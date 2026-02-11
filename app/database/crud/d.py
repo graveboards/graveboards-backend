@@ -1,176 +1,102 @@
-from sqlalchemy.sql import select, delete
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Iterable
 
-from app.database.models import *
+from sqlalchemy.sql import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.elements import and_
+
+from app.database.models import BaseType, ModelClass
 from .decorators import session_manager
 
 
 class _D:
     @staticmethod
-    async def _delete_instance(model_class: ModelClass, session: AsyncSession, **kwargs) -> bool:
-        select_stmt = select(model_class.value).filter_by(**kwargs).limit(1)
+    async def _delete_instance(
+        model_class: ModelClass,
+        session: AsyncSession,
+        **kwargs
+    ):
+        if not kwargs:
+            raise ValueError("At least one filter must be provided to delete an instance")
 
-        instance = session.scalar(select_stmt)
+        model = model_class.value
 
-        if instance is None:
-            return False
+        for key in kwargs:
+        select_stmt = select(model_class.value).filter_by(**kwargs)
 
-        await session.delete(instance)
+        rows = (await session.scalars(select_stmt)).all()
+
+        if not rows:
+            raise ValueError(f"No {model.__name__} matches the provided filters")
+
+        if len(rows) > 1:
+            raise ValueError(f"Delete would affect {len(rows)} rows; filters are not specific enough")
+
+        await session.delete(rows[0])
         await session.commit()
-
-        return True
 
     @staticmethod
-    async def _delete_instances(model_class: ModelClass, session: AsyncSession, **kwargs) -> int:
-        delete_stmt = delete(model_class.value).filter_by(**kwargs)
+    async def _delete_instances(
+        model_class: ModelClass,
+        session: AsyncSession,
+        **kwargs
+    ) -> int:
+        if not kwargs:
+            raise ValueError("At least one filter must be provided to delete instances")
 
-        result = await session.execute(delete_stmt)
+        model = model_class.value
+        conditions = []
+
+        for key, value in kwargs.items():
+            attr = getattr(model, key)
+
+            if isinstance(value, Iterable) and not isinstance(value, (str, bytes)):
+                if not (values := list(value)):
+                    return 0
+
+                conditions.append(attr.in_(values))
+            else:
+                conditions.append(attr == value)
+
+        select_stmt = select(model).where(and_(*conditions))
+        rows = (await session.scalars(select_stmt)).all()
+
+        if not rows:
+            return 0
+
+        for row in rows:
+            await session.delete(row)
+
         await session.commit()
-
-        return await result.rowcount
+        return len(rows)
 
 
 class D(_D):
     @session_manager
-    async def delete_user(self, session: AsyncSession = None, **kwargs) -> bool:
-        return await self._delete_instance(ModelClass.USER, session, **kwargs)
+    async def delete(
+        self,
+        model: type[BaseType],
+        session: AsyncSession = None,
+        **kwargs
+    ):
+        model_class = ModelClass(model)
+
+        await self._delete_instance(
+            model_class,
+            session,
+            **kwargs
+        )
 
     @session_manager
-    async def delete_users(self, session: AsyncSession = None, **kwargs) -> int:
-        return await self._delete_instances(ModelClass.USER, session, **kwargs)
+    async def delete_many(
+            self,
+            model: type[BaseType],
+            session: AsyncSession = None,
+            **kwargs
+    ) -> int:
+        model_class = ModelClass(model)
 
-    @session_manager
-    async def delete_role(self, session: AsyncSession = None, **kwargs) -> bool:
-        return await self._delete_instance(ModelClass.ROLE, session, **kwargs)
-
-    @session_manager
-    async def delete_roles(self, session: AsyncSession = None, **kwargs) -> int:
-        return await self._delete_instances(ModelClass.ROLE, session, **kwargs)
-
-    @session_manager
-    async def delete_profile(self, session: AsyncSession = None, **kwargs) -> bool:
-        return await self._delete_instance(ModelClass.PROFILE, session, **kwargs)
-
-    @session_manager
-    async def delete_profiles(self, session: AsyncSession = None, **kwargs) -> int:
-        return await self._delete_instances(ModelClass.PROFILE, session, **kwargs)
-
-    @session_manager
-    async def delete_api_key(self, session: AsyncSession = None, **kwargs) -> bool:
-        return await self._delete_instance(ModelClass.API_KEY, session, **kwargs)
-
-    @session_manager
-    async def delete_api_keys(self, session: AsyncSession = None, **kwargs) -> int:
-        return await self._delete_instances(ModelClass.API_KEY, session, **kwargs)
-
-    @session_manager
-    async def delete_oauth_token(self, session: AsyncSession = None, **kwargs) -> bool:
-        return await self._delete_instance(ModelClass.OAUTH_TOKEN, session, **kwargs)
-
-    @session_manager
-    async def delete_oauth_tokens(self, session: AsyncSession = None, **kwargs) -> int:
-        return await self._delete_instances(ModelClass.OAUTH_TOKEN, session, **kwargs)
-
-    @session_manager
-    async def delete_jwt(self, session: AsyncSession = None, **kwargs) -> bool:
-        return await self._delete_instance(ModelClass.JWT, session, **kwargs)
-
-    @session_manager
-    async def delete_jwts(self, session: AsyncSession = None, **kwargs) -> int:
-        return await self._delete_instances(ModelClass.JWT, session, **kwargs)
-
-    @session_manager
-    async def delete_score_fetcher_task(self, session: AsyncSession = None, **kwargs) -> bool:
-        return await self._delete_instance(ModelClass.SCORE_FETCHER_TASK, session, **kwargs)
-
-    @session_manager
-    async def delete_score_fetcher_tasks(self, session: AsyncSession = None, **kwargs) -> int:
-        return await self._delete_instances(ModelClass.SCORE_FETCHER_TASK, session, **kwargs)
-
-    @session_manager
-    async def delete_profile_fetcher_task(self, session: AsyncSession = None, **kwargs) -> bool:
-        return await self._delete_instance(ModelClass.PROFILE_FETCHER_TASK, session, **kwargs)
-
-    @session_manager
-    async def delete_profile_fetcher_tasks(self, session: AsyncSession = None, **kwargs) -> int:
-        return await self._delete_instances(ModelClass.PROFILE_FETCHER_TASK, session, **kwargs)
-
-    @session_manager
-    async def delete_beatmap(self, session: AsyncSession = None, **kwargs) -> bool:
-        return await self._delete_instance(ModelClass.BEATMAP, session, **kwargs)
-
-    @session_manager
-    async def delete_beatmaps(self, session: AsyncSession = None, **kwargs) -> int:
-        return await self._delete_instances(ModelClass.BEATMAP, session, **kwargs)
-
-    @session_manager
-    async def delete_beatmap_snapshot(self, session: AsyncSession = None, **kwargs) -> bool:
-        return await self._delete_instance(ModelClass.BEATMAP_SNAPSHOT, session, **kwargs)
-
-    @session_manager
-    async def delete_beatmap_snapshots(self, session: AsyncSession = None, **kwargs) -> int:
-        return await self._delete_instances(ModelClass.BEATMAP_SNAPSHOT, session, **kwargs)
-
-    @session_manager
-    async def delete_beatmapset(self, session: AsyncSession = None, **kwargs) -> bool:
-        return await self._delete_instance(ModelClass.BEATMAPSET, session, **kwargs)
-
-    @session_manager
-    async def delete_beatmapsets(self, session: AsyncSession = None, **kwargs) -> int:
-        return await self._delete_instances(ModelClass.BEATMAPSET, session, **kwargs)
-
-    @session_manager
-    async def delete_beatmapset_snapshot(self, session: AsyncSession = None, **kwargs) -> bool:
-        return await self._delete_instance(ModelClass.BEATMAPSET_SNAPSHOT, session, **kwargs)
-
-    @session_manager
-    async def delete_beatmapset_snapshots(self, session: AsyncSession = None, **kwargs) -> int:
-        return await self._delete_instances(ModelClass.BEATMAPSET_SNAPSHOT, session, **kwargs)
-
-    @session_manager
-    async def delete_beatmapset_listing(self, session: AsyncSession = None, **kwargs) -> bool:
-        return await self._delete_instance(ModelClass.BEATMAPSET_LISTING, session, **kwargs)
-
-    @session_manager
-    async def delete_beatmapset_listings(self, session: AsyncSession = None, **kwargs) -> int:
-        return await self._delete_instances(ModelClass.BEATMAPSET_LISTING, session, **kwargs)
-
-    @session_manager
-    async def delete_leaderboard(self, session: AsyncSession = None, **kwargs) -> bool:
-        return await self._delete_instance(ModelClass.LEADERBOARD, session, **kwargs)
-
-    @session_manager
-    async def delete_leaderboards(self, session: AsyncSession = None, **kwargs) -> int:
-        return await self._delete_instances(ModelClass.LEADERBOARD, session, **kwargs)
-
-    @session_manager
-    async def delete_score(self, session: AsyncSession = None, **kwargs) -> bool:
-        return await self._delete_instance(ModelClass.SCORE, session, **kwargs)
-
-    @session_manager
-    async def delete_scores(self, session: AsyncSession = None, **kwargs) -> int:
-        return await self._delete_instances(ModelClass.SCORE, session, **kwargs)
-
-    @session_manager
-    async def delete_queue(self, session: AsyncSession = None, **kwargs) -> bool:
-        return await self._delete_instance(ModelClass.QUEUE, session, **kwargs)
-
-    @session_manager
-    async def delete_queues(self, session: AsyncSession = None, **kwargs) -> int:
-        return await self._delete_instances(ModelClass.QUEUE, session, **kwargs)
-
-    @session_manager
-    async def delete_request(self, session: AsyncSession = None, **kwargs) -> bool:
-        return await self._delete_instance(ModelClass.REQUEST, session, **kwargs)
-
-    @session_manager
-    async def delete_requests(self, session: AsyncSession = None, **kwargs) -> int:
-        return await self._delete_instances(ModelClass.REQUEST, session, **kwargs)
-
-    @session_manager
-    async def delete_tag(self, session: AsyncSession = None, **kwargs) -> bool:
-        return await self._delete_instance(ModelClass.BEATMAPSET_TAG, session, **kwargs)
-
-    @session_manager
-    async def delete_tags(self, session: AsyncSession = None, **kwargs) -> int:
-        return await self._delete_instances(ModelClass.BEATMAPSET_TAG, session, **kwargs)
+        return await self._delete_instances(
+            model_class,
+            session,
+            **kwargs
+        )
