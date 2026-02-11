@@ -9,6 +9,7 @@ from connexion.exceptions import Forbidden
 from app.database import PostgresqlDB
 from app.database.enums import RoleName
 from app.config import DISABLE_SECURITY
+from app.database.models import User
 from app.utils import get_nested_value
 
 
@@ -35,7 +36,7 @@ def role_authorization(*required_roles: RoleName, one_of: Iterable[RoleName] = N
                 func_path = ".".join((func.__module__, func.__name__))
                 raise ValueError(f"Decorated function '{func_path}' must accept **kwargs to use @role_authorization")
 
-            user = await db.get_user(id=user_id, _loading_options={"roles": True})
+            user = await db.get(User, id=user_id, _include={"roles": True})
             user_roles = {RoleName(role.name) for role in user.roles}
             user_meets_role_requirements = (
                 all(required_role in user_roles for required_role in required_roles) if required_roles else
@@ -92,7 +93,7 @@ def ownership_authorization(authorized_user_id_lookup: str = "user", resource_us
                 func_path = ".".join((func.__module__, func.__name__))
                 raise ValueError(f"Decorated function '{func_path}' must accept **kwargs to use @ownership_authorization")
 
-            user = await db.get_user(id=authorized_user_id, _loading_options={"roles": True})
+            user = await db.get(User, id=authorized_user_id, _include={"roles": True})
             user_roles = {RoleName(role.name) for role in user.roles}
 
             if any(role is RoleName.ADMIN for role in user_roles):

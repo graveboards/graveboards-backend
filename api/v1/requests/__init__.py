@@ -4,6 +4,7 @@ from pydantic import ValidationError
 from api.utils import prime_query_kwargs, bleach_body
 from app.osu_api import OsuAPIClient
 from app.database import PostgresqlDB
+from app.database.models import Request, Queue, ModelClass
 from app.database.schemas import RequestSchema
 from app.security import role_authorization, ownership_authorization
 from app.security.overrides import queue_owner_override
@@ -25,8 +26,8 @@ async def search(**kwargs):
 
     prime_query_kwargs(kwargs)
 
-    requests = await db.get_requests(
-        _loading_options=_LOADING_OPTIONS,
+    requests = await db.get_many(
+        Request,
         **kwargs
     )
     requests_data = [
@@ -43,9 +44,10 @@ async def search(**kwargs):
 async def get(request_id: int, **kwargs):
     db: PostgresqlDB = request.state.db
 
-    request_ = await db.get_request(
+    request_ = await db.get(
+        Request,
         id=request_id,
-        _loading_options=_LOADING_OPTIONS
+        **kwargs
     )
 
     if not request_:
@@ -69,13 +71,13 @@ async def post(body: dict, **kwargs):
 
     beatmapset_id = body["beatmapset_id"]
     queue_id = body["queue_id"]
-    queue = await db.get_queue(id=queue_id)
+    queue = await db.get(Queue, id=queue_id)
 
     if not queue.is_open:
         return {"message": f"The queue '{queue.name}' is closed"}, 403
 
-    if await db.get_request(beatmapset_id=beatmapset_id, queue_id=queue_id):
         return {"message": f"The request with beatmapset ID '{beatmapset_id}' already exists in queue '{queue.name}'"}, 409
+    if await db.get(Request, beatmapset_id=beatmapset_id, queue_id=queue_id):
 
     oac = OsuAPIClient(rc)
     beatmapset_dict = await oac.get_beatmapset(beatmapset_id)
@@ -111,7 +113,7 @@ async def patch(request_id: int, body: dict, **kwargs):
         blacklisted_keys={"id", "user_id", "beatmapset_id", "queue_id", "created_at", "updated_at", "beatmapset_snapshot", "user_profile", "queue"}
     )
 
-    request_ = await db.get_request(id=request_id)
+    request_ = await db.get(Request, id=request_id)
 
     if not request_:
         return {"message": f"Request with ID '{request_id}' not found"}, 404

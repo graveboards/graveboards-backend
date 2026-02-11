@@ -2,6 +2,7 @@ from connexion import request
 
 from api.utils import prime_query_kwargs
 from app.database import PostgresqlDB
+from app.database.models import User, ModelClass
 from app.database.schemas import UserSchema
 from app.database.enums import RoleName
 from app.security import role_authorization
@@ -24,8 +25,8 @@ async def search(**kwargs):
 
     prime_query_kwargs(kwargs)
 
-    users = await db.get_users(
-        _loading_options=_LOADING_OPTIONS,
+    users = await db.get_many(
+        User,
         **kwargs
     )
     users_data = [
@@ -44,9 +45,10 @@ async def get(user_id: int, **kwargs):
 
     prime_query_kwargs(kwargs)
 
-    user = await db.get_user(
+    user = await db.get(
+        User,
         id=user_id,
-        _loading_options=_LOADING_OPTIONS
+        **kwargs
     )
 
     if not user:
@@ -64,6 +66,7 @@ async def post(body: dict, **kwargs):
     db: PostgresqlDB = request.state.db
 
     user_id = body["user_id"]
+    if await db.get(User, id=body["user_id"]):
 
     if await db.get_user(id=user_id):
         return {"message": f"The user with ID '{user_id}' already exists"}, 409

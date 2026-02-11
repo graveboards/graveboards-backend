@@ -6,6 +6,7 @@ from connexion import request
 
 from app.beatmap_manager import BeatmapManager
 from app.database import PostgresqlDB
+from app.database.models import BeatmapSnapshot
 from app.redis import RedisClient
 
 
@@ -13,8 +14,23 @@ async def search(beatmap_id: int, snapshot_number: int):
     rc: RedisClient = request.state.rc
     db: PostgresqlDB = request.state.db
 
-    if not await db.get_beatmap_snapshot(beatmap_id=beatmap_id, snapshot_number=snapshot_number):
-        return {"message": f"There is no beatmap snapshot with beatmap ID '{beatmap_id}' and snapshot number '{snapshot_number}'"}, 404
+    if snapshot_number < 0:
+        offset = abs(snapshot_number) - 1
+
+        beatmap_snapshot = await db.get(
+            BeatmapSnapshot,
+            beatmap_id=beatmap_id,
+            _order_by=BeatmapSnapshot.snapshot_number.desc(),
+            _offset=offset
+        )
+    else:
+        beatmap_snapshot = await db.get(
+            BeatmapSnapshot,
+            beatmap_id=beatmap_id,
+            snapshot_number=snapshot_number
+        )
+
+    snapshot_number = beatmap_snapshot.snapshot_number
 
     bm = BeatmapManager(rc, db)
     dotosu_file_path = bm.get_path(beatmap_id, snapshot_number)

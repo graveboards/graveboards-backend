@@ -5,7 +5,7 @@ from sqlalchemy.sql.selectable import Select
 from sqlalchemy.orm.strategy_options import selectinload, joinedload, noload, defer, Load
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.models import *
+from app.database.models import BaseType, ModelClass, Base
 from app.utils import clamp
 from .decorators import session_manager
 from .types import LoadingStrategy, LoadingOptions, LoadingOptionsConfig
@@ -219,153 +219,61 @@ class _R:
 
 class R(_R):
     @session_manager
-    async def get_user(self, session: AsyncSession = None, **kwargs) -> User | None:
-        return await self._get_instance(ModelClass.USER, session, **kwargs)
+    async def get(
+        self,
+        model: type[BaseType],
+        session: AsyncSession = None,
+        _select: Union[str, Iterable[str]] = None,
+        _join: Union[Any, Iterable[Any]] = None,
+        _where: Union[Any, Iterable[Any]] = None,
+        _order_by: Union[Any, Iterable[Any]] = None,
+        _reversed: bool = False,
+        _include: Include = None,
+        _offset: int = 0,
+        **kwargs
+    ) -> Optional[BaseType]:
+        model_class = ModelClass(model)
+
+        return await self._get_instance(
+            model_class,
+            session,
+            _select=_select,
+            _join=_join,
+            _where=_where,
+            _order_by=_order_by,
+            _reversed=_reversed,
+            _include=_include,
+            _offset=_offset,
+            **kwargs
+        )
 
     @session_manager
-    async def get_users(self, session: AsyncSession = None, **kwargs) -> list[User]:
-        return await self._get_instances(ModelClass.USER, session, **kwargs)
+    async def get_many(
+        self,
+        model: type[BaseType],
+        session: AsyncSession = None,
+        _select: Union[str, Iterable[str]] = None,
+        _join: Union[Any, Iterable[Any]] = None,
+        _where: Union[Any, Iterable[Any]] = None,
+        _order_by: Union[Any, Iterable[Any]] = None,
+        _reversed: bool = False,
+        _include: Include = None,
+        _limit: int = QUERY_DEFAULT_LIMIT,
+        _offset: int = 0,
+        **kwargs
+    ) -> list[BaseType]:
+        model_class = ModelClass(model)
 
-    @session_manager
-    async def get_role(self, session: AsyncSession = None, **kwargs) -> Role | None:
-        return await self._get_instance(ModelClass.ROLE, session, **kwargs)
-
-    @session_manager
-    async def get_roles(self, session: AsyncSession = None, **kwargs) -> list[Role]:
-        return await self._get_instances(ModelClass.ROLE, session, **kwargs)
-
-    @session_manager
-    async def get_profile(self, session: AsyncSession = None, **kwargs) -> Profile | None:
-        return await self._get_instance(ModelClass.PROFILE, session, **kwargs)
-
-    @session_manager
-    async def get_profiles(self, session: AsyncSession = None, **kwargs) -> list[Profile]:
-        return await self._get_instances(ModelClass.PROFILE, session, **kwargs)
-
-    @session_manager
-    async def get_api_key(self, session: AsyncSession = None, **kwargs) -> ApiKey | None:
-        return await self._get_instance(ModelClass.API_KEY, session, **kwargs)
-
-    @session_manager
-    async def get_api_keys(self, session: AsyncSession = None, **kwargs) -> list[ApiKey]:
-        return await self._get_instances(ModelClass.API_KEY, session, **kwargs)
-
-    @session_manager
-    async def get_oauth_token(self, session: AsyncSession = None, **kwargs) -> OAuthToken | None:
-        return await self._get_instance(ModelClass.OAUTH_TOKEN, session, **kwargs)
-
-    @session_manager
-    async def get_oauth_tokens(self, session: AsyncSession = None, **kwargs) -> list[OAuthToken]:
-        return await self._get_instances(ModelClass.OAUTH_TOKEN, session, **kwargs)
-
-    @session_manager
-    async def get_jwt(self, session: AsyncSession = None, **kwargs) -> JWT | None:
-        return await self._get_instance(ModelClass.JWT, session, **kwargs)
-
-    @session_manager
-    async def get_jwts(self, session: AsyncSession = None, **kwargs) -> list[JWT]:
-        return await self._get_instances(ModelClass.JWT, session, **kwargs)
-
-    @session_manager
-    async def get_score_fetcher_task(self, session: AsyncSession = None, **kwargs) -> ScoreFetcherTask | None:
-        return await self._get_instance(ModelClass.SCORE_FETCHER_TASK, session, **kwargs)
-
-    @session_manager
-    async def get_score_fetcher_tasks(self, session: AsyncSession = None, **kwargs) -> list[ScoreFetcherTask]:
-        return await self._get_instances(ModelClass.SCORE_FETCHER_TASK, session, **kwargs)
-
-    @session_manager
-    async def get_profile_fetcher_task(self, session: AsyncSession = None, **kwargs) -> ProfileFetcherTask | None:
-        return await self._get_instance(ModelClass.PROFILE_FETCHER_TASK, session, **kwargs)
-
-    @session_manager
-    async def get_profile_fetcher_tasks(self, session: AsyncSession = None, **kwargs) -> list[ProfileFetcherTask]:
-        return await self._get_instances(ModelClass.PROFILE_FETCHER_TASK, session, **kwargs)
-
-    @session_manager
-    async def get_beatmap(self, session: AsyncSession = None, **kwargs) -> Beatmap | None:
-        return await self._get_instance(ModelClass.BEATMAP, session, **kwargs)
-
-    @session_manager
-    async def get_beatmaps(self, session: AsyncSession = None, **kwargs) -> list[Beatmap]:
-        return await self._get_instances(ModelClass.BEATMAP, session, **kwargs)
-
-    @session_manager
-    async def get_beatmap_snapshot(self, session: AsyncSession = None, **kwargs) -> BeatmapSnapshot | None:
-        return await self._get_instance(ModelClass.BEATMAP_SNAPSHOT, session, **kwargs)
-
-    @session_manager
-    async def get_beatmap_snapshots(self, session: AsyncSession = None, **kwargs) -> list[BeatmapSnapshot]:
-        return await self._get_instances(ModelClass.BEATMAP_SNAPSHOT, session, **kwargs)
-
-    @session_manager
-    async def get_beatmapset(self, session: AsyncSession = None, **kwargs) -> Beatmapset | None:
-        return await self._get_instance(ModelClass.BEATMAPSET, session, **kwargs)
-
-    @session_manager
-    async def get_beatmapsets(self, session: AsyncSession = None, **kwargs) -> list[Beatmapset]:
-        return await self._get_instances(ModelClass.BEATMAPSET, session, **kwargs)
-
-    @session_manager
-    async def get_beatmapset_snapshot(self, session: AsyncSession = None, **kwargs) -> BeatmapsetSnapshot | None:
-        return await self._get_instance(ModelClass.BEATMAPSET_SNAPSHOT, session, **kwargs)
-
-    @session_manager
-    async def get_beatmapset_snapshots(self, session: AsyncSession = None, **kwargs) -> list[BeatmapsetSnapshot]:
-        return await self._get_instances(ModelClass.BEATMAPSET_SNAPSHOT, session, **kwargs)
-
-    @session_manager
-    async def get_beatmapset_listing(self, session: AsyncSession = None, **kwargs) -> BeatmapsetListing | None:
-        return await self._get_instance(ModelClass.BEATMAPSET_LISTING, session, **kwargs)
-
-    @session_manager
-    async def get_beatmapset_listings(self, session: AsyncSession = None, **kwargs) -> list[BeatmapsetListing]:
-        return await self._get_instances(ModelClass.BEATMAPSET_LISTING, session, **kwargs)
-
-    @session_manager
-    async def get_leaderboard(self, session: AsyncSession = None, **kwargs) -> Leaderboard | None:
-        return await self._get_instance(ModelClass.LEADERBOARD, session, **kwargs)
-
-    @session_manager
-    async def get_leaderboards(self, session: AsyncSession = None, **kwargs) -> list[Leaderboard]:
-        return await self._get_instances(ModelClass.LEADERBOARD, session, **kwargs)
-
-    @session_manager
-    async def get_score(self, session: AsyncSession = None, **kwargs) -> Score | None:
-        return await self._get_instance(ModelClass.SCORE, session, **kwargs)
-
-    @session_manager
-    async def get_scores(self, session: AsyncSession = None, **kwargs) -> list[Score]:
-        return await self._get_instances(ModelClass.SCORE, session, **kwargs)
-
-    @session_manager
-    async def get_queue(self, session: AsyncSession = None, **kwargs) -> Queue | None:
-        return await self._get_instance(ModelClass.QUEUE, session, **kwargs)
-
-    @session_manager
-    async def get_queues(self, session: AsyncSession = None, **kwargs) -> list[Queue]:
-        return await self._get_instances(ModelClass.QUEUE, session, **kwargs)
-
-    @session_manager
-    async def get_request(self, session: AsyncSession = None, **kwargs) -> Request | None:
-        return await self._get_instance(ModelClass.REQUEST, session, **kwargs)
-
-    @session_manager
-    async def get_requests(self, session: AsyncSession = None, **kwargs) -> list[Request]:
-        return await self._get_instances(ModelClass.REQUEST, session, **kwargs)
-
-    @session_manager
-    async def get_beatmapset_tag(self, session: AsyncSession = None, **kwargs) -> BeatmapsetTag | None:
-        return await self._get_instance(ModelClass.BEATMAPSET_TAG, session, **kwargs)
-
-    @session_manager
-    async def get_beatmapset_tags(self, session: AsyncSession = None, **kwargs) -> list[BeatmapsetTag]:
-        return await self._get_instances(ModelClass.BEATMAPSET_TAG, session, **kwargs)
-
-    @session_manager
-    async def get_beatmap_tag(self, session: AsyncSession = None, **kwargs) -> BeatmapTag | None:
-        return await self._get_instance(ModelClass.BEATMAP_TAG, session, **kwargs)
-
-    @session_manager
-    async def get_beatmap_tags(self, session: AsyncSession = None, **kwargs) -> list[BeatmapTag]:
-        return await self._get_instances(ModelClass.BEATMAP_TAG, session, **kwargs)
+        return await self._get_instances(
+            model_class,
+            session,
+            _select=_select,
+            _join=_join,
+            _where=_where,
+            _order_by=_order_by,
+            _reversed=_reversed,
+            _include=_include,
+            _limit=_limit,
+            _offset=_offset,
+            **kwargs
+        )

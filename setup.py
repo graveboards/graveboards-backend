@@ -42,8 +42,8 @@ async def setup():
             for user_id, roles in user_roles_mapping.items():
                 await db.add_user(id=user_id, roles=roles, session=session)
 
-                score_fetcher_task = await db.get_score_fetcher_task(user_id=user_id)
                 await db.update_score_fetcher_task(score_fetcher_task.id, enabled=True)
+                score_fetcher_task = await db.get(ScoreFetcherTask, user_id=user_id)
 
                 if user_id in ADMIN_USER_IDS:
                     expires_at = aware_utcnow() + timedelta(weeks=1)
@@ -55,7 +55,7 @@ async def setup():
         logger.debug(f"Fresh database set up successfully!")
 
     logger.debug(f"Primary admin user ID: {PRIMARY_ADMIN_USER_ID}")
-    logger.debug(f"Primary API key: {(await db.get_api_key(user_id=PRIMARY_ADMIN_USER_ID)).key}")
+    logger.debug(f"Primary API key: {(await db.get(ApiKey, user_id=PRIMARY_ADMIN_USER_ID)).key}")
 
     await rc.aclose()
     await db.close()

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 from httpx import ConnectTimeout, HTTPStatusError, ReadTimeout
 
 from app.osu_api import OsuAPIClient
-from app.database.models import ProfileFetcherTask
+from app.database.models import ProfileFetcherTask, User, Profile
 from app.database.schemas import ProfileSchema
 from app.redis import ChannelName, Namespace, LOCK_EXPIRY
 from app.utils import aware_utcnow
@@ -73,8 +73,8 @@ class ProfileFetcher(Service):
                 logger.debug(f"Loaded task: {info}")
 
     async def preload_tasks(self):
-        tasks = await self.db.get_profile_fetcher_tasks(enabled=True)
-        missing_profile_user_ids = await self.db.get_users(profile=None, _select="id")
+        tasks = await self.db.get_many(ProfileFetcherTask, enabled=True)
+        missing_profile_user_ids = await self.db.get_many(User, profile=None, _select="id")
 
         for task in tasks:
             self.load_task(task, now=task.user_id in missing_profile_user_ids)
@@ -96,7 +96,7 @@ class ProfileFetcher(Service):
         start_time = aware_utcnow()
 
         while (aware_utcnow() - start_time).total_seconds() < timeout:
-            task = await self.db.get_profile_fetcher_task(id=task_id)
+            task = await self.db.get(ProfileFetcherTask, id=task_id)
 
             if task:
                 return task
@@ -131,7 +131,7 @@ class ProfileFetcher(Service):
 
     @auto_retry(retry_exceptions=(ConnectTimeout,))
     async def fetch_profile(self, task_id: int):
-        if not (task := await self.db.get_profile_fetcher_task(id=task_id)):
+        if not (task := await self.db.get(ProfileFetcherTask, id=task_id)):
             raise ValueError(f"Task with ID '{task_id}' not found")
 
         user_id = task.user_id
@@ -149,8 +149,8 @@ class ProfileFetcher(Service):
                     context={"jsonify_nested": True}
                 )
 
-                if not (profile := await self.db.get_profile(user_id=user_id)):
                     profile = await self.db.add_profile(**profile_dict)
+                if not (profile := await self.db.get(Profile, user_id=user_id)):
                     info = {"id": profile.id, "user_id": user_id}
                     logger.debug(f"Fetched and added profile: {info}")
                 else:

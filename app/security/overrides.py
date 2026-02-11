@@ -1,4 +1,5 @@
 from app.database import PostgresqlDB
+from app.database.models import Queue, Request
 from app.utils import get_nested_value
 
 
@@ -17,8 +18,8 @@ async def queue_owner_override(_db: PostgresqlDB, authenticated_user_id_lookup: 
     authenticated_user_id = get_nested_value(kwargs, authenticated_user_id_lookup)
 
     if not from_request:
-        queue = await _db.get_queue(id=kwargs["queue_id"])
+        queue = await _db.get(Queue, id=kwargs["queue_id"])
     else:
-        queue = (await _db.get_request(id=kwargs["request_id"], _loading_options={"queue": True})).queue
+        queue = (await _db.get(Request, id=kwargs["request_id"], _loading_options={"queue": True})).queue
 
     return authenticated_user_id == queue.user_id

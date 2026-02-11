@@ -2,12 +2,13 @@ from connexion.lifecycle import ConnexionRequest
 from jwt.exceptions import InvalidIssuerError, ExpiredSignatureError, InvalidTokenError
 
 from app.database import PostgresqlDB
+from app.database.models import ApiKey
 from app.security import validate_api_key, validate_token
 
 
 async def api_key_info(key: str, request: ConnexionRequest) -> dict | None:
     db: PostgresqlDB = request.state.db
-    api_key = await db.get_api_key(key=key)
+    api_key = await db.get(ApiKey, key=key)
 
     try:
         return validate_api_key(api_key)

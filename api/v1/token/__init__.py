@@ -2,6 +2,7 @@ from authlib.integrations.base_client.errors import OAuthError
 from connexion import request
 
 from app.database import PostgresqlDB
+from app.database.models import JWT, User, ScoreFetcherTask, OAuthToken
 from app.database.schemas import JWTSchema
 from app.oauth import OAuth
 from app.osu_api import OsuAPIClient
@@ -12,7 +13,7 @@ from app.security import create_token_payload, encode_token
 async def search(token: str):
     db: PostgresqlDB = request.state.db
 
-    jwt = await db.get_jwt(token=token)
+    jwt = await db.get(JWT, token=token)
 
     if not jwt:
         return {"message": f"The JWT provided does not exist"}, 404
@@ -55,10 +56,10 @@ async def post(body: dict):
     user_data = await oac.get_own_data(access_token)
     user_id = user_data["id"]
 
-    if not await db.get_user(id=user_id):
         await db.add_user(id=user_id)
+    if not await db.get(User, id=user_id):
 
-    score_fetcher_task = await db.get_score_fetcher_task(user_id=user_id)
+    score_fetcher_task = await db.get(ScoreFetcherTask, user_id=user_id)
 
     if not score_fetcher_task.enabled and score_fetcher_task.last_fetch is None:
         await db.update_score_fetcher_task(score_fetcher_task.id, enabled=True)

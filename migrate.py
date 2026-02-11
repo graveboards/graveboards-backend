@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from httpx import HTTPStatusError
 
 from app.database import PostgresqlDB
+from app.database.models import Beatmapset, BeatmapsetSnapshot, Request
 from app.beatmap_manager import BeatmapManager
 from app.redis import RedisClient
 from app.logging import setup_logging
@@ -29,7 +30,7 @@ async def migrate():
             row["created_at"] = datetime.fromisoformat(row["created_at"]).replace(tzinfo=timezone.utc)
             row["updated_at"] = datetime.fromisoformat(row["updated_at"]).replace(tzinfo=timezone.utc)
 
-            if not await db.get_beatmapset(id=beatmapset_id):
+            if not await db.get(Beatmapset, id=beatmapset_id):
                 try:
                     bm = BeatmapManager(rc, db)
                     changelog = await bm.archive(beatmapset_id)
@@ -38,15 +39,15 @@ async def migrate():
                     if e.response.status_code == 404:
                         continue
             else:
-                beatmapset_snapshot = await db.get_beatmapset_snapshot(id=beatmapset_id, _reversed=True)
+                beatmapset_snapshot = await db.get(BeatmapsetSnapshot, id=beatmapset_id, _reversed=True)
 
                 if beatmapset_snapshot is None:
                     raise ValueError(f"BeatmapsetSnapshot for beatmapset {beatmapset_id} not found")
 
                 row["beatmapset_snapshot_id"] = beatmapset_snapshot.id
 
-            if not await db.get_request(**row):
                 await db.add_request(**row)
+            if not await db.get(Request, **row):
 
             progress = int((i / total_rows) * 100)
             bar = "=" * (progress // 2)

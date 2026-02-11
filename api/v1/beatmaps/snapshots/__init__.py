@@ -2,6 +2,7 @@ from connexion import request
 
 from api.utils import prime_query_kwargs
 from app.database import PostgresqlDB
+from app.database.models import BeatmapSnapshot, ModelClass
 from app.database.schemas import BeatmapSnapshotSchema
 from . import osu
 
@@ -18,9 +19,9 @@ async def search(beatmap_id: int, **kwargs):
 
     prime_query_kwargs(kwargs)
 
-    beatmap_snapshots = await db.get_beatmap_snapshots(
+    beatmap_snapshots = await db.get_many(
+        BeatmapSnapshot,
         beatmap_id=beatmap_id,
-        _loading_options=_LOADING_OPTIONS,
         **kwargs
     )
     beatmap_snapshots_data = [
@@ -36,11 +37,23 @@ async def search(beatmap_id: int, **kwargs):
 async def get(beatmap_id: int, snapshot_number: int):
     db: PostgresqlDB = request.state.db
 
-    beatmap_snapshot = await db.get_beatmap_snapshot(
-        beatmap_id=beatmap_id,
-        snapshot_number=snapshot_number,
-        _loading_options=_LOADING_OPTIONS
-    )
+    if snapshot_number < 0:
+        offset = abs(snapshot_number) - 1
+
+        beatmap_snapshot = await db.get(
+            BeatmapSnapshot,
+            beatmap_id=beatmap_id,
+            _order_by=BeatmapSnapshot.snapshot_number.desc(),
+            _offset=offset,
+            **kwargs,
+        )
+    else:
+        beatmap_snapshot = await db.get(
+            BeatmapSnapshot,
+            beatmap_id=beatmap_id,
+            snapshot_number=snapshot_number,
+            **kwargs
+        )
 
     if not beatmap_snapshot:
         return {"message": f"BeatmapSnapshot with beatmap_id '{beatmap_id}' and snapshot_number '{snapshot_number}' not found"}, 404

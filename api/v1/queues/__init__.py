@@ -2,6 +2,7 @@ from connexion import request
 
 from api.utils import prime_query_kwargs, bleach_body
 from app.database import PostgresqlDB
+from app.database.models import Queue, ModelClass
 from app.database.schemas import QueueSchema
 from app.security import role_authorization
 from app.security.overrides import queue_owner_override
@@ -20,8 +21,8 @@ async def search(**kwargs):
 
     prime_query_kwargs(kwargs)
 
-    queues = await db.get_queues(
-        _loading_options=_LOADING_OPTIONS,
+    queues = await db.get_many(
+        Queue,
         **kwargs
     )
     queues_data = [
@@ -37,7 +38,8 @@ async def search(**kwargs):
 async def get(queue_id: int):
     db: PostgresqlDB = request.state.db
 
-    queue = await db.get_queue(
+    queue = await db.get(
+        Queue,
         id=queue_id,
         _loading_options=_LOADING_OPTIONS,
     )
@@ -77,7 +79,7 @@ async def patch(queue_id: int, body: dict, **kwargs):
         blacklisted_keys={"id", "user_id", "created_at", "updated_at", "requests", "managers", "user_profile", "manager_profiles"}
     )
 
-    queue = await db.get_queue(id=queue_id)
+    queue = await db.get(Queue, id=queue_id)
 
     if not queue:
         return {"message": f"Queue with ID '{queue_id}' not found"}, 404

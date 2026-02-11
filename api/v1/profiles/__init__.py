@@ -2,6 +2,7 @@ from connexion import request
 
 from api.utils import prime_query_kwargs
 from app.database import PostgresqlDB
+from app.database.models import Profile, ModelClass
 from app.database.schemas import ProfileSchema
 
 
@@ -10,7 +11,8 @@ async def search(**kwargs):
 
     prime_query_kwargs(kwargs)
 
-    profiles = await db.get_profiles(
+    profiles = await db.get_many(
+        Profile,
         **kwargs
     )
     profiles_data = [
@@ -24,8 +26,9 @@ async def search(**kwargs):
 async def get(user_id: int):
     db: PostgresqlDB = request.state.db
 
-    profile = await db.get_profile(
-        user_id=user_id
+    profile = await db.get(
+        Profile,
+        user_id=user_id,
     )
 
     if not profile:

@@ -4,6 +4,7 @@ from connexion import request
 from api.utils import prime_query_kwargs
 from app.beatmap_manager import BeatmapManager
 from app.database import PostgresqlDB
+from app.database.models import Beatmapset, ModelClass
 from app.database.schemas import BeatmapsetSchema
 from app.redis import RedisClient
 from app.security import role_authorization
@@ -20,8 +21,8 @@ async def search(**kwargs):
 
     prime_query_kwargs(kwargs)
 
-    beatmapsets = await db.get_beatmapsets(
-        _loading_options=_LOADING_OPTIONS,
+    beatmapsets = await db.get_many(
+        Beatmapset,
         **kwargs
     )
     beatmapsets_data = [

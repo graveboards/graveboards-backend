@@ -2,6 +2,7 @@ from connexion import request
 
 from api.utils import prime_query_kwargs
 from app.database import PostgresqlDB
+from app.database.models import Beatmap, ModelClass
 from app.database.schemas import BeatmapSchema
 from . import snapshots
 
@@ -16,8 +17,8 @@ async def search(**kwargs):
 
     prime_query_kwargs(kwargs)
 
-    beatmaps = await db.get_beatmaps(
-        _loading_options=_LOADING_OPTIONS,
+    beatmaps = await db.get_many(
+        Beatmap,
         **kwargs
     )
     beatmaps_data = [
