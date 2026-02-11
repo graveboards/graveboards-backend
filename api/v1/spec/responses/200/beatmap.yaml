@@ -1,0 +1,15 @@
+BeatmapResults:
+    description: List of beatmaps
+    content:
+        application/json:
+            schema:
+                type: array
+                items:
+                    $ref: "../../schemas/beatmap.yaml#/Beatmap"
+
+BeatmapResult:
+    description: Beatmap
+    content:
+        application/json:
+            schema:
+                $ref: "../../schemas/beatmap.yaml#/Beatmap"

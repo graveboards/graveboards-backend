@@ -4,11 +4,15 @@ Beatmapsets:
         tags:
             - Beatmapsets
         parameters:
+            - $ref: "../parameters/query/user.yaml#/UserId"
+            - $ref: "../parameters/query/include/beatmapset.yaml#/BeatmapsetInclude"
             - $ref: "../parameters/query/search.yaml#/Limit"
             - $ref: "../parameters/query/search.yaml#/Offset"
         responses:
             200:
-                description: Successfully retrieved beatmapsets
+                $ref: "../responses/200/beatmapset.yaml#/BeatmapsetResults"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
 
     post:
         summary: Downloads all beatmaps in a beatmapset to the server
@@ -18,12 +22,34 @@ Beatmapsets:
             - BearerAuth: []
             - ApiKeyAuth: []
         requestBody:
-            $ref: "../request_bodies/beatmapset.yaml#/Beatmapset"
+            $ref: "../request_bodies/beatmapset.yaml#/BeatmapsetCreate"
         responses:
             200:
-                description: All of the latest snapshots of the beatmaps in the beatmapset have already been downloaded
+                $ref: "../responses/200/beatmapset.yaml#/BeatmapsetUpdated"
             201:
-                description: Successfully downloaded entire beatmapset to the server
+                $ref: "../responses/201/beatmapset.yaml#/BeatmapsetCreated"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
+
+BeatmapsetById:
+    get:
+        summary: Returns the specified beatmapset
+        tags:
+            - Beatmapsets
+        parameters:
+            - $ref: "../parameters/path/beatmapset.yaml#/BeatmapsetId"
+            - $ref: "../parameters/query/include/beatmapset.yaml#/BeatmapsetInclude"
+        responses:
+            200:
+                $ref: "../responses/200/beatmapset.yaml#/BeatmapsetResult"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"
 
 BeatmapsetById-Snapshots:
     get:
@@ -32,11 +58,14 @@ BeatmapsetById-Snapshots:
             - Beatmapsets
         parameters:
             - $ref: "../parameters/path/beatmapset.yaml#/BeatmapsetId"
+            - $ref: "../parameters/query/include/beatmapset_snapshot.yaml#/BeatmapsetSnapshotInclude"
             - $ref: "../parameters/query/search.yaml#/Limit"
             - $ref: "../parameters/query/search.yaml#/Offset"
         responses:
             200:
-                description: Successfully retrieved beatmapset snapshots
+                $ref: "../responses/200/beatmapset_snapshot.yaml#/BeatmapsetSnapshotResults"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
 
 BeatmapsetById-SnapshotByNumber:
     get:
@@ -46,9 +75,14 @@ BeatmapsetById-SnapshotByNumber:
         parameters:
             - $ref: "../parameters/path/beatmapset.yaml#/BeatmapsetId"
             - $ref: "../parameters/path/beatmapset.yaml#/BeatmapsetSnapshotNumber"
+            - $ref: "../parameters/query/include/beatmapset_snapshot.yaml#/BeatmapsetSnapshotInclude"
         responses:
             200:
-                description: Successfully retrieved beatmapset snapshot
+                $ref: "../responses/200/beatmapset_snapshot.yaml#/BeatmapsetSnapshotResult"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"
 
 BeatmapsetById-SnapshotByNumber-Zip:
     get:
@@ -60,16 +94,21 @@ BeatmapsetById-SnapshotByNumber-Zip:
             - $ref: "../parameters/path/beatmapset.yaml#/BeatmapsetSnapshotNumber"
         responses:
             200:
-                description: Successfully retrieved zipped beatmap files
+                $ref: "../responses/200/beatmapset_snapshot.yaml#/ZipFile"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"
 
 BeatmapsetListings:
     get:
-        summary: Returns a list of beatmapset listings
+        summary: Returns a list of only latest beatmapset snapshots
         tags:
             - Beatmapsets
         parameters:
+            - $ref: "../parameters/query/include/beatmapset_snapshot.yaml#/BeatmapsetSnapshotInclude"
             - $ref: "../parameters/query/search.yaml#/Limit"
             - $ref: "../parameters/query/search.yaml#/Offset"
         responses:
             200:
-                description: Successfully retrieved beatmapset listings
+                $ref: "../responses/200/beatmapset_snapshot.yaml#/BeatmapsetSnapshotResults"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"

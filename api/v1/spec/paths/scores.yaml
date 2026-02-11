@@ -4,11 +4,14 @@ Scores:
         tags:
             - Scores
         parameters:
+            - $ref: "../parameters/query/include/score.yaml#/ScoreInclude"
             - $ref: "../parameters/query/search.yaml#/Limit"
             - $ref: "../parameters/query/search.yaml#/Offset"
         responses:
             200:
-                description: Successfully retrieved scores
+                $ref: "../responses/200/score.yaml#/ScoreResults"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
 
     post:
         summary: Adds a score to the latest snapshot of the appropriate beatmap's leaderboard
@@ -18,7 +21,27 @@ Scores:
             - BearerAuth: []
             - ApiKeyAuth: []
         requestBody:
-            $ref: "../request_bodies/score.yaml#/Score"
+            $ref: "../request_bodies/score.yaml#/ScoreCreate"
         responses:
             201:
-                description: Successfully added score
+                $ref: "../responses/201/score.yaml#/ScoreCreated"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
+
+ScoreById:
+    get:
+        summary: Returns the specified score
+        tags:
+            - Scores
+        parameters:
+            - $ref: "../parameters/path/score.yaml#/ScoreId"
+            - $ref: "../parameters/query/include/score.yaml#/ScoreInclude"
+        responses:
+            200:
+                $ref: "../responses/200/score.yaml#/ScoreResult"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"

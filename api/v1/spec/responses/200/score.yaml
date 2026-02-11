@@ -1,0 +1,15 @@
+ScoreResults:
+    description: List of scores
+    content:
+        application/json:
+            schema:
+                type: array
+                items:
+                    $ref: "../../schemas/score.yaml#/Score"
+
+ScoreResult:
+    description: Score
+    content:
+        application/json:
+            schema:
+                $ref: "../../schemas/score.yaml#/Score"

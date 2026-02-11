@@ -1,14 +1,33 @@
 Beatmaps:
     get:
-        summary: Returns a list of beatmaps stored on the server
+        summary: Returns a list of beatmaps
         tags:
             - Beatmaps
         parameters:
+            - $ref: "../parameters/query/include/beatmap.yaml#/BeatmapInclude"
             - $ref: "../parameters/query/search.yaml#/Limit"
             - $ref: "../parameters/query/search.yaml#/Offset"
         responses:
             200:
-                description: Successfully retrieved beatmaps
+                $ref: "../responses/200/beatmap.yaml#/BeatmapResults"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+
+BeatmapById:
+    get:
+        summary: Returns the specified beatmap
+        tags:
+            - Beatmaps
+        parameters:
+            - $ref: "../parameters/path/beatmap.yaml#/BeatmapId"
+            - $ref: "../parameters/query/include/beatmap.yaml#/BeatmapInclude"
+        responses:
+            200:
+                $ref: "../responses/200/beatmap.yaml#/BeatmapResult"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"
 
 BeatmapById-Snapshots:
     get:
@@ -17,11 +36,14 @@ BeatmapById-Snapshots:
             - Beatmaps
         parameters:
             - $ref: "../parameters/path/beatmap.yaml#/BeatmapId"
+            - $ref: "../parameters/query/include/beatmap_snapshot.yaml#/BeatmapSnapshotInclude"
             - $ref: "../parameters/query/search.yaml#/Limit"
             - $ref: "../parameters/query/search.yaml#/Offset"
         responses:
             200:
-                description: Successfully retrieved beatmap snapshots
+                $ref: "../responses/200/beatmap_snapshot.yaml#/BeatmapSnapshotResults"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
 
 BeatmapById-SnapshotByNumber:
     get:
@@ -31,9 +53,14 @@ BeatmapById-SnapshotByNumber:
         parameters:
             - $ref: "../parameters/path/beatmap.yaml#/BeatmapId"
             - $ref: "../parameters/path/beatmap.yaml#/BeatmapSnapshotNumber"
+            - $ref: "../parameters/query/include/beatmap_snapshot.yaml#/BeatmapSnapshotInclude"
         responses:
             200:
-                description: Successfully retrieved beatmap snapshot
+                $ref: "../responses/200/beatmap_snapshot.yaml#/BeatmapSnapshotResult"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"
 
 BeatmapById-SnapshotByNumber-Osu:
     get:
@@ -45,4 +72,111 @@ BeatmapById-SnapshotByNumber-Osu:
             - $ref: "../parameters/path/beatmap.yaml#/BeatmapSnapshotNumber"
         responses:
             200:
-                description: Successfully retrieved beatmap file
+                $ref: "../responses/200/beatmap_snapshot.yaml#/OsuFile"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"
+
+BeatmapById-SnapshotByNumber-Leaderboard:
+    get:
+        summary: Returns the leaderboard of the beatmap's specified snapshot
+        tags:
+            - Beatmaps
+            - Leaderboards
+        parameters:
+            - $ref: "../parameters/path/beatmap.yaml#/BeatmapId"
+            - $ref: "../parameters/path/beatmap.yaml#/BeatmapSnapshotNumber"
+            - $ref: "../parameters/query/include/leaderboard.yaml#/LeaderboardInclude"
+        responses:
+            200:
+                $ref: "../responses/200/leaderboard.yaml#/LeaderboardResult"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"
+
+    post:
+        summary: Adds a leaderboard for a beatmap's specified snapshot
+        tags:
+            - Beatmaps
+            - Leaderboards
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        parameters:
+            - $ref: "../parameters/path/beatmap.yaml#/BeatmapId"
+            - $ref: "../parameters/path/beatmap.yaml#/BeatmapSnapshotNumber"
+        requestBody:
+            $ref: "../request_bodies/leaderboard.yaml#/LeaderboardCreate"
+        responses:
+            201:
+                $ref: "../responses/201/leaderboard.yaml#/LeaderboardCreated"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"
+            409:
+                $ref: "../responses/409/generic.yaml#/Conflict"
+
+    patch:
+        summary: Updates leaderboard for a beatmap's specified snapshot
+        tags:
+            - Beatmaps
+            - Leaderboards
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        parameters:
+            - $ref: "../parameters/path/beatmap.yaml#/BeatmapId"
+            - $ref: "../parameters/path/beatmap.yaml#/BeatmapSnapshotNumber"
+        requestBody:
+            $ref: "../request_bodies/leaderboard.yaml#/LeaderboardPatch"
+        responses:
+            201:
+                $ref: "../responses/200/leaderboard.yaml#/LeaderboardPatched"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"
+
+BeatmapById-SnapshotByNumber-Scores:
+    get:
+        summary: Returns a list of scores for the beatmap's specified snapshot
+        tags:
+            - Beatmaps
+            - Scores
+        parameters:
+            - $ref: "../parameters/path/beatmap.yaml#/BeatmapId"
+            - $ref: "../parameters/path/beatmap.yaml#/BeatmapSnapshotNumber"
+            - $ref: "../parameters/query/include/score.yaml#/ScoreInclude"
+            - $ref: "../parameters/query/search.yaml#/Limit"
+            - $ref: "../parameters/query/search.yaml#/Offset"
+        responses:
+            200:
+                $ref: "../responses/200/score.yaml#/ScoreResults"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"
+
+BeatmapListings:
+    get:
+        summary: Returns a list of only latest beatmap snapshots
+        tags:
+            - Beatmaps
+        parameters:
+            - $ref: "../parameters/query/include/beatmap_snapshot.yaml#/BeatmapSnapshotInclude"
+            - $ref: "../parameters/query/search.yaml#/Limit"
+            - $ref: "../parameters/query/search.yaml#/Offset"
+        responses:
+            200:
+                $ref: "../responses/200/beatmap_snapshot.yaml#/BeatmapSnapshotResults"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"

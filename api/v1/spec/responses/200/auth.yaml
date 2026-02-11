@@ -1,0 +1,13 @@
+AuthorizationUrl:
+    description: Authorization url and state received from osu!'s API
+    content:
+        application/json:
+            schema:
+                $ref: "../../schemas/auth.yaml#/AuthorizationUrl"
+
+JWT:
+    description: JWT info
+    content:
+        application/json:
+            schema:
+                $ref: "../../schemas/auth.yaml#/JWT"

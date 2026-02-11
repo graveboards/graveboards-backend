@@ -26,9 +26,7 @@ BeatmapUrlConditions:
             $ref: "../../../../regex_pattern.yaml#/RegexPattern"
 
 BeatmapUrlValue:
-    type: string
-    pattern: ^https:\/\/osu\.ppy\.sh\/beatmaps\/\d+$
-    example: https://osu.ppy.sh/beatmaps/129891
+    $ref: "../../../../sub_schemas/beatmap_url.yaml#/BeatmapUrl"
 
 BeatmapUrlContainer:
     type: array

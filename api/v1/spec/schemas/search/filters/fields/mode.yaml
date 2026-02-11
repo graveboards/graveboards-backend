@@ -22,13 +22,7 @@ ModeConditions:
             type: boolean
 
 ModeValue:
-    type: string
-    enum:
-        - fruits
-        - mania
-        - osu
-        - taiko
-    default: osu
+    $ref: "../../../../sub_schemas/ruleset.yaml#/Ruleset"
 
 ModeContainer:
     type: array

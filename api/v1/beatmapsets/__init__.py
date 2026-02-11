@@ -41,12 +41,35 @@ async def search(**kwargs):
     return beatmapsets_data, 200, {"Content-Type": "application/json"}
 
 
+@api_query(ModelClass.BEATMAPSET)
+async def get(beatmapset_id: int, **kwargs):
+    db: PostgresqlDB = request.state.db
+
+    beatmapset = await db.get(
+        Beatmapset,
+        **kwargs
+    )
+
+    if not beatmapset:
+        raise NotFound(f"Beatmapset with beatmapset_id '{beatmapset_id}' not found")
+
+    include = build_pydantic_include(
+        obj=beatmapset,
+        include_schema=get_include_schema(ModelClass.BEATMAP),
+        request_include=kwargs.get("_include")
+    )
+
+    beatmapset_data = BeatmapsetSchema.model_validate(beatmapset).model_dump(include=include)
+
+    return beatmapset_data, 200, {"Content-Type": "application/json"}
+
+
 @role_authorization(RoleName.ADMIN)
 async def post(body: dict, **kwargs):
     rc: RedisClient = request.state.rc
     db: PostgresqlDB = request.state.db
 
-    beatmapset_id = body["beatmapset_id"]
+    beatmapset_id = body["id"]
 
     try:
         bm = BeatmapManager(rc, db)
@@ -56,7 +79,9 @@ async def post(body: dict, **kwargs):
 
     if changelog["snapshotted_beatmapset"] or changelog["snapshotted_beatmaps"]:
         num_snapshotted_beatmaps = len(changelog["snapshotted_beatmaps"])
-        changelog["message"] = f"Snapshotted {num_snapshotted_beatmaps} beatmaps"
+        changelog["message"] = f"Snapshotted {num_snapshotted_beatmaps} beatmap(s)"
+        del changelog["updated_beatmapset"]
+        del changelog["updated_beatmaps"]
         status_code = 201
     elif changelog["updated_beatmapset"] or changelog["updated_beatmaps"]:
         num_beatmaps = len(changelog["updated_beatmaps"])
@@ -67,9 +92,13 @@ async def post(body: dict, **kwargs):
             f"and {num_beatmap_fields} field(s) "
             f"in {num_beatmaps} beatmap(s)"
         )
+        del changelog["snapshotted_beatmapset"]
+        del changelog["snapshotted_beatmaps"]
         status_code = 200
     else:
         changelog["message"] = "The beatmapset and its beatmaps are fully up-to-date"
+        del changelog["snapshotted_beatmapset"]
+        del changelog["snapshotted_beatmaps"]
         status_code = 200
 
     return changelog, status_code, {"Content-Type": "application/json"}

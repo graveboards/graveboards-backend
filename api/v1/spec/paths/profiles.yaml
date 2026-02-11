@@ -4,13 +4,16 @@ Profiles:
         tags:
             - Profiles
         parameters:
+            - $ref: "../parameters/query/include/profile.yaml#/ProfileInclude"
             - $ref: "../parameters/query/search.yaml#/Limit"
             - $ref: "../parameters/query/search.yaml#/Offset"
         responses:
             200:
-                description: Successfully retrieved all profiles
+                $ref: "../responses/200/profile.yaml#/ProfileResults"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
             401:
-                $ref: "../responses/401/unauthorized_error.yaml#/UnauthorizedError"
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
 
 ProfileByUserId:
     get:
@@ -19,6 +22,11 @@ ProfileByUserId:
             - Profiles
         parameters:
             - $ref: "../parameters/path/user.yaml#/UserId"
+            - $ref: "../parameters/query/include/profile.yaml#/ProfileInclude"
         responses:
             200:
-                description: Successfully retrieved user profile
+                $ref: "../responses/200/profile.yaml#/ProfileResult"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"

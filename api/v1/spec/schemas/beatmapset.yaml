@@ -1,20 +1,41 @@
 Beatmapset:
-    description: An object representing an osu! beatmapset
+    title: Beatmapset
     type: object
     properties:
-        beatmapset_id:
+        id:
+            type: integer
+        user_id:
+            type: integer
+        snapshots:
+            type: array
+            items:
+                $ref: "./beatmapset_snapshot.yaml#/BeatmapsetSnapshot"
+
+BeatmapsetCreate:
+    description: An object containing the data of the beatmapset to create
+    type: object
+    additionalProperties: false
+    properties:
+        id:
             type: integer
     required:
-        - beatmapset_id
+        - id
 
-GenreId:
-    $ref: "./filters/fields/genre_id.yaml/#GenreIdValue"
-
-GenreName:
-    $ref: "./filters/fields/genre_name.yaml/#GenreNameValue"
-
-LanguageId:
-    $ref: "./filters/fields/language_id.yaml/#LanguageIdValue"
-
-LanguageName:
-    $ref: "./filters/fields/language_name.yaml/#LanguageNameValue"
+BeatmapsetInclude:
+    title: BeatmapsetInclude
+    type: object
+    additionalProperties: false
+    properties:
+        id:
+            type: boolean
+            default: true
+        user_id:
+            type: boolean
+            default: true
+        snapshots:
+            description:
+                $ref: "../parameters/query/include/description.yaml#/NestedInclude"
+            oneOf:
+                - $ref: "./beatmapset_snapshot.yaml#/BeatmapsetSnapshotInclude"
+                - type: boolean
+                  default: false

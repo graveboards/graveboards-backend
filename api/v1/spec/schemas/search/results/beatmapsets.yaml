@@ -1,14 +1,9 @@
 BeatmapsetResults:
-    description: Beatmapset Search Results
+    title: BeatmapsetResults
+    description: Beatmapset search results
     type: array
     items:
-        $ref: "#/BeatmapsetListing"
-
-BeatmapsetListing:
-    type: object
-    properties:
-        beatmapset_snapshot:
-            $ref: "#/BeatmapsetSnapshot"
+        $ref: "#/BeatmapsetSnapshot"
 
 BeatmapsetSnapshot:
     type: object

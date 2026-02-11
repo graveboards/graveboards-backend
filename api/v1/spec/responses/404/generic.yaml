@@ -1,0 +1,6 @@
+NotFound:
+    description: Content not found
+    content:
+        application/problem+json:
+            schema:
+                $ref: "../../schemas/problem.yaml#Problem"

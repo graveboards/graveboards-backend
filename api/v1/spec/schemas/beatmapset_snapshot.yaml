@@ -1,0 +1,327 @@
+BeatmapsetSnapshot:
+    title: BeatmapsetSnapshot
+    type: object
+    properties:
+        id:
+            type: integer
+        beatmapset_id:
+            type: integer
+        snapshot_number:
+            type: integer
+        snapshot_date:
+            type: string
+            format: date-time
+        checksum:
+            $ref: "./sub_schemas/checksum.yaml#/Checksum"
+        verified:
+            type: boolean
+        artist:
+            type: string
+        artist_unicode:
+            type: string
+        availability:
+            $ref: "./sub_schemas/availability.yaml#/Availability"
+        bpm:
+            type: number
+            format: float
+        can_be_hyped:
+            type: boolean
+        covers:
+            $ref: "./sub_schemas/covers.yaml#/Covers"
+        creator:
+            type: string
+        current_nominations:
+            type: array
+            items:
+                $ref: "./sub_schemas/current_nomination.yaml#/CurrentNomination"
+        deleted_at:
+            type: string
+            format: date-time
+            nullable: true
+        description:
+            $ref: "./sub_schemas/beatmapset_description.yaml#/BeatmapsetDescription"
+        discussion_enabled:
+            type: boolean
+        discussion_locked:
+            type: boolean
+        favourite_count:
+            type: integer
+        genre:
+            allOf:
+                - $ref: "./sub_schemas/genre.yaml#/Genre"
+                - nullable: true
+        hype:
+            allOf:
+                - $ref: "./sub_schemas/hype.yaml#/Hype"
+                - nullable: true
+        is_scoreable:
+            type: boolean
+        language:
+            allOf:
+                - $ref: "./sub_schemas/language.yaml#/Language"
+                - nullable: true
+        last_updated:
+            type: string
+            format: date-time
+        legacy_thread_url:
+            type: string
+            nullable: true
+        nominations_summary:
+            $ref: "./sub_schemas/nominations_summary.yaml#/NominationsSummary"
+        nsfw:
+            type: boolean
+        offset:
+            type: integer
+        pack_tags:
+            type: array
+            items:
+                type: string
+        play_count:
+            type: integer
+        preview_url:
+            $ref: "./sub_schemas/preview_url.yaml#/PreviewUrl"
+        ranked:
+            $ref: "./sub_schemas/ranked_status.yaml#/Ranked"
+        ranked_date:
+            type: string
+            format: date-time
+            nullable: true
+        rating:
+            type: number
+            format: float
+        ratings:
+            type: array
+            items:
+                type: integer
+        source:
+            type: string
+        spotlight:
+            type: boolean
+        status:
+            $ref: "./sub_schemas/ranked_status.yaml#/Status"
+        storyboard:
+            type: boolean
+        submitted_date:
+            type: string
+            format: date-time
+        tags:
+            type: string
+        title:
+            type: string
+        title_unicode:
+            type: string
+        track_id:
+            type: integer
+            nullable: true
+        user_id:
+            type: integer
+        video:
+            type: boolean
+        beatmap_snapshots:
+            type: array
+            items:
+                $ref: "./beatmap_snapshot.yaml#/BeatmapSnapshotShallow"
+        beatmapset_tags:
+            type: array
+            items:
+                $ref: "#/BeatmapsetTag"
+        user_profile:
+            $ref: "./profile.yaml#/Profile"
+
+BeatmapsetSnapshotShallow:
+    # Infinite recursion protection placeholder
+    # References to this are to be automatically populated on runtime
+    title: BeatmapsetSnapshotShallow
+    type: object
+
+BeatmapsetTag:
+    title: BeatmapsetTag
+    type: object
+    properties:
+        id:
+            type: integer
+        name:
+            type: string
+
+BeatmapsetSnapshotInclude:
+    title: BeatmapsetSnapshotInclude
+    type: object
+    additionalProperties: false
+    properties:
+        id:
+            type: boolean
+            default: true
+        beatmapset_id:
+            type: boolean
+            default: false
+        user_id:
+            type: boolean
+            default: false
+        snapshot_number:
+            type: boolean
+            default: false
+        snapshot_date:
+            type: boolean
+            default: false
+        checksum:
+            type: boolean
+            default: false
+        verified:
+            type: boolean
+            default: false
+        artist:
+            type: boolean
+            default: false
+        artist_unicode:
+            type: boolean
+            default: false
+        availability:
+            type: boolean
+            default: false
+        bpm:
+            type: boolean
+            default: false
+        can_be_hyped:
+            type: boolean
+            default: false
+        covers:
+            type: boolean
+            default: false
+        creator:
+            type: boolean
+            default: false
+        current_nominations:
+            type: boolean
+            default: false
+        deleted_at:
+            type: boolean
+            default: false
+        description:
+            type: boolean
+            default: false
+        discussion_enabled:
+            type: boolean
+            default: false
+        discussion_locked:
+            type: boolean
+            default: false
+        favourite_count:
+            type: boolean
+            default: false
+        genre:
+            type: boolean
+            default: false
+        hype:
+            type: boolean
+            default: false
+        is_scoreable:
+            type: boolean
+            default: false
+        language:
+            type: boolean
+            default: false
+        last_updated:
+            type: boolean
+            default: false
+        legacy_thread_url:
+            type: boolean
+            default: false
+        nominations_summary:
+            type: boolean
+            default: false
+        nsfw:
+            type: boolean
+            default: false
+        offset:
+            type: boolean
+            default: false
+        pack_tags:
+            type: boolean
+            default: false
+        play_count:
+            type: boolean
+            default: false
+        preview_url:
+            type: boolean
+            default: false
+        ranked:
+            type: boolean
+            default: false
+        ranked_date:
+            type: boolean
+            default: false
+        rating:
+            type: boolean
+            default: false
+        ratings:
+            type: boolean
+            default: false
+        source:
+            type: boolean
+            default: false
+        spotlight:
+            type: boolean
+            default: false
+        status:
+            type: boolean
+            default: false
+        storyboard:
+            type: boolean
+            default: false
+        submitted_date:
+            type: boolean
+            default: false
+        tags:
+            type: boolean
+            default: false
+        title:
+            type: boolean
+            default: false
+        title_unicode:
+            type: boolean
+            default: false
+        track_id:
+            type: boolean
+            default: false
+        video:
+            type: boolean
+            default: false
+        beatmap_snapshots:
+            description:
+                $ref: "../parameters/query/include/description.yaml#/NestedInclude"
+            oneOf:
+                - $ref: "./beatmap_snapshot.yaml#/BeatmapSnapshotIncludeShallow"
+                - type: boolean
+                  default: false
+        beatmapset_tags:
+            description:
+                $ref: "../parameters/query/include/description.yaml#/NestedInclude"
+            oneOf:
+                - $ref: "#/BeatmapsetTagInclude"
+                - type: boolean
+                  default: false
+        user_profile:
+            description:
+                $ref: "../parameters/query/include/description.yaml#/NestedInclude"
+            oneOf:
+                - $ref: "./profile.yaml#/ProfileInclude"
+                - type: boolean
+                  default: false
+
+BeatmapsetSnapshotIncludeShallow:
+    # Infinite recursion protection placeholder
+    # References to this are to be automatically populated on runtime
+    title: BeatmapsetSnapshotIncludeShallow
+    type: object
+
+BeatmapsetTagInclude:
+    title: BeatmapsetTagInclude
+    type: object
+    additionalProperties: false
+    properties:
+        id:
+            type: boolean
+            default: false
+        name:
+            type: boolean
+            default: true

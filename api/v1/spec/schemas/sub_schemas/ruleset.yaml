@@ -1,0 +1,22 @@
+Ruleset:
+    type: string
+    enum:
+        - "fruits"
+        - "mania"
+        - "osu"
+        - "taiko"
+
+RulesetInt:
+    description: >
+        ### The integer equivalent of a ruleset
+        
+        * 0 = osu
+        * 1 = taiko
+        * 2 = fruits
+        * 3 = mania
+    type: integer
+    enum:
+        - 0
+        - 1
+        - 2
+        - 3

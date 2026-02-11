@@ -1,0 +1,15 @@
+UserResults:
+    description: List of users
+    content:
+        application/json:
+            schema:
+                type: array
+                items:
+                    $ref: "../../schemas/user.yaml#/User"
+
+UserResult:
+    description: User
+    content:
+        application/json:
+            schema:
+                $ref: "../../schemas/user.yaml#/User"

@@ -1,0 +1,29 @@
+BeatmapsetSnapshotResults:
+    description: List of beatmapset snapshots
+    content:
+        application/json:
+            schema:
+                type: array
+                items:
+                    $ref: "../../schemas/beatmapset_snapshot.yaml#/BeatmapsetSnapshot"
+
+BeatmapsetSnapshotResult:
+    description: Beatmapset snapshot
+    content:
+        application/json:
+            schema:
+                $ref: "../../schemas/beatmapset_snapshot.yaml#/BeatmapsetSnapshot"
+
+ZipFile:
+    description: Beatampset .zip file
+    headers:
+        Content-Disposition:
+            description: File download information
+            schema:
+                type: string
+                example: attachment; filename=12345.zip
+    content:
+        application/zip:
+            schema:
+                type: string
+                format: binary

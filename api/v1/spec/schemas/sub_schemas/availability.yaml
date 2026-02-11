@@ -1,0 +1,8 @@
+Availability:
+    type: object
+    properties:
+        download_disabled:
+            type: boolean
+        more_information:
+            type: string
+            nullable: true

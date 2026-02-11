@@ -1,0 +1,35 @@
+MatchmakingStats:
+    type: object
+    properties:
+        first_placements:
+            type: integer
+        is_rating_provisional:
+            type: boolean
+        plays:
+            type: integer
+        pool_id:
+            type: integer
+        rank:
+            type: integer
+        rating:
+            type: integer
+        total_points:
+            type: integer
+        user_id:
+            type: integer
+        pool:
+            $ref: "#/MatchmakingPool"
+
+MatchmakingPool:
+    type: object
+    properties:
+        active:
+            type: boolean
+        id:
+            type: integer
+        name:
+            type: string
+        ruleset_id:
+            type: integer
+        variant_id:
+            type: integer

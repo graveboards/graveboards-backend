@@ -1,10 +1,81 @@
 Leaderboard:
-    description: An object containing a beatmap ID and snapshot number. Defaults to latest snapshot if no snapshot number is specified
+    title: Leaderboard
     type: object
     properties:
+        id:
+            type: integer
         beatmap_id:
             type: integer
-        snapshot_number:
+        beatmap_snapshot_id:
             type: integer
-    required:
-        - beatmap_id
+        created_at:
+            type: string
+            format: date-time
+        updated_at:
+            type: string
+            format: date-time
+        frozen:
+            type: boolean
+        beatmap_snapshot:
+            $ref: "./beatmap_snapshot.yaml#/BeatmapSnapshotShallow"
+
+LeaderboardShallow:
+    # Infinite recursion protection placeholder
+    # References to this are to be automatically populated on runtime
+    title: LeaderboardShallow
+    type: object
+
+LeaderboardCreate:
+    description: An object containing the data of the leaderboard to create
+    type: object
+    additionalProperties: false
+    properties:
+        frozen:
+            type: boolean
+            default: false
+
+LeaderboardPatch:
+    description: An object containing the updated data of the leaderboard
+    type: object
+    additionalProperties: false
+    properties:
+        frozen:
+            type: boolean
+            default: false
+
+LeaderboardInclude:
+    title: LeaderboardInclude
+    type: object
+    additionalProperties: false
+    properties:
+        id:
+            type: boolean
+            default: false
+        beatmap_id:
+            type: boolean
+            default: false
+        beatmap_snapshot_id:
+            type: boolean
+            default: false
+        created_at:
+            type: boolean
+            default: true
+        updated_at:
+            type: boolean
+            default: true
+        frozen:
+            type: boolean
+            default: true
+        beatmap_snapshot:
+            description:
+                $ref: "../parameters/query/include/description.yaml#/NestedInclude"
+            oneOf:
+                - $ref: "./beatmap_snapshot.yaml#/BeatmapSnapshotIncludeShallow"
+                - type: boolean
+                  default: false
+
+LeaderboardIncludeShallow:
+    # Infinite recursion protection placeholder
+    # References to this are to be automatically populated on runtime
+    title: LeaderboardIncludeShallow
+    type: object

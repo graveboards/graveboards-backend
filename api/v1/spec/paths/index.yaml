@@ -23,6 +23,9 @@
 /beatmaps:
     $ref: "./beatmaps.yaml#/Beatmaps"
 
+/beatmaps/{beatmap_id}:
+    $ref: "./beatmaps.yaml#/BeatmapById"
+
 /beatmaps/{beatmap_id}/snapshots:
     $ref: "./beatmaps.yaml#/BeatmapById-Snapshots"
 
@@ -32,9 +35,21 @@
 /beatmaps/{beatmap_id}/snapshots/{snapshot_number}/osu:
     $ref: "./beatmaps.yaml#/BeatmapById-SnapshotByNumber-Osu"
 
+/beatmaps/{beatmap_id}/snapshots/{snapshot_number}/leaderboard:
+    $ref: "./beatmaps.yaml#/BeatmapById-SnapshotByNumber-Leaderboard"
+
+/beatmaps/{beatmap_id}/snapshots/{snapshot_number}/scores:
+    $ref: "./beatmaps.yaml#/BeatmapById-SnapshotByNumber-Scores"
+
+/beatmaps/listings:
+    $ref: "./beatmaps.yaml#/BeatmapListings"
+
 # Beatmapsets
 /beatmapsets:
     $ref: "./beatmapsets.yaml#/Beatmapsets"
+
+/beatmapsets/{beatmapset_id}:
+    $ref: "./beatmapsets.yaml#/BeatmapsetById"
 
 /beatmapsets/{beatmapset_id}/snapshots:
     $ref: "./beatmapsets.yaml#/BeatmapsetById-Snapshots"
@@ -48,22 +63,12 @@
 /beatmapsets/listings:
     $ref: "./beatmapsets.yaml#/BeatmapsetListings"
 
-# Leaderboards
-/leaderboards:
-    $ref: "./leaderboards.yaml#/Leaderboards"
-
-/leaderboards/{beatmap_id}:
-    $ref: "./leaderboards.yaml#/LeaderboardByBeatmapId"
-
-/leaderboards/{beatmap_id}/snapshots:
-    $ref: "./leaderboards.yaml#/LeaderboardByBeatmapId-Snapshots"
-
-/leaderboards/{beatmap_id}/snapshots/{snapshot_number}:
-    $ref: "./leaderboards.yaml#/LeaderboardByBeatmapId-SnapshotByNumber"
-
 # Scores
 /scores:
     $ref: "./scores.yaml#/Scores"
+
+/scores/{score_id}:
+    $ref: "./scores.yaml#/ScoreById"
 
 # Queues
 /queues:
@@ -82,7 +87,7 @@
 /requests/tasks:
     $ref: "./requests.yaml#/RequestTasks"
 
-/requests/tasks/{task_id}:
+/requests/tasks/{hashed_id}:
     $ref: "./requests.yaml#/RequestTaskById"
 
 # Search

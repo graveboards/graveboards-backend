@@ -1,7 +1,7 @@
-User:
-    description: A JSON payload containing a user to add
+UserCreate:
+    description: A JSON payload containing the data of the user to create
     required: true
     content:
         application/json:
             schema:
-                $ref: "../schemas/user.yaml#/User"
+                $ref: "../schemas/user.yaml#/UserCreate"

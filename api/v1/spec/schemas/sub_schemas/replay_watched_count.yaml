@@ -1,0 +1,8 @@
+ReplayWatchedCount:
+    type: object
+    properties:
+        start_date:
+            type: string
+            format: date
+        count:
+            type: integer

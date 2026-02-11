@@ -1,0 +1,13 @@
+Failtimes:
+    type: object
+    properties:
+        exit:
+            type: array
+            items:
+                type: integer
+            nullable: true
+        fail:
+            type: array
+            items:
+                type: integer
+            nullable: true

@@ -4,7 +4,6 @@ from sqlalchemy.sql import and_, select
 from sqlalchemy.sql.selectable import CTE
 from sqlalchemy.sql.functions import func
 from sqlalchemy.sql.elements import BinaryExpression, literal_column
-from sqlalchemy.orm.strategy_options import joinedload, noload, selectinload
 from sqlalchemy.engine.row import RowMapping
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy.dialects import postgresql
@@ -43,7 +42,13 @@ from .mappings import SCOPE_MODEL_MAPPING, SCOPE_SCHEMA_MAPPING, SCOPE_OPTIONS_M
 
 DEFAULT_LIMIT = 50
 DEFAULT_OFFSET = 0
-ResultsType = Union[Sequence[BeatmapListing], Sequence[BeatmapsetListing], ..., Sequence[Queue], Sequence[Request]]
+ResultsType = Union[
+    Sequence[BeatmapSnapshot],
+    Sequence[BeatmapsetSnapshot],
+    ...,
+    Sequence[Queue],
+    Sequence[Request]
+]
 
 
 class SearchEngine:
@@ -102,73 +107,29 @@ class SearchEngine:
         return [row_mapping[self.model_class.value.__name__] for row_mapping in row_mappings]
 
     def _compose_query(self):
-        beatmap_snapshot_options = (
-            selectinload(BeatmapSnapshot.beatmap_tags),
-            selectinload(BeatmapSnapshot.owner_profiles),
-            noload(BeatmapSnapshot.beatmapset_snapshots),
-            noload(BeatmapSnapshot.leaderboard)
-        )
-
-        beatmapset_snapshot_options = (
-            selectinload(BeatmapsetSnapshot.beatmap_snapshots)
-            .options(*beatmap_snapshot_options),
-            selectinload(BeatmapsetSnapshot.beatmapset_tags),
-            joinedload(BeatmapsetSnapshot.user_profile)
-        )
-
-        queue_options = (
-            noload(Queue.managers),
-            joinedload(Queue.user_profile),
-            selectinload(Queue.manager_profiles)
-        )
-
         match self.scope:
             case Scope.BEATMAPS:
                 self.query = (
-                    select(BeatmapListing)
-                    .join(BeatmapListing.beatmap_snapshot)
-                    .options(
-                        joinedload(BeatmapListing.beatmap_snapshot)
-                        .options(*beatmap_snapshot_options)
-                    )
+                    select(BeatmapSnapshot)
+                    .join(BeatmapListing, BeatmapListing.beatmap_snapshot_id == BeatmapSnapshot.id)
+                    .options(*SCOPE_OPTIONS_MAPPING[self.scope])
                 )
             case Scope.BEATMAPSETS:
                 self.query: Select = (
-                    select(BeatmapsetListing)
-                    .join(BeatmapsetListing.beatmapset_snapshot)
-                    .options(
-                        joinedload(BeatmapsetListing.beatmapset_snapshot)
-                        .options(*beatmapset_snapshot_options)
-                    )
+                    select(BeatmapsetSnapshot)
+                    .join(BeatmapsetListing, BeatmapsetListing.beatmapset_snapshot_id == BeatmapsetSnapshot.id)
+                    .options(*SCOPE_OPTIONS_MAPPING[self.scope])
                 )
             case Scope.QUEUES:
                 self.query: Select = (
                     select(Queue)
-                    .options(
-                        *queue_options,
-                        selectinload(Queue.requests)
-                        .options(
-                            joinedload(Request.beatmapset_snapshot)
-                            .options(*beatmapset_snapshot_options),
-                            noload(Request.user_profile),
-                            noload(Request.queue)
-                        )
-                    )
+                    .options(*SCOPE_OPTIONS_MAPPING[self.scope])
                 )
             case Scope.REQUESTS:
                 self.query: Select = (
                     select(Request)
                     .join(Request.beatmapset_snapshot)
-                    .options(
-                        joinedload(Request.beatmapset_snapshot)
-                        .options(*beatmapset_snapshot_options),
-                        joinedload(Request.user_profile),
-                        joinedload(Request.queue)
-                        .options(
-                            noload(Queue.requests),
-                            *queue_options
-                        )
-                    )
+                    .options(*SCOPE_OPTIONS_MAPPING[self.scope])
                 )
 
         if self.search_terms:

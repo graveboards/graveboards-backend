@@ -1,0 +1,25 @@
+QueueResults:
+    description: List of queues
+    content:
+        application/json:
+            schema:
+                type: array
+                items:
+                    $ref: "../../schemas/queue.yaml#/Queue"
+
+QueueResult:
+    description: Queue
+    content:
+        application/json:
+            schema:
+                $ref: "../../schemas/queue.yaml#/Queue"
+
+QueuePatched:
+    description: Queue patch info
+    content:
+        application/json:
+            schema:
+                type: object
+                properties:
+                    message:
+                        type: string

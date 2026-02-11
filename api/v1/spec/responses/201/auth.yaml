@@ -1,0 +1,6 @@
+JWTCreated:
+    description: Info of the newly issued JWT from authentication success
+    content:
+        application/json:
+            schema:
+                $ref: "../../schemas/auth.yaml#/JWT"

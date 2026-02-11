@@ -1,0 +1,31 @@
+Ranked:
+    description: >
+        ### The ranked status of the map
+        
+        * -2 = Graveyard
+        * -1 = Wip
+        * 0 = Pending
+        * 1 = Ranked
+        * 2 = Approved
+        * 3 = Qualified
+        * 4 = Loved
+    type: integer
+    enum:
+        - -2
+        - -1
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+
+Status:
+    type: string
+    enum:
+        - graveyard
+        - wip
+        - pending
+        - Status
+        - approved
+        - qualified
+        - loved

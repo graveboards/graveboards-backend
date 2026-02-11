@@ -1,0 +1,21 @@
+UserAccountHistory:
+    type: object
+    properties:
+        id:
+            type: integer
+        timestamp:
+            type: string
+            format: date-time
+        length:
+            type: integer
+        permanent:
+            type: boolean
+        type:
+            type: string
+            enum:
+                - "note"
+                - "restriction"
+                - "silence"
+        description:
+            type: string
+            nullable: true

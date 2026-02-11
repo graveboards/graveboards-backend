@@ -1,0 +1,7 @@
+Hype:
+    type: object
+    properties:
+        current:
+            type: integer
+        required:
+            type: integer

@@ -1,0 +1,40 @@
+BeatmapSnapshotResults:
+    description: List of beatmap snapshots
+    content:
+        application/json:
+            schema:
+                type: array
+                items:
+                    $ref: "../../schemas/beatmap_snapshot.yaml#/BeatmapSnapshot"
+
+BeatmapSnapshotResult:
+    description: Beatmap snapshot
+    content:
+        application/json:
+            schema:
+                $ref: "../../schemas/beatmap_snapshot.yaml#/BeatmapSnapshot"
+
+OsuFile:
+    description: Beatamp .osu file contents
+    content:
+        text/plain:
+            schema:
+                type: string
+            examples:
+                osuFile:
+                    summary: Example .osu file
+                    value: |
+                        osu file format v14
+                        
+                        [General]
+                        AudioFilename: audio.mp3
+                        AudioLeadIn: 0
+                        PreviewTime: 12345
+                        Countdown: 0
+                        SampleSet: None
+                        StackLeniency: 1.0
+                        Mode: 0
+                        LetterboxInBreaks: 0
+                        WidescreenStoryboard: 1
+                        
+                        ...

@@ -1,5 +1,6 @@
 RequestResults:
-    description: Request Search Results
+    title: RequestResults
+    description: Request search results
     type: array
     items:
         $ref: "#/Request"

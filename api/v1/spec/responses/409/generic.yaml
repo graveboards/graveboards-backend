@@ -1,0 +1,6 @@
+Conflict:
+    description: Content conflicts with target resource
+    content:
+        application/problem+json:
+            schema:
+                $ref: "../../schemas/problem.yaml#Problem"

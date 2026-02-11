@@ -1,8 +1,32 @@
+AuthorizationUrl:
+    type: object
+    properties:
+        authorization_url:
+            type: string
+        state:
+            type: string
+
 AuthorizationCode:
-    description: An object containing an osu! OAuth Authorization Code
     type: object
     properties:
         code:
             type: string
+        state:
+            type: string
     required:
         - code
+        - state
+
+JWT:
+    type: object
+    properties:
+        user_id:
+            type: integer
+        token:
+            type: string
+        issued_at:
+            type: integer
+        expires_at:
+            type: integer
+        is_revoked:
+            type: boolean

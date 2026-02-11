@@ -1,0 +1,45 @@
+Language:
+    type: object
+    properties:
+        language_id:
+            $ref: "#/LanguageId"
+        language_name:
+            $ref: "#/LanguageName"
+
+LanguageId:
+    type: integer
+    enum:
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        - 8
+        - 9
+        - 10
+        - 11
+        - 12
+        - 13
+        - 14
+
+LanguageName:
+    type: string
+    enum:
+        - Any
+        - Unspecified
+        - English
+        - Japanese
+        - Chinese
+        - Instrumental
+        - Korean
+        - French
+        - German
+        - Swedish
+        - Spanish
+        - Italian
+        - Russian
+        - Polish
+        - Other

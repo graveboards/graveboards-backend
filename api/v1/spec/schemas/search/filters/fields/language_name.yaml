@@ -22,23 +22,7 @@ LanguageNameConditions:
             type: boolean
 
 LanguageNameValue:
-    type: string
-    enum:
-        - Any
-        - Unspecified
-        - English
-        - Japanese
-        - Chinese
-        - Instrumental
-        - Korean
-        - French
-        - German
-        - Swedish
-        - Spanish
-        - Italian
-        - Russian
-        - Polish
-        - Other
+    $ref: "../../../../sub_schemas/language.yaml#/LanguageName"
 
 LanguageNameContainer:
     type: array

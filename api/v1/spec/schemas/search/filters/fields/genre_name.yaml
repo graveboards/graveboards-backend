@@ -22,22 +22,7 @@ GenreNameConditions:
             type: boolean
 
 GenreNameValue:
-    type: string
-    enum:
-        - Any
-        - Unspecified
-        - Video Game
-        - Anime
-        - Rock
-        - Pop
-        - Other
-        - Novelty
-        - Hip Hop
-        - Electronic
-        - Metal
-        - Classical
-        - Folk
-        - Jazz
+    $ref: "../../../../sub_schemas/genre.yaml#/GenreName"
 
 GenreNameContainer:
     type: array

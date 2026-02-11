@@ -1,0 +1,34 @@
+BeatmapsetCreated:
+    description: Beatmapset download info
+    content:
+        application/json:
+            schema:
+                type: object
+                properties:
+                    message:
+                        type: string
+                    snapshotted_beatmapset:
+                        type: object
+                        properties:
+                            id:
+                                type: integer
+                            beatmapset_id:
+                                type: integer
+                            snapshot_number:
+                                type: integer
+                            checksum:
+                                $ref: "../../schemas/sub_schemas/checksum.yaml#/Checksum"
+                        nullable: true
+                    snapshotted_beatmaps:
+                        type: array
+                        items:
+                            type: object
+                            properties:
+                                id:
+                                    type: integer
+                                beatmap_id:
+                                    type: integer
+                                snapshot_number:
+                                    type: integer
+                                checksum:
+                                    $ref: "../../schemas/sub_schemas/checksum.yaml#/Checksum"

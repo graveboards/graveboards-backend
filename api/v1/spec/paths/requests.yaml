@@ -8,11 +8,18 @@ Requests:
             - ApiKeyAuth: []
         parameters:
             - $ref: "../parameters/query/queue.yaml#/QueueId"
+            - $ref: "../parameters/query/include/request.yaml#/RequestInclude"
             - $ref: "../parameters/query/search.yaml#/Limit"
             - $ref: "../parameters/query/search.yaml#/Offset"
         responses:
             200:
-                description: Successfully retrieved requests
+                $ref: "../responses/200/request.yaml#/RequestResults"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
 
     post:
         summary: Adds a beatmapset request to a queue
@@ -22,10 +29,18 @@ Requests:
             - BearerAuth: []
             - ApiKeyAuth: []
         requestBody:
-            $ref: "../request_bodies/request.yaml#/Request"
+            $ref: "../request_bodies/request.yaml#/RequestCreate"
         responses:
             201:
-                description: Successfully added request
+                $ref: "../responses/202/request.yaml#/RequestCreated"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
+            409:
+                $ref: "../responses/409/generic.yaml#/Conflict"
 
 RequestById:
     get:
@@ -37,9 +52,18 @@ RequestById:
             - ApiKeyAuth: []
         parameters:
             - $ref: "../parameters/path/request.yaml#/RequestId"
+            - $ref: "../parameters/query/include/request.yaml#/RequestInclude"
         responses:
             200:
-                description: Successfully retrieved beatmapset request
+                $ref: "../responses/200/request.yaml#/RequestResult"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"
 
     patch:
         summary: Updates a beatmapset request
@@ -54,7 +78,15 @@ RequestById:
             $ref: "../request_bodies/request.yaml#/RequestPatch"
         responses:
             200:
-                description: Successfully updated beatmapset request
+                $ref: "../responses/200/request.yaml#/RequestPatched"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"
 
 RequestTasks:
     get:
@@ -65,22 +97,31 @@ RequestTasks:
             - BearerAuth: []
             - ApiKeyAuth: []
         parameters:
+            - $ref: "../parameters/query/include/request.yaml#/RequestTaskInclude"
             - $ref: "../parameters/query/search.yaml#/Limit"
             - $ref: "../parameters/query/search.yaml#/Offset"
         responses:
             200:
-                description: Successfully retrieved beatmapset request tasks
+                $ref: "../responses/200/request.yaml#/RequestTaskResults"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
 
 RequestTaskById:
     get:
         summary: Returns the specified beatmapset request task
         tags:
             - Requests
-        security:
-            - BearerAuth: []
-            - ApiKeyAuth: []
         parameters:
-            - $ref: "../parameters/path/request.yaml#/RequestTaskId"
+            - $ref: "../parameters/path/request.yaml#/RequestTaskHashedId"
+            - $ref: "../parameters/query/include/request.yaml#/RequestTaskInclude"
         responses:
             200:
-                description: Successfully retrieved beatmapset request task
+                $ref: "../responses/200/request.yaml#/RequestTaskResult"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"

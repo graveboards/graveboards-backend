@@ -1,4 +1,4 @@
-UnauthorizedError:
+Unauthorized:
     description: X-API-KEY or Authorization is missing in the header or invalid
     headers:
         WWW-Authenticate:

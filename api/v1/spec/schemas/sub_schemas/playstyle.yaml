@@ -1,0 +1,7 @@
+Playstyle:
+    type: string
+    enum:
+        - "mouse"
+        - "keyboard"
+        - "tablet"
+        - "touch"

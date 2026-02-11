@@ -1,0 +1,4 @@
+PreviewUrl:
+    type: string
+    pattern: ^\/\/b\.ppy\.sh\/preview\/\d+\.mp3$
+    example: //b.ppy.sh/preview/39804.mp3

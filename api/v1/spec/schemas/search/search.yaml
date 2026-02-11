@@ -14,7 +14,16 @@ Search:
             $ref: "./sorting.yaml#/Sorting"
         filters:
             $ref: "./filters.yaml#/Filters"
-        frontend_mode:
-            description: Whether or not to return only the bare minimum amount of data that's used in the frontend
-            type: boolean
-            default: false
+
+SearchInclude:
+    title: SearchInclude
+    type: object
+    additionalProperties:
+        oneOf:
+            - $ref: "../profile.yaml#/ProfileInclude"
+            - $ref: "../beatmap_snapshot.yaml#/BeatmapSnapshotInclude"
+            - $ref: "../beatmap_snapshot.yaml#/BeatmapTagInclude"
+            - $ref: "../beatmapset_snapshot.yaml#/BeatmapsetSnapshotInclude"
+            - $ref: "../beatmapset_snapshot.yaml#/BeatmapsetTagInclude"
+            - $ref: "../queue.yaml#/QueueInclude"
+            - type: boolean

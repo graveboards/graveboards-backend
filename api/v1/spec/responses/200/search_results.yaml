@@ -1,9 +1,0 @@
-SearchResults:
-    description: Successfully retrieved search results
-    content:
-        application/json:
-            schema:
-                oneOf:
-                    - $ref: "../../schemas/search/results/beatmapsets.yaml#/BeatmapsetResults"
-                    - $ref: "../../schemas/search/results/queues.yaml#/QueueResults"
-                    - $ref: "../../schemas/search/results/requests.yaml#/RequestResults"

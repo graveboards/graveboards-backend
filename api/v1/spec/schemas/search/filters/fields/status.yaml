@@ -22,15 +22,7 @@ StatusConditions:
             type: boolean
 
 StatusValue:
-    type: string
-    enum:
-        - graveyard
-        - wip
-        - pending
-        - Status
-        - approved
-        - qualified
-        - loved
+    $ref: "../../../../sub_schemas/ranked_status.yaml#/Status"
 
 StatusContainer:
     type: array

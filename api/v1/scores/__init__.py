@@ -35,7 +35,31 @@ async def search(**kwargs):
         for score in scores
     ]
 
-    return scores_data, 200
+    return scores_data, 200, {"Content-Type": "application/json"}
+
+
+@api_query(ModelClass.SCORE)
+async def get(score_id: int, **kwargs):
+    db: PostgresqlDB = request.state.db
+
+    score = await db.get(
+        Score,
+        id=score_id,
+        **kwargs
+    )
+
+    if not score:
+        raise NotFound(f"Score with ID '{score_id}' not found")
+
+    include = build_pydantic_include(
+        obj=score,
+        include_schema=get_include_schema(ModelClass.SCORE),
+        request_include=kwargs.get("_include")
+    )
+
+    score_data = ScoreSchema.model_validate(score).model_dump(include=include)
+
+    return score_data, 200, {"Content-Type": "application/json"}
 
 
 @role_authorization(RoleName.ADMIN)

@@ -1,0 +1,16 @@
+LeaderboardResult:
+    description: Leaderboard
+    content:
+        application/json:
+            schema:
+                $ref: "../../schemas/leaderboard.yaml#/Leaderboard"
+
+LeaderboardPatched:
+    description: Leaderboard patch info
+    content:
+        application/json:
+            schema:
+                type: object
+                properties:
+                    message:
+                        type: string

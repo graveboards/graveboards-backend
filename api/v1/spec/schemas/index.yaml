@@ -2,11 +2,70 @@
 Search:
     $ref: "./search/search.yaml#/Search"
 
-BeatmapsetResults:
-    $ref: "./search/results/beatmapsets.yaml#/BeatmapsetResults"
+# Datastructures
+Profile:
+    $ref: "./profile.yaml#/Profile"
 
-QueueResults:
-    $ref: "./search/results/queues.yaml#/QueueResults"
+Beatmap:
+    $ref: "./beatmap.yaml#/Beatmap"
 
-RequestResults:
-    $ref: "./search/results/requests.yaml#/RequestResults"
+BeatmapSnapshot:
+    $ref: "./beatmap_snapshot.yaml#/BeatmapSnapshot"
+
+Beatmapset:
+    $ref: "./beatmapset.yaml#/Beatmapset"
+
+BeatmapsetSnapshot:
+    $ref: "./beatmapset_snapshot.yaml#/BeatmapsetSnapshot"
+
+Leaderboard:
+    $ref: "./leaderboard.yaml#/Leaderboard"
+
+Queue:
+    $ref: "./queue.yaml#/Queue"
+
+Request:
+    $ref: "./request.yaml#/Request"
+
+# Includes
+UserInclude:
+    $ref: "./user.yaml#/UserInclude"
+
+ProfileInclude:
+    $ref: "./profile.yaml#/ProfileInclude"
+
+BeatmapInclude:
+    $ref: "./beatmap.yaml#/BeatmapInclude"
+
+BeatmapSnapshotInclude:
+    $ref: "./beatmap_snapshot.yaml#/BeatmapSnapshotInclude"
+
+BeatmapTagInclude:
+    $ref: "./beatmap_snapshot.yaml#/BeatmapTagInclude"
+
+BeatmapsetInclude:
+    $ref: "./beatmapset.yaml#/BeatmapsetInclude"
+
+BeatmapsetSnapshotInclude:
+    $ref: "./beatmapset_snapshot.yaml#/BeatmapsetSnapshotInclude"
+
+BeatmapsetTagInclude:
+    $ref: "./beatmapset_snapshot.yaml#/BeatmapsetTagInclude"
+
+LeaderboardInclude:
+    $ref: "./leaderboard.yaml#/LeaderboardInclude"
+
+ScoreInclude:
+    $ref: "./score.yaml#/ScoreInclude"
+
+QueueInclude:
+    $ref: "./queue.yaml#/QueueInclude"
+
+RequestInclude:
+    $ref: "./request.yaml#/RequestInclude"
+
+RequestTaskInclude:
+    $ref: "./request.yaml#/RequestTaskInclude"
+
+SearchInclude:
+    $ref: "./search/search.yaml#/SearchInclude"

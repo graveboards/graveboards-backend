@@ -1,0 +1,20 @@
+Group:
+    type: object
+    properties:
+        colour:
+            type: string
+            nullable: true
+        has_listing:
+            type: boolean
+        has_playmodes:
+            type: boolean
+        id:
+            type: integer
+        identifier:
+            type: string
+        is_probationary:
+            type: boolean
+        name:
+            type: string
+        short_name:
+            type: string

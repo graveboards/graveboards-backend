@@ -8,8 +8,14 @@ BeatmapId:
 
 BeatmapSnapshotNumber:
     name: snapshot_number
-    description: osu! beatmap snapshot number
+    description: >
+        osu! beatmap snapshot number
+        
+        
+        Supports negative indexing (e.g., `-1` is the latest snapshot number, `-2` is the second-to-latest, and so on).
+        `latest` also works as an alias to `-1`
     in: path
     required: true
     schema:
-        type: integer
+        type: string
+        pattern: "^(latest|-?[1-9][0-9]*)$"

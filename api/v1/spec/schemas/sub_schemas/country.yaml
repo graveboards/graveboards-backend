@@ -1,0 +1,12 @@
+Country:
+    type: object
+    properties:
+        code:
+            $ref: "#/CountryCode"
+        name:
+            type: string
+
+CountryCode:
+    type: string
+    pattern: ^[A-Z]{2}|[a-z]{2}$
+    example: US

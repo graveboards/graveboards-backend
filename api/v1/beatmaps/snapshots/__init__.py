@@ -8,6 +8,8 @@ from app.database import PostgresqlDB
 from app.database.models import BeatmapSnapshot, ModelClass
 from app.database.schemas import BeatmapSnapshotSchema
 from . import osu
+from . import leaderboard
+from . import scores
 
 
 @api_query(ModelClass.BEATMAP_SNAPSHOT)

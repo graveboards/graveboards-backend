@@ -1,0 +1,21 @@
+RequestInclude:
+    name: include
+    description:
+        $ref: "./description.yaml#/Include"
+    in: query
+    required: false
+    style: deepObject
+    explode: true
+    schema:
+        $ref: "../../../schemas/request.yaml#/RequestInclude"
+
+RequestTaskInclude:
+    name: include
+    description:
+        $ref: "./description.yaml#/Include"
+    in: query
+    required: false
+    style: deepObject
+    explode: true
+    schema:
+        $ref: "../../../schemas/request.yaml#/RequestTaskInclude"

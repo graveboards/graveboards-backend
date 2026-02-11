@@ -1,0 +1,7 @@
+Kudosu:
+    type: object
+    properties:
+        available:
+            type: integer
+        total:
+            type: integer

@@ -1,0 +1,13 @@
+ProfileBanner:
+    type: object
+    properties:
+        id:
+            type: integer
+        tournament_id:
+            type: integer
+        image:
+            type: string
+            nullable: true
+        image@2x:
+            type: string
+            nullable: true

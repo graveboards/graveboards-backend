@@ -1,0 +1,18 @@
+SearchResults:
+    description: Search results
+    content:
+        application/json:
+            schema:
+                oneOf:
+                    -   type: array
+                        items:
+                            $ref: "../../schemas/beatmap_snapshot.yaml#/BeatmapSnapshot"
+                    -   type: array
+                        items:
+                            $ref: "../../schemas/beatmapset_snapshot.yaml#/BeatmapsetSnapshot"
+                    -   type: array
+                        items:
+                            $ref: "../../schemas/queue.yaml#/Queue"
+                    -   type: array
+                        items:
+                            $ref: "../../schemas/request.yaml#/Request"

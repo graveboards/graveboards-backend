@@ -26,9 +26,7 @@ CountryCodeConditions:
             $ref: "../../../../regex_pattern.yaml#/RegexPattern"
 
 CountryCodeValue:
-    type: string
-    pattern: ^[A-Z]{2}|[a-z]{2}$
-    example: US
+    $ref: "../../../../sub_schemas/country.yaml#/CountryCode"
 
 CountryCodeContainer:
     type: array

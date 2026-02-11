@@ -1,0 +1,87 @@
+UserStatistics:
+    type: object
+    properties:
+        count_100:
+            type: integer
+        count_300:
+            type: integer
+        count_50:
+            type: integer
+        count_miss:
+            type: integer
+        level:
+            $ref: "#/Level"
+        global_rank:
+            type: integer
+            nullable: true
+        global_rank_percent:
+            type: number
+            format: float
+            nullable: true
+        global_rank_exp:
+            type: integer
+            nullable: true
+        pp:
+            type: number
+            format: float
+        pp_exp:
+            type: number
+            format: float
+        ranked_score:
+            type: integer
+        hit_accuracy:
+            type: number
+            format: float
+        play_count:
+            type: integer
+        play_time:
+            type: integer
+        total_score:
+            type: integer
+        total_hits:
+            type: integer
+        maximum_combo:
+            type: integer
+        replays_watched_by_others:
+            type: integer
+        is_ranked:
+            type: boolean
+        grade_counts:
+            $ref: "#/UserStatisticsGradeCounts"
+        country_rank:
+            type: integer
+            nullable: true
+        rank:
+            $ref: "#/UserStatisticsRank"
+
+
+Level:
+    type: object
+    properties:
+        current:
+            type: integer
+        progress:
+            type: integer
+
+
+UserStatisticsGradeCounts:
+    type: object
+    properties:
+        ss:
+            type: integer
+        ssh:
+            type: integer
+        s:
+            type: integer
+        sh:
+            type: integer
+        a:
+            type: integer
+
+
+UserStatisticsRank:
+    type: object
+    properties:
+        country:
+            type: integer
+            nullable: true

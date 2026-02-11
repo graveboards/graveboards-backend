@@ -1,0 +1,19 @@
+Covers:
+    type: object
+    properties:
+        cover:
+            type: string
+        cover@2x:
+            type: string
+        card:
+            type: string
+        card@2x:
+            type: string
+        list:
+            type: string
+        list@2x:
+            type: string
+        slimcover:
+            type: string
+        slimcover@2x:
+            type: string

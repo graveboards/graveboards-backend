@@ -1,0 +1,6 @@
+Forbidden:
+    description: Insufficient permissions to access the resource
+    content:
+        application/problem+json:
+            schema:
+                $ref: "../../schemas/problem.yaml#Problem"

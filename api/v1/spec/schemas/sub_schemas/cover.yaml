@@ -1,0 +1,12 @@
+Cover:
+    type: object
+    properties:
+        custom_url:
+            type: string
+            nullable: true
+        url:
+            type: string
+            nullable: true
+        id:
+            type: integer
+            nullable: true

@@ -1,0 +1,12 @@
+Team:
+    type: object
+    properties:
+        flag_url:
+            type: string
+            nullable: true
+        id:
+            type: integer
+        name:
+            type: string
+        short_name:
+            type: string

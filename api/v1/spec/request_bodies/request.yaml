@@ -1,13 +1,13 @@
-Request:
-    description: A JSON payload containing the relevant data for submitting a beatmapset request
+RequestCreate:
+    description: A JSON payload containing the data of the beatmapset request to create
     required: true
     content:
         application/json:
             schema:
-                $ref: "../schemas/request.yaml#/Request"
+                $ref: "../schemas/request.yaml#/RequestCreate"
 
 RequestPatch:
-    description: A JSON payload containing the updated status for a beatmapset request
+    description: A JSON payload containing the updated data of the beatmapset request
     required: true
     content:
         application/json:

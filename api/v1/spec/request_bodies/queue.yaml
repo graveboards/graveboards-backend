@@ -1,13 +1,13 @@
-Queue:
-    description: A JSON payload containing a queue to add
+QueueCreate:
+    description: A JSON payload containing the data of the queue to create
     required: true
     content:
         application/json:
             schema:
-                $ref: "../schemas/queue.yaml#/Queue"
+                $ref: "../schemas/queue.yaml#/QueueCreate"
 
 QueuePatch:
-    description: A JSON payload containing the updated data for a queue
+    description: A JSON payload containing the updated data of the queue
     required: true
     content:
         application/json:

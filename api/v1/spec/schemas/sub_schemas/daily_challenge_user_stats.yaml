@@ -1,0 +1,25 @@
+DailyChallengeUserStats:
+    type: object
+    properties:
+        daily_streak_best:
+            type: integer
+        daily_streak_current:
+            type: integer
+        last_update:
+            type: string
+            format: date-time
+        last_weekly_streak:
+            type: string
+            format: date-time
+        playcount:
+            type: integer
+        top_10p_placements:
+            type: integer
+        top_50p_placements:
+            type: integer
+        user_id:
+            type: integer
+        weekly_streak_best:
+            type: integer
+        weekly_streak_current:
+            type: integer

@@ -1,0 +1,15 @@
+UserBadge:
+    type: object
+    properties:
+        awarded_at:
+            type: string
+            format: date-time
+        description:
+            type: string
+        image@2x_url:
+            type: string
+            nullable: true
+        image_url:
+            type: string
+        url:
+            type: string

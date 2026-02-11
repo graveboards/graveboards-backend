@@ -1,0 +1,6 @@
+BadRequest:
+    description: Malformed or invalid request
+    content:
+        application/problem+json:
+            schema:
+                $ref: "../../schemas/problem.yaml#Problem"

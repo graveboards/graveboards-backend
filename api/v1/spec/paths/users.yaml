@@ -7,13 +7,18 @@ Users:
             - BearerAuth: []
             - ApiKeyAuth: []
         parameters:
+            - $ref: "../parameters/query/include/user.yaml#/UserInclude"
             - $ref: "../parameters/query/search.yaml#/Limit"
             - $ref: "../parameters/query/search.yaml#/Offset"
         responses:
             200:
-                description: Successfully retrieved all users
+                $ref: "../responses/200/user.yaml#/UserResults"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
             401:
-                $ref: "../responses/401/unauthorized_error.yaml#/UnauthorizedError"
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
 
     post:
         summary: Adds a user
@@ -23,10 +28,18 @@ Users:
             - BearerAuth: []
             - ApiKeyAuth: []
         requestBody:
-            $ref: "../request_bodies/user.yaml#/User"
+            $ref: "../request_bodies/user.yaml#/UserCreate"
         responses:
             201:
-                description: Successfully added user
+                $ref: "../responses/201/user.yaml#/UserCreated"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
+            409:
+                $ref: "../responses/409/generic.yaml#/Conflict"
 
 UserById:
     get:
@@ -38,6 +51,15 @@ UserById:
             - ApiKeyAuth: []
         parameters:
             - $ref: "../parameters/path/user.yaml#/UserId"
+            - $ref: "../parameters/query/include/user.yaml#/UserInclude"
         responses:
             200:
-              description: Successfully retrieved user
+                $ref: "../responses/200/user.yaml#/UserResult"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"

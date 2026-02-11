@@ -1,0 +1,12 @@
+RequestCreated:
+    description: Request creation info
+    content:
+        application/json:
+            schema:
+                type: object
+                properties:
+                    message:
+                        type: string
+                    task_id:
+                        type: integer
+                        format: int64

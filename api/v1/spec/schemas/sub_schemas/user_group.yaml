@@ -1,0 +1,10 @@
+UserGroup:
+    allOf:
+        -   $ref: "./group.yaml#/Group"
+        -   type: object
+            properties:
+                playmodes:
+                    type: array
+                    items:
+                        $ref: "./ruleset.yaml#/Ruleset"
+                    nullable: true

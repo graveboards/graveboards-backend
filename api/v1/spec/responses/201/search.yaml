@@ -1,0 +1,11 @@
+SearchCreated:
+    description: Search resource creation info
+    content:
+        application/json:
+            schema:
+                type: object
+                properties:
+                    message:
+                        type: string
+                    q:
+                        type: string

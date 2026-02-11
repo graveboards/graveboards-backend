@@ -1,0 +1,9 @@
+RankHistory:
+    type: object
+    properties:
+        mode:
+            $ref: "./ruleset.yaml#/Ruleset"
+        data:
+            type: array
+            items:
+                type: integer

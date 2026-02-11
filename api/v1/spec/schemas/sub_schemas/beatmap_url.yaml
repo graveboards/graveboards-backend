@@ -1,0 +1,4 @@
+BeatmapUrl:
+    type: string
+    pattern: ^https:\/\/osu\.ppy\.sh\/beatmaps\/\d+$
+    example: https://osu.ppy.sh/beatmaps/129891

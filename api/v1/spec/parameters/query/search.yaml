@@ -20,14 +20,6 @@ Compressed:
         type: boolean
         default: false
 
-FrontendMode:
-    name: frontend_mode
-    description: Whether or not to return only the bare minimum amount of data that's used in the frontend
-    in: query
-    schema:
-        type: boolean
-        default: false
-
 Limit:
     name: limit
     description: Pagination limit

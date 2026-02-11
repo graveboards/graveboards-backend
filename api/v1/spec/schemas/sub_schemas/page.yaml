@@ -1,0 +1,18 @@
+Page:
+    type: object
+    properties:
+        html:
+            type: string
+        raw:
+            type: string
+
+ProfilePage:
+    type: string
+    enum:
+        - "me"
+        - "recent_activity"
+        - "beatmaps"
+        - "historical"
+        - "kudosu"
+        - "top_ranks"
+        - "medals"

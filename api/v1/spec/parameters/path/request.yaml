@@ -6,9 +6,9 @@ RequestId:
     schema:
         type: integer
 
-RequestTaskId:
-    name: task_id
-    description: Beatmapset request task ID
+RequestTaskHashedId:
+    name: hashed_id
+    description: Beatmapset request task hashed ID
     in: path
     required: true
     schema:

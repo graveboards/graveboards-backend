@@ -1,8 +1,61 @@
 User:
-    description: An object representing an osu! user
+    title: User
+    type: object
+    properties:
+        id:
+            type: integer
+        profile:
+            $ref: "./profile.yaml#/Profile"
+        roles:
+            type: array
+            items:
+                type: object
+                properties:
+                    id:
+                        type: integer
+                    name:
+                        type: string
+
+UserCreate:
+    description: An object containing the data of the user to create
     type: object
     properties:
         user_id:
             type: integer
     required:
         - user_id
+
+UserInclude:
+    title: UserInclude
+    type: object
+    additionalProperties: false
+    properties:
+        id:
+            type: boolean
+            default: true
+        profile:
+            description:
+                $ref: "../parameters/query/include/description.yaml#/NestedInclude"
+            oneOf:
+                - $ref: "./profile.yaml#/ProfileInclude"
+                - type: boolean
+                  default: false
+        roles:
+            description:
+                $ref: "../parameters/query/include/description.yaml#/NestedInclude"
+            oneOf:
+                - $ref: "#/RoleInclude"
+                - type: boolean
+                  default: false
+
+RoleInclude:
+    title: RoleInclude
+    type: object
+    additionalProperties: false
+    properties:
+        id:
+            type: boolean
+            default: false
+        name:
+            type: boolean
+            default: true

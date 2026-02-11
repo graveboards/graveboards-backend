@@ -1,0 +1,12 @@
+NominationsSummary:
+    type: object
+    properties:
+        current:
+            type: integer
+        eligible_main_rulesets:
+            type: array
+            items:
+                $ref: "./ruleset.yaml#/Ruleset"
+            nullable: true
+        required_meta:
+            $ref: "./required_meta.yaml#/RequiredMeta"

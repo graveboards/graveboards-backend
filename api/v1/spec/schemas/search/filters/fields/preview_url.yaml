@@ -26,9 +26,7 @@ PreviewUrlConditions:
             $ref: "../../../../regex_pattern.yaml#/RegexPattern"
 
 PreviewUrlValue:
-    type: string
-    pattern: ^\/\/b\.ppy\.sh\/preview\/\d+\.mp3$
-    example: //b.ppy.sh/preview/39804.mp3
+    $ref: "../../../../sub_schemas/preview_url.yaml#/PreviewUrl"
 
 PreviewUrlContainer:
     type: array

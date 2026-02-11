@@ -22,12 +22,7 @@ ModeIntConditions:
             type: boolean
 
 ModeIntValue:
-    type: integer
-    enum:
-        - 0
-        - 1
-        - 2
-        - 3
+    $ref: "../../../../sub_schemas/ruleset.yaml#/RulesetInt"
 
 ModeIntContainer:
     type: array

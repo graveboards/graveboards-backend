@@ -9,11 +9,18 @@ Queues:
         parameters:
             - $ref: "../parameters/query/user.yaml#/UserId"
             - $ref: "../parameters/query/queue.yaml#/IsOpen"
+            - $ref: "../parameters/query/include/queue.yaml#/QueueInclude"
             - $ref: "../parameters/query/search.yaml#/Limit"
             - $ref: "../parameters/query/search.yaml#/Offset"
         responses:
             200:
-                description: Successfully retrieved queues
+                $ref: "../responses/200/queue.yaml#/QueueResults"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
 
     post:
         summary: Adds a queue
@@ -23,10 +30,18 @@ Queues:
             - BearerAuth: []
             - ApiKeyAuth: []
         requestBody:
-            $ref: "../request_bodies/queue.yaml#/Queue"
+            $ref: "../request_bodies/queue.yaml#/QueueCreate"
         responses:
             201:
-                description: Successfully added queue
+                $ref: "../responses/201/queue.yaml#/QueueCreated"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
+            409:
+                $ref: "../responses/409/generic.yaml#/Conflict"
 
 QueueById:
     get:
@@ -38,9 +53,18 @@ QueueById:
             - ApiKeyAuth: []
         parameters:
             - $ref: "../parameters/path/queue.yaml#/QueueId"
+            - $ref: "../parameters/query/include/queue.yaml#/QueueInclude"
         responses:
             200:
-                description: Successfully retrieved queue
+                $ref: "../responses/200/queue.yaml#/QueueResult"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"
 
     patch:
         summary: Updates a queue
@@ -55,4 +79,12 @@ QueueById:
             $ref: "../request_bodies/queue.yaml#/QueuePatch"
         responses:
             200:
-                description: Successfully updated queue
+                $ref: "../responses/200/queue.yaml#/QueuePatched"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"

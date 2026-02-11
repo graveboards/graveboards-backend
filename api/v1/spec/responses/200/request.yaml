@@ -1,0 +1,41 @@
+RequestResults:
+    description: List of requests
+    content:
+        application/json:
+            schema:
+                type: array
+                items:
+                    $ref: "../../schemas/request.yaml#/Request"
+
+RequestResult:
+    description: Request
+    content:
+        application/json:
+            schema:
+                $ref: "../../schemas/request.yaml#/Request"
+
+RequestPatched:
+    description: Request patch info
+    content:
+        application/json:
+            schema:
+                type: object
+                properties:
+                    message:
+                        type: string
+
+RequestTaskResults:
+    description: List of request tasks
+    content:
+        application/json:
+            schema:
+                type: array
+                items:
+                    $ref: "../../schemas/request.yaml#/RequestTask"
+
+RequestTaskResult:
+    description: Request task
+    content:
+        application/json:
+            schema:
+                $ref: "../../schemas/request.yaml#/RequestTask"

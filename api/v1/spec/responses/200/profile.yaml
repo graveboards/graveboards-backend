@@ -1,0 +1,15 @@
+ProfileResults:
+    description: List of profiles
+    content:
+        application/json:
+            schema:
+                type: array
+                items:
+                    $ref: "../../schemas/profile.yaml#/Profile"
+
+ProfileResult:
+    description: Profile
+    content:
+        application/json:
+            schema:
+                $ref: "../../schemas/profile.yaml#/Profile"

@@ -1,5 +1,6 @@
 QueueResults:
-    description: Queue Search Results
+    title: QueueResults
+    description: Queue search results
     type: array
     items:
         $ref: "#/Queue"

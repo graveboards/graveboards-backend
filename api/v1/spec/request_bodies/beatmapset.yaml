@@ -1,7 +1,7 @@
-Beatmapset:
-    description: A JSON payload containing a beatmapset to add to or update on the server
+BeatmapsetCreate:
+    description: A JSON payload to add a beatmapset to or update on the server
     required: true
     content:
         application/json:
             schema:
-                $ref: "../schemas/beatmapset.yaml#/Beatmapset"
+                $ref: "../schemas/beatmapset.yaml#/BeatmapsetCreate"

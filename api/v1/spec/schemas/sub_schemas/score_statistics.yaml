@@ -1,0 +1,15 @@
+ScoreStatistics:
+    type: object
+    properties:
+        count_100:
+            type: integer
+        count_300:
+            type: integer
+        count_50:
+            type: integer
+        count_geki:
+            type: integer
+        count_katsu:
+            type: integer
+        count_miss:
+            type: integer

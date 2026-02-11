@@ -8,7 +8,7 @@ Scope:
         Please refer to the lists below for a breakdown of each scope
         
         
-        **beatmaps** -> *BeatmapListing*
+        **beatmaps** -> *BeatmapSnapshot*
         
         * Relevant search terms field weight categories:
             * **beatmap**
@@ -29,7 +29,7 @@ Scope:
                 * Requests that the beatmapset of the difficulty is contained in
         
         
-        **beatmapsets** -> *BeatmapsetListing*
+        **beatmapsets** -> *BeatmapsetSnapshot*
         
         * Relevant search terms field weight categories:
             * **beatmap**
@@ -116,7 +116,7 @@ Scope:
                 * Target data
     type: string
     enum:
-#        - beatmaps
+        - beatmaps
         - beatmapsets
 #        - scores
         - queues

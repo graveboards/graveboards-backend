@@ -1,0 +1,7 @@
+ScoreId:
+    name: score_id
+    description: Score ID
+    in: path
+    required: true
+    schema:
+        type: integer

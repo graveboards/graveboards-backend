@@ -1,0 +1,9 @@
+QueueCreated:
+    description: Queue creation info
+    content:
+        application/json:
+            schema:
+                type: object
+                properties:
+                    message:
+                        type: string

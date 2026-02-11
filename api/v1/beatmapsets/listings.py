@@ -1,44 +1,35 @@
 from connexion import request
 
-from api.utils import prime_query_kwargs
+from api.decorators import api_query
+from api.utils import build_pydantic_include
 from app.database import PostgresqlDB
-from app.database.schemas import BeatmapsetListingSchema, BeatmapSnapshotSchema
-
-_LOADING_OPTIONS = {
-    "beatmapset_snapshot": {
-        "options": {
-            "beatmap_snapshots": {
-                "options": {
-                    "owner_profiles": True,
-                    "beatmapset_snapshots": False,
-                    "leaderboard": False
-                }
-            },
-            "beatmapset_tags": True,
-            "user_profile": True
-        }
-    }
-}
+from app.database.models import BeatmapsetListing, BeatmapsetSnapshot, ModelClass
+from app.database.schemas import BeatmapsetSnapshotSchema
+from app.spec import get_include_schema
 
 
+@api_query(ModelClass.BEATMAPSET_SNAPSHOT)
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
 
-    prime_query_kwargs(kwargs)
-
-    beatmapset_listings = await db.get_beatmapset_listings(
-        _loading_options=_LOADING_OPTIONS,
+    beatmapset_snapshots = await db.get_many(
+        BeatmapsetSnapshot,
+        _join=(BeatmapsetListing, BeatmapsetListing.beatmapset_snapshot_id == BeatmapsetSnapshot.id),
         **kwargs
     )
-    beatmapset_listings_data = [
-        BeatmapsetListingSchema.model_validate(beatmapset_listing).model_dump(
-            context={
-                "exclusions": {
-                    BeatmapSnapshotSchema: {"beatmapset_snapshots", "leaderboard"}
-                }
-            }
-        )
-        for beatmapset_listing in beatmapset_listings
+
+    if not beatmapset_snapshots:
+        return [], 200, {"Content-Type": "application/json"}
+
+    include = build_pydantic_include(
+        obj=beatmapset_snapshots[0],
+        include_schema=get_include_schema(ModelClass.BEATMAPSET_SNAPSHOT),
+        request_include=kwargs.get("_include")
+    )
+
+    beatmapset_snapshots_data = [
+        BeatmapsetSnapshotSchema.model_validate(beatmapset_snapshot).model_dump(include=include)
+        for beatmapset_snapshot in beatmapset_snapshots
     ]
 
-    return beatmapset_listings_data, 200
+    return beatmapset_snapshots_data, 200, {"Content-Type": "application/json"}

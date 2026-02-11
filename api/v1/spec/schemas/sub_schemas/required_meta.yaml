@@ -1,0 +1,7 @@
+RequiredMeta:
+    type: object
+    properties:
+        main_ruleset:
+            type: integer
+        non_main_ruleset:
+            type: integer

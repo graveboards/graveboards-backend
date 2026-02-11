@@ -1,0 +1,40 @@
+BeatmapsetResults:
+    description: List of beatmapsets
+    content:
+        application/json:
+            schema:
+                type: array
+                items:
+                    $ref: "../../schemas/beatmapset.yaml#/Beatmapset"
+
+BeatmapsetResult:
+    description: Beatmapset
+    content:
+        application/json:
+            schema:
+                $ref: "../../schemas/beatmapset.yaml#/Beatmapset"
+
+BeatmapsetUpdated:
+    description: Beatmapset update info
+    content:
+        application/json:
+            schema:
+                type: object
+                properties:
+                    message:
+                        type: string
+                    updated_beatmapset:
+                        type: object
+                        additionalProperties: true
+                        properties:
+                            beatmapset_id:
+                                type: integer
+                        nullable: true
+                    updated_beatmaps:
+                        type: array
+                        items:
+                            type: object
+                            additionalProperties: true
+                            properties:
+                                beatmap_id:
+                                    type: integer

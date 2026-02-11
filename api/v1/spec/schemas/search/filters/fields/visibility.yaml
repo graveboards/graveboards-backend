@@ -22,17 +22,7 @@ VisibilityConditions:
             type: boolean
 
 VisibilityValue:
-    description: >
-        ### The visibility of the queue
-        
-         * 0 = Public
-         * 1 = Unlisted
-         * 2 = Private
-    type: integer
-    enum:
-        - 0
-        - 1
-        - 2
+    $ref: "../../../../sub_schemas/visibility.yaml#/Visibility"
 
 VisibilityContainer:
     type: array

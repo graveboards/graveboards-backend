@@ -22,15 +22,7 @@ RankedConditions:
             type: boolean
 
 RankedValue:
-    type: integer
-    enum:
-        - -2
-        - -1
-        - 0
-        - 1
-        - 2
-        - 3
-        - 4
+    $ref: "../../../../sub_schemas/ranked_status.yaml#/Ranked"
 
 RankedContainer:
     type: array

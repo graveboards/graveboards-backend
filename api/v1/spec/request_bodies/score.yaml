@@ -1,7 +1,7 @@
-Score:
-    description: Score to add to a leaderboard
+ScoreCreate:
+    description: A JSON payload containing the data of the score to create
     required: true
     content:
         application/json:
             schema:
-                $ref: "../schemas/score.yaml#/Score"
+                $ref: "../schemas/score.yaml#/ScoreCreate"

@@ -1,0 +1,12 @@
+RequestStatus:
+    description: >
+        ### The status of the request
+        
+        * -1 = Rejected
+        * 0 = Pending
+        * 1 = Accepted
+    type: integer
+    enum:
+        - -1
+        - 0
+        - 1

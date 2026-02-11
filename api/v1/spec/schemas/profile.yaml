@@ -1,0 +1,393 @@
+Profile:
+    title: Profile
+    type: object
+    properties:
+        id:
+            type: integer
+        user_id:
+            type: integer
+        updated_at:
+            type: string
+            format: date-time
+        is_restricted:
+            type: boolean
+        account_history:
+            type: array
+            items:
+                $ref: "./sub_schemas/user_account_history.yaml#/UserAccountHistory"
+        active_tournament_banners:
+            type: array
+            items:
+                $ref: "./sub_schemas/profile_banner.yaml#/ProfileBanner"
+        avatar_url:
+            type: string
+        badges:
+            type: array
+            items:
+                $ref: "./sub_schemas/user_badge.yaml#/UserBadge"
+        beatmap_playcounts_count:
+            type: integer
+        comments_count:
+            type: integer
+        country_code:
+            $ref: "./sub_schemas/country.yaml#/CountryCode"
+        country:
+            $ref: "./sub_schemas/country.yaml#/Country"
+        cover:
+            $ref: "./sub_schemas/cover.yaml#/Cover"
+        # current_season_stats  # Unknown
+        daily_challenge_user_stats:
+            $ref: "./sub_schemas/daily_challenge_user_stats.yaml#/DailyChallengeUserStats"
+        default_group:
+            type: string
+            nullable: true
+        discord:
+            type: string
+            nullable: true
+        favourite_beatmapset_count:
+            type: integer
+        follower_count:
+            type: integer
+        graveyard_beatmapset_count:
+            type: integer
+        groups:
+            type: array
+            items:
+                $ref: "./sub_schemas/user_group.yaml#/UserGroup"
+        guest_beatmapset_count:
+            type: integer
+        has_supported:
+            type: boolean
+        interests:
+            type: string
+            nullable: true
+        is_active:
+            type: boolean
+        is_bot:
+            type: boolean
+        is_deleted:
+            type: boolean
+        is_online:
+            type: boolean
+        is_supporter:
+            type: boolean
+        join_date:
+            type: string
+            format: date-time
+        kudosu:
+            $ref: "./sub_schemas/kudosu.yaml#/Kudosu"
+        location:
+            type: string
+            nullable: true
+        last_visit:
+            type: string
+            format: date-time
+            nullable: true
+        loved_beatmapset_count:
+            type: integer
+        mapping_follower_count:
+            type: integer
+        matchmaking_stats:
+            type: array
+            items:
+                $ref: "./sub_schemas/matchmaking_stats.yaml#/MatchmakingStats"
+        max_blocks:
+            type: integer
+        max_friends:
+            type: integer
+        monthly_playcounts:
+            type: array
+            items:
+                $ref: "./sub_schemas/user_monthly_playcount.yaml#/UserMonthlyPlaycount"
+        nominated_beatmapset_count:
+            type: integer
+        occupation:
+            type: string
+            nullable: true
+        page:
+            $ref: "./sub_schemas/page.yaml#/Page"
+        pending_beatmapset_count:
+            type: integer
+        playmode:
+            allOf:
+                - $ref: "./sub_schemas/ruleset.yaml#/Ruleset"
+                - nullable: true
+        playstyle:
+            type: array
+            items:
+                $ref: "./sub_schemas/playstyle.yaml#/Playstyle"
+        pm_friends_only:
+            type: boolean
+        post_count:
+            type: integer
+        previous_usernames:
+            type: array
+            items:
+                type: string
+        profile_colour:
+            type: string
+            nullable: true
+        profile_hue:
+            type: integer
+            nullable: true
+        profile_order:
+            type: array
+            items:
+                $ref: "./sub_schemas/page.yaml#/ProfilePage"
+        rank_highest:
+            $ref: "./sub_schemas/rank_highest.yaml#/RankHighest"
+        rank_history:
+            $ref: "./sub_schemas/rank_history.yaml#/RankHistory"
+        ranked_and_approved_beatmapset_count:
+            type: integer
+        ranked_beatmapset_count:
+            type: integer
+        replays_watched_counts:
+            type: array
+            items:
+                $ref: "./sub_schemas/replay_watched_count.yaml#/ReplayWatchedCount"
+        scores_best_count:
+            type: integer
+        scores_first_count:
+            type: integer
+        scores_pinned_count:
+            type: integer
+        scores_recent_count:
+            type: integer
+        statistics:
+            $ref: "./sub_schemas/user_statistics.yaml#/UserStatistics"
+        support_level:
+            type: integer
+        team:
+            allOf:
+                - $ref: "./sub_schemas/team.yaml#/Team"
+                - nullable: true
+        title:
+            type: string
+            nullable: true
+        title_url:
+            type: string
+            nullable: true
+        twitter:
+            type: string
+            nullable: true
+        user_achievements:
+            type: array
+            items:
+                $ref: "./sub_schemas/user_achievement.yaml#/UserAchievement"
+        username:
+            type: string
+        website:
+            type: string
+            nullable: true
+
+ProfileInclude:
+    title: ProfileInclude
+    type: object
+    additionalProperties: false
+    properties:
+        id:
+            type: boolean
+            default: false
+        user_id:
+            type: boolean
+            default: false
+        updated_at:
+            type: boolean
+            default: false
+        is_restricted:
+            type: boolean
+            default: false
+        account_history:
+            type: boolean
+            default: false
+        active_tournament_banners:
+            type: boolean
+            default: false
+        avatar_url:
+            type: boolean
+            default: false
+        badges:
+            type: boolean
+            default: false
+        beatmap_playcounts_count:
+            type: boolean
+            default: false
+        comments_count:
+            type: boolean
+            default: false
+        country_code:
+            type: boolean
+            default: false
+        country:
+            type: boolean
+            default: false
+        cover:
+            type: boolean
+            default: false
+        # current_season_stats  # Unknown
+        daily_challenge_user_stats:
+            type: boolean
+            default: false
+        default_group:
+            type: boolean
+            default: false
+        discord:
+            type: boolean
+            default: false
+        favourite_beatmapset_count:
+            type: boolean
+            default: false
+        follower_count:
+            type: boolean
+            default: false
+        graveyard_beatmapset_count:
+            type: boolean
+            default: false
+        groups:
+            type: boolean
+            default: false
+        guest_beatmapset_count:
+            type: boolean
+            default: false
+        has_supported:
+            type: boolean
+            default: false
+        interests:
+            type: boolean
+            default: false
+        is_active:
+            type: boolean
+            default: false
+        is_bot:
+            type: boolean
+            default: false
+        is_deleted:
+            type: boolean
+            default: false
+        is_online:
+            type: boolean
+            default: false
+        is_supporter:
+            type: boolean
+            default: false
+        join_date:
+            type: boolean
+            default: false
+        kudosu:
+            type: boolean
+            default: false
+        location:
+            type: boolean
+            default: false
+        last_visit:
+            type: boolean
+            default: false
+        loved_beatmapset_count:
+            type: boolean
+            default: false
+        mapping_follower_count:
+            type: boolean
+            default: false
+        matchmaking_stats:
+            type: boolean
+            default: false
+        max_blocks:
+            type: boolean
+            default: false
+        max_friends:
+            type: boolean
+            default: false
+        monthly_playcounts:
+            type: boolean
+            default: false
+        nominated_beatmapset_count:
+            type: boolean
+            default: false
+        occupation:
+            type: boolean
+            default: false
+        page:
+            type: boolean
+            default: false
+        pending_beatmapset_count:
+            type: boolean
+            default: false
+        playmode:
+            type: boolean
+            default: false
+        playstyle:
+            type: boolean
+            default: false
+        pm_friends_only:
+            type: boolean
+            default: false
+        post_count:
+            type: boolean
+            default: false
+        previous_usernames:
+            type: boolean
+            default: false
+        profile_colour:
+            type: boolean
+            default: false
+        profile_hue:
+            type: boolean
+            default: false
+        profile_order:
+            type: boolean
+            default: false
+        rank_highest:
+            type: boolean
+            default: false
+        rank_history:
+            type: boolean
+            default: false
+        ranked_and_approved_beatmapset_count:
+            type: boolean
+            default: false
+        ranked_beatmapset_count:
+            type: boolean
+            default: false
+        replays_watched_counts:
+            type: boolean
+            default: false
+        scores_best_count:
+            type: boolean
+            default: false
+        scores_first_count:
+            type: boolean
+            default: false
+        scores_pinned_count:
+            type: boolean
+            default: false
+        scores_recent_count:
+            type: boolean
+            default: false
+        statistics:
+            type: boolean
+            default: false
+        support_level:
+            type: boolean
+            default: false
+        team:
+            type: boolean
+            default: false
+        title:
+            type: boolean
+            default: false
+        title_url:
+            type: boolean
+            default: false
+        twitter:
+            type: boolean
+            default: false
+        user_achievements:
+            type: boolean
+            default: false
+        username:
+            type: boolean
+            default: true
+        website:
+            type: boolean
+            default: false

@@ -1,0 +1,8 @@
+UserAchievement:
+    type: object
+    properties:
+        achieved_at:
+            type: string
+            format: date-time
+        achievement_id:
+            type: integer

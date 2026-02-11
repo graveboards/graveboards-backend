@@ -6,18 +6,22 @@ Search:
         parameters:
             - $ref: "../parameters/query/search.yaml#/Q"
             - $ref: "../parameters/query/search.yaml#/Compressed"
-            - $ref: "../parameters/query/search.yaml#/FrontendMode"
+            - $ref: "../parameters/query/include/search.yaml#/SearchInclude"
             - $ref: "../parameters/query/search.yaml#/Limit"
             - $ref: "../parameters/query/search.yaml#/Offset"
         responses:
             200:
-                $ref: "../responses/200/search_results.yaml#/SearchResults"
+                $ref: "../responses/200/search.yaml#/SearchResults"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
     post:
-        summary: Creates a new search resource
+        summary: Creates a search resource
         tags:
             - Search
         requestBody:
-            $ref: "../request_bodies/search.yaml#/Search"
+            $ref: "../request_bodies/search.yaml#/SearchCreate"
         responses:
             201:
-                description: Successfully created new search resource
+                $ref: "../responses/201/search.yaml#/SearchCreated"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"

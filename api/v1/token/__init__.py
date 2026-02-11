@@ -19,7 +19,9 @@ async def search(token: str):
     if not jwt:
         raise NotFound(f"The JWT provided does not exist")
 
-    jwt_data = JWTSchema.model_validate(jwt).model_dump()
+    jwt_data = JWTSchema.model_validate(jwt).model_dump(
+        exclude={"id", "updated_at"}
+    )
 
     return jwt_data, 200, {"Content-Type": "application/json"}
 
@@ -86,7 +88,7 @@ async def post(body: dict):
         expires_at=payload["exp"]
     )
     jwt_data = JWTSchema.model_validate(jwt).model_dump(
-        exclude={"id"}
+        exclude={"id", "updated_at"}
     )
 
     return jwt_data, 201, {"Content-Type": "application/json"}
