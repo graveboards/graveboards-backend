@@ -2,7 +2,7 @@
 
 ## Quickstart (Docker)
 
-1. Close the repository: `git clone https://github.com/graveboards/graveboards.git && cd graveboards`
+1. Close the repository: `git clone https://github.com/graveboards/graveboards-backend.git && cd graveboards`
 2. Ensure docker is installed and running on your system
 3. Launch `run.bat`
 4. Follow the instructions to automatically fill out `.env.docker`
