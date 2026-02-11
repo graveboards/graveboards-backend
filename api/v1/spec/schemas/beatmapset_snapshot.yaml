@@ -150,13 +150,13 @@ BeatmapsetSnapshotInclude:
     properties:
         id:
             type: boolean
-            default: true
+            default: false
         beatmapset_id:
             type: boolean
-            default: false
+            default: true
         user_id:
             type: boolean
-            default: false
+            default: true
         snapshot_number:
             type: boolean
             default: false
@@ -168,13 +168,13 @@ BeatmapsetSnapshotInclude:
             default: false
         verified:
             type: boolean
-            default: false
+            default: true
         artist:
             type: boolean
-            default: false
+            default: true
         artist_unicode:
             type: boolean
-            default: false
+            default: true
         availability:
             type: boolean
             default: false
@@ -186,10 +186,10 @@ BeatmapsetSnapshotInclude:
             default: false
         covers:
             type: boolean
-            default: false
+            default: true
         creator:
             type: boolean
-            default: false
+            default: true
         current_nominations:
             type: boolean
             default: false
@@ -276,10 +276,10 @@ BeatmapsetSnapshotInclude:
             default: false
         title:
             type: boolean
-            default: false
+            default: true
         title_unicode:
             type: boolean
-            default: false
+            default: true
         track_id:
             type: boolean
             default: false

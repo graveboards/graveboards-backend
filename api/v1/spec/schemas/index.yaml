@@ -3,6 +3,9 @@ Search:
     $ref: "./search/search.yaml#/Search"
 
 # Datastructures
+User:
+    $ref: "./user.yaml#/User"
+
 Profile:
     $ref: "./profile.yaml#/Profile"
 

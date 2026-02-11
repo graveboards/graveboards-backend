@@ -191,7 +191,7 @@ ProfileInclude:
             default: false
         user_id:
             type: boolean
-            default: false
+            default: true
         updated_at:
             type: boolean
             default: false
@@ -206,7 +206,7 @@ ProfileInclude:
             default: false
         avatar_url:
             type: boolean
-            default: false
+            default: true
         badges:
             type: boolean
             default: false

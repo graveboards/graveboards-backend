@@ -53,7 +53,7 @@ LeaderboardInclude:
             default: false
         beatmap_id:
             type: boolean
-            default: false
+            default: true
         beatmap_snapshot_id:
             type: boolean
             default: false

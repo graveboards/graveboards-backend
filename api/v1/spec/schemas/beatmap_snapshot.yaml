@@ -116,10 +116,10 @@ BeatmapSnapshotInclude:
     properties:
         id:
             type: boolean
-            default: true
+            default: false
         beatmap_id:
             type: boolean
-            default: false
+            default: true
         user_id:
             type: boolean
             default: false
@@ -161,7 +161,7 @@ BeatmapSnapshotInclude:
             default: false
         difficulty_rating:
             type: boolean
-            default: false
+            default: true
         drain:
             type: boolean
             default: false
@@ -170,7 +170,7 @@ BeatmapSnapshotInclude:
             default: false
         hit_length:
             type: boolean
-            default: false
+            default: true
         is_scoreable:
             type: boolean
             default: false
@@ -182,7 +182,7 @@ BeatmapSnapshotInclude:
             default: false
         mode:
             type: boolean
-            default: false
+            default: true
         mode_int:
             type: boolean
             default: false
@@ -200,13 +200,13 @@ BeatmapSnapshotInclude:
             default: false
         total_length:
             type: boolean
-            default: false
+            default: true
         url:
             type: boolean
             default: false
         version:
             type: boolean
-            default: false
+            default: true
         beatmapset_snapshots:
             description:
                 $ref: "../parameters/query/include/description.yaml#/NestedInclude"
