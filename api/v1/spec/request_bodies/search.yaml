@@ -4,4 +4,4 @@ SearchCreate:
     content:
         application/json:
             schema:
-                $ref: "../schemas/search/search.yaml#/Search"
+                $ref: "../schemas/search.yaml#/Search"

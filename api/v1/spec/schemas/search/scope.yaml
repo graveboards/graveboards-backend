@@ -50,7 +50,7 @@ Scope:
                 * Requests that the beatmapset is contained in
         
         
-        **scores** -> *ScoreListing*
+        **scores** -> *Score* # Not implemented yet
         
         * Relevant search terms field weight categories:
             * **beatmap**
@@ -71,7 +71,7 @@ Scope:
                 * Requests that the beatmapset of the difficulty that the score was performed on is contained in
         
         
-        **queues** -> *QueueListing*
+        **queues** -> *Queue*
         
         * Relevant search terms field weight categories:
             * **beatmap**
@@ -94,7 +94,7 @@ Scope:
                 * Requests contained in the queue
         
         
-        **requests** -> *RequestListing*
+        **requests** -> *Request*
         
         * Relevant search terms field weight categories:
             * **beatmap**

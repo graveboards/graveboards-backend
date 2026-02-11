@@ -1,9 +1,0 @@
-BeatmapResults:
-    title: BeatmapResults
-    description: Beatmap search results
-    type: array
-    items:
-        $ref: "#/BeatmapSnapshot"
-
-BeatmapSnapshot:
-    type: object

@@ -1,0 +1,31 @@
+ModeConditions:
+    type: object
+    additionalProperties: false
+    properties:
+        eq:
+            $ref: "#/ModeValue"
+        neq:
+            $ref: "#/ModeValue"
+        gt:
+            $ref: "#/ModeValue"
+        lt:
+            $ref: "#/ModeValue"
+        gte:
+            $ref: "#/ModeValue"
+        lte:
+            $ref: "#/ModeValue"
+        in:
+            $ref: "#/ModeContainer"
+        not_in:
+            $ref: "#/ModeContainer"
+        is_null:
+            type: boolean
+
+ModeValue:
+    $ref: "../../../sub_schemas/ruleset.yaml#/Ruleset"
+
+ModeContainer:
+    type: array
+    items:
+        $ref: "#/ModeValue"
+    minItems: 1

@@ -1,10 +1,10 @@
 QueueInclude:
     name: include
     description:
-        $ref: "./description.yaml#/Include"
+        $ref: "../../../schemas/include/description.yaml#/IncludeDescription"
     in: query
     required: false
     style: deepObject
     explode: true
     schema:
-        $ref: "../../../schemas/queue.yaml#/QueueInclude"
+        $ref: "../../../schemas/include/queue.yaml#/QueueInclude"

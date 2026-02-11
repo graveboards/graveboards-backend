@@ -1,0 +1,55 @@
+BeatmapFilter:
+    title: BeatmapFilter
+    description:
+        $ref: "./description.yaml#/FilterDescription"
+    type: object
+    additionalProperties: false
+    properties:
+        accuracy:
+            $ref: "./fields/index.yaml#/FloatField"
+        ar:
+            $ref: "./fields/index.yaml#/FloatField"
+        bpm:
+            $ref: "./fields/index.yaml#/FloatField"
+        checksum:
+            $ref: "./fields/index.yaml#/ChecksumField"
+        count_circles:
+            $ref: "./fields/index.yaml#/IntegerField"
+        count_sliders:
+            $ref: "./fields/index.yaml#/IntegerField"
+        count_spinners:
+            $ref: "./fields/index.yaml#/IntegerField"
+        cs:
+            $ref: "./fields/index.yaml#/FloatField"
+        deleted_at:
+            $ref: "./fields/index.yaml#/DatetimeField"
+        difficulty_rating:
+            $ref: "./fields/index.yaml#/FloatField"
+        drain:
+            $ref: "./fields/index.yaml#/FloatField"
+        hit_length:
+            $ref: "./fields/index.yaml#/IntegerField"
+        is_scoreable:
+            $ref: "./fields/index.yaml#/BooleanField"
+        last_updated:
+            $ref: "./fields/index.yaml#/DatetimeField"
+        max_combo:
+            $ref: "./fields/index.yaml#/IntegerField"
+        mode:
+            $ref: "./fields/index.yaml#/ModeField"
+        mode_int:
+            $ref: "./fields/index.yaml#/ModeIntField"
+        passcount:
+            $ref: "./fields/index.yaml#/IntegerField"
+        playcount:
+            $ref: "./fields/index.yaml#/IntegerField"
+        ranked:
+            $ref: "./fields/index.yaml#/RankedField"
+        status:
+            $ref: "./fields/index.yaml#/StatusField"
+        total_length:
+            $ref: "./fields/index.yaml#/IntegerField"
+        url:
+            $ref: "./fields/index.yaml#/BeatmapUrlField"
+        version:
+            $ref: "./fields/index.yaml#/StringField"

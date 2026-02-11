@@ -1,0 +1,38 @@
+LeaderboardInclude:
+    title: LeaderboardInclude
+    description:
+        $ref: "./description.yaml#/IncludeDescription"
+    type: object
+    additionalProperties: false
+    properties:
+        id:
+            type: boolean
+            default: false
+        beatmap_id:
+            type: boolean
+            default: true
+        beatmap_snapshot_id:
+            type: boolean
+            default: false
+        created_at:
+            type: boolean
+            default: true
+        updated_at:
+            type: boolean
+            default: true
+        frozen:
+            type: boolean
+            default: true
+        beatmap_snapshot:
+            description:
+                $ref: "./description.yaml#/NestedIncludeDescription"
+            oneOf:
+                - $ref: "./beatmap_snapshot.yaml#/BeatmapSnapshotIncludeShallow"
+                - type: boolean
+                  default: false
+
+LeaderboardIncludeShallow:
+    # Infinite recursion protection placeholder
+    # References to this are to be automatically populated on runtime
+    title: LeaderboardIncludeShallow
+    type: object

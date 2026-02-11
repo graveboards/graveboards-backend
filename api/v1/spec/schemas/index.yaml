@@ -1,6 +1,6 @@
 # Search
 Search:
-    $ref: "./search/search.yaml#/Search"
+    $ref: "./search.yaml#/Search"
 
 # Datastructures
 User:
@@ -32,43 +32,43 @@ Request:
 
 # Includes
 UserInclude:
-    $ref: "./user.yaml#/UserInclude"
+    $ref: "./include/user.yaml#/UserInclude"
 
 ProfileInclude:
-    $ref: "./profile.yaml#/ProfileInclude"
+    $ref: "./include/profile.yaml#/ProfileInclude"
 
 BeatmapInclude:
-    $ref: "./beatmap.yaml#/BeatmapInclude"
+    $ref: "./include/beatmap.yaml#/BeatmapInclude"
 
 BeatmapSnapshotInclude:
-    $ref: "./beatmap_snapshot.yaml#/BeatmapSnapshotInclude"
+    $ref: "./include/beatmap_snapshot.yaml#/BeatmapSnapshotInclude"
 
 BeatmapTagInclude:
-    $ref: "./beatmap_snapshot.yaml#/BeatmapTagInclude"
+    $ref: "./include/beatmap_snapshot.yaml#/BeatmapTagInclude"
 
 BeatmapsetInclude:
-    $ref: "./beatmapset.yaml#/BeatmapsetInclude"
+    $ref: "./include/beatmapset.yaml#/BeatmapsetInclude"
 
 BeatmapsetSnapshotInclude:
-    $ref: "./beatmapset_snapshot.yaml#/BeatmapsetSnapshotInclude"
+    $ref: "./include/beatmapset_snapshot.yaml#/BeatmapsetSnapshotInclude"
 
 BeatmapsetTagInclude:
-    $ref: "./beatmapset_snapshot.yaml#/BeatmapsetTagInclude"
+    $ref: "./include/beatmapset_snapshot.yaml#/BeatmapsetTagInclude"
 
 LeaderboardInclude:
-    $ref: "./leaderboard.yaml#/LeaderboardInclude"
+    $ref: "./include/leaderboard.yaml#/LeaderboardInclude"
 
 ScoreInclude:
-    $ref: "./score.yaml#/ScoreInclude"
+    $ref: "./include/score.yaml#/ScoreInclude"
 
 QueueInclude:
-    $ref: "./queue.yaml#/QueueInclude"
+    $ref: "./include/queue.yaml#/QueueInclude"
 
 RequestInclude:
-    $ref: "./request.yaml#/RequestInclude"
+    $ref: "./include/request.yaml#/RequestInclude"
 
 RequestTaskInclude:
-    $ref: "./request.yaml#/RequestTaskInclude"
+    $ref: "./include/request.yaml#/RequestTaskInclude"
 
 SearchInclude:
-    $ref: "./search/search.yaml#/SearchInclude"
+    $ref: "./include/search.yaml#/SearchInclude"

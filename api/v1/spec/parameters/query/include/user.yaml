@@ -1,10 +1,10 @@
 UserInclude:
     name: include
     description:
-        $ref: "./description.yaml#/Include"
+        $ref: "../../../schemas/include/description.yaml#/IncludeDescription"
     in: query
     required: false
     style: deepObject
     explode: true
     schema:
-        $ref: "../../../schemas/user.yaml#/UserInclude"
+        $ref: "../../../schemas/include/user.yaml#/UserInclude"

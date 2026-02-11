@@ -10,22 +10,3 @@ Beatmap:
             type: array
             items:
                 $ref: "./beatmap_snapshot.yaml#/BeatmapSnapshot"
-
-BeatmapInclude:
-    title: BeatmapInclude
-    type: object
-    additionalProperties: false
-    properties:
-        id:
-            type: boolean
-            default: true
-        beatmapset_id:
-            type: boolean
-            default: true
-        snapshots:
-            description:
-                $ref: "../parameters/query/include/description.yaml#/NestedInclude"
-            oneOf:
-                - $ref: "./beatmap_snapshot.yaml#/BeatmapSnapshotInclude"
-                - type: boolean
-                  default: false

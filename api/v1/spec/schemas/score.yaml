@@ -44,12 +44,3 @@ ScoreCreate:
     description: An object containing the data of the score to create
     type: object
     additionalProperties: false
-
-ScoreInclude:
-    title: ScoreInclude
-    type: object
-    additionalProperties: false
-    properties:
-        id:
-            type: boolean
-            default: true

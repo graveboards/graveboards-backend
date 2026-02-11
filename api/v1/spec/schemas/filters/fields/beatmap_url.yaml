@@ -1,0 +1,35 @@
+BeatmapUrlConditions:
+    type: object
+    additionalProperties: false
+    properties:
+        eq:
+            $ref: "#/BeatmapUrlValue"
+        neq:
+            $ref: "#/BeatmapUrlValue"
+        gt:
+            $ref: "#/BeatmapUrlValue"
+        lt:
+            $ref: "#/BeatmapUrlValue"
+        gte:
+            $ref: "#/BeatmapUrlValue"
+        lte:
+            $ref: "#/BeatmapUrlValue"
+        in:
+            $ref: "#/BeatmapUrlContainer"
+        not_in:
+            $ref: "#/BeatmapUrlContainer"
+        is_null:
+            type: boolean
+        regex:
+            $ref: "../../../sub_schemas/regex_pattern.yaml#/RegexPattern"
+        not_regex:
+            $ref: "../../../sub_schemas/regex_pattern.yaml#/RegexPattern"
+
+BeatmapUrlValue:
+    $ref: "../../../sub_schemas/beatmap_url.yaml#/BeatmapUrl"
+
+BeatmapUrlContainer:
+    type: array
+    items:
+        $ref: "#/BeatmapUrlValue"
+    minItems: 1

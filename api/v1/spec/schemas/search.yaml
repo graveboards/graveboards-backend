@@ -1,0 +1,17 @@
+Search:
+    title: Search
+    description: >
+        ### Search query (q) object
+        
+        Supports everything from basic searches to powerful complex queries
+    type: object
+    additionalProperties: false
+    properties:
+        scope:
+            $ref: "./search/scope.yaml#/Scope"
+        search_terms:
+            $ref: "./search/search_terms.yaml#/SearchTerms"
+        sorting:
+            $ref: "./sorting/search.yaml#/SearchSorting"
+        filters:
+            $ref: "./filters/search.yaml#/SearchFilters"

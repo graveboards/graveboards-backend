@@ -1,10 +1,10 @@
 SearchInclude:
     name: include
     description:
-        $ref: "./description.yaml#/Include"
+        $ref: "../../../schemas/include/description.yaml#/IncludeDescription"
     in: query
     required: false
     style: deepObject
     explode: true
     schema:
-        $ref: "../../../schemas/search/search.yaml#/SearchInclude"
+        $ref: "../../../schemas/include/search.yaml#/SearchInclude"

@@ -1,0 +1,29 @@
+RequestSorting:
+    title: RequestSorting
+    description:
+        $ref: "./description.yaml#/SortingDescription"
+    type: array
+    items:
+        type: object
+        additionalProperties: false
+        properties:
+            field:
+                $ref: "#/RequestSortingField"
+            order:
+                $ref: "./sorting_order.yaml#/SortingOrder"
+        required:
+            - field
+
+RequestSortingField:
+    description: >
+        ### Enum of supported field identifiers for sorting
+    type: string
+    enum:
+        - Request.user_id
+        - Request.beatmapset_id
+        - Request.queue_id
+        - Request.comment
+        - Request.mv_checked
+        - Request.created_at
+        - Request.updated_at
+        - Request.status

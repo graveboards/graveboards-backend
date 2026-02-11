@@ -1,10 +1,10 @@
 ScoreInclude:
     name: include
     description:
-        $ref: "./description.yaml#/Include"
+        $ref: "../../../schemas/include/description.yaml#/IncludeDescription"
     in: query
     required: false
     style: deepObject
     explode: true
     schema:
-        $ref: "../../../schemas/score.yaml#/ScoreInclude"
+        $ref: "../../../schemas/include/score.yaml#/ScoreInclude"

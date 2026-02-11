@@ -1,10 +1,10 @@
 BeatmapsetInclude:
     name: include
     description:
-        $ref: "./description.yaml#/Include"
+        $ref: "../../../schemas/include/description.yaml#/IncludeDescription"
     in: query
     required: false
     style: deepObject
     explode: true
     schema:
-        $ref: "../../../schemas/beatmapset.yaml#/BeatmapsetInclude"
+        $ref: "../../../schemas/include/beatmapset.yaml#/BeatmapsetInclude"

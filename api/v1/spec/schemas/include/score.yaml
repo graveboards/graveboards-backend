@@ -1,0 +1,10 @@
+ScoreInclude:
+    title: ScoreInclude
+    description:
+        $ref: "./description.yaml#/IncludeDescription"
+    type: object
+    additionalProperties: false
+    properties:
+        id:
+            type: boolean
+            default: true

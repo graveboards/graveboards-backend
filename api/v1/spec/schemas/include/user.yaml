@@ -1,0 +1,38 @@
+UserInclude:
+    title: UserInclude
+    description:
+        $ref: "./description.yaml#/IncludeDescription"
+    type: object
+    additionalProperties: false
+    properties:
+        id:
+            type: boolean
+            default: true
+        profile:
+            description:
+                $ref: "./description.yaml#/NestedIncludeDescription"
+            oneOf:
+                - $ref: "./profile.yaml#/ProfileInclude"
+                - type: boolean
+                  default: false
+        roles:
+            description:
+                $ref: "./description.yaml#/NestedIncludeDescription"
+            oneOf:
+                - $ref: "#/RoleInclude"
+                - type: boolean
+                  default: false
+
+RoleInclude:
+    title: RoleInclude
+    description:
+        $ref: "./description.yaml#/IncludeDescription"
+    type: object
+    additionalProperties: false
+    properties:
+        id:
+            type: boolean
+            default: false
+        name:
+            type: boolean
+            default: true

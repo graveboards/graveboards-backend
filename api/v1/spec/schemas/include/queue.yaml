@@ -1,0 +1,45 @@
+QueueInclude:
+    title: QueueInclude
+    description:
+        $ref: "./description.yaml#/IncludeDescription"
+    type: object
+    additionalProperties: false
+    properties:
+        id:
+            type: boolean
+            default: true
+        user_id:
+            type: boolean
+            default: true
+        name:
+            type: boolean
+            default: true
+        description:
+            type: boolean
+            default: true
+        created_at:
+            type: boolean
+            default: true
+        updated_at:
+            type: boolean
+            default: true
+        is_open:
+            type: boolean
+            default: true
+        visibility:
+            type: boolean
+            default: true
+        user_profile:
+            description:
+                $ref: "./description.yaml#/NestedIncludeDescription"
+            oneOf:
+                - $ref: "./profile.yaml#/ProfileInclude"
+                - type: boolean
+                  default: false
+        manager_profiles:
+            description:
+                $ref: "./description.yaml#/NestedIncludeDescription"
+            oneOf:
+                - $ref: "./profile.yaml#/ProfileInclude"
+                - type: boolean
+                  default: false

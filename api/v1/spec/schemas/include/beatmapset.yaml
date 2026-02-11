@@ -1,0 +1,20 @@
+BeatmapsetInclude:
+    title: BeatmapsetInclude
+    description:
+        $ref: "./description.yaml#/IncludeDescription"
+    type: object
+    additionalProperties: false
+    properties:
+        id:
+            type: boolean
+            default: true
+        user_id:
+            type: boolean
+            default: true
+        snapshots:
+            description:
+                $ref: "./description.yaml#/NestedIncludeDescription"
+            oneOf:
+                - $ref: "./beatmapset_snapshot.yaml#/BeatmapsetSnapshotInclude"
+                - type: boolean
+                  default: false

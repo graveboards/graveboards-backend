@@ -1,10 +1,10 @@
 ProfileInclude:
     name: include
     description:
-        $ref: "./description.yaml#/Include"
+        $ref: "../../../schemas/include/description.yaml#/IncludeDescription"
     in: query
     required: false
     style: deepObject
     explode: true
     schema:
-        $ref: "../../../schemas/profile.yaml#/ProfileInclude"
+        $ref: "../../../schemas/include/profile.yaml#/ProfileInclude"

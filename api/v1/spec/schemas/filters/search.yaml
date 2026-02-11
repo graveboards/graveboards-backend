@@ -1,0 +1,25 @@
+SearchFilters:
+    title: SearchFilters
+    description: >
+        ### SearchFilters
+        
+        Object of filters organized by category that determines how the results should be filtered
+        
+        
+        Each domain contains a filter object with fields and conditions relevant to that type of entity.
+        This structure allows you to compose complex queries with precision
+    type: object
+    additionalProperties: false
+    properties:
+        profile:
+            $ref: "./profile.yaml#/ProfileFilter"
+        beatmap:
+            $ref: "./beatmap.yaml#/BeatmapFilter"
+        beatmapset:
+            $ref: "./beatmapset.yaml#/BeatmapsetFilter"
+#        score:
+#            $ref: "./score.yaml#/ScoreFilter"
+        queue:
+            $ref: "./queue.yaml#/QueueFilter"
+        request:
+            $ref: "./request.yaml#/RequestFilter"

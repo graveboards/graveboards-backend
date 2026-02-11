@@ -1,0 +1,22 @@
+IncludeDescription: >
+    ### Include
+    
+    Controls which fields are loaded in the object
+    
+    
+    Each field can be set to `true` or `false` to include/exclude it, overriding the schema's default.
+    If a field is not specified, the default will be inferred
+    
+    
+    Supports nested object includes adhering to the same rules
+
+NestedIncludeDescription: >
+    ### Nested Include
+    
+    You have three options to control nested includes:
+    
+    * Set the field to `false` to exclude the entire nested object
+    
+    * Set the field to `true` to include the nested object (inheriting defaults)
+    
+    * Provide an include object specifying which subfields to include/exclude in the the nested object (inheriting defaults)

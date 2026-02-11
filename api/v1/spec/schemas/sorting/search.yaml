@@ -1,0 +1,23 @@
+SearchSorting:
+    title: SearchSorting
+    description:
+        $ref: "./description.yaml#/SortingDescription"
+    type: array
+    items:
+        type: object
+        additionalProperties: false
+        properties:
+            field:
+                $ref: "#/SortingField"
+            order:
+                $ref: "./sorting_order.yaml#/SortingOrder"
+        required:
+            - field
+
+SortingField:
+    allOf:
+        - $ref: "./profile.yaml#/ProfileSortingField"
+        - $ref: "./beatmap_snapshot.yaml#/BeatmapSnapshotSortingField"
+        - $ref: "./beatmapset_snapshot.yaml#/BeatmapsetSnapshotSortingField"
+        - $ref: "./queue.yaml#/QueueSortingField"
+        - $ref: "./request.yaml#/RequestSortingField"

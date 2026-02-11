@@ -1,0 +1,35 @@
+PreviewUrlConditions:
+    type: object
+    additionalProperties: false
+    properties:
+        eq:
+            $ref: "#/PreviewUrlValue"
+        neq:
+            $ref: "#/PreviewUrlValue"
+        gt:
+            $ref: "#/PreviewUrlValue"
+        lt:
+            $ref: "#/PreviewUrlValue"
+        gte:
+            $ref: "#/PreviewUrlValue"
+        lte:
+            $ref: "#/PreviewUrlValue"
+        in:
+            $ref: "#/PreviewUrlContainer"
+        not_in:
+            $ref: "#/PreviewUrlContainer"
+        is_null:
+            type: boolean
+        regex:
+            $ref: "../../../sub_schemas/regex_pattern.yaml#/RegexPattern"
+        not_regex:
+            $ref: "../../../sub_schemas/regex_pattern.yaml#/RegexPattern"
+
+PreviewUrlValue:
+    $ref: "../../../sub_schemas/preview_url.yaml#/PreviewUrl"
+
+PreviewUrlContainer:
+    type: array
+    items:
+        $ref: "#/PreviewUrlValue"
+    minItems: 1

@@ -1,0 +1,31 @@
+RankedConditions:
+    type: object
+    additionalProperties: false
+    properties:
+        eq:
+            $ref: "#/RankedValue"
+        neq:
+            $ref: "#/RankedValue"
+        gt:
+            $ref: "#/RankedValue"
+        lt:
+            $ref: "#/RankedValue"
+        gte:
+            $ref: "#/RankedValue"
+        lte:
+            $ref: "#/RankedValue"
+        in:
+            $ref: "#/RankedContainer"
+        not_in:
+            $ref: "#/RankedContainer"
+        is_null:
+            type: boolean
+
+RankedValue:
+    $ref: "../../../sub_schemas/ranked_status.yaml#/Ranked"
+
+RankedContainer:
+    type: array
+    items:
+        $ref: "#/RankedValue"
+    minItems: 1

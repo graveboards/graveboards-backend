@@ -1,0 +1,160 @@
+BeatmapSnapshotInclude:
+    title: BeatmapSnapshotInclude
+    description:
+        $ref: "./description.yaml#/IncludeDescription"
+    type: object
+    additionalProperties: false
+    properties:
+        id:
+            type: boolean
+            default: false
+        beatmap_id:
+            type: boolean
+            default: true
+        user_id:
+            type: boolean
+            default: false
+        snapshot_number:
+            type: boolean
+            default: false
+        snapshot_date:
+            type: boolean
+            default: false
+        accuracy:
+            type: boolean
+            default: false
+        ar:
+            type: boolean
+            default: false
+        beatmapset_id:
+            type: boolean
+            default: false
+        bpm:
+            type: boolean
+            default: false
+        checksum:
+            type: boolean
+            default: false
+        count_circles:
+            type: boolean
+            default: false
+        count_sliders:
+            type: boolean
+            default: false
+        count_spinners:
+            type: boolean
+            default: false
+        cs:
+            type: boolean
+            default: false
+        deleted_at:
+            type: boolean
+            default: false
+        difficulty_rating:
+            type: boolean
+            default: true
+        drain:
+            type: boolean
+            default: false
+        failtimes:
+            type: boolean
+            default: false
+        hit_length:
+            type: boolean
+            default: true
+        is_scoreable:
+            type: boolean
+            default: false
+        last_updated:
+            type: boolean
+            default: false
+        max_combo:
+            type: boolean
+            default: false
+        mode:
+            type: boolean
+            default: true
+        mode_int:
+            type: boolean
+            default: false
+        passcount:
+            type: boolean
+            default: false
+        playcount:
+            type: boolean
+            default: false
+        ranked:
+            type: boolean
+            default: false
+        status:
+            type: boolean
+            default: false
+        total_length:
+            type: boolean
+            default: true
+        url:
+            type: boolean
+            default: false
+        version:
+            type: boolean
+            default: true
+        beatmapset_snapshots:
+            description:
+                $ref: "./description.yaml#/NestedIncludeDescription"
+            oneOf:
+                - $ref: "./beatmapset_snapshot.yaml#/BeatmapsetSnapshotIncludeShallow"
+                - type: boolean
+                  default: false
+        beatmap_tags:
+            description:
+                $ref: "./description.yaml#/NestedIncludeDescription"
+            oneOf:
+                - $ref: "#/BeatmapTagInclude"
+                - type: boolean
+                  default: false
+        leaderboard:
+            description:
+                $ref: "./description.yaml#/NestedIncludeDescription"
+            oneOf:
+                - $ref: "./leaderboard.yaml#/LeaderboardIncludeShallow"
+                - type: boolean
+                  default: false
+        owner_profiles:
+            description:
+                $ref: "./description.yaml#/NestedIncludeDescription"
+            oneOf:
+                - $ref: "./profile.yaml#/ProfileInclude"
+                - type: boolean
+                  default: false
+
+BeatmapSnapshotIncludeShallow:
+    # Infinite recursion protection placeholder
+    # References to this are to be automatically populated on runtime
+    title: BeatmapSnapshotIncludeShallow
+    type: object
+
+BeatmapTagInclude:
+    title: BeatmapTagInclude
+    description:
+        $ref: "./description.yaml#/IncludeDescription"
+    type: object
+    additionalProperties: false
+    properties:
+        id:
+            type: boolean
+            default: false
+        name:
+            type: boolean
+            default: true
+        ruleset_id:
+            type: boolean
+            default: false
+        description:
+            type: boolean
+            default: false
+        created_at:
+            type: boolean
+            default: false
+        updated_at:
+            type: boolean
+            default: false

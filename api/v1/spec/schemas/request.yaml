@@ -58,7 +58,7 @@ RequestPatch:
     additionalProperties: false
     properties:
         status:
-            $ref: "./search/filters/fields/request_status.yaml#/RequestStatusValue"
+            $ref: "./sub_schemas/request_status.yaml#/RequestStatus"
 
 RequestTask:
     title: RequestTask
@@ -84,89 +84,3 @@ RequestTask:
         hashed_id:
             type: integer
             format: int64
-
-RequestInclude:
-    title: RequestInclude
-    type: object
-    additionalProperties: false
-    properties:
-        id:
-            type: boolean
-            default: true
-        user_id:
-            type: boolean
-            default: true
-        beatmapset_id:
-            type: boolean
-            default: true
-        beatmapset_snapshot_id:
-            type: boolean
-            default: false
-        queue_id:
-            type: boolean
-            default: true
-        comment:
-            type: boolean
-            default: true
-        mv_checked:
-            type: boolean
-            default: true
-        created_at:
-            type: boolean
-            default: true
-        updated_at:
-            type: boolean
-            default: true
-        status:
-            type: boolean
-            default: true
-        beatmapset_snapshot:
-            description:
-                $ref: "../parameters/query/include/description.yaml#/NestedInclude"
-            oneOf:
-                - $ref: "./beatmapset_snapshot.yaml#/BeatmapsetSnapshotInclude"
-                - type: boolean
-                  default: false
-        user_profile:
-            description:
-                $ref: "../parameters/query/include/description.yaml#/NestedInclude"
-            oneOf:
-                - $ref: "./profile.yaml#/ProfileInclude"
-                - type: boolean
-                  default: false
-        queue:
-            description:
-                $ref: "../parameters/query/include/description.yaml#/NestedInclude"
-            oneOf:
-                - $ref: "./queue.yaml#/QueueInclude"
-                - type: boolean
-                  default: false
-
-RequestTaskInclude:
-    type: object
-    additionalProperties: false
-    properties:
-        user_id:
-            type: boolean
-            default: true
-        beatmapset_id:
-            type: boolean
-            default: true
-        queue_id:
-            type: boolean
-            default: true
-        comment:
-            type: boolean
-            default: true
-        mv_checked:
-            type: boolean
-            default: true
-        completed_at:
-            type: boolean
-            default: true
-        failed_at:
-            type: boolean
-            default: true
-        hashed_id:
-            type: boolean
-            default: true

@@ -20,22 +20,3 @@ BeatmapsetCreate:
             type: integer
     required:
         - id
-
-BeatmapsetInclude:
-    title: BeatmapsetInclude
-    type: object
-    additionalProperties: false
-    properties:
-        id:
-            type: boolean
-            default: true
-        user_id:
-            type: boolean
-            default: true
-        snapshots:
-            description:
-                $ref: "../parameters/query/include/description.yaml#/NestedInclude"
-            oneOf:
-                - $ref: "./beatmapset_snapshot.yaml#/BeatmapsetSnapshotInclude"
-                - type: boolean
-                  default: false

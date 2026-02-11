@@ -1,8 +1,0 @@
-SortingDescription: >
-    ### An ordered array of sorting rules that determines how the search results should be sorted
-    
-    Each item defines a **field** to sort by and the **order**
-    
-    
-    You can provide multiple sorting rules and they will be applied in sequence (i.e., if there are ties in
-    the results with the first sorting layer, the second layer will be applied to those tied results, and so on)

@@ -1,0 +1,47 @@
+BeatmapSnapshotSorting:
+    title: BeatmapSnapshotSorting
+    description:
+        $ref: "./description.yaml#/SortingDescription"
+    type: array
+    items:
+        type: object
+        additionalProperties: false
+        properties:
+            field:
+                $ref: "#/BeatmapSnapshotSortingField"
+            order:
+                $ref: "./sorting_order.yaml#/SortingOrder"
+        required:
+            - field
+
+BeatmapSnapshotSortingField:
+    description: >
+        ### Enum of supported field identifiers for sorting
+    type: string
+    enum:
+        - BeatmapSnapshot.beatmap_id
+        - BeatmapSnapshot.user_id
+        - BeatmapSnapshot.accuracy
+        - BeatmapSnapshot.ar
+        - BeatmapSnapshot.bpm
+        - BeatmapSnapshot.checksum
+        - BeatmapSnapshot.count_circles
+        - BeatmapSnapshot.count_sliders
+        - BeatmapSnapshot.count_spinners
+        - BeatmapSnapshot.cs
+        - BeatmapSnapshot.deleted_at
+        - BeatmapSnapshot.difficulty_rating
+        - BeatmapSnapshot.drain
+        - BeatmapSnapshot.hit_length
+        - BeatmapSnapshot.is_scoreable
+        - BeatmapSnapshot.last_updated
+        - BeatmapSnapshot.max_combo
+        - BeatmapSnapshot.mode
+        - BeatmapSnapshot.mode_int
+        - BeatmapSnapshot.passcount
+        - BeatmapSnapshot.playcount
+        - BeatmapSnapshot.ranked
+        - BeatmapSnapshot.status
+        - BeatmapSnapshot.total_length
+        - BeatmapSnapshot.url
+        - BeatmapSnapshot.version

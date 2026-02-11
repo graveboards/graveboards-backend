@@ -1,0 +1,31 @@
+VisibilityConditions:
+    type: object
+    additionalProperties: false
+    properties:
+        eq:
+            $ref: "#/VisibilityValue"
+        neq:
+            $ref: "#/VisibilityValue"
+        gt:
+            $ref: "#/VisibilityValue"
+        lt:
+            $ref: "#/VisibilityValue"
+        gte:
+            $ref: "#/VisibilityValue"
+        lte:
+            $ref: "#/VisibilityValue"
+        in:
+            $ref: "#/VisibilityContainer"
+        not_in:
+            $ref: "#/VisibilityContainer"
+        is_null:
+            type: boolean
+
+VisibilityValue:
+    $ref: "../../../sub_schemas/visibility.yaml#/Visibility"
+
+VisibilityContainer:
+    type: array
+    items:
+        $ref: "#/VisibilityValue"
+    minItems: 1

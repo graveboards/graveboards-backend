@@ -1,0 +1,21 @@
+SearchInclude:
+    title: SearchInclude
+    description:
+        $ref: "./description.yaml#/IncludeDescription"
+    type: object
+    additionalProperties:
+        oneOf:
+            - $ref: "./profile.yaml#/ProfileInclude"
+            - $ref: "./beatmap_snapshot.yaml#/BeatmapSnapshotInclude"
+            - $ref: "./beatmap_snapshot.yaml#/BeatmapTagInclude"
+            - $ref: "./beatmapset_snapshot.yaml#/BeatmapsetSnapshotInclude"
+            - $ref: "./beatmapset_snapshot.yaml#/BeatmapsetTagInclude"
+            - $ref: "./queue.yaml#/QueueInclude"
+            - type: boolean
+    example:
+        field1: true
+        field2: false
+        nested1: false
+        nested2:
+            nested_field1: true
+            nested_field2: false

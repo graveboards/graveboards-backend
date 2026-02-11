@@ -1,0 +1,90 @@
+RequestInclude:
+    title: RequestInclude
+    description:
+        $ref: "./description.yaml#/IncludeDescription"
+    type: object
+    additionalProperties: false
+    properties:
+        id:
+            type: boolean
+            default: true
+        user_id:
+            type: boolean
+            default: true
+        beatmapset_id:
+            type: boolean
+            default: true
+        beatmapset_snapshot_id:
+            type: boolean
+            default: false
+        queue_id:
+            type: boolean
+            default: true
+        comment:
+            type: boolean
+            default: true
+        mv_checked:
+            type: boolean
+            default: true
+        created_at:
+            type: boolean
+            default: true
+        updated_at:
+            type: boolean
+            default: true
+        status:
+            type: boolean
+            default: true
+        beatmapset_snapshot:
+            description:
+                $ref: "./description.yaml#/NestedIncludeDescription"
+            oneOf:
+                - $ref: "./beatmapset_snapshot.yaml#/BeatmapsetSnapshotInclude"
+                - type: boolean
+                  default: false
+        user_profile:
+            description:
+                $ref: "./description.yaml#/NestedIncludeDescription"
+            oneOf:
+                - $ref: "./profile.yaml#/ProfileInclude"
+                - type: boolean
+                  default: false
+        queue:
+            description:
+                $ref: "./description.yaml#/NestedIncludeDescription"
+            oneOf:
+                - $ref: "./queue.yaml#/QueueInclude"
+                - type: boolean
+                  default: false
+
+RequestTaskInclude:
+    title: RequestTaskInclude
+    description:
+        $ref: "./description.yaml#/IncludeDescription"
+    type: object
+    additionalProperties: false
+    properties:
+        user_id:
+            type: boolean
+            default: true
+        beatmapset_id:
+            type: boolean
+            default: true
+        queue_id:
+            type: boolean
+            default: true
+        comment:
+            type: boolean
+            default: true
+        mv_checked:
+            type: boolean
+            default: true
+        completed_at:
+            type: boolean
+            default: true
+        failed_at:
+            type: boolean
+            default: true
+        hashed_id:
+            type: boolean
+            default: true
