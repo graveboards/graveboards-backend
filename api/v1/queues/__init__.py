@@ -5,6 +5,7 @@ from api.utils import bleach_body, build_pydantic_include
 from app.database import PostgresqlDB
 from app.database.models import Queue, ModelClass
 from app.database.schemas import QueueSchema
+from app.exceptions import NotFound, Conflict
 from app.security import role_authorization
 from app.security.overrides import queue_owner_override
 from app.database.enums import RoleName
@@ -34,7 +35,7 @@ async def search(**kwargs):
         for queue in queues
     ]
 
-    return queues_data, 200
+    return queues_data, 200, {"Content-Type": "application/json"}
 
 
 @api_query(ModelClass.QUEUE)
@@ -48,7 +49,7 @@ async def get(queue_id: int, **kwargs):
     )
 
     if not queue:
-        return {"message": f"Queue with ID '{queue_id}' not found"}, 404
+        raise NotFound(f"Queue with ID '{queue_id}' not found")
 
     include = build_pydantic_include(
         obj=queue,
@@ -56,15 +57,18 @@ async def get(queue_id: int, **kwargs):
         request_include=kwargs.get("_include")
     )
 
-    return queue_data, 200
     queue_data = QueueSchema.model_validate(queue).model_dump(include=include)
 
+    return queue_data, 200, {"Content-Type": "application/json"}
 
 
 # @role_authorization(RoleName.ADMIN, override=matching_user_id_override, override_kwargs={"resource_user_id_lookup": "body.user_id"})  # Disable regular users from adding queues for now
 @role_authorization(one_of={RoleName.PRIVILEGED, RoleName.ADMIN})
 async def post(body: dict, **kwargs):
     db: PostgresqlDB = request.state.db
+
+    if await db.get(Queue, user_id=body["user_id"], name=body["name"]):
+        raise Conflict(f"The queue with name '{body["name"]}' for user with ID '{body["user_id"]}' already exists")
 
     body = bleach_body(
         body,
@@ -88,7 +92,7 @@ async def patch(queue_id: int, body: dict, **kwargs):
     queue = await db.get(Queue, id=queue_id)
 
     if not queue:
-        return {"message": f"Queue with ID '{queue_id}' not found"}, 404
+        raise NotFound(f"Queue with ID '{queue_id}' not found")
 
     delta = {}
 
@@ -98,4 +102,4 @@ async def patch(queue_id: int, body: dict, **kwargs):
 
     await db.update(Queue, queue_id, **delta)
 
-    return {"message": "Queue updated successfully!"}, 200
+    return {"message": "Queue updated successfully!"}, 200, {"Content-Type": "application/json"}

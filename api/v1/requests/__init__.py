@@ -1,8 +1,9 @@
 from connexion import request
-from pydantic import ValidationError
+from connexion.exceptions import Forbidden
 
 from api.decorators import api_query
 from api.utils import bleach_body, build_pydantic_include
+from app.exceptions import NotFound, Conflict, BadRequest
 from app.osu_api import OsuAPIClient
 from app.database import PostgresqlDB
 from app.database.models import Request, Queue, ModelClass
@@ -40,7 +41,7 @@ async def search(**kwargs):
         for request_ in requests
     ]
 
-    return requests_data, 200
+    return requests_data, 200, {"Content-Type": "application/json"}
 
 
 @api_query(ModelClass.REQUEST)
@@ -55,7 +56,7 @@ async def get(request_id: int, **kwargs):
     )
 
     if not request_:
-        return {"message": f"Request with ID '{request_id}' not found"}, 404
+        raise NotFound(f"Request with ID '{request_id}' not found")
 
     include = build_pydantic_include(
         obj=request,
@@ -63,35 +64,33 @@ async def get(request_id: int, **kwargs):
         request_include=kwargs.get("_include")
     )
 
-    return request_data, 200
     request_data = RequestSchema.model_validate(request_).model_dump(include=include)
 
+    return request_data, 200, {"Content-Type": "application/json"}
 
 
 async def post(body: dict, **kwargs):
     rc: RedisClient = request.state.rc
     db: PostgresqlDB = request.state.db
 
-    try:
-        RequestSchema.model_validate(body)
-    except ValidationError as e:
-        return {"message": "Invalid input data", "errors": str(e)}, 400
-
     beatmapset_id = body["beatmapset_id"]
     queue_id = body["queue_id"]
     queue = await db.get(Queue, id=queue_id)
 
-    if not queue.is_open:
-        return {"message": f"The queue '{queue.name}' is closed"}, 403
+    if not queue:
+        raise NotFound(f"The queue with ID '{queue_id}' not found")
 
-        return {"message": f"The request with beatmapset ID '{beatmapset_id}' already exists in queue '{queue.name}'"}, 409
+    if not queue.is_open:
+        raise Forbidden(f"The queue '{queue.name}' is closed")
+
     if await db.get(Request, beatmapset_id=beatmapset_id, queue_id=queue_id):
+        raise Conflict(f"The request with beatmapset ID '{beatmapset_id}' already exists in queue '{queue.name}'")
 
     oac = OsuAPIClient(rc)
     beatmapset_dict = await oac.get_beatmapset(beatmapset_id)
 
     if (status := beatmapset_dict["status"]) in {"ranked", "approved", "qualified", "loved"}:
-        return {"message": f"The beatmapset is already {status} on osu!"}, 400
+        raise BadRequest(f"The beatmapset is already {status} on osu!")
 
     task = QueueRequestHandlerTask(**body)
     task_hash_name = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(task.hashed_id)
@@ -103,12 +102,12 @@ async def post(body: dict, **kwargs):
         if existing_task.failed_at:
             await rc.delete(task_hash_name)
         else:
-            return {"message": f"The request with beatmapset ID '{beatmapset_id}' in queue '{queue.name}' is currently being processed"}, 409
+            raise Conflict(f"The request with beatmapset ID '{beatmapset_id}' in queue '{queue.name}' is currently being processed")
 
     await rc.hset(task_hash_name, mapping=task.serialize())
     await rc.publish(ChannelName.QUEUE_REQUEST_HANDLER_TASKS.value, task.hashed_id)
 
-    return {"message": "Request submitted and queued for processing!", "task_id": task.hashed_id}, 202
+    return {"message": "Request submitted and queued for processing!", "task_id": task.hashed_id}, 202, {"Content-Type": "application/json"}
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override, override_kwargs={"from_request": True})
@@ -123,7 +122,7 @@ async def patch(request_id: int, body: dict, **kwargs):
     request_ = await db.get(Request, id=request_id)
 
     if not request_:
-        return {"message": f"Request with ID '{request_id}' not found"}, 404
+        raise NotFound(f"Request with ID '{request_id}' not found")
 
     delta = {}
 
@@ -133,4 +132,4 @@ async def patch(request_id: int, body: dict, **kwargs):
 
     await db.update(Request, request_id, **delta)
 
-    return {"message": "Request updated successfully!"}, 200
+    return {"message": "Request updated successfully!"}, 200, {"Content-Type": "application/json"}

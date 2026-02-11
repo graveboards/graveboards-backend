@@ -6,6 +6,7 @@ from app.database import PostgresqlDB
 from app.database.models import User, ModelClass
 from app.database.schemas import UserSchema
 from app.database.enums import RoleName
+from app.exceptions import NotFound, Conflict
 from app.security import role_authorization
 from app.security.overrides import matching_user_id_override
 from app.spec import get_include_schema
@@ -35,7 +36,7 @@ async def search(**kwargs):
         for user in users
     ]
 
-    return users_data, 200
+    return users_data, 200, {"Content-Type": "application/json"}
 
 
 @api_query(ModelClass.USER)
@@ -50,7 +51,7 @@ async def get(user_id: int, **kwargs):
     )
 
     if not user:
-        return {"message": f"User with ID '{user_id}' not found"}, 404
+        raise NotFound(f"User with ID '{user_id}' not found")
 
     include = build_pydantic_include(
         obj=user,
@@ -67,10 +68,9 @@ async def get(user_id: int, **kwargs):
 async def post(body: dict, **kwargs):
     db: PostgresqlDB = request.state.db
 
-    user_id = body["user_id"]
     if await db.get(User, id=body["user_id"]):
+        raise Conflict(f"The user with ID '{body["user_id"]}' already exists")
 
-        return {"message": f"The user with ID '{user_id}' already exists"}, 409
     body = bleach_body(
         body,
         whitelisted_keys={"user_id"}
@@ -78,4 +78,4 @@ async def post(body: dict, **kwargs):
 
     await db.add(User, **body)
 
-    return {"message": "User added successfully!"}, 201
+    return {"message": "User added successfully!"}, 201, {"Content-Type": "application/json"}

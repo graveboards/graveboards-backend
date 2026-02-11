@@ -4,6 +4,7 @@ from connexion import request
 from app.database import PostgresqlDB
 from app.database.models import JWT, User, ScoreFetcherTask, OAuthToken
 from app.database.schemas import JWTSchema
+from app.exceptions import NotFound, BadRequest, OsuOAuthError
 from app.oauth import OAuth
 from app.osu_api import OsuAPIClient
 from app.redis import RedisClient, Namespace
@@ -16,28 +17,31 @@ async def search(token: str):
     jwt = await db.get(JWT, token=token)
 
     if not jwt:
-        return {"message": f"The JWT provided does not exist"}, 404
+        raise NotFound(f"The JWT provided does not exist")
 
     jwt_data = JWTSchema.model_validate(jwt).model_dump()
 
-    return jwt_data, 200
+    return jwt_data, 200, {"Content-Type": "application/json"}
 
 
 async def post(body: dict):
     rc: RedisClient = request.state.rc
     db: PostgresqlDB = request.state.db
 
-    state = body.get("state")
     code = body.get("code")
+    state = body.get("state")
 
-    if not state or not code:
-        return {"message": "Missing state or code"}, 400
+    if not code:
+        raise BadRequest("Missing code in body")
+
+    if not state:
+        raise BadRequest("Missing state in body")
 
     state_hash_name = Namespace.CSRF_STATE.hash_name(state)
     stored_state = await rc.getdel(state_hash_name)
 
     if not stored_state or stored_state != "valid":
-        return {"message": "Invalid or expired state"}, 400
+        raise BadRequest("Invalid or expired state")
 
     try:
         oauth = OAuth()
@@ -50,7 +54,7 @@ async def post(body: dict):
         refresh_token = token["refresh_token"]
         expires_at = token["expires_at"]
     except OAuthError as e:
-        return {"message": f"OAuth error: {e.description}"}, 500
+        raise OsuOAuthError(e)
 
     oac = OsuAPIClient(rc)
     user_data = await oac.get_own_data(access_token)
@@ -85,4 +89,4 @@ async def post(body: dict):
         exclude={"id"}
     )
 
-    return jwt_data, 201
+    return jwt_data, 201, {"Content-Type": "application/json"}

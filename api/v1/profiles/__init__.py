@@ -5,6 +5,7 @@ from api.utils import build_pydantic_include
 from app.database import PostgresqlDB
 from app.database.models import Profile, ModelClass
 from app.database.schemas import ProfileSchema
+from app.exceptions import NotFound
 from app.spec import get_include_schema
 
 
@@ -31,7 +32,7 @@ async def search(**kwargs):
         for profile in profiles
     ]
 
-    return profiles_data, 200
+    return profiles_data, 200, {"Content-Type": "application/json"}
 
 
 @api_query(ModelClass.PROFILE)
@@ -45,7 +46,7 @@ async def get(user_id: int, **kwargs):
     )
 
     if not profile:
-        return {"message": f"Profile with user_id '{user_id}' not found"}, 404
+        raise NotFound(f"Profile with user_id '{user_id}' not found")
 
     include = build_pydantic_include(
         obj=profile,

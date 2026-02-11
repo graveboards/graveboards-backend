@@ -5,6 +5,7 @@ from api.utils import bleach_body, build_pydantic_include
 from app.database import PostgresqlDB
 from app.database.models import Score, User, Beatmap, BeatmapSnapshot, Leaderboard, ModelClass
 from app.database.schemas import ScoreSchema
+from app.exceptions import NotFound, Conflict
 from app.spec import get_include_schema
 from app.utils import parse_iso8601
 from app.security import role_authorization
@@ -45,26 +46,26 @@ async def post(body: dict, **kwargs):
     beatmap_id = body["beatmap"]["id"]
     created_at = parse_iso8601(body["created_at"])
 
-        return {"message": f"There is no user with ID '{user_id}'"}, 404
     if not await db.get(User, id=user_id):
+        raise NotFound(f"There is no user with ID '{user_id}'")
 
-        return {"message": f"There is no beatmap with ID '{beatmap_id}'"}, 404
     if not await db.get(Beatmap, id=beatmap_id):
+        raise NotFound(f"There is no beatmap with ID '{beatmap_id}'")
 
     beatmap_snapshot = await db.get(BeatmapSnapshot, beatmap_id=beatmap_id, _reversed=True)
 
     if not beatmap_snapshot:
-        return {"message": f"There is no beatmap snapshot with beatmap ID '{beatmap_id}'"}, 404
+        raise NotFound(f"There is no beatmap snapshot with beatmap ID '{beatmap_id}'")
 
     leaderboard = await db.get(Leaderboard, beatmap_id=beatmap_id, beatmap_snapshot_id=beatmap_snapshot.id)
 
     if not leaderboard:
-        return {"message": f"There is no leaderboard with beatmap ID '{beatmap_id}' and snapshot ID '{beatmap_snapshot.id}'"}, 404
+        raise NotFound(f"There is no leaderboard with beatmap ID '{beatmap_id}' and snapshot ID '{beatmap_snapshot.id}'")
 
     body["leaderboard_id"] = leaderboard.id
 
-        return {"message": f"The score created by '{user_id}' at '{created_at}' on the beatmap with ID '{beatmap_id}' already exists"}, 409
     if await db.get(Score, user_id=user_id, beatmap_id=beatmap_id, created_at=created_at):
+        raise Conflict(f"The score created by '{user_id}' at '{created_at}' on the beatmap with ID '{beatmap_id}' already exists")
 
     body = bleach_body(
         body,
@@ -73,4 +74,4 @@ async def post(body: dict, **kwargs):
     )
     await db.add(Score, **body)
 
-    return {"message": "Score added successfully!"}, 201
+    return {"message": "Score added successfully!"}, 201, {"Content-Type": "application/json"}

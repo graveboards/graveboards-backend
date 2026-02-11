@@ -15,7 +15,9 @@ async def search():
     state_hash_name = Namespace.CSRF_STATE.hash_name(state)
     await rc.set(state_hash_name, "valid", ex=STATE_EXPIRES_IN)
 
-    return {
+    data = {
         "authorization_url": authorization_url,
         "state": state
-    }, 200
+    }
+
+    return data, 200, {"Content-Type": "application/json"}

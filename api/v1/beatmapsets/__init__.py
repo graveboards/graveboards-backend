@@ -3,6 +3,7 @@ from connexion import request
 
 from api.decorators import api_query
 from api.utils import build_pydantic_include
+from app.exceptions import NotFound
 from app.spec import get_include_schema
 from app.beatmap_manager import BeatmapManager
 from app.database import PostgresqlDB
@@ -37,7 +38,7 @@ async def search(**kwargs):
         for beatmapset in beatmapsets
     ]
 
-    return beatmapsets_data, 200
+    return beatmapsets_data, 200, {"Content-Type": "application/json"}
 
 
 @role_authorization(RoleName.ADMIN)
@@ -51,7 +52,7 @@ async def post(body: dict, **kwargs):
         bm = BeatmapManager(rc, db)
         changelog = await bm.archive(beatmapset_id)
     except httpx.HTTPStatusError as e:
-        return e.response.json(), e.response.status_code
+        return e.response.json(), e.response.status_code, {"Content-Type": "application/problem+json"}  # Inconsistent with other error formats, fix later
 
     if changelog["snapshotted_beatmapset"] or changelog["snapshotted_beatmaps"]:
         num_snapshotted_beatmaps = len(changelog["snapshotted_beatmaps"])
@@ -71,4 +72,4 @@ async def post(body: dict, **kwargs):
         changelog["message"] = "The beatmapset and its beatmaps are fully up-to-date"
         status_code = 200
 
-    return changelog, status_code
+    return changelog, status_code, {"Content-Type": "application/json"}

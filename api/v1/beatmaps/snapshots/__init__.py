@@ -2,6 +2,7 @@ from connexion import request
 
 from api.decorators import api_query, coerce_arguments
 from api.utils import build_pydantic_include
+from app.exceptions import NotFound
 from app.spec import get_include_schema
 from app.database import PostgresqlDB
 from app.database.models import BeatmapSnapshot, ModelClass
@@ -9,11 +10,9 @@ from app.database.schemas import BeatmapSnapshotSchema
 from . import osu
 
 
-
+@api_query(ModelClass.BEATMAP_SNAPSHOT)
 async def search(beatmap_id: int, **kwargs):
     db: PostgresqlDB = request.state.db
-
-    prime_query_kwargs(kwargs)
 
     beatmap_snapshots = await db.get_many(
         BeatmapSnapshot,
@@ -35,10 +34,12 @@ async def search(beatmap_id: int, **kwargs):
         for beatmap_snapshot in beatmap_snapshots
     ]
 
-    return beatmap_snapshots_data, 200
+    return beatmap_snapshots_data, 200, {"Content-Type": "application/json"}
 
 
-async def get(beatmap_id: int, snapshot_number: int):
+@api_query(ModelClass.BEATMAP_SNAPSHOT)
+@coerce_arguments(snapshot_number={"latest": -1})
+async def get(beatmap_id: int, snapshot_number: int = -1, **kwargs):
     db: PostgresqlDB = request.state.db
 
     if snapshot_number < 0:
@@ -60,7 +61,7 @@ async def get(beatmap_id: int, snapshot_number: int):
         )
 
     if not beatmap_snapshot:
-        return {"message": f"BeatmapSnapshot with beatmap_id '{beatmap_id}' and snapshot_number '{snapshot_number}' not found"}, 404
+        raise NotFound(f"BeatmapSnapshot with beatmap_id '{beatmap_id}' and snapshot_number '{snapshot_number}' not found")
 
     include = build_pydantic_include(
         obj=beatmap_snapshot,
@@ -68,6 +69,6 @@ async def get(beatmap_id: int, snapshot_number: int):
         request_include=kwargs.get("_include")
     )
 
-    return beatmap_snapshot_data, 200
     beatmap_snapshot_data = BeatmapSnapshotSchema.model_validate(beatmap_snapshot).model_dump(include=include)
 
+    return beatmap_snapshot_data, 200, {"Content-Type": "application/json"}

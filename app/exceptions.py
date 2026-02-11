@@ -1,5 +1,26 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, Sequence
+
+from authlib.integrations.base_client.errors import OAuthError
+from connexion.exceptions import BadRequestProblem, ClientProblem
+
+__all__ = [
+    "TypeValidationError",
+    "FieldValidationError",
+    "FieldNotSupportedError",
+    "FieldConditionValidationError",
+    "UnknownFieldCategoryError",
+    "AllValuesNullError",
+    "RestrictedUserError",
+    "RateLimitExceededError",
+    "RedisLockTimeoutError",
+    "IncludeValidationError",
+    "BadRequest",
+    "NotFound",
+    "Conflict",
+    "OsuOAuthError",
+    "bad_request_factory"
+]
 
 
 class TypeValidationError(TypeError):
@@ -141,3 +162,46 @@ class IncludeValidationError(ValueError):
         self.path = path
         self.message = message
         super().__init__(f"{'.'.join(path)}: {message}")
+
+
+class BadRequest(BadRequestProblem):
+    def __init__(self, detail: str, path: Sequence[str] = None):
+        super().__init__(detail=detail)
+
+        if path:
+            self.ext = {"path": ".".join(path)}
+
+
+class NotFound(ClientProblem):
+    def __init__(self, detail: str, path: Sequence[str] = None):
+        super().__init__(status=404, title="Not Found", detail=detail)
+
+        if path:
+            self.ext = {"path": ".".join(path)}
+
+
+class Conflict(ClientProblem):
+    def __init__(self, detail: str, path: Sequence[str] = None):
+        super().__init__(status=409, title="Conflict", detail=detail)
+
+        if path:
+            self.ext = {"path": ".".join(path)}
+
+
+class OsuOAuthError(BadRequest):
+    def __init__(self, e: OAuthError):
+        if not isinstance(e, OAuthError):
+            raise TypeError(f"Parameter e must be OAuthError, got {type(e)}")
+
+        super().__init__(e.description)
+        self.title = "osu! OAuth Error"
+        self.ext = {"oauth_error": e.error}
+
+        if e.error == "invalid_request":
+            self.ext["hint"] = "The authorization code may have already been used, expired, or the state parameter does not match"
+
+
+def bad_request_factory(e: Exception) -> BadRequest:
+    message = getattr(e, "message", str(e))
+    path = getattr(e, "path", None)
+    return BadRequest(message, path=path)

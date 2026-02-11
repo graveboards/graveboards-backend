@@ -32,4 +32,4 @@ async def search(**kwargs):
         for beatmap in beatmaps
     ]
 
-    return beatmaps_data, 200
+    return beatmaps_data, 200, {"Content-Type": "application/json"}

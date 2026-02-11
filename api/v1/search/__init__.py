@@ -13,6 +13,7 @@ from app.exceptions import (
     UnknownFieldCategoryError,
     AllValuesNullError,
     IncludeValidationError,
+    bad_request_factory
 )
 from app.search import compress_query, decompress_query, SearchSchema, SearchEngine, SCOPE_MODEL_MAPPING
 from app.spec import get_include_schema
@@ -53,11 +54,11 @@ async def search(**kwargs):
         async with db.session() as session:
             page = await se.search(session, **kwargs, debug=True)
     except EXCEPTIONS as e:
-        return {"message": str(e)}, 400
+        raise bad_request_factory(e)
 
     page_data = se.dump(page, include=include)
 
-    return page_data, 200
+    return page_data, 200, {"Content-Type": "application/json"}
 
 
 async def post(body: dict):
@@ -67,6 +68,6 @@ async def post(body: dict):
         search_query = SearchSchema.model_validate(body)
         q = compress_query(search_query.serialize())
     except EXCEPTIONS as e:
-        return {"message": str(e)}, 400
+        raise bad_request_factory(e)
 
-    return {"message": "Search resource created successfully", "q": q}, 201
+    return {"message": "Search resource created successfully", "q": q}, 201, {"Content-Type": "application/json"}

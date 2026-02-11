@@ -2,6 +2,7 @@ from connexion import request
 
 from api.decorators import api_query, coerce_arguments
 from api.utils import build_pydantic_include
+from app.exceptions import NotFound
 from app.spec import get_include_schema
 from app.database import PostgresqlDB
 from app.database.models import BeatmapsetSnapshot, ModelClass
@@ -33,7 +34,7 @@ async def search(beatmapset_id: int, **kwargs):
         for beatmapset_snapshot in beatmapset_snapshots
     ]
 
-    return beatmapset_snapshots_data, 200
+    return beatmapset_snapshots_data, 200, {"Content-Type": "application/json"}
 
 
 @api_query(ModelClass.BEATMAPSET_SNAPSHOT)
@@ -60,7 +61,7 @@ async def get(beatmapset_id: int, snapshot_number: int = -1, **kwargs):
         )
 
     if not beatmapset_snapshot:
-        return {"message": f"BeatmapsetSnapshot with beatmapset_id '{beatmapset_id}' and snapshot_number '{snapshot_number}' not found"}, 404
+        raise NotFound(f"BeatmapsetSnapshot with beatmapset_id '{beatmapset_id}' and snapshot_number '{snapshot_number}' not found")
 
     include = build_pydantic_include(
         obj=beatmapset_snapshot,
@@ -68,6 +69,6 @@ async def get(beatmapset_id: int, snapshot_number: int = -1, **kwargs):
         request_include=kwargs.get("_include")
     )
 
-    return beatmapset_snapshot_data, 200
     beatmapset_snapshot_data = BeatmapsetSnapshotSchema.model_validate(beatmapset_snapshot).model_dump(include=include)
 
+    return beatmapset_snapshot_data, 200, {"Content-Type": "application/json"}
