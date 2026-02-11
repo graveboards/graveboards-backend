@@ -114,7 +114,7 @@ class ProfileFetcher(Service):
         await self.fetch_profile(task_id)
         fetch_time = aware_utcnow()
         next_execution_time = fetch_time + timedelta(hours=PROFILE_FETCHER_INTERVAL_HOURS)
-        await self.db.update_profile_fetcher_task(task_id, last_fetch=fetch_time)
+        await self.db.update(ProfileFetcherTask, task_id, last_fetch=fetch_time)
 
         async with self.task_condition:
             heapq.heappush(self.task_heap, (next_execution_time, task_id))
@@ -166,7 +166,7 @@ class ProfileFetcher(Service):
                             delta[key] = value
 
                     if delta:
-                        await self.db.update_profile(profile.id, **delta)
+                        await self.db.update(Profile, profile.id, **delta)
                         logger.debug(f"Fetched and updated profile for user {user_id}: {set(delta.keys())}")
                     else:
                         logger.debug(f"Profile fetched for user {user_id} is up-to-date")

@@ -68,7 +68,6 @@ async def post(body: dict, **kwargs):
     user_id = body["user_id"]
     if await db.get(User, id=body["user_id"]):
 
-    if await db.get_user(id=user_id):
         return {"message": f"The user with ID '{user_id}' already exists"}, 409
 
     await db.add(User, **body)

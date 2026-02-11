@@ -47,8 +47,8 @@ async def setup():
             for user_id, roles in user_roles_mapping.items():
                 await db.add(User, id=user_id, roles=roles, session=session)
 
-                await db.update_score_fetcher_task(score_fetcher_task.id, enabled=True)
                 score_fetcher_task = await db.get(ScoreFetcherTask, user_id=user_id)
+                await db.update(ScoreFetcherTask, score_fetcher_task.id, enabled=True)
 
                 if user_id in ADMIN_USER_IDS:
                     expires_at = aware_utcnow() + timedelta(weeks=1)

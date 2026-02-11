@@ -65,8 +65,9 @@ async def post(body: dict, **kwargs):
         blacklisted_keys={"id", "created_at", "updated_at", "requests", "managers", "user_profile", "manager_profiles"}
     )
 
-    return {"message": "Queue added successfully!"}
     await db.add(Queue, **body)
+
+    return {"message": "Queue added successfully!"}, 201, {"Content-Type": "application/json"}
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
@@ -90,6 +91,6 @@ async def patch(queue_id: int, body: dict, **kwargs):
         if value != getattr(queue, key):
             delta[key] = value
 
-    await db.update_queue(queue_id, **delta)
+    await db.update(Queue, queue_id, **delta)
 
     return {"message": "Queue updated successfully!"}, 200

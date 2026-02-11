@@ -62,7 +62,7 @@ async def post(body: dict):
     score_fetcher_task = await db.get(ScoreFetcherTask, user_id=user_id)
 
     if not score_fetcher_task.enabled and score_fetcher_task.last_fetch is None:
-        await db.update_score_fetcher_task(score_fetcher_task.id, enabled=True)
+        await db.update(ScoreFetcherTask, score_fetcher_task.id, enabled=True)
 
     await db.add(
         OAuthToken,

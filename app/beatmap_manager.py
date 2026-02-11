@@ -137,7 +137,7 @@ class BeatmapManager:
                 delta[field] = new_value
 
         if delta:
-            await self.db.update_beatmapset_snapshot(beatmapset_snapshot.id, **delta)
+            await self.db.update(BeatmapsetSnapshot, beatmapset_snapshot.id, **delta)
 
             info = {**{"beatmapset_id": beatmapset_snapshot.beatmapset_id}, **delta}
             self._changelog["updated_beatmapset"] = {**{"beatmapset_id": beatmapset_snapshot.beatmapset_id}, **delta}
@@ -269,11 +269,11 @@ class BeatmapManager:
                     logger.debug(f"Added profile: {info}")
                 except IntegrityError:
                     logger.warning(f"IntegrityError - This shouldn't happen after obtaining the lock... {user_id=}")
-                    profile = await self.db.update_profile(profile.id, **profile_dict)
                     profile = await self.db.get(Profile, user_id=user_id)
+                    profile = await self.db.update(Profile, profile.id, **profile_dict)
 
-                await self.db.update_profile_fetcher_task(task.id, last_fetch=aware_utcnow())
                 task = (await self.db.get(ProfileFetcherTask, user_id=user_id))
+                await self.db.update(ProfileFetcherTask, task.id, last_fetch=aware_utcnow())
 
                 return profile
         except RedisLockTimeoutError:
@@ -352,7 +352,7 @@ class BeatmapManager:
                 old_osu_beatmap_tag = BeatmapTagSchema.model_validate(beatmap_tag).model_dump(exclude={"created_at", "updated_at"})
 
                 if osu_beatmap_tag != old_osu_beatmap_tag:
-                    await self.db.update_beatmap_tag(primary_key=tag_id, **osu_beatmap_tag)
+                    await self.db.update(BeatmapTag, primary_key=tag_id, **osu_beatmap_tag)
                     logger.debug(f"Updated beatmap tag: old={old_osu_beatmap_tag}, new={osu_beatmap_tag}")
 
     async def _download(self, beatmap_ids: list[int]):

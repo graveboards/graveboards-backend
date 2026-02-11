@@ -113,7 +113,7 @@ class ScoreFetcher(Service):
         await self.fetch_scores(task_id)
         fetch_time = aware_utcnow()
         next_execution_time = fetch_time + timedelta(hours=SCORE_FETCHER_INTERVAL_HOURS)
-        await self.db.update_score_fetcher_task(task_id, last_fetch=fetch_time)
+        await self.db.update(ScoreFetcherTask, task_id, last_fetch=fetch_time)
 
         async with self.task_condition:
             heapq.heappush(self.task_heap, (next_execution_time, task_id))

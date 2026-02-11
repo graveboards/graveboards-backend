@@ -1,16 +1,30 @@
+from typing import Any
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.models import *
+from app.database.models import BaseType, ModelClass
 from .decorators import session_manager
 
 
 class _U:
     @staticmethod
-    async def _update_instance(model_class: ModelClass, session: AsyncSession, primary_key: int, **kwargs) -> BaseType:
-        instance = await session.get(model_class.value, primary_key)
+    async def _update_instance(
+        model_class: ModelClass,
+        session: AsyncSession,
+        primary_key: int,
+        **kwargs
+    ) -> BaseType:
+        if not kwargs:
+            raise ValueError("At least one field must be provided to update an instance")
+
+        if not isinstance(primary_key, int):
+            raise TypeError(f"Primary key must be int, got {type(primary_key).__name__}")
+
+        model = model_class.value
+        instance = await session.get(model, primary_key)
 
         if instance is None:
-            raise ValueError(f"There is no {model_class.value.__name__} with the primary key '{primary_key}'")
+            raise ValueError(f"There is no {model.__name__} with the primary key '{primary_key}'")
 
         for key, value in kwargs.items():
             if hasattr(instance, key):
@@ -23,80 +37,78 @@ class _U:
 
         return instance
 
+    @staticmethod
+    async def _update_instances(
+        model_class: ModelClass,
+        session: AsyncSession,
+        *data: tuple[int, dict[str, Any]]
+    ) -> list[BaseType]:
+        if not data:
+            return []
+
+        for i, item in enumerate(data):
+            if not isinstance(item, tuple) or len(item) != 2:
+                raise TypeError(f"Update #{i} must be a tuple of (int, dict), got {type(item).__name__}")
+
+            pk, delta = item
+
+            if not isinstance(pk, int):
+                raise TypeError(f"Primary key in update #{i} must be int, got {type(pk).__name__}")
+
+            if not isinstance(delta, dict):
+                raise TypeError(f"Delta in update #{i} must be dict, got {type(delta).__name__}")
+
+        model = model_class.value
+        instances = []
+
+        for pk, delta in data:
+            instance = await session.get(model, pk)
+
+            if instance is None:
+                raise ValueError(f"There is no {model.__name__} with the primary key '{pk}'")
+
+            for key, value in delta.items():
+                setattr(instance, key, value)
+
+            instances.append(instance)
+
+        await session.commit()
+
+        for instance in instances:
+            await session.refresh(instance)
+
+        return instances
+
 
 class U(_U):
     @session_manager
-    async def update_user(self, primary_key: int, session: AsyncSession = None, **kwargs) -> User:
-        return await self._update_instance(ModelClass.USER, session, primary_key, **kwargs)
+    async def update(
+        self,
+        model: type[BaseType],
+        primary_key: int,
+        session: AsyncSession = None,
+        **kwargs
+    ) -> BaseType:
+        model_class = ModelClass(model)
+
+        return await self._update_instance(
+            model_class,
+            session,
+            primary_key,
+            **kwargs
+        )
 
     @session_manager
-    async def update_role(self, primary_key: int, session: AsyncSession = None, **kwargs) -> Role:
-        return await self._update_instance(ModelClass.ROLE, session, primary_key, **kwargs)
+    async def update_many(
+        self,
+        model: type[BaseType],
+        *data: tuple[int, dict[str, Any]],
+        session: AsyncSession = None
+    ) -> BaseType:
+        model_class = ModelClass(model)
 
-    @session_manager
-    async def update_profile(self, primary_key: int, session: AsyncSession = None, **kwargs) -> Profile:
-        return await self._update_instance(ModelClass.PROFILE, session, primary_key, **kwargs)
-
-    @session_manager
-    async def update_api_key(self, primary_key: int, session: AsyncSession = None, **kwargs) -> ApiKey:
-        return await self._update_instance(ModelClass.API_KEY, session, primary_key, **kwargs)
-
-    @session_manager
-    async def update_oauth_token(self, primary_key: int, session: AsyncSession = None, **kwargs) -> OAuthToken:
-        return await self._update_instance(ModelClass.OAUTH_TOKEN, session, primary_key, **kwargs)
-
-    @session_manager
-    async def update_jwt(self, primary_key: int, session: AsyncSession = None, **kwargs) -> JWT:
-        return await self._update_instance(ModelClass.JWT, session, primary_key, **kwargs)
-
-    @session_manager
-    async def update_score_fetcher_task(self, primary_key: int, session: AsyncSession = None, **kwargs) -> ScoreFetcherTask:
-        return await self._update_instance(ModelClass.SCORE_FETCHER_TASK, session, primary_key, **kwargs)
-
-    @session_manager
-    async def update_profile_fetcher_task(self, primary_key: int, session: AsyncSession = None, **kwargs) -> ProfileFetcherTask:
-        return await self._update_instance(ModelClass.PROFILE_FETCHER_TASK, session, primary_key, **kwargs)
-
-    @session_manager
-    async def update_beatmap(self, primary_key: int, session: AsyncSession = None, **kwargs) -> Beatmap:
-        return await self._update_instance(ModelClass.BEATMAP, session, primary_key, **kwargs)
-
-    @session_manager
-    async def update_beatmap_snapshot(self, primary_key: int, session: AsyncSession = None, **kwargs) -> BeatmapSnapshot:
-        return await self._update_instance(ModelClass.BEATMAP_SNAPSHOT, session, primary_key, **kwargs)
-
-    @session_manager
-    async def update_beatmapset(self, primary_key: int, session: AsyncSession = None, **kwargs) -> Beatmapset:
-        return await self._update_instance(ModelClass.BEATMAPSET, session, primary_key, **kwargs)
-
-    @session_manager
-    async def update_beatmapset_snapshot(self, primary_key: int, session: AsyncSession = None, **kwargs) -> BeatmapsetSnapshot:
-        return await self._update_instance(ModelClass.BEATMAPSET_SNAPSHOT, session, primary_key, **kwargs)
-
-    @session_manager
-    async def update_beatmapset_listing(self, primary_key: int, session: AsyncSession = None, **kwargs) -> BeatmapsetListing:
-        return await self._update_instance(ModelClass.BEATMAPSET_LISTING, session, primary_key, **kwargs)
-
-    @session_manager
-    async def update_leaderboard(self, primary_key: int, session: AsyncSession = None, **kwargs) -> Leaderboard:
-        return await self._update_instance(ModelClass.LEADERBOARD, session, primary_key, **kwargs)
-
-    @session_manager
-    async def update_score(self, primary_key: int, session: AsyncSession = None, **kwargs) -> Score:
-        return await self._update_instance(ModelClass.SCORE, session, primary_key, **kwargs)
-
-    @session_manager
-    async def update_queue(self, primary_key: int, session: AsyncSession = None, **kwargs) -> Queue:
-        return await self._update_instance(ModelClass.QUEUE, session, primary_key, **kwargs)
-
-    @session_manager
-    async def update_request(self, primary_key: int, session: AsyncSession = None, **kwargs) -> Request:
-        return await self._update_instance(ModelClass.REQUEST, session, primary_key, **kwargs)
-
-    @session_manager
-    async def update_beatmapset_tag(self, primary_key: int, session: AsyncSession = None, **kwargs) -> BeatmapsetTag:
-        return await self._update_instance(ModelClass.BEATMAPSET_TAG, session, primary_key, **kwargs)
-
-    @session_manager
-    async def update_beatmap_tag(self, primary_key: int, session: AsyncSession = None, **kwargs) -> BeatmapTag:
-        return await self._update_instance(ModelClass.BEATMAP_TAG, session, primary_key, **kwargs)
+        return await self._update_instance(
+            model_class,
+            session,
+            *data
+        )

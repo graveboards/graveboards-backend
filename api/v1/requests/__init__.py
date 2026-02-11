@@ -124,6 +124,6 @@ async def patch(request_id: int, body: dict, **kwargs):
         if value != getattr(request_, key):
             delta[key] = value
 
-    await db.update_request(request_id, **delta)
+    await db.update(Request, request_id, **delta)
 
     return {"message": "Request updated successfully!"}, 200
