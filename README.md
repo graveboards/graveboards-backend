@@ -4,7 +4,9 @@
 
 1. Close the repository: `git clone https://github.com/graveboards/graveboards-backend.git && cd graveboards`
 2. Ensure docker is installed and running on your system
-3. Launch `run.bat`
+3. Launch the run script
+   - `run.bat` (Windows)
+   - `run.sh` (Linux)
 4. Follow the instructions to automatically fill out `.env.docker`
 5. The backend should now be running on http://localhost:8000
 
@@ -18,7 +20,7 @@
 
 1. Clone the repository:
     ```bash
-    git clone https://github.com/pianosuki/graveboards.git
+    git clone https://github.com/graveboards/graveboards-backend.git
     cd graveboards
     ```
 
@@ -35,6 +37,7 @@
 
 4. Create the `.env` file:
     ```
+    ENV=dev
     DEBUG=true
     DISABLE_SECURITY=false
     BASE_URL=<frontend-base-url>  # http://localhost:3000

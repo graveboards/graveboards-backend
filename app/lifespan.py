@@ -4,12 +4,12 @@ from contextlib import asynccontextmanager
 
 from connexion.middleware import ConnexionMiddleware
 
-from app.redis import RedisClient
-from app.database import PostgresqlDB
-from app.config import DISABLE_SECURITY
-from app.logging import setup_logging
-from daemon.service_daemon import ServiceDaemon
-from daemon.services import ServiceClass
+from .redis import RedisClient
+from .database import PostgresqlDB
+from .config import DISABLE_SECURITY
+from .logging import setup_logging
+from .daemon import ServiceDaemon
+from .daemon.services import ServiceClass
 
 
 @asynccontextmanager
@@ -29,16 +29,16 @@ async def lifespan(app: ConnexionMiddleware):
     daemon_app.register_service(ServiceClass.QUEUE_REQUEST_HANDLER)
     # daemon_app.register_service(ServiceClass.SCORE_FETCHER)  # Disabled until database is set up to handle lazer scores, need further clarity overall
 
-    task = asyncio.create_task(daemon_app.run(), name="Daemon Task")
+    daemon_task = asyncio.create_task(daemon_app.run(), name="Daemon Task")
 
     try:
         yield {"rc": rc, "db": db}
     finally:
         await daemon_app.shutdown()
-        task.cancel()
+        daemon_task.cancel()
 
         try:
-            await task
+            await daemon_task
         except asyncio.CancelledError:
             pass
 

@@ -16,4 +16,11 @@ RUN sed -i 's/\r$//' /app/entrypoint.sh /app/wait-for-it.sh && \
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 
-CMD ["uvicorn", "main:connexion_app", "--host", "0.0.0.0", "--port", "8000", "--log-config", "logging.uvicorn.yaml"]
+CMD [ \
+    "uvicorn", \
+    "app.connexion_app:create_connexion_app", \
+    "--factory", \
+    "--host", "0.0.0.0", \
+    "--port", "8000", \
+    "--log-config", "logging.uvicorn.yaml" \
+]

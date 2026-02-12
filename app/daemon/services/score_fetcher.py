@@ -5,12 +5,10 @@ from datetime import datetime, timedelta, timezone
 
 from httpx import ConnectTimeout
 
-from api import v1 as api
 from app.osu_api import OsuAPIClient, ScoreType
 from app.database.models import ScoreFetcherTask, Leaderboard
 from app.redis import ChannelName
 from app.utils import aware_utcnow
-from app.config import PRIMARY_ADMIN_USER_ID
 from .decorators import auto_retry
 from .enums import RuntimeTaskName
 from .service import Service
@@ -138,10 +136,10 @@ class ScoreFetcher(Service):
             if not await self.score_is_submittable(score):
                 continue
 
-            _, status_code = await api.scores.post(score, user=PRIMARY_ADMIN_USER_ID)
-
-            if status_code == 201:
-                logger.debug(f"Added score {score["id"]} for user {user_id}")
+            # _, status_code = await api.scores.post(score, user=PRIMARY_ADMIN_USER_ID)  # TODO: Work on scores
+            #
+            # if status_code == 201:
+            #     logger.debug(f"Added score {score["id"]} for user {user_id}")
 
     async def score_is_submittable(self, score: dict) -> bool:
         return bool(await self.db.get(Leaderboard, beatmap_id=score["beatmap"]["id"]))

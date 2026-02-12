@@ -3,14 +3,17 @@ import os
 from dotenv import load_dotenv
 
 from .utils import parse_user_ids
+from .enums import Env
 
 load_dotenv()
 
+ENV = Env(os.getenv("ENV", "prod").lower())
 DEBUG = os.getenv("DEBUG", "false").lower() in ("true", "1", "yes")
 DISABLE_SECURITY = os.getenv("DISABLE_SECURITY", "false").lower() in ("true", "1", "yes")
 
 API_BASE_PATH = "api/v1/"
 SPEC_DIR = os.path.abspath("api/v1/spec")
+CACHE_FILE = os.path.join(SPEC_DIR, ".spec_cache.pkl")
 OPENAPI_ENTRYPOINT = os.path.join(SPEC_DIR, "openapi.yaml")
 DEFAULT_MODULE_NAME = "api.v1"
 INSTANCE_DIR = os.path.abspath("instance")

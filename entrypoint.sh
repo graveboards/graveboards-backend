@@ -13,8 +13,8 @@ else
   REDIS_HOST="graveboards-redis-prod"
 fi
 
-./wait-for-it.sh $DB_HOST:5432 --timeout=30 --strict -- echo "PostgreSQL is up."
-./wait-for-it.sh $REDIS_HOST:6379 --timeout=30 --strict -- echo "Redis is up."
+./wait-for-it.sh $DB_HOST:5432 --timeout=30 --strict
+./wait-for-it.sh $REDIS_HOST:6379 --timeout=30 --strict
 
 python setup.py
 exec "$@"
