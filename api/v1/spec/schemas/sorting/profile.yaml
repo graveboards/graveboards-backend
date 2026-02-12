@@ -19,6 +19,7 @@ ProfileSortingField:
         ### Enum of supported field identifiers for sorting
     type: string
     enum:
+        - Profile.id
         - Profile.avatar_url
         - Profile.username
         - Profile.country_code

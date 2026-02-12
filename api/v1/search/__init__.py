@@ -12,7 +12,7 @@ from app.exceptions import (
     FieldConditionValidationError,
     UnknownFieldCategoryError,
     AllValuesNullError,
-    IncludeValidationError,
+    DeepObjectValidationError,
     bad_request_factory
 )
 from app.search import compress_query, decompress_query, SearchSchema, SearchEngine, SCOPE_MODEL_MAPPING
@@ -26,7 +26,7 @@ EXCEPTIONS = (
     FieldConditionValidationError,
     UnknownFieldCategoryError,
     AllValuesNullError,
-    IncludeValidationError
+    DeepObjectValidationError
 )
 
 

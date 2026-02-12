@@ -1,5 +1,5 @@
-RequestSorting:
-    title: RequestSorting
+ScoreSorting:
+    title: ScoreSorting
     description:
         $ref: "./description.yaml#/SortingDescription"
     type: array
@@ -8,23 +8,15 @@ RequestSorting:
         additionalProperties: false
         properties:
             field:
-                $ref: "#/RequestSortingField"
+                $ref: "#/ScoreSortingField"
             order:
                 $ref: "./sorting_order.yaml#/SortingOrder"
         required:
             - field
 
-RequestSortingField:
+ScoreSortingField:
     description: >
         ### Enum of supported field identifiers for sorting
     type: string
     enum:
-        - Request.id
-        - Request.user_id
-        - Request.beatmapset_id
-        - Request.queue_id
-        - Request.comment
-        - Request.mv_checked
-        - Request.created_at
-        - Request.updated_at
-        - Request.status
+        - Score.id

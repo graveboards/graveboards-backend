@@ -18,6 +18,7 @@ def prime_query_kwargs(
     params = {
         "include"
     } if not many else {
+        "sorting",
         "include",
         "limit",
         "offset",

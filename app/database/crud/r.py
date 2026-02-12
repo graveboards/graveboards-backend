@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.models import BaseType, ModelClass, Base
 from app.utils import clamp
 from .decorators import session_manager
-from .types import Include
+from .types import Include, Sorting
 from .utils import is_lazy
 
 QUERY_MIN_LIMIT = 1
@@ -28,12 +28,12 @@ class _R:
         _select: Union[str, Iterable[str]] = None,
         _join: Union[Any, Iterable[Any]] = None,
         _where: Union[Any, Iterable[Any]] = None,
-        _order_by: Union[Any, Iterable[Any]] = None,
+        _sorting: Union[Any, Iterable[Any]] = None,
         _include: Include = None,
         _offset: int = 0,
         **kwargs
     ) -> BaseType:
-        select_stmt = _R._construct_stmt(model_class, _select, _join, _where, _order_by, _include, **kwargs)
+        select_stmt = _R._construct_stmt(model_class, _select, _join, _where, _sorting, _include, **kwargs)
         select_stmt = select_stmt.offset(_offset)
 
         return await session.scalar(select_stmt)
@@ -45,14 +45,14 @@ class _R:
         _select: Union[str, Iterable[str]] = None,
         _join: Union[Any, Iterable[Any]] = None,
         _where: Union[Any, Iterable[Any]] = None,
-        _order_by: Union[Any, Iterable[Any]] = None,
+        _sorting: Union[Any, Iterable[Any]] = None,
         _include: Include = None,
         _limit: int = QUERY_DEFAULT_LIMIT,
         _offset: int = 0,
         _reversed: bool = False,
         **kwargs
     ) -> list[BaseType]:
-        select_stmt = _R._construct_stmt(model_class, _select, _join, _where, _order_by, _include, **kwargs)
+        select_stmt = _R._construct_stmt(model_class, _select, _join, _where, _sorting, _include, **kwargs)
         select_stmt = select_stmt.limit(clamp(_limit, QUERY_MIN_LIMIT, QUERY_MAX_LIMIT)).offset(_offset)
 
         results = list((await session.scalars(select_stmt)).all())
@@ -68,7 +68,7 @@ class _R:
         _select: Union[str, Iterable[str]] = None,
         _join: Union[Any, Iterable[Any]] = None,
         _where: Union[Any, Iterable[Any]] = None,
-        _order_by: Union[Any, Iterable[Any]] = None,
+        _sorting: Union[Any, Iterable[Any]] = None,
         _include: Include = None,
         **kwargs
     ) -> Select:
@@ -83,8 +83,8 @@ class _R:
         if _where:
             select_stmt = _R._apply_where(select_stmt, _where)
 
-        if _order_by is not None:
-            select_stmt = _R._apply_order_by(select_stmt, model_class, _order_by)
+        if _sorting is not None:
+            select_stmt = _R._apply_sorting(select_stmt, model_class, _sorting)
 
         if _include and not _select:
             select_stmt, included_paths = _R._apply_include(select_stmt, model_class, _include)
@@ -162,33 +162,46 @@ class _R:
         return select_stmt.where(*where)
 
     @staticmethod
-    def _apply_order_by(
+    def _apply_sorting(
         select_stmt: Select,
         model_class: ModelClass,
-        order_by: Union[Any, Iterable[Any]]
+        sorting: Sorting
     ) -> Select:
-        if not isinstance(order_by, (list, tuple, set)):
-            order_by = [order_by]
+        if not isinstance(sorting, (list, tuple)):
+            raise TypeError("_sorting must be a list of sorting objects")
 
+        model = model_class.value
+        model_name = model.__name__
+        valid_fields = model_class.column_names | model_class.hybrid_property_names
         clauses = []
 
-        for item in order_by:
-            if isinstance(item, ColumnElement):
-                clauses.append(item)
-            elif isinstance(item, str):
-                is_desc = item.startswith("-")
-                field = item[1:] if is_desc else item
+        for i, item in enumerate(sorting):
+            if not isinstance(item, dict):
+                raise TypeError(f"Invalid sorting item at index {i}: {item!r}")
 
-                if field not in model_class.all_names:
-                    raise ValueError(f"Attribute '{field}' is not a valid column, relationship, nor hybrid property of {model_class.value}")
+            field = item.get("field")
+            order = item.get("order", "asc")
 
-                if field in model_class.relationship_names:
-                    raise ValueError(f"Invalid attribute '{field}': cannot order by a relationship")
+            if not field:
+                raise ValueError(f"Sorting item #{i} missing required 'field'")
 
-                col = model_class.mapper.attrs[field]
-                clauses.append(col.desc() if is_desc else col.asc())
-            else:
-                raise TypeError(f"Invalid _order_by value: {item!r}")
+            try:
+                prefix, attr_name = field.split(".", 1)
+            except ValueError:
+                raise ValueError(f"Invalid field format '{field}' in item #{i}. Expected 'Model.field'")
+
+            if prefix != model_name:
+                raise ValueError(f"Sorting field '{field}' in item #{i} does not match model '{model_name}'")
+
+            if attr_name not in valid_fields:
+                raise ValueError(f"Attribute '{attr_name}' in item #{i} is not a valid column or hybrid property of {model_name}")
+
+            attr = getattr(model, attr_name)
+
+            if order not in ("asc", "desc"):
+                raise ValueError(f"Invalid sorting order '{order}' in item #{i}. Must be 'asc' or 'desc'")
+
+            clauses.append(attr.desc() if order == "desc" else attr.asc())
 
         return select_stmt.order_by(*clauses)
 
@@ -201,11 +214,11 @@ class _R:
         included_paths: set[str] = set()
 
         def parse_node(
-                attr: QueryableAttribute,
-                rel_info: RelationshipProperty,
-                target_model_class: ModelClass,
-                value: Union[bool, Include],
-                path: str
+            attr: QueryableAttribute,
+            rel_info: RelationshipProperty,
+            target_model_class: ModelClass,
+            value: Union[bool, Include],
+            path: str
         ) -> LoaderOption:
             included_paths.add(path)
 
@@ -321,7 +334,7 @@ class R(_R):
         _select: Union[str, Iterable[str]] = None,
         _join: Union[Any, Iterable[Any]] = None,
         _where: Union[Any, Iterable[Any]] = None,
-        _order_by: Union[Any, Iterable[Any]] = None,
+        _sorting: Union[Any, Iterable[Any]] = None,
         _include: Include = None,
         _offset: int = 0,
         **kwargs
@@ -334,7 +347,7 @@ class R(_R):
             _select=_select,
             _join=_join,
             _where=_where,
-            _order_by=_order_by,
+            _sorting=_sorting,
             _include=_include,
             _offset=_offset,
             **kwargs
@@ -348,7 +361,7 @@ class R(_R):
         _select: Union[str, Iterable[str]] = None,
         _join: Union[Any, Iterable[Any]] = None,
         _where: Union[Any, Iterable[Any]] = None,
-        _order_by: Union[Any, Iterable[Any]] = None,
+        _sorting: Union[Any, Iterable[Any]] = None,
         _include: Include = None,
         _limit: int = QUERY_DEFAULT_LIMIT,
         _offset: int = 0,
@@ -363,7 +376,7 @@ class R(_R):
             _select=_select,
             _join=_join,
             _where=_where,
-            _order_by=_order_by,
+            _sorting=_sorting,
             _include=_include,
             _limit=_limit,
             _offset=_offset,

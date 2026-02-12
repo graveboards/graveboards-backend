@@ -76,7 +76,7 @@ async def post(body: dict, **kwargs):
     if not await db.get(Beatmap, id=beatmap_id):
         raise NotFound(f"There is no beatmap with ID '{beatmap_id}'")
 
-    beatmap_snapshot = await db.get(BeatmapSnapshot, beatmap_id=beatmap_id, _reversed=True)
+    beatmap_snapshot = await db.get(BeatmapSnapshot, beatmap_id=beatmap_id, _sorting=[{"field": "BeatmapSnapshot.id", "order": "desc"}])
 
     if not beatmap_snapshot:
         raise NotFound(f"There is no beatmap snapshot with beatmap ID '{beatmap_id}'")

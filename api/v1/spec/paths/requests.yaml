@@ -8,6 +8,7 @@ Requests:
             - ApiKeyAuth: []
         parameters:
             - $ref: "../parameters/query/queue.yaml#/QueueId"
+            - $ref: "../parameters/query/sorting/request.yaml#/RequestSorting"
             - $ref: "../parameters/query/include/request.yaml#/RequestInclude"
             - $ref: "../parameters/query/limit.yaml#/Limit"
             - $ref: "../parameters/query/offset.yaml#/Offset"

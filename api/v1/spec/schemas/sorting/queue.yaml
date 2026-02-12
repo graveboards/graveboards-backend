@@ -19,6 +19,7 @@ QueueSortingField:
         ### Enum of supported field identifiers for sorting
     type: string
     enum:
+        - Queue.id
         - Queue.user_id
         - Queue.name
         - Queue.description

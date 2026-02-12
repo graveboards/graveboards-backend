@@ -4,6 +4,7 @@ Profiles:
         tags:
             - Profiles
         parameters:
+            - $ref: "../parameters/query/sorting/profile.yaml#/ProfileSorting"
             - $ref: "../parameters/query/include/profile.yaml#/ProfileInclude"
             - $ref: "../parameters/query/limit.yaml#/Limit"
             - $ref: "../parameters/query/offset.yaml#/Offset"

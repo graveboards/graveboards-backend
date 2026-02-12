@@ -5,6 +5,7 @@ Beatmapsets:
             - Beatmapsets
         parameters:
             - $ref: "../parameters/query/user.yaml#/UserId"
+            - $ref: "../parameters/query/sorting/beatmapset.yaml#/BeatmapsetSorting"
             - $ref: "../parameters/query/include/beatmapset.yaml#/BeatmapsetInclude"
             - $ref: "../parameters/query/limit.yaml#/Limit"
             - $ref: "../parameters/query/offset.yaml#/Offset"
@@ -59,6 +60,7 @@ BeatmapsetById-Snapshots:
             - Beatmapsets
         parameters:
             - $ref: "../parameters/path/beatmapset.yaml#/BeatmapsetId"
+            - $ref: "../parameters/query/sorting/beatmapset_snapshot.yaml#/BeatmapsetSnapshotSorting"
             - $ref: "../parameters/query/include/beatmapset_snapshot.yaml#/BeatmapsetSnapshotInclude"
             - $ref: "../parameters/query/limit.yaml#/Limit"
             - $ref: "../parameters/query/offset.yaml#/Offset"
@@ -106,6 +108,7 @@ BeatmapsetListings:
         tags:
             - Beatmapsets
         parameters:
+            - $ref: "../parameters/query/sorting/beatmapset_snapshot.yaml#/BeatmapsetSnapshotSorting"
             - $ref: "../parameters/query/include/beatmapset_snapshot.yaml#/BeatmapsetSnapshotInclude"
             - $ref: "../parameters/query/limit.yaml#/Limit"
             - $ref: "../parameters/query/offset.yaml#/Offset"

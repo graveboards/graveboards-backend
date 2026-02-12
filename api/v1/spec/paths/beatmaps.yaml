@@ -4,6 +4,7 @@ Beatmaps:
         tags:
             - Beatmaps
         parameters:
+            - $ref: "../parameters/query/sorting/beatmap.yaml#/BeatmapSorting"
             - $ref: "../parameters/query/include/beatmap.yaml#/BeatmapInclude"
             - $ref: "../parameters/query/limit.yaml#/Limit"
             - $ref: "../parameters/query/offset.yaml#/Offset"
@@ -37,6 +38,7 @@ BeatmapById-Snapshots:
             - Beatmaps
         parameters:
             - $ref: "../parameters/path/beatmap.yaml#/BeatmapId"
+            - $ref: "../parameters/query/sorting/beatmap_snapshot.yaml#/BeatmapSnapshotSorting"
             - $ref: "../parameters/query/include/beatmap_snapshot.yaml#/BeatmapSnapshotInclude"
             - $ref: "../parameters/query/limit.yaml#/Limit"
             - $ref: "../parameters/query/offset.yaml#/Offset"
@@ -157,6 +159,7 @@ BeatmapById-SnapshotByNumber-Scores:
         parameters:
             - $ref: "../parameters/path/beatmap.yaml#/BeatmapId"
             - $ref: "../parameters/path/beatmap.yaml#/BeatmapSnapshotNumber"
+            - $ref: "../parameters/query/sorting/score.yaml#/ScoreSorting"
             - $ref: "../parameters/query/include/score.yaml#/ScoreInclude"
             - $ref: "../parameters/query/limit.yaml#/Limit"
             - $ref: "../parameters/query/offset.yaml#/Offset"
@@ -175,6 +178,7 @@ BeatmapListings:
         tags:
             - Beatmaps
         parameters:
+            - $ref: "../parameters/query/sorting/beatmap_snapshot.yaml#/BeatmapSnapshotSorting"
             - $ref: "../parameters/query/include/beatmap_snapshot.yaml#/BeatmapSnapshotInclude"
             - $ref: "../parameters/query/limit.yaml#/Limit"
             - $ref: "../parameters/query/offset.yaml#/Offset"

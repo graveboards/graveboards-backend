@@ -39,7 +39,7 @@ async def migrate():
                     if e.response.status_code == 404:
                         continue
             else:
-                beatmapset_snapshot = await db.get(BeatmapsetSnapshot, id=beatmapset_id, _reversed=True)
+                beatmapset_snapshot = await db.get(BeatmapsetSnapshot, id=beatmapset_id, _sorting=[{"field": "BeatmapsetSnapshot.id", "order": "desc"}])
 
                 if beatmapset_snapshot is None:
                     raise ValueError(f"BeatmapsetSnapshot for beatmapset {beatmapset_id} not found")

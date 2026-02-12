@@ -1,3 +1,5 @@
+import json
+
 from connexion.uri_parsing import OpenAPIURIParser
 from connexion.utils import coerce_type, boolean, TypeValidationError
 
@@ -32,10 +34,13 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
                 values = [values]
 
             if param_schema and param_schema["type"] == "array":
-                # resolve variable re-assignment, handle explode
-                values = self._resolve_param_duplicates(values, param_defn, _in)
-                # handle array styles
-                resolved_param[k] = self._split(values, param_defn, _in)
+                if k == "sorting":
+                    resolved_param[k] = values
+                else:
+                    # resolve variable re-assignment, handle explode
+                    values = self._resolve_param_duplicates(values, param_defn, _in)
+                    # handle array styles
+                    resolved_param[k] = self._split(values, param_defn, _in)
             else:
                 resolved_param[k] = values[-1]
 
@@ -43,6 +48,11 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
             if k == "include":
                 try:
                     resolved_param[k] = self.coerce_include(param_defn, resolved_param[k], "parameter", k)
+                except TypeValidationError:
+                    pass
+            elif k == "sorting":
+                try:
+                    resolved_param[k] = self.coerce_sorting(param_defn, resolved_param[k], "parameter", k)
                 except TypeValidationError:
                     pass
             else:
@@ -114,3 +124,15 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
                 return value
 
         return cast(value, param_schema)
+
+    @staticmethod
+    def coerce_sorting(param, value, parameter_type, parameter_name=None):
+        coerced = []
+
+        for item in value:
+            try:
+                coerced.append(json.loads(item))
+            except json.JSONDecodeError:
+                raise
+
+        return coerced

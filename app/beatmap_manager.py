@@ -120,7 +120,7 @@ class BeatmapManager:
         beatmapset_snapshot = await self.db.get(
             BeatmapsetSnapshot,
             checksum=checksum,
-            _reversed=True
+            _sorting=[{"field": "BeatmapsetSnapshot.id", "order": "desc"}]
         )
         old = BeatmapsetOsuApiSchema.model_validate(beatmapset_snapshot, from_attributes=True).model_dump()
         new = BeatmapsetOsuApiSchema.model_validate(beatmapset_dict).model_dump()
@@ -351,7 +351,7 @@ class BeatmapManager:
                 url = os.path.join(BEATMAP_DOWNLOAD_BASEURL, str(beatmap_id))
                 output_directory = os.path.join(BEATMAPS_PATH, str(beatmap_id))
                 os.makedirs(output_directory, exist_ok=True)
-                beatmap_snapshot = (await self.db.get(BeatmapSnapshot, beatmap_id=beatmap_id, _reversed=True))
+                beatmap_snapshot = (await self.db.get(BeatmapSnapshot, beatmap_id=beatmap_id, _sorting=[{"field": "BeatmapSnapshot.id", "order": "desc"}]))
                 output_path = os.path.join(output_directory, f"{beatmap_snapshot.snapshot_number}.osu")
                 exists = os.path.exists(output_path)
 

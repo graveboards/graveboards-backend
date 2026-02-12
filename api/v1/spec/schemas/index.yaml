@@ -30,6 +30,37 @@ Queue:
 Request:
     $ref: "./request.yaml#/Request"
 
+# Sortings
+UserSorting:
+    $ref: "./sorting/user.yaml#/UserSorting"
+
+ProfileSorting:
+    $ref: "./sorting/profile.yaml#/ProfileSorting"
+
+BeatmapSorting:
+    $ref: "./sorting/beatmap.yaml#/BeatmapSorting"
+
+BeatmapSnapshotSorting:
+    $ref: "./sorting/beatmap_snapshot.yaml#/BeatmapSnapshotSorting"
+
+BeatmapsetSorting:
+    $ref: "./sorting/beatmapset.yaml#/BeatmapsetSorting"
+
+BeatmapsetSnapshotSorting:
+    $ref: "./sorting/beatmapset_snapshot.yaml#/BeatmapsetSnapshotSorting"
+
+ScoreSorting:
+    $ref: "./sorting/score.yaml#/ScoreSorting"
+
+QueueSorting:
+    $ref: "./sorting/queue.yaml#/QueueSorting"
+
+RequestSorting:
+    $ref: "./sorting/request.yaml#/RequestSorting"
+
+SearchSorting:
+    $ref: "./sorting/search.yaml#/SearchSorting"
+
 # Includes
 UserInclude:
     $ref: "./include/user.yaml#/UserInclude"

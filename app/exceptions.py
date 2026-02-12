@@ -14,7 +14,8 @@ __all__ = [
     "RestrictedUserError",
     "RateLimitExceededError",
     "RedisLockTimeoutError",
-    "IncludeValidationError",
+    "ArrayValidationError",
+    "DeepObjectValidationError",
     "BadRequest",
     "NotFound",
     "Conflict",
@@ -157,7 +158,14 @@ class RedisLockTimeoutError(TimeoutError):
         return f"Could not acquire lock for '{self.key}' after {self.timeout} seconds"
 
 
-class IncludeValidationError(ValueError):
+class ArrayValidationError(ValueError):
+    def __init__(self, index: int, message: str):
+        self.index = index
+        self.message = message
+        super().__init__(f"At index {index}: {message}")
+
+
+class DeepObjectValidationError(ValueError):
     def __init__(self, path: Sequence[str], message: str):
         self.path = path
         self.message = message

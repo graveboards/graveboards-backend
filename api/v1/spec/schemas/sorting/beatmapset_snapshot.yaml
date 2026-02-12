@@ -19,6 +19,7 @@ BeatmapsetSnapshotSortingField:
         ### Enum of supported field identifiers for sorting
     type: string
     enum:
+        - BeatmapsetSnapshot.id
         - BeatmapsetSnapshot.beatmapset_id
         - BeatmapsetSnapshot.user_id
         - BeatmapsetSnapshot.artist
