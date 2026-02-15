@@ -36,7 +36,7 @@ class _D:
             raise ValueError(f"Delete would affect {len(rows)} rows; filters are not specific enough")
 
         await session.delete(rows[0])
-        await session.commit()
+        await session.flush()
 
     @staticmethod
     async def _delete_instances(
@@ -74,7 +74,7 @@ class _D:
         for row in rows:
             await session.delete(row)
 
-        await session.commit()
+        await session.flush()
         return len(rows)
 
 

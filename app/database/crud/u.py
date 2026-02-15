@@ -33,7 +33,7 @@ class _U:
 
             setattr(instance, key, value)
 
-        await session.commit()
+        await session.flush()
         await session.refresh(instance)
 
         return instance
@@ -77,7 +77,7 @@ class _U:
 
             instances.append(instance)
 
-        await session.commit()
+        await session.flush()
 
         for instance in instances:
             await session.refresh(instance)
