@@ -7,6 +7,6 @@ __all__ = [
 ]
 
 
-RoleNameLiteral = Literal["admin", "privileged"]
+RoleNameLiteral = Literal["admin"]
 RequestStatusLiteral = Literal["rejected", "pending", "accepted"]
 RequestStatusIntLiteral = Literal[-1, 0, 1]

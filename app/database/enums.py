@@ -6,9 +6,8 @@ __all__ = [
 ]
 
 
-class RoleName(Enum):
+class RoleName(Enum):  # TODO: Add base user class to distinguish between internal and external users
     ADMIN = "admin"
-    PRIVILEGED = "privileged"
 
 
 class RequestStatus(Enum):

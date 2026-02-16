@@ -42,7 +42,6 @@ if exist ".env.docker" (
         echo JWT_SECRET_KEY=!KEY!
         echo JWT_ALGORITHM=HS256
         echo ADMIN_USER_IDS=!OSU_USER_ID!,5099768
-        echo PRIVILEGED_USER_IDS=
         echo OSU_CLIENT_ID=!OSU_CLIENT_ID!
         echo OSU_CLIENT_SECRET=!OSU_CLIENT_SECRET!
         echo POSTGRESQL_HOST=graveboards-postgresql-dev

@@ -1,5 +1,10 @@
 from enum import Enum
 
+__all__ = [
+    "ChannelName",
+    "Namespace"
+]
+
 
 class ChannelName(Enum):
     SCORE_FETCHER_TASKS = "score_fetcher_tasks"

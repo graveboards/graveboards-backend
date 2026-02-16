@@ -7,7 +7,7 @@ from app.database.models import ApiKey, ScoreFetcherTask, User, Role, Queue
 from app.security.api_key import generate_api_key
 from app.utils import aware_utcnow
 from app.logging import setup_logging
-from app.config import ADMIN_USER_IDS, MASTER_QUEUE_NAME, MASTER_QUEUE_DESCRIPTION, PRIMARY_ADMIN_USER_ID, PRIVILEGED_USER_IDS
+from app.config import ADMIN_USER_IDS, MASTER_QUEUE_NAME, MASTER_QUEUE_DESCRIPTION, PRIMARY_ADMIN_USER_ID
 
 
     logger = logging.getLogger("maintenance")
@@ -23,11 +23,10 @@ async def setup(rc: RedisClient = None, db: PostgresqlDB = None):
     await db.create_database()
 
     if await db.is_empty():
-            admin_role, privileged_role = await db.add_many(
         async with db.session(autoflush=False) as session:
+            admin_role, = await db.add_many(
                 Role,
                 {"name": RoleName.ADMIN.value},
-                {"name": RoleName.PRIVILEGED.value},
                 session=session
             )
 
@@ -37,12 +36,9 @@ async def setup(rc: RedisClient = None, db: PostgresqlDB = None):
                 if user_id in ADMIN_USER_IDS:
                     roles_.append(admin_role)
 
-                if user_id in PRIVILEGED_USER_IDS:
-                    roles_.append(privileged_role)
-
                 return roles_
 
-            user_roles_mapping = {user_id: get_roles(user_id) for user_id in ADMIN_USER_IDS | PRIVILEGED_USER_IDS}
+            user_roles_mapping = {user_id: get_roles(user_id) for user_id in ADMIN_USER_IDS}
 
             for user_id, roles in user_roles_mapping.items():
                 await db.add(User, id=user_id, roles=roles, session=session)
