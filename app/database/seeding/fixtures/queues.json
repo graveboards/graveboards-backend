@@ -1,0 +1,23 @@
+[
+    {
+        "user_id": 16219092,
+        "name": "Graveboards Queue",
+        "description": "Master queue for beatmaps to receive leaderboards",
+        "is_open": true,
+        "visibility": 0
+    },
+    {
+        "user_id": 5099768,
+        "name": "Net0's BN Queue",
+        "description": "Net0's BN modding queue",
+        "is_open": true,
+        "visibility": 0
+    },
+    {
+        "user_id": 6064571,
+        "name": "HowRengar's Queue",
+        "description": "HowRengar's BN Queue",
+        "is_open": true,
+        "visibility": 2
+    }
+]

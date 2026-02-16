@@ -1,0 +1,50 @@
+[
+    {
+        "user_id": 4098393,
+        "beatmapset_id": 2387557,
+        "queue_id": 1,
+        "comment": "",
+        "mv_checked": false,
+        "status": 0
+    },
+    {
+        "user_id": 5099768,
+        "beatmapset_id": 623475,
+        "queue_id": 1,
+        "comment": "",
+        "mv_checked": false,
+        "status": 0
+    },
+    {
+        "user_id": 6064571,
+        "beatmapset_id": 1034724,
+        "queue_id": 1,
+        "comment": "",
+        "mv_checked": false,
+        "status": 0
+    },
+    {
+        "user_id": 7716455,
+        "beatmapset_id": 1895918,
+        "queue_id": 1,
+        "comment": "",
+        "mv_checked": false,
+        "status": 0
+    },
+    {
+        "user_id": 11422420,
+        "beatmapset_id": 2362400,
+        "queue_id": 1,
+        "comment": "",
+        "mv_checked": false,
+        "status": 0
+    },
+    {
+        "user_id": 16219092,
+        "beatmapset_id": 2344790,
+        "queue_id": 1,
+        "comment": "",
+        "mv_checked": false,
+        "status": 0
+    }
+]
