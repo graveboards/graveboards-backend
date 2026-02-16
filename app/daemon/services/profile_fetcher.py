@@ -16,6 +16,7 @@ from .enums import RuntimeTaskName
 from .service import Service
 
 PROFILE_FETCHER_INTERVAL_HOURS = 24
+PROFILE_FETCHER_MIN_INTERVAL_SECONDS = 5
 PENDING_TASK_TIMEOUT_SECONDS = 60
 logger = get_logger(__name__, prefix="ProfileFetcher")
 
@@ -30,6 +31,9 @@ class ProfileFetcher(Service):
         self.task_heap: list[tuple[datetime, int]] = []
         self.tasks: dict[int, asyncio.Task] = {}
         self.task_condition = asyncio.Condition()
+
+        self._rate_lock = asyncio.Lock()
+        self._last_request_time: datetime | None = None
 
     async def run(self):
         await self.preload_tasks()
@@ -143,6 +147,7 @@ class ProfileFetcher(Service):
 
         try:
             async with self.rc.lock_ctx(lock_hash_name):
+                await self._respect_rate_limit()
                 user_dict = await self.oac.get_user(user_id)  # Rare httpx.readtimeout can occur, keeping note of that
                 profile_dict = ProfileSchema.model_validate(user_dict).model_dump(
                     exclude={"id", "updated_at", "is_restricted"},
@@ -159,10 +164,12 @@ class ProfileFetcher(Service):
                     delta = {}
 
                     for key, value in profile_dict.items():
-                        if key == "page":
-                            if value.get("raw") != old_profile_dict[key].get("raw"):
+                        old_value = old_profile_dict[key]
+
+                        if key == "page" and old_value is not None:
+                            if value.get("raw") != old_value.get("raw"):
                                 delta[key] = value
-                        elif value != old_profile_dict[key]:
+                        elif value != old_value:
                             delta[key] = value
 
                     if delta:
@@ -179,3 +186,16 @@ class ProfileFetcher(Service):
             )
         except ReadTimeout as e:
             logger.warning(f"Read timeout while fetching profile for user {user_id}: {e}")
+
+    async def _respect_rate_limit(self):
+        async with self._rate_lock:
+            now = aware_utcnow()
+
+            if self._last_request_time is not None:
+                elapsed = (now - self._last_request_time).total_seconds()
+                remaining = PROFILE_FETCHER_MIN_INTERVAL_SECONDS - elapsed
+
+                if remaining > 0:
+                    await asyncio.sleep(remaining)
+
+            self._last_request_time = aware_utcnow()
