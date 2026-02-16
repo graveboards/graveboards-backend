@@ -1,5 +1,7 @@
 from enum import Enum
+from typing import Any
 
+from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.orm.mapper import Mapper
 from sqlalchemy.inspection import inspect
 from sqlalchemy.ext.hybrid import HybridExtensionType
@@ -85,3 +87,7 @@ class ModelClass(Enum):
     @property
     def all_names(self) -> set[str]:
         return self.column_names | self.relationship_names | self.hybrid_property_names
+
+    @property
+    def primary_keys(self) -> tuple[ColumnElement[Any], ...]:
+        return self.mapper.primary_key

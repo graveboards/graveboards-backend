@@ -67,7 +67,7 @@ class _C:
 
 
 class C(_C):
-    @session_manager
+    @session_manager()
     async def add(
         self,
         model: type[BaseType],
@@ -82,7 +82,7 @@ class C(_C):
             **kwargs
         )
 
-    @session_manager
+    @session_manager()
     async def add_many(
         self,
         model: type[BaseType],

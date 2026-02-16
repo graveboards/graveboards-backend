@@ -10,6 +10,12 @@ from sqlalchemy.dialects.postgresql import ARRAY
 from app.exceptions import TypeValidationError
 from app.search.enums import FilterOperator
 
+__all__ = [
+    "extract_inner_types",
+    "validate_type",
+    "get_filter_condition"
+]
+
 
 def extract_inner_types(annotated_type: Any) -> type | tuple[type, ...]:
     current = annotated_type
@@ -77,10 +83,10 @@ def validate_type(expected_type: Any, value: Any):
 
 
 def get_filter_condition(
-        filter_operator: FilterOperator,
-        target: InstrumentedAttribute | ColumnClause,
-        value: Any,
-        is_aggregated: bool = False
+    filter_operator: FilterOperator,
+    target: InstrumentedAttribute | ColumnClause,
+    value: Any,
+    is_aggregated: bool = False
 ) -> BinaryExpression | BindParameter | CollectionAggregate | ColumnElement[bool]:
     if not is_aggregated:
         return filter_operator.method(target, value)

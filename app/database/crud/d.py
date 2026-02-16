@@ -79,7 +79,7 @@ class _D:
 
 
 class D(_D):
-    @session_manager
+    @session_manager()
     async def delete(
         self,
         model: type[BaseType],
@@ -94,7 +94,7 @@ class D(_D):
             **kwargs
         )
 
-    @session_manager
+    @session_manager()
     async def delete_many(
             self,
             model: type[BaseType],

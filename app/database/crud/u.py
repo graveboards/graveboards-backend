@@ -86,7 +86,7 @@ class _U:
 
 
 class U(_U):
-    @session_manager
+    @session_manager()
     async def update(
         self,
         model: type[BaseType],
@@ -103,7 +103,7 @@ class U(_U):
             **kwargs
         )
 
-    @session_manager
+    @session_manager()
     async def update_many(
         self,
         model: type[BaseType],

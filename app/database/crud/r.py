@@ -1,11 +1,11 @@
 from typing import Iterable, Any, Optional, Union
 
-from sqlalchemy.sql import select, desc
-from sqlalchemy.sql.elements import ColumnElement, BinaryExpression
+from sqlalchemy.sql import select
+from sqlalchemy.sql.elements import BinaryExpression
 from sqlalchemy.sql.selectable import Select
 from sqlalchemy.orm.attributes import QueryableAttribute
 from sqlalchemy.orm.interfaces import LoaderOption
-from sqlalchemy.orm.relationships import RelationshipProperty
+from sqlalchemy.orm.relationships import RelationshipProperty, Relationship
 from sqlalchemy.orm.strategy_options import selectinload, joinedload, noload, Load
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,7 +13,6 @@ from app.database.models import BaseType, ModelClass, Base
 from app.utils import clamp
 from .decorators import session_manager
 from .types import Include, Sorting
-from .utils import is_lazy
 
 QUERY_MIN_LIMIT = 1
 QUERY_MAX_LIMIT = 100
@@ -85,6 +84,8 @@ class _R:
 
         if _sorting is not None:
             select_stmt = _R._apply_sorting(select_stmt, model_class, _sorting)
+        else:
+            select_stmt = select_stmt.order_by(*model_class.primary_keys)
 
         if _include and not _select:
             select_stmt, included_paths = _R._apply_include(select_stmt, model_class, _include)
@@ -268,6 +269,9 @@ class _R:
         if include is None:
             include = {}
 
+        def is_lazy(rel: Relationship) -> bool:
+            return rel.lazy in {True, "select", "dynamic"}
+
         def exclude_unincluded(
             parent_model_class,
             includes: Include,
@@ -326,7 +330,7 @@ class _R:
 
 
 class R(_R):
-    @session_manager
+    @session_manager()
     async def get(
         self,
         model: type[BaseType],
@@ -353,7 +357,7 @@ class R(_R):
             **kwargs
         )
 
-    @session_manager
+    @session_manager()
     async def get_many(
         self,
         model: type[BaseType],
