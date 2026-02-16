@@ -97,6 +97,9 @@ def build_pydantic_include(
 
 
 def _extract_default_include(include_schema: dict) -> dict:
+    if include_schema.get("title").endswith("Shallow"):
+        raise RuntimeError("Shallow schemas were not properly resolved")
+
     result = {}
 
     if "properties" in include_schema:

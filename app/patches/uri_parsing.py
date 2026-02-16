@@ -1,7 +1,7 @@
 import json
 
 from connexion.uri_parsing import OpenAPIURIParser
-from connexion.utils import coerce_type, boolean, TypeValidationError
+from connexion.utils import coerce_type, TypeValidationError
 
 NESTED_INCLUDE_KEY_TITLE_MAPPING = {
     "user_profile": "ProfileInclude",
@@ -66,64 +66,132 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
     @staticmethod
     def coerce_include(param, value, parameter_type, parameter_name=None):
         param_schema = param.get("schema", param)
-        param_type = param_schema.get("type")
 
-        def cast(d, schema):
-            if "oneOf" in schema:
-                for branch in schema["oneOf"]:
-                    branch_type = branch.get("type")
+        def resolve_oneof(schema, data):
+            if not isinstance(schema, dict):
+                return schema
 
-                    if branch_type == "object" and isinstance(d, dict):
-                        schema = branch
-                        break
+            if "oneOf" not in schema:
+                return schema
 
-                    if branch_type == "boolean" and isinstance(d, str) and d.lower() in ("true", "false"):
-                        schema = branch
-                        break
+            for branch in schema["oneOf"]:
+                branch_type = branch.get("type")
 
-            if isinstance(d, dict) and (additional_props := schema.get("additionalProperties")):
-                for k, v in d.items():
-                    if isinstance(v, dict) and k in NESTED_INCLUDE_KEY_TITLE_MAPPING:
-                        title = NESTED_INCLUDE_KEY_TITLE_MAPPING[k]
+                if branch_type == "object" and isinstance(data, dict):
+                    return branch
 
-                        for branch in additional_props["oneOf"]:
-                            if branch.get("title") == title:
-                                d[k] = cast(v, branch)
-                    elif isinstance(v, str) and v.lower() in ("true", "false"):
-                        d[k] = boolean(v)
-                    else:
-                        raise TypeValidationError(param_type, parameter_type, parameter_name)
+                if branch_type == "array" and isinstance(data, list):
+                    return branch
 
-                return d
+                if branch_type == "boolean":
+                    return branch
 
-            if isinstance(d, dict) and (props := schema.get("properties")):
-                for k, v in d.items():
-                    if k in props:
-                        sub_schema = props[k]
-                        d[k] = cast(v, sub_schema)
-                    else:
-                        d[k] = boolean(v)
+            return schema["oneOf"][0]
 
-                return d
+        def cast(data, schema):
+            if isinstance(data, str):
+                lower = data.lower()
 
-            if schema.get("type") == "boolean":
-                try:
-                    return boolean(d)
-                except ValueError:
-                    return value
+                if lower == "true":
+                    return True
 
-            # Primitive types
-            TYPE_MAP = {"integer": int, "number": float, "boolean": boolean, "object": dict}
-            type_func = TYPE_MAP.get(schema.get("type"), lambda x: x)
+                if lower == "false":
+                    return False
 
-            try:
-                return type_func(d)
-            except ValueError:
-                raise TypeValidationError(param_type, parameter_type, parameter_name)
-            except TypeError:
-                return value
+            if isinstance(data, dict):
+                if isinstance(schema, dict):
+                    schema = resolve_oneof(schema, data)
+
+                    properties = schema.get("properties")
+                    additional = schema.get("additionalProperties")
+
+                    new_dict = {}
+
+                    for k, v in data.items():
+                        if properties and k in properties:
+                            new_dict[k] = cast(v, properties[k])
+                        elif isinstance(additional, dict):
+                            new_dict[k] = cast(v, additional)
+                        else:
+                            new_dict[k] = cast(v, {})
+
+                    return new_dict
+
+                return {k: cast(v, {}) for k, v in data.items()}
+
+            if isinstance(data, list):
+                if isinstance(schema, dict):
+                    items_schema = schema.get("items", {})
+                else:
+                    items_schema = {}
+
+                return [cast(v, items_schema) for v in data]
+
+            return data
 
         return cast(value, param_schema)
+
+    # @staticmethod
+    # def coerce_include(param, value, parameter_type, parameter_name=None):
+    #     param_schema = param.get("schema", param)
+    #     param_type = param_schema.get("type")
+    #
+    #     def cast(d, schema):
+    #         if "oneOf" in schema:
+    #             for branch in schema["oneOf"]:
+    #                 branch_type = branch.get("type")
+    #
+    #                 if branch_type == "object" and isinstance(d, dict):
+    #                     schema = branch
+    #                     break
+    #
+    #                 if branch_type == "boolean" and isinstance(d, str) and d.lower() in ("true", "false"):
+    #                     schema = branch
+    #                     break
+    #
+    #         if isinstance(d, dict) and (additional_props := schema.get("additionalProperties")):
+    #             for k, v in d.items():
+    #                 if isinstance(v, dict) and k in NESTED_INCLUDE_KEY_TITLE_MAPPING:
+    #                     title = NESTED_INCLUDE_KEY_TITLE_MAPPING[k]
+    #
+    #                     for branch in additional_props["oneOf"]:
+    #                         if branch.get("title") == title:
+    #                             d[k] = cast(v, branch)
+    #                 elif isinstance(v, str) and v.lower() in ("true", "false"):
+    #                     d[k] = boolean(v)
+    #                 else:
+    #                     raise TypeValidationError(param_type, parameter_type, parameter_name)
+    #
+    #             return d
+    #
+    #         if isinstance(d, dict) and (props := schema.get("properties")):
+    #             for k, v in d.items():
+    #                 if k in props:
+    #                     sub_schema = props[k]
+    #                     d[k] = cast(v, sub_schema)
+    #                 else:
+    #                     d[k] = boolean(v)
+    #
+    #             return d
+    #
+    #         if schema.get("type") == "boolean":
+    #             try:
+    #                 return boolean(d)
+    #             except ValueError:
+    #                 return value
+    #
+    #         # Primitive types
+    #         TYPE_MAP = {"integer": int, "number": float, "boolean": boolean, "object": dict}
+    #         type_func = TYPE_MAP.get(schema.get("type"), lambda x: x)
+    #
+    #         try:
+    #             return type_func(d)
+    #         except ValueError:
+    #             raise TypeValidationError(param_type, parameter_type, parameter_name)
+    #         except TypeError:
+    #             return value
+    #
+    #     return cast(value, param_schema)
 
     @staticmethod
     def coerce_sorting(param, value, parameter_type, parameter_name=None):

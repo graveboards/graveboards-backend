@@ -4,6 +4,7 @@ from connexion.lifecycle import ConnexionRequest
 from connexion.validators import ParameterValidator
 
 from app.exceptions import ArrayValidationError, DeepObjectValidationError, bad_request_factory
+from app.spec import get_include_schema
 from app.config import API_BASE_PATH
 
 
@@ -35,7 +36,8 @@ class ParameterValidatorPatched(ParameterValidator):
                     # Delegate this validation to be run by the operation function where the context is available
                     return None
 
-                return validate_include(value, param.get("schema"))
+                resolved_schema = get_include_schema(schema_name=param["schema"]["title"])  # F**k Connexion
+                return validate_include(value, resolved_schema)
             except DeepObjectValidationError as e:
                 raise bad_request_factory(e)
 
@@ -84,12 +86,11 @@ def validate_include(
     if path is None:
         path = []
 
-    if "properties" in schema:
-        properties = schema["properties"]
-    else:
-        properties = schema
+    properties = schema.get("properties", schema)
 
     for key, value in include.items():
+        current_path = path + [key]
+
         if key not in properties:
             raise DeepObjectValidationError(
                 path + [key],
@@ -97,9 +98,11 @@ def validate_include(
             )
 
         prop = properties[key]
+        prop_type = prop.get("type")
 
-        if prop.get("type") == "boolean":
-            if "enum" in prop and value not in prop["enum"]:  # Catch first for better error clarity in the case of the user providing True or a nested include
+        if prop_type == "boolean":
+            if (enum := prop.get("enum")) is not None and value not in enum:
+                # Catch first for better error clarity in the case of the user providing True or a nested include
                 raise DeepObjectValidationError(
                     path + [key],
                     "This relationship cannot be included (recursive include is forbidden)"
@@ -107,25 +110,33 @@ def validate_include(
 
             if not isinstance(value, bool):
                 raise DeepObjectValidationError(
-                    path + [key],
+                    current_path,
                     "Expected boolean (true or false)"
                 )
         elif "oneOf" in prop:
-            obj_branch = next((b for b in prop["oneOf"] if b.get("type") == "object"), None)
-            bool_branch = next((b for b in prop["oneOf"] if b.get("type") == "boolean"), None)
+            obj_branch = None
+            bool_branch = None
+
+            for branch in prop["oneOf"]:
+                t = branch.get("type")
+
+                if t == "object":
+                    obj_branch = branch
+                elif t == "boolean":
+                    bool_branch = branch
 
             if isinstance(value, dict):
                 if obj_branch is None:
                     raise DeepObjectValidationError(
-                        path + [key],
+                        current_path,
                         "Nested includes are not allowed here"
                     )
 
-                validate_include(value, obj_branch, path + [key])
+                validate_include(value, obj_branch, current_path)
             elif isinstance(value, bool):
                 if bool_branch is None:
                     raise DeepObjectValidationError(
-                        path + [key],
+                        current_path,
                         "Boolean value not allowed here"
                     )
 
@@ -133,19 +144,24 @@ def validate_include(
 
                 if enum is not None and value not in enum:
                     raise DeepObjectValidationError(
-                        path + [key],
+                        current_path,
                         f"This relationship cannot be {"included" if value else "excluded"}"
                     )
             else:
                 raise DeepObjectValidationError(
-                    path + [key],
+                    current_path,
                     "Expected boolean or object"
                 )
-        elif prop.get("type") == "object":
-            if isinstance(value, dict):
-                validate_include(value, prop, path + [key])
+        elif prop_type == "object":
+            if not isinstance(value, dict):
+                raise DeepObjectValidationError(
+                    current_path,
+                    "Expected nested include object"
+                )
+
+            validate_include(value, prop, current_path)
         else:
             raise DeepObjectValidationError(
-                path + [key],
+                current_path,
                 "Invalid include schema definition"
             )

@@ -1,10 +1,14 @@
 import copy
 
 SCHEMAS_WITH_SHALLOW_REFS = {
+    "Beatmap",
     "BeatmapSnapshot",
+    "Beatmapset",
     "BeatmapsetSnapshot",
     "Leaderboard",
+    "BeatmapInclude",
     "BeatmapSnapshotInclude",
+    "BeatmapsetInclude",
     "BeatmapsetSnapshotInclude",
     "LeaderboardInclude"
 }
@@ -20,71 +24,109 @@ disabled_nested_obj = {
 def populate_shallow_refs(openapi_spec: dict):
     schemas = openapi_spec["components"]["schemas"]
 
-    def populate_schema(root_title: str, root_schema: dict):
-        for pk, pv in root_schema["properties"].items():
-            type_ = pv.get("type")
+    def is_shallow(title: str) -> bool:
+        return isinstance(title, str) and title.endswith("Shallow")
 
-            if type_ == "object":
-                if title := pv.get("title"):
-                    if title.endswith("Shallow"):
-                        schemas[root_title]["properties"][pk] = make_shallow_schema(title, root_title)
-            elif type_ == "array":
-                if title := pv["items"].get("title"):
-                    if title.endswith("Shallow"):
-                        schemas[root_title]["properties"][pk]["items"] = make_shallow_schema(title, root_title)
+    def is_include(title: str) -> bool:
+        return isinstance(title, str) and title.endswith("Include")
 
-    def populate_include_schema(root_title: str, root_schema: dict):
-        for pk, pv in root_schema["properties"].items():
-            if "oneOf" in pv:
-                i, obj_branch = next(((i, b) for i, b in enumerate(pv["oneOf"]) if b.get("type") == "object"), (None, None))
+    def resolve_schema(schema: dict, stack: tuple[str, ...]) -> dict | None:
+        schema = copy.deepcopy(schema)
+        title = schema.get("title")
 
-                if title := obj_branch.get("title"):
-                    if title.endswith("Shallow"):
-                        schemas[root_title]["properties"][pk]["oneOf"][i] = make_shallow_include_schema(title, root_title)
+        # Track titled schemas
+        if isinstance(title, str):
+            if title in stack:
+                # Cycle
+                if is_include(stack[-1]):
+                    return disabled_nested_obj
 
-    def make_shallow_schema(title: str, root_title: str) -> dict:
-        original = schemas[title.rstrip("Shallow")]
-        shallow = {**{k: copy.deepcopy(v) for k, v in original.items() if k != "properties"}, **{"properties": {}}}
+                return None  # Drop property
 
-        for pk, pv in original["properties"].items():
-            type_ = pv.get("type")
+            stack = stack + (title,)
 
-            if type_ == "object":
-                if (title := pv.get("title")) and isinstance(title, str):
-                    if title.rstrip("Shallow") == root_title:
-                        continue
-            elif type_ == "array":
-                if (title := pv["items"].get("title")) and isinstance(title, str):
-                    if title.rstrip("Shallow") == root_title:
-                        continue
+        # Resolve properties
+        if "properties" in schema:
+            new_props = {}
 
-            shallow["properties"][pk] = copy.deepcopy(pv)
+            for pk, pv in schema["properties"].items():
+                resolved = resolve_property(pv, stack)
 
-        return shallow
+                if resolved is None:
+                    continue
 
-    def make_shallow_include_schema(title: str, root_title: str) -> dict:
-        original = schemas[title.rstrip("Shallow")]
-        shallow = {**{k: copy.deepcopy(v) for k, v in original.items() if k != "properties"}, **{"properties": {}}}
+                new_props[pk] = resolved
 
-        for pk, pv in original["properties"].items():
-            if "oneOf" in pv:
-                if "oneOf" in pv:
-                    obj_branch = next((b for b in pv["oneOf"] if b.get("type") == "object"), None)
+            schema["properties"] = new_props
 
-                    if title := obj_branch.get("title"):
-                        if title.rstrip("Shallow") == root_title:
-                            shallow["properties"][pk] = disabled_nested_obj
-                            continue
+        return schema
 
-            shallow["properties"][pk] = copy.deepcopy(pv)
+    def resolve_property(prop: dict, stack: tuple[str, ...]) -> dict | None:
+        # Object
+        if prop.get("type") == "object":
+            title = prop.get("title")
 
-        return shallow
+            # Shallow
+            if is_shallow(title):
+                base_title = title[:-7]
 
-    for schema_name, schema in schemas.items():
-        if schema_name not in SCHEMAS_WITH_SHALLOW_REFS:
+                if base_title in stack:
+                    # Cycle
+                    if is_include(stack[-1]):
+                        return disabled_nested_obj
+
+                    return None  # Drop property
+
+                if base_title not in schemas:
+                    return None
+
+                return resolve_schema(schemas[base_title], stack)
+
+            # Full
+            if isinstance(title, str) and title in schemas:
+                return resolve_schema(schemas[title], stack)
+
+            return resolve_schema(prop, stack)
+
+        # Array
+        if prop.get("type") == "array":
+            items = prop.get("items", {})
+            new_items = resolve_property(items, stack)
+
+            if new_items is None:
+                return None
+
+            prop["items"] = new_items
+            return prop
+
+        # Include schema
+        if "oneOf" in prop:
+            new_branches = []
+
+            for branch in prop["oneOf"]:
+                if branch.get("type") == "boolean":
+                    new_branches.append(branch)
+                    continue
+
+                resolved = resolve_property(branch, stack)
+
+                if resolved is None:
+                    if is_include(stack[-1]):
+                        new_branches.append(disabled_nested_obj)
+
+                    continue
+
+                new_branches.append(resolved)
+
+            prop["oneOf"] = new_branches
+            return prop
+
+        # Primitive
+        return prop
+
+    for name in SCHEMAS_WITH_SHALLOW_REFS:
+        if name not in schemas:
             continue
 
-        if schema_name.endswith("Include"):
-            populate_include_schema(schema_name, schema)
-        else:
-            populate_schema(schema_name, schema)
+        fully_resolved = resolve_schema(schemas[name], ())
+        schemas[name] = fully_resolved
