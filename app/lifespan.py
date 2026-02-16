@@ -10,6 +10,7 @@ from .config import DISABLE_SECURITY
 from .logging import setup_logging
 from .daemon import ServiceDaemon
 from .daemon.services import ServiceClass
+from .setup import setup
 
 
 @asynccontextmanager
@@ -17,6 +18,8 @@ async def lifespan(app: ConnexionMiddleware):
     setup_logging()
     logger = logging.getLogger(__name__)
     logger.info("Start of app lifespan")
+
+    await setup()
 
     if DISABLE_SECURITY:
         logger.warning("Security has been disabled!")

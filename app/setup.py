@@ -1,5 +1,3 @@
-import asyncio
-import logging
 from datetime import timedelta
 
 from app.redis import RedisClient
@@ -12,19 +10,21 @@ from app.logging import setup_logging
 from app.config import ADMIN_USER_IDS, MASTER_QUEUE_NAME, MASTER_QUEUE_DESCRIPTION, PRIMARY_ADMIN_USER_ID, PRIVILEGED_USER_IDS
 
 
-async def setup():
-    setup_logging()
     logger = logging.getLogger("maintenance")
+async def setup(rc: RedisClient = None, db: PostgresqlDB = None):
 
-    rc = RedisClient()
-    db = PostgresqlDB()
+    if rc is None:
+        rc = RedisClient()
+
+    if db is None:
+        db = PostgresqlDB()
 
     await rc.flushdb()
     await db.create_database()
 
     if await db.is_empty():
-        async with db.session() as session:
             admin_role, privileged_role = await db.add_many(
+        async with db.session(autoflush=False) as session:
                 Role,
                 {"name": RoleName.ADMIN.value},
                 {"name": RoleName.PRIVILEGED.value},
@@ -47,8 +47,8 @@ async def setup():
             for user_id, roles in user_roles_mapping.items():
                 await db.add(User, id=user_id, roles=roles, session=session)
 
-                score_fetcher_task = await db.get(ScoreFetcherTask, user_id=user_id)
-                await db.update(ScoreFetcherTask, score_fetcher_task.id, enabled=True)
+                score_fetcher_task = await db.get(ScoreFetcherTask, user_id=user_id, session=session)
+                await db.update(ScoreFetcherTask, score_fetcher_task.id, enabled=True, session=session)
 
                 if user_id in ADMIN_USER_IDS:
                     expires_at = aware_utcnow() + timedelta(weeks=1)
@@ -68,6 +68,3 @@ async def setup():
 
     await rc.aclose()
     await db.close()
-
-if __name__ == "__main__":
-    asyncio.run(setup())
