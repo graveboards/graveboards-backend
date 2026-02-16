@@ -3,19 +3,34 @@ disable_existing_loggers: False
 
 formatters:
     standard:
+        (): app.logging.LogFormatter
         style: "{"
-        format: "{asctime} | {levelname:<8} | {name:<14} | {message}"
+        format: "{asctime} | {levelname:<8} | {alias:<8} | {message}"
         datefmt: "%Y-%m-%d %H:%M:%S"
+        colored: False
+    colored:
+        (): app.logging.LogFormatter
+        style: "{"
+        format: "{asctime} | {levelname:<8} | {alias:<8} | {message}"
+        datefmt: "%Y-%m-%d %H:%M:%S"
+        colored: True
 
 handlers:
     console:
         class: logging.StreamHandler
-        formatter: standard
+        formatter: colored
         stream: ext://sys.stdout
-    file:
+    uvicorn_file:
         class: logging.handlers.RotatingFileHandler
         formatter: standard
         filename: "instance/logs/uvicorn.log"
+        maxBytes: 10_000_000
+        backupCount: 3
+        encoding: utf8
+    access_file:
+        class: logging.handlers.RotatingFileHandler
+        formatter: standard
+        filename: "instance/logs/uvicorn.access.log"
         maxBytes: 10_000_000
         backupCount: 3
         encoding: utf8
@@ -23,15 +38,15 @@ handlers:
 loggers:
     uvicorn:
         level: INFO
-        handlers: [console, file]
+        handlers: [console, uvicorn_file]
         propagate: False
     uvicorn.error:
         level: INFO
-        handlers: [console, file]
+        handlers: [console, uvicorn_file]
         propagate: False
     uvicorn.access:
         level: INFO
-        handlers: [console, file]
+        handlers: [console, access_file]
         propagate: False
     root:
         level: WARNING

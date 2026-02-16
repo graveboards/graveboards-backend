@@ -63,7 +63,7 @@ async def get(queue_id: int, **kwargs):
 
 
 # @role_authorization(RoleName.ADMIN, override=matching_user_id_override, override_kwargs={"resource_user_id_lookup": "body.user_id"})  # Disable regular users from adding queues for now
-@role_authorization(one_of={RoleName.PRIVILEGED, RoleName.ADMIN})
+@role_authorization(RoleName.ADMIN)
 async def post(body: dict, **kwargs):
     db: PostgresqlDB = request.state.db
 

@@ -2,7 +2,7 @@ from starlette.responses import StreamingResponse
 from connexion import request
 
 from api.decorators import coerce_arguments
-from app.beatmap_manager import BeatmapManager
+from app.beatmaps import BeatmapManager
 from app.database import PostgresqlDB
 from app.exceptions import NotFound
 from app.redis import RedisClient

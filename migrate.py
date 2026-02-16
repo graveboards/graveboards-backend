@@ -1,21 +1,21 @@
 import json
 import asyncio
-import logging
 from datetime import datetime, timezone
 
 from httpx import HTTPStatusError
 
 from app.database import PostgresqlDB
 from app.database.models import Beatmapset, BeatmapsetSnapshot, Request
-from app.beatmap_manager import BeatmapManager
+from app.beatmaps import BeatmapManager
 from app.redis import RedisClient
 from app.logging import setup_logging
-from setup import setup
+from app.setup import setup
+from app.logging import get_logger
 
 
 async def migrate():
     setup_logging()
-    logger = logging.getLogger("maintenance")
+    logger = get_logger(__name__)
     logger.info("Starting migration...")
 
     rc = RedisClient()

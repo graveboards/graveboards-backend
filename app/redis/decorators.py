@@ -1,14 +1,18 @@
 import asyncio
-import logging
 from typing import Callable, Any, Awaitable
 from functools import wraps
 from datetime import datetime, timedelta
 
+from app.exceptions import RateLimitExceededError
+from app.logging import get_logger
 from .rc import RedisClient
 from .enums import Namespace
-from app.exceptions import RateLimitExceededError
 
-logger = logging.getLogger("redis")
+__all__ = [
+    "rate_limit"
+]
+
+logger = get_logger(__name__)
 
 
 def rate_limit(limit_per_window: int, auto_retry: bool = True):

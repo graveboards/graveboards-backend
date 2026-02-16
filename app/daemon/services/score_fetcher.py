@@ -1,6 +1,5 @@
 import asyncio
 import heapq
-import logging
 from datetime import datetime, timedelta, timezone
 
 from httpx import ConnectTimeout
@@ -9,13 +8,14 @@ from app.osu_api import OsuAPIClient, ScoreType
 from app.database.models import ScoreFetcherTask, Leaderboard
 from app.redis import ChannelName
 from app.utils import aware_utcnow
+from app.logging import get_logger
 from .decorators import auto_retry
 from .enums import RuntimeTaskName
 from .service import Service
 
 SCORE_FETCHER_INTERVAL_HOURS = 24
 PENDING_TASK_TIMEOUT_SECONDS = 60
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ScoreFetcher(Service):

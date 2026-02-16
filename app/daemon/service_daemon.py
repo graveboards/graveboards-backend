@@ -1,11 +1,11 @@
 import asyncio
-import logging
 
 from app.redis import RedisClient
 from app.database import PostgresqlDB
+from app.logging import get_logger
 from .services import ServiceClass, ServiceType
 
-logger = logging.getLogger("daemon")
+logger = get_logger(__name__)
 
 
 class ServiceDaemon:

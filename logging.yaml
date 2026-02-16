@@ -3,20 +3,17 @@ disable_existing_loggers: False
 
 formatters:
     standard:
+        (): app.logging.LogFormatter
         style: "{"
-        format: "{asctime} | {levelname:<8} | {name:<11} | {message}"
+        format: "{asctime} | {levelname:<8} | {alias:<8} | {prefix}{message}"
         datefmt: "%Y-%m-%d %H:%M:%S"
+        colored: False
     colored:
-        (): colorlog.ColoredFormatter
+        (): app.logging.LogFormatter
         style: "{"
-        format: "{log_color}{asctime} | {levelname:<8} | {name:<11} | {message}"
+        format: "{asctime} | {levelname:<8} | {alias:<8} | {prefix}{message}"
         datefmt: "%Y-%m-%d %H:%M:%S"
-        log_colors:
-            DEBUG: white
-            INFO: green
-            WARNING: yellow
-            ERROR: red
-            CRITICAL: bold_red
+        colored: True
 
 handlers:
     console:
@@ -64,6 +61,30 @@ loggers:
         level: INFO
         handlers: [console, app_file]
         propagate: False
+    beatmaps:
+        level: INFO
+        handlers: [ console, app_file ]
+        propagate: False
+    osu_api:
+        level: INFO
+        handlers: [ console, app_file ]
+        propagate: False
+    search:
+        level: INFO
+        handlers: [ console, app_file ]
+        propagate: False
+    security:
+        level: INFO
+        handlers: [ console, app_file ]
+        propagate: False
+    spec:
+        level: INFO
+        handlers: [ console, app_file ]
+        propagate: False
+    lifespan:
+        level: INFO
+        handlers: [ console, app_file ]
+        propagate: False
     daemon:
         level: INFO
         handlers: [console, daemon_file]
@@ -76,9 +97,17 @@ loggers:
         level: INFO
         handlers: [console, redis_file]
         propagate: False
-    maintenance:
+    setup:
         level: INFO
         handlers: [console, maintenance_file]
+        propagate: False
+    manage:
+        level: INFO
+        handlers: [ console, maintenance_file ]
+        propagate: False
+    migrate:
+        level: INFO
+        handlers: [ console, maintenance_file ]
         propagate: False
     root:
         level: WARNING

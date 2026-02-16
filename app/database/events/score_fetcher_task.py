@@ -1,16 +1,15 @@
-import logging
-
 from sqlalchemy import event
 from sqlalchemy.orm.attributes import AttributeEventToken
 
-from app.database.models import ScoreFetcherTask
+from app.logging import get_logger
 from app.redis import redis_connection, ChannelName
+from app.database.models import ScoreFetcherTask
 
 __all__ = [
     "score_fetcher_task_enabled_set"
 ]
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @event.listens_for(ScoreFetcherTask.enabled, "set")

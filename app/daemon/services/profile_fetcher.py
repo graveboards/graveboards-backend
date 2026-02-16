@@ -1,6 +1,5 @@
 import asyncio
 import heapq
-import logging
 from datetime import datetime, timedelta, timezone
 
 from httpx import ConnectTimeout, HTTPStatusError, ReadTimeout
@@ -11,13 +10,14 @@ from app.database.schemas import ProfileSchema
 from app.redis import ChannelName, Namespace, LOCK_EXPIRY
 from app.utils import aware_utcnow
 from app.exceptions import RedisLockTimeoutError
+from app.logging import get_logger
 from .decorators import auto_retry
 from .enums import RuntimeTaskName
 from .service import Service
 
 PROFILE_FETCHER_INTERVAL_HOURS = 24
 PENDING_TASK_TIMEOUT_SECONDS = 60
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__, prefix="ProfileFetcher")
 
 
 class ProfileFetcher(Service):

@@ -6,12 +6,12 @@ from app.database.enums import RoleName
 from app.database.models import ApiKey, ScoreFetcherTask, User, Role, Queue
 from app.security.api_key import generate_api_key
 from app.utils import aware_utcnow
-from app.logging import setup_logging
+from app.logging import get_logger
 from app.config import ADMIN_USER_IDS, MASTER_QUEUE_NAME, MASTER_QUEUE_DESCRIPTION, PRIMARY_ADMIN_USER_ID
 
 
-    logger = logging.getLogger("maintenance")
 async def setup(rc: RedisClient = None, db: PostgresqlDB = None):
+    logger = get_logger(__name__)
 
     if rc is None:
         rc = RedisClient()

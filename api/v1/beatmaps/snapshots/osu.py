@@ -5,7 +5,7 @@ from starlette.responses import PlainTextResponse
 from connexion import request
 
 from api.decorators import coerce_arguments
-from app.beatmap_manager import BeatmapManager
+from app.beatmaps import BeatmapManager
 from app.database import PostgresqlDB
 from app.database.models import BeatmapSnapshot
 from app.exceptions import NotFound

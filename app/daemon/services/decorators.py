@@ -1,9 +1,11 @@
 import asyncio
-import logging
 from functools import wraps
 from typing import Callable, Any, Awaitable
 
+from app.logging import get_logger
+
 MAX_ATTEMPTS = 5
+logger = get_logger(__name__)
 
 
 def auto_retry(
@@ -14,8 +16,6 @@ def auto_retry(
     def decorator(func: Callable[..., Awaitable[Any]]):
         if not asyncio.iscoroutinefunction(func):
             raise ValueError(f"Function '{func.__name__}' must be async to use @auto_retry")
-
-        logger = logging.getLogger(func.__module__)
 
         @wraps(func)
         async def wrapper(*args, **kwargs) -> Awaitable[Any]:

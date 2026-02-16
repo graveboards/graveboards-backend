@@ -1,6 +1,5 @@
 import os
 import asyncio
-import logging
 from io import BytesIO
 from zipfile import ZipFile
 from copy import copy
@@ -11,9 +10,10 @@ import aiofiles
 from httpx import HTTPError
 from sqlalchemy.exc import IntegrityError
 
-from .osu_api import OsuAPIClient
-from .database import PostgresqlDB
-from .database.models import (
+from app.logging import get_logger
+from app.osu_api import OsuAPIClient
+from app.database import PostgresqlDB
+from app.database.models import (
     Profile,
     BeatmapsetTag,
     BeatmapTag,
@@ -24,7 +24,7 @@ from .database.models import (
     Beatmap,
     ProfileFetcherTask
 )
-from .database.schemas import (
+from app.database.schemas import (
     BeatmapSnapshotSchema,
     BeatmapsetSnapshotSchema,
     ProfileSchema,
@@ -32,16 +32,16 @@ from .database.schemas import (
     BeatmapsetOsuApiSchema,
     BeatmapOsuApiSchema
 )
-from .redis import RedisClient, Namespace
-from .utils import combine_checksums, aware_utcnow
-from .exceptions import RestrictedUserError, RedisLockTimeoutError
-from .config import INSTANCE_DIR
+from app.redis import RedisClient, Namespace
+from app.utils import combine_checksums, aware_utcnow
+from app.exceptions import RestrictedUserError, RedisLockTimeoutError
+from app.config import INSTANCE_DIR
 
 BEATMAPS_PATH = os.path.join(INSTANCE_DIR, "beatmaps")
 BEATMAPSETS_PATH = os.path.join(INSTANCE_DIR, "beatmapsets")
 BEATMAP_DOWNLOAD_BASEURL = "https://osu.ppy.sh/osu/"
 BEATMAP_SNAPSHOT_FILE_PATH = os.path.join(BEATMAPS_PATH, "{beatmap_id}/{snapshot_number}.osu")
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class BeatmapManager:

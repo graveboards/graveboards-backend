@@ -1,4 +1,3 @@
-import logging
 import asyncio
 from contextlib import contextmanager, asynccontextmanager
 
@@ -7,11 +6,16 @@ from redis.asyncio import Redis as AsyncRedis
 
 from app.config import REDIS_CONFIGURATION
 from app.exceptions import RedisLockTimeoutError
+from app.logging import get_logger
 from .constants import LOCK_EXPIRY, LOCK_ACQUISITION_RETRY_INTERVAL, LOCK_ACQUISITION_TIMEOUT
 
-REDIS_BASE_URL = f"redis://{REDIS_CONFIGURATION["username"]}:***@{REDIS_CONFIGURATION["host"]}:{REDIS_CONFIGURATION["port"]}/{REDIS_CONFIGURATION["db"]}"
+__all__ = [
+    "RedisClient",
+    "redis_connection"
+]
 
-logger = logging.getLogger("redis")
+REDIS_BASE_URL = f"redis://{REDIS_CONFIGURATION["username"]}:***@{REDIS_CONFIGURATION["host"]}:{REDIS_CONFIGURATION["port"]}/{REDIS_CONFIGURATION["db"]}"
+logger = get_logger(__name__)
 
 
 class RedisClient(AsyncRedis):

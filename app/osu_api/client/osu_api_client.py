@@ -1,4 +1,3 @@
-import logging
 from typing import Union
 
 import httpx
@@ -6,11 +5,12 @@ from pydantic_core import ValidationError
 
 from app.redis import rate_limit, Namespace, CACHED_BEATMAP_EXPIRY, CACHED_BEATMAPSET_EXPIRY
 from app.redis.models import Beatmap, Beatmapset
-from .base import OsuAPIClientBase
+from app.logging import get_logger
 from app.osu_api.enums import APIEndpoint, ScoreType, Ruleset
+from .base import OsuAPIClientBase
 
 RATE_LIMIT = 60
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class OsuAPIClient(OsuAPIClientBase):

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -11,6 +12,7 @@ ENV = Env(os.getenv("ENV", "prod").lower())
 DEBUG = os.getenv("DEBUG", "false").lower() in ("true", "1", "yes")
 DISABLE_SECURITY = os.getenv("DISABLE_SECURITY", "false").lower() in ("true", "1", "yes")
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 API_BASE_PATH = "api/v1/"
 SPEC_DIR = os.path.abspath("api/v1/spec")
 CACHE_FILE = os.path.join(SPEC_DIR, ".spec_cache.pkl")
@@ -54,7 +56,6 @@ OAUTH_CONFIGURATION = {
 }
 
 ADMIN_USER_IDS = set(_admin_user_ids := parse_user_ids("ADMIN_USER_IDS", required=True))
-PRIVILEGED_USER_IDS = set(parse_user_ids("PRIVILEGED_USER_IDS"))
 PRIMARY_ADMIN_USER_ID = _admin_user_ids[0]
 MASTER_QUEUE_NAME = "Graveboards Queue"
 MASTER_QUEUE_DESCRIPTION = "Master queue for beatmaps to receive leaderboards"

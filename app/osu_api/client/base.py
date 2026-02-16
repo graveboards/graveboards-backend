@@ -1,6 +1,5 @@
 import asyncio
 import time
-import logging
 
 import httpx
 from pydantic import ValidationError
@@ -9,9 +8,10 @@ from app.oauth import OAuth
 from app.redis import RedisClient, Namespace
 from app.redis.models import OsuClientOAuthToken
 from app.exceptions import RedisLockTimeoutError
+from app.logging import get_logger
 
 MAX_TOKEN_FETCH_RETRIES = 3
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class OsuAPIClientBase:

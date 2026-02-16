@@ -5,7 +5,7 @@ from api.decorators import api_query
 from api.utils import build_pydantic_include
 from app.exceptions import NotFound
 from app.spec import get_include_schema
-from app.beatmap_manager import BeatmapManager
+from app.beatmaps import BeatmapManager
 from app.database import PostgresqlDB
 from app.database.models import Beatmapset, ModelClass
 from app.database.schemas import BeatmapsetSchema

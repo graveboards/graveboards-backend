@@ -1,6 +1,5 @@
-import logging
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import AsyncGenerator, AsyncIterator
 
 from sqlalchemy import event
 from sqlalchemy.sql import select
@@ -11,12 +10,12 @@ from sqlalchemy.exc import SQLAlchemyError
 from asyncpg.connection import Connection
 
 from app.config import POSTGRESQL_CONFIGURATION
+from app.logging import get_logger
 from .crud import CRUD
 from . import events
 
 DATABASE_URI = URL.create(**POSTGRESQL_CONFIGURATION)
-
-logger = logging.getLogger("database")
+logger = get_logger(__name__)
 
 
 class PostgresqlDB(CRUD):
@@ -44,10 +43,10 @@ class PostgresqlDB(CRUD):
             await self.close()
 
     @asynccontextmanager
-    async def session(self) -> AsyncGenerator[AsyncSession, None]:
+    async def session(self, autoflush: bool = True) -> AsyncIterator[AsyncSession]:
         new_async_session = self.async_session_generator()
 
-        async with new_async_session() as session_:
+        async with new_async_session(autoflush=autoflush) as session_:
             try:
                 yield session_
                 await session_.commit()

@@ -1,10 +1,9 @@
-import logging
-
 from sqlalchemy import event
 from sqlalchemy.engine.base import Connection
 from sqlalchemy.sql import select, insert, update, func
 from sqlalchemy.orm.mapper import Mapper
 
+from app.logging import get_logger
 from app.database.models import BeatmapsetSnapshot, BeatmapsetListing, Request
 
 __all__ = [
@@ -12,7 +11,7 @@ __all__ = [
     "beatmapset_snapshot_after_insert"
 ]
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @event.listens_for(BeatmapsetSnapshot, "before_insert")

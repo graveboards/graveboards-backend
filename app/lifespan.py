@@ -1,5 +1,4 @@
 import asyncio
-import logging
 from contextlib import asynccontextmanager
 
 from connexion.middleware import ConnexionMiddleware
@@ -7,7 +6,7 @@ from connexion.middleware import ConnexionMiddleware
 from .redis import RedisClient
 from .database import PostgresqlDB
 from .config import DISABLE_SECURITY
-from .logging import setup_logging
+from .logging import setup_logging, get_logger
 from .daemon import ServiceDaemon
 from .daemon.services import ServiceClass
 from .setup import setup
@@ -16,7 +15,7 @@ from .setup import setup
 @asynccontextmanager
 async def lifespan(app: ConnexionMiddleware):
     setup_logging()
-    logger = logging.getLogger(__name__)
+    logger = get_logger(__name__)
     logger.info("Start of app lifespan")
 
     await setup()

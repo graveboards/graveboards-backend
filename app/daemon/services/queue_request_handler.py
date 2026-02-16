@@ -1,19 +1,19 @@
 import asyncio
-import logging
 
 from httpx import ConnectTimeout
 
-from app.beatmap_manager import BeatmapManager
+from app.beatmaps import BeatmapManager
 from app.database.models import Request
 from app.database.schemas import RequestSchema
 from app.redis import ChannelName, Namespace
 from app.redis.models import QueueRequestHandlerTask
 from app.utils import aware_utcnow
+from app.logging import get_logger
 from .decorators import auto_retry
 from .enums import RuntimeTaskName
 from .service import Service
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class QueueRequestHandler(Service):

@@ -1,18 +1,17 @@
-import logging
-
 from sqlalchemy import event
 from sqlalchemy.engine.base import Connection
 from sqlalchemy.sql import insert
 from sqlalchemy.orm.mapper import Mapper
 
-from app.database.models import User, ScoreFetcherTask, ProfileFetcherTask
+from app.logging import get_logger
 from app.redis import redis_connection, ChannelName
+from app.database.models import User, ScoreFetcherTask, ProfileFetcherTask
 
 __all__ = [
     "user_after_insert"
 ]
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @event.listens_for(User, "after_insert")
