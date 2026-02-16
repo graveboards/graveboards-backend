@@ -1,0 +1,10 @@
+BeatmapTagSorting:
+    name: sorting
+    description:
+        $ref: "../../../schemas/sorting/description.yaml#/SortingDescription"
+    in: query
+    required: false
+    style: form
+    explode: true
+    schema:
+        $ref: "../../../schemas/sorting/beatmap_tag.yaml#/BeatmapTagSorting"

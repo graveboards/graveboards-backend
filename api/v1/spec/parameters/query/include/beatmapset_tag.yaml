@@ -1,0 +1,10 @@
+BeatmapsetTagInclude:
+    name: include
+    description:
+        $ref: "../../../schemas/include/description.yaml#/IncludeDescription"
+    in: query
+    required: false
+    style: deepObject
+    explode: true
+    schema:
+        $ref: "../../../schemas/include/beatmapset_tag.yaml#/BeatmapsetTagInclude"

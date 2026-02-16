@@ -109,7 +109,7 @@ BeatmapSnapshotInclude:
             description:
                 $ref: "./description.yaml#/NestedIncludeDescription"
             oneOf:
-                - $ref: "#/BeatmapTagInclude"
+                - $ref: "./beatmap_tag.yaml#/BeatmapTagInclude"
                 - type: boolean
                   default: false
         leaderboard:
@@ -132,29 +132,3 @@ BeatmapSnapshotIncludeShallow:
     # References to this are to be automatically populated on runtime
     title: BeatmapSnapshotIncludeShallow
     type: object
-
-BeatmapTagInclude:
-    title: BeatmapTagInclude
-    description:
-        $ref: "./description.yaml#/IncludeDescription"
-    type: object
-    additionalProperties: false
-    properties:
-        id:
-            type: boolean
-            default: false
-        name:
-            type: boolean
-            default: true
-        ruleset_id:
-            type: boolean
-            default: false
-        description:
-            type: boolean
-            default: false
-        created_at:
-            type: boolean
-            default: false
-        updated_at:
-            type: boolean
-            default: false

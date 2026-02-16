@@ -1,0 +1,13 @@
+BeatmapsetTagInclude:
+    title: BeatmapsetTagInclude
+    description:
+        $ref: "./description.yaml#/IncludeDescription"
+    type: object
+    additionalProperties: false
+    properties:
+        id:
+            type: boolean
+            default: false
+        name:
+            type: boolean
+            default: true

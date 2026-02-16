@@ -188,3 +188,36 @@ BeatmapListings:
                 $ref: "../responses/200/beatmap_snapshot.yaml#/BeatmapSnapshotResults"
             400:
                 $ref: "../responses/400/generic.yaml#/BadRequest"
+
+BeatmapTags:
+    get:
+        summary: Returns a list of beatmap tags
+        tags:
+            - Beatmaps
+        parameters:
+            - $ref: "../parameters/query/sorting/beatmap_tag.yaml#/BeatmapTagSorting"
+            - $ref: "../parameters/query/include/beatmap_tag.yaml#/BeatmapTagInclude"
+            - $ref: "../parameters/query/limit.yaml#/Limit"
+            - $ref: "../parameters/query/offset.yaml#/Offset"
+            - $ref: "../parameters/query/reversed.yaml#/Reversed"
+        responses:
+            200:
+                $ref: "../responses/200/beatmap_tag.yaml#/BeatmapTagResults"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+
+BeatmapTagById:
+    get:
+        summary: Returns the specified beatmap tag
+        tags:
+            - Beatmaps
+        parameters:
+            - $ref: "../parameters/path/beatmap.yaml#/BeatmapTagId"
+            - $ref: "../parameters/query/include/beatmap_tag.yaml#/BeatmapTagInclude"
+        responses:
+            200:
+                $ref: "../responses/200/beatmap_tag.yaml#/BeatmapTagResults"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"

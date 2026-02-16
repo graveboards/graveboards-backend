@@ -1,0 +1,27 @@
+BeatmapTagSorting:
+    title: BeatmapTagSorting
+    description:
+        $ref: "./description.yaml#/SortingDescription"
+    type: array
+    items:
+        type: object
+        additionalProperties: false
+        properties:
+            field:
+                $ref: "#/BeatmapTagSortingField"
+            order:
+                $ref: "./sorting_order.yaml#/SortingOrder"
+        required:
+            - field
+
+BeatmapTagSortingField:
+    description: >
+        ### Enum of supported field identifiers for sorting
+    type: string
+    enum:
+        - BeatmapTag.id
+        - BeatmapTag.name
+        - BeatmapTag.ruleset_id
+        - BeatmapTag.description
+        - BeatmapTag.created_at
+        - BeatmapTag.updated_at

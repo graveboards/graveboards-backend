@@ -124,7 +124,7 @@ BeatmapsetSnapshot:
         beatmapset_tags:
             type: array
             items:
-                $ref: "#/BeatmapsetTag"
+                $ref: "./beatmapset_tag.yaml#/BeatmapsetTag"
         user_profile:
             $ref: "./profile.yaml#/Profile"
 
@@ -133,12 +133,3 @@ BeatmapsetSnapshotShallow:
     # References to this are to be automatically populated on runtime
     title: BeatmapsetSnapshotShallow
     type: object
-
-BeatmapsetTag:
-    title: BeatmapsetTag
-    type: object
-    properties:
-        id:
-            type: integer
-        name:
-            type: string

@@ -19,3 +19,11 @@ BeatmapSnapshotNumber:
     schema:
         type: string
         pattern: "^(latest|-?[1-9][0-9]*)$"
+
+BeatmapTagId:
+    name: beatmap_tag_id
+    description: Beatmap tag ID
+    in: path
+    required: true
+    schema:
+        type: integer

@@ -75,7 +75,7 @@ BeatmapSnapshotInclude:
     $ref: "./include/beatmap_snapshot.yaml#/BeatmapSnapshotInclude"
 
 BeatmapTagInclude:
-    $ref: "./include/beatmap_snapshot.yaml#/BeatmapTagInclude"
+    $ref: "./include/beatmap_tag.yaml#/BeatmapTagInclude"
 
 BeatmapsetInclude:
     $ref: "./include/beatmapset.yaml#/BeatmapsetInclude"
@@ -84,7 +84,7 @@ BeatmapsetSnapshotInclude:
     $ref: "./include/beatmapset_snapshot.yaml#/BeatmapsetSnapshotInclude"
 
 BeatmapsetTagInclude:
-    $ref: "./include/beatmapset_snapshot.yaml#/BeatmapsetTagInclude"
+    $ref: "./include/beatmapset_tag.yaml#/BeatmapsetTagInclude"
 
 LeaderboardInclude:
     $ref: "./include/leaderboard.yaml#/LeaderboardInclude"

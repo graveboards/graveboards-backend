@@ -12,7 +12,7 @@ from app.database.schemas import BeatmapsetSchema
 from app.redis import RedisClient
 from app.security import role_authorization
 from app.database.enums import RoleName
-from . import listings, snapshots
+from . import listings, snapshots, tags
 
 
 @api_query(ModelClass.BEATMAPSET, many=True)

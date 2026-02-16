@@ -7,10 +7,9 @@ SearchInclude:
         oneOf:
             - $ref: "./profile.yaml#/ProfileInclude"
             - $ref: "./beatmap_snapshot.yaml#/BeatmapSnapshotInclude"
-            - $ref: "./beatmap_snapshot.yaml#/BeatmapTagInclude"
             - $ref: "./beatmapset_snapshot.yaml#/BeatmapsetSnapshotInclude"
-            - $ref: "./beatmapset_snapshot.yaml#/BeatmapsetTagInclude"
             - $ref: "./queue.yaml#/QueueInclude"
+            - $ref: "./request.yaml#/RequestInclude"
             - type: boolean
     example:
         field1: true

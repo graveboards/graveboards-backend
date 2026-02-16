@@ -1,0 +1,19 @@
+BeatmapTag:
+    title: BeatmapTag
+    type: object
+    properties:
+        id:
+            type: integer
+        name:
+            type: string
+        description:
+            type: string
+        ruleset_id:
+            type: integer
+            nullable: true
+        created_at:
+            type: string
+            format: date-time
+        updated_at:
+            type: string
+            format: date-time

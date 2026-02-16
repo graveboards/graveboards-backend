@@ -7,7 +7,7 @@ from app.spec import get_include_schema
 from app.database import PostgresqlDB
 from app.database.models import Beatmap, ModelClass
 from app.database.schemas import BeatmapSchema
-from . import snapshots
+from . import snapshots, listings, tags
 
 
 @api_query(ModelClass.BEATMAP, many=True)

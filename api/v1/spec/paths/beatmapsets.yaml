@@ -118,3 +118,36 @@ BeatmapsetListings:
                 $ref: "../responses/200/beatmapset_snapshot.yaml#/BeatmapsetSnapshotResults"
             400:
                 $ref: "../responses/400/generic.yaml#/BadRequest"
+
+BeatmapsetTags:
+    get:
+        summary: Returns a list of beatmapset tags
+        tags:
+            - Beatmapsets
+        parameters:
+            - $ref: "../parameters/query/sorting/beatmapset_tag.yaml#/BeatmapsetTagSorting"
+            - $ref: "../parameters/query/include/beatmapset_tag.yaml#/BeatmapsetTagInclude"
+            - $ref: "../parameters/query/limit.yaml#/Limit"
+            - $ref: "../parameters/query/offset.yaml#/Offset"
+            - $ref: "../parameters/query/reversed.yaml#/Reversed"
+        responses:
+            200:
+                $ref: "../responses/200/beatmapset_tag.yaml#/BeatmapsetTagResults"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+
+BeatmapsetTagById:
+    get:
+        summary: Returns the specified beatmapset tag
+        tags:
+            - Beatmapsets
+        parameters:
+            - $ref: "../parameters/path/beatmapset.yaml#/BeatmapsetTagId"
+            - $ref: "../parameters/query/include/beatmapset_tag.yaml#/BeatmapsetTagInclude"
+        responses:
+            200:
+                $ref: "../responses/200/beatmapset_tag.yaml#/BeatmapsetTagResults"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"

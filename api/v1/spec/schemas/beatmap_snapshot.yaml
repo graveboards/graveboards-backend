@@ -81,7 +81,7 @@ BeatmapSnapshot:
         beatmap_tags:
             type: array
             items:
-                $ref: "#/BeatmapTag"
+                $ref: "./beatmap_tag.yaml#/BeatmapTag"
         leaderboard:
             $ref: "./leaderboard.yaml#/LeaderboardShallow"
         owner_profiles:
@@ -94,17 +94,3 @@ BeatmapSnapshotShallow:
     # References to this are to be automatically populated on runtime
     title: BeatmapSnapshotShallow
     type: object
-
-BeatmapTag:
-    title: BeatmapTag
-    type: object
-    properties:
-        id:
-            type: integer
-        name:
-            type: string
-        description:
-            type: string
-        ruleset_id:
-            type: integer
-            nullable: true

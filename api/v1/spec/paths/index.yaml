@@ -44,6 +44,12 @@
 /beatmaps/listings:
     $ref: "./beatmaps.yaml#/BeatmapListings"
 
+/beatmaps/tags:
+    $ref: "./beatmaps.yaml#/BeatmapTags"
+
+/beatmaps/tags/{beatmap_tag_id}:
+    $ref: "./beatmaps.yaml#/BeatmapTagById"
+
 # Beatmapsets
 /beatmapsets:
     $ref: "./beatmapsets.yaml#/Beatmapsets"
@@ -62,6 +68,12 @@
 
 /beatmapsets/listings:
     $ref: "./beatmapsets.yaml#/BeatmapsetListings"
+
+/beatmapsets/tags:
+    $ref: "./beatmapsets.yaml#/BeatmapsetTags"
+
+/beatmapsets/tags/{beatmapset_tag_id}:
+    $ref: "./beatmapsets.yaml#/BeatmapsetTagById"
 
 # Scores
 /scores:
