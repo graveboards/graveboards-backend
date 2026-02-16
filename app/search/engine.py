@@ -36,6 +36,7 @@ from app.database.ctes.queue.sorting import queue_sorting_cte_factory
 from app.database.ctes.queue.filtering import queue_filtering_cte_factory
 from app.database.utils import get_filter_condition
 from app.spec import get_include_schema
+from app.text import align_center
 from .datastructures import ConditionValue, SearchTermsSchema, SortingSchema, FiltersSchema
 from .enums import Scope, SearchableFieldCategory, FilterOperator, ModelField, CATEGORY_NAMES
 from .mappings import SCOPE_MODEL_MAPPING, SCOPE_SCHEMA_MAPPING, SCOPE_OPTIONS_MAPPING
@@ -510,17 +511,12 @@ class SearchEngine:
         ]
 
     def print_score_debug(self, result: Sequence[RowMapping]) -> None:
-        def center_text(text: str, width: int, fill: str = "=") -> str:
-            left = fill * int(width / 2 - len(text) / 2)
-            right = fill * (int(width / 2 - len(text) / 2) + (1 if width % 2 else 0))
-            return f"{left}{text}{right}"
-
         model_name = self.model_class.value.__name__
         max_term_length = max(len(term) for term in self.search_terms.terms)
         row_width = 68 + max_term_length
 
         print("=" * row_width)
-        print(center_text("SEARCH RESULTS", row_width))
+        print(align_center("SEARCH RESULTS", row_width))
         print("=" * row_width)
 
         for i, row in enumerate(result, start=1):
@@ -528,7 +524,7 @@ class SearchEngine:
             total_score = row["total_score"]
 
             row_header = f"Result {i} | {model_name} ID: {model.id} | Total Score: {total_score}"
-            print(center_text(row_header, row_width, "-"))
+            print(align_center(row_header, row_width, "-"))
 
             for category in CATEGORY_NAMES:
                 if (key := f"{category}_score_details") in row and (score_details := row[key]):

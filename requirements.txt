@@ -23,11 +23,14 @@ inflection==0.5.1
 Jinja2==3.1.6
 jsonschema==4.26.0
 jsonschema-specifications==2025.9.1
+markdown-it-py==4.0.0
 MarkupSafe==3.0.3
+mdurl==0.1.2
 numpy==2.4.2
 pycparser==3.0
 pydantic==2.12.5
 pydantic_core==2.41.5
+Pygments==2.19.2
 PyJWT==2.11.0
 python-dotenv==1.2.1
 python-multipart==0.0.22
@@ -35,6 +38,7 @@ PyYAML==6.0.3
 redis==7.1.0
 referencing==0.37.0
 requests==2.32.5
+rich==14.3.2
 rpds-py==0.30.0
 SQLAlchemy==2.0.46
 starlette==0.52.1

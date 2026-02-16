@@ -11,7 +11,8 @@ COPY . .
 COPY entrypoint.sh /app
 COPY wait-for-it.sh /app
 
-RUN sed -i 's/\r$//' /app/entrypoint.sh /app/wait-for-it.sh && \
+RUN mkdir -p /app/instance/logs && \
+    sed -i 's/\r$//' /app/entrypoint.sh /app/wait-for-it.sh && \
     chmod +x /app/entrypoint.sh /app/wait-for-it.sh
 
 ENTRYPOINT ["/app/entrypoint.sh"]

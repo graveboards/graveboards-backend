@@ -1,19 +1,21 @@
 #!/bin/sh
 set -e
 
-mkdir -p /app/instance/logs
-
-if [ "$ENV" = "dev" ]; then
+if [ "$ENV" = "dev" ] && [ "$QUIET" != "true" ]; then
   echo "Running in development mode..."
-  DB_HOST="graveboards-postgresql-dev"
-  REDIS_HOST="graveboards-redis-dev"
-else
+elif [ "$QUIET" != "true" ]; then
   echo "Running in production mode..."
-  DB_HOST="graveboards-postgresql-prod"
-  REDIS_HOST="graveboards-redis-prod"
 fi
 
-./wait-for-it.sh $DB_HOST:5432 --timeout=30 --strict
-./wait-for-it.sh $REDIS_HOST:6379 --timeout=30 --strict
+wait_for() {
+  if [ "$QUIET" = "true" ]; then
+    ./wait-for-it.sh "$1" --timeout=30 --strict > /dev/null 2>&1
+  else
+    ./wait-for-it.sh "$1" --timeout=30 --strict
+  fi
+}
+
+wait_for "$POSTGRESQL_HOST:$POSTGRESQL_PORT"
+wait_for "$REDIS_HOST:$REDIS_PORT"
 
 exec "$@"

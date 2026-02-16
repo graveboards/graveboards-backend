@@ -1,7 +1,6 @@
 # Graveboards Backend
 
 ## Quickstart (Docker)
-
 1. Close the repository: `git clone https://github.com/graveboards/graveboards-backend.git && cd graveboards`
 2. Ensure docker is installed and running on your system
 3. Launch the run script
@@ -15,6 +14,8 @@
 ### Prerequisites
 
 - Python 3.14+
+- PostgreSQL
+- Redis
 
 ### Setup
 
@@ -36,7 +37,7 @@
     ```
 
 4. Create the `.env` file:
-    ```
+    ```shell
     ENV=dev
     DEBUG=true
     DISABLE_SECURITY=false
@@ -63,9 +64,41 @@
 
 5. Run the application:
     ```bash
-    # Development mode:
      python main.py  # On Windows use: py main.py
     ```
+
+## Management (docker)
+
+A Makefile has been provided for quick and convenient maintenance:
+
+```text
+-------------Docker-------------
+make up        - Start all services
+make down      - Stop all services
+make build     - Rebuild project image
+make logs      - View backend logs
+make shell     - Open backend shell
+make wipe      - Destroy database volumes
+------------Database------------
+make status    - View database status
+make reset     - Reset database
+make seed      - Seed database
+make fresh     - Reset & seed database      
+```
+
+## Management (non-docker)
+
+Utilize the `manage.py` script to perform maintenance:
+
+```text
+usage: manage.py [-h] {status,reset,seed} ...
+
+positional arguments:
+  {status,reset,seed}
+    status             View database status
+    reset              Reset database
+    seed               Seed database
+```
 
 ## Documentation
 

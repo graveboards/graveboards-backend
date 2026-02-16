@@ -1,3 +1,15 @@
+x-app-base: &app-base
+    image: graveboards-backend:latest
+    env_file:
+        - ./.env.docker
+    volumes:
+        - ./instance:/app/instance
+    networks:
+        - web
+    depends_on:
+        - graveboards-postgresql-dev
+        - graveboards-redis-dev
+
 services:
     graveboards-redis-dev:
         image: docker.io/bitnami/redis:latest
@@ -20,24 +32,23 @@ services:
             - web
 
     graveboards-backend:
+        <<: *app-base
         container_name: graveboards-backend
-        ports:
-            - "8000:8000"
-        env_file:
-            - ./.env.docker
-        environment:
-            ENV: "dev"
-        volumes:
-            - type: bind
-              source: ./instance
-              target: /app/instance
         build:
             context: .
-        networks:
-            - web
-        depends_on:
-            - graveboards-postgresql-dev
-            - graveboards-redis-dev
+        ports:
+            - "8000:8000"
+        environment:
+            ENV: "dev"
+
+    graveboards-manage:
+        <<: *app-base
+        container_name: graveboards-manage
+        environment:
+            ENV: "dev"
+            QUIET: "true"
+        profiles:
+            - tools
 
 volumes:
     graveboards-redis-dev-data:
