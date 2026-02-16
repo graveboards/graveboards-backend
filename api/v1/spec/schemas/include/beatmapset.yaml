@@ -11,6 +11,13 @@ BeatmapsetInclude:
         user_id:
             type: boolean
             default: true
+        beatmaps:
+            description:
+                $ref: "./description.yaml#/NestedIncludeDescription"
+            oneOf:
+                - $ref: "./beatmap.yaml#/BeatmapIncludeShallow"
+                - type: boolean
+                  default: false
         snapshots:
             description:
                 $ref: "./description.yaml#/NestedIncludeDescription"
@@ -18,3 +25,9 @@ BeatmapsetInclude:
                 - $ref: "./beatmapset_snapshot.yaml#/BeatmapsetSnapshotInclude"
                 - type: boolean
                   default: false
+
+BeatmapsetIncludeShallow:
+    # Infinite recursion protection placeholder
+    # References to this are to be automatically populated on runtime
+    title: BeatmapsetIncludeShallow
+    type: object

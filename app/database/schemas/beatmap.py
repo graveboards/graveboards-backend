@@ -6,6 +6,7 @@ from pydantic.config import ConfigDict
 from .base_model_extra import BaseModelExtra
 
 if TYPE_CHECKING:
+    from .beatmapset import BeatmapsetSchema
     from .beatmap_snapshot import BeatmapSnapshotSchema
 
 
@@ -15,4 +16,5 @@ class BeatmapSchema(BaseModel, BaseModelExtra):
     id: Optional[int] = None
     beatmapset_id: int
 
+    beatmapset: Optional[BeatmapsetSchema] = None
     snapshots: list["BeatmapSnapshotSchema"] = []

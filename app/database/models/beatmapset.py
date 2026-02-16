@@ -11,6 +11,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from .base import Base
 
 if TYPE_CHECKING:
+    from .beatmap import Beatmap
     from .beatmapset_snapshot import BeatmapsetSnapshot
 
 
@@ -20,7 +21,15 @@ class Beatmapset(Base):
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
 
     # Relationships
-    snapshots: Mapped[list["BeatmapsetSnapshot"]] = relationship("BeatmapsetSnapshot", lazy=True)
+    beatmaps: Mapped[list["Beatmap"]] = relationship(
+        "Beatmap",
+        back_populates="beatmapset",
+        lazy=True
+    )
+    snapshots: Mapped[list["BeatmapsetSnapshot"]] = relationship(
+        "BeatmapsetSnapshot",
+        lazy=True
+    )
 
     # Hybrid annotations
     num_snapshots: Mapped[int]

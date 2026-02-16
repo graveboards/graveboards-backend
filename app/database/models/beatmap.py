@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy.sql import select
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import Integer
@@ -7,7 +9,10 @@ from sqlalchemy.orm.base import Mapped
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from .base import Base
-from .beatmap_snapshot import BeatmapSnapshot
+
+if TYPE_CHECKING:
+    from .beatmapset import Beatmapset
+    from .beatmap_snapshot import BeatmapSnapshot
 
 
 class Beatmap(Base):
@@ -16,7 +21,15 @@ class Beatmap(Base):
     beatmapset_id: Mapped[int] = mapped_column(Integer, ForeignKey("beatmapsets.id"), nullable=False)
 
     # Relationships
-    snapshots: Mapped[list["BeatmapSnapshot"]] = relationship("BeatmapSnapshot", lazy=True)
+    beatmapset: Mapped[list["Beatmapset"]] = relationship(
+        "Beatmapset",
+        back_populates="beatmaps",
+        lazy=True
+    )
+    snapshots: Mapped[list["BeatmapSnapshot"]] = relationship(
+        "BeatmapSnapshot",
+        lazy=True
+    )
 
     # Hybrid annotations
     num_snapshots: Mapped[int]

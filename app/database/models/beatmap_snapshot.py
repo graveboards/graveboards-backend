@@ -10,6 +10,7 @@ from sqlalchemy.dialects.postgresql.json import JSONB
 from app.utils import aware_utcnow
 from .base import Base
 from .associations import beatmap_snapshot_beatmapset_snapshot_association, beatmap_snapshot_owner_association, beatmap_tag_beatmap_snapshot_association
+from .types import AwareDateTime
 
 if TYPE_CHECKING:
     from .beatmapset_snapshot import BeatmapsetSnapshot
@@ -24,7 +25,7 @@ class BeatmapSnapshot(Base):
     beatmap_id: Mapped[int] = mapped_column(Integer, ForeignKey("beatmaps.id"), nullable=False)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
     snapshot_number: Mapped[int] = mapped_column(Integer, nullable=False)
-    snapshot_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=aware_utcnow)
+    snapshot_date: Mapped[datetime] = mapped_column(AwareDateTime(), default=aware_utcnow)
 
     # osu! API datastructure
     accuracy: Mapped[float] = mapped_column(Float, nullable=False)
@@ -36,13 +37,13 @@ class BeatmapSnapshot(Base):
     count_sliders: Mapped[int] = mapped_column(Integer, nullable=False)
     count_spinners: Mapped[int] = mapped_column(Integer, nullable=False)
     cs: Mapped[float] = mapped_column(Float, nullable=False)
-    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(AwareDateTime())
     difficulty_rating: Mapped[float] = mapped_column(Float, nullable=False)
     drain: Mapped[float] = mapped_column(Float, nullable=False)
     failtimes: Mapped[dict[str, Optional[list[int]]]] = mapped_column(JSONB, nullable=False)
     hit_length: Mapped[int] = mapped_column(Integer, nullable=False)
     is_scoreable: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    last_updated: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    last_updated: Mapped[datetime] = mapped_column(AwareDateTime(), nullable=False)
     max_combo: Mapped[int] = mapped_column(Integer, nullable=False)
     mode: Mapped[str] = mapped_column(String, nullable=False)
     mode_int: Mapped[int] = mapped_column(Integer, nullable=False)

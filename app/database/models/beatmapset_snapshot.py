@@ -13,6 +13,7 @@ from sqlalchemy.dialects.postgresql.array import ARRAY
 from app.utils import aware_utcnow
 from .base import Base
 from .associations import beatmap_snapshot_beatmapset_snapshot_association, beatmapset_tag_beatmapset_snapshot_association
+from .types import AwareDateTime
 
 if TYPE_CHECKING:
     from .beatmap_snapshot import BeatmapSnapshot
@@ -26,7 +27,7 @@ class BeatmapsetSnapshot(Base):
     beatmapset_id: Mapped[int] = mapped_column(Integer, ForeignKey("beatmapsets.id"), nullable=False)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
     snapshot_number: Mapped[int] = mapped_column(Integer, nullable=False)
-    snapshot_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=aware_utcnow)
+    snapshot_date: Mapped[datetime] = mapped_column(AwareDateTime(), default=aware_utcnow)
     checksum: Mapped[str] = mapped_column(String(32), unique=True, nullable=False)
     verified: Mapped[bool] = mapped_column(Boolean, default=False)
 
@@ -39,7 +40,7 @@ class BeatmapsetSnapshot(Base):
     covers: Mapped[Optional[dict[str, str]]] = mapped_column(JSONB)
     creator: Mapped[str] = mapped_column(String, nullable=False)
     current_nominations: Mapped[list[dict[str, Union[int, list[str], bool]]]] = mapped_column(JSONB, nullable=False)
-    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(AwareDateTime())
     description: Mapped[dict[str, str]] = mapped_column(JSONB, nullable=False)
     discussion_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False)
     discussion_locked: Mapped[bool] = mapped_column(Boolean, nullable=False)
@@ -48,7 +49,7 @@ class BeatmapsetSnapshot(Base):
     hype: Mapped[Optional[dict[str, int]]] = mapped_column(JSONB)
     is_scoreable: Mapped[bool] = mapped_column(Boolean, nullable=False)
     language: Mapped[Optional[dict[str, Union[int, str]]]] = mapped_column(JSONB)
-    last_updated: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    last_updated: Mapped[datetime] = mapped_column(AwareDateTime(), nullable=False)
     legacy_thread_url: Mapped[Optional[str]] = mapped_column(String)
     nominations_summary: Mapped[dict[str, Union[int, list[str], dict[str, int], None]]] = mapped_column(JSONB, nullable=False)
     nsfw: Mapped[bool] = mapped_column(Boolean, nullable=False)
@@ -57,14 +58,14 @@ class BeatmapsetSnapshot(Base):
     play_count: Mapped[int] = mapped_column(Integer, nullable=False)
     preview_url: Mapped[str] = mapped_column(String, nullable=False)
     ranked: Mapped[int] = mapped_column(Integer, nullable=False)
-    ranked_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    ranked_date: Mapped[Optional[datetime]] = mapped_column(AwareDateTime())
     rating: Mapped[float] = mapped_column(Float, nullable=False)
     ratings: Mapped[list[int]] = mapped_column(ARRAY(Integer), nullable=False)
     source: Mapped[str] = mapped_column(String, nullable=False)
     spotlight: Mapped[bool] = mapped_column(Boolean, nullable=False)
     status: Mapped[str] = mapped_column(String, nullable=False)
     storyboard: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    submitted_date: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    submitted_date: Mapped[datetime] = mapped_column(AwareDateTime())
     tags: Mapped[str] = mapped_column(String, nullable=False)
     title: Mapped[str] = mapped_column(String, nullable=False)
     title_unicode: Mapped[str] = mapped_column(String, nullable=False)

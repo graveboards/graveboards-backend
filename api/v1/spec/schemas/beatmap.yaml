@@ -6,7 +6,15 @@ Beatmap:
             type: integer
         beatmapset_id:
             type: integer
+        beatmapset:
+            $ref: "./beatmapset.yaml#/BeatmapsetShallow"
         snapshots:
             type: array
             items:
                 $ref: "./beatmap_snapshot.yaml#/BeatmapSnapshot"
+
+BeatmapShallow:
+    # Infinite recursion protection placeholder
+    # References to this are to be automatically populated on runtime
+    title: BeatmapShallow
+    type: object

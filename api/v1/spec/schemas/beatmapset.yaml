@@ -6,6 +6,10 @@ Beatmapset:
             type: integer
         user_id:
             type: integer
+        beatmaps:
+            type: array
+            items:
+                $ref: "./beatmap.yaml#/BeatmapShallow"
         snapshots:
             type: array
             items:
@@ -20,3 +24,9 @@ BeatmapsetCreate:
             type: integer
     required:
         - id
+
+BeatmapsetShallow:
+    # Infinite recursion protection placeholder
+    # References to this are to be automatically populated on runtime
+    title: BeatmapsetShallow
+    type: object

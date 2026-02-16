@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy.sql.schema import ForeignKey
+from sqlalchemy.sql.schema import ForeignKey, UniqueConstraint
 from sqlalchemy.sql.sqltypes import Integer, DateTime, Text, Boolean
 from sqlalchemy.orm import relationship, mapped_column
 from sqlalchemy.orm.base import Mapped
@@ -47,4 +47,8 @@ class Request(Base):
         back_populates="requests",
         overlaps="requests",
         lazy=True
+    )
+
+    __table_args__ = (
+        UniqueConstraint("beatmapset_id", "queue_id", name="_beatmapset_and_queue_uc"),
     )
