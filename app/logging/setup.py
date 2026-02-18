@@ -19,6 +19,24 @@ def setup_logging(
     level_overrides: dict[str, int] = None,
     no_debug: bool = False
 ):
+    """Initialize application logging from YAML configuration.
+
+    Args:
+        global_level:
+            Optional log level applied to all configured loggers.
+        enabled_loggers:
+            If provided, only these loggers retain handlers.
+        disabled_loggers:
+            Explicitly disable specific loggers.
+        level_overrides:
+            Per-logger level mapping.
+        no_debug:
+            If True, changes DEBUG-level loggers to INFO.
+
+    Side Effects:
+        - Creates log directory if missing.
+        - Configures the global logging system.
+    """
     with open(CONFIG_PATH, "rt") as f:
         config = yaml.safe_load(f)
 
