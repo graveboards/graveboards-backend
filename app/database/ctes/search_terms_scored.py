@@ -16,9 +16,29 @@ from .utils import extract_cte_target_scalar
 
 
 def search_terms_scored_ctes_factory(
-        scope: Scope,
-        search_terms: SearchTermsSchema
+    scope: Scope,
+    search_terms: SearchTermsSchema
 ) -> dict[SearchableFieldCategory, CTE]:
+    """Build per-category scoring CTEs for all search terms.
+
+    Generates weighted match statements for each (category, field, term, pattern)
+    combination, unions them, applies field grouping rules, and aggregates scores per
+    entity.
+
+    Each resulting CTE contains:
+      - id: entity ID
+      - score: summed weighted score
+      - score_details: JSONB breakdown of contributing matches
+
+    Args:
+        scope:
+            The search scope determining searchable categories.
+        search_terms:
+            Parsed search configuration including weights and multipliers.
+
+    Returns:
+        A mapping of category to aggregated scoring CTE.
+    """
     category_score_stmts: dict[SearchableFieldCategory, list[Select]] = defaultdict(list)
 
     for category, score_stmt in _generate_term_score_stmts(scope, search_terms):
@@ -52,9 +72,25 @@ def search_terms_scored_ctes_factory(
 
 
 def _generate_term_score_stmts(
-        scope: Scope,
-        search_terms: SearchTermsSchema
+    scope: Scope,
+    search_terms: SearchTermsSchema
 ) -> Generator[tuple[SearchableFieldCategory, Select], None, None]:
+    """Yield weighted scoring SELECT statements for each term and field.
+
+    For every searchable field in scope, generates pattern-based match queries using
+    configured multipliers. For each (entity, term), only the highest scoring pattern is
+    retained via window ranking.
+
+    Args:
+        scope:
+            The search scope determining searchable categories.
+        search_terms:
+            Parsed search configuration with weights and multipliers.
+
+    Yields:
+        Tuples of (category, SELECT) where each SELECT returns id, field, term, pattern,
+        score.
+    """
     categories = SCOPE_CATEGORIES_MAPPING[scope]
     terms = search_terms.terms
     multipliers = search_terms.pattern_multipliers
@@ -123,10 +159,29 @@ def _generate_term_score_stmts(
 
 
 def _process_field_groups(
-        base_query: CompoundSelect,
-        category: SearchableFieldCategory,
-        field_groups_config: dict[SearchableFieldCategory, dict[str, set[str]]]
+    base_query: CompoundSelect,
+    category: SearchableFieldCategory,
+    field_groups_config: dict[SearchableFieldCategory, dict[str, set[str]]]
 ) -> CompoundSelect:
+    """Apply field grouping rules to a unioned scoring query.
+
+    Fields configured in the same group are collapsed into a synthetic group field. For
+    grouped fields, the maximum score per (id, term, pattern) is retained to prevent
+    overcounting similar fields.
+
+    Non-grouped fields pass through unchanged.
+
+    Args:
+        base_query:
+            Unioned scoring query across fields.
+        category:
+            The searchable category being processed.
+        field_groups_config:
+            Mapping of category to grouping definitions.
+
+    Returns:
+        A ``CompoundSelect`` with grouping logic applied.
+    """
     if not (field_groups := field_groups_config.get(category, {})):
         return base_query
 
@@ -163,6 +218,32 @@ def aggregated_child_scores_to_parent_cte_factory(
     mapping_parent_fk: str,
     cte_name: str
 ) -> CTE:
+    """Aggregate scored child entities into parent-level scores.
+
+    Expands the child CTE's JSON ``score_details``, maps each child to its parent
+    via the provided association table, and re-ranks entries to retain the
+    highest score per (parent, field, term).
+
+    The final CTE returns:
+      - id: parent entity ID
+      - score: summed score across best child matches
+      - score_details: JSONB breakdown of retained contributions
+
+    Args:
+        child_score_cte:
+            CTE containing child-level scores.
+        mapping_table:
+            Association table relating child to parent.
+        mapping_child_fk:
+            Column name referencing the child ID.
+        mapping_parent_fk:
+            Column name referencing the parent ID.
+        cte_name:
+            Name for the resulting CTE.
+
+    Returns:
+        A parent-level aggregated scoring CTE.
+    """
     exploded = (
         select(
             getattr(mapping_table.c, mapping_parent_fk).label("id"),

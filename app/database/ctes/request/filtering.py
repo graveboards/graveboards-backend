@@ -8,7 +8,24 @@ from app.database.models import BeatmapsetSnapshot, Request, Queue, BeatmapSnaps
 from app.search.enums import Scope
 
 
-def request_filtering_cte_factory(scope: Scope, target: InstrumentedAttribute | QueryableAttribute[Any]) -> CTE:
+def request_filtering_cte_factory(
+    scope: Scope,
+    target: InstrumentedAttribute | QueryableAttribute[Any]
+) -> CTE:
+    """Build a request-derived filtering CTE for the given scope.
+
+    Projects request-level attributes into the active scope, joining through beatmapset
+    relationships when necessary.
+
+    Args:
+        scope:
+            The search scope determining the root entity.
+        target:
+            Request attribute to expose for filtering.
+
+    Returns:
+        A CTE yielding (id, target) for request-based filtering.
+    """
     field_name = target.key
 
     match scope:

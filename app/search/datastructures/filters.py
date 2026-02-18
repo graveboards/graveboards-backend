@@ -20,6 +20,7 @@ from .conditions import Conditions, ConditionValue
 
 
 class FieldFilters(RootModel):
+    """Field-level filtering conditions for a category."""
     root: dict[str, Conditions]
 
     def __iter__(self) -> Iterator[str]:
@@ -35,6 +36,7 @@ class FieldFilters(RootModel):
         return self.root.items()
 
     def validate_against_sqlalchemy_model(self, category: SearchableFieldCategory):
+        """Validate filter fields and values against the SQLAlchemy model."""
         column_map = category.model_class.value.__annotations__
 
         for field_name, conditions in self.root.items():
@@ -58,6 +60,7 @@ class FieldFilters(RootModel):
                         raise FieldValidationError(category.value, field_name, value, *e.target_types) from e
 
     def serialize(self, category: SearchableFieldCategory) -> bytes:
+        """Serialize category-specific filters."""
         length = struct.pack("!B", len(self))
         chunks = []
 
@@ -71,6 +74,7 @@ class FieldFilters(RootModel):
 
     @classmethod
     def deserialize(cls, data: bytes, offset: int = 0) -> tuple["FieldFilters", int]:
+        """Deserialize field filters from binary format."""
         length = struct.unpack_from("!B", data, offset=offset)[0]
         offset += 1
         values = {}
@@ -86,6 +90,11 @@ class FieldFilters(RootModel):
 
 
 class FiltersSchema(BaseModel):
+    """Structured filtering configuration across categories.
+
+    Validates filter fields against SQLAlchemy models and supports compact binary
+    serialization.
+    """
     profile: Optional[FieldFilters] = None
     beatmap: Optional[FieldFilters] = None
     beatmapset: Optional[FieldFilters] = None
@@ -95,6 +104,7 @@ class FiltersSchema(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def validate_filters(cls, filters: dict[str, Any]) -> dict[str, Any]:
+        """Validate category and field-level filter definitions."""
         validated_filters = {}
 
         for category_name, field_filters in filters.items():
@@ -141,6 +151,7 @@ class FiltersSchema(BaseModel):
         return validated_filters
 
     def serialize(self) -> bytes:
+        """Serialize all enabled category filters."""
         presence = 0
         chunks = []
 
@@ -170,6 +181,7 @@ class FiltersSchema(BaseModel):
 
     @classmethod
     def deserialize(cls, data: bytes, offset: int = 0) -> tuple["FiltersSchema", int]:
+        """Deserialize filtering configuration from binary format."""
         presence = struct.unpack_from("!B", data, offset=offset)[0]
         offset += 1
 

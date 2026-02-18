@@ -8,7 +8,24 @@ from app.database.models import BeatmapsetSnapshot, Request, Queue, BeatmapSnaps
 from app.search.enums import Scope
 
 
-def profile_filtering_cte_factory(scope: Scope, target: InstrumentedAttribute | QueryableAttribute[Any]) -> CTE:
+def profile_filtering_cte_factory(
+    scope: Scope,
+    target: InstrumentedAttribute | QueryableAttribute[Any]
+) -> CTE:
+    """Build a profile-derived filtering CTE for the given scope.
+
+    Projects user/profile attributes into the active scope by joining through the
+    appropriate ownership relationship (e.g., owner, creator, queue user).
+
+    Args:
+        scope:
+            The search scope determining the root entity.
+        target:
+            Profile attribute to expose for filtering.
+
+    Returns:
+        A CTE yielding (id, target) for profile-based filtering.
+    """
     field_name = target.key
 
     match scope:

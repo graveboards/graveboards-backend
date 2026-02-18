@@ -20,6 +20,10 @@ SCOPE_MODEL_MAPPING = {
     Scope.QUEUES: ModelClass.QUEUE,
     Scope.REQUESTS: ModelClass.REQUEST
 }
+"""Maps search ``Scope`` to its underlying ``ModelClass``.
+
+Defines which root model a query operates against.
+"""
 
 SCOPE_SCHEMA_MAPPING = {
     Scope.BEATMAPS: BeatmapSnapshotSchema,
@@ -28,6 +32,10 @@ SCOPE_SCHEMA_MAPPING = {
     Scope.QUEUES: QueueSchema,
     Scope.REQUESTS: RequestSchema
 }
+"""Maps search ``Scope`` to its response serialization schema.
+
+Determines how results are serialized for each scope.
+"""
 
 SCOPE_OPTIONS_MAPPING = {
     Scope.BEATMAPS: (
@@ -98,6 +106,11 @@ SCOPE_OPTIONS_MAPPING = {
         )
     )
 }
+"""Eager-loading strategy per ``Scope``.
+
+Defines ORM loading behavior (selectinload/joinedload/noload) to optimize query 
+execution and prevent N+1 issues.
+"""
 
 SCOPE_CATEGORIES_MAPPING = {
     Scope.BEATMAPS: [SearchableFieldCategory.BEATMAP, SearchableFieldCategory.BEATMAPSET],
@@ -106,6 +119,10 @@ SCOPE_CATEGORIES_MAPPING = {
     Scope.QUEUES: [SearchableFieldCategory.BEATMAP, SearchableFieldCategory.BEATMAPSET, SearchableFieldCategory.QUEUE, SearchableFieldCategory.REQUEST],
     Scope.REQUESTS: [SearchableFieldCategory.BEATMAP, SearchableFieldCategory.BEATMAPSET, SearchableFieldCategory.REQUEST]
 }
+"""Allowed ``SearchableFieldCategory`` values per ``Scope``.
+
+Constrains which field categories may be used in a given query scope.
+"""
 
 CATEGORY_MODEL_FIELDS_MAPPING = {
     SearchableFieldCategory.BEATMAP: {
@@ -129,6 +146,10 @@ CATEGORY_MODEL_FIELDS_MAPPING = {
         "comment": ModelField.REQUEST__COMMENT
     }
 }
+"""Public field name to `ModelField` mapping per category.
+
+Acts as an allow-list for searchable fields within each category.
+"""
 
 CATEGORY_FIELD_GROUPS_MAPPING = {
     SearchableFieldCategory.BEATMAPSET: {
@@ -136,3 +157,7 @@ CATEGORY_FIELD_GROUPS_MAPPING = {
         "artist": {"artist", "artist_unicode"}
     }
 }
+"""Logical field group definitions per category.
+
+Allows grouped searching across multiple related fields.
+"""

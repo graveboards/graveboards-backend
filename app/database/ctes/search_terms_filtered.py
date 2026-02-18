@@ -20,7 +20,28 @@ from .utils import extract_cte_target_scalar
 TermName: TypeAlias = str
 
 
-def search_terms_filtered_cte_factory(scope: Scope, search_terms: SearchTermsSchema) -> CTE:
+def search_terms_filtered_cte_factory(
+    scope: Scope,
+    search_terms: SearchTermsSchema
+) -> CTE:
+    """Build a CTE that filters entities by requiring all search terms to match.
+
+    For the given scope, generates per-term subqueries across all configured searchable
+    categories and fields. Each term produces a CTE of matching entity IDs (via
+    LIKE/ILIKE depending on case sensitivity).
+
+    The resulting CTE returns distinct IDs that appear in every term CTE (logical AND
+    across terms, logical OR across fields/categories per term).
+
+    Args:
+        scope:
+            The search ``Scope``.
+        search_terms:
+            Structured search term configuration.
+
+    Returns:
+        A CTE yielding distinct entity IDs that satisfy all terms.
+    """
     categories = SCOPE_CATEGORIES_MAPPING[scope]
     terms = search_terms.terms
     field_weights = search_terms.field_weights
@@ -70,7 +91,33 @@ def search_terms_filtered_cte_factory(scope: Scope, search_terms: SearchTermsSch
     return filter_cte
 
 
-def get_filter_stmt(scope: Scope, category: SearchableFieldCategory, target: Union[InstrumentedAttribute, HashableCTE], like_operator: Literal["like", "ilike"], pattern: str) -> Select:
+def get_filter_stmt(
+    scope: Scope,
+    category: SearchableFieldCategory,
+    target: Union[InstrumentedAttribute, HashableCTE],
+    like_operator: Literal["like", "ilike"],
+    pattern: str
+) -> Select:
+    """Construct a scope-aware SELECT statement for filtering by a pattern.
+
+    Produces a DISTINCT ID query for the given scope and searchable category, joining
+    through required relationships when the target field lives on a related model.
+
+    Args:
+        scope:
+            The active search scope determining the root entity.
+        category:
+            The searchable field category being queried.
+        target:
+            The SQLAlchemy attribute or extracted CTE scalar to filter on.
+        like_operator:
+            SQL operator to use (``"like"`` or ``"ilike"``).
+        pattern:
+            The wildcard pattern to apply.
+
+    Returns:
+        A SELECT statement yielding distinct root entity IDs that match.
+    """
     match scope:
         case Scope.BEATMAPS:
             match category:

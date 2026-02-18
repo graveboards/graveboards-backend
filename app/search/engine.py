@@ -53,6 +53,19 @@ ResultsType = Union[
 
 
 class SearchEngine:
+    """Composable, scope-aware search engine for relational models.
+
+    Builds a SQLAlchemy query dynamically based on:
+        - Full-text search terms
+        - Category-aware sorting
+        - Structured filtering
+
+    The engine operates on a specific ``Scope``, which determines the underlying model,
+    schema, joins, and scoring behavior.
+
+    The composed query is constructed at initialization time and executed with
+    pagination via the ``search`` method.
+    """
     def __init__(
         self,
         scope: Scope,
@@ -60,6 +73,25 @@ class SearchEngine:
         sorting: SortingSchema | list[dict[str, str]] = None,
         filters: FiltersSchema | dict[str, dict[str, Union[dict[str, ConditionValue], ConditionValue, bool, None]]] = None
     ):
+        """Initialize the search engine and compose the base query.
+
+        Args:
+            scope:
+                Target search scope that determines model and schema behavior.
+            search_terms:
+                Structured search input as a ``SearchTermsSchema``, raw dictionary, or
+                ``None``
+            sorting:
+                Structured sorting configuration as a ``SortingSchema``, raw list of
+                definitions, or ``None``.
+            filters:
+                Structured filtering configuration as a ``FiltersSchema``, raw
+                dictionary, or ``None``
+
+        Raises:
+            TypeError:
+                If any argument is provided with an invalid type.
+        """
         self.scope = scope
         self.model_class = SCOPE_MODEL_MAPPING[scope]
         self.schema_class = SCOPE_SCHEMA_MAPPING[scope]
@@ -95,6 +127,25 @@ class SearchEngine:
         offset: int = DEFAULT_OFFSET,
         debug: bool = False
     ) -> ResultsType:
+        """Execute the composed search query with pagination.
+
+        Args:
+            session:
+                Active SQLAlchemy ``AsyncSession``.
+            limit:
+                Maximum number of results to return.
+            offset:
+                Offset for pagination.
+            debug:
+                If True, prints detailed scoring breakdown.
+
+        Returns:
+            ResultsType: List of ORM model instances for the given scope.
+
+        Raises:
+            TypeError:
+                If ``limit`` or ``offset`` are not non-negative integers.
+        """
         if not isinstance(limit, int) or not isinstance(offset, int) or limit < 0 or offset < 0:
             raise TypeError("Both limit and offset must be a positive integer")
 
@@ -108,6 +159,11 @@ class SearchEngine:
         return [row_mapping[self.model_class.value.__name__] for row_mapping in row_mappings]
 
     def _compose_query(self):
+        """Construct the base query and apply search components.
+
+        Initializes the scope-specific SELECT statement and conditionally
+        applies search terms, sorting, and filtering in that order.
+        """
         match self.scope:
             case Scope.BEATMAPS:
                 self.query = (
@@ -143,6 +199,12 @@ class SearchEngine:
             self._apply_filters()
 
     def _apply_search_terms(self):
+        """Apply full-text search scoring and ranking logic.
+
+        Builds filtering and scoring CTEs per searchable category, aggregates child
+        scores where required, computes total score, and orders results by descending
+        relevance.
+        """
         filter_cte = search_terms_filtered_cte_factory(self.scope, self.search_terms)
         category_score_ctes = search_terms_scored_ctes_factory(self.scope, self.search_terms)
 
@@ -395,6 +457,13 @@ class SearchEngine:
                 )
 
     def _apply_sorting(self):
+        """Apply structured sorting rules to the query.
+
+        Generates category-aware sorting CTEs when required and composes SQL ORDER BY
+        clauses accordingly.
+
+        Explicit sorting overrides default relevance ordering.
+        """
         def apply_clause():
             sorting_clauses.append(sorting_option.order.sort_func(target))
 
@@ -439,6 +508,11 @@ class SearchEngine:
             self.query = self.query.order_by(None).order_by(*sorting_clauses)
 
     def _apply_filters(self):
+        """Apply structured filtering conditions to the query.
+
+        Translates filter schema definitions into SQL expressions, optionally using
+        category-specific CTEs for aggregated fields.
+        """
         def clause_generator(is_aggregated: bool = False) -> Generator[BinaryExpression, None, None]:
             for op_str, value in conditions.model_dump(exclude_unset=True, by_alias=True).items():
                 filter_operator = FilterOperator.from_name(op_str)
@@ -496,6 +570,17 @@ class SearchEngine:
             self.query = self.query.where(and_(*filtering_clauses))
 
     def dump(self, page: ResultsType, include: dict = None) -> list[dict[str, Any]]:
+        """Serialize ORM results using the scope schema.
+
+        Args:
+            page:
+                List of ORM model instances.
+            include:
+                Optional Pydantic include specification.
+
+        Returns:
+            List of serialized dictionaries matching the scope schema.
+        """
         if not page:
             return []
 
@@ -511,6 +596,15 @@ class SearchEngine:
         ]
 
     def print_score_debug(self, result: Sequence[RowMapping]) -> None:
+        """Print a formatted breakdown of search scoring details.
+
+        Displays per-category match contributions and term-level scoring information for
+        debugging relevance behavior.
+
+        Args:
+            result:
+                Raw SQLAlchemy row mappings from execution.
+        """
         model_name = self.model_class.value.__name__
         max_term_length = max(len(term) for term in self.search_terms.terms)
         row_width = 68 + max_term_length
@@ -542,4 +636,8 @@ class SearchEngine:
 
     @property
     def compiled_query(self) -> str:
+        """Return the fully compiled SQL query as a string.
+
+        Uses PostgreSQL dialect with literal binds for debugging/inspection purposes.
+        """
         return str(self.query.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}))

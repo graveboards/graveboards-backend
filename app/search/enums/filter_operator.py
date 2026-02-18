@@ -5,6 +5,14 @@ from sqlalchemy.sql import operators
 
 
 class FilterOperator(Enum):
+    """Supported filter operators for query conditions.
+
+    Each operator maps:
+        - A public string identifier (e.g., ``"eq"``)
+        - A callable that applies the operation to a database column
+
+    This decouples external query syntax from ORM-specific logic.
+    """
     EQ = "eq", staticmethod(operators.eq)
     NEQ = "neq", staticmethod(operators.ne)
     GT = "gt", staticmethod(operators.gt)
@@ -23,6 +31,19 @@ class FilterOperator(Enum):
 
     @classmethod
     def from_name(cls, name: str) -> "FilterOperator":
+        """Resolve an operator from its string name.
+
+        Args:
+            name:
+                Case-insensitive operator name.
+
+        Returns:
+            Matching `FilterOperator`.
+
+        Raises:
+            ValueError:
+                If no matching operator exists.
+        """
         for member_name, member in cls.__members__.items():
             if name.upper() == member_name:
                 return member

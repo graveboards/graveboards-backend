@@ -13,6 +13,10 @@ PatternName = Literal["exact", "prefix", "suffix", "substring"]
 
 
 class PatternMultipliers(BaseModel):
+    """Scoring multipliers for different text match patterns.
+
+    Supports exact, prefix, suffix, and substring matches.
+    """
     model_config = ConfigDict(extra="forbid")
 
     exact: Optional[Annotated[int, Field(ge=-128, le=127)]] = 5
@@ -22,12 +26,14 @@ class PatternMultipliers(BaseModel):
 
     @model_validator(mode="after")
     def at_least_one_not_null(self):
+        """Ensure at least one multiplier is enabled."""
         if any(getattr(self, field) is not None for field in self.model_fields):
             return self
 
         raise AllValuesNullError("pattern_multipliers")
 
     def get_patterns(self, term: str) -> list[tuple[PatternName, str, Optional[int]]]:
+        """Generate SQL pattern variants for a term."""
         return [
             ("exact", term, self.exact),
             ("prefix", f"{term}%", self.prefix),
@@ -36,6 +42,7 @@ class PatternMultipliers(BaseModel):
         ]
 
     def serialize(self) -> bytes:
+        """Serialize non-default multipliers using bit flags."""
         presence = 0
         null_presence = 0
         chunks = []
@@ -57,6 +64,7 @@ class PatternMultipliers(BaseModel):
 
     @classmethod
     def deserialize(cls, data: bytes, offset: int = 0) -> tuple["PatternMultipliers", int]:
+        """Deserialize multipliers from binary format."""
         presence, null_presence = struct.unpack_from("!BB", data, offset)
         offset += 2
         values = {}

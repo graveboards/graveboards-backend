@@ -10,7 +10,28 @@ from app.database.models import BeatmapsetSnapshot, Request, Queue, BeatmapSnaps
 from app.search.enums import Scope
 
 
-def bm_ss_filtering_cte_factory(scope: Scope, target: InstrumentedAttribute | QueryableAttribute[Any], aggregated_conditions: Iterable[BinaryExpression] = None) -> CTE:
+def bm_ss_filtering_cte_factory(
+    scope: Scope,
+    target: InstrumentedAttribute | QueryableAttribute[Any],
+    aggregated_conditions: Iterable[BinaryExpression] = None
+) -> CTE:
+    """Build a beatmap-derived filtering CTE for the given scope.
+
+    Projects a beatmap-level field into the active scope. For parent scopes
+    (beatmapsets, queues, requests), values are aggregated and filtered via HAVING
+    clauses to support cross-beatmap conditions.
+
+    Args:
+        scope:
+            The search scope determining the root entity.
+        target:
+            BeatmapSnapshot attribute to expose for filtering.
+        aggregated_conditions:
+            Optional HAVING conditions for aggregated scopes.
+
+    Returns:
+        A CTE yielding (id, target) for downstream filtering logic.
+    """
     if scope is not Scope.BEATMAPS and aggregated_conditions is None:
         raise ValueError(f"Scope {scope} must be supplied with aggregated_conditions")
 

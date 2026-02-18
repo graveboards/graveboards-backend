@@ -7,7 +7,26 @@ from app.search.enums import Scope
 from app.search.datastructures import SortingOption
 
 
-def bm_ss_sorting_cte_factory(scope: Scope, sorting_option: SortingOption) -> CTE:
+def bm_ss_sorting_cte_factory(
+    scope: Scope,
+    sorting_option: SortingOption
+) -> CTE:
+    """Build a beatmap-derived ranking CTE for the given scope.
+
+    Projects a beatmap-level sorting field into the active scope and assigns a
+    deterministic row_number per root entity using the configured sort order.
+
+    For parent scopes, joins traverse beatmap relationships before ranking.
+
+    Args:
+        scope:
+            The search scope determining the root entity.
+        sorting_option:
+            Sorting configuration including field and order.
+
+    Returns:
+        A CTE yielding (id, target, rank) for downstream ordering.
+    """
     target = sorting_option.field.target
     sorting_order = sorting_option.order
     field_name = target.key

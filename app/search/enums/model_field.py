@@ -9,6 +9,19 @@ from .field_category import SearchableFieldCategory
 
 
 class ModelField(Enum):
+    """Enumeration of all searchable model fields.
+
+    Each member defines:
+        - Public field name
+        - Associated ``ModelClass``
+        - ORM target attribute
+        - Optional external alias
+
+    This enum forms the canonical mapping between external query fields and internal
+    database representations.
+
+    Prevents arbitrary field access and enforces a strict, allow-listed query surface.
+    """
     PROFILE__AVATAR_URL = "avatar_url", ModelClass.PROFILE, Profile.avatar_url
     PROFILE__USERNAME = "username", ModelClass.PROFILE, Profile.username
     PROFILE__COUNTRY_CODE = "country_code", ModelClass.PROFILE, Profile.country_code
@@ -124,6 +137,23 @@ class ModelField(Enum):
 
     @classmethod
     def from_category_field(cls, category_name: str, field_name: str) -> "ModelField":
+        """Resolve a model field from category and field name.
+
+        Supports alias resolution where defined.
+
+        Args:
+            category_name:
+                External category identifier.
+            field_name:
+                External field name or alias.
+
+        Returns:
+            Matching ``ModelField``.
+
+        Raises:
+            ValueError:
+                If no matching field exists.
+        """
         for category in SearchableFieldCategory.__members__.values():
             if category_name == category.value:
                 for member in cls.__members__.values():
@@ -142,7 +172,12 @@ class ModelField(Enum):
 
     @property
     def is_aliased(self) -> bool:
+        """Indicate whether the field exposes an external alias."""
         return self.alias is not None
 
 
 ModelFieldId = IntEnum("ModelFieldId", {field.name: auto() for field in ModelField})
+"""Compact integer identifiers for `ModelField`.
+
+Used during binary serialization to encode fields efficiently and deterministically.
+"""

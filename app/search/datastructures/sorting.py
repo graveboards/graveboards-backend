@@ -8,6 +8,7 @@ from app.search.enums import ModelField, SortingOrder, ModelFieldId, SortingOrde
 
 
 class SortingOption(BaseModel):
+    """Represents a single field-based sorting rule."""
     field: ModelField
     order: Optional[SortingOrder] = SortingOrder.ASCENDING
 
@@ -20,12 +21,14 @@ class SortingOption(BaseModel):
         return order.value
 
     def serialize(self) -> bytes:
+        """Serialize the sorting option into compact binary form."""
         field_id = ModelFieldId[self.field.name]
         order_id = SortingOrderId[self.order.name]
         return struct.pack("!BB", field_id, order_id)
 
     @classmethod
     def deserialize(cls, data: bytes, offset: int = 0) -> tuple["SortingOption", int]:
+        """Deserialize a sorting option from binary format."""
         field_id, order_id = struct.unpack_from("!BB", data, offset=offset)
         offset += 2
         field = ModelField[ModelFieldId(field_id).name]
@@ -34,6 +37,7 @@ class SortingOption(BaseModel):
 
 
 class SortingSchema(RootModel):
+    """Collection of ordered sorting options."""
     root: list[SortingOption]
 
     def __iter__(self) -> Iterator[SortingOption]:
@@ -43,6 +47,7 @@ class SortingSchema(RootModel):
         return len(self.root)
 
     def serialize(self) -> bytes:
+        """Serialize all sorting options."""
         option_count = struct.pack("!B", len(self))
         chunks = []
 
@@ -53,6 +58,7 @@ class SortingSchema(RootModel):
 
     @classmethod
     def deserialize(cls, data: bytes, offset: int = 0) -> tuple["SortingSchema", int]:
+        """Deserialize sorting options from binary format."""
         option_count = struct.unpack_from("!B", data, offset=offset)[0]
         offset += 1
         options = []

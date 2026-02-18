@@ -14,12 +14,22 @@ from app.search.mappings import SCOPE_CATEGORIES_MAPPING
 
 
 class BeatmapFieldWeights(BaseModel):
+    """Defines per-field scoring weights for the corresponding category.
+
+    Weights must be within signed byte range (``-128`` to ``127``). ``None`` disables
+    scoring for the field.
+    """
     model_config = ConfigDict(extra="forbid")
 
     version: Optional[Annotated[int, Field(ge=-128, le=127)]] = 2
 
 
 class BeatmapsetFieldWeights(BaseModel):
+    """Defines per-field scoring weights for the corresponding category.
+
+    Weights must be within signed byte range (``-128`` to ``127``). ``None`` disables
+    scoring for the field.
+    """
     model_config = ConfigDict(extra="forbid")
 
     title: Optional[Annotated[int, Field(ge=-128, le=127)]] = 5
@@ -33,6 +43,11 @@ class BeatmapsetFieldWeights(BaseModel):
 
 
 class QueueFieldWeights(BaseModel):
+    """Defines per-field scoring weights for the corresponding category.
+
+    Weights must be within signed byte range (``-128`` to ``127``). ``None`` disables
+    scoring for the field.
+    """
     model_config = ConfigDict(extra="forbid")
 
     name: Optional[Annotated[int, Field(ge=-128, le=127)]] = 6
@@ -40,12 +55,22 @@ class QueueFieldWeights(BaseModel):
 
 
 class RequestFieldWeights(BaseModel):
+    """Defines per-field scoring weights for the corresponding category.
+
+    Weights must be within signed byte range (``-128`` to ``127``). ``None`` disables
+    scoring for the field.
+    """
     model_config = ConfigDict(extra="forbid")
 
     comment: Optional[Annotated[int, Field(ge=-128, le=127)]] = 0
 
 
 class FieldWeights(BaseModel):
+    """Aggregated field weighting configuration across categories.
+
+    Controls per-field contribution to relevance scoring. Supports compact bitmask-based
+    serialization.
+    """
     model_config = ConfigDict(extra="forbid")
 
     beatmap: BeatmapFieldWeights = Field(default_factory=BeatmapFieldWeights)
@@ -56,6 +81,7 @@ class FieldWeights(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def handle_disable_shorthand(cls, values):
+        """Expand shorthand ``None`` category values into explicit null fields."""
         for key, value in values.items():
             if value is None and key in cls.model_fields:
                 model_class = cls.model_fields[key].annotation
@@ -64,6 +90,12 @@ class FieldWeights(BaseModel):
         return values
 
     def validate_against_scope(self, scope: Scope):
+        """Ensure at least one applicable field weight is enabled for the scope.
+
+        Raises:
+            AllValuesNullError:
+                If no effective weights are configured.
+        """
         for category_name, model in self:
             category = SearchableFieldCategory.from_name(category_name)
 
@@ -76,6 +108,7 @@ class FieldWeights(BaseModel):
         raise AllValuesNullError("field_weights")
 
     def serialize(self, scope: Scope) -> bytes:
+        """Serialize non-default field weights using bit flags."""
         presence = 0
         null_presence = 0
         chunks = []
@@ -107,6 +140,7 @@ class FieldWeights(BaseModel):
 
     @classmethod
     def deserialize(cls, data: bytes, offset: int = 0) -> tuple["FieldWeights", int]:
+        """Deserialize field weights from binary format."""
         presence, null_presence = struct.unpack_from("!HH", data, offset)
         offset += 4
         values = defaultdict(dict)

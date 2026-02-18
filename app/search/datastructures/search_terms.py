@@ -12,6 +12,10 @@ from .pattern_multipliers import PatternMultipliers
 
 
 class SearchTermsSchema(BaseModel):
+    """Defines full-text search terms and scoring configuration.
+
+    Includes pattern multipliers and per-field weighting rules.
+    """
     terms: list[Annotated[str, Field(max_length=255)]]
     case_sensitive: bool = False
     pattern_multipliers: PatternMultipliers = PatternMultipliers()
@@ -23,6 +27,10 @@ class SearchTermsSchema(BaseModel):
     @field_validator("terms", mode="before")
     @classmethod
     def validate_terms(cls, raw_terms: Union[str, list[str]]) -> list[str]:
+        """Normalize and validate search terms input.
+
+        Accepts either a raw search string or list of strings.
+        """
         if isinstance(raw_terms, str):
             try:
                 parsed = shlex.split(raw_terms)
@@ -41,9 +49,11 @@ class SearchTermsSchema(BaseModel):
         return terms
 
     def validate_against_scope(self, scope: Scope):
+        """Ensure field weights are valid for the given scope."""
         self.field_weights.validate_against_scope(scope)
 
     def serialize(self, scope: Scope) -> bytes:
+        """Serialize search terms and scoring configuration."""
         encoded_terms = [t.encode() for t in self.terms]
         term_count = struct.pack("!B", len(encoded_terms))
         term_data = b"".join(struct.pack("!B", len(t)) + t for t in encoded_terms)
@@ -61,6 +71,7 @@ class SearchTermsSchema(BaseModel):
 
     @classmethod
     def deserialize(cls, data: bytes, offset: int = 0) -> tuple["SearchTermsSchema", int]:
+        """Deserialize search terms from binary format."""
         term_count = struct.unpack_from("!B", data, offset=offset)[0]
         offset += 1
         terms = []

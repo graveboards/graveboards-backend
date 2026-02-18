@@ -7,7 +7,26 @@ from app.search.enums import Scope
 from app.search.datastructures import SortingOption
 
 
-def queue_sorting_cte_factory(scope: Scope, sorting_option: SortingOption) -> CTE:
+def queue_sorting_cte_factory(
+    scope: Scope,
+    sorting_option: SortingOption
+) -> CTE:
+    """Build a queue-derived ranking CTE for the given scope.
+
+    Projects a queue-level sorting field into the active scope and assigns a row_number
+    per root entity using the configured ordering strategy.
+
+    Relationship joins ensure correct ranking semantics across scopes.
+
+    Args:
+        scope:
+            The search scope determining the root entity.
+        sorting_option:
+            Sorting configuration including field and order.
+
+    Returns:
+        A CTE yielding (id, target, rank) for queue-based ordering.
+    """
     target = sorting_option.field.target
     sorting_order = sorting_option.order
     field_name = sorting_option.field.field_name
