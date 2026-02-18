@@ -1,145 +1,79 @@
-import asyncio
-import heapq
-from datetime import datetime, timedelta, timezone
+from typing import ClassVar
 
 from httpx import ConnectTimeout
 
-from app.osu_api import OsuAPIClient, ScoreType
 from app.database.models import ScoreFetcherTask, Leaderboard
 from app.redis import ChannelName
-from app.utils import aware_utcnow
-from app.logging import get_logger
+from app.logging import get_logger, Logger
 from .decorators import auto_retry
-from .enums import RuntimeTaskName
-from .service import Service
-
-SCORE_FETCHER_INTERVAL_HOURS = 24
-PENDING_TASK_TIMEOUT_SECONDS = 60
-logger = get_logger(__name__)
+from .service import ScheduledFetcherService
+from .service.job import JobLoadInstruction
 
 
-class ScoreFetcher(Service):
-    def __init__(self, *args):
-        super().__init__(*args)
+class ScoreFetcher(ScheduledFetcherService):
+    """Periodically fetch and post osu! user scores to leaderboards.
 
-        self.pubsub = self.rc.pubsub()
-        self.oac = OsuAPIClient(self.rc)
+    This service schedules score fetch jobs, listens for new jobs, and collects recent
+    scores from the osu! API for each registered user.
 
-        self.task_heap: list[tuple[datetime, int]] = []
-        self.tasks: dict[int, asyncio.Task] = {}
-        self.task_condition = asyncio.Condition()
+    If a user with score fetching disabled decides to enable it at any time, a database
+    event is triggered to send a fetch job that will be picked up by this service.
 
-    async def run(self):
-        await self.preload_tasks()
-        self.runtime_tasks[RuntimeTaskName.SCHEDULER_TASK] = asyncio.create_task(self.task_scheduler(), name="Scheduler Task")
-        self.runtime_tasks[RuntimeTaskName.SUBSCRIBER_TASK] = asyncio.create_task(self.task_subscriber(), name="Subscriber Task")
-        await asyncio.gather(*self.runtime_tasks.values())
+    The scores will get posted to leaderboards if the beatmaps they were performed on
+    have eligible leaderboards in the database.
+    """
 
-    async def task_scheduler(self):
-        while True:
-            async with self.task_condition:
-                while not self.task_heap:
-                    await self.task_condition.wait()
+    LOGGER: ClassVar[Logger] = get_logger(__name__, prefix="ScoreFetcher")
+    RECORD_MODEL: ClassVar[type[ScoreFetcherTask]] = ScoreFetcherTask
+    CHANNEL: ClassVar[str] = ChannelName.SCORE_FETCHER_TASKS
+    JOB_NAME: ClassVar[str] = "score-fetch"
 
-                execution_time, task_id = heapq.heappop(self.task_heap)
+    async def _preload_jobs(self):
+        """Load enabled score fetch jobs into the scheduler at startup."""
+        records = await self._db.get_many(ScoreFetcherTask, enabled=True)
+        num_loaded = 0
 
-            scheduled_task = asyncio.create_task(self.handle_task(execution_time, task_id))
-            self.tasks[task_id] = scheduled_task
-            scheduled_task.add_done_callback(self.handle_task_error)
-
-    async def task_subscriber(self):
-        await self.pubsub.subscribe(ChannelName.SCORE_FETCHER_TASKS.value)
-
-        async for message in self.pubsub.listen():
-            if not message["type"] == "message" or not message["channel"] == ChannelName.SCORE_FETCHER_TASKS.value:
+        for record in records:
+            if not record.enabled:
                 continue
 
-            task_id = int(message["data"])
+            instruction = JobLoadInstruction(last_execution=record.last_fetch)
+            await self._load_job(record.id, instruction=instruction)
+            num_loaded += 1
 
-            try:
-                task = await self.get_pending_task(task_id)
-            except TimeoutError:
-                logger.warning(f"Task {task_id} was not found in the database after waiting")
-                continue
-
-            if task.enabled:
-                async with self.task_condition:
-                    self.load_task(task)
-                    self.task_condition.notify()
-
-                info = {"id": task.id, "user_id": task.user_id}
-                logger.debug(f"Loaded task: {info}")
-
-    async def preload_tasks(self):
-        tasks = await self.db.get_many(ScoreFetcherTask, enabled=True)
-
-        for task in tasks:
-            self.load_task(task)
-
-        logger.debug(f"Preloaded tasks: ({len(tasks)})")
-
-    def load_task(self, task: ScoreFetcherTask):
-        if not task.enabled:
-            return
-
-        if task.last_fetch is not None:
-            execution_time = task.last_fetch.replace(tzinfo=timezone.utc) + timedelta(hours=SCORE_FETCHER_INTERVAL_HOURS)
-        else:
-            execution_time = aware_utcnow()
-
-        heapq.heappush(self.task_heap, (execution_time, task.id))
-
-    async def get_pending_task(self, task_id: int, timeout: int = PENDING_TASK_TIMEOUT_SECONDS) -> ScoreFetcherTask:
-        start_time = aware_utcnow()
-
-        while (aware_utcnow() - start_time).total_seconds() < timeout:
-            task = await self.db.get(ScoreFetcherTask, id=task_id)
-
-            if task:
-                return task
-
-            await asyncio.sleep(0.5)
-
-        raise TimeoutError
-
-    async def handle_task(self, execution_time: datetime, task_id: int):
-        delay = (execution_time - aware_utcnow()).total_seconds()
-
-        if delay > 0:
-            await asyncio.sleep(delay)
-
-        await self.fetch_scores(task_id)
-        fetch_time = aware_utcnow()
-        next_execution_time = fetch_time + timedelta(hours=SCORE_FETCHER_INTERVAL_HOURS)
-        await self.db.update(ScoreFetcherTask, task_id, last_fetch=fetch_time)
-
-        async with self.task_condition:
-            heapq.heappush(self.task_heap, (next_execution_time, task_id))
-            self.task_condition.notify()
-
-    @staticmethod
-    def handle_task_error(task: asyncio.Task):
-        try:
-            task.result()
-        except Exception as e:
-            logger.error(f"Task '{task.get_name()}' failed with error: {e}", exc_info=True)
+        self.logger.debug(f"Preloaded jobs: ({num_loaded})")
 
     @auto_retry(retry_exceptions=(ConnectTimeout,))
-    async def fetch_scores(self, task_id: int):
-        if not (task := await self.db.get(ScoreFetcherTask, id=task_id)):
-            raise ValueError(f"Task with ID '{task_id}' not found")
+    async def _execute_job(self, record_id: int) -> None:
+        """Fetch and synchronize a user's recent osu! scores.
 
-        user_id = task.user_id
-        scores = await self.oac.get_user_scores(user_id, ScoreType.RECENT)
+        Retrieves score data from the osu! API, checks each score and whether the
+        beatmaps the scores were performed on have active leaderboards, then creates and
+        posts new Score records accordingly.
 
-        for score in scores:
-            if not await self.score_is_submittable(score):
-                continue
+        Args:
+            record_id:
+                ID of the score fetcher record.
 
-            # _, status_code = await api.scores.post(score, user=PRIMARY_ADMIN_USER_ID)  # TODO: Work on scores
-            #
-            # if status_code == 201:
-            #     logger.debug(f"Added score {score["id"]} for user {user_id}")
+        Raises:
+            ValueError: If the record does not exist.
+        """
+        pass  # TODO: Work on scores
+        # if not (task := await self._db.get(ScoreFetcherTask, id=task_id)):
+        #     raise ValueError(f"Task with ID '{task_id}' not found")
+        #
+        # user_id = task.user_id
+        # await self._respect_rate_limit()
+        # scores = await self._oac.get_user_scores(user_id, ScoreType.RECENT)
+        #
+        # for score in scores:
+        #     if not await self._score_is_submittable(score):
+        #         continue
+        #
+        #     _, status_code = await api.scores.post(score, user=PRIMARY_ADMIN_USER_ID)
+        #
+        #     if status_code == 201:
+        #         logger.debug(f"Added score {score["id"]} for user {user_id}")
 
-    async def score_is_submittable(self, score: dict) -> bool:
-        return bool(await self.db.get(Leaderboard, beatmap_id=score["beatmap"]["id"]))
+    async def _score_is_submittable(self, score: dict) -> bool:
+        return bool(await self._db.get(Leaderboard, beatmap_id=score["beatmap"]["id"]))

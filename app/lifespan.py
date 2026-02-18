@@ -7,8 +7,7 @@ from .redis import RedisClient
 from .database import PostgresqlDB
 from .config import DISABLE_SECURITY
 from .logging import setup_logging, get_logger
-from .daemon import ServiceDaemon
-from .daemon.services import ServiceClass
+from .daemon import Daemon
 from .setup import setup
 
 
@@ -26,20 +25,18 @@ async def lifespan(app: ConnexionMiddleware):
     rc = RedisClient()
     db = PostgresqlDB()
 
-    daemon_app = ServiceDaemon(rc, db)
-    daemon_app.register_service(ServiceClass.PROFILE_FETCHER)
-    daemon_app.register_service(ServiceClass.QUEUE_REQUEST_HANDLER)
-    # daemon_app.register_service(ServiceClass.SCORE_FETCHER)  # Disabled until database is set up to handle lazer scores, need further clarity overall
-
-    daemon_task = asyncio.create_task(daemon_app.run(), name="Daemon Task")
+    daemon_app = Daemon(rc, db)
+    await daemon_app.start()
+    daemon_task = asyncio.create_task(daemon_app.serve_forever(), name="Daemon Task")
 
     try:
         yield {"rc": rc, "db": db}
     finally:
-        await daemon_app.shutdown()
-        daemon_task.cancel()
+        await daemon_app.stop()
+        await daemon_app.wait_stopped()
 
         try:
+            daemon_task.cancel()
             await daemon_task
         except asyncio.CancelledError:
             pass

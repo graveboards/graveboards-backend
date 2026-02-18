@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 
 __all__ = [
     "ChannelName",
@@ -6,13 +6,13 @@ __all__ = [
 ]
 
 
-class ChannelName(Enum):
+class ChannelName(StrEnum):
     SCORE_FETCHER_TASKS = "score_fetcher_tasks"
     PROFILE_FETCHER_TASKS = "profile_fetcher_tasks"
     QUEUE_REQUEST_HANDLER_TASKS = "queue_request_handler_tasks"
 
 
-class Namespace(Enum):
+class Namespace(StrEnum):
     LOCK = "lock"
     RATE_LIMIT_COUNTER = "rate_limit_counter"
     OSU_CLIENT_OAUTH_TOKEN = "osu_client_oauth_token"

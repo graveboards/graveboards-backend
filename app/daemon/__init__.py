@@ -1,2 +1,2 @@
-from .service_daemon import ServiceDaemon
+from .daemon import Daemon
 from . import services

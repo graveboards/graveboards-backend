@@ -14,12 +14,12 @@ async def matching_user_id_override(authenticated_user_id_lookup: str = "user", 
     )
 
 
-async def queue_owner_override(_db: PostgresqlDB, authenticated_user_id_lookup: str = "user", from_request: bool = False, **kwargs) -> bool:
+async def queue_owner_override(db: PostgresqlDB, authenticated_user_id_lookup: str = "user", from_request: bool = False, **kwargs) -> bool:
     authenticated_user_id = get_nested_value(kwargs, authenticated_user_id_lookup)
 
     if not from_request:
-        queue = await _db.get(Queue, id=kwargs["queue_id"])
+        queue = await db.get(Queue, id=kwargs["queue_id"])
     else:
-        queue = (await _db.get(Request, id=kwargs["request_id"], _loading_options={"queue": True})).queue
+        queue = (await db.get(Request, id=kwargs["request_id"], _include={"queue": True})).queue
 
     return authenticated_user_id == queue.user_id

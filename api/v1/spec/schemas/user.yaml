@@ -15,10 +15,14 @@ UserCreate:
     description: An object containing the data of the user to create
     type: object
     properties:
-        user_id:
+        id:
             type: integer
+        roles:
+            type: array
+            items:
+                $ref: "#/Role"
     required:
-        - user_id
+        - id
 
 Role:
     title: Role

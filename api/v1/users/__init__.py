@@ -68,12 +68,14 @@ async def get(user_id: int, **kwargs):
 async def post(body: dict, **kwargs):
     db: PostgresqlDB = request.state.db
 
-    if await db.get(User, id=body["user_id"]):
-        raise Conflict(f"The user with ID '{body["user_id"]}' already exists")
+    user_id = body["id"]
+
+    if await db.get(User, id=user_id):
+        raise Conflict(f"The user with ID '{user_id}' already exists")
 
     body = bleach_body(
         body,
-        whitelisted_keys={"user_id"}
+        whitelisted_keys={"id", "roles"}
     )
 
     await db.add(User, **body)
