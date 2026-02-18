@@ -18,6 +18,31 @@ class _C:
         session: AsyncSession,
         **kwargs
     ) -> BaseType:
+        """Create or resolve a single model instance.
+
+        Validates input attributes against the model schema, then processed through
+        ``_resolve_or_create``. Relationship fields are recursively resolved. The
+        instance is then added to the session, flushed, and refreshed before returning.
+
+        Args:
+            model_class:
+                Wrapped model metadata used for validation and resolution.
+            session:
+                Active async SQLAlchemy session.
+            **kwargs:
+                Field values for the new instance. May include both column attributes
+                and relationship attributes.
+
+        Returns:
+            The newly created or resolved model instance, flushed and refreshed.
+
+        Raises:
+            ValueError:
+                If no fields are provided when required columns exist, or if an invalid
+                attribute is supplied.
+            RuntimeError:
+                If a related object is bound to a different session.
+        """
         if not kwargs and len(model_class.required_columns) > 0:
             raise ValueError("At least one field must be provided to create an instance")
 
@@ -42,6 +67,33 @@ class _C:
         session: AsyncSession,
         *data: dict
     ) -> list[BaseType]:
+        """Create or resolve multiple model instances.
+
+        Each input dictionary is validated against the model schema, then processed
+        independently through ``_resolve_or_create``. Relationship fields are
+        recursively resolved. Instances are then bulk-added to the session, flushed, and
+        refreshed before returning.
+
+        Args:
+            model_class:
+                Wrapped model metadata used for validation and resolution.
+            session:
+                Active async SQLAlchemy session.
+            *data:
+                One or more dictionaries describing instances to create.
+
+        Returns:
+            A list of newly created or resolved model instances.
+
+        Raises:
+            TypeError:
+                If any item in ``data`` is not a dictionary.
+            ValueError:
+                If a provided item is empty when required fields exist, or if an invalid
+                attribute is supplied.
+            RuntimeError:
+                If a related object is bound to a different session.
+        """
         if not data:
             return []
 
@@ -78,6 +130,36 @@ class _C:
         data: dict[str, Any],
         session: AsyncSession,
     ) -> BaseType:
+        """Resolve an existing instance or create one from structured input.
+
+        Resolution strategy (in order):
+
+        1. Primary key lookup (if all PK fields are present).
+        2. Unique column or composite unique constraint lookup.
+            - Checks in-memory identity map first.
+            - Falls back to database query if not found.
+        3. Instance creation if no match exists.
+
+        Relationship values are processed recursively:
+            - For `uselist=True`, each item is resolved or validated.
+            - For scalar relationships, nested dictionaries are resolved, or existing
+            instances are validated for session compatibility.
+
+        Args:
+            model_class:
+                Wrapped model metadata.
+            data:
+                Field dictionary containing column and/or relationship values.
+            session:
+                Active async SQLAlchemy session.
+
+        Returns:
+            An existing or newly created model instance.
+
+        Raises:
+            RuntimeError:
+                If an object is bound to a different session.
+        """
         model = model_class.value
         mapper = model_class.mapper
         pk_keys = [col.key for col in mapper.primary_key]
@@ -213,6 +295,22 @@ class _C:
 
     @staticmethod
     def _ensure_same_session(obj: Any, session: AsyncSession) -> None:
+        """Ensure an object is bound to the current session.
+
+        Prevents cross-session identity conflicts by verifying that the object's session
+        matches the provided async session. This guards against subtle identity map
+        inconsistencies and unintended persistence behavior.
+
+        Args:
+            obj:
+                SQLAlchemy-mapped instance.
+            session:
+                Active async SQLAlchemy session.
+
+        Raises:
+            RuntimeError:
+                If the object is bound to a different session.
+        """
         state = inspect(obj)
 
         if state.session is not None and state.session is not session.sync_session:
@@ -235,6 +333,22 @@ class C(_C):
         session: AsyncSession = None,
         **kwargs
     ) -> BaseType:
+        """Public API for creating or resolving a single model instance.
+
+        Wraps ``_add_instance`` and manages session lifecycle via the
+        ``session_manager`` decorator.
+
+        Args:
+            model:
+                SQLAlchemy model class.
+            session:
+                Optional externally managed async session.
+            **kwargs:
+                Field values for the instance.
+
+        Returns:
+            The newly created or resolved model instance.
+        """
         model_class = ModelClass(model)
 
         return await self._add_instance(
@@ -250,6 +364,22 @@ class C(_C):
         *data: dict,
         session: AsyncSession = None
     ) -> list[BaseType]:
+        """Public API for creating or resolving multiple model instances.
+
+        Wraps ``_add_instances`` and manages session lifecycle via the
+        ``session_manager`` decorator.
+
+        Args:
+            model:
+                SQLAlchemy model class.
+            *data:
+                One or more dictionaries describing instances to create.
+            session:
+                Optional externally managed async session.
+
+        Returns:
+            A list of newly created or resolved model instances.
+        """
         model_class = ModelClass(model)
 
         return await self._add_instances(

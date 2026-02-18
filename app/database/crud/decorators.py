@@ -23,6 +23,32 @@ def session_manager(
     session_resolver: SessionResolver = None,
     autoflush_allowed: bool = True
 ) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
+    """Manage ``AsyncSession`` lifecycle for coroutine-based CRUD operations.
+
+    This decorator ensures that a valid session is available for the wrapped method.
+
+    Session resolution order:
+        1. Explicitly passed ``session``
+        2. Currently active ``ContextVar`` session
+        3. Newly created session via ``session_resolver``
+
+    The active session is stored in a ``ContextVar`` to allow safe nested CRUD calls
+    without reopening sessions.
+
+    Args:
+        session_resolver:
+            Callable that returns an ``AsyncSession`` context manager. Defaults to the
+            object's `session()` method.
+        autoflush_allowed:
+            If False, enforces that the session has autoflush disabled.
+
+    Returns:
+        A wrapped async function that guarantees session availability.
+
+    Raises:
+        RuntimeError:
+            If autoflush constraints are violated.
+    """
     if session_resolver is None:
         session_resolver = _default_session_resolver
 
@@ -67,6 +93,30 @@ def session_manager_stream(
     session_resolver: Callable[[Any], AsyncContextManager[Any]] = None,
     autoflush_allowed: bool = True
 ) -> Callable[[Callable[P, AsyncIterator[T]]], Callable[P, AsyncIterator[T]]]:
+    """Manage ``AsyncSession`` lifecycle for async generator methods.
+
+    Mirrors ``session_manager`` but supports async iterators. Ensures that a valid
+    session remains active for the full duration of the stream.
+
+    Session resolution order:
+        1. Explicitly passed ``session``
+        2. Currently active ``ContextVar`` session
+        3. Newly created session via ``session_resolver``
+
+    Args:
+        session_resolver:
+            Callable that returns an AsyncSession context manager. Defaults to the
+            object's `session()` method.
+        autoflush_allowed:
+            If False, enforces that the session has autoflush disabled.
+
+    Returns:
+        A wrapped async generator function with managed session scope.
+
+    Raises:
+        RuntimeError:
+            If autoflush constraints are violated.
+    """
     if session_resolver is None:
         session_resolver = _default_session_resolver
 
@@ -117,6 +167,23 @@ def session_manager_stream(
 
 
 def ensure_required(many: bool = False) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
+    """Validate presence of required model columns before execution.
+
+    This decorator checks that all required columns defined on the model are present in
+    the provided input data.
+
+    Args:
+        many:
+            If False, validates keyword arguments for a single instance. If True,
+            validates each dictionary in positional arguments (used for bulk creation).
+
+    Returns:
+        A wrapped async function that enforces required column validation.
+
+    Raises:
+        ValueError:
+            If required columns are missing.
+    """
     def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
         @wraps(func)
         async def wrapper(model_class: ModelClass, session: AsyncSession, *args: P.args, **kwargs: P.kwargs) -> T:
@@ -145,6 +212,12 @@ def ensure_required(many: bool = False) -> Callable[[Callable[P, Awaitable[T]]],
 
 
 class SessionResolver(Protocol):
+    """Protocol for resolving an AsyncSession context manager.
+
+    Implementations must return an async context manager that yields an ``AsyncSession``
+    instance. This abstraction allows CRUD decorators to remain decoupled from specific
+    database wiring strategies.
+    """
     def __call__(
         self,
         obj: Any,
@@ -154,6 +227,11 @@ class SessionResolver(Protocol):
 
 
 class DbSessionResolver(SessionResolver):
+    """SessionResolver implementation that delegates to `obj.db.session()`.
+
+    Intended for use when the database handle is stored on an attribute
+    named `db` rather than exposed directly via `session()`.
+    """
     def __call__(
         self,
         obj: Any,
@@ -171,6 +249,19 @@ def _default_session_resolver(
     *,
     autoflush: bool = True
 ) -> AsyncContextManager[AsyncSession]:
+    """Default strategy for resolving a session from a ``DatabaseProtocol``.
+
+    Delegates to `obj.session()`.
+
+    Args:
+        obj:
+            Object implementing the ``DatabaseProtocol`` interface.
+        autoflush:
+            Whether the resolved session should enable autoflush.
+
+    Returns:
+        An async context manager yielding an ``AsyncSession``.
+    """
     return obj.session(autoflush=autoflush)
 
 
@@ -179,5 +270,19 @@ def _enforce_autoflush(
     autoflush_allowed: bool,
     func: Callable[P, Awaitable[T] | AsyncIterator[T]]
 ):
+    """Enforce autoflush policy for a wrapped CRUD operation.
+
+    Args:
+        session:
+            Active ``AsyncSession``.
+        autoflush_allowed:
+            Whether autoflush is permitted for this operation.
+        func:
+            The wrapped function (used for error context).
+
+    Raises:
+        RuntimeError:
+            If autoflush is enabled when disallowed.
+    """
     if not autoflush_allowed and session.autoflush:
         raise RuntimeError(f"{func.__name__} requires autoflush=False but received session with autoflush=True.")

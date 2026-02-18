@@ -18,6 +18,18 @@ __all__ = [
 
 
 def extract_inner_types(annotated_type: Any) -> type | tuple[type, ...]:
+    """Extract concrete inner types from nested typing annotations.
+
+    Unwraps Optional, Union, and generic containers to determine the underlying runtime
+    type(s).
+
+    Args:
+        annotated_type:
+            A typing-annotated type.
+
+    Returns:
+        A single type or tuple of possible types.
+    """
     current = annotated_type
 
     while get_origin(current):
@@ -34,6 +46,24 @@ def extract_inner_types(annotated_type: Any) -> type | tuple[type, ...]:
 
 
 def validate_type(expected_type: Any, value: Any):
+    """Recursively validate a value against a typing annotation.
+
+    Supports:
+        - Union / Optional
+        - list / tuple
+        - dict
+        - Numeric widening (int accepted for float)
+
+    Args:
+        expected_type:
+            Typing annotation to validate against.
+        value:
+            Runtime value to validate.
+
+    Raises:
+        TypeValidationError:
+            If validation fails at any level.
+    """
     origin = get_origin(expected_type)
     args = get_args(expected_type)
 
@@ -88,6 +118,30 @@ def get_filter_condition(
     value: Any,
     is_aggregated: bool = False
 ) -> BinaryExpression | BindParameter | CollectionAggregate | ColumnElement[bool]:
+    """Construct a SQLAlchemy filter condition dynamically.
+
+    For non-aggregated columns, delegates directly to the operator's bound method.
+
+    For aggregated queries, constructs array-based comparisons using PostgreSQL
+    aggregation functions to support filtering across grouped results.
+
+    Args:
+        filter_operator:
+            Logical operator abstraction.
+        target:
+            Column or instrumented attribute being filtered.
+        value:
+            Comparison value.
+        is_aggregated:
+            Whether the filter applies to grouped results.
+
+    Returns:
+        SQLAlchemy boolean expression suitable for WHERE or HAVING.
+
+    Raises:
+        ValueError:
+            If an unsupported filter operator is provided.
+    """
     if not is_aggregated:
         return filter_operator.method(target, value)
 

@@ -16,6 +16,26 @@ logger = get_logger(__name__)
 
 @event.listens_for(BeatmapSnapshot, "before_insert")
 def beatmap_snapshot_before_insert(mapper: Mapper[BeatmapSnapshot], connection: Connection, target: BeatmapSnapshot):
+    """Assign the next sequential snapshot number for a ``BeatmapSnapshot``.
+
+    Before insertion, this listener determines the current maximum ``snapshot_number``
+    for the ``beatmap_id`` and increments it to ensure per-beatmap version ordering.
+
+    Args:
+        mapper:
+            SQLAlchemy mapper for ``BeatmapSnapshot``.
+        connection:
+            Active database connection for executing SQL.
+        target:
+            The ``BeatmapSnapshot`` instance being inserted.
+
+    Raises:
+        SQLAlchemyError:
+            If the aggregate query fails.
+
+    Side Effects:
+        Mutates ``target.snapshot_number`` prior to persistence.
+    """
     select_stmt = (
         select(func.max(BeatmapSnapshot.snapshot_number))
         .where(BeatmapSnapshot.beatmap_id == target.beatmap_id)
@@ -27,6 +47,26 @@ def beatmap_snapshot_before_insert(mapper: Mapper[BeatmapSnapshot], connection: 
 
 @event.listens_for(BeatmapSnapshot, "after_insert")
 def beatmap_snapshot_after_insert(mapper: Mapper[BeatmapSnapshot], connection: Connection, target: BeatmapSnapshot):
+    """Synchronize ``BeatmapListing`` to the newly inserted snapshot.
+
+    Ensures that each beatmap has a corresponding ``BeatmapListing`` row pointing to its
+    latest snapshot. If no listing exists, one is created; otherwise, it is updated to
+    reference the new snapshot.
+
+    Args:
+        mapper:
+            SQLAlchemy mapper for ``BeatmapSnapshot``.
+        connection:
+            Active database connection.
+        target:
+            The newly inserted ``BeatmapSnapshot``.
+
+    Raises:
+        SQLAlchemyError: If insert/update statements fail.
+
+    Side Effects:
+        Inserts or updates ``BeatmapListing``.
+    """
     info = {"id": target.id, "beatmap_id": target.beatmap_id}
     logger.debug(f"New BeatmapSnapshot detected (after_insert): {info}")
     

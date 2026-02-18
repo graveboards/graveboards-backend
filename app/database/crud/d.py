@@ -15,6 +15,33 @@ class _D:
         session: AsyncSession,
         **kwargs
     ):
+        """Delete a single model instance matching strict filter criteria.
+
+        Performs attribute validation, executes a filtered SELECT to resolve matching
+        instances, and deletes exactly one row. If zero or multiple rows match, the
+        operation fails to prevent unintended mass deletion.
+
+        This method intentionally avoids raw SQL DELETE statements to preserve ORM
+        lifecycle behavior and cascade semantics.
+
+        Args:
+            model_class:
+                Wrapped model metadata used for validation.
+            session:
+                Active async SQLAlchemy session.
+            **kwargs:
+                Equality-based filters used to uniquely identify the instance to delete.
+
+        Raises:
+            ValueError:
+                If no filters are provided.
+            ValueError:
+                If an invalid attribute is supplied.
+            ValueError:
+                If no rows match the filters.
+            ValueError:
+                If multiple rows match the filters.
+        """
         if not kwargs:
             raise ValueError("At least one filter must be provided to delete an instance")
 
@@ -44,6 +71,30 @@ class _D:
         session: AsyncSession,
         **kwargs
     ) -> int:
+        """Delete multiple model instances matching filter criteria.
+
+        Supports equality filters and iterable-based membership filters (translated into
+        SQL IN clauses). Instances are loaded and deleted through the ORM to preserve
+        cascade behavior and session integrity.
+
+        Args:
+            model_class:
+                Wrapped model metadata used for validation.
+            session:
+                Active async SQLAlchemy session.
+            **kwargs:
+                Filtering criteria. Iterable values (excluding strings and bytes) are
+                treated as membership filters.
+
+        Returns:
+            The number of rows deleted. Returns 0 if no rows match.
+
+        Raises:
+            ValueError:
+                If no filters are provided.
+            ValueError:
+                If an invalid attribute is supplied.
+        """
         if not kwargs:
             raise ValueError("At least one filter must be provided to delete instances")
 
@@ -86,6 +137,19 @@ class D(_D):
         session: AsyncSession = None,
         **kwargs
     ):
+        """Public API for deleting a single model instance.
+
+        Wraps ``_delete_instance`` and manages session lifecycle via the
+        ``session_manager`` decorator.
+
+        Args:
+            model:
+                SQLAlchemy model class.
+            session:
+                Optional externally managed async session.
+            **kwargs:
+                Equality-based filters used to uniquely identify the instance to delete.
+        """
         model_class = ModelClass(model)
 
         await self._delete_instance(
@@ -101,6 +165,22 @@ class D(_D):
             session: AsyncSession = None,
             **kwargs
     ) -> int:
+        """Public API for deleting multiple model instances.
+
+        Wraps ``_delete_instances`` and manages session lifecycle via the
+        ``session_manager`` decorator.
+
+        Args:
+            model:
+                SQLAlchemy model class.
+            session:
+                Optional externally managed async session.
+            **kwargs:
+                Filtering criteria. Iterable values are treated as membership filters.
+
+        Returns:
+            The number of rows deleted.
+        """
         model_class = ModelClass(model)
 
         return await self._delete_instances(

@@ -14,6 +14,24 @@ logger = get_logger(__name__)
 
 @event.listens_for(ScoreFetcherTask.enabled, "set")
 def score_fetcher_task_enabled_set(target: ScoreFetcherTask, value: bool, oldvalue: bool, initiator: AttributeEventToken):
+    """Publish ``ScoreFetcherTask`` activation events to Redis.
+
+    When the ``enabled`` attribute transitions to True, the task ID is published to a
+    Redis channel for distributed worker pickup.
+
+    Args:
+        target:
+            The ``ScoreFetcherTask`` instance being modified.
+        value:
+            The new boolean value.
+        oldvalue:
+            The previous boolean value.
+        initiator:
+            SQLAlchemy attribute event metadata.
+
+    Side Effects:
+        Publishes task ID to Redis.
+    """
     if value:
         with redis_connection() as rc:
             rc.publish(ChannelName.SCORE_FETCHER_TASKS.value, target.id)

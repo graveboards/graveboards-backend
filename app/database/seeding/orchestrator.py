@@ -13,10 +13,39 @@ SEEDERS: dict[SeederTarget, type[Seeder]] = {
     SeederTarget.QUEUE: QueueSeeder,
     SeederTarget.REQUEST: RequestSeeder
 }
+"""Mapping of ``SeederTarget`` to concrete ``Seeder`` implementation.
+
+This registry allows the orchestrator to dynamically instantiate the correct seeder 
+class for each logical domain target.
+"""
 
 
 class SeederOrchestrator:
+    """Coordinates dependency-aware, layered database seeding.
+
+    The orchestrator:
+        - Normalizes CLI targets into internal ``SeederTarget`` values
+        - Resolves transitive dependencies via topological layering
+        - Executes seeders layer-by-layer
+        - Runs independent seeders within a layer concurrently
+        - Streams progress events as an async iterator
+
+    Seeding is deterministic with respect to dependency order while still leveraging
+    asyncio concurrency for independent targets.
+    """
     def __init__(self, db: PostgresqlDB, *targets: SeedTarget):
+        """Initialize the orchestrator for the given seed targets.
+
+        Args:
+            db:
+                Database interface.
+            *targets:
+                CLI-facing seed targets to execute.
+
+        Raises:
+            TypeError:
+                If invalid ``SeedTarget`` values are provided.
+        """
         self.db = db
         targets = set(targets)
 
@@ -37,6 +66,18 @@ class SeederOrchestrator:
         self.total = sum(t for t in self.totals.values())
 
     async def run_seeders(self) -> AsyncIterator[SeedEvent]:
+        """Execute all seeders in dependency order.
+
+        Seeders are executed in topological layers. Within each layer, seeders run
+        concurrently. Progress events are streamed as they are produced.
+
+        Yields:
+            SeedEvent: Incremental progress updates for each target.
+
+        Raises:
+            Exception:
+                Propagates seeder-level exceptions.
+        """
         queue: asyncio.Queue[SeedEvent | None] = asyncio.Queue()
 
         for layer in self.execution_order:
@@ -69,6 +110,17 @@ class SeederOrchestrator:
 
     @staticmethod
     def _normalize_cli_targets(targets: set[SeedTarget]) -> set[SeederTarget]:
+        """Translate CLI targets into internal ``SeederTarget`` values.
+
+        If ALL is specified, all ``SeederTarget`` members are returned.
+
+        Args:
+            targets:
+                User-specified CLI targets.
+
+        Returns:
+            A normalized set of ``SeederTarget`` values.
+        """
         if SeedTarget.ALL in targets:
             return {member for member in SeederTarget}
 

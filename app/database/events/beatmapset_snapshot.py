@@ -16,6 +16,22 @@ logger = get_logger(__name__)
 
 @event.listens_for(BeatmapsetSnapshot, "before_insert")
 def beatmapset_snapshot_before_insert(mapper: Mapper[BeatmapsetSnapshot], connection: Connection, target: BeatmapsetSnapshot):
+    """Assign the next sequential snapshot number for a ``BeatmapsetSnapshot``.
+
+    Determines the maximum ``snapshot_number`` for the associated ``beatmapset_id`` and
+    increments it to ensure per-beatmapset version ordering.
+
+    Args:
+        mapper:
+            SQLAlchemy mapper for ``BeatmapsetSnapshot``.
+        connection:
+            Active database connection.
+        target:
+            The ``BeatmapsetSnapshot`` being inserted.
+
+    Side Effects:
+        Mutates ``target.snapshot_number`` prior to persistence.
+    """
     select_stmt = (
         select(func.max(BeatmapsetSnapshot.snapshot_number))
         .where(BeatmapsetSnapshot.beatmapset_id == target.beatmapset_id)
@@ -27,6 +43,27 @@ def beatmapset_snapshot_before_insert(mapper: Mapper[BeatmapsetSnapshot], connec
 
 @event.listens_for(BeatmapsetSnapshot, "after_insert")
 def beatmapset_snapshot_after_insert(mapper: Mapper[BeatmapsetSnapshot], connection: Connection, target: BeatmapsetSnapshot):
+    """Propagate a new ``BeatmapsetSnapshot`` to dependent tables.
+
+    After insertion:
+        - Ensures ``BeatmapsetListing`` references the latest snapshot.
+        - Updates all related ``Request`` rows to reference the new snapshot.
+
+    This guarantees that read models and active requests always point to the most recent
+    beatmapset state.
+
+    Args:
+        mapper:
+            SQLAlchemy mapper for ``BeatmapsetSnapshot``.
+        connection:
+            Active database connection.
+        target:
+            The newly inserted ``BeatmapsetSnapshot``.
+
+    Side Effects:
+        Inserts or updates ``BeatmapsetListing``.
+        Bulk-updates ``Request`` rows.
+    """
     info = {"id": target.id, "beatmapset_id": target.beatmapset_id}
     logger.debug(f"New BeatmapsetSnapshot detected (after_insert): {info}")
 

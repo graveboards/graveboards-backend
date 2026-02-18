@@ -14,6 +14,35 @@ class _U:
         primary_key: int,
         **kwargs
     ) -> BaseType:
+        """Update a single model instance by primary key.
+
+        Performs strict primary key lookup, validates provided attributes, applies
+        in-memory mutations, and flushes changes to the database.
+
+        This method does not support conditional or bulk SQL updates—it operates on a
+        loaded ORM instance to preserve relationship semantics and session integrity.
+
+        Args:
+            model_class:
+                Wrapped model metadata used for validation.
+            session:
+                Active async SQLAlchemy session.
+            primary_key:
+                Integer primary key identifying the instance.
+            **kwargs:
+                Field updates to apply. May include column or relationship attributes.
+
+        Returns:
+            The updated and refreshed model instance.
+
+        Raises:
+            ValueError:
+                If no update fields are provided or if the instance does not exist.
+            TypeError:
+                If the primary key is not an integer.
+            ValueError:
+                If an invalid attribute is supplied.
+        """
         if not kwargs:
             raise ValueError("At least one field must be provided to update an instance")
 
@@ -44,6 +73,32 @@ class _U:
         session: AsyncSession,
         *data: tuple[int, dict[str, Any]]
     ) -> list[BaseType]:
+        """Update multiple model instances by primary key.
+
+        Each update is provided as a tuple of: (primary_key, delta_dict)
+
+        All updates are validated before execution. Instances are loaded individually,
+        mutated in memory, flushed, and refreshed before returning.
+
+        Args:
+            model_class:
+                Wrapped model metadata used for validation.
+            session:
+                Active async SQLAlchemy session.
+            *data:
+                One or more (int, dict) tuples describing updates.
+
+        Returns:
+            A list of updated model instances.
+
+        Raises:
+            TypeError:
+                If any update item is not a (int, dict) tuple.
+            ValueError:
+                If a referenced instance does not exist.
+            ValueError:
+                If an invalid attribute is supplied.
+        """
         if not data:
             return []
 
@@ -94,6 +149,24 @@ class U(_U):
         session: AsyncSession = None,
         **kwargs
     ) -> BaseType:
+        """Public API for updating a single model instance.
+
+        Wraps ``_update_instance`` and manages session lifecycle via
+        the ``session_manager`` decorator.
+
+        Args:
+            model:
+                SQLAlchemy model class.
+            primary_key:
+                Integer primary key identifying the instance.
+            session:
+                Optional externally managed async session.
+            **kwargs:
+                Field updates to apply.
+
+        Returns:
+            The updated model instance.
+        """
         model_class = ModelClass(model)
 
         return await self._update_instance(
@@ -109,10 +182,26 @@ class U(_U):
         model: type[BaseType],
         *data: tuple[int, dict[str, Any]],
         session: AsyncSession = None
-    ) -> BaseType:
+    ) -> list[BaseType]:
+        """Public API for updating multiple model instances.
+
+        Wraps ``_update_instances`` and manages session lifecycle via
+        the ``session_manager`` decorator.
+
+        Args:
+            model:
+                SQLAlchemy model class.
+            *data:
+                One or more (int, dict) tuples describing updates.
+            session:
+                Optional externally managed async session.
+
+        Returns:
+            A list of updated model instances.
+        """
         model_class = ModelClass(model)
 
-        return await self._update_instance(
+        return await self._update_instances(
             model_class,
             session,
             *data

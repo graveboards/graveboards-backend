@@ -32,6 +32,37 @@ class _R:
         _offset: int = 0,
         **kwargs
     ) -> BaseType:
+        """Fetch a single instance using a dynamically constructed query.
+
+        This method composes a SQLAlchemy ``Select`` statement via ``_construct_stmt``,
+        optionally applies an offset, and returns the first scalar result.
+
+        Args:
+            model_class:
+                Wrapped model metadata used for validation and query construction.
+            session:
+                Active async SQLAlchemy session.
+            _select:
+                Column name or iterable of column names to project. If omitted, selects
+                the full model entity.
+            _join:
+                Join target(s) which may be a model class, a (model, condition) tuple,
+                or an iterable of either.
+            _where:
+                WHERE clause expression(s).
+            _sorting:
+                Sorting configuration as a list of sorting dicts.
+            _include:
+                Nested relationship loading specification.
+            _offset:
+                Number of rows to skip before returning the first result.
+            **kwargs:
+                Additional equality filters applied via `filter_by()`.
+
+        Returns:
+            The first matching model instance or projected scalar value, or ``None`` if
+            no result is found.
+        """
         select_stmt = _R._construct_stmt(model_class, _select, _join, _where, _sorting, _include, **kwargs)
         select_stmt = select_stmt.offset(_offset)
 
@@ -51,6 +82,40 @@ class _R:
         _reversed: bool = False,
         **kwargs
     ) -> list[BaseType]:
+        """Fetch multiple instances using a dynamically constructed query.
+
+        Applies limit and offset constraints with bounds clamping, executes the query,
+        and optionally reverses the result list in memory.
+
+        Args:
+            model_class:
+                Wrapped model metadata used for validation and query construction.
+            session:
+                Active async SQLAlchemy session.
+            _select:
+                Column name or iterable of column names to project. If omitted, selects
+                the full model entity.
+            _join:
+                Join target(s) which may be a model class, a (model, condition) tuple,
+                or an iterable of either.
+            _where:
+                WHERE clause expression(s).
+            _sorting:
+                Sorting configuration as a list of sorting dicts.
+            _include:
+                Nested relationship loading specification.
+            _limit:
+                Maximum number of rows to return. Clamped between configured bounds.
+            _offset:
+                Number of rows to skip before returning results.
+            _reversed:
+                If True, reverses the result list after retrieval.
+            **kwargs:
+                Additional equality filters applied via `filter_by()`.
+
+        Returns:
+            A list of matching model instances or projected scalar values.
+        """
         select_stmt = _R._construct_stmt(model_class, _select, _join, _where, _sorting, _include, **kwargs)
         select_stmt = select_stmt.limit(clamp(_limit, QUERY_MIN_LIMIT, QUERY_MAX_LIMIT)).offset(_offset)
 
@@ -71,6 +136,30 @@ class _R:
         _include: Include = None,
         **kwargs
     ) -> Select:
+        """Construct a SQLAlchemy ``Select`` statement from query parameters.
+
+        This method orchestrates projection, joins, filtering, sorting, relationship
+        loading, and lazy-exclusion rules into a single ``Select`` object.
+
+        Args:
+            model_class:
+                Wrapped model metadata for validation and attribute access.
+            _select:
+                Column name(s) to project. If omitted, selects full model entity.
+            _join:
+                Join target(s).
+            _where:
+                WHERE clause expression(s).
+            _sorting:
+                Sorting configuration.
+            _include:
+                Nested relationship loading configuration.
+            **kwargs:
+                Equality-based filters applied via `filter_by()`.
+
+        Returns:
+            A fully constructed SQLAlchemy ``Select`` statement.
+        """
         if _select:
             select_stmt = _R._apply_select(model_class, _select)
         else:
@@ -102,6 +191,25 @@ class _R:
         model_class: ModelClass,
         select_: Union[str, Iterable[str]]
     ) -> Select:
+        """Apply projection to a ``Select`` statement.
+
+        Validates requested attribute names against the model metadata and restricts
+        selection to columns or hybrid properties. Relationships cannot be projected
+        directly.
+
+        Args:
+            model_class:
+                Wrapped model metadata.
+            select_:
+                Column name or iterable of column names.
+
+        Returns:
+            A ``Select`` statement projecting only the requested attributes.
+
+        Raises:
+            ValueError:
+                If an attribute does not exist or is a relationship.
+        """
         if not isinstance(select_, (list, tuple, set)):
             select_ = [select_]
 
@@ -126,6 +234,24 @@ class _R:
         select_stmt: Select,
         join: Union[type[BaseType], tuple[type[BaseType], BinaryExpression], Iterable[type[BaseType]], Iterable[tuple[type[BaseType], BinaryExpression]]]
     ) -> Select:
+        """Apply one or more JOIN clauses to a ``Select`` statement.
+
+        Accepts model classes or (model, condition) tuples. Input is normalized into an
+        iterable of join targets before being applied sequentially.
+
+        Args:
+            select_stmt:
+                The base ``Select`` statement.
+            join:
+                Join specification(s).
+
+        Returns:
+            The ``Select`` statement with joins applied.
+
+        Raises:
+            TypeError:
+                If the join specification is invalid.
+        """
         def is_base(t: Any) -> bool:
             return isinstance(t, type) and issubclass(t, Base)
 
@@ -157,6 +283,17 @@ class _R:
         select_stmt: Select,
         where: Union[Any, Iterable[Any]]
     ) -> Select:
+        """Apply WHERE clause expressions to a ``Select`` statement.
+
+        Args:
+            select_stmt:
+                The base ``Select`` statement.
+            where:
+                A SQLAlchemy expression or iterable of expressions.
+
+        Returns:
+            The ``Select`` statement with WHERE conditions applied.
+        """
         if not isinstance(where, (list, tuple, set)):
             where = [where]
 
@@ -168,6 +305,30 @@ class _R:
         model_class: ModelClass,
         sorting: Sorting
     ) -> Select:
+        """Apply validated sorting clauses to a ``Select`` statement.
+
+        Sorting items must follow the format:
+            {"field": "Model.field_name", "order": "asc" | "desc"}
+
+        Only model columns and hybrid properties are sortable.
+
+        Args:
+            select_stmt:
+                The base ``Select`` statement.
+            model_class:
+                Wrapped model metadata for validation.
+            sorting:
+                List of sorting configuration dictionaries.
+
+        Returns:
+            The ``Select`` statement with ORDER BY clauses applied.
+
+        Raises:
+            TypeError:
+                If sorting is not a list of dicts.
+            ValueError:
+                If fields or ordering values are invalid.
+        """
         if not isinstance(sorting, (list, tuple)):
             raise TypeError("_sorting must be a list of sorting objects")
 
@@ -212,6 +373,25 @@ class _R:
         model_class: ModelClass,
         include: Include
     ) -> tuple[Select, set[str]]:
+        """Apply eager-loading options based on a nested include specification.
+
+        Supports nested relationship loading using `joinedload` or `selectinload`,
+        depending on relationship cardinality. Boolean values control whether a
+        relationship is loaded or suppressed.
+
+        Args:
+            select_stmt:
+                The base ``Select`` statement.
+            model_class:
+                Wrapped model metadata.
+            include:
+                Nested dictionary describing relationships to include.
+
+        Returns:
+            A tuple of:
+                - The ``Select`` statement with loader options applied.
+                - A set of included relationship paths.
+        """
         included_paths: set[str] = set()
 
         def parse_node(
@@ -266,6 +446,23 @@ class _R:
         model_class: ModelClass,
         include: Include | None
     ) -> Select:
+        """Prevent unintended lazy-loading of relationships.
+
+        Any relationship not explicitly included is configured with `noload` to avoid
+        implicit SELECT queries during attribute access. This enforces explicit loading
+        behavior and guards against N+1 query issues.
+
+        Args:
+            select_stmt:
+                The base ``Select`` statement.
+            model_class:
+                Wrapped model metadata.
+            include:
+                Nested include specification.
+
+        Returns:
+            The ``Select`` statement with lazy exclusions applied.
+        """
         if include is None:
             include = {}
 
@@ -343,6 +540,37 @@ class R(_R):
         _offset: int = 0,
         **kwargs
     ) -> Optional[BaseType]:
+        """Public API for fetching a single model instance.
+
+        Wraps ``_get_instance`` and manages session lifecycle via the
+        ``session_manager`` decorator.
+
+        Args:
+            model:
+                SQLAlchemy model class.
+            session:
+                Optional externally managed async session.
+            _select:
+                Column name or iterable of column names to project. If omitted, selects
+                the full model entity.
+            _join:
+                Join target(s) which may be a model class, a (model, condition) tuple,
+                or an iterable of either.
+            _where:
+                WHERE clause expression(s).
+            _sorting:
+                Sorting configuration as a list of sorting dicts.
+            _include:
+                Nested relationship loading specification.
+            _offset:
+                Number of rows to skip before returning the first result.
+            **kwargs:
+                Additional equality filters applied via `filter_by()`.
+
+        Returns:
+            The first matching model instance or projected scalar value, or ``None`` if
+            no result is found.
+        """
         model_class = ModelClass(model)
 
         return await self._get_instance(
@@ -372,6 +600,40 @@ class R(_R):
         _reversed: bool = False,
         **kwargs
     ) -> list[BaseType]:
+        """Public API for fetching multiple model instances.
+
+        Wraps ``_get_instances`` and manages session lifecycle via the
+        ``session_manager`` decorator.
+
+        Args:
+            model:
+                SQLAlchemy model class.
+            session:
+                Optional externally managed async session.
+            _select:
+                Column name or iterable of column names to project. If omitted, selects
+                the full model entity.
+            _join:
+                Join target(s) which may be a model class, a (model, condition) tuple,
+                or an iterable of either.
+            _where:
+                WHERE clause expression(s).
+            _sorting:
+                Sorting configuration as a list of sorting dicts.
+            _include:
+                Nested relationship loading specification.
+            _limit:
+                Maximum number of rows to return. Clamped between configured bounds.
+            _offset:
+                Number of rows to skip before returning results.
+            _reversed:
+                If True, reverses the result list after retrieval.
+            **kwargs:
+                Additional equality filters applied via `filter_by()`.
+
+        Returns:
+            A list of matching model instances or projected scalar values.
+        """
         model_class = ModelClass(model)
 
         return await self._get_instances(

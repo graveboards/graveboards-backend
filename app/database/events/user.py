@@ -16,6 +16,27 @@ logger = get_logger(__name__)
 
 @event.listens_for(User, "after_insert")
 def user_after_insert(mapper: Mapper[User], connection: Connection, target: User):
+    """Initialize background tasks for a newly created ``User``.
+
+    Automatically creates:
+        - A ``ScoreFetcherTask``
+        - A ``ProfileFetcherTask``
+
+    The ``ProfileFetcherTask`` ID is immediately published to Redis to trigger
+    asynchronous processing.
+
+    Args:
+        mapper:
+            SQLAlchemy mapper for ``User``.
+        connection:
+            Active database connection.
+        target:
+            The newly inserted ``User``.
+
+    Side Effects:
+        Inserts task rows.
+        Publishes ``ProfileFetcherTask`` ID to Redis.
+    """
     info = {"id": target.id}
     logger.debug(f"New User detected (after_insert): {info}")
 
