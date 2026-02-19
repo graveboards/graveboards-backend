@@ -26,24 +26,28 @@ class ScopeId(IntEnum):
 
     @property
     def scope_name(self) -> ScopeLiteral:
-        """Return the lowercase string representation of the scope."""
+        """The lowercase string representation of the scope.
+
+        Returns:
+            The canonical lowercase scope name.
+        """
         return cast(ScopeLiteral, self.name.lower())
 
     @classmethod
     def from_name(cls, name: str) -> "ScopeId":
         """Resolve a scope identifier from its name.
 
-            Args:
-                name:
-                    Case-insensitive scope name.
+        Args:
+            name:
+                Case-insensitive scope name.
 
-            Returns:
-                Corresponding ``ScopeId``.
+        Returns:
+            Corresponding ``ScopeId``.
 
-            Raises:
-                ValueError:
-                    If no matching scope exists.
-            """
+        Raises:
+            ValueError:
+                If no matching scope exists.
+        """
 
         for member_name, member in cls.__members__.items():
             if name.upper() == member_name:
@@ -55,7 +59,8 @@ class ScopeId(IntEnum):
 class SearchFieldFlag(IntFlag):
     """Bitmask flags indicating which search components are present.
 
-    Used in binary serialization to encode optional sections.
+    Used during binary serialization to encode optional sections of a ``SearchSchema``
+    instance.
     """
     SEARCH_TERMS = auto()
     SORTING = auto()
@@ -65,8 +70,13 @@ class SearchFieldFlag(IntFlag):
 class SearchSchema(BaseModel):
     """Top-level structured search definition.
 
-    Encapsulates scope, search terms, sorting rules, and filters. Provides compact
-    binary serialization for transport or storage.
+    Encapsulates:
+        - Search scope
+        - Full-text search configuration
+        - Sorting rules
+        - Field-level filters
+
+    Supports validation and compact binary serialization for transport or storage.
     """
     model_config = ConfigDict(extra="forbid")
 
@@ -77,17 +87,36 @@ class SearchSchema(BaseModel):
 
     @model_validator(mode="after")
     def validate_search(self):
-        """Validate search terms against the selected scope."""
+        """Validate search configuration against the selected scope.
+
+        Ensures search terms and associated field weights are valid for the configured
+        scope.
+
+        Returns:
+            The validated ``SearchSchema`` instance.
+
+        Raises:
+            FieldNotSupportedError:
+                If a field is invalid for the scope.
+            FieldValidationError:
+                If scoring configuration is invalid.
+        """
         if self.search_terms:
             self.search_terms.validate_against_scope(self.scope)
 
         return self
 
     def serialize(self) -> bytes:
-        """Serialize the search schema into a compact binary format.
+        """Serialize the search schema into compact binary format.
+
+        Serialization behavior:
+            - Encodes the search scope.
+            - Stores a bitmask indicating which optional components are present.
+            - Appends serialized search terms, sorting rules, and filters
+              in deterministic order.
 
         Returns:
-            Bytes representing the encoded search configuration.
+            A bytes object representing the encoded search configuration.
         """
         scope_byte = struct.pack("!B", ScopeId.from_name(self.scope.name))
         presence = 0
@@ -111,14 +140,14 @@ class SearchSchema(BaseModel):
 
     @classmethod
     def deserialize(cls, data: bytes) -> "SearchSchema":
-        """Deserialize binary data into a ``SearchSchema``.
+        """Deserialize binary data into a ``SearchSchema`` instance.
 
         Args:
             data:
                 Serialized search schema bytes.
 
         Returns:
-            Reconstructed ``SearchSchema``.
+            The reconstructed ``SearchSchema``.
         """
         scope_byte, presence = struct.unpack_from("!BB", data)
         offset = 2

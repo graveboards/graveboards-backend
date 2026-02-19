@@ -1,13 +1,20 @@
 import asyncio
 from functools import wraps
-from typing import Callable, Any, Awaitable
+from typing import Callable, Any, Awaitable, ParamSpec, TypeVar
 from inspect import signature, Parameter
 
 from app.database.models import ModelClass
 from api.utils import pop_auth_info, prime_query_kwargs, coerce_value
 
 
-def api_query(model_class: ModelClass, many: bool = False):
+P = ParamSpec("P")
+T = TypeVar("T")
+
+
+def api_query(
+    model_class: ModelClass,
+    many: bool = False
+) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Decorator for normalizing API query handlers.
 
     Ensures:
@@ -25,12 +32,12 @@ def api_query(model_class: ModelClass, many: bool = False):
         ValueError:
             If applied to a non-async function.
     """
-    def decorator(func: Callable[..., Awaitable[Any]]):
+    def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
         if not asyncio.iscoroutinefunction(func):
             raise ValueError(f"Function '{func.__name__}' must be async to use @api_query")
 
         @wraps(func)
-        async def wrapper(*args, **kwargs) -> Awaitable[Any]:
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             pop_auth_info(kwargs)
             prime_query_kwargs(kwargs, many=many)
 
@@ -41,7 +48,10 @@ def api_query(model_class: ModelClass, many: bool = False):
     return decorator
 
 
-def coerce_arguments(*params: str, **param_mappings: dict):
+def coerce_arguments(
+    *params: str,
+    **param_mappings: dict
+) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Decorator for runtime coercion of handler arguments.
 
     Coerces specified parameters according to their type annotations. Optional mappings
@@ -59,7 +69,7 @@ def coerce_arguments(*params: str, **param_mappings: dict):
         TypeError:
             If parameters lack type annotations.
     """
-    def decorator(func: Callable[..., Awaitable[Any]]):
+    def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
         if not asyncio.iscoroutinefunction(func):
             raise ValueError(f"Function '{func.__name__}' must be async to use @coerce_arguments")
 
@@ -77,7 +87,7 @@ def coerce_arguments(*params: str, **param_mappings: dict):
                 raise TypeError(f"Parameter '{name}' in '{func.__name__}' must have a type annotation")
 
         @wraps(func)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             bound = sig.bind_partial(*args, **kwargs)
 
             for arg_name in all_params:

@@ -38,7 +38,7 @@ class FilterOperator(Enum):
                 Case-insensitive operator name.
 
         Returns:
-            Matching `FilterOperator`.
+            Matching ``FilterOperator``.
 
         Raises:
             ValueError:

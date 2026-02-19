@@ -20,23 +20,71 @@ from .conditions import Conditions, ConditionValue
 
 
 class FieldFilters(RootModel):
-    """Field-level filtering conditions for a category."""
+    """Field-level filtering conditions for a single category.
+
+    Wraps a mapping of field names to ``Conditions`` objects and provides SQLAlchemy
+    model validation and compact binary serialization support.
+    """
     root: dict[str, Conditions]
 
     def __iter__(self) -> Iterator[str]:
+        """Iterate over filter field names.
+
+        Returns:
+            An iterator over field names.
+        """
         return iter(self.root)
 
     def __getitem__(self, key: str) -> Conditions:
+        """Retrieve conditions for a specific field.
+
+        Args:
+            key:
+                Field name.
+
+        Returns:
+            The corresponding ``Conditions`` instance.
+
+        Raises:
+            KeyError:
+                If the field does not exist.
+        """
         return self.root[key]
 
     def __len__(self) -> int:
+        """Return the number of filtered fields.
+
+        Returns:
+            The number of field filters.
+        """
         return len(self.root)
 
     def items(self) -> ItemsView[str, Conditions]:
+        """Return a view of field-condition pairs.
+
+        Returns:
+            An items view of field names and their associated conditions.
+        """
         return self.root.items()
 
     def validate_against_sqlalchemy_model(self, category: SearchableFieldCategory):
-        """Validate filter fields and values against the SQLAlchemy model."""
+        """Validate filter fields and values against the SQLAlchemy model.
+
+        Ensures:
+            - Each field exists on the underlying model
+            - Aliased fields resolve correctly
+            - All condition values conform to the column's expected type
+
+        Args:
+            category:
+                Field category defining the SQLAlchemy model.
+
+        Raises:
+            FieldNotSupportedError:
+                If a field is not supported for the category.
+            FieldValidationError:
+                If a condition value does not match the expected type.
+        """
         column_map = category.model_class.value.__annotations__
 
         for field_name, conditions in self.root.items():
@@ -60,7 +108,20 @@ class FieldFilters(RootModel):
                         raise FieldValidationError(category.value, field_name, value, *e.target_types) from e
 
     def serialize(self, category: SearchableFieldCategory) -> bytes:
-        """Serialize category-specific filters."""
+        """Serialize field filters into compact binary format.
+
+        Serialization behavior:
+            - Encodes the number of filtered fields as a single byte.
+            - Stores each field using its ``ModelFieldId``.
+            - Appends serialized ``Conditions`` for each field.
+
+        Args:
+            category:
+                Category used to resolve model field identifiers.
+
+        Returns:
+            A bytes object representing serialized field filters.
+        """
         length = struct.pack("!B", len(self))
         chunks = []
 
@@ -74,7 +135,19 @@ class FieldFilters(RootModel):
 
     @classmethod
     def deserialize(cls, data: bytes, offset: int = 0) -> tuple["FieldFilters", int]:
-        """Deserialize field filters from binary format."""
+        """Deserialize field filters from binary format.
+
+        Args:
+            data:
+                Serialized byte sequence.
+            offset:
+                Starting offset within the sequence.
+
+        Returns:
+            A tuple containing:
+                - The reconstructed ``FieldFilters`` instance
+                - The updated byte offset
+        """
         length = struct.unpack_from("!B", data, offset=offset)[0]
         offset += 1
         values = {}
@@ -104,7 +177,33 @@ class FiltersSchema(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def validate_filters(cls, filters: dict[str, Any]) -> dict[str, Any]:
-        """Validate category and field-level filter definitions."""
+        """Validate category-level and field-level filter definitions.
+
+        Validation steps:
+            - Ensures category names are recognized
+            - Validates each field's ``Conditions`` definition
+            - Performs SQLAlchemy model compatibility checks
+            - Converts raw dictionaries into ``FieldFilters`` instances
+
+        Args:
+            filters:
+                Raw filter input mapping category names to definitions.
+
+        Returns:
+            A validated mapping of category names to ``FieldFilters`` instances.
+
+        Raises:
+            UnknownFieldCategoryError:
+                If a category name is invalid.
+            TypeError:
+                If a category definition is not a dictionary.
+            FieldConditionValidationError:
+                If a field condition is invalid.
+            FieldNotSupportedError:
+                If a field is not supported by the model.
+            FieldValidationError:
+                If a value fails type validation.
+        """
         validated_filters = {}
 
         for category_name, field_filters in filters.items():
@@ -151,7 +250,16 @@ class FiltersSchema(BaseModel):
         return validated_filters
 
     def serialize(self) -> bytes:
-        """Serialize all enabled category filters."""
+        """Serialize enabled category filters into compact binary format.
+
+        Serialization behavior:
+            - Encodes category presence using a bitmask.
+            - Serializes each enabled category in deterministic order.
+            - Appends serialized ``FieldFilters`` per category.
+
+        Returns:
+            A bytes object representing the serialized filtering configuration.
+        """
         presence = 0
         chunks = []
 
@@ -181,7 +289,19 @@ class FiltersSchema(BaseModel):
 
     @classmethod
     def deserialize(cls, data: bytes, offset: int = 0) -> tuple["FiltersSchema", int]:
-        """Deserialize filtering configuration from binary format."""
+        """Deserialize filtering configuration from binary format.
+
+        Args:
+            data:
+                Serialized byte sequence.
+            offset:
+                Starting offset within the sequence.
+
+        Returns:
+            A tuple containing:
+                - The reconstructed ``FiltersSchema`` instance
+                - The updated byte offset
+        """
         presence = struct.unpack_from("!B", data, offset=offset)[0]
         offset += 1
 

@@ -26,7 +26,7 @@ def pop_auth_info(
 def prime_query_kwargs(
     kwargs: dict[str, Any],
     many: bool = False
-):
+) -> None:
     """Normalize query-related kwargs for database consumption.
 
     Moves supported query parameters (e.g., ``limit``, ``offset``) to their internal
@@ -89,7 +89,7 @@ def coerce_value(
     value: Any,
     annotation: Any,
     param_name: str
-):
+) -> Any | None:
     """Coerce a value to match a function parameter annotation.
 
     Supports:
@@ -152,7 +152,7 @@ def build_pydantic_include(
     obj: BaseType | BaseModel,
     include_schema: dict,
     request_include: Optional[dict] = None
-):
+) -> dict:
     """Build a Pydantic-compatible include tree from an OpenAPI schema.
 
     Merges schema defaults with client-provided include overrides and formats the result

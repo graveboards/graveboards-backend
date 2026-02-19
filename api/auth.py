@@ -16,7 +16,7 @@ async def api_key_info(key: str, request: ConnexionRequest) -> dict | None:
             Incoming request context.
 
     Returns:
-        Token payload if valid, otherwise None.
+        Token payload if valid, otherwise ``None``.
     """
     db: PostgresqlDB = request.state.db
     api_key = await db.get(ApiKey, key=key)

@@ -74,7 +74,7 @@ def _build_spec() -> dict:
     return spec
 
 
-def _apply_mutations(spec: dict):
+def _apply_mutations(spec: dict) -> None:
     """Apply post-processing mutations to the OpenAPI specification.
 
     This includes expanding shallow schema references and optionally removing security

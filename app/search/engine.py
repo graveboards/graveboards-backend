@@ -56,9 +56,9 @@ class SearchEngine:
     """Composable, scope-aware search engine for relational models.
 
     Builds a SQLAlchemy query dynamically based on:
-        - Full-text search terms
-        - Category-aware sorting
-        - Structured filtering
+        - Full-text search terms (with scoring)
+        - Category-aware sorting rules
+        - Category-aware filtering conditions
 
     The engine operates on a specific ``Scope``, which determines the underlying model,
     schema, joins, and scoring behavior.
@@ -72,25 +72,27 @@ class SearchEngine:
         search_terms: SearchTermsSchema | dict[str, Union[str, list[str], bool, dict[str, int]]] = None,
         sorting: SortingSchema | list[dict[str, str]] = None,
         filters: FiltersSchema | dict[str, dict[str, Union[dict[str, ConditionValue], ConditionValue, bool, None]]] = None
-    ):
+    ) -> None:
         """Initialize the search engine and compose the base query.
+
+        Accepts structured schema instances or raw input dictionaries/lists, which are
+        validated and converted into their corresponding schema types.
 
         Args:
             scope:
-                Target search scope that determines model and schema behavior.
+                Target search scope determining model and query behavior.
             search_terms:
-                Structured search input as a ``SearchTermsSchema``, raw dictionary, or
-                ``None``
+                ``SearchTermsSchema`` instance, raw dictionary, or ``None``.
             sorting:
-                Structured sorting configuration as a ``SortingSchema``, raw list of
-                definitions, or ``None``.
+                ``SortingSchema`` instance, raw list of definitions, or ``None``.
             filters:
-                Structured filtering configuration as a ``FiltersSchema``, raw
-                dictionary, or ``None``
+                ``FiltersSchema`` instance, raw dictionary, or ``None``.
 
         Raises:
             TypeError:
                 If any argument is provided with an invalid type.
+            ValidationError:
+                If schema validation fails for raw inputs.
         """
         self.scope = scope
         self.model_class = SCOPE_MODEL_MAPPING[scope]
@@ -108,7 +110,7 @@ class SearchEngine:
         elif isinstance(sorting, list):
             self.sorting = SortingSchema.model_validate(sorting)
         else:
-            raise TypeError(f"sorting must be SearchTermsSchema or dict, got {type(search_terms).__name__}")
+            raise TypeError(f"sorting must be SortingSchema or dict, got {type(search_terms).__name__}")
 
         if isinstance(filters, FiltersSchema) or filters is None:
             self.filters = filters
@@ -133,21 +135,21 @@ class SearchEngine:
             session:
                 Active SQLAlchemy ``AsyncSession``.
             limit:
-                Maximum number of results to return.
+                Maximum number of results to return (must be >= 0).
             offset:
-                Offset for pagination.
+                Offset for pagination (must be >= 0).
             debug:
-                If True, prints detailed scoring breakdown.
+                If ``True``, prints a detailed scoring breakdown.
 
         Returns:
-            ResultsType: List of ORM model instances for the given scope.
+            A sequence of ORM model instances corresponding to the given scope.
 
         Raises:
             TypeError:
                 If ``limit`` or ``offset`` are not non-negative integers.
         """
         if not isinstance(limit, int) or not isinstance(offset, int) or limit < 0 or offset < 0:
-            raise TypeError("Both limit and offset must be a positive integer")
+            raise TypeError("Both limit and offset must be a non-negative integer")
 
         page_query = self.query.limit(limit).offset(offset)
         result = await session.execute(page_query)
@@ -158,11 +160,12 @@ class SearchEngine:
 
         return [row_mapping[self.model_class.value.__name__] for row_mapping in row_mappings]
 
-    def _compose_query(self):
+    def _compose_query(self) -> None:
         """Construct the base query and apply search components.
 
         Initializes the scope-specific SELECT statement and conditionally
-        applies search terms, sorting, and filtering in that order.
+        applies search term scoring (relevance), explicit sorting (overrides relevance
+        ordering), and filtering constraints.
         """
         match self.scope:
             case Scope.BEATMAPS:
@@ -198,12 +201,12 @@ class SearchEngine:
         if self.filters:
             self._apply_filters()
 
-    def _apply_search_terms(self):
-        """Apply full-text search scoring and ranking logic.
+    def _apply_search_terms(self) -> None:
+        """Apply full-text search scoring and relevance ordering.
 
-        Builds filtering and scoring CTEs per searchable category, aggregates child
-        scores where required, computes total score, and orders results by descending
-        relevance.
+        Builds category-specific filtering and scoring CTEs, aggregates child scores to
+        parent entities when required, computes total relevance score, and orders
+        results by descending score.
         """
         filter_cte = search_terms_filtered_cte_factory(self.scope, self.search_terms)
         category_score_ctes = search_terms_scored_ctes_factory(self.scope, self.search_terms)
@@ -456,7 +459,7 @@ class SearchEngine:
                     .order_by(total_score_column.desc())
                 )
 
-    def _apply_sorting(self):
+    def _apply_sorting(self) -> None:
         """Apply structured sorting rules to the query.
 
         Generates category-aware sorting CTEs when required and composes SQL ORDER BY
@@ -464,10 +467,10 @@ class SearchEngine:
 
         Explicit sorting overrides default relevance ordering.
         """
-        def apply_clause():
+        def apply_clause() -> None:
             sorting_clauses.append(sorting_option.order.sort_func(target))
 
-        def apply_sorting_cte(cte: CTE):
+        def apply_sorting_cte(cte: CTE) -> None:
             nonlocal target
             target = cte.c.target
 
@@ -479,7 +482,7 @@ class SearchEngine:
 
             apply_clause()
 
-        def apply_sorting_option():
+        def apply_sorting_option() -> None:
             match category:
                 case SearchableFieldCategory.PROFILE:
                     cte = profile_sorting_cte_factory(self.scope, sorting_option)
@@ -507,22 +510,22 @@ class SearchEngine:
         if sorting_clauses:
             self.query = self.query.order_by(None).order_by(*sorting_clauses)
 
-    def _apply_filters(self):
+    def _apply_filters(self) -> None:
         """Apply structured filtering conditions to the query.
 
-        Translates filter schema definitions into SQL expressions, optionally using
-        category-specific CTEs for aggregated fields.
+        Translates filter schema definitions into SQL expressions and, when necessary,
+        uses category-specific CTEs to resolve aggregated or relational fields.
         """
         def clause_generator(is_aggregated: bool = False) -> Generator[BinaryExpression, None, None]:
             for op_str, value in conditions.model_dump(exclude_unset=True, by_alias=True).items():
                 filter_operator = FilterOperator.from_name(op_str)
                 yield get_filter_condition(filter_operator, target, value, is_aggregated=is_aggregated)
 
-        def apply_clauses():
+        def apply_clauses() -> None:
             for clause in clause_generator():
                 filtering_clauses.append(clause)
 
-        def apply_filter_conditions():
+        def apply_filter_conditions() -> None:
             nonlocal target
 
             match field_category:
@@ -569,17 +572,17 @@ class SearchEngine:
         if filtering_clauses:
             self.query = self.query.where(and_(*filtering_clauses))
 
-    def dump(self, page: ResultsType, include: dict = None) -> list[dict[str, Any]]:
-        """Serialize ORM results using the scope schema.
+    def dump(self, page: ResultsType, include: dict = None) -> Sequence[dict[str, Any]]:
+        """Serialize ORM results using the scope-specific schema.
 
         Args:
             page:
-                List of ORM model instances.
+                Sequence of ORM model instances.
             include:
                 Optional Pydantic include specification.
 
         Returns:
-            List of serialized dictionaries matching the scope schema.
+            A sequence of serialized dictionaries matching the scope schema.
         """
         if not page:
             return []
@@ -636,8 +639,11 @@ class SearchEngine:
 
     @property
     def compiled_query(self) -> str:
-        """Return the fully compiled SQL query as a string.
+        """Fully compile the SQL query.
 
         Uses PostgreSQL dialect with literal binds for debugging/inspection purposes.
+
+        Returns:
+            Compiled query as a string.
         """
         return str(self.query.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}))

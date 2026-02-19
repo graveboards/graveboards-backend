@@ -77,7 +77,11 @@ class ConditionFieldFlag(IntFlag):
 
     @property
     def field_name(self) -> str:
-        """Return the lowercase condition name corresponding to the flag."""
+        """The lowercase field name corresponding to the flag.
+
+        Returns:
+            The lowercase operator name.
+        """
         return self.name.lower()
 
 
@@ -104,19 +108,31 @@ class Conditions(BaseModel):
         extra="forbid"
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         non_null_fields = self.model_dump(exclude_none=True)
         fields_repr = ", ".join(f"{k}={v!r}" for k, v in non_null_fields.items())
         return f"{self.__class__.__name__}({fields_repr})"
 
     @model_validator(mode="before")
     @classmethod
-    def normalize_shorthand(cls, value: Any):
-        """Normalize shorthand condition inputs.
+    def normalize_shorthand(cls, value: Any) -> Conditions | dict:
+        """Normalize shorthand condition inputs into canonical form.
 
-        - Primitive value: equality condition.
-        - ``None``: null check.
-        - Dict or Conditions: returned unchanged.
+        Shorthand behavior:
+            - Primitive value -> {"eq": value}
+            - ``None`` -> {"is_null": True}
+            - dict or Conditions -> returned unchanged
+
+        Args:
+            value:
+                Raw input value.
+
+        Returns:
+            A normalized dictionary or Conditions instance.
+
+        Raises:
+            TypeError:
+                If the value type is unsupported.
         """
         if isinstance(value, (cls, dict)):
             return value
@@ -129,8 +145,15 @@ class Conditions(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def validate_condition_keys(cls, value: Any):
-        """Ensure only supported condition operators are provided.
+    def validate_condition_keys(cls, value: Any) -> Any:
+        """Validate that only supported condition operator keys are provided.
+
+        Args:
+            value:
+                Raw input value.
+
+        Returns:
+            The original value if valid.
 
         Raises:
             ValueError:
@@ -149,9 +172,18 @@ class Conditions(BaseModel):
 
     @field_validator("eq", "neq", "lt", "lte", "gt", "gte", "in_", "not_in", mode="before")
     @classmethod
-    def parse_datetime(cls, value: Any):
-        """Parse ISO 8601 strings into ``datetime`` objects when applicable."""
-        def parse_datetime_value(value_: Any):
+    def parse_datetime(cls, value: Any) -> datetime | Any | list[datetime | Any]:
+        """Parse ISO 8601 strings into datetime objects when applicable.
+
+        Args:
+            value:
+                A scalar or list of potential datetime strings.
+
+        Returns:
+            A parsed datetime, a list of parsed values, or the original value if parsing
+            is not applicable.
+        """
+        def parse_datetime_value(value_: Any) -> datetime | Any:
             if isinstance(value_, str):
                 try:
                     return datetime.fromisoformat(value_)
@@ -167,15 +199,26 @@ class Conditions(BaseModel):
 
     @field_validator("regex", "not_regex", mode="after")
     @classmethod
-    def validate_regex(cls, value: str):
-        """Validate regex patterns for safety and complexity.
+    def validate_regex(cls, value: str | None) -> str | None:
+        """Validate regular expression patterns for safety and complexity.
 
-        Enforces length limits, disallows dangerous constructs, detects suspicious
-        backtracking patterns, and limits capture group count.
+        Enforces:
+            - Maximum length restriction
+            - Disallowed advanced constructs
+            - Suspicious catastrophic backtracking patterns
+            - Maximum capture group count
+            - Safe compilation with timeout enforcement
+
+        Args:
+            value:
+                Regex pattern string.
+
+        Returns:
+            The validated regex pattern.
 
         Raises:
             ValueError:
-                If the pattern is unsafe or invalid.
+                If the pattern is unsafe, invalid, or exceeds limits.
         """
         if value is None:
             return None
@@ -212,14 +255,17 @@ class Conditions(BaseModel):
         return value
 
     @model_validator(mode="after")
-    def validate_logic(self):
-        """Validate logical consistency between operators.
+    def validate_logic(self) -> Conditions:
+        """Validate logical consistency between condition operators.
 
         Ensures:
-            - At least one condition is specified.
-            - Range bounds are coherent.
-            - Equality does not conflict with set membership.
-            - Null checks are not combined with other operators.
+            - At least one condition is specified
+            - Null checks are not combined with other operators
+            - Equality does not conflict with inequality or membership
+            - Range bounds are logically coherent
+
+        Returns:
+            The validated ``Conditions`` instance.
 
         Raises:
             ValueError:
@@ -268,15 +314,31 @@ class Conditions(BaseModel):
         return self
 
     def values_for_validation(self) -> list[Any]:
-        """Return all non-null scalar values for type validation."""
+        """Collect all non-null scalar values for type validation.
+
+        Returns:
+            A list of scalar condition values.
+        """
         values = [self.eq, self.neq, self.lt, self.lte, self.gt, self.gte]
         values += (self.in_ or []) + (self.not_in or [])
         return [value for value in values if value is not None]
 
     def serialize(self) -> bytes:
-        """Serialize condition operators and values into binary format.
+        """Serialize the ``Conditions`` instance into compact binary format.
 
-        Uses bit flags for operator presence and compact encoding for primitive values.
+        Uses:
+            - Bitmask flags to encode operator presence
+            - Type-tagged encoding for primitive values
+            - Length-prefixed encoding for sequences
+
+        Returns:
+            A bytes object representing the serialized conditions.
+
+        Raises:
+            TypeError:
+                If an unsupported value type is encountered.
+            Exception:
+                Propagates errors from value serialization.
         """
         presence = 0
         chunks = []
@@ -316,7 +378,25 @@ class Conditions(BaseModel):
 
     @classmethod
     def deserialize(cls, data: bytes, offset: int = 0) -> tuple["Conditions", int]:
-        """Deserialize binary data into a ``Conditions`` instance."""
+        """Deserialize binary data into a ``Conditions`` instance.
+
+        Args:
+            data:
+                Serialized byte sequence.
+            offset:
+                Starting offset within the byte sequence.
+
+        Returns:
+            A tuple containing:
+                - The reconstructed ``Conditions`` instance
+                - The updated byte offset
+
+        Raises:
+            ValueError:
+                If an unsupported condition flag is encountered.
+            Exception:
+                Propagates errors from value deserialization.
+        """
         presence = struct.unpack_from("!H", data, offset=offset)[0]
         offset += 2
         values = {}
@@ -356,18 +436,25 @@ class Conditions(BaseModel):
     def serialize_condition_value(value: ConditionValue) -> bytes:
         """Serialize a primitive condition value using type-tagged encoding.
 
-        Applies size-optimized representations:
-            - Fixed-width integers where possible
-            - Varint + ZigZag for larger ints
-            - Smallest precise float representation
-            - Length-prefixed strings
-            - Millisecond timestamps for datetimes
+        Encoding strategy:
+            - Compact fixed-width integers where possible
+            - Varint + ZigZag encoding for larger integers
+            - Smallest precise floating-point representation
+            - Length-prefixed UTF-8 strings
+            - Millisecond timestamps for datetime values
+
+        Args:
+            value:
+                Primitive value to serialize.
+
+        Returns:
+            A bytes representation of the encoded value.
 
         Raises:
             TypeError:
                 If the value type is unsupported.
             ValueError:
-                If the float cannot be represented precisely.
+                If a float cannot be precisely represented.
         """
         if isinstance(value, int) and not isinstance(value, bool):
             if 0 <= value <= 255:
@@ -406,7 +493,25 @@ class Conditions(BaseModel):
 
     @staticmethod
     def deserialize_condition_value(data: bytes, offset: int = 0) -> tuple[ConditionValue, int]:
-        """Deserialize a single primitive value from binary format."""
+        """Deserialize a single primitive value from binary format.
+
+        Args:
+            data:
+                Serialized byte sequence.
+            offset:
+                Starting offset within the sequence.
+
+        Returns:
+            A tuple containing:
+                - The decoded primitive value
+                - The updated byte offset
+
+        Raises:
+            ValueError:
+                If the type identifier is unsupported.
+            TypeError:
+                If deserialization fails due to invalid data.
+        """
         type_id = struct.unpack_from("!B", data, offset)[0]
         offset += 1
 
@@ -439,7 +544,15 @@ class Conditions(BaseModel):
 
     @staticmethod
     def encode_varint(value: int) -> bytes:
-        """Encode an integer using variable-length encoding."""
+        """Encode an integer using variable-length (varint) encoding.
+
+        Args:
+            value:
+                Non-negative integer to encode.
+
+        Returns:
+            Varint-encoded byte representation.
+        """
         result = bytearray()
 
         while value > 0x7F:
@@ -451,7 +564,19 @@ class Conditions(BaseModel):
 
     @staticmethod
     def decode_varint(data: bytes, offset: int = 0) -> tuple[int, int]:
-        """Decode a variable-length integer."""
+        """Decode a variable-length integer from binary data.
+
+        Args:
+            data:
+                Byte sequence containing encoded data.
+            offset:
+                Starting offset.
+
+        Returns:
+            A tuple containing:
+                - The decoded integer
+                - The updated offset
+        """
         shift = 0
         result = 0
 
@@ -469,10 +594,26 @@ class Conditions(BaseModel):
 
     @staticmethod
     def encode_zigzag(n: int) -> int:
-        """Encode a signed integer using ZigZag encoding."""
+        """Encode a signed integer using ZigZag encoding.
+
+        Args:
+            n:
+                Signed integer.
+
+        Returns:
+            ZigZag-encoded integer.
+        """
         return (n << 1) ^ (n >> 63)
 
     @staticmethod
     def decode_zigzag(n: int) -> int:
-        """Decode a ZigZag-encoded integer."""
+        """Decode a ZigZag-encoded integer.
+
+        Args:
+            n:
+                ZigZag-encoded integer.
+
+        Returns:
+            Decoded signed integer.
+        """
         return (n >> 1) ^ -(n & 1)

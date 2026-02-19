@@ -81,7 +81,18 @@ class FieldWeights(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def handle_disable_shorthand(cls, values):
-        """Expand shorthand ``None`` category values into explicit null fields."""
+        """Expand shorthand ``None`` category values into explicit null fields.
+
+        If a category is explicitly set to ``None``, all of its fields are expanded into
+        a dictionary where each field is set to ``None``, disabling the category.
+
+        Args:
+            values:
+                Raw input values for model initialization.
+
+        Returns:
+            Updated values dictionary with expanded category definitions.
+        """
         for key, value in values.items():
             if value is None and key in cls.model_fields:
                 model_class = cls.model_fields[key].annotation
@@ -92,9 +103,16 @@ class FieldWeights(BaseModel):
     def validate_against_scope(self, scope: Scope):
         """Ensure at least one applicable field weight is enabled for the scope.
 
+        Only categories mapped to the provided scope are considered. At least one field
+        within the applicable categories must have a non-``None`` weight.
+
+        Args:
+            scope:
+                Search scope used to determine applicable categories.
+
         Raises:
             AllValuesNullError:
-                If no effective weights are configured.
+                If no effective field weights are enabled for the given scope.
         """
         for category_name, model in self:
             category = SearchableFieldCategory.from_name(category_name)
@@ -108,7 +126,21 @@ class FieldWeights(BaseModel):
         raise AllValuesNullError("field_weights")
 
     def serialize(self, scope: Scope) -> bytes:
-        """Serialize non-default field weights using bit flags."""
+        """Serialize non-default field weights into compact binary format.
+
+        Serialization behavior:
+            - Only fields relevant to the provided scope are considered.
+            - Fields that differ from their default value are encoded.
+            - Presence and null-state are encoded using bit flags.
+            - Non-null values are stored as signed bytes.
+
+        Args:
+            scope:
+                Search scope determining applicable categories.
+
+        Returns:
+            A bytes object containing the serialized field weights.
+        """
         presence = 0
         null_presence = 0
         chunks = []
@@ -140,7 +172,19 @@ class FieldWeights(BaseModel):
 
     @classmethod
     def deserialize(cls, data: bytes, offset: int = 0) -> tuple["FieldWeights", int]:
-        """Deserialize field weights from binary format."""
+        """Deserialize binary data into a ``FieldWeights`` instance.
+
+        Args:
+            data:
+                Serialized byte sequence.
+            offset:
+                Starting offset within the byte sequence.
+
+        Returns:
+            A tuple containing:
+                - The reconstructed ``FieldWeights`` instance
+                - The updated byte offset
+        """
         presence, null_presence = struct.unpack_from("!HH", data, offset)
         offset += 4
         values = defaultdict(dict)
@@ -157,6 +201,7 @@ class FieldWeights(BaseModel):
         return cls(**values), offset
 
 
+# Default field weight configuration used for diff-based serialization.
 _DEFAULTS = FieldWeights().model_dump()
 
 FieldWeightFieldFlag = IntFlag(
@@ -167,3 +212,9 @@ FieldWeightFieldFlag = IntFlag(
         for field in defaults.keys()
     },
 )
+"""
+Bitmask flags representing individual field weights.
+
+Each flag corresponds to a flattened "category__field" identifier and is used to encode 
+presence and null-state information during binary serialization.
+"""

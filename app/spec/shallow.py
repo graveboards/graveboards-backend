@@ -21,7 +21,7 @@ disabled_nested_obj = {
 }
 
 
-def populate_shallow_refs(openapi_spec: dict):
+def populate_shallow_refs(openapi_spec: dict) -> None:
     """Expand shallow schema references and prevent recursive cycles.
 
     For schemas listed in ``SCHEMAS_WITH_SHALLOW_REFS``, this function:

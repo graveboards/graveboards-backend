@@ -12,9 +12,15 @@ from .pattern_multipliers import PatternMultipliers
 
 
 class SearchTermsSchema(BaseModel):
-    """Defines full-text search terms and scoring configuration.
+    """Full-text search configuration and scoring rules.
 
-    Includes pattern multipliers and per-field weighting rules.
+    Encapsulates:
+        - Search terms
+        - Case sensitivity behavior
+        - Pattern-based match multipliers
+        - Per-field scoring weights
+
+    Supports validation against a search scope and compact binary serialization.
     """
     terms: list[Annotated[str, Field(max_length=255)]]
     case_sensitive: bool = False
@@ -22,14 +28,39 @@ class SearchTermsSchema(BaseModel):
     field_weights: FieldWeights = FieldWeights()
 
     def __iter__(self) -> Iterator[str]:
+        """Iterate over normalized search terms.
+
+        Returns:
+            An iterator of search term strings.
+        """
         return iter(self.terms)
 
     @field_validator("terms", mode="before")
     @classmethod
     def validate_terms(cls, raw_terms: Union[str, list[str]]) -> list[str]:
-        """Normalize and validate search terms input.
+        """Normalize and validate search term input.
 
-        Accepts either a raw search string or list of strings.
+        Accepts either:
+            - A raw search string (parsed using ``shlex.split``)
+            - A list of strings
+
+        Validation behavior:
+            - Ensures all terms are strings
+            - Removes empty or whitespace-only entries
+            - Rejects empty term collections
+
+        Args:
+            raw_terms:
+                Raw search term input.
+
+        Returns:
+            A normalized list of non-empty search terms.
+
+        Raises:
+            ValueError:
+                If parsing fails or no valid terms remain.
+            TypeError:
+                If input is not a string or list of strings.
         """
         if isinstance(raw_terms, str):
             try:
@@ -49,11 +80,38 @@ class SearchTermsSchema(BaseModel):
         return terms
 
     def validate_against_scope(self, scope: Scope):
-        """Ensure field weights are valid for the given scope."""
+        """Validate field weights against a given search scope.
+
+        Ensures all configured field weights are valid for the scope definition.
+
+        Args:
+            scope:
+                The search scope used to validate field eligibility.
+
+        Raises:
+            FieldNotSupportedError:
+                If a field is not allowed in the scope.
+            FieldValidationError:
+                If weight definitions are invalid.
+        """
         self.field_weights.validate_against_scope(scope)
 
     def serialize(self, scope: Scope) -> bytes:
-        """Serialize search terms and scoring configuration."""
+        """Serialize search terms and scoring configuration into binary format.
+
+        Serialization behavior:
+            - Encodes all search terms.
+            - Stores case-sensitivity flags.
+            - Appends serialized pattern multipliers.
+            - Appends scope-aware field weight configuration.
+
+        Args:
+            scope:
+                Scope used for serializing field weights.
+
+        Returns:
+            A bytes object representing the serialized search configuration.
+        """
         encoded_terms = [t.encode() for t in self.terms]
         term_count = struct.pack("!B", len(encoded_terms))
         term_data = b"".join(struct.pack("!B", len(t)) + t for t in encoded_terms)
@@ -71,7 +129,19 @@ class SearchTermsSchema(BaseModel):
 
     @classmethod
     def deserialize(cls, data: bytes, offset: int = 0) -> tuple["SearchTermsSchema", int]:
-        """Deserialize search terms from binary format."""
+        """Deserialize search configuration from binary format.
+
+        Args:
+            data:
+                Serialized byte sequence.
+            offset:
+                Starting offset within the sequence.
+
+        Returns:
+            A tuple containing:
+                - The reconstructed ``SearchTermsSchema`` instance
+                - The updated byte offset
+        """
         term_count = struct.unpack_from("!B", data, offset=offset)[0]
         offset += 1
         terms = []

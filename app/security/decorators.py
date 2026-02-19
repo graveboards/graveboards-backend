@@ -1,6 +1,6 @@
 import asyncio
 from functools import wraps
-from typing import Callable, Any, Awaitable, Iterable
+from typing import Callable, Any, Awaitable, Iterable, ParamSpec, TypeVar
 from collections.abc import Sequence
 
 from connexion import request
@@ -12,8 +12,16 @@ from app.config import DISABLE_SECURITY
 from app.database.models import User
 from app.utils import get_nested_value
 
+P = ParamSpec("P")
+T = TypeVar("T")
 
-def role_authorization(*required_roles: RoleName, one_of: Iterable[RoleName] = None, override: Callable[..., Awaitable[bool]] = None, override_kwargs: dict[str, Any] = None):
+
+def role_authorization(
+    *required_roles: RoleName,
+    one_of: Iterable[RoleName] = None,
+    override: Callable[..., Awaitable[bool]] = None,
+    override_kwargs: dict[str, Any] = None
+) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Decorator enforcing role-based access control on endpoints.
 
     Supports:
@@ -42,7 +50,7 @@ def role_authorization(*required_roles: RoleName, one_of: Iterable[RoleName] = N
         Forbidden:
             If authorization fails.
     """
-    def decorator(func: Callable[..., Awaitable[Any]]):
+    def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
         if not asyncio.iscoroutinefunction(func):
             raise ValueError(f"Function '{func.__name__}' must be async to use @role_authorization")
 
@@ -52,7 +60,7 @@ def role_authorization(*required_roles: RoleName, one_of: Iterable[RoleName] = N
             raise ValueError("Must provide either 'required_roles' arg(s) or 'one_of' kwarg")
 
         @wraps(func)
-        async def wrapper(*args, **kwargs) -> Awaitable[Any]:
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             db: PostgresqlDB = request.state.db
 
             if DISABLE_SECURITY:
@@ -67,16 +75,23 @@ def role_authorization(*required_roles: RoleName, one_of: Iterable[RoleName] = N
             user = await db.get(User, id=user_id, _include={"roles": True})
             user_roles = {RoleName(role.name) for role in user.roles}
             user_meets_role_requirements = (
-                all(required_role in user_roles for required_role in required_roles) if required_roles else
-                any(allowed_role in user_roles for allowed_role in one_of) if one_of else False
+                all(role in user_roles for role in required_roles)
+                if required_roles
+                else any(role in user_roles for role in one_of)
             )
 
             override_kwargs_ = {"_db": db, **kwargs, **(override_kwargs or {})}
 
-            if not (
-                (override is None and user_meets_role_requirements) or
-                (override is not None and (await override(**override_kwargs_) or user_meets_role_requirements))
-            ):
+            authorized = (
+                user_meets_role_requirements
+                if override is None
+                else (
+                    user_meets_role_requirements
+                    or await override(**override_kwargs_)
+                )
+            )
+
+            if not authorized:
                 raise Forbidden(detail="You are not authorized to access this resource")
 
             return await func(*args, **kwargs)
@@ -86,7 +101,10 @@ def role_authorization(*required_roles: RoleName, one_of: Iterable[RoleName] = N
     return decorator
 
 
-def ownership_authorization(authorized_user_id_lookup: str = "user", resource_user_id_lookup: str = "user_id"):
+def ownership_authorization(
+    authorized_user_id_lookup: str = "user",
+    resource_user_id_lookup: str = "user_id"
+) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Decorator enforcing resource ownership access control.
 
     Ensures the authenticated user matches the owner of the returned resource(s), unless
@@ -110,19 +128,12 @@ def ownership_authorization(authorized_user_id_lookup: str = "user", resource_us
         Forbidden:
             If ownership validation fails.
     """
-    def decorator(func: Callable[..., Awaitable[Any]]):
+    def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
         if not asyncio.iscoroutinefunction(func):
             raise ValueError(f"Function '{func.__name__}' must be async to use @check_ownership")
 
         @wraps(func)
-        async def wrapper(*args, **kwargs) -> Any:
-            def check_item_ownership(item_: dict) -> bool:
-                try:
-                    resource_user_id = get_nested_value(item_, resource_user_id_lookup)
-                    return resource_user_id == authorized_user_id
-                except KeyError:
-                    raise ValueError(f"Invalid data path '{resource_user_id_lookup}'")
-
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             db: PostgresqlDB = request.state.db
 
             result = await func(*args, **kwargs)
@@ -130,7 +141,11 @@ def ownership_authorization(authorized_user_id_lookup: str = "user", resource_us
             if DISABLE_SECURITY:
                 return result
 
-            if not isinstance(result, tuple) or not isinstance(result[0], (dict, Sequence)) or not isinstance(result[1], int):
+            if (
+                not isinstance(result, tuple)
+                or not isinstance(result[0], (dict, Sequence))
+                or not isinstance(result[1], int)
+            ):
                 raise ValueError(f"Unexpected result received from function '{func.__name__}', unable to evaluate authorization eligibility")
 
             data, status = result
@@ -147,8 +162,15 @@ def ownership_authorization(authorized_user_id_lookup: str = "user", resource_us
             user = await db.get(User, id=authorized_user_id, _include={"roles": True})
             user_roles = {RoleName(role.name) for role in user.roles}
 
-            if any(role is RoleName.ADMIN for role in user_roles):
+            if RoleName.ADMIN in user_roles:
                 return result
+
+            def check_item_ownership(item_: dict) -> bool:
+                try:
+                    resource_user_id = get_nested_value(item_, resource_user_id_lookup)
+                    return resource_user_id == authorized_user_id
+                except KeyError:
+                    raise ValueError(f"Invalid data path '{resource_user_id_lookup}'")
 
             if isinstance(data, dict):
                 if not check_item_ownership(data):
