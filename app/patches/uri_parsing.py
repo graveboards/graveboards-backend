@@ -15,10 +15,42 @@ NESTED_INCLUDE_KEY_TITLE_MAPPING = {
     "beatmapset_tags": "BeatmapsetTagInclude",
     "queue": "QueueInclude"
 }
+"""Mapping of nested include keys to OpenAPI schema titles.
+
+Used to resolve ambiguous or dynamically nested include relationships to their 
+corresponding OpenAPI component schema definitions.
+"""
 
 
 class OpenAPIURIParserPatched(OpenAPIURIParser):
+    """Extended OpenAPI URI parser with custom coercion logic.
+
+    Enhancements:
+        - Custom parsing for deep-object `include` parameters
+        - JSON-based coercion for `sorting`
+        - Improved handling of array-style query parameters
+
+    Designed to support complex filtering, nested includes, and structured query
+    parameters not natively handled by Connexion.
+    """
     def resolve_params(self, params, _in):
+        """Resolve and coerce incoming request parameters.
+
+        Applies schema-based coercion for standard parameters (copied from connexion)
+
+        Delegates special handling to:
+            - `coerce_include` for deep-object includes
+            - `coerce_sorting` for structured sorting arrays
+
+        Args:
+            params:
+                Raw parameter dictionary from the request.
+            _in:
+                Parameter location ("query", "path", etc.).
+
+        Returns:
+            Dictionary of resolved and coerced parameters.
+        """
         resolved_param = {}
         for k, values in params.items():
             param_defn = self.param_defns.get(k)
@@ -65,6 +97,26 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
 
     @staticmethod
     def coerce_include(param, value, parameter_type, parameter_name=None):
+        """Recursively coerce deep-object include parameters.
+
+        Supports:
+            - Boolean string casting (``"true"``/``"false"``)
+            - oneOf schema branch resolution
+            - Recursive object and array casting
+
+        Args:
+            param:
+                Parameter definition or schema.
+            value:
+                Raw include value.
+            parameter_type:
+                Location context (unused but required).
+            parameter_name:
+                Parameter name (optional).
+
+        Returns:
+            Coerced include structure matching schema shape.
+        """
         param_schema = param.get("schema", param)
 
         def resolve_oneof(schema, data):
@@ -131,70 +183,29 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
 
         return cast(value, param_schema)
 
-    # @staticmethod
-    # def coerce_include(param, value, parameter_type, parameter_name=None):
-    #     param_schema = param.get("schema", param)
-    #     param_type = param_schema.get("type")
-    #
-    #     def cast(d, schema):
-    #         if "oneOf" in schema:
-    #             for branch in schema["oneOf"]:
-    #                 branch_type = branch.get("type")
-    #
-    #                 if branch_type == "object" and isinstance(d, dict):
-    #                     schema = branch
-    #                     break
-    #
-    #                 if branch_type == "boolean" and isinstance(d, str) and d.lower() in ("true", "false"):
-    #                     schema = branch
-    #                     break
-    #
-    #         if isinstance(d, dict) and (additional_props := schema.get("additionalProperties")):
-    #             for k, v in d.items():
-    #                 if isinstance(v, dict) and k in NESTED_INCLUDE_KEY_TITLE_MAPPING:
-    #                     title = NESTED_INCLUDE_KEY_TITLE_MAPPING[k]
-    #
-    #                     for branch in additional_props["oneOf"]:
-    #                         if branch.get("title") == title:
-    #                             d[k] = cast(v, branch)
-    #                 elif isinstance(v, str) and v.lower() in ("true", "false"):
-    #                     d[k] = boolean(v)
-    #                 else:
-    #                     raise TypeValidationError(param_type, parameter_type, parameter_name)
-    #
-    #             return d
-    #
-    #         if isinstance(d, dict) and (props := schema.get("properties")):
-    #             for k, v in d.items():
-    #                 if k in props:
-    #                     sub_schema = props[k]
-    #                     d[k] = cast(v, sub_schema)
-    #                 else:
-    #                     d[k] = boolean(v)
-    #
-    #             return d
-    #
-    #         if schema.get("type") == "boolean":
-    #             try:
-    #                 return boolean(d)
-    #             except ValueError:
-    #                 return value
-    #
-    #         # Primitive types
-    #         TYPE_MAP = {"integer": int, "number": float, "boolean": boolean, "object": dict}
-    #         type_func = TYPE_MAP.get(schema.get("type"), lambda x: x)
-    #
-    #         try:
-    #             return type_func(d)
-    #         except ValueError:
-    #             raise TypeValidationError(param_type, parameter_type, parameter_name)
-    #         except TypeError:
-    #             return value
-    #
-    #     return cast(value, param_schema)
-
     @staticmethod
     def coerce_sorting(param, value, parameter_type, parameter_name=None):
+        """Coerce sorting parameters from JSON-encoded strings.
+
+        Each sorting item is parsed from JSON into a structured dict.
+
+        Args:
+            param:
+                Parameter definition.
+            value:
+                List of JSON-encoded sorting items.
+            parameter_type:
+                Location context (unused but required).
+            parameter_name:
+                Parameter name (optional).
+
+        Returns:
+            List of parsed sorting dictionaries.
+
+        Raises:
+            json.JSONDecodeError:
+                If any sorting item is invalid JSON.
+        """
         coerced = []
 
         for item in value:

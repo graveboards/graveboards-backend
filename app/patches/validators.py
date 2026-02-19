@@ -9,6 +9,16 @@ from app.config import API_BASE_PATH
 
 
 class ParameterValidatorPatched(ParameterValidator):
+    """Extended parameter validator with domain-specific logic.
+
+    Adds:
+        - Structured validation for `sorting`
+        - Deep-object validation for `include`
+        - Request-scope tracking for context-aware validation
+        - Custom error translation into HTTP 400 responses
+
+    Addresses Connexion limitations around complex query schemas.
+    """
     def __init__(
         self,
         parameters,
@@ -20,6 +30,28 @@ class ParameterValidatorPatched(ParameterValidator):
         self.request_scopes: dict[ConnexionRequest, dict] = {}
 
     def validate_query_parameter(self, param: dict, request: ConnexionRequest):
+        """Validate query parameters with custom include/sorting logic.
+
+        Special handling:
+            - `sorting`: Field/order validation against schema enums.
+            - `include`: Recursive deep-object validation against dynamically resolved
+            include schemas.
+
+            - `/search: include validation is deferred due to schema ambiguity.
+
+        Args:
+            param:
+                Parameter schema definition.
+            request:
+                Incoming Connexion request.
+
+        Returns:
+            Validated and possibly transformed parameter value.
+
+        Raises:
+            HTTPException:
+                On validation failure.
+        """
         param_name = param["name"]
         value = request.query_params.get(param_name)
 
@@ -44,6 +76,15 @@ class ParameterValidatorPatched(ParameterValidator):
         return self.validate_parameter("query", value, param, param_name=param_name)
 
     def validate(self, scope: dict):
+        """Validate request scope while tracking context.
+
+        Temporarily stores request scope to allow context-aware validation (e.g.,
+        route-specific include behavior).
+
+        Args:
+            scope:
+                ASGI request scope dictionary.
+        """
         request = ConnexionRequest(scope, uri_parser=self.uri_parser)
 
         try:
@@ -57,6 +98,23 @@ def validate_sorting(
     sorting: list,
     schema: dict
 ):
+    """Validate structured sorting directives.
+
+    Ensures each sorting entry:
+        - Contains a valid `field`
+        - Uses an allowed `order` (default: ``asc``/``desc``)
+        - Does not include unexpected keys
+
+    Args:
+        sorting:
+            List of sorting dictionaries.
+        schema:
+            OpenAPI schema defining allowed fields and orders.
+
+    Raises:
+        ArrayValidationError:
+            If any entry fails validation.
+    """
     items_schema = schema.get("items", {})
     allowed_fields = set(items_schema.get("properties", {}).get("field", {}).get("enum", []))
     allowed_orders = set(items_schema.get("properties", {}).get("order", {}).get("enum", ["asc", "desc"]))
@@ -83,6 +141,26 @@ def validate_include(
     schema: dict,
     path: list[str] = None,
 ):
+    """Recursively validate deep-object include structures.
+
+    Enforces:
+        - Only declared relationships may be included
+        - Boolean vs nested-object constraints
+        - oneOf schema resolution for conditional includes
+        - Prevention of forbidden recursive relationships
+
+    Args:
+        include:
+            Nested include dictionary from query parameters.
+        schema:
+            OpenAPI schema describing allowed structure.
+        path:
+            Internal recursion path (used for error reporting).
+
+    Raises:
+        DeepObjectValidationError:
+            On invalid structure or value.
+    """
     if path is None:
         path = []
 
