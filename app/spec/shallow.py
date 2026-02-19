@@ -22,6 +22,21 @@ disabled_nested_obj = {
 
 
 def populate_shallow_refs(openapi_spec: dict):
+    """Expand shallow schema references and prevent recursive cycles.
+
+    For schemas listed in ``SCHEMAS_WITH_SHALLOW_REFS``, this function:
+      - Resolves "Shallow" object schemas into their full definitions.
+      - Expands nested object and array properties.
+      - Detects cyclic references using a traversal stack.
+      - Drops cyclic properties or replaces nested include cycles with a disabled
+        boolean schema to prevent infinite recursion.
+
+    The specification is mutated in place.
+
+    Args:
+        openapi_spec:
+            The OpenAPI specification to transform.
+    """
     schemas = openapi_spec["components"]["schemas"]
 
     def is_shallow(title: str) -> bool:
