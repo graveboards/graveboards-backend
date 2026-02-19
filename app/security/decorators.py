@@ -14,6 +14,34 @@ from app.utils import get_nested_value
 
 
 def role_authorization(*required_roles: RoleName, one_of: Iterable[RoleName] = None, override: Callable[..., Awaitable[bool]] = None, override_kwargs: dict[str, Any] = None):
+    """Decorator enforcing role-based access control on endpoints.
+
+    Supports:
+        - Requiring all specified roles
+        - Requiring at least one role (``one_of``)
+        - Optional override callback for dynamic authorization logic
+
+    The decorated function must:
+        - Be async
+        - Accept ``**kwargs``
+        - Provide the authenticated user ID via ``kwargs["user"]``
+
+    Args:
+        *required_roles:
+            Roles the user must possess (all required).
+        one_of:
+            Iterable of roles where at least one must be present.
+        override:
+            Optional async callable returning ``True`` to allow access.
+        override_kwargs:
+            Additional keyword arguments passed to override.
+
+    Raises:
+        ValueError:
+            For invalid decorator usage or missing parameters.
+        Forbidden:
+            If authorization fails.
+    """
     def decorator(func: Callable[..., Awaitable[Any]]):
         if not asyncio.iscoroutinefunction(func):
             raise ValueError(f"Function '{func.__name__}' must be async to use @role_authorization")
@@ -59,6 +87,29 @@ def role_authorization(*required_roles: RoleName, one_of: Iterable[RoleName] = N
 
 
 def ownership_authorization(authorized_user_id_lookup: str = "user", resource_user_id_lookup: str = "user_id"):
+    """Decorator enforcing resource ownership access control.
+
+    Ensures the authenticated user matches the owner of the returned resource(s), unless
+    the user has an administrative role.
+
+    The decorated function must:
+        - Be async
+        - Accept ``**kwargs``
+        - Return a tuple of ``(data, status_code)``
+        - Return data as a dict or sequence of dicts
+
+    Args:
+        authorized_user_id_lookup:
+            Key/path used to locate the authenticated user ID.
+        resource_user_id_lookup:
+            Key/path used to locate the resource owner ID.
+
+    Raises:
+        ValueError:
+            If decorator contract is violated.
+        Forbidden:
+            If ownership validation fails.
+    """
     def decorator(func: Callable[..., Awaitable[Any]]):
         if not asyncio.iscoroutinefunction(func):
             raise ValueError(f"Function '{func.__name__}' must be async to use @check_ownership")
