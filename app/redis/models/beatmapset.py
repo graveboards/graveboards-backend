@@ -6,9 +6,15 @@ from .beatmap import Beatmap
 
 
 class Beatmapset(BeatmapsetOsuApiSchema):
+    """Domain model representing an osu! beatmapset and its beatmaps."""
     beatmaps: list["Beatmap"]
 
     def serialize(self) -> dict[str, str]:
+        """Serialize the beatmapset into a Redis-safe string dictionary.
+
+        Returns:
+            A dictionary with stringified values.
+        """
         serialized_dict = {}
 
         for key, value in self.__dict__.items():
@@ -29,6 +35,15 @@ class Beatmapset(BeatmapsetOsuApiSchema):
 
     @classmethod
     def deserialize(cls, serialized_dict: dict[str, str]) -> "Beatmapset":
+        """Deserialize a Redis-stored beatmapset dictionary.
+
+        Args:
+            serialized_dict:
+                Serialized beatmapset data.
+
+        Returns:
+            A validated ``Beatmapset`` instance.
+        """
         deserialized_dict = {}
 
         for key, value in serialized_dict.items():

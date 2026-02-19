@@ -7,6 +7,7 @@ from pydantic.fields import computed_field
 
 
 class QueueRequestHandlerTask(BaseModel):
+    """Represents a queued beatmapset request processing task."""
     user_id: int
     beatmapset_id: int
     queue_id: int
@@ -18,9 +19,19 @@ class QueueRequestHandlerTask(BaseModel):
     @computed_field
     @property
     def hashed_id(self) -> int:
+        """Compute a stable positive hash identifier for the task.
+
+        Returns:
+            A 64-bit positive integer hash.
+        """
         return hash((self.queue_id, self.beatmapset_id)) & 0x7FFFFFFFFFFFFFFF
 
     def serialize(self) -> dict[str, str]:
+        """Serialize the task for Redis storage.
+
+        Returns:
+            A dictionary with stringified values.
+        """
         serialized_dict = {}
 
         for key, value in self.__dict__.items():
@@ -34,6 +45,15 @@ class QueueRequestHandlerTask(BaseModel):
 
     @classmethod
     def deserialize(cls, serialized_dict: dict[str, str]) -> "QueueRequestHandlerTask":
+        """Deserialize a stored task dictionary.
+
+        Args:
+            serialized_dict:
+                Serialized task data.
+
+        Returns:
+            A validated ``QueueRequestHandlerTask`` instance.
+        """
         deserialized_dict = {}
 
         for key, value in serialized_dict.items():

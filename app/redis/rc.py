@@ -1,5 +1,6 @@
 import asyncio
 from contextlib import contextmanager, asynccontextmanager
+from typing import AsyncIterator, Generator, Any
 
 from redis import Redis
 from redis.asyncio import Redis as AsyncRedis
@@ -19,11 +20,37 @@ logger = get_logger(__name__)
 
 
 class RedisClient(AsyncRedis):
-    def __init__(self):
+    """Asynchronous Redis client interface.
+
+    Designed to centralize redis concerns behind a thin, composable abstraction.
+    """
+    def __init__(self) -> None:
+        """Initialize the Redis client using configured connection settings."""
         super().__init__(**REDIS_CONFIGURATION)
         logger.info(f"Connected to Redis at '{REDIS_BASE_URL}'")
 
-    async def paginate_scan(self, pattern: str, limit: int = None, offset: int = 0, type_: str = None) -> list[str]:
+    async def paginate_scan(
+        self,
+        pattern: str,
+        limit: int = None,
+        offset: int = 0,
+        type_: str = None
+    ) -> list[str]:
+        """Scan keys matching a pattern with offset/limit pagination.
+
+        Args:
+            pattern:
+                Glob-style key pattern.
+            limit:
+                Maximum number of keys to return.
+            offset:
+                Number of matching keys to skip.
+            type_:
+                Optional Redis type filter.
+
+        Returns:
+            A list of matching Redis keys.
+        """
         keys = []
         count = 0
 
@@ -40,7 +67,35 @@ class RedisClient(AsyncRedis):
         return keys
 
     @asynccontextmanager
-    async def lock_ctx(self, key: str, expiry: int = LOCK_EXPIRY, timeout: float = LOCK_ACQUISITION_TIMEOUT, retry_interval: float = LOCK_ACQUISITION_RETRY_INTERVAL):
+    async def lock_ctx(
+        self,
+        key: str,
+        expiry: int = LOCK_EXPIRY,
+        timeout: float = LOCK_ACQUISITION_TIMEOUT,
+        retry_interval: float = LOCK_ACQUISITION_RETRY_INTERVAL
+    ) -> AsyncIterator[None]:
+        """Acquire a distributed lock using Redis SET NX semantics.
+
+        Retries until acquired or timeout is reached. Automatically releases the lock on
+        context exit.
+
+        Args:
+            key:
+                Lock key.
+            expiry:
+                Lock expiration time in seconds.
+            timeout:
+                Maximum time to wait for acquisition.
+            retry_interval:
+                Delay between retry attempts.
+
+        Yields:
+            ``None``.
+
+        Raises:
+            RedisLockTimeoutError:
+                If the lock cannot be acquired in time.
+        """
         deadline = asyncio.get_event_loop().time() + timeout
 
         while True:
@@ -59,7 +114,12 @@ class RedisClient(AsyncRedis):
 
 
 @contextmanager
-def redis_connection():
+def redis_connection() -> Generator[Redis, Any, None]:
+    """Provide a synchronous Redis connection from the shared pool.
+
+    Yields:
+        Redis: A Redis client instance.
+    """
     from .pool import connection_pool
 
     rc = Redis(connection_pool=connection_pool)
