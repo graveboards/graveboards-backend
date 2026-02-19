@@ -8,6 +8,23 @@ from api.utils import pop_auth_info, prime_query_kwargs, coerce_value
 
 
 def api_query(model_class: ModelClass, many: bool = False):
+    """Decorator for normalizing API query handlers.
+
+    Ensures:
+        - Handler is async
+        - Auth info is stripped from kwargs
+        - Query parameters are normalized for DB layer
+
+    Args:
+        model_class:
+            Target model for the query.
+        many:
+            Whether the handler returns multiple results.
+
+    Raises:
+        ValueError:
+            If applied to a non-async function.
+    """
     def decorator(func: Callable[..., Awaitable[Any]]):
         if not asyncio.iscoroutinefunction(func):
             raise ValueError(f"Function '{func.__name__}' must be async to use @api_query")
@@ -25,6 +42,23 @@ def api_query(model_class: ModelClass, many: bool = False):
 
 
 def coerce_arguments(*params: str, **param_mappings: dict):
+    """Decorator for runtime coercion of handler arguments.
+
+    Coerces specified parameters according to their type annotations. Optional mappings
+    may be provided to translate specific input values before coercion.
+
+    Args:
+        *params:
+            Parameter names to coerce.
+        **param_mappings:
+            Optional value remapping per parameter.
+
+    Raises:
+        ValueError:
+            If the function is not async or parameter names are invalid.
+        TypeError:
+            If parameters lack type annotations.
+    """
     def decorator(func: Callable[..., Awaitable[Any]]):
         if not asyncio.iscoroutinefunction(func):
             raise ValueError(f"Function '{func.__name__}' must be async to use @coerce_arguments")

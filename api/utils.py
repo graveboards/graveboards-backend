@@ -8,6 +8,18 @@ from app.database.models import BaseType
 def pop_auth_info(
     kwargs: dict[str, Any]
 ) -> dict[str, Any]:
+    """Remove authentication-related keys from kwargs.
+
+    Extracts and removes ``"user"`` and ``"token_info"`` from the provided dictionary if
+    present.
+
+    Args:
+        kwargs:
+            Keyword arguments from an API handler.
+
+    Returns:
+        The extracted authentication data.
+    """
     return {key: kwargs.pop(key) for key in ("user", "token_info") if key in kwargs}
 
 
@@ -15,6 +27,17 @@ def prime_query_kwargs(
     kwargs: dict[str, Any],
     many: bool = False
 ):
+    """Normalize query-related kwargs for database consumption.
+
+    Moves supported query parameters (e.g., ``limit``, ``offset``) to their internal
+    underscored equivalents (e.g., ``_limit``, ``_offset``).
+
+    Args:
+        kwargs:
+            Incoming handler kwargs.
+        many:
+            Whether the query targets multiple results.
+    """
     params = {
         "include"
     } if not many else {
@@ -35,6 +58,23 @@ def bleach_body(
     whitelisted_keys: Iterable[str] = None,
     blacklisted_keys: Iterable[str] = None
 ) -> dict[str, Any]:
+    """Filter a request body using whitelist and/or blacklist rules.
+
+    Args:
+        body:
+            Incoming request payload.
+        whitelisted_keys:
+            Keys allowed to pass through.
+        blacklisted_keys:
+            Keys explicitly disallowed.
+
+    Returns:
+        Sanitized payload.
+
+    Raises:
+        ValueError:
+            If a key appears in both whitelist and blacklist.
+    """
     whitelist = set(whitelisted_keys) if whitelisted_keys is not None else None
     blacklist = set(blacklisted_keys or ())
 
@@ -50,6 +90,28 @@ def coerce_value(
     annotation: Any,
     param_name: str
 ):
+    """Coerce a value to match a function parameter annotation.
+
+    Supports:
+        - Concrete types (e.g., int, str)
+        - Optional/Union types
+        - Literal values
+
+    Args:
+        value:
+            Incoming parameter value.
+        annotation:
+            Target type annotation.
+        param_name:
+            Parameter name (for error messages).
+
+    Returns:
+        Coerced value.
+
+    Raises:
+        TypeError:
+            If coercion fails or annotation is unsupported.
+    """
     if value is None:
         return None
 
@@ -91,12 +153,34 @@ def build_pydantic_include(
     include_schema: dict,
     request_include: Optional[dict] = None
 ):
+    """Build a Pydantic-compatible include tree from an OpenAPI schema.
+
+    Merges schema defaults with client-provided include overrides and formats the result
+    for use with ``model_dump(include=...)``.
+
+    Args:
+        obj:
+            Source object instance.
+        include_schema:
+            OpenAPI Include schema definition.
+        request_include:
+            Client-provided include structure.
+
+    Returns:
+        Nested include tree.
+    """
     defaults = _extract_default_include(include_schema)
     merged = _merge_include(defaults, request_include)
     return _format_include(obj, merged)
 
 
 def _extract_default_include(include_schema: dict) -> dict:
+    """Extract default include configuration from an Include schema.
+
+    Raises:
+        RuntimeError:
+            If unresolved shallow schemas are encountered.
+    """
     if include_schema.get("title").endswith("Shallow"):
         raise RuntimeError("Shallow schemas were not properly resolved")
 
@@ -128,6 +212,11 @@ def _extract_default_include(include_schema: dict) -> dict:
 
 
 def _merge_include(defaults: dict, overrides: Optional[dict] = None) -> dict:
+    """Merge client include overrides into schema defaults recursively.
+
+    Returns:
+        Merged dictionary
+    """
     if overrides is None:
         return defaults
 
@@ -164,7 +253,11 @@ def _merge_include(defaults: dict, overrides: Optional[dict] = None) -> dict:
     return merged
 
 
-def _is_collection(obj: BaseType | BaseModel, attr: str) -> bool:
+def _is_collection(
+    obj: BaseType | BaseModel,
+    attr: str
+) -> bool:
+    """Determine whether a model attribute represents a collection."""
     try:
         value = getattr(obj, attr)
     except AttributeError:
@@ -176,7 +269,14 @@ def _is_collection(obj: BaseType | BaseModel, attr: str) -> bool:
     return isinstance(value, Iterable) and not isinstance(value, (str, bytes, dict))
 
 
-def _format_include(obj: BaseType | BaseModel, include_tree: dict) -> dict:
+def _format_include(
+    obj: BaseType | BaseModel,
+    include_tree: dict
+) -> dict:
+    """Convert internal include tree metadata into Pydantic include format.
+
+    Handles nested objects and collections using ``"__all__"`` for lists.
+    """
     result = {}
 
     for field, meta in include_tree.items():
