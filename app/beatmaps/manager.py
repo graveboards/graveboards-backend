@@ -45,14 +45,58 @@ logger = get_logger(__name__)
 
 
 class BeatmapManager:
-    def __init__(self, rc: RedisClient, db: PostgresqlDB):
+    """Manager for archiving and versioning beatmaps and beatmapsets.
+
+    Coordinates interactions between:
+        - The osu! API client
+        - The PostgreSQL database
+        - Redis-based locking
+        - Local filesystem storage for `.osu` snapshots
+
+    Handles snapshot creation, delta updates, tag synchronization, ownership resolution,
+    and downloadable artifact generation.
+    """
+    def __init__(
+        self,
+        rc: RedisClient,
+        db: PostgresqlDB
+    ) -> None:
+        """Initialize the BeatmapManager.
+
+        Args:
+            rc:
+                Redis client used for distributed locking.
+            db:
+                Database interface.
+        """
         self.rc = rc
         self.db = db
         self.oac = OsuAPIClient(rc)
 
         self._changelog = {}
 
-    async def archive(self, beatmapset_id: int, download: bool = True) -> dict[str, Union[dict, list[dict], str, None]]:
+    async def archive(
+        self,
+        beatmapset_id: int,
+        download: bool = True
+    ) -> dict[str, Union[dict, list[dict], str, None]]:
+        """Archive or update a beatmapset and its beatmaps.
+
+        Fetches the latest beatmapset from the osu! API and determines whether a new
+        snapshot should be created (based on checksum) or an existing snapshot should be
+        updated with field-level deltas.
+
+        Optionally downloads `.osu` files for newly snapshotted beatmaps.
+
+        Args:
+            beatmapset_id:
+                The osu! beatmapset ID.
+            download:
+                Whether to download `.osu` files for new snapshots.
+
+        Returns:
+            A changelog describing created or updated entities.
+        """
         logger.debug(f"Started archive process for beatmapset {beatmapset_id}: {download=}")
         self._reset_changelog()
 
@@ -79,7 +123,21 @@ class BeatmapManager:
         finally:
             self._reset_changelog()
 
-    async def _snapshot_beatmapset(self, beatmapset_dict: dict):
+    async def _snapshot_beatmapset(
+        self,
+        beatmapset_dict: dict
+    ) -> None:
+        """Create a new ``BeatmapsetSnapshot`` and associated relationships.
+
+        Snapshots:
+            - Beatmapset metadata
+            - Child beatmap snapshots
+            - Beatmapset tags
+
+        Args:
+            beatmapset_dict:
+                Raw beatmapset payload from osu! API.
+        """
         beatmapset_snapshot_dict = BeatmapsetSnapshotSchema.model_validate(beatmapset_dict).model_dump(
             exclude={"beatmap_snapshots", "beatmapset_tags", "user_profile"}
         )
@@ -91,7 +149,21 @@ class BeatmapManager:
         self._changelog["snapshotted_beatmapset"] = info
         logger.debug(f"Snapshotted beatmapset: {info}")
 
-    async def _snapshot_beatmaps(self, beatmap_dicts: list[dict]) -> list[BeatmapSnapshot]:
+    async def _snapshot_beatmaps(
+        self,
+        beatmap_dicts: list[dict]
+) -> list[BeatmapSnapshot]:
+        """Create ``BeatmapSnapshot`` records for new beatmaps.
+
+        Existing snapshots (matched by checksum) are reused.
+
+        Args:
+            beatmap_dicts:
+                Raw beatmap payloads from osu! API.
+
+        Returns:
+            List of snapshot instances.
+        """
         beatmap_snapshots = []
 
         for beatmap_dict in beatmap_dicts:
@@ -113,7 +185,15 @@ class BeatmapManager:
 
         return beatmap_snapshots
 
-    async def _update_beatmapset(self, beatmapset_dict: dict):
+    async def _update_beatmapset(
+        self,
+        beatmapset_dict: dict
+    ) -> None:
+        """Apply field-level updates to the latest ``BeatmapsetSnapshot``.
+
+        Computes a delta against UPDATABLE_FIELDS and persists only changed values.
+        Child beatmaps are updated separately.
+        """
         await self._update_beatmaps(beatmapset_dict["beatmaps"])
 
         checksum = combine_checksums([beatmap["checksum"] for beatmap in beatmapset_dict["beatmaps"]])
@@ -137,7 +217,14 @@ class BeatmapManager:
             self._changelog["updated_beatmapset"] = {**{"beatmapset_id": beatmapset_snapshot.beatmapset_id}, **delta}
             logger.debug(f"Updated beatmapset: {info}")
 
-    async def _update_beatmaps(self, beatmap_dicts: list[dict]):
+    async def _update_beatmaps(
+        self,
+        beatmap_dicts: list[dict]
+    ) -> None:
+        """Apply field-level updates to existing BeatmapSnapshot records.
+
+        Also refreshes many-to-many relationships for beatmap tags and owner profiles.
+        """
         for beatmap_dict in beatmap_dicts:
             async with self.db.session() as session:
                 beatmap_snapshot = await self.db.get(
@@ -174,7 +261,14 @@ class BeatmapManager:
                     self._changelog["updated_beatmaps"].append(info)
                     logger.debug(f"Updated beatmap: {info}")
 
-    async def _populate_beatmapset(self, beatmapset_dict: dict):
+    async def _populate_beatmapset(
+        self,
+        beatmapset_dict: dict
+    ) -> None:
+        """Ensure ``Beatmapset`` and related ``Beatmap`` records exist.
+
+        Populates users, profile, the beatmapset, and child beatmaps.
+        """
         beatmapset_id = beatmapset_dict["id"]
         user_id = beatmapset_dict["user_id"]
 
@@ -192,7 +286,11 @@ class BeatmapManager:
         for beatmap_dict in beatmapset_dict["beatmaps"]:
             await self._populate_beatmap(beatmap_dict)
 
-    async def _populate_beatmap(self, beatmap_dict: dict):
+    async def _populate_beatmap(
+        self,
+        beatmap_dict: dict
+    ) -> None:
+        """Ensure a Beatmap record exists and user ownership is resolved."""
         beatmap_id = beatmap_dict["id"]
         beatmapset_id = beatmap_dict["beatmapset_id"]
         user_id = beatmap_dict["user_id"]  # Appears to always be first user in owners, else host
@@ -207,7 +305,19 @@ class BeatmapManager:
             info = {"id": beatmap_id, "beatmapset_id": beatmapset_id}
             logger.debug(f"Added beatmap: {info}")
 
-    async def _populate_user(self, user_id: int) -> User:
+    async def _populate_user(
+        self,
+        user_id: int
+    ) -> User:
+        """Ensure a ``User`` exists and populate their ``Profile``.
+
+        Returns:
+            Instance of the user.
+
+        Raises:
+            RestrictedUserError:
+                If the user profile cannot be retrieved from the osu! API.
+        """
         if not (user := await self.db.get(User, id=user_id)):
             user = await self.db.add(User, id=user_id)
             info = {"id": user_id}
@@ -221,7 +331,32 @@ class BeatmapManager:
 
         return user
 
-    async def _populate_profile(self, user_id: int, restricted_user_dict: dict = None, is_restricted: bool = False) -> Profile:
+    async def _populate_profile(
+        self,
+        user_id: int,
+        restricted_user_dict: dict = None,
+        is_restricted: bool = False
+    ) -> Profile:
+        """Create or update a Profile with distributed locking.
+
+        Fetches profile data from the osu! API unless the user is restricted. Uses a
+        Redis lock to prevent concurrent profile creation.
+
+        Args:
+            user_id:
+                osu! user ID.
+            restricted_user_dict:
+                Fallback data for restricted users.
+            is_restricted:
+                Whether the user is restricted.
+
+        Returns:
+            The persisted profile instance.
+
+        Raises:
+            RedisLockTimeoutError:
+                If the distributed lock cannot be acquired.
+        """
         restricted_user_dict = restricted_user_dict if restricted_user_dict is not None else {}
         lock_hash_name = Namespace.LOCK.hash_name(Namespace.OSU_USER_PROFILE.hash_name(user_id))
 
@@ -266,7 +401,15 @@ class BeatmapManager:
         except RedisLockTimeoutError:
             raise
 
-    async def _populate_owner_profiles(self, owners: list[dict]) -> list[Profile]:
+    async def _populate_owner_profiles(
+        self,
+        owners: list[dict]
+    ) -> list[Profile]:
+        """Resolve and populate ``Profile`` instances for beatmap owners.
+
+        Returns:
+            List of profile instances.
+        """
         profiles = []
 
         for owner_dict in owners:
@@ -282,7 +425,15 @@ class BeatmapManager:
 
         return profiles
 
-    async def _populate_beatmapset_tags(self, tags_str: str) -> list[BeatmapsetTag]:
+    async def _populate_beatmapset_tags(
+        self,
+        tags_str: str
+    ) -> list[BeatmapsetTag]:
+        """Create/retrieve tag records from a space-delimited string.
+
+        Returns:
+            List of beatmapset tag instances.
+        """
         tag_strs = set(tag.strip() for tag in tags_str.split(" ") if tag.strip())
         beatmapset_tags = []
 
@@ -299,7 +450,17 @@ class BeatmapManager:
 
         return beatmapset_tags
 
-    async def _populate_beatmap_tags(self, top_tag_ids: list[dict[str, int]]) -> list[BeatmapTag]:
+    async def _populate_beatmap_tags(
+        self,
+        top_tag_ids: list[dict[str, int]]
+    ) -> list[BeatmapTag]:
+        """Resolve ```BeatmapTag``` records from osu! tag IDs.
+
+        If tags are missing locally, synchronizes from the osu! API.
+
+        Returns:
+            List of beatmap tag instances.
+        """
         async def fetch_beatmap_tag(_recursed=False) -> BeatmapTag | None:
             if not (beatmap_tag_ := await self.db.get(BeatmapTag, id=tag_id)):
                 if _recursed:
@@ -326,7 +487,8 @@ class BeatmapManager:
 
         return beatmap_tags
 
-    async def _update_beatmap_tags_from_osu(self):
+    async def _update_beatmap_tags_from_osu(self) -> None:
+        """Synchronize ``BeatmapTag`` records with the osu! API."""
         osu_beatmap_tags = await self.oac.get_tags()
 
         for osu_beatmap_tag in osu_beatmap_tags["tags"]:
@@ -342,7 +504,15 @@ class BeatmapManager:
                     await self.db.update(BeatmapTag, primary_key=tag_id, **osu_beatmap_tag)
                     logger.debug(f"Updated beatmap tag: old={old_osu_beatmap_tag}, new={osu_beatmap_tag}")
 
-    async def _download(self, beatmap_ids: list[int]):
+    async def _download(
+        self,
+        beatmap_ids: list[int]
+    ) -> None:
+        """Download `.osu` files for the given beatmap IDs.
+
+        Files are stored under versioned snapshot directories. Existing files are
+        overwritten if out of sync.
+        """
         if not beatmap_ids:
             return
 
@@ -366,7 +536,19 @@ class BeatmapManager:
                     logger.warning(f"Overwrote .osu file at '{output_path}'")  # Caused by local instance files not being in sync with the database (e.g., leftover files)
 
     @staticmethod
-    async def get(beatmap_id: int, snapshot_number: int) -> bytes:
+    async def get(
+        beatmap_id: int,
+        snapshot_number: int
+    ) -> bytes:
+        """Retrieve the raw `.osu` file contents for a snapshot from disk.
+
+        Returns:
+            Raw bytes of the file's content.
+
+        Raises:
+            FileNotFoundError:
+                If the file does not exist.
+        """
         file_path = BEATMAP_SNAPSHOT_FILE_PATH.format(beatmap_id=beatmap_id, snapshot_number=snapshot_number)
 
         if not os.path.exists(file_path):
@@ -376,7 +558,19 @@ class BeatmapManager:
             return await file.read()
 
     @staticmethod
-    def get_path(beatmap_id: int, snapshot_number: int) -> str:
+    def get_path(
+        beatmap_id: int,
+        snapshot_number: int
+    ) -> str:
+        """Resolve the filesystem path to a `.osu` snapshot file.
+
+        Returns:
+            The path as a string.
+
+        Raises:
+            FileNotFoundError:
+                If the file does not exist.
+        """
         file_path = BEATMAP_SNAPSHOT_FILE_PATH.format(beatmap_id=beatmap_id, snapshot_number=snapshot_number)
 
         if not os.path.exists(file_path):
@@ -384,7 +578,23 @@ class BeatmapManager:
 
         return file_path
 
-    async def get_zip(self, beatmapset_id: int, snapshot_number: int = -1) -> BytesIO:
+    async def get_zip(
+        self,
+        beatmapset_id: int,
+        snapshot_number: int = -1
+    ) -> BytesIO:
+        """Create a ZIP archive containing `.osu` files for a snapshot.
+
+        If ``snapshot_number`` is negative, selects snapshots relative to the most
+        recent version (e.g., ``-1`` = latest).
+
+        Returns:
+            ``BytesIO`` object for streaming a response.
+
+        Raises:
+            ValueError:
+                If the requested snapshot does not exist.
+        """
         if snapshot_number < 0:
             offset = abs(snapshot_number) - 1
 
@@ -419,7 +629,14 @@ class BeatmapManager:
         return await asyncio.to_thread(self._create_zip, beatmap_paths)
 
     @staticmethod
-    def _create_zip(beatmap_paths: list[tuple[str, str]]) -> BytesIO:
+    def _create_zip(
+        beatmap_paths: list[tuple[str, str]]
+    ) -> BytesIO:
+        """Create an in-memory ZIP archive from beatmap file paths.
+
+        Returns:
+            ``BytesIO`` object of the archive
+        """
         zip_buffer = BytesIO()
 
         with ZipFile(zip_buffer, "w") as zip_file:
@@ -429,7 +646,8 @@ class BeatmapManager:
         zip_buffer.seek(0)
         return zip_buffer
 
-    def _reset_changelog(self):
+    def _reset_changelog(self) -> None:
+        """Reset the internal changelog state."""
         self._changelog = {
             "snapshotted_beatmapset": None,
             "snapshotted_beatmaps": [],
