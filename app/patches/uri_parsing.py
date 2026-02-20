@@ -1,25 +1,8 @@
 import json
+from datetime import datetime
 
 from connexion.uri_parsing import OpenAPIURIParser
 from connexion.utils import coerce_type, TypeValidationError
-
-NESTED_INCLUDE_KEY_TITLE_MAPPING = {
-    "user_profile": "ProfileInclude",
-    "owner_profiles": "ProfileInclude",
-    "manager_profiles": "ProfileInclude",
-    "beatmap_snapshot": "BeatmapSnapshotInclude",
-    "beatmap_snapshots": "BeatmapSnapshotInclude",
-    "beatmap_tags": "BeatmapTagInclude",
-    "beatmapset_snapshot": "BeatmapsetSnapshotInclude",
-    "beatmapset_snapshots": "BeatmapsetSnapshotInclude",
-    "beatmapset_tags": "BeatmapsetTagInclude",
-    "queue": "QueueInclude"
-}
-"""Mapping of nested include keys to OpenAPI schema titles.
-
-Used to resolve ambiguous or dynamically nested include relationships to their 
-corresponding OpenAPI component schema definitions.
-"""
 
 
 class OpenAPIURIParserPatched(OpenAPIURIParser):
@@ -36,11 +19,8 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
     def resolve_params(self, params, _in):
         """Resolve and coerce incoming request parameters.
 
-        Applies schema-based coercion for standard parameters (copied from connexion)
-
-        Delegates special handling to:
-            - `coerce_include` for deep-object includes
-            - `coerce_sorting` for structured sorting arrays
+        Applies schema-based coercion for standard parameters (copied from connexion),
+        and special handling for custom parameters.
 
         Args:
             params:
@@ -76,7 +56,6 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
             else:
                 resolved_param[k] = values[-1]
 
-            # Use custom coerce_type specifically for include
             if k == "include":
                 try:
                     resolved_param[k] = self.coerce_include(param_defn, resolved_param[k], "parameter", k)
@@ -85,6 +64,11 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
             elif k == "sorting":
                 try:
                     resolved_param[k] = self.coerce_sorting(param_defn, resolved_param[k], "parameter", k)
+                except TypeValidationError:
+                    pass
+            elif k == "filters":
+                try:
+                    resolved_param[k] = self.coerce_filters(param_defn, resolved_param[k], "parameter", k)
                 except TypeValidationError:
                     pass
             else:
@@ -153,7 +137,6 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
             if isinstance(data, dict):
                 if isinstance(schema, dict):
                     schema = resolve_oneof(schema, data)
-
                     properties = schema.get("properties")
                     additional = schema.get("additionalProperties")
 
@@ -215,3 +198,57 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
                 raise
 
         return coerced
+
+    @staticmethod
+    def coerce_filters(param, value, parameter_type, parameter_name=None):
+        """
+        Recursively coerce deep-object filter parameters.
+
+        Supports:
+            - Primitive casting for condition values
+            - Nested relationship filter objects
+            - Preservation of condition mappings
+
+        Args:
+            param:
+                Parameter definition or schema.
+            value:
+                Raw filters value.
+            parameter_type:
+                Location context (unused but required).
+            parameter_name:
+                Parameter name (optional).
+
+        Returns:
+            Coerced filters structure matching schema shape.
+        """
+        def cast(data):
+            if isinstance(data, str):
+                lower = data.lower()
+
+                if lower == "true":
+                    return True
+                if lower == "false":
+                    return False
+
+                try:
+                    return datetime.fromisoformat(data.replace("Z", "+00:00"))
+                except ValueError:
+                    pass
+
+                try:
+                    if "." in data:
+                        return float(data)
+                    return int(data)
+                except ValueError:
+                    return data
+
+            if isinstance(data, dict):
+                return {k: cast(v) for k, v in data.items()}
+
+            if isinstance(data, list):
+                return [cast(v) for v in data]
+
+            return data
+
+        return cast(value)

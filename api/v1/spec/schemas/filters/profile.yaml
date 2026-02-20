@@ -4,7 +4,7 @@ ProfileFilter:
         $ref: "./description.yaml#/FilterDescription"
     type: object
     additionalProperties: false
-    properties:
+    properties: # TODO: Add other columns
         username:
             $ref: "./fields/index.yaml#/UsernameField"
         country_code:

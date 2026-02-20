@@ -42,6 +42,7 @@ def prime_query_kwargs(
         "include"
     } if not many else {
         "sorting",
+        "filters",
         "include",
         "limit",
         "offset",

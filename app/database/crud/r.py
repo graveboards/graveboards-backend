@@ -1,7 +1,7 @@
 from typing import Iterable, Any, Optional, Union
 
 from sqlalchemy.sql import select
-from sqlalchemy.sql.elements import BinaryExpression
+from sqlalchemy.sql.elements import BinaryExpression, ColumnElement, and_
 from sqlalchemy.sql.selectable import Select
 from sqlalchemy.orm.attributes import QueryableAttribute
 from sqlalchemy.orm.interfaces import LoaderOption
@@ -10,9 +10,11 @@ from sqlalchemy.orm.strategy_options import selectinload, joinedload, noload, Lo
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import BaseType, ModelClass, Base
+from app.database.utils import get_filter_condition
+from app.database.enums import FilterOperator
 from app.utils import clamp
 from .decorators import session_manager
-from .types import Include, Sorting
+from .types import Sorting, Filters, Include
 
 QUERY_MIN_LIMIT = 1
 QUERY_MAX_LIMIT = 100
@@ -27,7 +29,8 @@ class _R:
         _select: Union[str, Iterable[str]] = None,
         _join: Union[Any, Iterable[Any]] = None,
         _where: Union[Any, Iterable[Any]] = None,
-        _sorting: Union[Any, Iterable[Any]] = None,
+        _sorting: Sorting = None,
+        _filters: Filters = None,
         _include: Include = None,
         _offset: int = 0,
         **kwargs
@@ -43,8 +46,7 @@ class _R:
             session:
                 Active async SQLAlchemy session.
             _select:
-                Column name or iterable of column names to project. If omitted, selects
-                the full model entity.
+                Column name(s) to project. If omitted, selects the full model entity.
             _join:
                 Join target(s) which may be a model class, a (model, condition) tuple,
                 or an iterable of either.
@@ -52,8 +54,10 @@ class _R:
                 WHERE clause expression(s).
             _sorting:
                 Sorting configuration as a list of sorting dicts.
+            _filters:
+                Nested filter configuration as a dict of fields and conditions.
             _include:
-                Nested relationship loading specification.
+                Nested relationship loading configuration.
             _offset:
                 Number of rows to skip before returning the first result.
             **kwargs:
@@ -63,7 +67,7 @@ class _R:
             The first matching model instance or projected scalar value, or ``None`` if
             no result is found.
         """
-        select_stmt = _R._construct_stmt(model_class, _select, _join, _where, _sorting, _include, **kwargs)
+        select_stmt = _R._construct_stmt(model_class, _select, _join, _where, _sorting, _filters, _include, **kwargs)
         select_stmt = select_stmt.offset(_offset)
 
         return await session.scalar(select_stmt)
@@ -75,7 +79,8 @@ class _R:
         _select: Union[str, Iterable[str]] = None,
         _join: Union[Any, Iterable[Any]] = None,
         _where: Union[Any, Iterable[Any]] = None,
-        _sorting: Union[Any, Iterable[Any]] = None,
+        _sorting: Sorting = None,
+        _filters: Filters = None,
         _include: Include = None,
         _limit: int = QUERY_DEFAULT_LIMIT,
         _offset: int = 0,
@@ -93,8 +98,7 @@ class _R:
             session:
                 Active async SQLAlchemy session.
             _select:
-                Column name or iterable of column names to project. If omitted, selects
-                the full model entity.
+                Column name(s) to project. If omitted, selects the full model entity.
             _join:
                 Join target(s) which may be a model class, a (model, condition) tuple,
                 or an iterable of either.
@@ -102,8 +106,10 @@ class _R:
                 WHERE clause expression(s).
             _sorting:
                 Sorting configuration as a list of sorting dicts.
+            _filters:
+                Nested filter configuration as a dict of fields and conditions.
             _include:
-                Nested relationship loading specification.
+                Nested relationship loading configuration.
             _limit:
                 Maximum number of rows to return. Clamped between configured bounds.
             _offset:
@@ -116,7 +122,7 @@ class _R:
         Returns:
             A list of matching model instances or projected scalar values.
         """
-        select_stmt = _R._construct_stmt(model_class, _select, _join, _where, _sorting, _include, **kwargs)
+        select_stmt = _R._construct_stmt(model_class, _select, _join, _where, _sorting, _filters, _include, **kwargs)
         select_stmt = select_stmt.limit(clamp(_limit, QUERY_MIN_LIMIT, QUERY_MAX_LIMIT)).offset(_offset)
 
         results = list((await session.scalars(select_stmt)).all())
@@ -133,25 +139,29 @@ class _R:
         _join: Union[Any, Iterable[Any]] = None,
         _where: Union[Any, Iterable[Any]] = None,
         _sorting: Union[Any, Iterable[Any]] = None,
+        _filters: Filters = None,
         _include: Include = None,
         **kwargs
     ) -> Select:
         """Construct a SQLAlchemy ``Select`` statement from query parameters.
 
-        This method orchestrates projection, joins, filtering, sorting, relationship
+        This method orchestrates projection, joins, sorting, filtering, relationship
         loading, and lazy-exclusion rules into a single ``Select`` object.
 
         Args:
             model_class:
                 Wrapped model metadata for validation and attribute access.
             _select:
-                Column name(s) to project. If omitted, selects full model entity.
+                Column name(s) to project. If omitted, selects the full model entity.
             _join:
-                Join target(s).
+                Join target(s) which may be a model class, a (model, condition) tuple,
+                or an iterable of either.
             _where:
                 WHERE clause expression(s).
             _sorting:
-                Sorting configuration.
+                Sorting configuration as a list of sorting dicts.
+            _filters:
+                Nested filter configuration as a dict of fields and conditions.
             _include:
                 Nested relationship loading configuration.
             **kwargs:
@@ -176,8 +186,11 @@ class _R:
         else:
             select_stmt = select_stmt.order_by(*model_class.primary_keys)
 
+        if _filters is not None:
+            select_stmt = _R._apply_filters(select_stmt, model_class, _filters)
+
         if _include and not _select:
-            select_stmt, included_paths = _R._apply_include(select_stmt, model_class, _include)
+            select_stmt = _R._apply_include(select_stmt, model_class, _include)
 
         if not _select:
             select_stmt = _R._apply_exclude_lazy(select_stmt, model_class, _include)
@@ -307,9 +320,6 @@ class _R:
     ) -> Select:
         """Apply validated sorting clauses to a ``Select`` statement.
 
-        Sorting items must follow the format:
-            {"field": "Model.field_name", "order": "asc" | "desc"}
-
         Only model columns and hybrid properties are sortable.
 
         Args:
@@ -318,7 +328,7 @@ class _R:
             model_class:
                 Wrapped model metadata for validation.
             sorting:
-                List of sorting configuration dictionaries.
+                List of dictionaries describing sorting rules.
 
         Returns:
             The ``Select`` statement with ORDER BY clauses applied.
@@ -368,11 +378,95 @@ class _R:
         return select_stmt.order_by(*clauses)
 
     @staticmethod
+    def _apply_filters(
+        select_stmt: Select,
+        model_class: ModelClass,
+        filters: Filters,
+    ) -> Select:
+        """
+        Apply validated filter clauses to a ``Select`` statement.
+
+        Supports both column-level conditions and nested relationship filtering.
+
+        Args:
+            select_stmt:
+                The base ``Select`` statement.
+            model_class:
+                Wrapped model metadata.
+            filters:
+                Dictionary describing filtering conditions.
+
+        Returns:
+            The ``Select`` statement with WHERE clauses applied.
+
+        Raises:
+            TypeError:
+                If filtering structure is invalid.
+            ValueError:
+                If unsupported operators or attributes are encountered.
+        """
+        def parse_filters(
+            parent_model_class: ModelClass,
+            filters_: Filters,
+            prefix: str = "",
+        ) -> list[ColumnElement[bool]]:
+            conditions: list[ColumnElement[bool]] = []
+
+            for attr_name, value in filters_.items():
+                path = f"{prefix}.{attr_name}" if prefix else attr_name
+                is_attribute = attr_name in parent_model_class.column_names | parent_model_class.hybrid_property_names
+                is_relationship = attr_name in parent_model_class.relationship_names
+
+                if is_attribute:
+                    column = getattr(parent_model_class.value, attr_name)
+
+                    if not isinstance(value, dict):
+                        operator = FilterOperator.EQ
+                        conditions.append(get_filter_condition(operator, column, value))
+                        continue
+
+                    for op_name, op_value in value.items():
+                        operator = FilterOperator.from_name(op_name)
+                        conditions.append(get_filter_condition(operator, column, op_value))
+                elif is_relationship:
+                    if not isinstance(value, dict):
+                        raise TypeError(f"Nested filter for relationship '{path}' must be a dict")
+
+                    rel = parent_model_class.mapper.relationships[attr_name]
+                    target_model_class = ModelClass(rel.mapper.class_)
+                    relationship_attr = getattr(parent_model_class.value, attr_name)
+
+                    nested_conditions = parse_filters(
+                        target_model_class,
+                        value,
+                        path,
+                    )
+
+                    if not nested_conditions:
+                        continue
+
+                    if rel.uselist:
+                        conditions.append(relationship_attr.any(and_(*nested_conditions)))
+                    else:
+                        conditions.append(relationship_attr.has(and_(*nested_conditions)))
+                else:
+                    raise ValueError(f"Attribute '{attr_name}' is not a valid field or relationship of {parent_model_class.value.__name__}")
+
+            return conditions
+
+        where_clauses = parse_filters(model_class, filters)
+
+        if where_clauses:
+            select_stmt = select_stmt.where(and_(*where_clauses))
+
+        return select_stmt
+
+    @staticmethod
     def _apply_include(
         select_stmt: Select,
         model_class: ModelClass,
         include: Include
-    ) -> tuple[Select, set[str]]:
+    ) -> Select:
         """Apply eager-loading options based on a nested include specification.
 
         Supports nested relationship loading using `joinedload` or `selectinload`,
@@ -385,14 +479,11 @@ class _R:
             model_class:
                 Wrapped model metadata.
             include:
-                Nested dictionary describing relationships to include.
+                Dictionary describing relationships to include.
 
         Returns:
-            A tuple of:
-                - The ``Select`` statement with loader options applied.
-                - A set of included relationship paths.
+            The ``Select`` statement with loader options applied.
         """
-        included_paths: set[str] = set()
 
         def parse_node(
             attr: QueryableAttribute,
@@ -401,7 +492,6 @@ class _R:
             value: Union[bool, Include],
             path: str
         ) -> LoaderOption:
-            included_paths.add(path)
 
             if isinstance(value, bool) and value:
                 return selectinload(attr) if rel_info.uselist else joinedload(attr)
@@ -438,7 +528,7 @@ class _R:
             return options
 
         load_options = parse_includes(model_class, include)
-        return select_stmt.options(*load_options), included_paths
+        return select_stmt.options(*load_options)
 
     @staticmethod
     def _apply_exclude_lazy(
@@ -535,7 +625,8 @@ class R(_R):
         _select: Union[str, Iterable[str]] = None,
         _join: Union[Any, Iterable[Any]] = None,
         _where: Union[Any, Iterable[Any]] = None,
-        _sorting: Union[Any, Iterable[Any]] = None,
+        _sorting: Sorting = None,
+        _filters: Filters = None,
         _include: Include = None,
         _offset: int = 0,
         **kwargs
@@ -560,6 +651,8 @@ class R(_R):
                 WHERE clause expression(s).
             _sorting:
                 Sorting configuration as a list of sorting dicts.
+            _filters:
+                Nested filter configuration as a dict of fields and conditions.
             _include:
                 Nested relationship loading specification.
             _offset:
@@ -580,6 +673,7 @@ class R(_R):
             _join=_join,
             _where=_where,
             _sorting=_sorting,
+            _filters=_filters,
             _include=_include,
             _offset=_offset,
             **kwargs
@@ -593,7 +687,8 @@ class R(_R):
         _select: Union[str, Iterable[str]] = None,
         _join: Union[Any, Iterable[Any]] = None,
         _where: Union[Any, Iterable[Any]] = None,
-        _sorting: Union[Any, Iterable[Any]] = None,
+        _sorting: Sorting = None,
+        _filters: Filters = None,
         _include: Include = None,
         _limit: int = QUERY_DEFAULT_LIMIT,
         _offset: int = 0,
@@ -620,6 +715,8 @@ class R(_R):
                 WHERE clause expression(s).
             _sorting:
                 Sorting configuration as a list of sorting dicts.
+            _filters:
+                Nested filter configuration as a dict of fields and conditions.
             _include:
                 Nested relationship loading specification.
             _limit:
@@ -643,6 +740,7 @@ class R(_R):
             _join=_join,
             _where=_where,
             _sorting=_sorting,
+            _filters=_filters,
             _include=_include,
             _limit=_limit,
             _offset=_offset,

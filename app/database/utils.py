@@ -8,7 +8,7 @@ from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.dialects.postgresql import ARRAY
 
 from app.exceptions import TypeValidationError
-from app.search.enums import FilterOperator
+from app.database.enums import FilterOperator
 
 __all__ = [
     "extract_inner_types",

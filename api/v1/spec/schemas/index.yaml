@@ -30,7 +30,7 @@ Queue:
 Request:
     $ref: "./request.yaml#/Request"
 
-# Sortings
+# Sorting
 UserSorting:
     $ref: "./sorting/user.yaml#/UserSorting"
 
@@ -43,11 +43,17 @@ BeatmapSorting:
 BeatmapSnapshotSorting:
     $ref: "./sorting/beatmap_snapshot.yaml#/BeatmapSnapshotSorting"
 
+BeatmapTagSorting:
+    $ref: "./sorting/beatmap_tag.yaml#/BeatmapTagSorting"
+
 BeatmapsetSorting:
     $ref: "./sorting/beatmapset.yaml#/BeatmapsetSorting"
 
 BeatmapsetSnapshotSorting:
     $ref: "./sorting/beatmapset_snapshot.yaml#/BeatmapsetSnapshotSorting"
+
+BeatmapsetTagSorting:
+    $ref: "./sorting/beatmapset_tag.yaml#/BeatmapsetTagSorting"
 
 ScoreSorting:
     $ref: "./sorting/score.yaml#/ScoreSorting"
@@ -58,10 +64,41 @@ QueueSorting:
 RequestSorting:
     $ref: "./sorting/request.yaml#/RequestSorting"
 
-SearchSorting:
-    $ref: "./sorting/search.yaml#/SearchSorting"
+# Filters
+UserFilter:
+    $ref: "./filters/user.yaml#/UserFilter"
 
-# Includes
+ProfileFilter:
+    $ref: "./filters/profile.yaml#/ProfileFilter"
+
+BeatmapFilter:
+    $ref: "./filters/beatmap.yaml#/BeatmapFilter"
+
+BeatmapSnapshotFilter:
+    $ref: "./filters/beatmap_snapshot.yaml#/BeatmapSnapshotFilter"
+
+BeatmapTagFilter:
+    $ref: "./filters/beatmap_tag.yaml#/BeatmapTagFilter"
+
+BeatmapsetFilter:
+    $ref: "./filters/beatmapset.yaml#/BeatmapsetFilter"
+
+BeatmapsetSnapshotFilter:
+    $ref: "./filters/beatmapset_snapshot.yaml#/BeatmapsetSnapshotFilter"
+
+BeatmapsetTagFilter:
+    $ref: "./filters/beatmapset_tag.yaml#/BeatmapsetTagFilter"
+
+ScoreFilter:
+    $ref: "./filters/score.yaml#/ScoreFilter"
+
+QueueFilter:
+    $ref: "./filters/queue.yaml#/QueueFilter"
+
+RequestFilter:
+    $ref: "./filters/request.yaml#/RequestFilter"
+
+# Include
 UserInclude:
     $ref: "./include/user.yaml#/UserInclude"
 

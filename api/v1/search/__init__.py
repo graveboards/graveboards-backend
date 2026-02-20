@@ -39,6 +39,7 @@ async def search(**kwargs):
     try:
         compressed = kwargs.pop("compressed", False)
         include = kwargs.pop("include", None)
+        reversed_ = kwargs.pop("reversed", None)
 
         if compressed:
             q = decompress_query(kwargs.pop("q"))
@@ -57,6 +58,9 @@ async def search(**kwargs):
         raise bad_request_factory(e)
 
     page_data = se.dump(page, include=include)
+
+    if reversed_:
+        page_data.reverse()
 
     return page_data, 200, {"Content-Type": "application/json"}
 

@@ -5,6 +5,7 @@ Profiles:
             - Profiles
         parameters:
             - $ref: "../parameters/query/sorting/profile.yaml#/ProfileSorting"
+            - $ref: "../parameters/query/filters/profile.yaml#/ProfileFilter"
             - $ref: "../parameters/query/include/profile.yaml#/ProfileInclude"
             - $ref: "../parameters/query/limit.yaml#/Limit"
             - $ref: "../parameters/query/offset.yaml#/Offset"

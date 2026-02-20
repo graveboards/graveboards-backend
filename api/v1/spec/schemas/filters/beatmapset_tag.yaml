@@ -1,0 +1,11 @@
+BeatmapsetTagFilter:
+    title: BeatmapsetTagFilter
+    description:
+        $ref: "./description.yaml#/FilterDescription"
+    type: object
+    additionalProperties: false
+    properties:
+        id:
+            $ref: "./fields/index.yaml#/IntegerField"
+        name:
+            $ref: "./fields/index.yaml#/StringField"

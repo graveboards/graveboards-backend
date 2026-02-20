@@ -10,6 +10,7 @@ Queues:
             - $ref: "../parameters/query/user.yaml#/UserId"
             - $ref: "../parameters/query/queue.yaml#/IsOpen"
             - $ref: "../parameters/query/sorting/queue.yaml#/QueueSorting"
+            - $ref: "../parameters/query/filters/queue.yaml#/QueueFilter"
             - $ref: "../parameters/query/include/queue.yaml#/QueueInclude"
             - $ref: "../parameters/query/limit.yaml#/Limit"
             - $ref: "../parameters/query/offset.yaml#/Offset"

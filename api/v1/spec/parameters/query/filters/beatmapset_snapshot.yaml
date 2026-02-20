@@ -1,0 +1,10 @@
+BeatmapsetSnapshotFilter:
+    name: filters
+    description:
+        $ref: "../../../schemas/filters/description.yaml#/FilterDescription"
+    in: query
+    required: false
+    style: form
+    explode: true
+    schema:
+        $ref: "../../../schemas/filters/beatmapset_snapshot.yaml#/BeatmapsetSnapshotFilter"

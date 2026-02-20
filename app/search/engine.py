@@ -35,10 +35,11 @@ from app.database.ctes.request.filtering import request_filtering_cte_factory
 from app.database.ctes.queue.sorting import queue_sorting_cte_factory
 from app.database.ctes.queue.filtering import queue_filtering_cte_factory
 from app.database.utils import get_filter_condition
+from app.database.enums import FilterOperator
 from app.spec import get_include_schema
 from app.text import align_center
 from .datastructures import ConditionValue, SearchTermsSchema, SortingSchema, FiltersSchema
-from .enums import Scope, SearchableFieldCategory, FilterOperator, ModelField, CATEGORY_NAMES
+from .enums import Scope, SearchableFieldCategory, ModelField, CATEGORY_NAMES
 from .mappings import SCOPE_MODEL_MAPPING, SCOPE_SCHEMA_MAPPING, SCOPE_OPTIONS_MAPPING
 
 DEFAULT_LIMIT = 50
@@ -564,15 +565,15 @@ class SearchEngine:
                 continue
 
             for field_name, conditions in field_filters.root.items():
-                model_field = ModelField.from_category_field(category_name, field_name)
-                field_category = SearchableFieldCategory.from_model_class(model_field.model_class)
+                field_category = SearchableFieldCategory.from_name(category_name)
+                model_field = ModelField.from_model_field_name(field_category.model_class, field_name)
                 target = model_field.target
                 apply_filter_conditions()
 
         if filtering_clauses:
             self.query = self.query.where(and_(*filtering_clauses))
 
-    def dump(self, page: ResultsType, include: dict = None) -> Sequence[dict[str, Any]]:
+    def dump(self, page: ResultsType, include: dict = None) -> list[dict[str, Any]]:
         """Serialize ORM results using the scope-specific schema.
 
         Args:
@@ -582,7 +583,7 @@ class SearchEngine:
                 Optional Pydantic include specification.
 
         Returns:
-            A sequence of serialized dictionaries matching the scope schema.
+            A list of serialized dictionaries matching the scope schema.
         """
         if not page:
             return []

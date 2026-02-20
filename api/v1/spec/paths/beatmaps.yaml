@@ -5,6 +5,7 @@ Beatmaps:
             - Beatmaps
         parameters:
             - $ref: "../parameters/query/sorting/beatmap.yaml#/BeatmapSorting"
+            - $ref: "../parameters/query/filters/beatmap.yaml#/BeatmapFilter"
             - $ref: "../parameters/query/include/beatmap.yaml#/BeatmapInclude"
             - $ref: "../parameters/query/limit.yaml#/Limit"
             - $ref: "../parameters/query/offset.yaml#/Offset"
@@ -39,6 +40,7 @@ BeatmapById-Snapshots:
         parameters:
             - $ref: "../parameters/path/beatmap.yaml#/BeatmapId"
             - $ref: "../parameters/query/sorting/beatmap_snapshot.yaml#/BeatmapSnapshotSorting"
+            - $ref: "../parameters/query/filters/beatmap_snapshot.yaml#/BeatmapSnapshotFilter"
             - $ref: "../parameters/query/include/beatmap_snapshot.yaml#/BeatmapSnapshotInclude"
             - $ref: "../parameters/query/limit.yaml#/Limit"
             - $ref: "../parameters/query/offset.yaml#/Offset"
@@ -160,6 +162,7 @@ BeatmapById-SnapshotByNumber-Scores:
             - $ref: "../parameters/path/beatmap.yaml#/BeatmapId"
             - $ref: "../parameters/path/beatmap.yaml#/BeatmapSnapshotNumber"
             - $ref: "../parameters/query/sorting/score.yaml#/ScoreSorting"
+            - $ref: "../parameters/query/filters/score.yaml#/ScoreFilter"
             - $ref: "../parameters/query/include/score.yaml#/ScoreInclude"
             - $ref: "../parameters/query/limit.yaml#/Limit"
             - $ref: "../parameters/query/offset.yaml#/Offset"
@@ -179,6 +182,7 @@ BeatmapListings:
             - Beatmaps
         parameters:
             - $ref: "../parameters/query/sorting/beatmap_snapshot.yaml#/BeatmapSnapshotSorting"
+            - $ref: "../parameters/query/filters/beatmap_snapshot.yaml#/BeatmapSnapshotFilter"
             - $ref: "../parameters/query/include/beatmap_snapshot.yaml#/BeatmapSnapshotInclude"
             - $ref: "../parameters/query/limit.yaml#/Limit"
             - $ref: "../parameters/query/offset.yaml#/Offset"
@@ -196,6 +200,7 @@ BeatmapTags:
             - Beatmaps
         parameters:
             - $ref: "../parameters/query/sorting/beatmap_tag.yaml#/BeatmapTagSorting"
+            - $ref: "../parameters/query/filters/beatmap_tag.yaml#/BeatmapTagFilter"
             - $ref: "../parameters/query/include/beatmap_tag.yaml#/BeatmapTagInclude"
             - $ref: "../parameters/query/limit.yaml#/Limit"
             - $ref: "../parameters/query/offset.yaml#/Offset"

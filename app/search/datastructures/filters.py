@@ -1,5 +1,5 @@
 import struct
-from typing import Iterator, Any, Optional
+from typing import Iterator, Any, Optional, Union
 from collections.abc import ItemsView
 
 from pydantic.main import BaseModel
@@ -8,6 +8,7 @@ from pydantic.functional_validators import model_validator
 from pydantic_core import ValidationError
 
 from app.database.utils import extract_inner_types, validate_type
+from app.database.models import ModelClass
 from app.exceptions import (
     FieldNotSupportedError,
     TypeValidationError,
@@ -25,7 +26,7 @@ class FieldFilters(RootModel):
     Wraps a mapping of field names to ``Conditions`` objects and provides SQLAlchemy
     model validation and compact binary serialization support.
     """
-    root: dict[str, Conditions]
+    root: dict[str, Union[Conditions, FieldFilters]]
 
     def __iter__(self) -> Iterator[str]:
         """Iterate over filter field names.
@@ -67,45 +68,74 @@ class FieldFilters(RootModel):
         """
         return self.root.items()
 
-    def validate_against_sqlalchemy_model(self, category: SearchableFieldCategory):
-        """Validate filter fields and values against the SQLAlchemy model.
+    def validate_against_sqlalchemy_model(self, model_class: ModelClass) -> None:
+        """Recursively validate filters against the SQLAlchemy model.
 
         Ensures:
-            - Each field exists on the underlying model
+            - Each field or relationship exists on the model
             - Aliased fields resolve correctly
-            - All condition values conform to the column's expected type
+            - Condition values conform to expected column types
+            - Nested filters target valid relationship models
 
         Args:
-            category:
-                Field category defining the SQLAlchemy model.
+            model_class:
+                ``ModelClass`` enum member defining the SQLAlchemy model.
 
         Raises:
             FieldNotSupportedError:
-                If a field is not supported for the category.
+                If a field is not supported for the model.
             FieldValidationError:
                 If a condition value does not match the expected type.
         """
-        column_map = category.model_class.value.__annotations__
+        column_map = model_class.value.__annotations__
 
-        for field_name, conditions in self.root.items():
-            try:
-                model_field = ModelField.from_category_field(category.value, field_name)
+        for field_name, value in self.root.items():
+            is_attribute = field_name in model_class.column_names | model_class.hybrid_property_names
+            is_relationship = field_name in model_class.relationship_names
 
-                if model_field.is_aliased:
-                    column = column_map[model_field.alias]
-                else:
-                    column = column_map[field_name]
-            except (KeyError, ValueError):
-                raise FieldNotSupportedError(category.value, field_name)
+            if is_attribute:
+                try:
+                    model_field = ModelField.from_model_field_name(model_class, field_name)
 
-            expected_type = extract_inner_types(column)
+                    if model_field.is_aliased:
+                        column = column_map[model_field.alias]
+                    else:
+                        column = column_map[field_name]
+                except (KeyError, ValueError):
+                    raise FieldNotSupportedError(model_class.value, field_name)
 
-            for value in conditions.values_for_validation():
-                if value is not None:
-                    try:
-                        validate_type(expected_type, value)
-                    except TypeValidationError as e:
-                        raise FieldValidationError(category.value, field_name, value, *e.target_types) from e
+                expected_type = extract_inner_types(column)
+
+                for condition_value in value.values_for_validation():
+                    if condition_value is not None:
+                        try:
+                            validate_type(expected_type, condition_value)
+                        except TypeValidationError as e:
+                            raise FieldValidationError(
+                                model_class.value,
+                                field_name,
+                                condition_value,
+                                *e.target_types,
+                            ) from e
+            elif is_relationship:
+                if not isinstance(value, FieldFilters):
+                    raise FieldValidationError(
+                        model_class.value,
+                        field_name,
+                        value,
+                        FieldFilters
+                    )
+
+                try:
+                    relationship = model_class.mapper.relationships[field_name]
+                    related_model = relationship.mapper.class_
+                    related_model_class = ModelClass(related_model)
+                except (KeyError, ValueError):
+                    raise FieldNotSupportedError(model_class.value, field_name)
+
+                value.validate_against_sqlalchemy_model(related_model_class)
+            else:
+                raise FieldNotSupportedError(model_class.value, field_name)
 
     def serialize(self, category: SearchableFieldCategory) -> bytes:
         """Serialize field filters into compact binary format.
@@ -126,7 +156,7 @@ class FieldFilters(RootModel):
         chunks = []
 
         for field_name, conditions in self.root.items():
-            model_field = ModelField.from_category_field(category.value, field_name)
+            model_field = ModelField.from_model_field_name(category.value, field_name)
             model_field_id = ModelFieldId[model_field.name]
             chunks.append(struct.pack("!H", model_field_id))
             chunks.append(conditions.serialize())
@@ -209,6 +239,7 @@ class FiltersSchema(BaseModel):
         for category_name, field_filters in filters.items():
             try:
                 filter_category = SearchableFieldCategory.from_name(category_name)
+                model_class = filter_category.model_class
             except ValueError:
                 raise UnknownFieldCategoryError(category_name)
 
@@ -216,7 +247,7 @@ class FiltersSchema(BaseModel):
                 continue
 
             if isinstance(field_filters, FieldFilters):
-                field_filters.validate_against_sqlalchemy_model(filter_category)
+                field_filters.validate_against_sqlalchemy_model(model_class)
                 validated_filters[category_name] = field_filters
                 continue
 
@@ -242,10 +273,10 @@ class FiltersSchema(BaseModel):
                             msg = error.get("msg", "Unknown validation error")
 
                         detail = f"{msg}{loc_detail}"
-                        raise FieldConditionValidationError(filter_category.value, field_name, detail=detail) from e
+                        raise FieldConditionValidationError(model_class.value, field_name, detail=detail) from e
 
             validated_filters[category_name] = FieldFilters.model_validate(validated_field_filters)
-            validated_filters[category_name].validate_against_sqlalchemy_model(filter_category)
+            validated_filters[category_name].validate_against_sqlalchemy_model(model_class)
 
         return validated_filters
 

@@ -1,4 +1,4 @@
-IntegerField:
+IntegerConditions:
     type: object
     additionalProperties: false
     properties:

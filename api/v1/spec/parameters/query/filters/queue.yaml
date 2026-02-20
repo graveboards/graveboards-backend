@@ -1,0 +1,10 @@
+QueueFilter:
+    name: filters
+    description:
+        $ref: "../../../schemas/filters/description.yaml#/FilterDescription"
+    in: query
+    required: false
+    style: form
+    explode: true
+    schema:
+        $ref: "../../../schemas/filters/queue.yaml#/QueueFilter"

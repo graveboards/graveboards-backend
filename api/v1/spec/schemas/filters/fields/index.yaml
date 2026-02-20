@@ -1,6 +1,6 @@
 IntegerField:
     oneOf:
-        - $ref: "./integer.yaml/#IntegerField"
+        - $ref: "./integer.yaml/#IntegerConditions"
         - $ref: "./integer.yaml/#IntegerValue"
 
 FloatField:

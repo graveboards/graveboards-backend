@@ -1,7 +1,13 @@
-from typing import Mapping, Union, Iterable, Literal
+from typing import Mapping, Union, Iterable, Literal, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.search.datastructures import ConditionField, ConditionValue
 
 type AttrName = str
 """Type alias representing a model attribute name."""
+
+type RelName = str
+"""Type alias representing a model relationship name."""
 
 type AttrPath = str
 """Type alias representing a model attribute path."""
@@ -17,6 +23,22 @@ Expected format:
         }
 
 Used by the read layer to construct validated ORDER BY clauses.
+"""
+
+type Conditions = Mapping[ConditionField, ConditionValue | None]
+
+type Filters = Mapping[Union[AttrName, RelName], Union[ConditionValue, None, Conditions, "Filters[RelName]"]]
+"""Type alias describing nested filtering configurations for read operations.
+
+Expected format:
+    Dictionary of:
+        {
+            "field": {"eq": "value", ...},
+            "relationship": Filters,
+            ...
+        }
+
+Used by the read layer to construct validated WHERE clauses.
 """
 
 type Include = Mapping[AttrName, Union[bool, "Include[AttrName]"]]

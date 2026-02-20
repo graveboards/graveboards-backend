@@ -14,9 +14,9 @@ SearchFilters:
         profile:
             $ref: "./profile.yaml#/ProfileFilter"
         beatmap:
-            $ref: "./beatmap.yaml#/BeatmapFilter"
+            $ref: "./beatmap_snapshot.yaml#/BeatmapSnapshotFilter"
         beatmapset:
-            $ref: "./beatmapset.yaml#/BeatmapsetFilter"
+            $ref: "./beatmapset_snapshot.yaml#/BeatmapsetSnapshotFilter"
 #        score:
 #            $ref: "./score.yaml#/ScoreFilter"
         queue:

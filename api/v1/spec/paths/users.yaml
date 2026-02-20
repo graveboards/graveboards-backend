@@ -8,6 +8,7 @@ Users:
             - ApiKeyAuth: []
         parameters:
             - $ref: "../parameters/query/sorting/user.yaml#/UserSorting"
+            - $ref: "../parameters/query/filters/user.yaml#/UserFilter"
             - $ref: "../parameters/query/include/user.yaml#/UserInclude"
             - $ref: "../parameters/query/limit.yaml#/Limit"
             - $ref: "../parameters/query/offset.yaml#/Offset"

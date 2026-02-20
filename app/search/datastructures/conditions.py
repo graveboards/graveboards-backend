@@ -1,7 +1,7 @@
 import struct
 import re
 from datetime import datetime
-from typing import Union, Optional, Sequence, Any
+from typing import Union, Optional, Sequence, Any, Literal
 from enum import IntFlag, auto, IntEnum
 
 import numpy as np
@@ -11,6 +11,9 @@ from pydantic.functional_validators import model_validator, field_validator
 from pydantic.config import ConfigDict
 
 from app.security import safe_compile_regex
+
+ConditionField = Literal["eq", "neq", "lt", "lte", "gt", "gte", "in", "not_in", "regex", "not_regex"]
+"""Supported field keys for conditions."""
 
 ConditionValue = Union[int, float, str, bool, datetime]
 """Supported primitive value types for field conditions.
@@ -76,7 +79,7 @@ class ConditionFieldFlag(IntFlag):
     NOT_REGEX = auto()
 
     @property
-    def field_name(self) -> str:
+    def field_name(self) -> ConditionField:
         """The lowercase field name corresponding to the flag.
 
         Returns:
@@ -197,6 +200,34 @@ class Conditions(BaseModel):
 
         return parse_datetime_value(value)
 
+    @field_validator("in_", "not_in", mode="after")
+    @classmethod
+    def validate_sequence_types(cls, value: Any) -> Any:
+        """Ensure all values inside a sequence share the same type.
+
+        Args:
+            value:
+                Sequence of condition values for membership operators.
+
+        Returns:
+            The original sequence if all values share the same type.
+
+        Raises:
+            ValueError:
+                If the sequence contains mixed types.
+        """
+        if value:
+            base = value[0]
+
+            for v in value[1:]:
+                if type(v) is not type(base):
+                    raise ValueError(
+                        f"All values inside a sequence must share the same type. "
+                        f"Got {type(base).__name__} and {type(v).__name__}."
+                    )
+
+        return value
+
     @field_validator("regex", "not_regex", mode="after")
     @classmethod
     def validate_regex(cls, value: str | None) -> str | None:
@@ -276,6 +307,8 @@ class Conditions(BaseModel):
         if not conditions or not any(v is not None for v in conditions.values()):
             raise ValueError("At least one condition must be specified")
 
+        self._ensure_comparable_types(self.values_for_validation())
+
         if self.is_null is True and len(conditions) > 1:
             raise ValueError("If 'is_null' is True, no other conditions can be specified")
 
@@ -322,6 +355,38 @@ class Conditions(BaseModel):
         values = [self.eq, self.neq, self.lt, self.lte, self.gt, self.gte]
         values += (self.in_ or []) + (self.not_in or [])
         return [value for value in values if value is not None]
+
+    @staticmethod
+    def _ensure_comparable_types(values: list[Any]) -> None:
+        """Ensure all condition values are mutually comparable.
+
+        Allows numeric mixing between ``int`` and ``float`` but otherwise requires exact
+        type consistency across values.
+
+        Args:
+            values:
+                List of non-null scalar condition values collected for validation.
+
+        Raises:
+            ValueError:
+                If incompatible types are detected.
+        """
+        if not values:
+            return
+
+        numeric_types = (int, float)
+
+        base = values[0]
+
+        for v in values[1:]:
+            if isinstance(base, numeric_types) and isinstance(v, numeric_types):
+                continue
+
+            if type(base) is not type(v):
+                raise ValueError(
+                    f"All condition values must be of comparable type. "
+                    f"Got {type(base).__name__} and {type(v).__name__}"
+                )
 
     def serialize(self) -> bytes:
         """Serialize the ``Conditions`` instance into compact binary format.

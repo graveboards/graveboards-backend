@@ -5,6 +5,7 @@ Scores:
             - Scores
         parameters:
             - $ref: "../parameters/query/sorting/score.yaml#/ScoreSorting"
+            - $ref: "../parameters/query/filters/score.yaml#/ScoreFilter"
             - $ref: "../parameters/query/include/score.yaml#/ScoreInclude"
             - $ref: "../parameters/query/limit.yaml#/Limit"
             - $ref: "../parameters/query/offset.yaml#/Offset"

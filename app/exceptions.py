@@ -1,8 +1,11 @@
 from datetime import datetime
-from typing import Any, Sequence
+from typing import Any, Sequence, TYPE_CHECKING
 
 from authlib.integrations.base_client.errors import OAuthError
 from connexion.exceptions import BadRequestProblem, ClientProblem
+
+if TYPE_CHECKING:
+    from app.database.models import BaseType
 
 __all__ = [
     "TypeValidationError",
@@ -44,12 +47,12 @@ class TypeValidationError(TypeError):
 class FieldValidationError(TypeValidationError):
     def __init__(
         self,
-        category: str,
+        model: BaseType,
         field: str,
         value: Any,
         *target_types: type
     ):
-        self.category = category
+        self.model = model
         self.field = field
         self.value = value
 
@@ -61,14 +64,14 @@ class FieldValidationError(TypeValidationError):
     @property
     def message(self) -> str:
         return (
-            f"Field '{self.field}' in category '{self.category}' received value {repr(self.value)} "
+            f"Field '{self.field}' of model '{self.model.__name__}' received value {repr(self.value)} "
             f"of type {self.value_type.__name__}, expected type(s): {self.expected_types}"
         )
 
 
 class FieldNotSupportedError(Exception):
-    def __init__(self, category: str, field: str):
-        self.category = category
+    def __init__(self, model: BaseType, field: str):
+        self.model = model
         self.field = field
         
     def __str__(self):
@@ -76,12 +79,12 @@ class FieldNotSupportedError(Exception):
 
     @property
     def message(self) -> str:
-        return f"Category '{self.category}' does not support field '{self.field}'"
+        return f"Model '{self.model.__name__}' does not support field '{self.field}'"
 
 
 class FieldConditionValidationError(Exception):
-    def __init__(self, category: str, field: str, detail: str):
-        self.category = category
+    def __init__(self, model: BaseType, field: str, detail: str):
+        self.model = model
         self.field = field
         self.detail = detail
 
@@ -90,7 +93,7 @@ class FieldConditionValidationError(Exception):
 
     @property
     def message(self) -> str:
-        return f"Invalid conditions for field '{self.field}' in category '{self.category}': {self.detail}"
+        return f"Invalid conditions for field '{self.field}' of model '{self.model.__name__}': {self.detail}"
 
 
 class UnknownFieldCategoryError(Exception):

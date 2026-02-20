@@ -5,7 +5,6 @@ from sqlalchemy.orm import InstrumentedAttribute
 
 from app.database.ctes.hashable_cte import HashableCTE
 from app.database.models import ModelClass, Profile, BeatmapSnapshot, BeatmapsetSnapshot, Request, Queue
-from .field_category import SearchableFieldCategory
 
 
 class ModelField(Enum):
@@ -32,7 +31,7 @@ class ModelField(Enum):
     PROFILE__IS_RESTRICTED = "is_restricted", ModelClass.PROFILE, Profile.is_restricted
     PROFILE__TOTAL_MAPS = "total_maps", ModelClass.PROFILE, Profile.total_maps
     PROFILE__TOTAL_KUDOSU = "total_kudosu", ModelClass.PROFILE, Profile.total_kudosu
-    # TODO: Profile fields need updating
+    # TODO: Profile fields need updating, everything else does too zzz
 
     BEATMAPSNAPSHOT__BEATMAP_ID = "beatmap_id", ModelClass.BEATMAP_SNAPSHOT, BeatmapSnapshot.beatmap_id
     BEATMAPSNAPSHOT__USER_ID = "user_id", ModelClass.BEATMAP_SNAPSHOT, BeatmapSnapshot.user_id
@@ -136,16 +135,16 @@ class ModelField(Enum):
         self.alias = alias
 
     @classmethod
-    def from_category_field(cls, category_name: str, field_name: str) -> "ModelField":
-        """Resolve a model field from category and field name.
+    def from_model_field_name(cls, model_class: ModelClass, field_name: str) -> "ModelField":
+        """Resolve a model field from a ``ModelClass`` and field name.
 
         Supports alias resolution where defined.
 
         Args:
-            category_name:
-                External category identifier.
+            model_class:
+                The ``ModelClass`` of the field.
             field_name:
-                External field name or alias.
+                The field name or alias.
 
         Returns:
             Matching ``ModelField``.
@@ -154,21 +153,19 @@ class ModelField(Enum):
             ValueError:
                 If no matching field exists.
         """
-        for category in SearchableFieldCategory.__members__.values():
-            if category_name == category.value:
-                for member in cls.__members__.values():
-                    if (
-                        category.model_class is member.model_class
-                        and (
-                            field_name == member.field_name
-                            or (
-                                member.is_aliased and field_name == member.alias
-                            )
-                        )
-                    ):
-                        return member
+        for member in cls.__members__.values():
+            if (
+                model_class is member.model_class
+                and (
+                    field_name == member.field_name
+                    or (
+                        member.is_aliased and field_name == member.alias
+                    )
+                )
+            ):
+                return member
 
-        raise ValueError(f"No ModelField exists with category '{category_name}' and field '{field_name}'")
+        raise ValueError(f"No ModelField exists with model class '{model_class}' and field '{field_name}'")
 
     @property
     def is_aliased(self) -> bool:
