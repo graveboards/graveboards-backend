@@ -43,9 +43,10 @@ class BeatmapSeeder(Seeder):
             await self.db.add(Beatmapset, id=beatmapset_id, user_id=user_id, session=self.session)
 
         bms_bm_mapping: dict[int, list[dict]] = {}
+
         for beatmap_entry in beatmapset_entry["beatmaps"]:
             added_bm_dict = await self._seed_beatmap(beatmap_entry)
-            bms_bm_mapping[beatmapset_id] = added_bm_dict
+            bms_bm_mapping.setdefault(beatmapset_id, []).extend(added_bm_dict)
 
         for beatmapset_snapshot_entry in beatmapset_entry["snapshots"]:
             await self._seed_beatmapset_snapshot(beatmapset_snapshot_entry, bms_bm_mapping)
