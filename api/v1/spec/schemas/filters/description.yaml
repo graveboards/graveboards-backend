@@ -14,3 +14,5 @@ FilterDescription: >
     
      * *value is not null* -> **eq**
      * *value is null* -> **is_null**
+    
+    Nested objects can be used to filter related entities, applying the same rules recursively.
