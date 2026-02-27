@@ -254,7 +254,6 @@
                         ],
                         "owner_profiles": [
                             {
-                                "id": 56,
                                 "user_id": 5099768,
                                 "avatar_url": "https://a.ppy.sh/5099768?1748873352.gif",
                                 "username": "Neto"
@@ -507,7 +506,6 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 56,
                                 "user_id": 5099768,
                                 "avatar_url": "https://a.ppy.sh/5099768?1748873352.gif",
                                 "username": "Neto"
@@ -760,7 +758,6 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 56,
                                 "user_id": 5099768,
                                 "avatar_url": "https://a.ppy.sh/5099768?1748873352.gif",
                                 "username": "Neto"
@@ -1013,7 +1010,6 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 56,
                                 "user_id": 5099768,
                                 "avatar_url": "https://a.ppy.sh/5099768?1748873352.gif",
                                 "username": "Neto"
@@ -1266,7 +1262,6 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 56,
                                 "user_id": 5099768,
                                 "avatar_url": "https://a.ppy.sh/5099768?1748873352.gif",
                                 "username": "Neto"
@@ -1519,7 +1514,6 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 56,
                                 "user_id": 5099768,
                                 "avatar_url": "https://a.ppy.sh/5099768?1748873352.gif",
                                 "username": "Neto"
@@ -1772,7 +1766,6 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 56,
                                 "user_id": 5099768,
                                 "avatar_url": "https://a.ppy.sh/5099768?1748873352.gif",
                                 "username": "Neto"
@@ -2025,7 +2018,6 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 56,
                                 "user_id": 5099768,
                                 "avatar_url": "https://a.ppy.sh/5099768?1748873352.gif",
                                 "username": "Neto"
@@ -2278,7 +2270,6 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 56,
                                 "user_id": 5099768,
                                 "avatar_url": "https://a.ppy.sh/5099768?1748873352.gif",
                                 "username": "Neto"
@@ -2442,7 +2433,6 @@
                     }
                 ],
                 "user_profile": {
-                    "id": 56,
                     "user_id": 5099768,
                     "avatar_url": "https://a.ppy.sh/5099768?1748873352.gif",
                     "username": "Neto"
@@ -2705,7 +2695,6 @@
                         ],
                         "owner_profiles": [
                             {
-                                "id": 57,
                                 "user_id": 6064571,
                                 "avatar_url": "https://a.ppy.sh/6064571?1702307044.jpeg",
                                 "username": "HowRengar"
@@ -2821,7 +2810,6 @@
                     }
                 ],
                 "user_profile": {
-                    "id": 57,
                     "user_id": 6064571,
                     "avatar_url": "https://a.ppy.sh/6064571?1702307044.jpeg",
                     "username": "HowRengar"
@@ -3084,7 +3072,6 @@
                         ],
                         "owner_profiles": [
                             {
-                                "id": 58,
                                 "user_id": 4098393,
                                 "avatar_url": "https://a.ppy.sh/4098393?1722895741.jpeg",
                                 "username": "Tarrasky"
@@ -3356,7 +3343,6 @@
                         ],
                         "owner_profiles": [
                             {
-                                "id": 58,
                                 "user_id": 4098393,
                                 "avatar_url": "https://a.ppy.sh/4098393?1722895741.jpeg",
                                 "username": "Tarrasky"
@@ -3640,7 +3626,6 @@
                         ],
                         "owner_profiles": [
                             {
-                                "id": 58,
                                 "user_id": 4098393,
                                 "avatar_url": "https://a.ppy.sh/4098393?1722895741.jpeg",
                                 "username": "Tarrasky"
@@ -3893,7 +3878,6 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 58,
                                 "user_id": 4098393,
                                 "avatar_url": "https://a.ppy.sh/4098393?1722895741.jpeg",
                                 "username": "Tarrasky"
@@ -4146,7 +4130,6 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 58,
                                 "user_id": 4098393,
                                 "avatar_url": "https://a.ppy.sh/4098393?1722895741.jpeg",
                                 "username": "Tarrasky"
@@ -4350,7 +4333,6 @@
                     }
                 ],
                 "user_profile": {
-                    "id": 58,
                     "user_id": 4098393,
                     "avatar_url": "https://a.ppy.sh/4098393?1722895741.jpeg",
                     "username": "Tarrasky"
@@ -4613,7 +4595,6 @@
                         ],
                         "owner_profiles": [
                             {
-                                "id": 59,
                                 "user_id": 7716455,
                                 "avatar_url": "https://a.ppy.sh/7716455?1767457900.jpeg",
                                 "username": "Remilie"
@@ -4866,13 +4847,11 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 51,
                                 "user_id": 19111992,
                                 "avatar_url": "https://a.ppy.sh/19111992?1721292766.jpeg",
                                 "username": "Urition"
                             },
                             {
-                                "id": 59,
                                 "user_id": 7716455,
                                 "avatar_url": "https://a.ppy.sh/7716455?1767457900.jpeg",
                                 "username": "Remilie"
@@ -5125,7 +5104,6 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 3,
                                 "user_id": 3638962,
                                 "avatar_url": "https://a.ppy.sh/3638962?1734590922.jpeg",
                                 "username": "-Tynamo"
@@ -5378,7 +5356,6 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 55,
                                 "user_id": 24262269,
                                 "avatar_url": "https://a.ppy.sh/24262269?1693535727.jpeg",
                                 "username": "Axilotl"
@@ -5631,7 +5608,6 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 54,
                                 "user_id": 21007343,
                                 "avatar_url": "https://a.ppy.sh/21007343?1765033535.jpeg",
                                 "username": "Your Stary"
@@ -5884,7 +5860,6 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 49,
                                 "user_id": 17076146,
                                 "avatar_url": "https://a.ppy.sh/17076146?1738420476.jpeg",
                                 "username": "Sprixx"
@@ -6137,7 +6112,6 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 52,
                                 "user_id": 19322780,
                                 "avatar_url": "https://a.ppy.sh/19322780?1759435046.gif",
                                 "username": "Take"
@@ -6349,7 +6323,6 @@
                     }
                 ],
                 "user_profile": {
-                    "id": 59,
                     "user_id": 7716455,
                     "avatar_url": "https://a.ppy.sh/7716455?1767457900.jpeg",
                     "username": "Remilie"
@@ -6612,7 +6585,6 @@
                         ],
                         "owner_profiles": [
                             {
-                                "id": 59,
                                 "user_id": 7716455,
                                 "avatar_url": "https://a.ppy.sh/7716455?1767457900.jpeg",
                                 "username": "Remilie"
@@ -6890,7 +6862,6 @@
                         ],
                         "owner_profiles": [
                             {
-                                "id": 13,
                                 "user_id": 6174349,
                                 "avatar_url": "https://a.ppy.sh/6174349?1672435525.jpeg",
                                 "username": "Kuki1537"
@@ -7174,7 +7145,6 @@
                         ],
                         "owner_profiles": [
                             {
-                                "id": 27,
                                 "user_id": 10369295,
                                 "avatar_url": "https://a.ppy.sh/10369295?1765302583.gif",
                                 "username": "Not DT Farmer"
@@ -7427,7 +7397,6 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 59,
                                 "user_id": 7716455,
                                 "avatar_url": "https://a.ppy.sh/7716455?1767457900.jpeg",
                                 "username": "Remilie"
@@ -7711,13 +7680,11 @@
                         ],
                         "owner_profiles": [
                             {
-                                "id": 26,
                                 "user_id": 10081218,
                                 "avatar_url": "https://a.ppy.sh/10081218?1766190999.png",
                                 "username": "Alan"
                             },
                             {
-                                "id": 59,
                                 "user_id": 7716455,
                                 "avatar_url": "https://a.ppy.sh/7716455?1767457900.jpeg",
                                 "username": "Remilie"
@@ -7977,7 +7944,6 @@
                         ],
                         "owner_profiles": [
                             {
-                                "id": 59,
                                 "user_id": 7716455,
                                 "avatar_url": "https://a.ppy.sh/7716455?1767457900.jpeg",
                                 "username": "Remilie"
@@ -8230,7 +8196,6 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 59,
                                 "user_id": 7716455,
                                 "avatar_url": "https://a.ppy.sh/7716455?1767457900.jpeg",
                                 "username": "Remilie"
@@ -8483,7 +8448,6 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 52,
                                 "user_id": 19322780,
                                 "avatar_url": "https://a.ppy.sh/19322780?1759435046.gif",
                                 "username": "Take"
@@ -8743,7 +8707,6 @@
                         ],
                         "owner_profiles": [
                             {
-                                "id": 46,
                                 "user_id": 14348073,
                                 "avatar_url": "https://a.ppy.sh/14348073?1761139699.jpeg",
                                 "username": "Omekyu"
@@ -9015,7 +8978,6 @@
                         ],
                         "owner_profiles": [
                             {
-                                "id": 58,
                                 "user_id": 4098393,
                                 "avatar_url": "https://a.ppy.sh/4098393?1722895741.jpeg",
                                 "username": "Tarrasky"
@@ -9275,7 +9237,6 @@
                         ],
                         "owner_profiles": [
                             {
-                                "id": 49,
                                 "user_id": 17076146,
                                 "avatar_url": "https://a.ppy.sh/17076146?1738420476.jpeg",
                                 "username": "Sprixx"
@@ -9533,7 +9494,6 @@
                     }
                 ],
                 "user_profile": {
-                    "id": 59,
                     "user_id": 7716455,
                     "avatar_url": "https://a.ppy.sh/7716455?1767457900.jpeg",
                     "username": "Remilie"
@@ -9796,7 +9756,6 @@
                         ],
                         "owner_profiles": [
                             {
-                                "id": 60,
                                 "user_id": 16219092,
                                 "avatar_url": "https://a.ppy.sh/16219092?1767226138.png",
                                 "username": "foss"
@@ -10003,7 +9962,6 @@
                     }
                 ],
                 "user_profile": {
-                    "id": 60,
                     "user_id": 16219092,
                     "avatar_url": "https://a.ppy.sh/16219092?1767226138.png",
                     "username": "foss"
@@ -10266,259 +10224,216 @@
                         ],
                         "owner_profiles": [
                             {
-                                "id": 1,
                                 "user_id": 3149577,
                                 "avatar_url": "https://a.ppy.sh/3149577?1769965702.png",
                                 "username": "Coreanmaluco"
                             },
                             {
-                                "id": 2,
                                 "user_id": 3220885,
                                 "avatar_url": "https://a.ppy.sh/3220885?1722212678.jpeg",
                                 "username": "GabrielBueno"
                             },
                             {
-                                "id": 4,
                                 "user_id": 3822808,
                                 "avatar_url": "https://a.ppy.sh/3822808?1716659988.jpeg",
                                 "username": "ekisu"
                             },
                             {
-                                "id": 5,
                                 "user_id": 3914271,
                                 "avatar_url": "https://a.ppy.sh/3914271?1766642328.png",
                                 "username": "maot"
                             },
                             {
-                                "id": 6,
                                 "user_id": 3947634,
                                 "avatar_url": "https://a.ppy.sh/3947634?1766627256.png",
                                 "username": "Shiyun"
                             },
                             {
-                                "id": 7,
                                 "user_id": 4706466,
                                 "avatar_url": "https://a.ppy.sh/4706466?1689742445.jpeg",
                                 "username": "Darkk"
                             },
                             {
-                                "id": 8,
                                 "user_id": 5176421,
                                 "avatar_url": "https://a.ppy.sh/5176421?1742678827.jpeg",
                                 "username": "Skarsta"
                             },
                             {
-                                "id": 9,
                                 "user_id": 5403374,
                                 "avatar_url": "https://a.ppy.sh/5403374?1766934357.png",
                                 "username": "dasdwqdf"
                             },
                             {
-                                "id": 10,
                                 "user_id": 5587363,
                                 "avatar_url": "https://a.ppy.sh/5587363?1627933652.jpeg",
                                 "username": "Draell"
                             },
                             {
-                                "id": 11,
                                 "user_id": 5980661,
                                 "avatar_url": "https://a.ppy.sh/5980661?1765124128.jpeg",
                                 "username": "Renamon"
                             },
                             {
-                                "id": 14,
                                 "user_id": 6405477,
                                 "avatar_url": "https://a.ppy.sh/6405477?1761097737.jpeg",
                                 "username": "luis10barbo"
                             },
                             {
-                                "id": 16,
                                 "user_id": 6772887,
                                 "avatar_url": "https://a.ppy.sh/6772887?1767188445.png",
                                 "username": "Akane Hime"
                             },
                             {
-                                "id": 17,
                                 "user_id": 6816366,
                                 "avatar_url": "https://a.ppy.sh/6816366?1761799840.jpeg",
                                 "username": "Kauan"
                             },
                             {
-                                "id": 18,
                                 "user_id": 7198334,
                                 "avatar_url": "https://a.ppy.sh/7198334?1731981345.jpeg",
                                 "username": "neuronio"
                             },
                             {
-                                "id": 19,
                                 "user_id": 7593935,
                                 "avatar_url": "https://a.ppy.sh/7593935?1762014174.png",
                                 "username": "T-Light"
                             },
                             {
-                                "id": 20,
                                 "user_id": 8332321,
                                 "avatar_url": "https://a.ppy.sh/8332321?1735991897.jpeg",
                                 "username": "-Smine-"
                             },
                             {
-                                "id": 21,
                                 "user_id": 8855680,
                                 "avatar_url": "https://a.ppy.sh/8855680?1735073430.jpeg",
                                 "username": "kelowna"
                             },
                             {
-                                "id": 22,
                                 "user_id": 9234078,
                                 "avatar_url": "https://a.ppy.sh/9234078?1732243910.jpeg",
                                 "username": "Malphs"
                             },
                             {
-                                "id": 23,
                                 "user_id": 9314703,
                                 "avatar_url": "https://a.ppy.sh/9314703?1661283252.jpeg",
                                 "username": "reicavera"
                             },
                             {
-                                "id": 24,
                                 "user_id": 9706291,
                                 "avatar_url": "https://a.ppy.sh/9706291?1627933558.jpeg",
                                 "username": "Faito"
                             },
                             {
-                                "id": 25,
                                 "user_id": 9876301,
                                 "avatar_url": "https://a.ppy.sh/9876301?1753461525.png",
                                 "username": "-Sophia"
                             },
                             {
-                                "id": 28,
                                 "user_id": 10378085,
                                 "avatar_url": "https://a.ppy.sh/10378085?1767650951.png",
                                 "username": "azumiw"
                             },
                             {
-                                "id": 29,
                                 "user_id": 10466730,
                                 "avatar_url": "https://a.ppy.sh/10466730?1610821558.jpeg",
                                 "username": "Akaeboshi"
                             },
                             {
-                                "id": 30,
                                 "user_id": 10594471,
                                 "avatar_url": "https://a.ppy.sh/10594471?1607058217.png",
                                 "username": "LorGue"
                             },
                             {
-                                "id": 31,
                                 "user_id": 10909373,
                                 "avatar_url": "https://a.ppy.sh/10909373?1742184870.jpeg",
                                 "username": "vetoed"
                             },
                             {
-                                "id": 32,
                                 "user_id": 11004271,
                                 "avatar_url": "https://osu.ppy.sh/images/layout/avatar-guest@2x.png",
                                 "username": "Toofu"
                             },
                             {
-                                "id": 33,
                                 "user_id": 11251594,
                                 "avatar_url": "https://a.ppy.sh/11251594?1766327485.png",
                                 "username": "sharpay"
                             },
                             {
-                                "id": 35,
                                 "user_id": 11461810,
                                 "avatar_url": "https://a.ppy.sh/11461810?1770393708.png",
                                 "username": "kagiura"
                             },
                             {
-                                "id": 36,
                                 "user_id": 11809892,
                                 "avatar_url": "https://a.ppy.sh/11809892?1750327869.jpeg",
                                 "username": "EdgyKing"
                             },
                             {
-                                "id": 37,
                                 "user_id": 11984937,
                                 "avatar_url": "https://a.ppy.sh/11984937?1761525220.png",
                                 "username": "RafaelXDP"
                             },
                             {
-                                "id": 38,
                                 "user_id": 12253421,
                                 "avatar_url": "https://a.ppy.sh/12253421?1732058779.jpeg",
                                 "username": "Saheko"
                             },
                             {
-                                "id": 39,
                                 "user_id": 12429294,
                                 "avatar_url": "https://a.ppy.sh/12429294?1753965836.jpeg",
                                 "username": "gabriel1ms"
                             },
                             {
-                                "id": 41,
                                 "user_id": 12844572,
                                 "avatar_url": "https://a.ppy.sh/12844572?1744016371.jpeg",
                                 "username": "Red Velvet"
                             },
                             {
-                                "id": 42,
                                 "user_id": 12967997,
                                 "avatar_url": "https://a.ppy.sh/12967997?1770822265.png",
                                 "username": "Gostoza"
                             },
                             {
-                                "id": 43,
                                 "user_id": 13364737,
                                 "avatar_url": "https://a.ppy.sh/13364737?1770300805.jpeg",
                                 "username": "Shykes"
                             },
                             {
-                                "id": 45,
                                 "user_id": 13806900,
                                 "avatar_url": "https://a.ppy.sh/13806900?1756887695.jpeg",
                                 "username": "Doug"
                             },
                             {
-                                "id": 47,
                                 "user_id": 15879318,
                                 "avatar_url": "https://a.ppy.sh/15879318?1769718288.jpeg",
                                 "username": "Otsu-"
                             },
                             {
-                                "id": 48,
                                 "user_id": 16808089,
                                 "avatar_url": "https://a.ppy.sh/16808089?1738420451.jpeg",
                                 "username": "Youru"
                             },
                             {
-                                "id": 50,
                                 "user_id": 18765111,
                                 "avatar_url": "https://a.ppy.sh/18765111?1729443452.jpeg",
                                 "username": "hashgulso"
                             },
                             {
-                                "id": 53,
                                 "user_id": 19791618,
                                 "avatar_url": "https://a.ppy.sh/19791618?1767500352.jpeg",
                                 "username": "Lartie"
                             },
                             {
-                                "id": 56,
                                 "user_id": 5099768,
                                 "avatar_url": "https://a.ppy.sh/5099768?1748873352.gif",
                                 "username": "Neto"
                             },
                             {
-                                "id": 61,
                                 "user_id": 11422420,
                                 "avatar_url": "https://a.ppy.sh/11422420?1759777950.jpeg",
                                 "username": "bielsuu"
                             },
                             {
-                                "id": 60,
                                 "user_id": 16219092,
                                 "avatar_url": "https://a.ppy.sh/16219092?1767226138.png",
                                 "username": "foss"
@@ -11058,7 +10973,6 @@
                     }
                 ],
                 "user_profile": {
-                    "id": 56,
                     "user_id": 5099768,
                     "avatar_url": "https://a.ppy.sh/5099768?1748873352.gif",
                     "username": "Neto"
@@ -11321,7 +11235,6 @@
                         ],
                         "owner_profiles": [
                             {
-                                "id": 57,
                                 "user_id": 6064571,
                                 "avatar_url": "https://a.ppy.sh/6064571?1702307044.jpeg",
                                 "username": "HowRengar"
@@ -11574,7 +11487,6 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 57,
                                 "user_id": 6064571,
                                 "avatar_url": "https://a.ppy.sh/6064571?1702307044.jpeg",
                                 "username": "HowRengar"
@@ -11730,7 +11642,6 @@
                     }
                 ],
                 "user_profile": {
-                    "id": 57,
                     "user_id": 6064571,
                     "avatar_url": "https://a.ppy.sh/6064571?1702307044.jpeg",
                     "username": "HowRengar"
@@ -11993,7 +11904,6 @@
                         ],
                         "owner_profiles": [
                             {
-                                "id": 61,
                                 "user_id": 11422420,
                                 "avatar_url": "https://a.ppy.sh/11422420?1759777950.jpeg",
                                 "username": "bielsuu"
@@ -12259,7 +12169,6 @@
                         ],
                         "owner_profiles": [
                             {
-                                "id": 17,
                                 "user_id": 6816366,
                                 "avatar_url": "https://a.ppy.sh/6816366?1761799840.jpeg",
                                 "username": "Kauan"
@@ -12525,7 +12434,6 @@
                         ],
                         "owner_profiles": [
                             {
-                                "id": 15,
                                 "user_id": 6701398,
                                 "avatar_url": "https://a.ppy.sh/6701398?1767117329.jpeg",
                                 "username": "Sulli"
@@ -12778,7 +12686,6 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 53,
                                 "user_id": 19791618,
                                 "avatar_url": "https://a.ppy.sh/19791618?1767500352.jpeg",
                                 "username": "Lartie"
@@ -13031,7 +12938,6 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 40,
                                 "user_id": 12728547,
                                 "avatar_url": "https://a.ppy.sh/12728547?1731439095.jpeg",
                                 "username": "miss yo"
@@ -13244,7 +13150,6 @@
                     }
                 ],
                 "user_profile": {
-                    "id": 61,
                     "user_id": 11422420,
                     "avatar_url": "https://a.ppy.sh/11422420?1759777950.jpeg",
                     "username": "bielsuu"
@@ -13507,7 +13412,6 @@
                         ],
                         "owner_profiles": [
                             {
-                                "id": 60,
                                 "user_id": 16219092,
                                 "avatar_url": "https://a.ppy.sh/16219092?1767226138.png",
                                 "username": "foss"
@@ -13683,7 +13587,6 @@
                     }
                 ],
                 "user_profile": {
-                    "id": 60,
                     "user_id": 16219092,
                     "avatar_url": "https://a.ppy.sh/16219092?1767226138.png",
                     "username": "foss"
@@ -13946,7 +13849,6 @@
                         ],
                         "owner_profiles": [
                             {
-                                "id": 61,
                                 "user_id": 11422420,
                                 "avatar_url": "https://a.ppy.sh/11422420?1759777950.jpeg",
                                 "username": "bielsuu"
@@ -14199,7 +14101,6 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 43,
                                 "user_id": 13364737,
                                 "avatar_url": "https://a.ppy.sh/13364737?1770300805.jpeg",
                                 "username": "Shykes"
@@ -14444,7 +14345,6 @@
                     }
                 ],
                 "user_profile": {
-                    "id": 61,
                     "user_id": 11422420,
                     "avatar_url": "https://a.ppy.sh/11422420?1759777950.jpeg",
                     "username": "bielsuu"
@@ -14707,7 +14607,6 @@
                         ],
                         "owner_profiles": [
                             {
-                                "id": 58,
                                 "user_id": 4098393,
                                 "avatar_url": "https://a.ppy.sh/4098393?1722895741.jpeg",
                                 "username": "Tarrasky"
@@ -14960,7 +14859,6 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 44,
                                 "user_id": 13646997,
                                 "avatar_url": "https://a.ppy.sh/13646997?1715810123.jpeg",
                                 "username": "Le Mirai"
@@ -15213,13 +15111,11 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 12,
                                 "user_id": 6057004,
                                 "avatar_url": "https://a.ppy.sh/6057004?1726794618.jpeg",
                                 "username": "Kuroame"
                             },
                             {
-                                "id": 28,
                                 "user_id": 10378085,
                                 "avatar_url": "https://a.ppy.sh/10378085?1767650951.png",
                                 "username": "azumiw"
@@ -15472,7 +15368,6 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 34,
                                 "user_id": 11334594,
                                 "avatar_url": "https://a.ppy.sh/11334594?1730514133.jpeg",
                                 "username": "K4L1"
@@ -15725,7 +15620,6 @@
                         "beatmap_tags": [],
                         "owner_profiles": [
                             {
-                                "id": 58,
                                 "user_id": 4098393,
                                 "avatar_url": "https://a.ppy.sh/4098393?1722895741.jpeg",
                                 "username": "Tarrasky"
@@ -15825,7 +15719,6 @@
                 "verified": false,
                 "beatmapset_tags": [],
                 "user_profile": {
-                    "id": 58,
                     "user_id": 4098393,
                     "avatar_url": "https://a.ppy.sh/4098393?1722895741.jpeg",
                     "username": "Tarrasky"
