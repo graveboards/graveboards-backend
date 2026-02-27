@@ -19,3 +19,10 @@ Compressed:
     schema:
         type: boolean
         default: false
+
+SearchString:
+    name: search
+    description: Search terms to apply to a query
+    in: query
+    schema:
+        type: string

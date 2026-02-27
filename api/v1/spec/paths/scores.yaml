@@ -4,6 +4,7 @@ Scores:
         tags:
             - Scores
         parameters:
+            - $ref: "../parameters/query/search.yaml#/SearchString"
             - $ref: "../parameters/query/sorting/score.yaml#/ScoreSorting"
             - $ref: "../parameters/query/filters/score.yaml#/ScoreFilter"
             - $ref: "../parameters/query/include/score.yaml#/ScoreInclude"

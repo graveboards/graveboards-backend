@@ -1,8 +1,10 @@
 from typing import Iterable, Any, Optional, Union
 
-from sqlalchemy.sql import select
+from sqlalchemy.sql import select, cast
+from sqlalchemy.sql.sqltypes import String, Text
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement, and_
 from sqlalchemy.sql.selectable import Select
+from sqlalchemy.sql.functions import func
 from sqlalchemy.orm.attributes import QueryableAttribute
 from sqlalchemy.orm.interfaces import LoaderOption
 from sqlalchemy.orm.relationships import RelationshipProperty, Relationship
@@ -10,7 +12,7 @@ from sqlalchemy.orm.strategy_options import selectinload, joinedload, noload, Lo
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import BaseType, ModelClass, Base
-from app.database.utils import get_filter_condition
+from app.database.utils import get_filter_condition, extract_inner_types
 from app.database.enums import FilterOperator
 from app.utils import clamp
 from .decorators import session_manager
@@ -31,6 +33,7 @@ class _R:
         _where: Union[Any, Iterable[Any]] = None,
         _sorting: Sorting = None,
         _filters: Filters = None,
+        _search: str = None,
         _include: Include = None,
         _offset: int = 0,
         **kwargs
@@ -56,6 +59,8 @@ class _R:
                 Sorting configuration as a list of sorting dicts.
             _filters:
                 Nested filter configuration as a dict of fields and conditions.
+            _search:
+                Search query string.
             _include:
                 Nested relationship loading configuration.
             _offset:
@@ -81,6 +86,7 @@ class _R:
         _where: Union[Any, Iterable[Any]] = None,
         _sorting: Sorting = None,
         _filters: Filters = None,
+        _search: str = None,
         _include: Include = None,
         _limit: int = QUERY_DEFAULT_LIMIT,
         _offset: int = 0,
@@ -108,6 +114,8 @@ class _R:
                 Sorting configuration as a list of sorting dicts.
             _filters:
                 Nested filter configuration as a dict of fields and conditions.
+            _search:
+                Search query string.
             _include:
                 Nested relationship loading configuration.
             _limit:
@@ -122,7 +130,7 @@ class _R:
         Returns:
             A list of matching model instances or projected scalar values.
         """
-        select_stmt = _R._construct_stmt(model_class, _select, _join, _where, _sorting, _filters, _include, **kwargs)
+        select_stmt = _R._construct_stmt(model_class, _select, _join, _where, _sorting, _filters, _search, _include, **kwargs)
         select_stmt = select_stmt.limit(clamp(_limit, QUERY_MIN_LIMIT, QUERY_MAX_LIMIT)).offset(_offset)
 
         results = list((await session.scalars(select_stmt)).all())
@@ -140,6 +148,7 @@ class _R:
         _where: Union[Any, Iterable[Any]] = None,
         _sorting: Union[Any, Iterable[Any]] = None,
         _filters: Filters = None,
+        _search: str = None,
         _include: Include = None,
         **kwargs
     ) -> Select:
@@ -162,6 +171,8 @@ class _R:
                 Sorting configuration as a list of sorting dicts.
             _filters:
                 Nested filter configuration as a dict of fields and conditions.
+            _search:
+                Search query string.
             _include:
                 Nested relationship loading configuration.
             **kwargs:
@@ -188,6 +199,9 @@ class _R:
 
         if _filters is not None:
             select_stmt = _R._apply_filters(select_stmt, model_class, _filters)
+
+        if _search:
+            select_stmt = _R._apply_search(select_stmt, model_class, _search)
 
         if _include and not _select:
             select_stmt = _R._apply_include(select_stmt, model_class, _include)
@@ -383,8 +397,7 @@ class _R:
         model_class: ModelClass,
         filters: Filters,
     ) -> Select:
-        """
-        Apply validated filter clauses to a ``Select`` statement.
+        """Apply validated filter clauses to a ``Select`` statement.
 
         Supports both column-level conditions and nested relationship filtering.
 
@@ -460,6 +473,64 @@ class _R:
             select_stmt = select_stmt.where(and_(*where_clauses))
 
         return select_stmt
+
+    @staticmethod
+    def _apply_search(
+        select_stmt: Select,
+        model_class: ModelClass,
+        search: str,
+    ) -> Select:
+        """Apply full-text search to a ``Select`` statement.
+
+        Search applies to all string columns and hybrid properties of the root model.
+
+        Args:
+            select_stmt:
+                The base ``Select`` statement.
+            model_class:
+                Wrapped model metadata.
+            search:
+                String with search terms.
+
+        Returns:
+            The ``Select`` statement with WHERE clauses applied.
+        """
+        model = model_class.value
+
+        if not (search := search.strip()):
+            return select_stmt
+
+        string_columns = []
+
+        for column_name in model_class.column_names:
+            attr = getattr(model, column_name)
+
+            try:
+                if isinstance(attr.type, String):
+                    string_columns.append(attr)
+            except AttributeError:
+                continue
+
+        for hybrid_name in model_class.hybrid_property_names:
+            column = model_class.value.__annotations__[hybrid_name]
+            expected_type = extract_inner_types(column)
+
+            if expected_type is str:
+                attr = getattr(model, hybrid_name)
+                string_columns.append(attr)
+
+        if not string_columns:
+            return select_stmt
+
+        concatenated = func.concat_ws(
+            " ",
+            *[func.coalesce(cast(col, Text), "") for col in string_columns]
+        )
+
+        tsvector = func.to_tsvector("simple", concatenated)
+        tsquery = func.websearch_to_tsquery("simple", search)
+        search_condition = tsvector.op("@@")(tsquery)
+        return select_stmt.where(search_condition)
 
     @staticmethod
     def _apply_include(
@@ -627,6 +698,7 @@ class R(_R):
         _where: Union[Any, Iterable[Any]] = None,
         _sorting: Sorting = None,
         _filters: Filters = None,
+        _search: str = None,
         _include: Include = None,
         _offset: int = 0,
         **kwargs
@@ -653,6 +725,8 @@ class R(_R):
                 Sorting configuration as a list of sorting dicts.
             _filters:
                 Nested filter configuration as a dict of fields and conditions.
+            _search:
+                Search query string.
             _include:
                 Nested relationship loading specification.
             _offset:
@@ -674,6 +748,7 @@ class R(_R):
             _where=_where,
             _sorting=_sorting,
             _filters=_filters,
+            _search=_search,
             _include=_include,
             _offset=_offset,
             **kwargs
@@ -689,6 +764,7 @@ class R(_R):
         _where: Union[Any, Iterable[Any]] = None,
         _sorting: Sorting = None,
         _filters: Filters = None,
+        _search: str = None,
         _include: Include = None,
         _limit: int = QUERY_DEFAULT_LIMIT,
         _offset: int = 0,
@@ -717,6 +793,8 @@ class R(_R):
                 Sorting configuration as a list of sorting dicts.
             _filters:
                 Nested filter configuration as a dict of fields and conditions.
+            _search:
+                Search query string.
             _include:
                 Nested relationship loading specification.
             _limit:
@@ -741,6 +819,7 @@ class R(_R):
             _where=_where,
             _sorting=_sorting,
             _filters=_filters,
+            _search=_search,
             _include=_include,
             _limit=_limit,
             _offset=_offset,

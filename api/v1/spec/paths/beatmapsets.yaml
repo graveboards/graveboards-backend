@@ -5,6 +5,7 @@ Beatmapsets:
             - Beatmapsets
         parameters:
             - $ref: "../parameters/query/user.yaml#/UserId"
+            - $ref: "../parameters/query/search.yaml#/SearchString"
             - $ref: "../parameters/query/sorting/beatmapset.yaml#/BeatmapsetSorting"
             - $ref: "../parameters/query/filters/beatmapset.yaml#/BeatmapsetFilter"
             - $ref: "../parameters/query/include/beatmapset.yaml#/BeatmapsetInclude"
@@ -61,6 +62,7 @@ BeatmapsetById-Snapshots:
             - Beatmapsets
         parameters:
             - $ref: "../parameters/path/beatmapset.yaml#/BeatmapsetId"
+            - $ref: "../parameters/query/search.yaml#/SearchString"
             - $ref: "../parameters/query/sorting/beatmapset_snapshot.yaml#/BeatmapsetSnapshotSorting"
             - $ref: "../parameters/query/filters/beatmapset_snapshot.yaml#/BeatmapsetSnapshotFilter"
             - $ref: "../parameters/query/include/beatmapset_snapshot.yaml#/BeatmapsetSnapshotInclude"
@@ -110,6 +112,7 @@ BeatmapsetListings:
         tags:
             - Beatmapsets
         parameters:
+            - $ref: "../parameters/query/search.yaml#/SearchString"
             - $ref: "../parameters/query/sorting/beatmapset_snapshot.yaml#/BeatmapsetSnapshotSorting"
             - $ref: "../parameters/query/filters/beatmapset_snapshot.yaml#/BeatmapsetSnapshotFilter"
             - $ref: "../parameters/query/include/beatmapset_snapshot.yaml#/BeatmapsetSnapshotInclude"
@@ -128,6 +131,7 @@ BeatmapsetTags:
         tags:
             - Beatmapsets
         parameters:
+            - $ref: "../parameters/query/search.yaml#/SearchString"
             - $ref: "../parameters/query/sorting/beatmapset_tag.yaml#/BeatmapsetTagSorting"
             - $ref: "../parameters/query/filters/beatmapset_tag.yaml#/BeatmapsetTagFilter"
             - $ref: "../parameters/query/include/beatmapset_tag.yaml#/BeatmapsetTagInclude"

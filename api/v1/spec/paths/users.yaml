@@ -7,6 +7,7 @@ Users:
             - BearerAuth: []
             - ApiKeyAuth: []
         parameters:
+            - $ref: "../parameters/query/search.yaml#/SearchString"
             - $ref: "../parameters/query/sorting/user.yaml#/UserSorting"
             - $ref: "../parameters/query/filters/user.yaml#/UserFilter"
             - $ref: "../parameters/query/include/user.yaml#/UserInclude"
