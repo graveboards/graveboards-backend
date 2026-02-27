@@ -100,7 +100,7 @@ BeatmapsetSnapshotInclude:
             default: false
         preview_url:
             type: boolean
-            default: false
+            default: true
         ranked:
             type: boolean
             default: false
