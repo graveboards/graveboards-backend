@@ -1,3 +1,5 @@
+import os
+
 from connexion import AsyncApp
 from connexion.exceptions import Forbidden
 from connexion.resolver import RestyResolver
@@ -9,10 +11,13 @@ from .lifespan import lifespan
 from .patches import OpenAPIURIParserPatched, ParameterValidatorPatched
 from .spec import load_spec
 from .error_handlers import forbidden
-from .config import SPEC_DIR, DEFAULT_MODULE_NAME
+from .config import SPEC_DIR, DEFAULT_MODULE_NAME, INSTANCE_DIR, LOGS_DIR
 
 
 def create_connexion_app() -> AsyncApp:
+    os.makedirs(INSTANCE_DIR, exist_ok=True)
+    os.makedirs(LOGS_DIR, exist_ok=True)
+
     connexion_app = AsyncApp(
         __name__,
         specification_dir=SPEC_DIR,

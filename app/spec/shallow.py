@@ -14,7 +14,8 @@ SCHEMAS_WITH_SHALLOW_REFS = {
     "BeatmapSnapshotInclude",
     "BeatmapsetInclude",
     "BeatmapsetSnapshotInclude",
-    "LeaderboardInclude"
+    "LeaderboardInclude",
+    "RequestInclude"
 }
 
 disabled_nested_obj = {

@@ -19,6 +19,7 @@ CACHE_FILE = os.path.join(SPEC_DIR, ".spec_cache.pkl")
 OPENAPI_ENTRYPOINT = os.path.join(SPEC_DIR, "openapi.yaml")
 DEFAULT_MODULE_NAME = "api.v1"
 INSTANCE_DIR = os.path.abspath("instance")
+LOGS_DIR = os.path.join(INSTANCE_DIR, "logs")
 
 FRONTEND_BASE_URL = os.getenv("BASE_URL", "http://localhost:3000")
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")

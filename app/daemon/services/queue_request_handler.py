@@ -62,7 +62,7 @@ class QueueRequestHandler(ScheduledService):
             await bm.archive(record.beatmapset_id)
 
             request_dict = RequestSchema.model_validate(record).model_dump(
-                exclude={"user_profile", "queue"}
+                exclude={"user_profile", "queue", "beatmapset_snapshot"}
             )
             request = await self._db.add(Request, **request_dict)
             logger.debug(f"Added request id={request.id} for beatmapset {request.beatmapset_id} to queue id={request.queue_id}")
