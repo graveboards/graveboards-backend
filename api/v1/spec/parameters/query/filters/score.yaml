@@ -4,7 +4,7 @@ ScoreFilter:
         $ref: "../../../schemas/filters/description.yaml#/FilterDescription"
     in: query
     required: false
-    style: form
+    style: deepObject
     explode: true
     schema:
         $ref: "../../../schemas/filters/score.yaml#/ScoreFilter"
