@@ -13,7 +13,6 @@ from .role import Role
 from .profile import Profile
 from .api_key import ApiKey
 from .oauth_token import OAuthToken
-from .jwt import JWT
 from .score_fetcher_task import ScoreFetcherTask
 from .profile_fetcher_task import ProfileFetcherTask
 from .beatmap import Beatmap
@@ -44,7 +43,6 @@ __all__ = [
     "Profile",
     "ApiKey",
     "OAuthToken",
-    "JWT",
     "ScoreFetcherTask",
     "ProfileFetcherTask",
     "Beatmap",

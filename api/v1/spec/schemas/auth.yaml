@@ -20,13 +20,17 @@ AuthorizationCode:
 JWT:
     type: object
     properties:
-        user_id:
-            type: integer
         token:
             type: string
-        issued_at:
+
+JWTClaims:
+    type: object
+    properties:
+        sub:
             type: integer
-        expires_at:
+        iss:
+            type: string
+        iat:
             type: integer
-        is_revoked:
-            type: boolean
+        exp:
+            type: integer

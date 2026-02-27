@@ -1,29 +1,23 @@
 from authlib.integrations.base_client.errors import OAuthError
 from connexion import request
+from jwt.exceptions import InvalidIssuerError, ExpiredSignatureError, InvalidTokenError
 
 from app.database import PostgresqlDB
-from app.database.models import JWT, User, ScoreFetcherTask, OAuthToken
-from app.database.schemas import JWTSchema
-from app.exceptions import NotFound, BadRequest, OsuOAuthError
+from app.database.models import User, ScoreFetcherTask, OAuthToken
+from app.exceptions import BadRequest, OsuOAuthError
 from app.oauth import OAuth
 from app.osu_api import OsuAPIClient
 from app.redis import RedisClient, Namespace
-from app.security import create_token_payload, encode_token
+from app.security import create_token_payload, encode_token, validate_token
 
 
 async def search(token: str):
-    db: PostgresqlDB = request.state.db
+    try:
+        jwt_claims = validate_token(token)
+    except (InvalidTokenError, ExpiredSignatureError, InvalidIssuerError):
+        raise BadRequest("Invalid or expired JWT")
 
-    jwt = await db.get(JWT, token=token)
-
-    if not jwt:
-        raise NotFound(f"The JWT provided does not exist")
-
-    jwt_data = JWTSchema.model_validate(jwt).model_dump(
-        exclude={"id", "updated_at"}
-    )
-
-    return jwt_data, 200, {"Content-Type": "application/json"}
+    return jwt_claims, 200, {"Content-Type": "application/json"}
 
 
 async def post(body: dict):
@@ -79,16 +73,6 @@ async def post(body: dict):
     )
 
     payload = create_token_payload(user_id)
-    jwt_str = encode_token(payload)
-    jwt = await db.add(
-        JWT,
-        user_id=user_id,
-        token=jwt_str,
-        issued_at=payload["iat"],
-        expires_at=payload["exp"]
-    )
-    jwt_data = JWTSchema.model_validate(jwt).model_dump(
-        exclude={"id", "updated_at"}
-    )
+    jwt_ = encode_token(payload)
 
-    return jwt_data, 201, {"Content-Type": "application/json"}
+    return {"token": jwt_}, 201, {"Content-Type": "application/json"}

@@ -1,7 +1,7 @@
 from datetime import timedelta
-from typing import Any
 
 import jwt
+from jwt.exceptions import InvalidIssuerError, ExpiredSignatureError, InvalidTokenError
 
 from app.utils import aware_utcnow
 from app.config import FRONTEND_BASE_URL, JWT_SECRET_KEY, JWT_ALGORITHM
@@ -22,7 +22,7 @@ def generate_token(user_id: int | str) -> str:
     return encode_token(create_token_payload(user_id))
 
 
-def create_token_payload(user_id: int | str) -> dict[str, Any]:
+def create_token_payload(user_id: int | str) -> dict[str, str | int]:
     """Create a JWT payload for authentication.
 
     Includes standard claims:
@@ -46,7 +46,7 @@ def create_token_payload(user_id: int | str) -> dict[str, Any]:
     }
 
 
-def encode_token(payload: dict[str, Any]) -> str:
+def encode_token(payload: dict[str, str | int]) -> str:
     """Encode and sign a JWT payload.
 
     Args:
@@ -59,7 +59,7 @@ def encode_token(payload: dict[str, Any]) -> str:
     return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
 
-def decode_token(token: str) -> dict[str, Any]:
+def decode_token(token: str) -> dict[str, str | int]:
     """Decode and verify a JWT.
 
     Args:
@@ -70,15 +70,15 @@ def decode_token(token: str) -> dict[str, Any]:
         Decoded payload dictionary.
 
     Raises:
-        jwt.InvalidTokenError:
+        InvalidTokenError:
             If signature or structure is invalid.
-        jwt.ExpiredSignatureError:
+        ExpiredSignatureError:
             If token has expired.
     """
     return jwt.decode(token, key=JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
 
 
-def validate_token(token: str) -> dict[str, int]:
+def validate_token(token: str) -> dict[str, str | int]:
     """Validate a JWT and normalize its payload.
 
     Verifies:
@@ -91,12 +91,12 @@ def validate_token(token: str) -> dict[str, int]:
             Encoded JWT string.
 
     Returns:
-        Normalized payload dictionary with ``sub`` as int.
+        Normalized payload dictionary.
 
     Raises:
-        jwt.ExpiredSignatureError:
+        ExpiredSignatureError:
             If token is expired.
-        jwt.InvalidTokenError:
+        InvalidTokenError:
             If validation fails.
     """
     try:
@@ -104,15 +104,21 @@ def validate_token(token: str) -> dict[str, int]:
         sub = payload["sub"]
 
         if payload["iss"] != FRONTEND_BASE_URL:
-            raise jwt.InvalidIssuerError("Invalid token issuer")
+            raise InvalidIssuerError("Invalid token issuer")
 
         if not sub.isdigit():
-            raise jwt.InvalidTokenError("Subject is not convertable to an integer")
+            raise InvalidTokenError("Subject is not convertable to an integer")
 
         payload["sub"] = int(sub)
 
+        if not isinstance(payload["iat"], int):
+            payload["iat"] = int(payload["iat"])
+
+        if not isinstance(payload["exp"], int):
+            payload["exp"] = int(payload["exp"])
+
         return payload
-    except jwt.ExpiredSignatureError:
+    except ExpiredSignatureError:
         raise
-    except jwt.InvalidTokenError:
+    except InvalidTokenError:
         raise

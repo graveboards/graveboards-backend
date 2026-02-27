@@ -12,7 +12,6 @@ from .role import Role
 from .profile import Profile
 from .api_key import ApiKey
 from .oauth_token import OAuthToken
-from .jwt import JWT
 from .score_fetcher_task import ScoreFetcherTask
 from .profile_fetcher_task import ProfileFetcherTask
 from .beatmap import Beatmap
@@ -35,7 +34,6 @@ class ModelClass(Enum):
     PROFILE = Profile
     API_KEY = ApiKey
     OAUTH_TOKEN = OAuthToken
-    JWT = JWT
     SCORE_FETCHER_TASK = ScoreFetcherTask
     PROFILE_FETCHER_TASK = ProfileFetcherTask
     BEATMAP = Beatmap

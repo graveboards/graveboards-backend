@@ -5,9 +5,9 @@ AuthorizationUrl:
             schema:
                 $ref: "../../schemas/auth.yaml#/AuthorizationUrl"
 
-JWT:
-    description: JWT info
+JWTClaims:
+    description: Claims of a validated JWT
     content:
         application/json:
             schema:
-                $ref: "../../schemas/auth.yaml#/JWT"
+                $ref: "../../schemas/auth.yaml#/JWTClaims"

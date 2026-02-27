@@ -1,5 +1,5 @@
 JWTCreated:
-    description: Info of the newly issued JWT from authentication success
+    description: Newly issued JWT from authentication success
     content:
         application/json:
             schema:

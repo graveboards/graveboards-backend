@@ -9,18 +9,16 @@ Login:
 
 Token:
     get:
-        summary: Retrieve info for a JWT
+        summary: Validate and retrieve claims of a JWT
         tags:
             - OAuth
         parameters:
             - $ref: "../parameters/query/auth.yaml#/JWT"
         responses:
             200:
-                $ref: "../responses/200/auth.yaml#/JWT"
+                $ref: "../responses/200/auth.yaml#/JWTClaims"
             400:
                 $ref: "../responses/400/generic.yaml#/BadRequest"
-            404:
-                $ref: "../responses/404/generic.yaml#/NotFound"
 
     post:
         summary: Uses the authorization code from the osu! OAuth flow to authenticate a user and issues a JWT
