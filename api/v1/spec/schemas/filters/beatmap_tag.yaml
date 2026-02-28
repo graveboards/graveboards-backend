@@ -9,7 +9,7 @@ BeatmapTagFilter:
             $ref: "./fields/index.yaml#/IntegerField"
         name:
             $ref: "./fields/index.yaml#/StringField"
-        ruelset_id:
+        ruleset_id:
             $ref: "./fields/index.yaml#/IntegerField"
         description:
             $ref: "./fields/index.yaml#/StringField"
