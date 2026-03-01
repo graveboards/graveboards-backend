@@ -1,21 +1,94 @@
 import json
+import re
 from datetime import datetime
 
 from connexion.uri_parsing import OpenAPIURIParser
 from connexion.utils import coerce_type, TypeValidationError
+
+from app.logging import get_logger
+
+affirmative_literals = {"true", "t", "yes", "y"}
+negative_literals = {"false", "f", "no", "n"}
+logger = get_logger(__name__)
 
 
 class OpenAPIURIParserPatched(OpenAPIURIParser):
     """Extended OpenAPI URI parser with custom coercion logic.
 
     Enhancements:
-        - Custom parsing for deep-object `include` parameters
+        - Custom parsing for deepObject `include` parameters
         - JSON-based coercion for `sorting`
         - Improved handling of array-style query parameters
+        - Preserve arrays with repeated values in deepObject parameters.
 
     Designed to support complex filtering, nested includes, and structured query
     parameters not natively handled by Connexion.
     """
+
+    def _make_deep_object(self, k, v):
+        """Patched to preserve repeated values for deepObject arrays."""
+        if not isinstance(v, list):
+            v = [v]
+
+        root_key = None
+        if k in self.param_schemas.keys():
+            root_key = k
+            is_deep = False
+        else:
+            for key in self.param_schemas.keys():
+                if k.startswith(key) and "[" in k:
+                    root_key = key
+            if not root_key:
+                root_key = k.split("[", 1)[0]
+            is_deep = self._is_deep_object_style_param(root_key)
+
+        if not is_deep:
+            return root_key, v if len(v) > 1 else v[0], False
+
+        key_path = re.findall(r"\[([^\[\]]*)\]", k)
+        root = prev = node = {}
+        for key_part in key_path:
+            node[key_part] = {}
+            prev = node
+            node = node[key_part]
+
+        schema = self.param_schemas.get(root_key, {})
+        for kp in key_path[:-1]:
+            while "oneOf" in schema:
+                # Pick first object branch
+                schema = next((b for b in schema["oneOf"] if b.get("type") == "object"), schema["oneOf"][0])
+
+            schema = schema.get("properties", {}).get(kp, {})
+
+        last_key = key_path[-1]
+
+        while "oneOf" in schema:
+            schema = next((b for b in schema["oneOf"] if b.get("type") == "object"), schema["oneOf"][0])
+
+        last_schema = schema.get("properties", {}).get(last_key, {})
+
+        if not last_schema:
+            logger.warning("no schema found for deepObject leaf %s.%s", root_key, last_key)
+
+        # Preserve list only if leaf type is array
+        if last_schema.get("type") == "array":
+            if (
+                k.startswith("filters") and
+                isinstance(v, list) and
+                len(v) == 1 and
+                isinstance(v[0], str)
+            ):
+                # Support non-exploded forms
+                v = v[0].split(",")
+
+            prev[last_key] = v
+        else:
+            prev[last_key] = v if isinstance(v, list) else [v]
+            if isinstance(prev[last_key], list) and len(prev[last_key]) == 1:
+                prev[last_key] = prev[last_key][0]
+
+        return root_key, [root], True
+
     def resolve_params(self, params, _in):
         """Resolve and coerce incoming request parameters.
 
@@ -37,24 +110,20 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
             param_schema = self.param_schemas.get(k)
 
             if not (param_defn or param_schema):
-                # rely on validation
                 resolved_param[k] = values
                 continue
 
             if _in == "path":
-                # multiple values in a path is impossible
                 values = [values]
 
             if param_schema and param_schema["type"] == "array":
                 if k == "sorting":
                     resolved_param[k] = values
                 else:
-                    # resolve variable re-assignment, handle explode
                     values = self._resolve_param_duplicates(values, param_defn, _in)
-                    # handle array styles
                     resolved_param[k] = self._split(values, param_defn, _in)
             else:
-                resolved_param[k] = values[-1]
+                resolved_param[k] = values
 
             if k == "include":
                 try:
@@ -119,7 +188,11 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
                 if branch_type == "array" and isinstance(data, list):
                     return branch
 
-                if branch_type == "boolean":
+                if branch_type == "boolean" and (
+                    isinstance(data, bool) or
+                    isinstance(data, str) and
+                    data.lower() in affirmative_literals | negative_literals
+                ):
                     return branch
 
             return schema["oneOf"][0]
@@ -128,10 +201,9 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
             if isinstance(data, str):
                 lower = data.lower()
 
-                if lower == "true":
+                if lower in affirmative_literals:
                     return True
-
-                if lower == "false":
+                elif lower in negative_literals:
                     return False
 
             if isinstance(data, dict):
@@ -164,6 +236,9 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
 
             return data
 
+        if isinstance(value, list) and len(value) == 1:
+            return cast(value[0], param_schema)
+
         return cast(value, param_schema)
 
     @staticmethod
@@ -189,9 +264,18 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
             json.JSONDecodeError:
                 If any sorting item is invalid JSON.
         """
+        if not value:
+            return []
+
+        if isinstance(value, str):
+            value = [value]
+
         coerced = []
 
         for item in value:
+            if item is None:
+                continue
+
             try:
                 coerced.append(json.loads(item))
             except json.JSONDecodeError:
@@ -250,5 +334,8 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
                 return [cast(v) for v in data]
 
             return data
+
+        if isinstance(value, list) and len(value) == 1:
+            return cast(value[0])
 
         return cast(value)
