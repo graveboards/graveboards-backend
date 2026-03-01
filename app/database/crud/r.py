@@ -72,7 +72,7 @@ class _R:
             The first matching model instance or projected scalar value, or ``None`` if
             no result is found.
         """
-        select_stmt = _R._construct_stmt(model_class, _select, _join, _where, _sorting, _filters, _include, **kwargs)
+        select_stmt = _R._construct_stmt(model_class, _select, _join, _where, _sorting, _filters, _search, _include, **kwargs)
         select_stmt = select_stmt.offset(_offset)
 
         return await session.scalar(select_stmt)
