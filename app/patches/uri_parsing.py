@@ -114,7 +114,8 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
                 continue
 
             if _in == "path":
-                values = [values]
+                if param_schema and param_schema.get("type") == "array":
+                    values = [values]
 
             if param_schema and param_schema["type"] == "array":
                 if k == "sorting":
