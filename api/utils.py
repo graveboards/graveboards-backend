@@ -44,6 +44,8 @@ def prime_query_kwargs(
         "sorting",
         "filters",
         "search",
+        "search_mode",
+        "search_relevance",
         "include",
         "limit",
         "offset",

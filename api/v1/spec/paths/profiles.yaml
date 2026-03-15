@@ -5,6 +5,8 @@ Profiles:
             - Profiles
         parameters:
             - $ref: "../parameters/query/search.yaml#/SearchString"
+            - $ref: "../parameters/query/search.yaml#/SearchMode"
+            - $ref: "../parameters/query/search.yaml#/SearchRelevance"
             - $ref: "../parameters/query/sorting/profile.yaml#/ProfileSorting"
             - $ref: "../parameters/query/filters/profile.yaml#/ProfileFilter"
             - $ref: "../parameters/query/include/profile.yaml#/ProfileInclude"

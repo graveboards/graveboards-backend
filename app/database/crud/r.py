@@ -1,9 +1,8 @@
-from typing import Iterable, Any, Optional, Union
-from itertools import product
+from typing import Iterable, Any, Optional, Union, Literal
 
 from sqlalchemy.sql import select, cast
 from sqlalchemy.sql.sqltypes import String, Text
-from sqlalchemy.sql.elements import BinaryExpression, ColumnElement, and_, or_
+from sqlalchemy.sql.elements import BinaryExpression, ColumnElement, and_, or_, literal_column
 from sqlalchemy.sql.selectable import Select
 from sqlalchemy.sql.functions import func
 from sqlalchemy.orm.attributes import QueryableAttribute
@@ -12,16 +11,40 @@ from sqlalchemy.orm.relationships import RelationshipProperty, Relationship
 from sqlalchemy.orm.strategy_options import selectinload, joinedload, noload, Load
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.models import BaseType, ModelClass, Base
+from app.database.models import (
+    BaseType,
+    ModelClass,
+    Base,
+    BeatmapSnapshot,
+    BeatmapsetSnapshot,
+    Queue,
+    Request,
+    beatmap_snapshot_beatmapset_snapshot_association
+)
 from app.database.utils import get_filter_condition, extract_inner_types
 from app.database.enums import FilterOperator
 from app.utils import clamp
+from app.search.datastructures import SearchTermsSchema
+from app.search.enums import Scope, SearchableFieldCategory
+from app.search.mappings import SCOPE_MODEL_MAPPING
+from app.database.ctes.search_terms_filtered import search_terms_filtered_cte_factory
+from app.database.ctes.search_terms_scored import (
+    search_terms_scored_ctes_factory,
+    aggregated_child_scores_to_parent_cte_factory
+)
 from .decorators import session_manager
 from .types import Sorting, Filters, Include
 
 QUERY_MIN_LIMIT = 1
 QUERY_MAX_LIMIT = 100
 QUERY_DEFAULT_LIMIT = 50
+SearchMode = Literal["simple", "engine"]
+
+MODEL_SCOPE_MAPPING = {
+    model_class: scope
+    for scope, model_class in SCOPE_MODEL_MAPPING.items()
+    if model_class is not ...
+}
 
 
 class _R:
@@ -35,6 +58,8 @@ class _R:
         _sorting: Sorting = None,
         _filters: Filters = None,
         _search: str = None,
+        _search_mode: SearchMode = "simple",
+        _search_relevance: bool = False,
         _include: Include = None,
         _offset: int = 0,
         **kwargs
@@ -62,6 +87,10 @@ class _R:
                 Nested filter configuration as a dict of fields and conditions.
             _search:
                 Search query string.
+            _search_mode:
+                Search strategy ("simple" or "engine").
+            _search_relevance:
+                If ``True``, apply relevance ordering for engine searches.
             _include:
                 Nested relationship loading configuration.
             _offset:
@@ -73,7 +102,19 @@ class _R:
             The first matching model instance or projected scalar value, or ``None`` if
             no result is found.
         """
-        select_stmt = _R._construct_stmt(model_class, _select, _join, _where, _sorting, _filters, _search, _include, **kwargs)
+        select_stmt = _R._construct_stmt(
+            model_class,
+            _select,
+            _join,
+            _where,
+            _sorting,
+            _filters,
+            _search,
+            _search_mode,
+            _search_relevance,
+            _include,
+            **kwargs
+        )
         select_stmt = select_stmt.offset(_offset)
 
         return await session.scalar(select_stmt)
@@ -88,6 +129,8 @@ class _R:
         _sorting: Sorting = None,
         _filters: Filters = None,
         _search: str = None,
+        _search_mode: SearchMode = "simple",
+        _search_relevance: bool = False,
         _include: Include = None,
         _limit: int = QUERY_DEFAULT_LIMIT,
         _offset: int = 0,
@@ -117,6 +160,10 @@ class _R:
                 Nested filter configuration as a dict of fields and conditions.
             _search:
                 Search query string.
+            _search_mode:
+                Search strategy ("simple" or "engine").
+            _search_relevance:
+                If ``True``, apply relevance ordering for engine searches.
             _include:
                 Nested relationship loading configuration.
             _limit:
@@ -131,7 +178,19 @@ class _R:
         Returns:
             A list of matching model instances or projected scalar values.
         """
-        select_stmt = _R._construct_stmt(model_class, _select, _join, _where, _sorting, _filters, _search, _include, **kwargs)
+        select_stmt = _R._construct_stmt(
+            model_class,
+            _select,
+            _join,
+            _where,
+            _sorting,
+            _filters,
+            _search,
+            _search_mode,
+            _search_relevance,
+            _include,
+            **kwargs
+        )
         select_stmt = select_stmt.limit(clamp(_limit, QUERY_MIN_LIMIT, QUERY_MAX_LIMIT)).offset(_offset)
 
         results = list((await session.scalars(select_stmt)).all())
@@ -150,6 +209,8 @@ class _R:
         _sorting: Union[Any, Iterable[Any]] = None,
         _filters: Filters = None,
         _search: str = None,
+        _search_mode: SearchMode = "simple",
+        _search_relevance: bool = False,
         _include: Include = None,
         **kwargs
     ) -> Select:
@@ -174,6 +235,10 @@ class _R:
                 Nested filter configuration as a dict of fields and conditions.
             _search:
                 Search query string.
+            _search_mode:
+                Search strategy ("simple" or "engine").
+            _search_relevance:
+                If ``True``, apply relevance ordering for engine searches.
             _include:
                 Nested relationship loading configuration.
             **kwargs:
@@ -202,7 +267,13 @@ class _R:
             select_stmt = _R._apply_filters(select_stmt, model_class, _filters)
 
         if _search:
-            select_stmt = _R._apply_search(select_stmt, model_class, _search)
+            select_stmt = _R._apply_search(
+                select_stmt,
+                model_class,
+                _search,
+                mode=_search_mode,
+                relevance=_search_relevance and _sorting is None
+            )
 
         if _include and not _select:
             select_stmt = _R._apply_include(select_stmt, model_class, _include)
@@ -480,10 +551,14 @@ class _R:
         select_stmt: Select,
         model_class: ModelClass,
         search: str,
+        mode: SearchMode = "simple",
+        relevance: bool = False,
     ) -> Select:
-        """Apply full-text + substring search to a ``Select`` statement.
+        """Apply search to a ``Select`` statement.
 
-        Search applies to all string columns and hybrid properties of the root model.
+        Modes:
+            - ``simple``: Search applies to all string columns and hybrid properties of the root model.
+            - ``engine``: Search applies scope-aware relationship mappings via search-term CTEs.
 
         Args:
             select_stmt:
@@ -492,13 +567,242 @@ class _R:
                 Wrapped model metadata.
             search:
                 String with search terms.
+            mode:
+                Search strategy ("simple" or "engine").
+            relevance:
+                If ``True``, apply relevance ordering for engine searches.
+                This is ignored for simple search and when explicit sorting is applied.
 
         Returns:
             The ``Select`` statement with WHERE clauses applied.
         """
         if not (search := search.strip()):
             return select_stmt
+        if mode == "engine":
+            engine_stmt = _R._apply_search_engine(select_stmt, model_class, search, relevance=relevance)
+            if engine_stmt is not None:
+                return engine_stmt
 
+        return _R._apply_search_simple(select_stmt, model_class, search)
+
+    @staticmethod
+    def _apply_search_engine(
+        select_stmt: Select,
+        model_class: ModelClass,
+        search: str,
+        relevance: bool = False,
+    ) -> Optional[Select]:
+        """Apply scope-aware search term filtering using the main search mappings."""
+        scope = MODEL_SCOPE_MAPPING.get(model_class)
+
+        if scope is None:
+            return None
+
+        search_terms = SearchTermsSchema(terms=search)
+        filter_cte = search_terms_filtered_cte_factory(scope, search_terms)
+
+        select_stmt = select_stmt.join(filter_cte, filter_cte.c.id == model_class.value.id)
+
+        if not relevance:
+            return select_stmt
+
+        return _R._apply_search_engine_relevance(select_stmt, scope, search_terms)
+
+    @staticmethod
+    def _apply_search_engine_relevance(
+        select_stmt: Select,
+        scope: Scope,
+        search_terms: SearchTermsSchema
+    ) -> Select:
+        """Apply relevance-based ordering for engine searches."""
+        category_score_ctes = search_terms_scored_ctes_factory(scope, search_terms)
+
+        match scope:
+            case Scope.BEATMAPS:
+                beatmap_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAP)
+                beatmapset_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAPSET)
+
+                aggregated_beatmapset_cte = (
+                    aggregated_child_scores_to_parent_cte_factory(
+                        child_score_cte=beatmapset_cte,
+                        mapping_table=beatmap_snapshot_beatmapset_snapshot_association,
+                        mapping_child_fk="beatmapset_snapshot_id",
+                        mapping_parent_fk="beatmap_snapshot_id",
+                        cte_name="aggregated_beatmapset_scores_cte",
+                    )
+                    if beatmapset_cte is not None
+                    else None
+                )
+
+                beatmap_score_column = (beatmap_cte.c.score if beatmap_cte is not None else literal_column("0"))
+                beatmapset_score_column = (aggregated_beatmapset_cte.c.score if aggregated_beatmapset_cte is not None else literal_column("0"))
+
+                total_score_column = (
+                    func.coalesce(beatmap_score_column, 0) +
+                    func.coalesce(beatmapset_score_column, 0)
+                ).label("total_score")
+
+                if beatmap_cte is not None:
+                    select_stmt = select_stmt.outerjoin(beatmap_cte, beatmap_cte.c.id == BeatmapSnapshot.id)
+
+                if aggregated_beatmapset_cte is not None:
+                    select_stmt = select_stmt.outerjoin(aggregated_beatmapset_cte, aggregated_beatmapset_cte.c.id == BeatmapSnapshot.id)
+
+                return select_stmt.order_by(None).order_by(total_score_column.desc())
+            case Scope.BEATMAPSETS:
+                beatmap_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAP)
+                beatmapset_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAPSET)
+
+                aggregated_beatmap_cte = (
+                    aggregated_child_scores_to_parent_cte_factory(
+                        child_score_cte=beatmap_cte,
+                        mapping_table=beatmap_snapshot_beatmapset_snapshot_association,
+                        mapping_child_fk="beatmap_snapshot_id",
+                        mapping_parent_fk="beatmapset_snapshot_id",
+                        cte_name="aggregated_beatmap_scores_cte",
+                    )
+                    if beatmap_cte is not None
+                    else None
+                )
+
+                beatmap_score_column = (aggregated_beatmap_cte.c.score if aggregated_beatmap_cte is not None else literal_column("0"))
+                beatmapset_score_column = (beatmapset_cte.c.score if beatmapset_cte is not None else literal_column("0"))
+
+                total_score_column = (
+                    func.coalesce(beatmap_score_column, 0) +
+                    func.coalesce(beatmapset_score_column, 0)
+                ).label("total_score")
+
+                if aggregated_beatmap_cte is not None:
+                    select_stmt = select_stmt.outerjoin(aggregated_beatmap_cte, aggregated_beatmap_cte.c.id == BeatmapsetSnapshot.id)
+
+                if beatmapset_cte is not None:
+                    select_stmt = select_stmt.outerjoin(beatmapset_cte, beatmapset_cte.c.id == BeatmapsetSnapshot.id)
+
+                return select_stmt.order_by(None).order_by(total_score_column.desc())
+            case Scope.QUEUES:
+                beatmap_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAP)
+                beatmapset_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAPSET)
+                queue_cte = category_score_ctes.get(SearchableFieldCategory.QUEUE)
+                request_cte = category_score_ctes.get(SearchableFieldCategory.REQUEST)
+
+                aggregated_beatmap_cte = (
+                    aggregated_child_scores_to_parent_cte_factory(
+                        child_score_cte=beatmap_cte,
+                        mapping_table=beatmap_snapshot_beatmapset_snapshot_association,
+                        mapping_child_fk="beatmap_snapshot_id",
+                        mapping_parent_fk="beatmapset_snapshot_id",
+                        cte_name="aggregated_beatmap_scores_cte",
+                    )
+                    if beatmap_cte is not None
+                    else None
+                )
+
+                if aggregated_beatmap_cte is not None:
+                    queue_from_beatmap_cte = aggregated_child_scores_to_parent_cte_factory(
+                        aggregated_beatmap_cte,
+                        Request.__table__,
+                        "beatmapset_snapshot_id",
+                        "queue_id",
+                        "queue_aggregated_from_beatmap_scores_cte"
+                    )
+                else:
+                    queue_from_beatmap_cte = None
+
+                if beatmapset_cte is not None:
+                    queue_from_beatmapset_cte = aggregated_child_scores_to_parent_cte_factory(
+                        beatmapset_cte,
+                        Request.__table__,
+                        "beatmapset_snapshot_id",
+                        "queue_id",
+                        "queue_aggregated_from_beatmapset_scores_cte"
+                    )
+                else:
+                    queue_from_beatmapset_cte = None
+
+                if request_cte is not None:
+                    queue_from_request_cte = aggregated_child_scores_to_parent_cte_factory(
+                        request_cte,
+                        Request.__table__,
+                        "id",
+                        "queue_id",
+                        "queue_aggregated_from_request_scores_cte"
+                    )
+                else:
+                    queue_from_request_cte = None
+
+                beatmap_score_column = (queue_from_beatmap_cte.c.score if queue_from_beatmap_cte is not None else literal_column("0"))
+                beatmapset_score_column = (queue_from_beatmapset_cte.c.score if queue_from_beatmapset_cte is not None else literal_column("0"))
+                queue_score_column = (queue_cte.c.score if queue_cte is not None else literal_column("0"))
+                request_score_column = (queue_from_request_cte.c.score if queue_from_request_cte is not None else literal_column("0"))
+
+                total_score_column = (
+                    func.coalesce(beatmap_score_column, 0) +
+                    func.coalesce(beatmapset_score_column, 0) +
+                    func.coalesce(queue_score_column, 0) +
+                    func.coalesce(request_score_column, 0)
+                ).label("total_score")
+
+                if queue_from_beatmap_cte is not None:
+                    select_stmt = select_stmt.outerjoin(queue_from_beatmap_cte, queue_from_beatmap_cte.c.id == Queue.id)
+
+                if queue_from_beatmapset_cte is not None:
+                    select_stmt = select_stmt.outerjoin(queue_from_beatmapset_cte, queue_from_beatmapset_cte.c.id == Queue.id)
+
+                if queue_cte is not None:
+                    select_stmt = select_stmt.outerjoin(queue_cte, queue_cte.c.id == Queue.id)
+
+                if queue_from_request_cte is not None:
+                    select_stmt = select_stmt.outerjoin(queue_from_request_cte, queue_from_request_cte.c.id == Queue.id)
+
+                return select_stmt.order_by(None).order_by(total_score_column.desc())
+            case Scope.REQUESTS:
+                beatmap_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAP)
+                beatmapset_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAPSET)
+                request_cte = category_score_ctes.get(SearchableFieldCategory.REQUEST)
+
+                aggregated_beatmap_cte = (
+                    aggregated_child_scores_to_parent_cte_factory(
+                        child_score_cte=beatmap_cte,
+                        mapping_table=beatmap_snapshot_beatmapset_snapshot_association,
+                        mapping_child_fk="beatmap_snapshot_id",
+                        mapping_parent_fk="beatmapset_snapshot_id",
+                        cte_name="aggregated_beatmap_scores_cte",
+                    )
+                    if beatmap_cte is not None
+                    else None
+                )
+
+                beatmap_score_column = (aggregated_beatmap_cte.c.score if aggregated_beatmap_cte is not None else literal_column("0"))
+                beatmapset_score_column = (beatmapset_cte.c.score if beatmapset_cte is not None else literal_column("0"))
+                request_score_column = (request_cte.c.score if request_cte is not None else literal_column("0"))
+
+                total_score_column = (
+                    func.coalesce(beatmap_score_column, 0) +
+                    func.coalesce(beatmapset_score_column, 0) +
+                    func.coalesce(request_score_column, 0)
+                ).label("total_score")
+
+                if aggregated_beatmap_cte is not None:
+                    select_stmt = select_stmt.outerjoin(aggregated_beatmap_cte, aggregated_beatmap_cte.c.id == Request.beatmapset_snapshot_id)
+
+                if beatmapset_cte is not None:
+                    select_stmt = select_stmt.outerjoin(beatmapset_cte, beatmapset_cte.c.id == Request.beatmapset_snapshot_id)
+
+                if request_cte is not None:
+                    select_stmt = select_stmt.outerjoin(request_cte, request_cte.c.id == Request.id)
+
+                return select_stmt.order_by(None).order_by(total_score_column.desc())
+            case _:
+                return select_stmt
+
+    @staticmethod
+    def _apply_search_simple(
+        select_stmt: Select,
+        model_class: ModelClass,
+        search: str,
+    ) -> Select:
+        """Apply full-text + substring search to a ``Select`` statement."""
         model = model_class.value
 
         string_columns = [
@@ -708,6 +1012,8 @@ class R(_R):
         _sorting: Sorting = None,
         _filters: Filters = None,
         _search: str = None,
+        _search_mode: SearchMode = "simple",
+        _search_relevance: bool = False,
         _include: Include = None,
         _offset: int = 0,
         **kwargs
@@ -736,6 +1042,10 @@ class R(_R):
                 Nested filter configuration as a dict of fields and conditions.
             _search:
                 Search query string.
+            _search_mode:
+                Search strategy ("simple" or "engine").
+            _search_relevance:
+                If ``True``, apply relevance ordering for engine searches.
             _include:
                 Nested relationship loading specification.
             _offset:
@@ -758,6 +1068,8 @@ class R(_R):
             _sorting=_sorting,
             _filters=_filters,
             _search=_search,
+            _search_mode=_search_mode,
+            _search_relevance=_search_relevance,
             _include=_include,
             _offset=_offset,
             **kwargs
@@ -774,6 +1086,8 @@ class R(_R):
         _sorting: Sorting = None,
         _filters: Filters = None,
         _search: str = None,
+        _search_mode: SearchMode = "simple",
+        _search_relevance: bool = False,
         _include: Include = None,
         _limit: int = QUERY_DEFAULT_LIMIT,
         _offset: int = 0,
@@ -804,6 +1118,10 @@ class R(_R):
                 Nested filter configuration as a dict of fields and conditions.
             _search:
                 Search query string.
+            _search_mode:
+                Search strategy ("simple" or "engine").
+            _search_relevance:
+                If ``True``, apply relevance ordering for engine searches.
             _include:
                 Nested relationship loading specification.
             _limit:
@@ -829,6 +1147,8 @@ class R(_R):
             _sorting=_sorting,
             _filters=_filters,
             _search=_search,
+            _search_mode=_search_mode,
+            _search_relevance=_search_relevance,
             _include=_include,
             _limit=_limit,
             _offset=_offset,

@@ -1,16 +1,18 @@
 import asyncio
 from functools import wraps
-from typing import Callable, Any, Awaitable, Iterable, ParamSpec, TypeVar
+from typing import Callable, Any, Awaitable, Iterable, ParamSpec, TypeVar, TYPE_CHECKING
 from collections.abc import Sequence
 
 from connexion import request
 from connexion.exceptions import Forbidden
 
-from app.database import PostgresqlDB
 from app.database.enums import RoleName
 from app.config import DISABLE_SECURITY
 from app.database.models import User
 from app.utils import get_nested_value
+
+if TYPE_CHECKING:
+    from app.database import PostgresqlDB
 
 P = ParamSpec("P")
 T = TypeVar("T")

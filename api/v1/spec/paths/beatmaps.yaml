@@ -5,6 +5,8 @@ Beatmaps:
             - Beatmaps
         parameters:
             - $ref: "../parameters/query/search.yaml#/SearchString"
+            - $ref: "../parameters/query/search.yaml#/SearchMode"
+            - $ref: "../parameters/query/search.yaml#/SearchRelevance"
             - $ref: "../parameters/query/sorting/beatmap.yaml#/BeatmapSorting"
             - $ref: "../parameters/query/filters/beatmap.yaml#/BeatmapFilter"
             - $ref: "../parameters/query/include/beatmap.yaml#/BeatmapInclude"
@@ -41,6 +43,8 @@ BeatmapById-Snapshots:
         parameters:
             - $ref: "../parameters/path/beatmap.yaml#/BeatmapId"
             - $ref: "../parameters/query/search.yaml#/SearchString"
+            - $ref: "../parameters/query/search.yaml#/SearchMode"
+            - $ref: "../parameters/query/search.yaml#/SearchRelevance"
             - $ref: "../parameters/query/sorting/beatmap_snapshot.yaml#/BeatmapSnapshotSorting"
             - $ref: "../parameters/query/filters/beatmap_snapshot.yaml#/BeatmapSnapshotFilter"
             - $ref: "../parameters/query/include/beatmap_snapshot.yaml#/BeatmapSnapshotInclude"
@@ -164,6 +168,8 @@ BeatmapById-SnapshotByNumber-Scores:
             - $ref: "../parameters/path/beatmap.yaml#/BeatmapId"
             - $ref: "../parameters/path/beatmap.yaml#/BeatmapSnapshotNumber"
             - $ref: "../parameters/query/search.yaml#/SearchString"
+            - $ref: "../parameters/query/search.yaml#/SearchMode"
+            - $ref: "../parameters/query/search.yaml#/SearchRelevance"
             - $ref: "../parameters/query/sorting/score.yaml#/ScoreSorting"
             - $ref: "../parameters/query/filters/score.yaml#/ScoreFilter"
             - $ref: "../parameters/query/include/score.yaml#/ScoreInclude"
@@ -185,6 +191,8 @@ BeatmapListings:
             - Beatmaps
         parameters:
             - $ref: "../parameters/query/search.yaml#/SearchString"
+            - $ref: "../parameters/query/search.yaml#/SearchMode"
+            - $ref: "../parameters/query/search.yaml#/SearchRelevance"
             - $ref: "../parameters/query/sorting/beatmap_snapshot.yaml#/BeatmapSnapshotSorting"
             - $ref: "../parameters/query/filters/beatmap_snapshot.yaml#/BeatmapSnapshotFilter"
             - $ref: "../parameters/query/include/beatmap_snapshot.yaml#/BeatmapSnapshotInclude"
@@ -204,6 +212,8 @@ BeatmapTags:
             - Beatmaps
         parameters:
             - $ref: "../parameters/query/search.yaml#/SearchString"
+            - $ref: "../parameters/query/search.yaml#/SearchMode"
+            - $ref: "../parameters/query/search.yaml#/SearchRelevance"
             - $ref: "../parameters/query/sorting/beatmap_tag.yaml#/BeatmapTagSorting"
             - $ref: "../parameters/query/filters/beatmap_tag.yaml#/BeatmapTagFilter"
             - $ref: "../parameters/query/include/beatmap_tag.yaml#/BeatmapTagInclude"

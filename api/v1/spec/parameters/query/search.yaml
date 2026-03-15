@@ -26,3 +26,20 @@ SearchString:
     in: query
     schema:
         type: string
+
+SearchMode:
+    name: search_mode
+    description: Search strategy to use for the `search` query param
+    in: query
+    schema:
+        type: string
+        enum: [simple, engine]
+        default: simple
+
+SearchRelevance:
+    name: search_relevance
+    description: Whether to apply relevance ordering when using engine search mode
+    in: query
+    schema:
+        type: boolean
+        default: false

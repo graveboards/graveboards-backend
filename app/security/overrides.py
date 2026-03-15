@@ -1,6 +1,10 @@
-from app.database import PostgresqlDB
+from typing import TYPE_CHECKING
+
 from app.database.models import Queue, Request
 from app.utils import get_nested_value
+
+if TYPE_CHECKING:
+    from app.database import PostgresqlDB
 
 
 async def matching_user_id_override(

@@ -8,6 +8,8 @@ Requests:
             - ApiKeyAuth: []
         parameters:
             - $ref: "../parameters/query/search.yaml#/SearchString"
+            - $ref: "../parameters/query/search.yaml#/SearchMode"
+            - $ref: "../parameters/query/search.yaml#/SearchRelevance"
             - $ref: "../parameters/query/queue.yaml#/QueueId"
             - $ref: "../parameters/query/sorting/request.yaml#/RequestSorting"
             - $ref: "../parameters/query/filters/request.yaml#/RequestFilter"
