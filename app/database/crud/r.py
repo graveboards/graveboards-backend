@@ -1,8 +1,9 @@
 from typing import Iterable, Any, Optional, Union
+from itertools import product
 
 from sqlalchemy.sql import select, cast
 from sqlalchemy.sql.sqltypes import String, Text
-from sqlalchemy.sql.elements import BinaryExpression, ColumnElement, and_
+from sqlalchemy.sql.elements import BinaryExpression, ColumnElement, and_, or_
 from sqlalchemy.sql.selectable import Select
 from sqlalchemy.sql.functions import func
 from sqlalchemy.orm.attributes import QueryableAttribute
@@ -480,7 +481,7 @@ class _R:
         model_class: ModelClass,
         search: str,
     ) -> Select:
-        """Apply full-text search to a ``Select`` statement.
+        """Apply full-text + substring search to a ``Select`` statement.
 
         Search applies to all string columns and hybrid properties of the root model.
 
@@ -495,42 +496,50 @@ class _R:
         Returns:
             The ``Select`` statement with WHERE clauses applied.
         """
-        model = model_class.value
-
         if not (search := search.strip()):
             return select_stmt
 
-        string_columns = []
+        model = model_class.value
 
-        for column_name in model_class.column_names:
-            attr = getattr(model, column_name)
+        string_columns = [
+            getattr(model, name)
+            for name in model_class.column_names
+            if isinstance(getattr(model, name).type, String)
+        ]
 
-            try:
-                if isinstance(attr.type, String):
-                    string_columns.append(attr)
-            except AttributeError:
-                continue
-
-        for hybrid_name in model_class.hybrid_property_names:
-            column = model_class.value.__annotations__[hybrid_name]
-            expected_type = extract_inner_types(column)
-
-            if expected_type is str:
-                attr = getattr(model, hybrid_name)
-                string_columns.append(attr)
+        string_columns += [
+            getattr(model, name)
+            for name in model_class.hybrid_property_names
+            if extract_inner_types(model.__annotations__[name]) is str
+        ]
 
         if not string_columns:
             return select_stmt
 
         concatenated = func.concat_ws(
             " ",
-            *[func.coalesce(cast(col, Text), "") for col in string_columns]
+            *[func.coalesce(cast(col, Text), "") for col in string_columns],
         )
 
-        tsvector = func.to_tsvector("simple", concatenated)
-        tsquery = func.websearch_to_tsquery("simple", search)
-        search_condition = tsvector.op("@@")(tsquery)
-        return select_stmt.where(search_condition)
+        fts_condition = func.to_tsvector("simple", concatenated).op("@@")(
+            func.websearch_to_tsquery("simple", search)
+        )
+
+        terms = search.split()
+
+        substring_condition = and_(
+            *[
+                or_(
+                    *[
+                        cast(col, Text).ilike(f"%{term}%")
+                        for col in string_columns
+                    ]
+                )
+                for term in terms
+            ]
+        )
+
+        return select_stmt.where(or_(fts_condition, substring_condition))
 
     @staticmethod
     def _apply_include(
