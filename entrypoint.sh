@@ -1,6 +1,8 @@
 #!/bin/sh
 set -e
 
+mkdir -p /app/instance/logs
+
 if [ "$ENV" = "dev" ] && [ "$QUIET" != "true" ]; then
   echo "Running in development mode..."
 elif [ "$QUIET" != "true" ]; then
