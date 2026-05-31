@@ -18,11 +18,11 @@ class ScopeId(IntEnum):
     Used during binary serialization to represent a ``Scope`` as a compact unsigned
     integer.
     """
-    BEATMAPS = auto()
-    BEATMAPSETS = auto()
-    # SCORES = auto()
-    REQUESTS = auto()
-    QUEUES = auto()
+    BEATMAPS = 1
+    BEATMAPSETS = 2
+    # SCORES = 3
+    REQUESTS = 4
+    QUEUES = 5
 
     @property
     def scope_name(self) -> ScopeLiteral:
@@ -163,6 +163,9 @@ class SearchSchema(BaseModel):
 
         if presence & SearchFieldFlag.FILTERS:
             filters, offset = FiltersSchema.deserialize(data, offset=offset)
+
+        if offset != len(data):
+            raise ValueError("Unexpected trailing bytes in serialized search schema")
 
         return cls(
             scope=scope,
