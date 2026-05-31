@@ -36,6 +36,7 @@ from app.database.ctes.queue.sorting import queue_sorting_cte_factory
 from app.database.ctes.queue.filtering import queue_filtering_cte_factory
 from app.database.utils import get_filter_condition
 from app.database.enums import FilterOperator
+from app.logging import get_logger
 from app.spec import get_include_schema
 from app.text import align_center
 from .datastructures import ConditionValue, SearchTermsSchema, SortingSchema, FiltersSchema
@@ -44,6 +45,7 @@ from .mappings import SCOPE_MODEL_MAPPING, SCOPE_SCHEMA_MAPPING, SCOPE_OPTIONS_M
 
 DEFAULT_LIMIT = 50
 DEFAULT_OFFSET = 0
+logger = get_logger(__name__)
 ResultsType = Union[
     Sequence[BeatmapSnapshot],
     Sequence[BeatmapsetSnapshot],
@@ -600,7 +602,7 @@ class SearchEngine:
         ]
 
     def print_score_debug(self, result: Sequence[RowMapping]) -> None:
-        """Print a formatted breakdown of search scoring details.
+        """Log a formatted breakdown of search scoring details.
 
         Displays per-category match contributions and term-level scoring information for
         debugging relevance behavior.
@@ -613,30 +615,30 @@ class SearchEngine:
         max_term_length = max(len(term) for term in self.search_terms.terms)
         row_width = 68 + max_term_length
 
-        print("=" * row_width)
-        print(align_center("SEARCH RESULTS", row_width))
-        print("=" * row_width)
+        logger.debug("=" * row_width)
+        logger.debug(align_center("SEARCH RESULTS", row_width))
+        logger.debug("=" * row_width)
 
         for i, row in enumerate(result, start=1):
             model = row[model_name]
             total_score = row["total_score"]
 
             row_header = f"Result {i} | {model_name} ID: {model.id} | Total Score: {total_score}"
-            print(align_center(row_header, row_width, "-"))
+            logger.debug(align_center(row_header, row_width, "-"))
 
             for category in CATEGORY_NAMES:
                 if (key := f"{category}_score_details") in row and (score_details := row[key]):
-                    print(f"\n[{category.capitalize()} Matches] | Score: {sum(match["score"] for match in score_details)}")
+                    logger.debug(f"\n[{category.capitalize()} Matches] | Score: {sum(match["score"] for match in score_details)}")
 
                     for match in sorted(score_details, key=lambda x: x["score"], reverse=True):
-                        print(
+                        logger.debug(
                             f"  -> Term: {match["term"]:{max_term_length}} | "
                             f"Field: {match["field"]:14} | "
                             f"Pattern: {match["pattern"]:9} | "
                             f"Score: {match["score"]}"
                         )
 
-            print("=" * row_width)
+            logger.debug("=" * row_width)
 
     @property
     def compiled_query(self) -> str:
