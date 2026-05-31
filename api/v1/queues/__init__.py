@@ -67,8 +67,11 @@ async def get(queue_id: int, **kwargs):
 async def post(body: dict, **kwargs):
     db: PostgresqlDB = request.state.db
 
-    if await db.get(Queue, user_id=body["user_id"], name=body["name"]):
-        raise Conflict(f"The queue with name '{body["name"]}' for user with ID '{body["user_id"]}' already exists")
+    queue_name = body["name"]
+    user_id = body["user_id"]
+
+    if await db.get(Queue, user_id=user_id, name=queue_name):
+        raise Conflict(f"Queue '{queue_name}' already exists for user '{user_id}'")
 
     body = bleach_body(
         body,
@@ -99,6 +102,9 @@ async def patch(queue_id: int, body: dict, **kwargs):
     for key, value in body.items():
         if value != getattr(queue, key):
             delta[key] = value
+
+    if not delta:
+        return {"message": "No changes"}, 200, {"Content-Type": "application/json"}
 
     await db.update(Queue, queue_id, **delta)
 
