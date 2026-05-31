@@ -400,8 +400,9 @@ class BeatmapManager:
                     profile = await self.db.get(Profile, user_id=user_id, session=self._session)
                     profile = await self.db.update(Profile, profile.id, **profile_dict, session=self._session)
 
-                task = (await self.db.get(ProfileFetcherTask, user_id=user_id, session=self._session))
-                await self.db.update(ProfileFetcherTask, task.id, last_fetch=aware_utcnow(), session=self._session)
+                task = await self.db.get(ProfileFetcherTask, user_id=user_id, session=self._session)
+                if task:
+                    await self.db.update(ProfileFetcherTask, task.id, last_fetch=aware_utcnow(), session=self._session)
 
                 return profile
         except RedisLockTimeoutError:
