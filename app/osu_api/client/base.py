@@ -61,7 +61,7 @@ class OsuAPIClientBase:
                 self._token = token
                 return
             except httpx.ReadTimeout:
-                if attempt < MAX_TOKEN_FETCH_RETRIES:
+                if attempt < MAX_TOKEN_FETCH_RETRIES - 1:
                     await asyncio.sleep(2 ** attempt)
                     continue
 
@@ -72,6 +72,6 @@ class OsuAPIClientBase:
 
     @staticmethod
     def format_query_parameters(query_parameters: dict) -> str:
-        parameter_strings = [f"{key}={value}" for key, value in query_parameters.items()]
+        from urllib.parse import urlencode
 
-        return f"?{"&".join(parameter_strings)}"
+        return f"?{urlencode(query_parameters)}"
