@@ -1,4 +1,5 @@
 import asyncio
+import secrets
 from contextlib import contextmanager, asynccontextmanager
 from typing import AsyncIterator, Generator, Any
 
@@ -77,7 +78,7 @@ class RedisClient(AsyncRedis):
         """Acquire a distributed lock using Redis SET NX semantics.
 
         Retries until acquired or timeout is reached. Automatically releases the lock on
-        context exit.
+        context exit, but only if it still owns the lock.
 
         Args:
             key:
@@ -96,13 +97,15 @@ class RedisClient(AsyncRedis):
             RedisLockTimeoutError:
                 If the lock cannot be acquired in time.
         """
-        deadline = asyncio.get_event_loop().time() + timeout
+        token = secrets.token_urlsafe()
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + timeout
 
         while True:
-            if await self.set(key, "locked", ex=expiry, nx=True):
+            if await self.set(key, token, ex=expiry, nx=True):
                 break
 
-            if asyncio.get_event_loop().time() > deadline:
+            if loop.time() > deadline:
                 raise RedisLockTimeoutError(key, timeout)
 
             await asyncio.sleep(retry_interval)
@@ -110,7 +113,14 @@ class RedisClient(AsyncRedis):
         try:
             yield
         finally:
-            await self.delete(key)
+            lua = """
+            if redis.call("get", KEYS[1]) == ARGV[1] then
+                return redis.call("del", KEYS[1])
+            else
+                return 0
+            end
+            """
+            await self.eval(lua, 1, key, token)
 
 
 @contextmanager
