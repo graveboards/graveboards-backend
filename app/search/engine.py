@@ -111,14 +111,14 @@ class SearchEngine:
         elif isinstance(sorting, list):
             self.sorting = SortingSchema.model_validate(sorting)
         else:
-            raise TypeError(f"sorting must be SortingSchema or dict, got {type(search_terms).__name__}")
+            raise TypeError(f"sorting must be SortingSchema or list, got {type(sorting).__name__}")
 
         if isinstance(filters, FiltersSchema) or filters is None:
             self.filters = filters
         elif isinstance(filters, dict):
             self.filters = FiltersSchema.model_validate(filters)
         else:
-            raise TypeError(f"filters must be FiltersSchema or dict, got {type(search_terms).__name__}")
+            raise TypeError(f"filters must be FiltersSchema or dict, got {type(filters).__name__}")
 
         self.query: Optional[Select] = None
         self._compose_query()
