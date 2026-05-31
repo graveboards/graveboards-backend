@@ -86,7 +86,7 @@ def bleach_body(
         if overlap := whitelist & blacklist:
             raise ValueError(f"Keys cannot be both whitelisted and blacklisted: {sorted(overlap)}")
 
-    return {k: v for k, v in body.items() if k in whitelist and k not in blacklist}
+    return {k: v for k, v in body.items() if (whitelist is None or k in whitelist) and k not in blacklist}
 
 
 def coerce_value(
