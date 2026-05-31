@@ -45,7 +45,7 @@ class OsuAPIClient(OsuAPIClientBase):
         response.raise_for_status()
         beatmap_data = response.json()
 
-        cached_beatmap = Beatmapset.model_validate(beatmap_data)
+        cached_beatmap = Beatmap.model_validate(beatmap_data)
         await self.rc.hset(cached_beatmap_hash_name, mapping=cached_beatmap.serialize())
         await self.rc.expire(cached_beatmap_hash_name, CACHED_BEATMAP_EXPIRY)
 
