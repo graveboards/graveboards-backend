@@ -185,7 +185,10 @@ def _extract_default_include(include_schema: dict) -> dict:
         RuntimeError:
             If unresolved shallow schemas are encountered.
     """
-    if include_schema.get("title").endswith("Shallow"):
+    if not include_schema:
+        return {}
+
+    if include_schema.get("title", "").endswith("Shallow"):
         raise RuntimeError("Shallow schemas were not properly resolved")
 
     result = {}
