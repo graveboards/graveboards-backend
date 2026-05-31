@@ -75,7 +75,13 @@ def decode_token(token: str) -> dict[str, str | int]:
         ExpiredSignatureError:
             If token has expired.
     """
-    return jwt.decode(token, key=JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+    return jwt.decode(
+        token,
+        key=JWT_SECRET_KEY,
+        algorithms=[JWT_ALGORITHM],
+        issuer=FRONTEND_BASE_URL,
+        options={"require": ["sub", "iss", "iat", "exp"]}
+    )
 
 
 def validate_token(token: str) -> dict[str, str | int]:
@@ -103,11 +109,8 @@ def validate_token(token: str) -> dict[str, str | int]:
         payload = decode_token(token)
         sub = payload["sub"]
 
-        if payload["iss"] != FRONTEND_BASE_URL:
-            raise InvalidIssuerError("Invalid token issuer")
-
-        if not sub.isdigit():
-            raise InvalidTokenError("Subject is not convertable to an integer")
+        if not isinstance(sub, str) or not sub.isdigit():
+            raise InvalidTokenError("Subject is not convertible to an integer")
 
         payload["sub"] = int(sub)
 
