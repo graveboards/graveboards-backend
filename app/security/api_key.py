@@ -1,4 +1,5 @@
 import secrets
+import hashlib
 
 from app.database.models.api_key import ApiKey, API_KEY_LENGTH
 from app.utils import aware_utcnow
@@ -12,6 +13,19 @@ def generate_api_key() -> str:
     """
     sequence = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     return "".join(secrets.choice(sequence) for _ in range(API_KEY_LENGTH))
+
+
+def hash_api_key(key: str) -> str:
+    """Hash an API key using SHA-256.
+
+    Args:
+        key:
+            Raw API key string.
+
+    Returns:
+        The hex-encoded SHA-256 hash of the key.
+    """
+    return hashlib.sha256(key.encode()).hexdigest()
 
 
 def validate_api_key(api_key: ApiKey) -> dict[str, int]:

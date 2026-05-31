@@ -12,7 +12,7 @@ class ApiKeySchema(BaseModel, BaseModelExtra):
 
     id: Optional[int] = None
     user_id: int
-    key: str
+    hashed_key: str
     created_at: Optional[datetime] = None
     expires_at: datetime
     is_revoked: bool = False

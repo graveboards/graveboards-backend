@@ -3,7 +3,7 @@ from jwt.exceptions import InvalidIssuerError, ExpiredSignatureError, InvalidTok
 
 from app.database import PostgresqlDB
 from app.database.models import ApiKey
-from app.security import validate_api_key, validate_token
+from app.security import validate_api_key, validate_token, hash_api_key
 
 
 async def api_key_info(key: str, request: ConnexionRequest) -> dict | None:
@@ -19,7 +19,7 @@ async def api_key_info(key: str, request: ConnexionRequest) -> dict | None:
         Token payload if valid, otherwise ``None``.
     """
     db: PostgresqlDB = request.state.db
-    api_key = await db.get(ApiKey, key=key)
+    api_key = await db.get(ApiKey, hashed_key=hash_api_key(key))
 
     try:
         return validate_api_key(api_key)

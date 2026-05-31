@@ -4,7 +4,7 @@ from app.redis import RedisClient
 from app.database import PostgresqlDB
 from app.database.enums import RoleName
 from app.database.models import ApiKey, ScoreFetcherTask, User, Role, Queue
-from app.security.api_key import generate_api_key
+from app.security.api_key import generate_api_key, hash_api_key
 from app.utils import aware_utcnow
 from app.logging import get_logger
 from app.config import ADMIN_USER_IDS, MASTER_QUEUE_NAME, MASTER_QUEUE_DESCRIPTION, PRIMARY_ADMIN_USER_ID
@@ -40,6 +40,8 @@ async def setup(rc: RedisClient = None, db: PostgresqlDB = None):
 
             user_roles_mapping = {user_id: get_roles(user_id) for user_id in ADMIN_USER_IDS}
 
+            primary_raw_key = None
+
             for user_id, roles in user_roles_mapping.items():
                 await db.add(User, id=user_id, roles=roles, session=session)
 
@@ -47,8 +49,12 @@ async def setup(rc: RedisClient = None, db: PostgresqlDB = None):
                 await db.update(ScoreFetcherTask, score_fetcher_task.id, enabled=True, session=session)
 
                 if user_id in ADMIN_USER_IDS:
+                    raw_key = generate_api_key()
                     expires_at = aware_utcnow() + timedelta(weeks=1)
-                    await db.add(ApiKey, key=generate_api_key(), user_id=user_id, expires_at=expires_at, session=session)
+                    await db.add(ApiKey, hashed_key=hash_api_key(raw_key), user_id=user_id, expires_at=expires_at, session=session)
+
+                    if user_id == PRIMARY_ADMIN_USER_ID:
+                        primary_raw_key = raw_key
 
             queue_data = [
                 {"user_id": PRIMARY_ADMIN_USER_ID, "name": MASTER_QUEUE_NAME, "description": MASTER_QUEUE_DESCRIPTION},
@@ -60,7 +66,7 @@ async def setup(rc: RedisClient = None, db: PostgresqlDB = None):
         logger.debug(f"Fresh database set up successfully!")
 
     logger.debug(f"Primary admin user ID: {PRIMARY_ADMIN_USER_ID}")
-    logger.debug(f"Primary API key: {(await db.get(ApiKey, user_id=PRIMARY_ADMIN_USER_ID)).key}")
+    logger.debug(f"Primary API key: {primary_raw_key}")
 
     await rc.aclose()
     await db.close()
