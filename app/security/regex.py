@@ -75,5 +75,5 @@ def safe_compile_regex(
         raise ValueError("Regex compilation timed out (possible ReDoS)")
     except re.error as e:
         raise ValueError(f"Invalid regex: {e}")
-    except Exception:
-        return None
+    except Exception as e:
+        raise ValueError(f"Unexpected error during regex validation: {e}")
