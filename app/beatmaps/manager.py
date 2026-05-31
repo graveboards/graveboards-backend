@@ -525,7 +525,7 @@ class BeatmapManager:
 
         async with httpx.AsyncClient() as client:
             for beatmap_id in beatmap_ids:
-                url = os.path.join(BEATMAP_DOWNLOAD_BASEURL, str(beatmap_id))
+                url = f"{BEATMAP_DOWNLOAD_BASEURL}{beatmap_id}"
                 output_directory = os.path.join(BEATMAPS_PATH, str(beatmap_id))
                 os.makedirs(output_directory, exist_ok=True)
                 beatmap_snapshot = (
@@ -540,6 +540,7 @@ class BeatmapManager:
                 exists = os.path.exists(output_path)
 
                 async with client.stream("GET", url) as response:
+                    response.raise_for_status()
                     async with aiofiles.open(output_path, "wb") as f:
                         async for chunk in response.aiter_bytes():
                             await f.write(chunk)
