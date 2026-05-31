@@ -48,6 +48,13 @@ class OsuAPIClientBase:
 
                 await self.refresh_token()
         except RedisLockTimeoutError:
+            # Prevent stampede: wait briefly and re-check Redis before refreshing
+            await asyncio.sleep(0.5)
+
+            if token := await get_valid_token_from_redis():
+                self._token = token
+                return token.access_token
+
             await self.refresh_token()
 
         return self._token.access_token
