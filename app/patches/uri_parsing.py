@@ -83,10 +83,10 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
 
             prev[last_key] = v
         else:
-            prev[last_key] = v if isinstance(v, list) else [v]
-            if isinstance(prev[last_key], list) and len(prev[last_key]) == 1:
-                prev[last_key] = prev[last_key][0]
+            prev[last_key] = v[0] if len(v) == 1 else v
 
+        # Return root wrapped in a list. This is required by Connexion's
+        # parser merge behavior to correctly handle repeated parameters.
         return root_key, [root], True
 
     def resolve_params(self, params, _in):
