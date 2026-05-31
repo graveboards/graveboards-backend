@@ -106,8 +106,6 @@ class BeatmapManager:
             async with self.db.session() as session:
                 self._session = session
                 beatmapset_dict = await self.oac.get_beatmapset(beatmapset_id)
-                beatmapset_dict["play_count"] = 90
-                beatmapset_dict["beatmaps"][0]["top_tag_ids"] = [{"tag_id":8}]
                 checksum = combine_checksums([beatmap["checksum"] for beatmap in beatmapset_dict["beatmaps"]])
 
                 await self._populate_beatmapset(beatmapset_dict)
