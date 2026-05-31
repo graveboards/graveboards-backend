@@ -53,7 +53,7 @@ async def search(**kwargs):
         se = SearchEngine(sq.scope, search_terms=sq.search_terms, sorting=sq.sorting, filters=sq.filters)
 
         async with db.session() as session:
-            page = await se.search(session, **kwargs, debug=True)
+            page = await se.search(session, **kwargs)
     except EXCEPTIONS as e:
         raise bad_request_factory(e)
 
