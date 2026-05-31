@@ -1,3 +1,4 @@
+import types
 from typing import Iterable, Any, Optional, get_origin, get_args, Union, Literal
 
 from pydantic import BaseModel
@@ -98,8 +99,10 @@ def coerce_value(
 
     Supports:
         - Concrete types (e.g., int, str)
-        - Optional/Union types
+        - Optional/Union types (including PEP 604 |)
         - Literal values
+        - Generic collections (e.g., list[int])
+        - Any
 
     Args:
         value:
@@ -119,20 +122,38 @@ def coerce_value(
     if value is None:
         return None
 
+    if annotation is Any:
+        return value
+
     origin = get_origin(annotation)
     args = get_args(annotation)
+
+    # Boolean coercion
+    if annotation is bool:
+        if isinstance(value, str):
+            val_lower = value.lower()
+            if val_lower in ("true", "1", "yes", "on"):
+                return True
+            if val_lower in ("false", "0", "no", "off"):
+                return False
+        return bool(value)
 
     if origin is None:
         try:
             return annotation(value)
         except Exception:
-            raise TypeError(f"Failed to coerce parameter '{param_name}' to {annotation.__name__}")
+            try:
+                name = annotation.__name__
+            except AttributeError:
+                name = str(annotation)
+            raise TypeError(f"Failed to coerce parameter '{param_name}' to {name}")
 
-    if origin is Union and type(None) in args:
-        non_none = next(a for a in args if a is not type(None))
-        return coerce_value(value, non_none, param_name)
+    # Handle Union types (including int | None / types.UnionType)
+    if origin is Union or (hasattr(types, "UnionType") and origin is types.UnionType):
+        if type(None) in args:
+            non_none = next(a for a in args if a is not type(None))
+            return coerce_value(value, non_none, param_name)
 
-    if origin is Union:
         last_error = None
 
         for candidate in args:
@@ -148,6 +169,12 @@ def coerce_value(
             raise TypeError(f"Parameter '{param_name}' must be one of {args}")
 
         return value
+
+    if origin is list:
+        if not isinstance(value, (list, tuple)):
+            value = [value]
+        item_type = args[0] if args else Any
+        return [coerce_value(item, item_type, f"{param_name}[]") for item in value]
 
     raise TypeError(f"Unsupported type annotation for parameter '{param_name}': {annotation}")
 
