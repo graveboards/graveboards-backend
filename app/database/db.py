@@ -62,18 +62,9 @@ class PostgresqlDB(CRUD):
         Raises:
             SQLAlchemyError:
                 If the connection or query fails.
-
-        Side Effects:
-            Disposes of the engine after the test completes.
         """
-        try:
-            async with self.engine.connect() as conn:
-                await conn.execute(select(1))
-
-        except SQLAlchemyError:
-            raise
-        finally:
-            await self.close()
+        async with self.engine.connect() as conn:
+            await conn.execute(select(1))
 
     @asynccontextmanager
     async def session(self, autoflush: bool = True) -> AsyncIterator[AsyncSession]:
