@@ -11,6 +11,7 @@ load_dotenv()
 ENV = Env(os.getenv("ENV", "prod").lower())
 DEBUG = os.getenv("DEBUG", "false").lower() in ("true", "1", "yes")
 DISABLE_SECURITY = os.getenv("DISABLE_SECURITY", "false").lower() in ("true", "1", "yes")
+DEBUG_API_KEY = os.getenv("DEBUG_API_KEY")
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 API_BASE_PATH = "api/v1/"
