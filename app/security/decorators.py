@@ -1,4 +1,4 @@
-import asyncio
+import inspect
 from functools import wraps
 from typing import Callable, Any, Awaitable, Iterable, ParamSpec, TypeVar, TYPE_CHECKING
 from collections.abc import Sequence
@@ -16,6 +16,23 @@ if TYPE_CHECKING:
 
 P = ParamSpec("P")
 T = TypeVar("T")
+
+
+def _get_authenticated_user_id(kwargs: dict[str, Any], user_lookup: str = "user") -> int:
+    try:
+        return get_nested_value(kwargs, user_lookup)
+    except KeyError:
+        pass
+
+    try:
+        return kwargs["token_info"]["sub"]
+    except KeyError:
+        raise KeyError(user_lookup)
+
+
+def _strip_auth_info(kwargs: dict[str, Any]) -> None:
+    kwargs.pop("user", None)
+    kwargs.pop("token_info", None)
 
 
 def role_authorization(
@@ -53,7 +70,7 @@ def role_authorization(
             If authorization fails.
     """
     def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
-        if not asyncio.iscoroutinefunction(func):
+        if not inspect.iscoroutinefunction(func):
             raise ValueError(f"Function '{func.__name__}' must be async to use @role_authorization")
 
         if required_roles and one_of is not None:
@@ -69,11 +86,12 @@ def role_authorization(
                 return await func(*args, **kwargs)
 
             try:
-                user_id = kwargs["user"]
+                user_id = _get_authenticated_user_id(kwargs)
             except KeyError:
                 func_path = ".".join((func.__module__, func.__name__))
                 raise ValueError(f"Decorated function '{func_path}' must accept **kwargs to use @role_authorization")
 
+            kwargs["user"] = user_id
             user = await db.get(User, id=user_id, _include={"roles": True})
             user_roles = {RoleName(role.name) for role in user.roles}
             user_meets_role_requirements = (
@@ -82,7 +100,7 @@ def role_authorization(
                 else any(role in user_roles for role in one_of)
             )
 
-            override_kwargs_ = {"_db": db, **kwargs, **(override_kwargs or {})}
+            override_kwargs_ = {"db": db, **kwargs, **(override_kwargs or {})}
 
             authorized = (
                 user_meets_role_requirements
@@ -96,8 +114,10 @@ def role_authorization(
             if not authorized:
                 raise Forbidden(detail="You are not authorized to access this resource")
 
+            _strip_auth_info(kwargs)
             return await func(*args, **kwargs)
 
+        wrapper.__security_authorization__ = True
         return wrapper
 
     return decorator
@@ -131,17 +151,24 @@ def ownership_authorization(
             If ownership validation fails.
     """
     def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
-        if not asyncio.iscoroutinefunction(func):
+        if not inspect.iscoroutinefunction(func):
             raise ValueError(f"Function '{func.__name__}' must be async to use @check_ownership")
 
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             db: PostgresqlDB = request.state.db
 
-            result = await func(*args, **kwargs)
-
             if DISABLE_SECURITY:
-                return result
+                return await func(*args, **kwargs)
+
+            try:
+                authorized_user_id = _get_authenticated_user_id(kwargs, authorized_user_id_lookup)
+            except KeyError:
+                func_path = ".".join((func.__module__, func.__name__))
+                raise ValueError(f"Decorated function '{func_path}' must accept **kwargs to use @ownership_authorization")
+
+            _strip_auth_info(kwargs)
+            result = await func(*args, **kwargs)
 
             if (
                 not isinstance(result, tuple)
@@ -154,12 +181,6 @@ def ownership_authorization(
 
             if status >= 400:
                 return result
-
-            try:
-                authorized_user_id = kwargs[authorized_user_id_lookup]
-            except KeyError:
-                func_path = ".".join((func.__module__, func.__name__))
-                raise ValueError(f"Decorated function '{func_path}' must accept **kwargs to use @ownership_authorization")
 
             user = await db.get(User, id=authorized_user_id, _include={"roles": True})
             user_roles = {RoleName(role.name) for role in user.roles}
@@ -187,6 +208,7 @@ def ownership_authorization(
 
             return result
 
+        wrapper.__security_authorization__ = True
         return wrapper
 
     return decorator

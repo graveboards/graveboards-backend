@@ -1,6 +1,6 @@
-import asyncio
+import inspect
 from functools import wraps
-from typing import Callable, Any, Awaitable, ParamSpec, TypeVar
+from typing import Callable, Awaitable, ParamSpec, TypeVar
 from inspect import signature, Parameter
 
 from app.database.models import ModelClass
@@ -33,13 +33,16 @@ def api_query(
             If applied to a non-async function.
     """
     def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
-        if not asyncio.iscoroutinefunction(func):
+        if not inspect.iscoroutinefunction(func):
             raise ValueError(f"Function '{func.__name__}' must be async to use @api_query")
 
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-            pop_auth_info(kwargs)
+            auth_info = pop_auth_info(kwargs)
             prime_query_kwargs(kwargs, many=many)
+
+            if getattr(func, "__security_authorization__", False):
+                kwargs.update(auth_info)
 
             return await func(*args, **kwargs)
 
@@ -70,7 +73,7 @@ def coerce_arguments(
             If parameters lack type annotations.
     """
     def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
-        if not asyncio.iscoroutinefunction(func):
+        if not inspect.iscoroutinefunction(func):
             raise ValueError(f"Function '{func.__name__}' must be async to use @coerce_arguments")
 
         sig = signature(func)
