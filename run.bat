@@ -58,7 +58,7 @@ if exist ".env.docker" if exist ".env" if exist ".env.test" (
         echo POSTGRESQL_HOST=localhost
         echo POSTGRESQL_PORT=5432
         echo POSTGRESQL_USERNAME=postgres
-        echo POSTGRESQL_PASSWORD=
+        echo POSTGRESQL_PASSWORD=postgres
         echo POSTGRESQL_DATABASE=graveboards_dev
         echo REDIS_HOST=localhost
         echo REDIS_PORT=6379
@@ -79,7 +79,7 @@ if exist ".env.docker" if exist ".env" if exist ".env.test" (
         echo POSTGRESQL_HOST=localhost
         echo POSTGRESQL_PORT=5432
         echo POSTGRESQL_USERNAME=postgres
-        echo POSTGRESQL_PASSWORD=
+        echo POSTGRESQL_PASSWORD=postgres
         echo POSTGRESQL_DATABASE=graveboards_test
         echo REDIS_HOST=localhost
         echo REDIS_PORT=6379
@@ -100,8 +100,8 @@ if exist ".env.docker" if exist ".env" if exist ".env.test" (
         echo POSTGRESQL_HOST=graveboards-postgresql-dev
         echo POSTGRESQL_PORT=5432
         echo POSTGRESQL_USERNAME=postgres
-        echo POSTGRESQL_PASSWORD=
-        echo POSTGRESQL_DATABASE=graveboards
+        echo POSTGRESQL_PASSWORD=postgres
+        echo POSTGRESQL_DATABASE=graveboards_dev
         echo REDIS_HOST=graveboards-redis-dev
         echo REDIS_PORT=6379
         echo REDIS_USERNAME=
