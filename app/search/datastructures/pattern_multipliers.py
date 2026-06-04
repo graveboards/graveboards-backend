@@ -2,9 +2,7 @@ import struct
 from enum import IntFlag, auto
 from typing import Literal, Optional, Annotated
 
-from pydantic.main import BaseModel
-from pydantic.functional_validators import model_validator
-from pydantic.fields import Field
+from pydantic import BaseModel, Field, model_validator
 from pydantic.config import ConfigDict
 
 from app.exceptions import AllValuesNullError
@@ -38,7 +36,7 @@ class PatternMultipliers(BaseModel):
             AllValuesNullError:
                 If all multipliers are set to ``None``.
         """
-        if any(getattr(self, field) is not None for field in self.model_fields):
+        if any(getattr(self, field) is not None for field in type(self).model_fields):
             return self
 
         raise AllValuesNullError("pattern_multipliers")

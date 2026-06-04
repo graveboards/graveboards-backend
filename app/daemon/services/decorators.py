@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 from functools import wraps
 from typing import Callable, Any, Awaitable
 
@@ -14,7 +15,7 @@ def auto_retry(
         backoff_strategy: Callable[[int], float] = lambda attempt_no: attempt_no ** 2
 ):
     def decorator(func: Callable[..., Awaitable[Any]]):
-        if not asyncio.iscoroutinefunction(func):
+        if not inspect.iscoroutinefunction(func):
             raise ValueError(f"Function '{func.__name__}' must be async to use @auto_retry")
 
         @wraps(func)

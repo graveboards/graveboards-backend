@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 from typing import Callable, Awaitable, ParamSpec, TypeVar, runtime_checkable, Protocol
 from functools import wraps
 from datetime import datetime, timedelta
@@ -44,7 +45,7 @@ def rate_limit(
             If applied to a non-async function.
     """
     def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
-        if not asyncio.iscoroutinefunction(func):
+        if not inspect.iscoroutinefunction(func):
             raise ValueError(f"Function '{func.__name__}' must be async to use @rate_limit")
 
         @wraps(func)
