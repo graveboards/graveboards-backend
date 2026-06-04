@@ -34,9 +34,31 @@ async def cmd_fetch_fixtures(
     beatmap_scores: int | None,
     beatmap_attributes: int | None,
     use_minimal: bool,
+    beatmaps_range_min: int | None,
+    beatmaps_range_max: int | None,
+    beatmapsets_range_min: int | None,
+    beatmapsets_range_max: int | None,
+    users_range_min: int | None,
+    users_range_max: int | None,
 ):
     rc = RedisClient()
-    fetcher = FixtureDataFetcher(rc)
+    id_ranges = {}
+    if beatmaps_range_min or beatmaps_range_max:
+        id_ranges["beatmaps"] = {
+            "min": beatmaps_range_min or 1,
+            "max": beatmaps_range_max or 1000000,
+        }
+    if beatmapsets_range_min or beatmapsets_range_max:
+        id_ranges["beatmapsets"] = {
+            "min": beatmapsets_range_min or 1,
+            "max": beatmapsets_range_max or 100000,
+        }
+    if users_range_min or users_range_max:
+        id_ranges["users"] = {
+            "min": users_range_min or 1,
+            "max": users_range_max or 10000000,
+        }
+    fetcher = FixtureDataFetcher(rc, id_ranges=id_ranges if id_ranges else None)
     fetcher.logger = __import__("logging").getLogger(__name__)
 
     sample_counts = calculate_sample_counts(

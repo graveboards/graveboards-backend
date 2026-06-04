@@ -128,6 +128,36 @@ async def main():
         type=int,
         help="Number of beatmap attributes to fetch",
     )
+    fetch_parser.add_argument(
+        "--beatmaps-range-min",
+        type=int,
+        help="Minimum beatmap ID to fetch",
+    )
+    fetch_parser.add_argument(
+        "--beatmaps-range-max",
+        type=int,
+        help="Maximum beatmap ID to fetch",
+    )
+    fetch_parser.add_argument(
+        "--beatmapsets-range-min",
+        type=int,
+        help="Minimum beatmapset ID to fetch",
+    )
+    fetch_parser.add_argument(
+        "--beatmapsets-range-max",
+        type=int,
+        help="Maximum beatmapset ID to fetch",
+    )
+    fetch_parser.add_argument(
+        "--users-range-min",
+        type=int,
+        help="Minimum user ID to fetch",
+    )
+    fetch_parser.add_argument(
+        "--users-range-max",
+        type=int,
+        help="Maximum user ID to fetch",
+    )
 
     fixtures_subparsers.add_parser("list", help="List available fixtures")
     fixtures_subparsers.add_parser("validate", help="Validate fixture structure")
@@ -160,6 +190,12 @@ async def main():
                         beatmap_scores=args.beatmap_scores,
                         beatmap_attributes=args.beatmap_attributes,
                         use_minimal=args.minimal,
+                        beatmaps_range_min=args.beatmaps_range_min,
+                        beatmaps_range_max=args.beatmaps_range_max,
+                        beatmapsets_range_min=args.beatmapsets_range_min,
+                        beatmapsets_range_max=args.beatmapsets_range_max,
+                        users_range_min=args.users_range_min,
+                        users_range_max=args.users_range_max,
                     )
                 case "list":
                     await cmd_list_fixtures()

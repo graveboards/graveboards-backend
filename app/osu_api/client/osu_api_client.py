@@ -52,6 +52,32 @@ class OsuAPIClient(OsuAPIClientBase):
         return beatmap_data
 
     @rate_limit(RATE_LIMIT)
+    async def get_beatmap_scores(self, beatmap_id: int, limit: int | None = None, offset: int | None = None) -> dict:
+        url = APIEndpoint.BEATMAP_SCORES.format(beatmap=beatmap_id)
+
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            **await self.get_auth_headers()
+        }
+
+        query_parameters: dict[str, int] = {}
+
+        if limit is not None:
+            query_parameters["limit"] = limit
+
+        if offset is not None:
+            query_parameters["offset"] = offset
+
+        url += self.format_query_parameters(query_parameters)
+
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=headers)
+
+        response.raise_for_status()
+        return response.json()
+
+    @rate_limit(RATE_LIMIT)
     async def get_beatmap_attributes(self, beatmap_id: int, mods: int) -> dict:
         url = APIEndpoint.BEATMAP_ATTRIBUTES.format(beatmap=beatmap_id)
 
@@ -158,7 +184,8 @@ class OsuAPIClient(OsuAPIClientBase):
 
     @rate_limit(RATE_LIMIT)
     async def get_user(self, user_id: int, mode: Ruleset | None = None) -> dict:
-        url = APIEndpoint.USER.format(user=user_id, mode=mode)
+        mode_str = mode.value if mode is not None else ""
+        url = APIEndpoint.USER.format(user=user_id, mode=mode_str)
 
         headers = {
             "Content-Type": "application/json",

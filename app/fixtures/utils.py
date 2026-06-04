@@ -21,6 +21,12 @@ BASE_SAMPLE_COUNTS = {
     "beatmap_attributes": 20,
 }
 
+ID_RANGES = {
+    "beatmaps": {"min": 1, "max": 1000000},
+    "beatmapsets": {"min": 1, "max": 100000},
+    "users": {"min": 1, "max": 10000000},
+}
+
 MINIMAL_PROFILE = {
     "beatmaps": 1,
     "beatmapsets": 1,
@@ -121,6 +127,16 @@ def create_empty_metadata() -> dict:
             "beatmap_scores": {"count": 0, "last_fetched": None},
             "beatmap_attributes": {"count": 0, "last_fetched": None},
         },
+        "failed_ids": {
+            "beatmaps": [],
+            "beatmapsets": [],
+            "users": {r: [] for r in RULESETS},
+        },
+        "id_ranges": {
+            "beatmaps": {"min": 1, "max": 1000000},
+            "beatmapsets": {"min": 1, "max": 100000},
+            "users": {"min": 1, "max": 10000000},
+        },
         "rulesets": RULESETS,
         "source": "osu.ppy.sh/api/v2",
     }
@@ -128,6 +144,16 @@ def create_empty_metadata() -> dict:
 
 def save_metadata(metadata: dict) -> None:
     metadata["last_updated"] = datetime.now(timezone.utc).isoformat()
+    metadata.setdefault("failed_ids", {
+        "beatmaps": [],
+        "beatmapsets": [],
+        "users": {r: [] for r in RULESETS},
+    })
+    metadata.setdefault("id_ranges", {
+        "beatmaps": {"min": 1, "max": 1000000},
+        "beatmapsets": {"min": 1, "max": 100000},
+        "users": {"min": 1, "max": 10000000},
+    })
     with open(METADATA_FILE, "w") as f:
         json.dump(metadata, f, indent=2)
 
