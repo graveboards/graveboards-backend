@@ -1,29 +1,55 @@
-import os
-import sys
-from pathlib import Path
+import asyncio
+
+import pytest
+
+import asyncpg
+import redis
+
+from app.config import POSTGRESQL_CONFIGURATION, REDIS_CONFIGURATION
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+@pytest.fixture(scope="session")
+def event_loop():
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+    yield loop
 
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+
+@pytest.fixture(scope="session")
+async def test_db_pool():
+    pool = await asyncpg.create_pool(
+        host=POSTGRESQL_CONFIGURATION["host"],
+        port=POSTGRESQL_CONFIGURATION["port"],
+        user=POSTGRESQL_CONFIGURATION["username"],
+        password=POSTGRESQL_CONFIGURATION["password"],
+        database=POSTGRESQL_CONFIGURATION["database"],
+    )
+    yield pool
+    await pool.close()
 
 
-def pytest_configure(config):
-    os.environ.setdefault("ENV", "dev")
-    os.environ.setdefault("DEBUG", "false")
-    os.environ.setdefault("DISABLE_SECURITY", "false")
-    os.environ.setdefault("JWT_SECRET_KEY", "test-jwt-secret")
-    os.environ.setdefault("JWT_ALGORITHM", "HS256")
-    os.environ.setdefault("ADMIN_USER_IDS", "1")
-    os.environ.setdefault("BASE_URL", "http://localhost:3000")
+@pytest.fixture(scope="function")
+async def db_transaction(test_db_pool):
+    conn = await test_db_pool.acquire()
+    tx = conn.transaction()
+    await tx.start()
+    try:
+        yield conn
+    finally:
+        await tx.rollback()
+        await test_db_pool.release(conn)
 
-    os.environ.setdefault("POSTGRESQL_HOST", "localhost")
-    os.environ.setdefault("POSTGRESQL_PORT", "5432")
-    os.environ.setdefault("POSTGRESQL_USERNAME", "postgres")
-    os.environ.setdefault("POSTGRESQL_PASSWORD", "postgres")
-    os.environ.setdefault("POSTGRESQL_DATABASE", "graveboards_test")
 
-    os.environ.setdefault("REDIS_HOST", "localhost")
-    os.environ.setdefault("REDIS_PORT", "6379")
-    os.environ.setdefault("REDIS_DB", "15")
+@pytest.fixture(scope="function")
+async def clean_redis():
+    r = redis.Redis(
+        host=REDIS_CONFIGURATION["host"],
+        port=REDIS_CONFIGURATION["port"],
+        db=REDIS_CONFIGURATION["db"],
+        decode_responses=REDIS_CONFIGURATION["decode_responses"],
+    )
+    r.flushdb()
+    yield r
+    r.flushdb()

@@ -7,31 +7,32 @@ x-app-base: &app-base
     networks:
         - web
     depends_on:
-        - graveboards-postgresql-dev
-        - graveboards-redis-dev
+        - postgres
+        - redis
 
 services:
-    graveboards-redis-dev:
-        image: docker.io/bitnami/redis:latest
+    redis:
+        image: redis:7-alpine
         container_name: graveboards-redis-dev
         ports:
             - "6379:6379"
-        environment:
-            - ALLOW_EMPTY_PASSWORD=yes
         volumes:
-            - graveboards-redis-dev-data:/bitnami/redis
+            - graveboards-redis-dev-data:/data
         networks:
             - web
 
-    graveboards-postgresql-dev:
-        image: docker.io/bitnami/postgresql:latest
+    postgres:
+        image: postgres:16-alpine
         container_name: graveboards-postgresql-dev
         ports:
             - "5432:5432"
         environment:
-            - ALLOW_EMPTY_PASSWORD=yes
+            - POSTGRES_PASSWORD=
+            - POSTGRES_DB=graveboards_dev
+            - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
         volumes:
-            - graveboards-postgresql-dev-data:/bitnami/postgresql
+            - graveboards-postgresql-dev-data:/var/lib/postgresql/data
+            - ./docker-init:/docker-entrypoint-initdb.d
         networks:
             - web
 

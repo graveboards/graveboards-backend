@@ -4,13 +4,13 @@ set -e
 DOCKER_PREFIX=""
 
 # =========================
-# Step 1: Create .env.docker (once)
+# Step 1: Create .env, .env.test, and .env.docker (once)
 # =========================
 
-if [ -f ".env.docker" ]; then
-    echo ".env.docker already exists. Skipping creation."
+if [ -f ".env.docker" ] && [ -f ".env" ] && [ -f ".env.test" ]; then
+    echo ".env, .env.test, and .env.docker already exist. Skipping creation."
 else
-    echo "Creating .env.docker..."
+    echo "Creating environment files..."
 
     # Generate 32-character random alphanumeric JWT_SECRET_KEY
     JWT_SECRET_KEY=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32)
@@ -35,6 +35,55 @@ else
         *) DISABLE_SECURITY="false" ;;
     esac
 
+    # Generate separate JWT secrets for .env and .env.test
+    JWT_SECRET_KEY_DOTENV=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32)
+    JWT_SECRET_KEY_TEST=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32)
+
+    # Create .env for direct Python dev mode (connects to Docker DB/Redis via localhost)
+    cat > .env <<EOF
+DEBUG=true
+DISABLE_SECURITY=$DISABLE_SECURITY
+BASE_URL=http://localhost:3000
+JWT_SECRET_KEY=$JWT_SECRET_KEY_DOTENV
+JWT_ALGORITHM=HS256
+ADMIN_USER_IDS=$OSU_USER_ID,5099768
+OSU_CLIENT_ID=$OSU_CLIENT_ID
+OSU_CLIENT_SECRET=$OSU_CLIENT_SECRET
+POSTGRESQL_HOST=localhost
+POSTGRESQL_PORT=5432
+POSTGRESQL_USERNAME=postgres
+POSTGRESQL_PASSWORD=
+POSTGRESQL_DATABASE=graveboards_dev
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_USERNAME=
+REDIS_PASSWORD=
+REDIS_DB=0
+EOF
+
+    # Create .env.test for test mode (isolated DB/Redis)
+    cat > .env.test <<EOF
+DEBUG=true
+DISABLE_SECURITY=true
+BASE_URL=http://localhost:3000
+JWT_SECRET_KEY=$JWT_SECRET_KEY_TEST
+JWT_ALGORITHM=HS256
+ADMIN_USER_IDS=1,2
+OSU_CLIENT_ID=test-client-id
+OSU_CLIENT_SECRET=test-client-secret
+POSTGRESQL_HOST=localhost
+POSTGRESQL_PORT=5432
+POSTGRESQL_USERNAME=postgres
+POSTGRESQL_PASSWORD=
+POSTGRESQL_DATABASE=graveboards_test
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_USERNAME=
+REDIS_PASSWORD=
+REDIS_DB=15
+EOF
+
+    # Create .env.docker for Docker-only mode (uses Docker service names)
     cat > .env.docker <<EOF
 DEBUG=true
 DISABLE_SECURITY=$DISABLE_SECURITY
@@ -44,12 +93,12 @@ JWT_ALGORITHM=HS256
 ADMIN_USER_IDS=$OSU_USER_ID,5099768
 OSU_CLIENT_ID=$OSU_CLIENT_ID
 OSU_CLIENT_SECRET=$OSU_CLIENT_SECRET
-POSTGRESQL_HOST=graveboards-postgresql-dev
+POSTGRESQL_HOST=postgres
 POSTGRESQL_PORT=5432
 POSTGRESQL_USERNAME=postgres
 POSTGRESQL_PASSWORD=
-POSTGRESQL_DATABASE=
-REDIS_HOST=graveboards-redis-dev
+POSTGRESQL_DATABASE=graveboards_dev
+REDIS_HOST=redis
 REDIS_PORT=6379
 REDIS_USERNAME=
 REDIS_PASSWORD=
@@ -57,7 +106,11 @@ REDIS_DB=0
 EOF
 
     echo
-    echo "[OK] .env.docker created with your credentials and secure JWT secret."
+    echo "[OK] Environment files created:"
+    echo "  - .env (dev mode with localhost DB/Redis)"
+    echo "  - .env.test (test mode with isolated DB/Redis)"
+    echo "  - .env.docker (Docker mode with service names)"
+    echo
     echo "You have been added to ADMIN_USER_IDS as $OSU_USER_ID."
 fi
 

@@ -8,3 +8,4 @@ __all__ = [
 class Env(Enum):
     PROD = "prod"
     DEV = "dev"
+    TEST = "test"
