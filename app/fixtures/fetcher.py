@@ -159,8 +159,7 @@ class FixtureDataFetcher:
                 while retries < MAX_RETRIES:
                     try:
                         data = await self.oac.get_user_scores(user_id, score_type_enum, mode=mode)
-                        scores = data.get("scores", [])
-                        if not scores:
+                        if not isinstance(data, list) or not data:
                             self.logger.debug(f"Empty scores for user {user_id} ({score_type}) (retry {retries + 1}/{MAX_RETRIES})")
                             retries += 1
                             user_id = self._get_random_id("users")
@@ -286,7 +285,17 @@ class FixtureDataFetcher:
     def _add_failed_id(self, category: str, id_: int) -> None:
         if category not in self.failed_ids:
             self.failed_ids[category] = []
-        if id_ not in self.failed_ids[category]:
-            self.failed_ids[category].append(id_)
-            if len(self.failed_ids[category]) > 1000:
-                self.failed_ids[category] = self.failed_ids[category][-1000:]
+        
+        category_ids = self.failed_ids[category]
+        
+        if isinstance(category_ids, dict):
+            for subcategory in category_ids.values():
+                if id_ not in subcategory:
+                    subcategory.append(id_)
+                    if len(subcategory) > 1000:
+                        subcategory[:] = subcategory[-1000:]
+        else:
+            if id_ not in category_ids:
+                category_ids.append(id_)
+                if len(category_ids) > 1000:
+                    category_ids[:] = category_ids[-1000:]
