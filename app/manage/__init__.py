@@ -162,7 +162,12 @@ async def main():
     fixtures_subparsers.add_parser("list", help="List available fixtures")
     fixtures_subparsers.add_parser("validate", help="Validate fixture structure")
     fixtures_subparsers.add_parser("promote", help="Promote fixtures from instance to tests")
-    fixtures_subparsers.add_parser("wipe", help="Delete all fixtures")
+    wipe_parser = fixtures_subparsers.add_parser("wipe", help="Delete all fixtures")
+    wipe_parser.add_argument(
+        "--clear-failed-ids",
+        action="store_true",
+        help="Also clear failed IDs from metadata",
+    )
 
     args = parser.parse_args()
 
@@ -204,4 +209,4 @@ async def main():
                 case "promote":
                     await cmd_promote_fixtures()
                 case "wipe":
-                    await cmd_wipe_fixtures()
+                    await cmd_wipe_fixtures(clear_failed_ids=args.clear_failed_ids)

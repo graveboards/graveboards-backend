@@ -241,6 +241,6 @@ async def cmd_promote_fixtures():
     console.print("   [dim]Instance fixtures cleaned up[/dim]\n")
 
 
-async def cmd_wipe_fixtures():
-    wipe_all_fixtures()
+async def cmd_wipe_fixtures(clear_failed_ids: bool = False):
+    wipe_all_fixtures(clear_failed_ids=clear_failed_ids)
     console.print("[green]✅ All fixtures wiped[/green]\n")

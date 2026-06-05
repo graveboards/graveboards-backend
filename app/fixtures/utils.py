@@ -200,9 +200,15 @@ def get_all_fixture_files() -> dict[str, list[Path]]:
     return fixtures
 
 
-def wipe_all_fixtures() -> None:
+def wipe_all_fixtures(clear_failed_ids: bool = False) -> None:
     if FIXTURES_DIR.exists():
         shutil.rmtree(FIXTURES_DIR)
     FIXTURES_DIR.mkdir(parents=True, exist_ok=True)
-    save_metadata(create_empty_metadata())
+    
+    metadata = create_empty_metadata()
+    if not clear_failed_ids and METADATA_FILE.exists():
+        existing_metadata = load_metadata()
+        metadata["failed_ids"] = existing_metadata.get("failed_ids", metadata["failed_ids"])
+    
+    save_metadata(metadata)
     logger.info("All fixtures wiped")
