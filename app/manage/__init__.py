@@ -206,6 +206,11 @@ async def main():
         action="store_true",
         help="Also clear top player IDs from metadata",
     )
+    wipe_parser.add_argument(
+        "--clear-promoted",
+        action="store_true",
+        help="Also clear promoted fixture metadata (WARNING: will cause metadata desync if fixture files remain)",
+    )
 
     args = parser.parse_args()
 
@@ -274,8 +279,9 @@ async def main():
                         beatmap_scores=args.beatmap_scores,
                         beatmap_attributes=args.beatmap_attributes,
                     )
-                case "wipe":
-                    await cmd_wipe_fixtures(
-                        clear_failed_ids=args.clear_failed_ids,
-                        clear_top_player_ids=args.clear_top_player_ids,
-                    )
+                 case "wipe":
+                      await cmd_wipe_fixtures(
+                          clear_failed_ids=args.clear_failed_ids,
+                          clear_top_player_ids=args.clear_top_player_ids,
+                          clear_promoted=args.clear_promoted,
+                      )

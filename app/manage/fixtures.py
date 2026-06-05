@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from datetime import datetime, timezone
 from typing import Optional
 
 from rich.console import Console
@@ -23,22 +24,22 @@ logger = get_logger(__name__)
 
 
 async def cmd_refresh_top_players(
-    rulesets: Optional[list[str]] = None,
-    count: int = 1000,
+        rulesets: Optional[list[str]] = None,
+        count: int = 1000,
 ) -> None:
     rc = RedisClient()
     fetcher = FixtureDataFetcher(rc)
     fetcher.logger = logger
-    
+
     if rulesets is None:
         rulesets = RULESETS
-    
+
     console.print("\n[bold blue]Refreshing top players from osu! API...[/bold blue]")
     console.print(f"[bold]Rulesets:[/bold] {', '.join(rulesets)}")
     console.print(f"[bold]Count per ruleset:[/bold] {count}\n")
-    
+
     fetched = await fetcher.fetch_top_players(rulesets=rulesets, count_per_ruleset=count)
-    
+
     console.print("\n[bold green]Top players refresh complete![/bold green]\n")
     console.print("[bold]Fetched:[/bold]")
     table = Table(show_header=False)
@@ -51,25 +52,25 @@ async def cmd_refresh_top_players(
 
 
 async def cmd_fetch_fixtures(
-    scale: float,
-    beatmaps: int | None,
-    beatmapsets: int | None,
-    users_osu: int | None,
-    users_taiko: int | None,
-    users_fruits: int | None,
-    users_mania: int | None,
-    scores_best: int | None,
-    scores_firsts: int | None,
-    scores_recent: int | None,
-    beatmap_scores: int | None,
-    beatmap_attributes: int | None,
-    use_minimal: bool,
-    beatmaps_range_min: int | None,
-    beatmaps_range_max: int | None,
-    beatmapsets_range_min: int | None,
-    beatmapsets_range_max: int | None,
-    users_range_min: int | None,
-    users_range_max: int | None,
+        scale: float,
+        beatmaps: int | None,
+        beatmapsets: int | None,
+        users_osu: int | None,
+        users_taiko: int | None,
+        users_fruits: int | None,
+        users_mania: int | None,
+        scores_best: int | None,
+        scores_firsts: int | None,
+        scores_recent: int | None,
+        beatmap_scores: int | None,
+        beatmap_attributes: int | None,
+        use_minimal: bool,
+        beatmaps_range_min: int | None,
+        beatmaps_range_max: int | None,
+        beatmapsets_range_min: int | None,
+        beatmapsets_range_max: int | None,
+        users_range_min: int | None,
+        users_range_max: int | None,
 ):
     rc = RedisClient()
     id_ranges = {}
@@ -117,12 +118,12 @@ async def cmd_fetch_fixtures(
 
     console.print("\n[bold blue]Fetching fixture data from osu! API...[/bold blue]")
     console.print(f"\n[bold]Sample counts:[/bold]")
-    table = Table(show_header=False)
-    table.add_column("Category")
-    table.add_column("Count")
-    
-    add_counts_to_table(sample_counts, table)
-    console.print(table)
+    sample_table = Table(show_header=False)
+    sample_table.add_column("Category")
+    sample_table.add_column("Count")
+
+    add_counts_to_table(sample_counts, sample_table)
+    console.print(sample_table)
 
     results = await fetcher.fetch_all(sample_counts)
 
@@ -131,7 +132,7 @@ async def cmd_fetch_fixtures(
     result_table = Table(show_header=False)
     result_table.add_column("Category")
     result_table.add_column("Count")
-    
+
     add_counts_to_table(results, result_table)
     console.print(result_table)
     console.print()
@@ -217,12 +218,12 @@ async def cmd_validate_fixtures():
 
 
 async def cmd_promote_fixtures(
-    beatmaps: bool,
-    beatmapsets: bool,
-    users: bool,
-    scores: bool,
-    beatmap_scores: bool,
-    beatmap_attributes: bool,
+        beatmaps: bool,
+        beatmapsets: bool,
+        users: bool,
+        scores: bool,
+        beatmap_scores: bool,
+        beatmap_attributes: bool,
 ):
     from shutil import copy2, rmtree
 
@@ -231,36 +232,42 @@ async def cmd_promote_fixtures(
 
     metadata = load_metadata()
     copied = 0
+    current_time = datetime.now(timezone.utc).isoformat()
 
     console.print("\n[bold]=== Promoting Fixtures ===[/bold]\n")
 
     all_categories = not any([beatmaps, beatmapsets, users, scores, beatmap_scores, beatmap_attributes])
-    
+
     categories_to_promote = []
     if all_categories or beatmaps:
-        categories_to_promote.append(("beatmaps", "beatmaps"))
+        categories_to_promote.append(("beatmaps", "beatmaps", "beatmaps"))
     if all_categories or beatmapsets:
-        categories_to_promote.append(("beatmapsets", "beatmapsets"))
+        categories_to_promote.append(("beatmapsets", "beatmapsets", "beatmapsets"))
     if all_categories or beatmap_scores:
-        categories_to_promote.append(("beatmap_scores", "beatmap_scores"))
+        categories_to_promote.append(("beatmap_scores", "beatmap_scores", "beatmap_scores"))
     if all_categories or beatmap_attributes:
-        categories_to_promote.append(("beatmap_attributes", "beatmap_attributes"))
+        categories_to_promote.append(("beatmap_attributes", "beatmap_attributes", "beatmap_attributes"))
     if all_categories or users:
-        categories_to_promote.append(("users", "users"))
+        categories_to_promote.append(("users", "users", "users"))
     if all_categories or scores:
-        categories_to_promote.append(("scores", "scores"))
+        categories_to_promote.append(("scores", "scores", "scores"))
 
-    for src_name, dst_name in categories_to_promote:
+    for src_name, dst_name, meta_name in categories_to_promote:
         src_path = FIXTURES_DIR / src_name
         dst_path = test_fixtures_dir / dst_name
 
         if src_name in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
             dst_path.mkdir(parents=True, exist_ok=True)
             if src_path.exists():
+                count = len(list(src_path.glob("*.json")))
                 for filepath in src_path.glob("*.json"):
                     copy2(filepath, dst_path / filepath.name)
                     copied += 1
                 rmtree(src_path)
+                metadata["promoted_fixtures"][meta_name] = {
+                    "count": metadata["promoted_fixtures"][meta_name].get("count", 0) + count,
+                    "last_promoted": current_time,
+                }
         elif src_name in ["users", "scores"]:
             dst_path.mkdir(parents=True, exist_ok=True)
             if src_path.exists():
@@ -268,10 +275,15 @@ async def cmd_promote_fixtures(
                     if sub.is_dir():
                         sub_dst = dst_path / sub.name
                         sub_dst.mkdir(parents=True, exist_ok=True)
+                        count = len(list(sub.glob("*.json")))
                         for filepath in sub.glob("*.json"):
                             copy2(filepath, sub_dst / filepath.name)
                             copied += 1
                         rmtree(sub)
+                        if src_name == "users":
+                            metadata["promoted_fixtures"][meta_name]["per_ruleset"][sub.name] = metadata["promoted_fixtures"][meta_name]["per_ruleset"].get(sub.name, 0) + count
+                        else:
+                            metadata["promoted_fixtures"][meta_name]["per_type"][sub.name] = metadata["promoted_fixtures"][meta_name]["per_type"].get(sub.name, 0) + count
                 src_path.rmdir()
 
     if metadata.get("last_updated"):
@@ -284,54 +296,61 @@ async def cmd_promote_fixtures(
             "beatmap_scores": {"count": 0, "last_fetched": None},
             "beatmap_attributes": {"count": 0, "last_fetched": None},
         }
-        save_metadata(metadata)
+    save_metadata(metadata)
 
     console.print(f"[green]✅ Promoted {copied} fixture files to tests/fixtures/osu/[/green]")
+    console.print("   [dim]Instance fixtures cleaned up[/dim]\n")
 
 
 async def cmd_demote_fixtures(
-    beatmaps: bool,
-    beatmapsets: bool,
-    users: bool,
-    scores: bool,
-    beatmap_scores: bool,
-    beatmap_attributes: bool,
+        beatmaps: bool,
+        beatmapsets: bool,
+        users: bool,
+        scores: bool,
+        beatmap_scores: bool,
+        beatmap_attributes: bool,
 ):
-    from shutil import copy2, rmtree
+    from shutil import copy2
 
     test_fixtures_dir = Path(__file__).resolve().parent.parent.parent / "tests" / "fixtures" / "osu"
 
     moved = 0
+    current_time = datetime.now(timezone.utc).isoformat()
 
     console.print("\n[bold]=== Demoting Fixtures ===[/bold]\n")
 
     all_categories = not any([beatmaps, beatmapsets, users, scores, beatmap_scores, beatmap_attributes])
-    
+
     categories_to_demote = []
     if all_categories or beatmaps:
-        categories_to_demote.append(("beatmaps", "beatmaps"))
+        categories_to_demote.append(("beatmaps", "beatmaps", "beatmaps"))
     if all_categories or beatmapsets:
-        categories_to_demote.append(("beatmapsets", "beatmapsets"))
+        categories_to_demote.append(("beatmapsets", "beatmapsets", "beatmapsets"))
     if all_categories or beatmap_scores:
-        categories_to_demote.append(("beatmap_scores", "beatmap_scores"))
+        categories_to_demote.append(("beatmap_scores", "beatmap_scores", "beatmap_scores"))
     if all_categories or beatmap_attributes:
-        categories_to_demote.append(("beatmap_attributes", "beatmap_attributes"))
+        categories_to_demote.append(("beatmap_attributes", "beatmap_attributes", "beatmap_attributes"))
     if all_categories or users:
-        categories_to_demote.append(("users", "users"))
+        categories_to_demote.append(("users", "users", "users"))
     if all_categories or scores:
-        categories_to_demote.append(("scores", "scores"))
+        categories_to_demote.append(("scores", "scores", "scores"))
 
-    for src_name, dst_name in categories_to_demote:
+    metadata = load_metadata()
+
+    for src_name, dst_name, meta_name in categories_to_demote:
         src_path = test_fixtures_dir / src_name
         dst_path = FIXTURES_DIR / dst_name
 
         if src_name in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
             dst_path.mkdir(parents=True, exist_ok=True)
             if src_path.exists():
+                count = len(list(src_path.glob("*.json")))
                 for filepath in src_path.glob("*.json"):
                     copy2(filepath, dst_path / filepath.name)
                     moved += 1
                     filepath.unlink(missing_ok=True)
+                metadata["promoted_fixtures"][meta_name]["count"] = max(0, metadata["promoted_fixtures"][meta_name].get("count", 0) - count)
+                metadata["promoted_fixtures"][meta_name]["last_promoted"] = current_time
         elif src_name in ["users", "scores"]:
             dst_path.mkdir(parents=True, exist_ok=True)
             if src_path.exists():
@@ -339,30 +358,38 @@ async def cmd_demote_fixtures(
                     if sub.is_dir():
                         sub_dst = dst_path / sub.name
                         sub_dst.mkdir(parents=True, exist_ok=True)
+                        count = len(list(sub.glob("*.json")))
                         for filepath in sub.glob("*.json"):
                             copy2(filepath, sub_dst / filepath.name)
                             moved += 1
                             filepath.unlink(missing_ok=True)
+                        if src_name == "users":
+                            metadata["promoted_fixtures"][meta_name]["per_ruleset"][sub.name] = max(0, metadata["promoted_fixtures"][meta_name]["per_ruleset"].get(sub.name, 0) - count)
+                        else:
+                            metadata["promoted_fixtures"][meta_name]["per_type"][sub.name] = max(0, metadata["promoted_fixtures"][meta_name]["per_type"].get(sub.name, 0) - count)
+
+    save_metadata(metadata)
 
     console.print(f"[green]✅ Demoted {moved} fixture files from tests/fixtures/osu/[/green]")
 
 
 async def cmd_wipe_fixtures(
-    clear_failed_ids: bool = False,
-    clear_top_player_ids: bool = False,
+        clear_failed_ids: bool = False,
+        clear_top_player_ids: bool = False,
+        clear_promoted: bool = False,
 ):
     from shutil import rmtree
 
     console.print("\n[bold blue]Wiping fixtures...[/bold blue]\n")
 
     metadata = load_metadata()
-    
+
     if FIXTURES_DIR.exists():
         for sub_dir in FIXTURES_DIR.iterdir():
             if sub_dir.is_dir():
                 rmtree(sub_dir)
                 console.print(f"[green]✅ Deleted: {sub_dir.name}[/green]")
-    
+
     metadata["samples"] = {
         "beatmaps": {"count": 0, "last_fetched": None},
         "beatmapsets": {"count": 0, "last_fetched": None},
@@ -379,7 +406,19 @@ async def cmd_wipe_fixtures(
         }
     if clear_top_player_ids:
         metadata["top_player_ids"] = {r: [] for r in RULESETS}
+    if clear_promoted:
+        if metadata.get("promoted_fixtures", {}).get("beatmaps", {}).get("count", 0) > 0:
+            console.print(
+                "[yellow]⚠️  WARNING: Removing promoted fixture metadata while fixture files still exist on disk![/yellow]")
+            console.print("   This will cause metadata to be out of sync with actual fixture state.")
+        metadata["promoted_fixtures"] = {
+            "beatmaps": {"count": 0, "last_promoted": None},
+            "beatmapsets": {"count": 0, "last_promoted": None},
+            "users": {"count": 0, "per_ruleset": {r: 0 for r in RULESETS}, "last_promoted": None},
+            "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_promoted": None},
+            "beatmap_scores": {"count": 0, "last_promoted": None},
+            "beatmap_attributes": {"count": 0, "last_promoted": None},
+        }
     save_metadata(metadata)
 
     console.print("[green]✅ Fixtures wiped![/green]\n")
-

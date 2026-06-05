@@ -147,6 +147,14 @@ def create_empty_metadata() -> dict:
             "beatmap_scores": {"count": 0, "last_fetched": None},
             "beatmap_attributes": {"count": 0, "last_fetched": None},
         },
+        "promoted_fixtures": {
+            "beatmaps": {"count": 0, "last_promoted": None},
+            "beatmapsets": {"count": 0, "last_promoted": None},
+            "users": {"count": 0, "per_ruleset": {r: 0 for r in RULESETS}, "last_promoted": None},
+            "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_promoted": None},
+            "beatmap_scores": {"count": 0, "last_promoted": None},
+            "beatmap_attributes": {"count": 0, "last_promoted": None},
+        },
         "failed_ids": {
             "beatmaps": [],
             "beatmapsets": [],
@@ -165,6 +173,14 @@ def create_empty_metadata() -> dict:
 
 def save_metadata(metadata: dict) -> None:
     metadata["last_updated"] = datetime.now(timezone.utc).isoformat()
+    metadata.setdefault("promoted_fixtures", {
+        "beatmaps": {"count": 0, "last_promoted": None},
+        "beatmapsets": {"count": 0, "last_promoted": None},
+        "users": {"count": 0, "per_ruleset": {r: 0 for r in RULESETS}, "last_promoted": None},
+        "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_promoted": None},
+        "beatmap_scores": {"count": 0, "last_promoted": None},
+        "beatmap_attributes": {"count": 0, "last_promoted": None},
+    })
     metadata.setdefault("failed_ids", {
         "beatmaps": [],
         "beatmapsets": [],
