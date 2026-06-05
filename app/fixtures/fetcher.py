@@ -1,7 +1,7 @@
 import json
 import random
 from datetime import datetime, timezone
-from typing import Optional
+from typing import AsyncIterator, Optional
 
 from app.redis import RedisClient
 from app.osu_api.client.osu_api_client import OsuAPIClient
@@ -22,6 +22,13 @@ MAX_RETRIES = 5
 RANKING_PAGE_SIZE = 50
 
 
+class FetchEvent:
+    def __init__(self, category: str, current: int, total: int):
+        self.category = category
+        self.current = current
+        self.total = total
+
+
 class FixtureDataFetcher:
     def __init__(self, rc: RedisClient, id_ranges: dict | None = None):
         self.rc = rc
@@ -36,11 +43,11 @@ class FixtureDataFetcher:
         self.id_ranges = id_ranges or self.metadata.get("id_ranges", ID_RANGES)
         self.top_player_ids = self.metadata.get("top_player_ids", {r: [] for r in RULESETS})
 
-    async def fetch_beatmaps(self, count: int) -> int:
+    async def fetch_beatmaps(self, count: int) -> AsyncIterator[FetchEvent]:
         path = get_fixture_path("beatmaps")
         fetched = 0
 
-        for _ in range(count):
+        for i in range(count):
             beatmap_id = self._get_random_id("beatmaps")
             retries = 0
             while retries < MAX_RETRIES:
@@ -50,23 +57,25 @@ class FixtureDataFetcher:
                     with open(filepath, "w") as f:
                         json.dump(data, f, indent=2)
                     fetched += 1
+                    self.logger.debug(f"Fetched beatmap {beatmap_id} ({fetched}/{count})")
                     break
                 except Exception as e:
                     self.logger.debug(f"Failed to fetch beatmap {beatmap_id} (retry {retries + 1}/{MAX_RETRIES}): {e}")
                     self._add_failed_id("beatmaps", beatmap_id)
                     retries += 1
                     beatmap_id = self._get_random_id("beatmaps")
+            
+            yield FetchEvent("beatmaps", i + 1, count)
 
         self.metadata["samples"]["beatmaps"]["count"] += fetched
         self.metadata["samples"]["beatmaps"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
         save_metadata(self.metadata)
-        return fetched
 
-    async def fetch_beatmapsets(self, count: int) -> int:
+    async def fetch_beatmapsets(self, count: int) -> AsyncIterator[FetchEvent]:
         path = get_fixture_path("beatmapsets")
         fetched = 0
 
-        for _ in range(count):
+        for i in range(count):
             beatmapset_id = self._get_random_id("beatmapsets")
             retries = 0
             while retries < MAX_RETRIES:
@@ -76,17 +85,19 @@ class FixtureDataFetcher:
                     with open(filepath, "w") as f:
                         json.dump(data, f, indent=2)
                     fetched += 1
+                    self.logger.debug(f"Fetched beatmapset {beatmapset_id} ({fetched}/{count})")
                     break
                 except Exception as e:
                     self.logger.debug(f"Failed to fetch beatmapset {beatmapset_id} (retry {retries + 1}/{MAX_RETRIES}): {e}")
                     self._add_failed_id("beatmapsets", beatmapset_id)
                     retries += 1
                     beatmapset_id = self._get_random_id("beatmapsets")
+            
+            yield FetchEvent("beatmapsets", i + 1, count)
 
         self.metadata["samples"]["beatmapsets"]["count"] += fetched
         self.metadata["samples"]["beatmapsets"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
         save_metadata(self.metadata)
-        return fetched
 
     async def fetch_users(
         self,
@@ -94,7 +105,7 @@ class FixtureDataFetcher:
         users_taiko: int,
         users_fruits: int,
         users_mania: int,
-    ) -> dict[str, int]:
+    ) -> AsyncIterator[FetchEvent]:
         path = get_fixture_path("users")
         fetched = {r: 0 for r in RULESETS}
 
@@ -104,13 +115,16 @@ class FixtureDataFetcher:
             "fruits": users_fruits,
             "mania": users_mania,
         }
+        
+        total_count = sum(ruleset_counts.values())
+        cumulative_count = 0
 
         for ruleset in RULESETS:
             ruleset_path = path / ruleset
             ruleset_path.mkdir(parents=True, exist_ok=True)
             count = ruleset_counts[ruleset]
 
-            for _ in range(count):
+            for i in range(count):
                 user_id = self._get_random_id(f"users.{ruleset}")
                 mode = getattr(Ruleset, ruleset.upper()).value
                 retries = 0
@@ -121,12 +135,16 @@ class FixtureDataFetcher:
                         with open(filepath, "w") as f:
                             json.dump(data, f, indent=2)
                         fetched[ruleset] += 1
+                        self.logger.debug(f"Fetched user {user_id} ({ruleset}) ({fetched[ruleset]}/{count})")
                         break
                     except Exception as e:
                         self.logger.debug(f"Failed to fetch user {user_id} ({ruleset}) (retry {retries + 1}/{MAX_RETRIES}): {e}")
                         self._add_failed_id(f"users.{ruleset}", user_id)
                         retries += 1
                         user_id = self._get_random_id(f"users.{ruleset}")
+                
+                cumulative_count += 1
+                yield FetchEvent("users", cumulative_count, total_count)
 
         self.metadata["samples"]["users"]["count"] += sum(fetched.values())
         self.metadata["samples"]["users"]["per_ruleset"] = {
@@ -134,14 +152,13 @@ class FixtureDataFetcher:
         }
         self.metadata["samples"]["users"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
         save_metadata(self.metadata)
-        return fetched
 
     async def fetch_scores(
         self,
         scores_best: int,
         scores_firsts: int,
         scores_recent: int,
-    ) -> dict[str, int]:
+    ) -> AsyncIterator[FetchEvent]:
         if not self.top_player_ids.get(RULESETS[0]) or all(len(ids) == 0 for ids in self.top_player_ids.values()):
             self.logger.info("Top player IDs not found or empty. Fetching top players first...")
             await self.fetch_top_players()
@@ -154,13 +171,16 @@ class FixtureDataFetcher:
             "firsts": scores_firsts,
             "recent": scores_recent,
         }
+        
+        total_count = sum(type_counts.values())
+        cumulative_count = 0
 
         for score_type in SCORE_TYPES:
             type_path = path / score_type
             type_path.mkdir(parents=True, exist_ok=True)
             count = type_counts[score_type]
 
-            for _ in range(count):
+            for i in range(count):
                 use_top_players = score_type in ["firsts", "recent"]
                 user_id = self._get_random_id("users", use_top_players=use_top_players)
                 mode = Ruleset.OSU
@@ -181,6 +201,7 @@ class FixtureDataFetcher:
                         with open(filepath, "w") as f:
                             json.dump(data, f, indent=2)
                         fetched[score_type] += 1
+                        self.logger.debug(f"Fetched scores for user {user_id} ({score_type}) ({fetched[score_type]}/{count})")
                         break
                     except Exception as e:
                         self.logger.debug(f"Failed to fetch scores for user {user_id} ({score_type}) (retry {retries + 1}/{MAX_RETRIES}): {e}")
@@ -190,6 +211,9 @@ class FixtureDataFetcher:
                             user_id = self._get_random_id("users", use_top_players=True)
                         else:
                             user_id = self._get_random_id("users", use_top_players=use_top_players)
+                
+                cumulative_count += 1
+                yield FetchEvent("scores", cumulative_count, total_count)
 
         self.metadata["samples"]["scores"]["count"] += sum(fetched.values())
         self.metadata["samples"]["scores"]["per_type"] = {
@@ -197,13 +221,12 @@ class FixtureDataFetcher:
         }
         self.metadata["samples"]["scores"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
         save_metadata(self.metadata)
-        return fetched
 
-    async def fetch_beatmap_scores(self, count: int) -> int:
+    async def fetch_beatmap_scores(self, count: int) -> AsyncIterator[FetchEvent]:
         path = get_fixture_path("beatmap_scores")
         fetched = 0
 
-        for _ in range(count):
+        for i in range(count):
             beatmap_id = self._get_random_id("beatmaps")
             retries = 0
             while retries < MAX_RETRIES:
@@ -219,23 +242,25 @@ class FixtureDataFetcher:
                     with open(filepath, "w") as f:
                         json.dump(data, f, indent=2)
                     fetched += 1
+                    self.logger.debug(f"Fetched beatmap scores {beatmap_id} ({fetched}/{count})")
                     break
                 except Exception as e:
                     self.logger.debug(f"Failed to fetch beatmap scores {beatmap_id} (retry {retries + 1}/{MAX_RETRIES}): {e}")
                     self._add_failed_id("beatmaps", beatmap_id)
                     retries += 1
                     beatmap_id = self._get_random_id("beatmaps")
+            
+            yield FetchEvent("beatmap_scores", i + 1, count)
 
         self.metadata["samples"]["beatmap_scores"]["count"] += fetched
         self.metadata["samples"]["beatmap_scores"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
         save_metadata(self.metadata)
-        return fetched
 
-    async def fetch_beatmap_attributes(self, count: int) -> int:
+    async def fetch_beatmap_attributes(self, count: int) -> AsyncIterator[FetchEvent]:
         path = get_fixture_path("beatmap_attributes")
         fetched = 0
 
-        for _ in range(count):
+        for i in range(count):
             beatmap_id = self._get_random_id("beatmaps")
             mods = random.choice([0, 1, 2, 64, 128, 256])
             retries = 0
@@ -246,46 +271,78 @@ class FixtureDataFetcher:
                     with open(filepath, "w") as f:
                         json.dump(data, f, indent=2)
                     fetched += 1
+                    self.logger.debug(f"Fetched beatmap attributes {beatmap_id} ({fetched}/{count})")
                     break
                 except Exception as e:
                     self.logger.debug(f"Failed to fetch beatmap attributes {beatmap_id} (retry {retries + 1}/{MAX_RETRIES}): {e}")
                     self._add_failed_id("beatmaps", beatmap_id)
                     retries += 1
                     beatmap_id = self._get_random_id("beatmaps")
+            
+            yield FetchEvent("beatmap_attributes", i + 1, count)
 
         self.metadata["samples"]["beatmap_attributes"]["count"] += fetched
         self.metadata["samples"]["beatmap_attributes"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
         save_metadata(self.metadata)
-        return fetched
 
     def refresh_top_player_ids_from_metadata(self) -> None:
         self.top_player_ids = self.metadata.get("top_player_ids", {r: [] for r in RULESETS})
 
-    async def fetch_all(self, sample_counts: dict) -> dict:
+    async def fetch_all(self, sample_counts: dict) -> AsyncIterator[FetchEvent]:
+        self._last_fetch_results = {}
         self.logger.info("Fetching fixture data from osu! API...")
         
         users = sample_counts.get("users", {})
         scores = sample_counts.get("scores", {})
         
+        beatmaps_count = sample_counts.get("beatmaps", 0)
+        beatmapsets_count = sample_counts.get("beatmapsets", 0)
+        users_osu = users.get("osu", 0)
+        users_taiko = users.get("taiko", 0)
+        users_fruits = users.get("fruits", 0)
+        users_mania = users.get("mania", 0)
+        scores_best = scores.get("best", 0)
+        scores_firsts = scores.get("firsts", 0)
+        scores_recent = scores.get("recent", 0)
+        beatmap_scores_count = sample_counts.get("beatmap_scores", 0)
+        beatmap_attributes_count = sample_counts.get("beatmap_attributes", 0)
+        
+        if beatmaps_count > 0:
+            async for event in self.fetch_beatmaps(beatmaps_count):
+                yield event
+        
+        if beatmapsets_count > 0:
+            async for event in self.fetch_beatmapsets(beatmapsets_count):
+                yield event
+        
+        if users_osu > 0 or users_taiko > 0 or users_fruits > 0 or users_mania > 0:
+            async for event in self.fetch_users(users_osu, users_taiko, users_fruits, users_mania):
+                yield event
+        
+        if scores_best > 0 or scores_firsts > 0 or scores_recent > 0:
+            async for event in self.fetch_scores(scores_best, scores_firsts, scores_recent):
+                yield event
+        
+        if beatmap_scores_count > 0:
+            async for event in self.fetch_beatmap_scores(beatmap_scores_count):
+                yield event
+        
+        if beatmap_attributes_count > 0:
+            async for event in self.fetch_beatmap_attributes(beatmap_attributes_count):
+                yield event
+        
+        self.metadata = load_metadata()
         results = {
-            "beatmaps": await self.fetch_beatmaps(sample_counts.get("beatmaps", 0)),
-            "beatmapsets": await self.fetch_beatmapsets(sample_counts.get("beatmapsets", 0)),
-            "users": await self.fetch_users(
-                users.get("osu", 0),
-                users.get("taiko", 0),
-                users.get("fruits", 0),
-                users.get("mania", 0),
-            ),
-            "scores": await self.fetch_scores(
-                scores.get("best", 0),
-                scores.get("firsts", 0),
-                scores.get("recent", 0),
-            ),
-            "beatmap_scores": await self.fetch_beatmap_scores(sample_counts.get("beatmap_scores", 0)),
-            "beatmap_attributes": await self.fetch_beatmap_attributes(sample_counts.get("beatmap_attributes", 0)),
+            "beatmaps": self.metadata["samples"]["beatmaps"]["count"],
+            "beatmapsets": self.metadata["samples"]["beatmapsets"]["count"],
+            "users": self.metadata["samples"]["users"]["per_ruleset"].copy(),
+            "scores": self.metadata["samples"]["scores"]["per_type"].copy(),
+            "beatmap_scores": self.metadata["samples"]["beatmap_scores"]["count"],
+            "beatmap_attributes": self.metadata["samples"]["beatmap_attributes"]["count"],
         }
+        
+        self._last_fetch_results = results
         self.logger.info(f"Fixture data fetch complete: {results}")
-        return results
 
     async def fetch_top_players(
         self,
@@ -339,8 +396,6 @@ class FixtureDataFetcher:
         save_top_player_ids(current_top_ids)
         self.metadata = load_metadata()
         self.top_player_ids = self.metadata.get("top_player_ids", {r: [] for r in RULESETS})
-        
-        return fetched
 
     def _get_random_id(self, category: str, use_top_players: bool = False) -> int:
         if use_top_players and category == "users" and self.top_player_ids:

@@ -1,5 +1,15 @@
 from rich.console import Console
 from rich.table import Table
+from rich.live import Live
+from rich.panel import Panel
+from rich.progress import (
+    Progress,
+    BarColumn,
+    TextColumn,
+    TimeRemainingColumn,
+    TaskID,
+    TimeElapsedColumn
+)
 
 from app.fixtures.utils import RULESETS, SCORE_TYPES, calculate_sample_counts
 from app.fixtures.fetcher import FixtureDataFetcher
@@ -98,16 +108,75 @@ async def cmd_fetch_fixtures(
         use_minimal=use_minimal,
     )
 
-    console.print("\n[bold blue]Fetching fixture data from osu! API...[/bold blue]")
-    console.print(f"\n[bold]Sample counts:[/bold]")
-    sample_table = Table(show_header=False)
-    sample_table.add_column("Category")
-    sample_table.add_column("Count")
+    progress = Progress(
+        TextColumn("[bold blue]{task.description}"),
+        TextColumn("[white]({task.completed}/{task.total})"),
+        BarColumn(pulse_style="dim"),
+        "[progress.percentage]{task.percentage:>3.0f}%",
+        TimeRemainingColumn(compact=True),
+        TimeElapsedColumn()
+    )
 
-    _add_counts_to_table(sample_counts, sample_table)
-    console.print(sample_table)
+    tasks: dict[str, TaskID] = {}
+    total_tasks = 0
 
-    results = await fetcher.fetch_all(sample_counts)
+    if sample_counts.get("beatmaps", 0) > 0:
+        tasks["beatmaps"] = progress.add_task("Beatmaps", total=sample_counts["beatmaps"])
+        total_tasks += 1
+
+    if sample_counts.get("beatmapsets", 0) > 0:
+        tasks["beatmapsets"] = progress.add_task("Beatmapsets", total=sample_counts["beatmapsets"])
+        total_tasks += 1
+
+    users = sample_counts.get("users", {})
+    user_total = sum(users.values())
+    if user_total > 0:
+        tasks["users"] = progress.add_task("Users", total=user_total)
+        total_tasks += 1
+
+    scores = sample_counts.get("scores", {})
+    scores_total = sum(scores.values())
+    if scores_total > 0:
+        tasks["scores"] = progress.add_task("Scores", total=scores_total)
+        total_tasks += 1
+
+    if sample_counts.get("beatmap_scores", 0) > 0:
+        tasks["beatmap_scores"] = progress.add_task("Beatmap Scores", total=sample_counts["beatmap_scores"])
+        total_tasks += 1
+
+    if sample_counts.get("beatmap_attributes", 0) > 0:
+        tasks["beatmap_attributes"] = progress.add_task("Beatmap Attributes", total=sample_counts["beatmap_attributes"])
+        total_tasks += 1
+
+    overall_task = progress.add_task("Total", total=total_tasks)
+    overall_progress = 0
+
+    progress_table = Table.grid()
+    panel = Panel.fit(
+        progress,
+        title="Fetching Fixtures",
+        border_style="green",
+        padding=(1, 3)
+    )
+    progress_table.add_row(panel)
+
+    with Live(progress_table, refresh_per_second=20):
+        async for event in fetcher.fetch_all(sample_counts):
+            category = event.category
+            if category in tasks:
+                progress.update(tasks[category], completed=event.current)
+            else:
+                for task_category in tasks.keys():
+                    if task_category in category:
+                        progress.update(tasks[task_category], completed=event.current)
+                        break
+            overall_progress += 1
+            progress.update(overall_task, completed=overall_progress)
+        
+        results = fetcher._last_fetch_results
+
+        panel.title = "Fetching Completed"
+        panel.border_style = "dim green"
 
     console.print("\n[bold green]Fixture data fetch complete![/bold green]")
     console.print("\n[bold]Results:[/bold]")
