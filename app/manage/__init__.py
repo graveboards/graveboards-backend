@@ -195,6 +195,8 @@ async def main():
         help="Number of player IDs to collect per ruleset (default: 1000)",
     )
 
+    list_parser = fixtures_subparsers.add_parser("list", help="List fixture data status")
+    
     wipe_parser = fixtures_subparsers.add_parser("wipe", help="Delete all fixtures")
     wipe_parser.add_argument(
         "--clear-failed-ids",
