@@ -376,6 +376,7 @@ async def cmd_demote_fixtures(
                     filepath.unlink(missing_ok=True)
                 metadata["promoted_fixtures"][meta_name]["count"] = max(0, metadata["promoted_fixtures"][meta_name].get("count", 0) - count)
                 metadata["promoted_fixtures"][meta_name]["last_promoted"] = current_time
+                metadata["samples"][meta_name]["count"] = metadata["samples"][meta_name].get("count", 0) + count
         elif src_name in ["users", "scores"]:
             dst_path.mkdir(parents=True, exist_ok=True)
             total_count = 0
@@ -396,14 +397,17 @@ async def cmd_demote_fixtures(
                             if "per_ruleset" not in metadata["promoted_fixtures"][meta_name]:
                                 metadata["promoted_fixtures"][meta_name]["per_ruleset"] = {}
                             metadata["promoted_fixtures"][meta_name]["per_ruleset"][sub.name] = max(0, metadata["promoted_fixtures"][meta_name]["per_ruleset"].get(sub.name, 0) - count)
+                            metadata["samples"]["users"]["per_ruleset"][sub.name] = metadata["samples"]["users"]["per_ruleset"].get(sub.name, 0) + count
                         else:
                             if meta_name not in metadata["promoted_fixtures"]:
                                 metadata["promoted_fixtures"][meta_name] = {"count": 0, "per_type": {}}
                             if "per_type" not in metadata["promoted_fixtures"][meta_name]:
                                 metadata["promoted_fixtures"][meta_name]["per_type"] = {}
                             metadata["promoted_fixtures"][meta_name]["per_type"][sub.name] = max(0, metadata["promoted_fixtures"][meta_name]["per_type"].get(sub.name, 0) - count)
+                            metadata["samples"]["scores"]["per_type"][sub.name] = metadata["samples"]["scores"]["per_type"].get(sub.name, 0) + count
                 metadata["promoted_fixtures"][meta_name]["count"] = max(0, metadata["promoted_fixtures"][meta_name].get("count", 0) - total_count)
                 metadata["promoted_fixtures"][meta_name]["last_promoted"] = current_time
+                metadata["samples"][meta_name]["count"] = metadata["samples"][meta_name].get("count", 0) + total_count
 
     save_metadata(metadata)
 
