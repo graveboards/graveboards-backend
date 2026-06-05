@@ -55,6 +55,20 @@ def calculate_sample_counts(
     beatmap_attributes: int | None = None,
     use_minimal: bool = False,
 ) -> dict:
+    has_explicit_categories = any([
+        beatmaps is not None,
+        beatmapsets is not None,
+        users_osu is not None,
+        users_taiko is not None,
+        users_fruits is not None,
+        users_mania is not None,
+        scores_best is not None,
+        scores_firsts is not None,
+        scores_recent is not None,
+        beatmap_scores is not None,
+        beatmap_attributes is not None,
+    ])
+
     if use_minimal:
         base = MINIMAL_PROFILE.copy()
     else:
@@ -68,6 +82,11 @@ def calculate_sample_counts(
                 elif isinstance(value, dict):
                     for subkey, subvalue in value.items():
                         base[key][subkey] = max(1, int(subvalue * scale))
+
+    if has_explicit_categories:
+        result = {}
+    else:
+        result = base.copy()
 
     overrides = {
         "beatmaps": beatmaps,
@@ -90,15 +109,15 @@ def calculate_sample_counts(
     for key, override_value in overrides.items():
         if override_value is not None:
             if isinstance(override_value, dict):
-                if isinstance(base.get(key), dict):
-                    for subkey, subvalue in override_value.items():
-                        if subvalue is not None:
-                            base[key][subkey] = subvalue
+                if key not in result:
+                    result[key] = {}
+                for subkey, subvalue in override_value.items():
+                    if subvalue is not None:
+                        result[key][subkey] = subvalue
             else:
-                if isinstance(base.get(key), int):
-                    base[key] = override_value
+                result[key] = override_value
 
-    return base
+    return result
 
 
 def get_fixture_path(category: str, subcategory: str | None = None) -> Path:
