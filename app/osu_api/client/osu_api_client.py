@@ -215,3 +215,32 @@ class OsuAPIClient(OsuAPIClientBase):
 
         response.raise_for_status()
         return response.json()
+
+    @rate_limit(RATE_LIMIT)
+    async def get_rankings(self, ruleset: Ruleset, mode: str, limit: int | None = None, offset: int | None = None, cursor_page: int | None = None) -> dict:
+        url = APIEndpoint.RANKINGS.format(ruleset=ruleset.value, mode=mode)
+
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            **await self.get_auth_headers()
+        }
+
+        query_parameters: dict[str, Union[int, str]] = {}
+
+        if limit is not None:
+            query_parameters["limit"] = limit
+
+        if offset is not None:
+            query_parameters["offset"] = offset
+
+        if cursor_page is not None:
+            query_parameters["cursor[page]"] = cursor_page
+
+        url += self.format_query_parameters(query_parameters)
+
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=headers)
+
+        response.raise_for_status()
+        return response.json()

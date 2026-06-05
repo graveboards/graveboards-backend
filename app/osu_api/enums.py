@@ -36,6 +36,9 @@ class APIEndpoint(Enum):
     SCORES = API_BASEURL + "/users/{user}/scores/{type}"
     USER = API_BASEURL + "/users/{user}/{mode}"
 
+    # Rankings
+    RANKINGS = API_BASEURL + "/rankings/{ruleset}/{mode}"
+
     # Tags
     TAGS = API_BASEURL + "/tags"
 
