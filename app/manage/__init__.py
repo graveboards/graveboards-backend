@@ -12,6 +12,7 @@ from .fixtures import (
     cmd_list_fixtures,
     cmd_validate_fixtures,
     cmd_promote_fixtures,
+    cmd_demote_fixtures,
     cmd_wipe_fixtures,
     cmd_refresh_top_players,
 )
@@ -159,9 +160,26 @@ async def main():
         help="Enable verbose/debug logging",
     )
 
-    fixtures_subparsers.add_parser("list", help="List available fixtures")
-    fixtures_subparsers.add_parser("validate", help="Validate fixture structure")
-    fixtures_subparsers.add_parser("promote", help="Promote fixtures from instance to tests")
+    promote_parser = fixtures_subparsers.add_parser("promote", help="Promote fixtures from instance to tests")
+    promote_parser.add_argument("--beatmaps", action="store_true", help="Promote beatmaps (all if none specified)")
+    promote_parser.add_argument("--beatmapsets", action="store_true",
+                                help="Promote beatmapsets (all if none specified)")
+    promote_parser.add_argument("--users", action="store_true", help="Promote users (all if none specified)")
+    promote_parser.add_argument("--scores", action="store_true", help="Promote scores (all if none specified)")
+    promote_parser.add_argument("--beatmap-scores", action="store_true",
+                                help="Promote beatmap scores (all if none specified)")
+    promote_parser.add_argument("--beatmap-attributes", action="store_true",
+                                help="Promote beatmap attributes (all if none specified)")
+
+    demote_parser = fixtures_subparsers.add_parser("demote", help="Demote fixtures from tests to instance")
+    demote_parser.add_argument("--beatmaps", action="store_true", help="Demote beatmaps (all if none specified)")
+    demote_parser.add_argument("--beatmapsets", action="store_true", help="Demote beatmapsets (all if none specified)")
+    demote_parser.add_argument("--users", action="store_true", help="Demote users (all if none specified)")
+    demote_parser.add_argument("--scores", action="store_true", help="Demote scores (all if none specified)")
+    demote_parser.add_argument("--beatmap-scores", action="store_true",
+                               help="Demote beatmap scores (all if none specified)")
+    demote_parser.add_argument("--beatmap-attributes", action="store_true",
+                               help="Demote beatmap attributes (all if none specified)")
     refresh_parser = fixtures_subparsers.add_parser("refresh-top-players", help="Fetch top players from osu! API")
     refresh_parser.add_argument(
         "--ruleset", "-r",
@@ -207,41 +225,57 @@ async def main():
             await cmd_seed(args.target)
         case "fixtures":
             match args.fixture_command:
-                 case "fetch":
-                     await cmd_fetch_fixtures(
-                         scale=args.scale,
-                         beatmaps=args.beatmaps,
-                         beatmapsets=args.beatmapsets,
-                         users_osu=args.users_osu,
-                         users_taiko=args.users_taiko,
-                         users_fruits=args.users_fruits,
-                         users_mania=args.users_mania,
-                         scores_best=args.scores_best,
-                         scores_firsts=args.scores_firsts,
-                         scores_recent=args.scores_recent,
-                         beatmap_scores=args.beatmap_scores,
-                         beatmap_attributes=args.beatmap_attributes,
-                         use_minimal=args.minimal,
-                         beatmaps_range_min=args.beatmaps_range_min,
-                         beatmaps_range_max=args.beatmaps_range_max,
-                         beatmapsets_range_min=args.beatmapsets_range_min,
-                         beatmapsets_range_max=args.beatmapsets_range_max,
-                         users_range_min=args.users_range_min,
-                         users_range_max=args.users_range_max,
-                     )
-                 case "refresh-top-players":
-                     await cmd_refresh_top_players(
-                         rulesets=args.rulesets,
-                         count=args.count,
-                     )
-                 case "list":
-                     await cmd_list_fixtures()
-                 case "validate":
-                     await cmd_validate_fixtures()
-                 case "promote":
-                     await cmd_promote_fixtures()
-                 case "wipe":
-                     await cmd_wipe_fixtures(
-                         clear_failed_ids=args.clear_failed_ids,
-                         clear_top_player_ids=args.clear_top_player_ids,
-                     )
+                case "fetch":
+                    await cmd_fetch_fixtures(
+                        scale=args.scale,
+                        beatmaps=args.beatmaps,
+                        beatmapsets=args.beatmapsets,
+                        users_osu=args.users_osu,
+                        users_taiko=args.users_taiko,
+                        users_fruits=args.users_fruits,
+                        users_mania=args.users_mania,
+                        scores_best=args.scores_best,
+                        scores_firsts=args.scores_firsts,
+                        scores_recent=args.scores_recent,
+                        beatmap_scores=args.beatmap_scores,
+                        beatmap_attributes=args.beatmap_attributes,
+                        use_minimal=args.minimal,
+                        beatmaps_range_min=args.beatmaps_range_min,
+                        beatmaps_range_max=args.beatmaps_range_max,
+                        beatmapsets_range_min=args.beatmapsets_range_min,
+                        beatmapsets_range_max=args.beatmapsets_range_max,
+                        users_range_min=args.users_range_min,
+                        users_range_max=args.users_range_max,
+                    )
+                case "refresh-top-players":
+                    await cmd_refresh_top_players(
+                        rulesets=args.rulesets,
+                        count=args.count,
+                    )
+                case "list":
+                    await cmd_list_fixtures()
+                case "validate":
+                    await cmd_validate_fixtures()
+                case "promote":
+                    await cmd_promote_fixtures(
+                        beatmaps=args.beatmaps,
+                        beatmapsets=args.beatmapsets,
+                        users=args.users,
+                        scores=args.scores,
+                        beatmap_scores=args.beatmap_scores,
+                        beatmap_attributes=args.beatmap_attributes,
+                    )
+                case "demote":
+                    await cmd_demote_fixtures(
+                        beatmaps=args.beatmaps,
+                        beatmapsets=args.beatmapsets,
+                        users=args.users,
+                        scores=args.scores,
+                        beatmap_scores=args.beatmap_scores,
+                        beatmap_attributes=args.beatmap_attributes,
+                    )
+                case "wipe":
+                    await cmd_wipe_fixtures(
+                        clear_failed_ids=args.clear_failed_ids,
+                        clear_top_player_ids=args.clear_top_player_ids,
+                    )

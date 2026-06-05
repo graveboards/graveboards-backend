@@ -216,7 +216,14 @@ async def cmd_validate_fixtures():
     console.print()
 
 
-async def cmd_promote_fixtures():
+async def cmd_promote_fixtures(
+    beatmaps: bool,
+    beatmapsets: bool,
+    users: bool,
+    scores: bool,
+    beatmap_scores: bool,
+    beatmap_attributes: bool,
+):
     from shutil import copy2, rmtree
 
     test_fixtures_dir = Path(__file__).resolve().parent.parent.parent / "tests" / "fixtures" / "osu"
@@ -227,32 +234,45 @@ async def cmd_promote_fixtures():
 
     console.print("\n[bold]=== Promoting Fixtures ===[/bold]\n")
 
-    for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
-        src_path = FIXTURES_DIR / category
-        dst_path = test_fixtures_dir / category
-        dst_path.mkdir(parents=True, exist_ok=True)
+    all_categories = not any([beatmaps, beatmapsets, users, scores, beatmap_scores, beatmap_attributes])
+    
+    categories_to_promote = []
+    if all_categories or beatmaps:
+        categories_to_promote.append(("beatmaps", "beatmaps"))
+    if all_categories or beatmapsets:
+        categories_to_promote.append(("beatmapsets", "beatmapsets"))
+    if all_categories or beatmap_scores:
+        categories_to_promote.append(("beatmap_scores", "beatmap_scores"))
+    if all_categories or beatmap_attributes:
+        categories_to_promote.append(("beatmap_attributes", "beatmap_attributes"))
+    if all_categories or users:
+        categories_to_promote.append(("users", "users"))
+    if all_categories or scores:
+        categories_to_promote.append(("scores", "scores"))
 
-        if src_path.exists():
-            for filepath in src_path.glob("*.json"):
-                copy2(filepath, dst_path / filepath.name)
-                copied += 1
-            rmtree(src_path)
+    for src_name, dst_name in categories_to_promote:
+        src_path = FIXTURES_DIR / src_name
+        dst_path = test_fixtures_dir / dst_name
 
-    for category in ["users", "scores"]:
-        src_path = FIXTURES_DIR / category
-        dst_path = test_fixtures_dir / category
-        dst_path.mkdir(parents=True, exist_ok=True)
-
-        if src_path.exists():
-            for sub in src_path.iterdir():
-                if sub.is_dir():
-                    sub_dst = dst_path / sub.name
-                    sub_dst.mkdir(parents=True, exist_ok=True)
-                    for filepath in sub.glob("*.json"):
-                        copy2(filepath, sub_dst / filepath.name)
-                        copied += 1
-                    rmtree(sub)
-            src_path.rmdir()
+        if src_name in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
+            dst_path.mkdir(parents=True, exist_ok=True)
+            if src_path.exists():
+                for filepath in src_path.glob("*.json"):
+                    copy2(filepath, dst_path / filepath.name)
+                    copied += 1
+                rmtree(src_path)
+        elif src_name in ["users", "scores"]:
+            dst_path.mkdir(parents=True, exist_ok=True)
+            if src_path.exists():
+                for sub in src_path.iterdir():
+                    if sub.is_dir():
+                        sub_dst = dst_path / sub.name
+                        sub_dst.mkdir(parents=True, exist_ok=True)
+                        for filepath in sub.glob("*.json"):
+                            copy2(filepath, sub_dst / filepath.name)
+                            copied += 1
+                        rmtree(sub)
+                src_path.rmdir()
 
     if metadata.get("last_updated"):
         metadata["last_updated"] = None
@@ -267,7 +287,64 @@ async def cmd_promote_fixtures():
         save_metadata(metadata)
 
     console.print(f"[green]✅ Promoted {copied} fixture files to tests/fixtures/osu/[/green]")
-    console.print("   [dim]Instance fixtures cleaned up[/dim]\n")
+
+
+async def cmd_demote_fixtures(
+    beatmaps: bool,
+    beatmapsets: bool,
+    users: bool,
+    scores: bool,
+    beatmap_scores: bool,
+    beatmap_attributes: bool,
+):
+    from shutil import copy2, rmtree
+
+    test_fixtures_dir = Path(__file__).resolve().parent.parent.parent / "tests" / "fixtures" / "osu"
+
+    moved = 0
+
+    console.print("\n[bold]=== Demoting Fixtures ===[/bold]\n")
+
+    all_categories = not any([beatmaps, beatmapsets, users, scores, beatmap_scores, beatmap_attributes])
+    
+    categories_to_demote = []
+    if all_categories or beatmaps:
+        categories_to_demote.append(("beatmaps", "beatmaps"))
+    if all_categories or beatmapsets:
+        categories_to_demote.append(("beatmapsets", "beatmapsets"))
+    if all_categories or beatmap_scores:
+        categories_to_demote.append(("beatmap_scores", "beatmap_scores"))
+    if all_categories or beatmap_attributes:
+        categories_to_demote.append(("beatmap_attributes", "beatmap_attributes"))
+    if all_categories or users:
+        categories_to_demote.append(("users", "users"))
+    if all_categories or scores:
+        categories_to_demote.append(("scores", "scores"))
+
+    for src_name, dst_name in categories_to_demote:
+        src_path = test_fixtures_dir / src_name
+        dst_path = FIXTURES_DIR / dst_name
+
+        if src_name in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
+            dst_path.mkdir(parents=True, exist_ok=True)
+            if src_path.exists():
+                for filepath in src_path.glob("*.json"):
+                    copy2(filepath, dst_path / filepath.name)
+                    moved += 1
+                    filepath.unlink(missing_ok=True)
+        elif src_name in ["users", "scores"]:
+            dst_path.mkdir(parents=True, exist_ok=True)
+            if src_path.exists():
+                for sub in src_path.iterdir():
+                    if sub.is_dir():
+                        sub_dst = dst_path / sub.name
+                        sub_dst.mkdir(parents=True, exist_ok=True)
+                        for filepath in sub.glob("*.json"):
+                            copy2(filepath, sub_dst / filepath.name)
+                            moved += 1
+                            filepath.unlink(missing_ok=True)
+
+    console.print(f"[green]✅ Demoted {moved} fixture files from tests/fixtures/osu/[/green]")
 
 
 async def cmd_wipe_fixtures(
