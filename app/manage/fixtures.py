@@ -4,6 +4,7 @@ from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 
+from app.logging import get_logger
 from app.fixtures.utils import (
     FIXTURES_DIR,
     load_metadata,
@@ -18,6 +19,7 @@ from app.fixtures.fetcher import FixtureDataFetcher
 from app.redis import RedisClient
 
 console = Console()
+logger = get_logger(__name__)
 
 
 async def cmd_fetch_fixtures(
@@ -59,7 +61,7 @@ async def cmd_fetch_fixtures(
             "max": users_range_max or 10000000,
         }
     fetcher = FixtureDataFetcher(rc, id_ranges=id_ranges if id_ranges else None)
-    fetcher.logger = __import__("logging").getLogger(__name__)
+    fetcher.logger = logger
 
     sample_counts = calculate_sample_counts(
         scale=scale,
