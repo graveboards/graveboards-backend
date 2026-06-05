@@ -4,8 +4,9 @@ from shutil import copy2, rmtree
 
 from rich.console import Console
 
-from app.fixtures.utils import FIXTURES_DIR, load_metadata, save_metadata
+from app.fixtures.utils import FIXTURES_DIR, load_metadata, save_metadata, create_empty_samples
 from app.logging import get_logger
+from .helpers import get_categories_to_process
 
 console = Console()
 logger = get_logger(__name__)
@@ -19,7 +20,6 @@ async def cmd_promote_fixtures(
     beatmap_scores: bool,
     beatmap_attributes: bool,
 ):
-    from app.fixtures.utils import create_empty_samples
     
     test_fixtures_dir = Path(__file__).resolve().parent.parent.parent / "tests" / "fixtures" / "osu"
     test_fixtures_dir.mkdir(parents=True, exist_ok=True)
@@ -29,8 +29,6 @@ async def cmd_promote_fixtures(
     current_time = datetime.now(timezone.utc).isoformat()
 
     console.print("\n[bold]=== Promoting Fixtures ===[/bold]\n")
-
-    from .helpers import get_categories_to_process
 
     categories_to_promote = get_categories_to_process(
         beatmaps=beatmaps,

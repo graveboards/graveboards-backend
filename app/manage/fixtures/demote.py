@@ -6,6 +6,7 @@ from rich.console import Console
 
 from app.fixtures.utils import FIXTURES_DIR, load_metadata, save_metadata
 from app.logging import get_logger
+from .helpers import get_categories_to_process
 
 console = Console()
 logger = get_logger(__name__)
@@ -25,8 +26,6 @@ async def cmd_demote_fixtures(
     current_time = datetime.now(timezone.utc).isoformat()
 
     console.print("\n[bold]=== Demoting Fixtures ===[/bold]\n")
-
-    from .helpers import get_categories_to_process
 
     categories_to_demote = get_categories_to_process(
         beatmaps=beatmaps,

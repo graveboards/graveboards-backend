@@ -1,9 +1,8 @@
-from pathlib import Path
 from shutil import rmtree
 
 from rich.console import Console
 
-from app.fixtures.utils import FIXTURES_DIR, load_metadata, save_metadata, RULESETS, SCORE_TYPES, create_empty_samples, create_empty_promoted_fixtures
+from app.fixtures.utils import FIXTURES_DIR, load_metadata, save_metadata, RULESETS, create_empty_samples, create_empty_promoted_fixtures
 from app.logging import get_logger
 
 console = Console()
@@ -15,8 +14,6 @@ async def cmd_wipe_fixtures(
     clear_top_player_ids: bool = False,
     clear_promoted: bool = False,
 ):
-    from app.fixtures.utils import create_empty_samples, create_empty_promoted_fixtures
-    
     console.print("\n[bold blue]Wiping fixtures...[/bold blue]\n")
 
     metadata = load_metadata()
