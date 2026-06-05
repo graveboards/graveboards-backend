@@ -17,12 +17,6 @@ from .fixtures import (
 
 
 async def main():
-    setup_logging(
-        enabled_loggers=["manage", "database"],
-        level_overrides={"database": logging.WARNING},
-        no_debug=True
-    )
-
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -158,6 +152,11 @@ async def main():
         type=int,
         help="Maximum user ID to fetch",
     )
+    fetch_parser.add_argument(
+        "-v", "--verbose",
+        action="store_true",
+        help="Enable verbose/debug logging",
+    )
 
     fixtures_subparsers.add_parser("list", help="List available fixtures")
     fixtures_subparsers.add_parser("validate", help="Validate fixture structure")
@@ -170,6 +169,13 @@ async def main():
     )
 
     args = parser.parse_args()
+
+    no_debug = not getattr(args, 'verbose', False)
+    setup_logging(
+        enabled_loggers=["manage", "database"],
+        level_overrides={"database": logging.WARNING},
+        no_debug=no_debug
+    )
 
     match args.command:
         case "status":
