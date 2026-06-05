@@ -192,7 +192,7 @@ async def cmd_validate_fixtures():
                     try:
                         with open(filepath) as f:
                             data = json.load(f)
-                        if not isinstance(data, dict):
+                        if not isinstance(data, (dict, list)):
                             errors.append(f"{filepath}: Invalid JSON structure")
                     except json.JSONDecodeError as e:
                         errors.append(f"{filepath}: JSON decode error - {e}")
@@ -201,7 +201,7 @@ async def cmd_validate_fixtures():
                 try:
                     with open(filepath) as f:
                         data = json.load(f)
-                    if not isinstance(data, dict):
+                    if not isinstance(data, (dict, list)):
                         errors.append(f"{filepath}: Invalid JSON structure")
                 except json.JSONDecodeError as e:
                     errors.append(f"{filepath}: JSON decode error - {e}")

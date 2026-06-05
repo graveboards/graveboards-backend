@@ -3,8 +3,6 @@ import random
 from datetime import datetime, timezone
 from typing import Optional
 
-import httpx
-
 from app.redis import RedisClient
 from app.osu_api.client.osu_api_client import OsuAPIClient
 from app.osu_api.enums import ScoreType, Ruleset
