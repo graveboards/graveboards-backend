@@ -217,7 +217,7 @@ async def cmd_validate_fixtures():
 
 
 async def cmd_promote_fixtures():
-    from shutil import copy2
+    from shutil import copy2, rmtree
 
     test_fixtures_dir = Path(__file__).resolve().parent.parent.parent / "tests" / "fixtures" / "osu"
     test_fixtures_dir.mkdir(parents=True, exist_ok=True)
@@ -236,7 +236,7 @@ async def cmd_promote_fixtures():
             for filepath in src_path.glob("*.json"):
                 copy2(filepath, dst_path / filepath.name)
                 copied += 1
-            src_path.unlink(missing_ok=True)
+            rmtree(src_path)
 
     for category in ["users", "scores"]:
         src_path = FIXTURES_DIR / category
@@ -251,7 +251,8 @@ async def cmd_promote_fixtures():
                     for filepath in sub.glob("*.json"):
                         copy2(filepath, sub_dst / filepath.name)
                         copied += 1
-                    sub.unlink(missing_ok=True)
+                    rmtree(sub)
+            src_path.rmdir()
 
     if metadata.get("last_updated"):
         metadata["last_updated"] = None
@@ -273,7 +274,7 @@ async def cmd_wipe_fixtures(
     clear_failed_ids: bool = False,
     clear_top_player_ids: bool = False,
 ):
-    import shutil
+    from shutil import rmtree
 
     console.print("\n[bold blue]Wiping fixtures...[/bold blue]\n")
 
@@ -282,7 +283,7 @@ async def cmd_wipe_fixtures(
     if FIXTURES_DIR.exists():
         for sub_dir in FIXTURES_DIR.iterdir():
             if sub_dir.is_dir():
-                shutil.rmtree(sub_dir)
+                rmtree(sub_dir)
                 console.print(f"[green]✅ Deleted: {sub_dir.name}[/green]")
     
     metadata["samples"] = {
