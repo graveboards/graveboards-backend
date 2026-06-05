@@ -79,19 +79,21 @@ async def cmd_fetch_fixtures(
         use_minimal=use_minimal,
     )
 
+    def add_counts_to_table(counts: dict, table: Table) -> None:
+        for category, count in counts.items():
+            if isinstance(count, dict):
+                for subcat, subcount in count.items():
+                    table.add_row(f"{category}.{subcat}", str(subcount))
+            else:
+                table.add_row(category, str(count))
+
     console.print("\n[bold blue]Fetching fixture data from osu! API...[/bold blue]")
     console.print(f"\n[bold]Sample counts:[/bold]")
     table = Table(show_header=False)
     table.add_column("Category")
     table.add_column("Count")
     
-    for category, count in sample_counts.items():
-        if isinstance(count, dict):
-            for subcat, subcount in count.items():
-                table.add_row(f"{category}.{subcat}", str(subcount))
-        else:
-            table.add_row(category, str(count))
-    
+    add_counts_to_table(sample_counts, table)
     console.print(table)
 
     results = await fetcher.fetch_all(sample_counts)
@@ -99,12 +101,10 @@ async def cmd_fetch_fixtures(
     console.print("\n[bold green]Fixture data fetch complete![/bold green]")
     console.print("\n[bold]Results:[/bold]")
     result_table = Table(show_header=False)
-    for category, count in results.items():
-        if isinstance(count, dict):
-            for subcat, subcount in count.items():
-                result_table.add_row(f"{category}.{subcat}", str(subcount))
-        else:
-            result_table.add_row(category, str(count))
+    result_table.add_column("Category")
+    result_table.add_column("Count")
+    
+    add_counts_to_table(results, result_table)
     console.print(result_table)
     console.print()
 
@@ -152,7 +152,6 @@ async def cmd_list_fixtures():
 
 
 async def cmd_validate_fixtures():
-    metadata = load_metadata()
     fixtures = get_all_fixture_files()
     errors = []
 
