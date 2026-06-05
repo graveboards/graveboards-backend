@@ -159,6 +159,11 @@ async def main():
         action="store_true",
         help="Enable verbose/debug logging",
     )
+    fetch_parser.add_argument(
+        "--no-progress",
+        action="store_true",
+        help="Disable progress bar display",
+    )
 
     promote_parser = fixtures_subparsers.add_parser("promote", help="Promote fixtures from instance to tests")
     promote_parser.add_argument("--beatmaps", action="store_true", help="Promote beatmaps (all if none specified)")
@@ -253,6 +258,7 @@ async def main():
                         beatmapsets_range_max=args.beatmapsets_range_max,
                         users_range_min=args.users_range_min,
                         users_range_max=args.users_range_max,
+                        no_progress=args.no_progress,
                     )
                 case "refresh-top-players":
                     await cmd_refresh_top_players(

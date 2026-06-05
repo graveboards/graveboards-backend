@@ -71,6 +71,7 @@ async def cmd_fetch_fixtures(
     beatmapsets_range_max: int | None,
     users_range_min: int | None,
     users_range_max: int | None,
+    no_progress: bool,
 ):
     rc = RedisClient()
     id_ranges = {}
@@ -151,17 +152,8 @@ async def cmd_fetch_fixtures(
     overall_task = progress.add_task("Total", total=total_tasks)
     overall_progress = 0
 
-    progress_table = Table.grid()
-    panel = Panel.fit(
-        progress,
-        title="Fetching Fixtures",
-        border_style="green",
-        padding=(1, 3)
-    )
-    progress_table.add_row(panel)
-
-    with Live(progress_table, refresh_per_second=20):
-        async for event in fetcher.fetch_all(sample_counts):
+    async for event in fetcher.fetch_all(sample_counts):
+        if not no_progress:
             category = event.category
             if category in tasks:
                 progress.update(tasks[category], completed=event.current)
@@ -172,11 +164,15 @@ async def cmd_fetch_fixtures(
                         break
             overall_progress += 1
             progress.update(overall_task, completed=overall_progress)
-        
-        results = fetcher._last_fetch_results
+    
+    results = fetcher._last_fetch_results
 
+    if no_progress:
+        console.print(f"Fetched: {results}")
+    else:
         panel.title = "Fetching Completed"
         panel.border_style = "dim green"
+        progress_table.add_row(panel)
 
     console.print("\n[bold green]Fixture data fetch complete![/bold green]")
     console.print("\n[bold]Results:[/bold]")

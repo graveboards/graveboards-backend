@@ -70,6 +70,7 @@ class FixtureDataFetcher:
         self.metadata["samples"]["beatmaps"]["count"] += fetched
         self.metadata["samples"]["beatmaps"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
         save_metadata(self.metadata)
+        self._current_session_results["beatmaps"] = fetched
 
     async def fetch_beatmapsets(self, count: int) -> AsyncIterator[FetchEvent]:
         path = get_fixture_path("beatmapsets")
@@ -98,6 +99,7 @@ class FixtureDataFetcher:
         self.metadata["samples"]["beatmapsets"]["count"] += fetched
         self.metadata["samples"]["beatmapsets"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
         save_metadata(self.metadata)
+        self._current_session_results["beatmapsets"] = fetched
 
     async def fetch_users(
         self,
@@ -152,6 +154,7 @@ class FixtureDataFetcher:
         }
         self.metadata["samples"]["users"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
         save_metadata(self.metadata)
+        self._current_session_results["users"] = fetched.copy()
 
     async def fetch_scores(
         self,
@@ -221,6 +224,7 @@ class FixtureDataFetcher:
         }
         self.metadata["samples"]["scores"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
         save_metadata(self.metadata)
+        self._current_session_results["scores"] = fetched.copy()
 
     async def fetch_beatmap_scores(self, count: int) -> AsyncIterator[FetchEvent]:
         path = get_fixture_path("beatmap_scores")
@@ -255,6 +259,7 @@ class FixtureDataFetcher:
         self.metadata["samples"]["beatmap_scores"]["count"] += fetched
         self.metadata["samples"]["beatmap_scores"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
         save_metadata(self.metadata)
+        self._current_session_results["beatmap_scores"] = fetched
 
     async def fetch_beatmap_attributes(self, count: int) -> AsyncIterator[FetchEvent]:
         path = get_fixture_path("beatmap_attributes")
@@ -284,12 +289,21 @@ class FixtureDataFetcher:
         self.metadata["samples"]["beatmap_attributes"]["count"] += fetched
         self.metadata["samples"]["beatmap_attributes"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
         save_metadata(self.metadata)
+        self._current_session_results["beatmap_attributes"] = fetched
 
     def refresh_top_player_ids_from_metadata(self) -> None:
         self.top_player_ids = self.metadata.get("top_player_ids", {r: [] for r in RULESETS})
 
     async def fetch_all(self, sample_counts: dict) -> AsyncIterator[FetchEvent]:
         self._last_fetch_results = {}
+        self._current_session_results = {
+            "beatmaps": 0,
+            "beatmapsets": 0,
+            "users": {r: 0 for r in RULESETS},
+            "scores": {t: 0 for t in SCORE_TYPES},
+            "beatmap_scores": 0,
+            "beatmap_attributes": 0,
+        }
         self.logger.info("Fetching fixture data from osu! API...")
         
         users = sample_counts.get("users", {})
@@ -333,12 +347,12 @@ class FixtureDataFetcher:
         
         self.metadata = load_metadata()
         results = {
-            "beatmaps": self.metadata["samples"]["beatmaps"]["count"],
-            "beatmapsets": self.metadata["samples"]["beatmapsets"]["count"],
-            "users": self.metadata["samples"]["users"]["per_ruleset"].copy(),
-            "scores": self.metadata["samples"]["scores"]["per_type"].copy(),
-            "beatmap_scores": self.metadata["samples"]["beatmap_scores"]["count"],
-            "beatmap_attributes": self.metadata["samples"]["beatmap_attributes"]["count"],
+            "beatmaps": self._current_session_results["beatmaps"],
+            "beatmapsets": self._current_session_results["beatmapsets"],
+            "users": self._current_session_results["users"].copy(),
+            "scores": self._current_session_results["scores"].copy(),
+            "beatmap_scores": self._current_session_results["beatmap_scores"],
+            "beatmap_attributes": self._current_session_results["beatmap_attributes"],
         }
         
         self._last_fetch_results = results
