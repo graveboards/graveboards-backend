@@ -42,6 +42,8 @@ class FixtureDataFetcher:
         })
         self.id_ranges = id_ranges or self.metadata.get("id_ranges", ID_RANGES)
         self.top_player_ids = self.metadata.get("top_player_ids", {r: [] for r in RULESETS})
+        self.last_fetch_results = {}
+        self._current_session_results = {}
 
     async def fetch_beatmaps(self, count: int) -> AsyncIterator[FetchEvent]:
         path = get_fixture_path("beatmaps")
@@ -295,7 +297,7 @@ class FixtureDataFetcher:
         self.top_player_ids = self.metadata.get("top_player_ids", {r: [] for r in RULESETS})
 
     async def fetch_all(self, sample_counts: dict) -> AsyncIterator[FetchEvent]:
-        self._last_fetch_results = {}
+        self.last_fetch_results = {}
         self._current_session_results = {
             "beatmaps": 0,
             "beatmapsets": 0,
@@ -304,7 +306,6 @@ class FixtureDataFetcher:
             "beatmap_scores": 0,
             "beatmap_attributes": 0,
         }
-        self.logger.info("Fetching fixture data from osu! API...")
         
         users = sample_counts.get("users", {})
         scores = sample_counts.get("scores", {})
@@ -355,8 +356,7 @@ class FixtureDataFetcher:
             "beatmap_attributes": self._current_session_results["beatmap_attributes"],
         }
         
-        self._last_fetch_results = results
-        self.logger.info(f"Fixture data fetch complete: {results}")
+        self.last_fetch_results = results
 
     async def fetch_top_players(
         self,
@@ -410,6 +410,7 @@ class FixtureDataFetcher:
         save_top_player_ids(current_top_ids)
         self.metadata = load_metadata()
         self.top_player_ids = self.metadata.get("top_player_ids", {r: [] for r in RULESETS})
+        return fetched
 
     def _get_random_id(self, category: str, use_top_players: bool = False) -> int:
         if use_top_players and category == "users" and self.top_player_ids:

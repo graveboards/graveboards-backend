@@ -106,54 +106,130 @@ async def cmd_fetch_fixtures(
         scores_recent=scores_recent,
         beatmap_scores=beatmap_scores,
         beatmap_attributes=beatmap_attributes,
-        use_minimal=use_minimal,
+       use_minimal=use_minimal,
     )
 
-    progress = Progress(
-        TextColumn("[bold blue]{task.description}"),
-        TextColumn("[white]({task.completed}/{task.total})"),
-        BarColumn(pulse_style="dim"),
-        "[progress.percentage]{task.percentage:>3.0f}%",
-        TimeRemainingColumn(compact=True),
-        TimeElapsedColumn()
-    )
+    if not no_progress:
+        progress = Progress(
+            TextColumn("[bold blue]{task.description}"),
+            TextColumn("[white]({task.completed}/{task.total})"),
+            BarColumn(pulse_style="dim"),
+            "[progress.percentage]{task.percentage:>3.0f}%",
+            TimeRemainingColumn(compact=True),
+            TimeElapsedColumn()
+        )
 
-    tasks: dict[str, TaskID] = {}
-    total_tasks = 0
+        tasks: dict[str, TaskID] = {}
+        total_items = 0
 
-    if sample_counts.get("beatmaps", 0) > 0:
-        tasks["beatmaps"] = progress.add_task("Beatmaps", total=sample_counts["beatmaps"])
-        total_tasks += 1
+        if sample_counts.get("beatmaps", 0) > 0:
+            tasks["beatmaps"] = progress.add_task("Beatmaps", total=sample_counts["beatmaps"])
+            total_items += sample_counts["beatmaps"]
 
-    if sample_counts.get("beatmapsets", 0) > 0:
-        tasks["beatmapsets"] = progress.add_task("Beatmapsets", total=sample_counts["beatmapsets"])
-        total_tasks += 1
+        if sample_counts.get("beatmapsets", 0) > 0:
+            tasks["beatmapsets"] = progress.add_task("Beatmapsets", total=sample_counts["beatmapsets"])
+            total_items += sample_counts["beatmapsets"]
 
-    users = sample_counts.get("users", {})
-    user_total = sum(users.values())
-    if user_total > 0:
-        tasks["users"] = progress.add_task("Users", total=user_total)
-        total_tasks += 1
+        users = sample_counts.get("users", {})
+        user_total = sum(users.values())
+        if user_total > 0:
+            tasks["users"] = progress.add_task("Users", total=user_total)
+            total_items += user_total
 
-    scores = sample_counts.get("scores", {})
-    scores_total = sum(scores.values())
-    if scores_total > 0:
-        tasks["scores"] = progress.add_task("Scores", total=scores_total)
-        total_tasks += 1
+        scores = sample_counts.get("scores", {})
+        scores_total = sum(scores.values())
+        if scores_total > 0:
+            tasks["scores"] = progress.add_task("Scores", total=scores_total)
+            total_items += scores_total
 
-    if sample_counts.get("beatmap_scores", 0) > 0:
-        tasks["beatmap_scores"] = progress.add_task("Beatmap Scores", total=sample_counts["beatmap_scores"])
-        total_tasks += 1
+        if sample_counts.get("beatmap_scores", 0) > 0:
+            tasks["beatmap_scores"] = progress.add_task("Beatmap Scores", total=sample_counts["beatmap_scores"])
+            total_items += sample_counts["beatmap_scores"]
 
-    if sample_counts.get("beatmap_attributes", 0) > 0:
-        tasks["beatmap_attributes"] = progress.add_task("Beatmap Attributes", total=sample_counts["beatmap_attributes"])
-        total_tasks += 1
+        if sample_counts.get("beatmap_attributes", 0) > 0:
+            tasks["beatmap_attributes"] = progress.add_task("Beatmap Attributes", total=sample_counts["beatmap_attributes"])
+            total_items += sample_counts["beatmap_attributes"]
 
-    overall_task = progress.add_task("Total", total=total_tasks)
-    overall_progress = 0
+        overall_task = progress.add_task("Total", total=total_items)
+        overall_progress = 0
 
-    async for event in fetcher.fetch_all(sample_counts):
-        if not no_progress:
+        progress_table = Table.grid()
+        panel = Panel.fit(
+            progress,
+            title="Fetching Fixtures",
+            border_style="green",
+            padding=(1, 3)
+        )
+        progress_table.add_row(panel)
+
+        logger.info("Fetching fixture data from osu! API...")
+
+        with Live(progress_table, refresh_per_second=20):
+            async for event in fetcher.fetch_all(sample_counts):
+                category = event.category
+                if category in tasks:
+                    progress.update(tasks[category], completed=event.current)
+                else:
+                    for task_category in tasks.keys():
+                        if task_category in category:
+                            progress.update(tasks[task_category], completed=event.current)
+                            break
+                overall_progress += 1
+                progress.update(overall_task, completed=overall_progress)
+            
+            results = fetcher.last_fetch_results
+
+            panel.title = "Fetching Completed"
+            panel.border_style = "dim green"
+
+        logger.info(f"Fixture data fetch complete: {results}")
+    else:
+        progress = Progress(
+            TextColumn("[bold blue]{task.description}"),
+            TextColumn("[white]({task.completed}/{task.total})"),
+            BarColumn(pulse_style="dim"),
+            "[progress.percentage]{task.percentage:>3.0f}%",
+            TimeRemainingColumn(compact=True),
+            TimeElapsedColumn()
+        )
+
+        tasks: dict[str, TaskID] = {}
+        total_items = 0
+
+        if sample_counts.get("beatmaps", 0) > 0:
+            tasks["beatmaps"] = progress.add_task("Beatmaps", total=sample_counts["beatmaps"])
+            total_items += sample_counts["beatmaps"]
+
+        if sample_counts.get("beatmapsets", 0) > 0:
+            tasks["beatmapsets"] = progress.add_task("Beatmapsets", total=sample_counts["beatmapsets"])
+            total_items += sample_counts["beatmapsets"]
+
+        users = sample_counts.get("users", {})
+        user_total = sum(users.values())
+        if user_total > 0:
+            tasks["users"] = progress.add_task("Users", total=user_total)
+            total_items += user_total
+
+        scores = sample_counts.get("scores", {})
+        scores_total = sum(scores.values())
+        if scores_total > 0:
+            tasks["scores"] = progress.add_task("Scores", total=scores_total)
+            total_items += scores_total
+
+        if sample_counts.get("beatmap_scores", 0) > 0:
+            tasks["beatmap_scores"] = progress.add_task("Beatmap Scores", total=sample_counts["beatmap_scores"])
+            total_items += sample_counts["beatmap_scores"]
+
+        if sample_counts.get("beatmap_attributes", 0) > 0:
+            tasks["beatmap_attributes"] = progress.add_task("Beatmap Attributes", total=sample_counts["beatmap_attributes"])
+            total_items += sample_counts["beatmap_attributes"]
+
+        overall_task = progress.add_task("Total", total=total_items)
+        overall_progress = 0
+
+        logger.info("Fetching fixture data from osu! API...")
+
+        async for event in fetcher.fetch_all(sample_counts):
             category = event.category
             if category in tasks:
                 progress.update(tasks[category], completed=event.current)
@@ -164,17 +240,11 @@ async def cmd_fetch_fixtures(
                         break
             overall_progress += 1
             progress.update(overall_task, completed=overall_progress)
-    
-    results = fetcher._last_fetch_results
 
-    if no_progress:
-        console.print(f"Fetched: {results}")
-    else:
-        panel.title = "Fetching Completed"
-        panel.border_style = "dim green"
-        progress_table.add_row(panel)
+        results = fetcher.last_fetch_results
+        progress.stop()
+        logger.info(f"Fixture data fetch complete: {results}")
 
-    console.print("\n[bold green]Fixture data fetch complete![/bold green]")
     console.print("\n[bold]Results:[/bold]")
     result_table = Table(show_header=False)
     result_table.add_column("Category")
