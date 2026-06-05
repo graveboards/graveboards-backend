@@ -1,6 +1,9 @@
 import json
 import random
 from datetime import datetime, timezone
+from typing import Optional
+
+import httpx
 
 from app.redis import RedisClient
 from app.osu_api.client.osu_api_client import OsuAPIClient
@@ -13,9 +16,12 @@ from .utils import (
     RULESETS,
     SCORE_TYPES,
     ID_RANGES,
+    load_top_player_ids,
+    save_top_player_ids,
 )
 
 MAX_RETRIES = 5
+RANKING_PAGE_SIZE = 50
 
 
 class FixtureDataFetcher:
@@ -30,6 +36,7 @@ class FixtureDataFetcher:
             "users": {r: [] for r in RULESETS},
         })
         self.id_ranges = id_ranges or self.metadata.get("id_ranges", ID_RANGES)
+        self.top_player_ids = self.metadata.get("top_player_ids", {r: [] for r in RULESETS})
 
     async def fetch_beatmaps(self, count: int) -> int:
         path = get_fixture_path("beatmaps")
@@ -137,6 +144,10 @@ class FixtureDataFetcher:
         scores_firsts: int,
         scores_recent: int,
     ) -> dict[str, int]:
+        if not self.top_player_ids.get(RULESETS[0]) or all(len(ids) == 0 for ids in self.top_player_ids.values()):
+            self.logger.info("Top player IDs not found or empty. Fetching top players first...")
+            await self.fetch_top_players()
+
         path = get_fixture_path("scores")
         fetched = {t: 0 for t in SCORE_TYPES}
 
@@ -152,7 +163,8 @@ class FixtureDataFetcher:
             count = type_counts[score_type]
 
             for _ in range(count):
-                user_id = self._get_random_id("users")
+                use_top_players = score_type in ["firsts", "recent"]
+                user_id = self._get_random_id("users", use_top_players=use_top_players)
                 mode = Ruleset.OSU
                 score_type_enum = getattr(ScoreType, score_type.upper())
                 retries = 0
@@ -162,7 +174,10 @@ class FixtureDataFetcher:
                         if not isinstance(data, list) or not data:
                             self.logger.debug(f"Empty scores for user {user_id} ({score_type}) (retry {retries + 1}/{MAX_RETRIES})")
                             retries += 1
-                            user_id = self._get_random_id("users")
+                            if retries >= MAX_RETRIES and score_type == "best":
+                                user_id = self._get_random_id("users", use_top_players=True)
+                            else:
+                                user_id = self._get_random_id("users", use_top_players=use_top_players)
                             continue
                         filepath = type_path / f"scores_{user_id}_{score_type}.json"
                         with open(filepath, "w") as f:
@@ -173,7 +188,10 @@ class FixtureDataFetcher:
                         self.logger.debug(f"Failed to fetch scores for user {user_id} ({score_type}) (retry {retries + 1}/{MAX_RETRIES}): {e}")
                         self._add_failed_id("users", user_id)
                         retries += 1
-                        user_id = self._get_random_id("users")
+                        if retries >= MAX_RETRIES and score_type == "best":
+                            user_id = self._get_random_id("users", use_top_players=True)
+                        else:
+                            user_id = self._get_random_id("users", use_top_players=use_top_players)
 
         self.metadata["samples"]["scores"]["count"] += sum(fetched.values())
         self.metadata["samples"]["scores"]["per_type"] = {
@@ -242,6 +260,9 @@ class FixtureDataFetcher:
         save_metadata(self.metadata)
         return fetched
 
+    def refresh_top_player_ids_from_metadata(self) -> None:
+        self.top_player_ids = self.metadata.get("top_player_ids", {r: [] for r in RULESETS})
+
     async def fetch_all(self, sample_counts: dict) -> dict:
         self.logger.info("Fetching fixture data from osu! API...")
         
@@ -268,7 +289,71 @@ class FixtureDataFetcher:
         self.logger.info(f"Fixture data fetch complete: {results}")
         return results
 
-    def _get_random_id(self, category: str) -> int:
+    async def fetch_top_players(
+        self,
+        rulesets: Optional[list[str]] = None,
+        count_per_ruleset: int = 1000,
+    ) -> dict[str, list[int]]:
+        if rulesets is None:
+            rulesets = RULESETS
+        
+        fetched = {}
+        
+        for ruleset_name in rulesets:
+            page = 1
+            player_ids = []
+            
+            while len(player_ids) < count_per_ruleset:
+                remaining = count_per_ruleset - len(player_ids)
+                limit = min(RANKING_PAGE_SIZE, remaining)
+                
+                try:
+                    data = await self.oac.get_rankings(
+                        ruleset=getattr(Ruleset, ruleset_name.upper()),
+                        mode="performance",
+                        cursor_page=page,
+                        limit=limit
+                    )
+                    
+                    players = data.get("ranking", [])
+                    if not players:
+                        break
+                    
+                    for player in players:
+                        user = player.get("user")
+                        if user and "id" in user:
+                            player_ids.append(user["id"])
+                    
+                    if len(players) < limit:
+                        break
+                    
+                    page += 1
+                    
+                except Exception as e:
+                    self.logger.error(f"Error fetching ranking for {ruleset_name}: {e}")
+                    break
+            
+            fetched[ruleset_name] = player_ids[:count_per_ruleset]
+            self.logger.info(f"Fetched {len(player_ids)} top players for {ruleset_name}")
+        
+        current_top_ids = load_top_player_ids()
+        current_top_ids.update(fetched)
+        save_top_player_ids(current_top_ids)
+        self.metadata = load_metadata()
+        self.top_player_ids = self.metadata.get("top_player_ids", {r: [] for r in RULESETS})
+        
+        return fetched
+
+    def _get_random_id(self, category: str, use_top_players: bool = False) -> int:
+        if use_top_players and category == "users" and self.top_player_ids:
+            for ruleset in RULESETS:
+                top_ids = self.top_player_ids.get(ruleset, [])
+                if top_ids:
+                    candidate = random.choice(top_ids)
+                    failed_list = self.failed_ids.get("users", {}).get(ruleset, [])
+                    if candidate not in failed_list:
+                        return candidate
+        
         range_config = self.id_ranges.get(category, self.id_ranges.get(category.split(".")[0], {"min": 1, "max": 1000000}))
         min_id = range_config.get("min", 1)
         max_id = range_config.get("max", 1000000)

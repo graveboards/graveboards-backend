@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import Optional
 
 from rich.console import Console
 from rich.table import Table
@@ -10,7 +11,6 @@ from app.fixtures.utils import (
     load_metadata,
     save_metadata,
     get_all_fixture_files,
-    wipe_all_fixtures,
     RULESETS,
     SCORE_TYPES,
     calculate_sample_counts,
@@ -20,6 +20,34 @@ from app.redis import RedisClient
 
 console = Console()
 logger = get_logger(__name__)
+
+
+async def cmd_refresh_top_players(
+    rulesets: Optional[list[str]] = None,
+    count: int = 1000,
+) -> None:
+    rc = RedisClient()
+    fetcher = FixtureDataFetcher(rc)
+    fetcher.logger = logger
+    
+    if rulesets is None:
+        rulesets = RULESETS
+    
+    console.print("\n[bold blue]Refreshing top players from osu! API...[/bold blue]")
+    console.print(f"[bold]Rulesets:[/bold] {', '.join(rulesets)}")
+    console.print(f"[bold]Count per ruleset:[/bold] {count}\n")
+    
+    fetched = await fetcher.fetch_top_players(rulesets=rulesets, count_per_ruleset=count)
+    
+    console.print("\n[bold green]Top players refresh complete![/bold green]\n")
+    console.print("[bold]Fetched:[/bold]")
+    table = Table(show_header=False)
+    table.add_column("Ruleset")
+    table.add_column("Count")
+    for ruleset, player_ids in fetched.items():
+        table.add_row(ruleset, str(len(player_ids)))
+    console.print(table)
+    console.print()
 
 
 async def cmd_fetch_fixtures(
@@ -241,6 +269,39 @@ async def cmd_promote_fixtures():
     console.print("   [dim]Instance fixtures cleaned up[/dim]\n")
 
 
-async def cmd_wipe_fixtures(clear_failed_ids: bool = False):
-    wipe_all_fixtures(clear_failed_ids=clear_failed_ids)
-    console.print("[green]✅ All fixtures wiped[/green]\n")
+async def cmd_wipe_fixtures(
+    clear_failed_ids: bool = False,
+    clear_top_player_ids: bool = False,
+):
+    import shutil
+
+    console.print("\n[bold blue]Wiping fixtures...[/bold blue]\n")
+
+    metadata = load_metadata()
+    
+    if FIXTURES_DIR.exists():
+        for sub_dir in FIXTURES_DIR.iterdir():
+            if sub_dir.is_dir():
+                shutil.rmtree(sub_dir)
+                console.print(f"[green]✅ Deleted: {sub_dir.name}[/green]")
+    
+    metadata["samples"] = {
+        "beatmaps": {"count": 0, "last_fetched": None},
+        "beatmapsets": {"count": 0, "last_fetched": None},
+        "users": {"count": 0, "per_ruleset": {r: 0 for r in RULESETS}, "last_fetched": None},
+        "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_fetched": None},
+        "beatmap_scores": {"count": 0, "last_fetched": None},
+        "beatmap_attributes": {"count": 0, "last_fetched": None},
+    }
+    if clear_failed_ids:
+        metadata["failed_ids"] = {
+            "beatmaps": [],
+            "beatmapsets": [],
+            "users": {r: [] for r in RULESETS},
+        }
+    if clear_top_player_ids:
+        metadata["top_player_ids"] = {r: [] for r in RULESETS}
+    save_metadata(metadata)
+
+    console.print("[green]✅ Fixtures wiped![/green]\n")
+

@@ -38,6 +38,7 @@ MINIMAL_PROFILE = {
 
 RULESETS = ["osu", "taiko", "fruits", "mania"]
 SCORE_TYPES = ["best", "firsts", "recent"]
+TOP_PLAYERS_PER_RULESET = 1000
 
 
 def calculate_sample_counts(
@@ -151,6 +152,7 @@ def create_empty_metadata() -> dict:
             "beatmapsets": [],
             "users": {r: [] for r in RULESETS},
         },
+        "top_player_ids": {r: [] for r in RULESETS},
         "id_ranges": {
             "beatmaps": {"min": 1, "max": 1000000},
             "beatmapsets": {"min": 1, "max": 100000},
@@ -168,6 +170,7 @@ def save_metadata(metadata: dict) -> None:
         "beatmapsets": [],
         "users": {r: [] for r in RULESETS},
     })
+    metadata.setdefault("top_player_ids", {r: [] for r in RULESETS})
     metadata.setdefault("id_ranges", {
         "beatmaps": {"min": 1, "max": 1000000},
         "beatmapsets": {"min": 1, "max": 100000},
@@ -200,7 +203,18 @@ def get_all_fixture_files() -> dict[str, list[Path]]:
     return fixtures
 
 
-def wipe_all_fixtures(clear_failed_ids: bool = False) -> None:
+def load_top_player_ids() -> dict[str, list[int]]:
+    metadata = load_metadata()
+    return metadata.get("top_player_ids", {r: [] for r in RULESETS})
+
+
+def save_top_player_ids(top_player_ids: dict[str, list[int]]) -> None:
+    metadata = load_metadata()
+    metadata["top_player_ids"] = top_player_ids
+    save_metadata(metadata)
+
+
+def wipe_all_fixtures(clear_failed_ids: bool = False, clear_top_player_ids: bool = False) -> None:
     if FIXTURES_DIR.exists():
         shutil.rmtree(FIXTURES_DIR)
     FIXTURES_DIR.mkdir(parents=True, exist_ok=True)
@@ -209,6 +223,9 @@ def wipe_all_fixtures(clear_failed_ids: bool = False) -> None:
     if not clear_failed_ids and METADATA_FILE.exists():
         existing_metadata = load_metadata()
         metadata["failed_ids"] = existing_metadata.get("failed_ids", metadata["failed_ids"])
+    if not clear_top_player_ids and METADATA_FILE.exists():
+        existing_metadata = load_metadata()
+        metadata["top_player_ids"] = existing_metadata.get("top_player_ids", metadata["top_player_ids"])
     
     save_metadata(metadata)
     logger.info("All fixtures wiped")

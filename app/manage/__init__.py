@@ -13,6 +13,7 @@ from .fixtures import (
     cmd_validate_fixtures,
     cmd_promote_fixtures,
     cmd_wipe_fixtures,
+    cmd_refresh_top_players,
 )
 
 
@@ -161,11 +162,31 @@ async def main():
     fixtures_subparsers.add_parser("list", help="List available fixtures")
     fixtures_subparsers.add_parser("validate", help="Validate fixture structure")
     fixtures_subparsers.add_parser("promote", help="Promote fixtures from instance to tests")
+    refresh_parser = fixtures_subparsers.add_parser("refresh-top-players", help="Fetch top players from osu! API")
+    refresh_parser.add_argument(
+        "--ruleset", "-r",
+        dest="rulesets",
+        action="append",
+        choices=["osu", "taiko", "fruits", "mania"],
+        help="Ruleset to refresh (can be specified multiple times). If not provided, refreshes all rulesets.",
+    )
+    refresh_parser.add_argument(
+        "--count", "-c",
+        type=int,
+        default=1000,
+        help="Number of player IDs to collect per ruleset (default: 1000)",
+    )
+
     wipe_parser = fixtures_subparsers.add_parser("wipe", help="Delete all fixtures")
     wipe_parser.add_argument(
         "--clear-failed-ids",
         action="store_true",
         help="Also clear failed IDs from metadata",
+    )
+    wipe_parser.add_argument(
+        "--clear-top-player-ids",
+        action="store_true",
+        help="Also clear top player IDs from metadata",
     )
 
     args = parser.parse_args()
@@ -186,33 +207,41 @@ async def main():
             await cmd_seed(args.target)
         case "fixtures":
             match args.fixture_command:
-                case "fetch":
-                    await cmd_fetch_fixtures(
-                        scale=args.scale,
-                        beatmaps=args.beatmaps,
-                        beatmapsets=args.beatmapsets,
-                        users_osu=args.users_osu,
-                        users_taiko=args.users_taiko,
-                        users_fruits=args.users_fruits,
-                        users_mania=args.users_mania,
-                        scores_best=args.scores_best,
-                        scores_firsts=args.scores_firsts,
-                        scores_recent=args.scores_recent,
-                        beatmap_scores=args.beatmap_scores,
-                        beatmap_attributes=args.beatmap_attributes,
-                        use_minimal=args.minimal,
-                        beatmaps_range_min=args.beatmaps_range_min,
-                        beatmaps_range_max=args.beatmaps_range_max,
-                        beatmapsets_range_min=args.beatmapsets_range_min,
-                        beatmapsets_range_max=args.beatmapsets_range_max,
-                        users_range_min=args.users_range_min,
-                        users_range_max=args.users_range_max,
-                    )
-                case "list":
-                    await cmd_list_fixtures()
-                case "validate":
-                    await cmd_validate_fixtures()
-                case "promote":
-                    await cmd_promote_fixtures()
-                case "wipe":
-                    await cmd_wipe_fixtures(clear_failed_ids=args.clear_failed_ids)
+                 case "fetch":
+                     await cmd_fetch_fixtures(
+                         scale=args.scale,
+                         beatmaps=args.beatmaps,
+                         beatmapsets=args.beatmapsets,
+                         users_osu=args.users_osu,
+                         users_taiko=args.users_taiko,
+                         users_fruits=args.users_fruits,
+                         users_mania=args.users_mania,
+                         scores_best=args.scores_best,
+                         scores_firsts=args.scores_firsts,
+                         scores_recent=args.scores_recent,
+                         beatmap_scores=args.beatmap_scores,
+                         beatmap_attributes=args.beatmap_attributes,
+                         use_minimal=args.minimal,
+                         beatmaps_range_min=args.beatmaps_range_min,
+                         beatmaps_range_max=args.beatmaps_range_max,
+                         beatmapsets_range_min=args.beatmapsets_range_min,
+                         beatmapsets_range_max=args.beatmapsets_range_max,
+                         users_range_min=args.users_range_min,
+                         users_range_max=args.users_range_max,
+                     )
+                 case "refresh-top-players":
+                     await cmd_refresh_top_players(
+                         rulesets=args.rulesets,
+                         count=args.count,
+                     )
+                 case "list":
+                     await cmd_list_fixtures()
+                 case "validate":
+                     await cmd_validate_fixtures()
+                 case "promote":
+                     await cmd_promote_fixtures()
+                 case "wipe":
+                     await cmd_wipe_fixtures(
+                         clear_failed_ids=args.clear_failed_ids,
+                         clear_top_player_ids=args.clear_top_player_ids,
+                     )
