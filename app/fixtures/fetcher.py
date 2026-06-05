@@ -159,6 +159,12 @@ class FixtureDataFetcher:
                 while retries < MAX_RETRIES:
                     try:
                         data = await self.oac.get_user_scores(user_id, score_type_enum, mode=mode)
+                        scores = data.get("scores", [])
+                        if not scores:
+                            self.logger.debug(f"Empty scores for user {user_id} ({score_type}) (retry {retries + 1}/{MAX_RETRIES})")
+                            retries += 1
+                            user_id = self._get_random_id("users")
+                            continue
                         filepath = type_path / f"scores_{user_id}_{score_type}.json"
                         with open(filepath, "w") as f:
                             json.dump(data, f, indent=2)
@@ -188,6 +194,12 @@ class FixtureDataFetcher:
             while retries < MAX_RETRIES:
                 try:
                     data = await self.oac.get_beatmap_scores(beatmap_id, limit=1)
+                    scores = data.get("scores", [])
+                    if not scores:
+                        self.logger.debug(f"Empty scores for beatmap {beatmap_id} (retry {retries + 1}/{MAX_RETRIES})")
+                        retries += 1
+                        beatmap_id = self._get_random_id("beatmaps")
+                        continue
                     filepath = path / f"beatmap_scores_{beatmap_id}.json"
                     with open(filepath, "w") as f:
                         json.dump(data, f, indent=2)
