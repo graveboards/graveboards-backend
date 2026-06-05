@@ -23,6 +23,28 @@ console = Console()
 logger = get_logger(__name__)
 
 
+def _create_empty_samples() -> dict:
+    return {
+        "beatmaps": {"count": 0, "last_fetched": None},
+        "beatmapsets": {"count": 0, "last_fetched": None},
+        "users": {"count": 0, "per_ruleset": {r: 0 for r in RULESETS}, "last_fetched": None},
+        "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_fetched": None},
+        "beatmap_scores": {"count": 0, "last_fetched": None},
+        "beatmap_attributes": {"count": 0, "last_fetched": None},
+    }
+
+
+def _create_empty_promoted_fixtures() -> dict:
+    return {
+        "beatmaps": {"count": 0, "last_promoted": None},
+        "beatmapsets": {"count": 0, "last_promoted": None},
+        "users": {"count": 0, "per_ruleset": {r: 0 for r in RULESETS}, "last_promoted": None},
+        "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_promoted": None},
+        "beatmap_scores": {"count": 0, "last_promoted": None},
+        "beatmap_attributes": {"count": 0, "last_promoted": None},
+    }
+
+
 async def cmd_refresh_top_players(
         rulesets: Optional[list[str]] = None,
         count: int = 1000,
@@ -180,6 +202,16 @@ async def cmd_list_fixtures():
     console.print()
 
 
+def _validate_file(filepath: Path, errors: list[str]) -> None:
+    try:
+        with open(filepath) as f:
+            data = json.load(f)
+        if not isinstance(data, (dict, list)):
+            errors.append(f"{filepath}: Invalid JSON structure")
+    except json.JSONDecodeError as e:
+        errors.append(f"{filepath}: JSON decode error - {e}")
+
+
 async def cmd_validate_fixtures():
     fixtures = get_all_fixture_files()
     errors = []
@@ -190,22 +222,10 @@ async def cmd_validate_fixtures():
         if isinstance(files, dict):
             for subcat, subfiles in files.items():
                 for filepath in subfiles:
-                    try:
-                        with open(filepath) as f:
-                            data = json.load(f)
-                        if not isinstance(data, (dict, list)):
-                            errors.append(f"{filepath}: Invalid JSON structure")
-                    except json.JSONDecodeError as e:
-                        errors.append(f"{filepath}: JSON decode error - {e}")
+                    _validate_file(filepath, errors)
         else:
             for filepath in files:
-                try:
-                    with open(filepath) as f:
-                        data = json.load(f)
-                    if not isinstance(data, (dict, list)):
-                        errors.append(f"{filepath}: Invalid JSON structure")
-                except json.JSONDecodeError as e:
-                    errors.append(f"{filepath}: JSON decode error - {e}")
+                _validate_file(filepath, errors)
 
     if errors:
         console.print("[red]❌ Validation failed:[/red]")
@@ -288,14 +308,7 @@ async def cmd_promote_fixtures(
 
     if metadata.get("last_updated"):
         metadata["last_updated"] = None
-        metadata["samples"] = {
-            "beatmaps": {"count": 0, "last_fetched": None},
-            "beatmapsets": {"count": 0, "last_fetched": None},
-            "users": {"count": 0, "per_ruleset": {r: 0 for r in RULESETS}, "last_fetched": None},
-            "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_fetched": None},
-            "beatmap_scores": {"count": 0, "last_fetched": None},
-            "beatmap_attributes": {"count": 0, "last_fetched": None},
-        }
+        metadata["samples"] = _create_empty_samples()
     save_metadata(metadata)
 
     console.print(f"[green]✅ Promoted {copied} fixture files to tests/fixtures/osu/[/green]")
@@ -390,14 +403,7 @@ async def cmd_wipe_fixtures(
                 rmtree(sub_dir)
                 console.print(f"[green]✅ Deleted: {sub_dir.name}[/green]")
 
-    metadata["samples"] = {
-        "beatmaps": {"count": 0, "last_fetched": None},
-        "beatmapsets": {"count": 0, "last_fetched": None},
-        "users": {"count": 0, "per_ruleset": {r: 0 for r in RULESETS}, "last_fetched": None},
-        "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_fetched": None},
-        "beatmap_scores": {"count": 0, "last_fetched": None},
-        "beatmap_attributes": {"count": 0, "last_fetched": None},
-    }
+    metadata["samples"] = _create_empty_samples()
     if clear_failed_ids:
         metadata["failed_ids"] = {
             "beatmaps": [],
@@ -411,14 +417,7 @@ async def cmd_wipe_fixtures(
             console.print(
                 "[yellow]⚠️  WARNING: Removing promoted fixture metadata while fixture files still exist on disk![/yellow]")
             console.print("   This will cause metadata to be out of sync with actual fixture state.")
-        metadata["promoted_fixtures"] = {
-            "beatmaps": {"count": 0, "last_promoted": None},
-            "beatmapsets": {"count": 0, "last_promoted": None},
-            "users": {"count": 0, "per_ruleset": {r: 0 for r in RULESETS}, "last_promoted": None},
-            "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_promoted": None},
-            "beatmap_scores": {"count": 0, "last_promoted": None},
-            "beatmap_attributes": {"count": 0, "last_promoted": None},
-        }
+        metadata["promoted_fixtures"] = _create_empty_promoted_fixtures()
     save_metadata(metadata)
 
     console.print("[green]✅ Fixtures wiped![/green]\n")

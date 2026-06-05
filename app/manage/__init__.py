@@ -279,9 +279,9 @@ async def main():
                         beatmap_scores=args.beatmap_scores,
                         beatmap_attributes=args.beatmap_attributes,
                     )
-                 case "wipe":
-                      await cmd_wipe_fixtures(
-                          clear_failed_ids=args.clear_failed_ids,
-                          clear_top_player_ids=args.clear_top_player_ids,
-                          clear_promoted=args.clear_promoted,
-                      )
+                case "wipe":
+                    await cmd_wipe_fixtures(
+                        clear_failed_ids=args.clear_failed_ids,
+                        clear_top_player_ids=args.clear_top_player_ids,
+                        clear_promoted=args.clear_promoted,
+                    )
