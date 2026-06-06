@@ -35,11 +35,11 @@ async def cmd_demote_fixtures(
 
     metadata = load_metadata()
 
-    for src_name, dst_name, meta_name in categories_to_demote:
-        src_path = TEST_FIXTURES_DIR / src_name
-        dst_path = FIXTURES_DIR / dst_name
+    for category in categories_to_demote:
+        src_path = TEST_FIXTURES_DIR / category
+        dst_path = FIXTURES_DIR / category
 
-        if src_name in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
+        if category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
             dst_path.mkdir(parents=True, exist_ok=True)
             if src_path.exists():
                 files = list(src_path.glob("*.json"))
@@ -48,12 +48,12 @@ async def cmd_demote_fixtures(
                     copy2(filepath, dst_path / filepath.name)
                     moved += 1
                     filepath.unlink(missing_ok=True)
-                metadata["promoted_fixtures"][meta_name] = metadata["promoted_fixtures"].setdefault(meta_name, {"count": 0})
-                metadata["promoted_fixtures"][meta_name]["count"] = max(0, metadata["promoted_fixtures"][meta_name].get("count", 0) - count)
-                metadata["promoted_fixtures"][meta_name]["last_promoted"] = current_time
-                metadata["samples"][meta_name] = metadata["samples"].setdefault(meta_name, {"count": 0})
-                metadata["samples"][meta_name]["count"] = metadata["samples"][meta_name].get("count", 0) + count
-        elif src_name in ["users", "scores"]:
+                metadata["promoted_fixtures"][category] = metadata["promoted_fixtures"].setdefault(category, {"count": 0})
+                metadata["promoted_fixtures"][category]["count"] = max(0, metadata["promoted_fixtures"][category].get("count", 0) - count)
+                metadata["promoted_fixtures"][category]["last_promoted"] = current_time
+                metadata["samples"][category] = metadata["samples"].setdefault(category, {"count": 0})
+                metadata["samples"][category]["count"] = metadata["samples"][category].get("count", 0) + count
+        elif category in ["users", "scores"]:
             dst_path.mkdir(parents=True, exist_ok=True)
             total_count = 0
             if src_path.exists():
@@ -68,25 +68,25 @@ async def cmd_demote_fixtures(
                             copy2(filepath, sub_dst / filepath.name)
                             moved += 1
                             filepath.unlink(missing_ok=True)
-                        if src_name == "users":
-                            metadata["promoted_fixtures"][meta_name] = metadata["promoted_fixtures"].setdefault(meta_name, {"count": 0, "per_ruleset": {}})
-                            metadata["promoted_fixtures"][meta_name]["per_ruleset"] = metadata["promoted_fixtures"][meta_name].setdefault("per_ruleset", {})
-                            metadata["promoted_fixtures"][meta_name]["per_ruleset"][sub.name] = max(0, metadata["promoted_fixtures"][meta_name]["per_ruleset"].get(sub.name, 0) - count)
+                        if category == "users":
+                            metadata["promoted_fixtures"][category] = metadata["promoted_fixtures"].setdefault(category, {"count": 0, "per_ruleset": {}})
+                            metadata["promoted_fixtures"][category]["per_ruleset"] = metadata["promoted_fixtures"][category].setdefault("per_ruleset", {})
+                            metadata["promoted_fixtures"][category]["per_ruleset"][sub.name] = max(0, metadata["promoted_fixtures"][category]["per_ruleset"].get(sub.name, 0) - count)
                             metadata["samples"]["users"] = metadata["samples"].setdefault("users", {"per_ruleset": {}})
                             metadata["samples"]["users"]["per_ruleset"] = metadata["samples"]["users"].setdefault("per_ruleset", {})
                             metadata["samples"]["users"]["per_ruleset"][sub.name] = metadata["samples"]["users"]["per_ruleset"].get(sub.name, 0) + count
                         else:
-                            metadata["promoted_fixtures"][meta_name] = metadata["promoted_fixtures"].setdefault(meta_name, {"count": 0, "per_type": {}})
-                            metadata["promoted_fixtures"][meta_name]["per_type"] = metadata["promoted_fixtures"][meta_name].setdefault("per_type", {})
-                            metadata["promoted_fixtures"][meta_name]["per_type"][sub.name] = max(0, metadata["promoted_fixtures"][meta_name]["per_type"].get(sub.name, 0) - count)
+                            metadata["promoted_fixtures"][category] = metadata["promoted_fixtures"].setdefault(category, {"count": 0, "per_type": {}})
+                            metadata["promoted_fixtures"][category]["per_type"] = metadata["promoted_fixtures"][category].setdefault("per_type", {})
+                            metadata["promoted_fixtures"][category]["per_type"][sub.name] = max(0, metadata["promoted_fixtures"][category]["per_type"].get(sub.name, 0) - count)
                             metadata["samples"]["scores"] = metadata["samples"].setdefault("scores", {"per_type": {}})
                             metadata["samples"]["scores"]["per_type"] = metadata["samples"]["scores"].setdefault("per_type", {})
                             metadata["samples"]["scores"]["per_type"][sub.name] = metadata["samples"]["scores"]["per_type"].get(sub.name, 0) + count
-                metadata["promoted_fixtures"][meta_name] = metadata["promoted_fixtures"].setdefault(meta_name, {"count": 0})
-                metadata["promoted_fixtures"][meta_name]["count"] = max(0, metadata["promoted_fixtures"][meta_name].get("count", 0) - total_count)
-                metadata["promoted_fixtures"][meta_name]["last_promoted"] = current_time
-                metadata["samples"][meta_name] = metadata["samples"].setdefault(meta_name, {"count": 0})
-                metadata["samples"][meta_name]["count"] = metadata["samples"][meta_name].get("count", 0) + total_count
+                metadata["promoted_fixtures"][category] = metadata["promoted_fixtures"].setdefault(category, {"count": 0})
+                metadata["promoted_fixtures"][category]["count"] = max(0, metadata["promoted_fixtures"][category].get("count", 0) - total_count)
+                metadata["promoted_fixtures"][category]["last_promoted"] = current_time
+                metadata["samples"][category] = metadata["samples"].setdefault(category, {"count": 0})
+                metadata["samples"][category]["count"] = metadata["samples"][category].get("count", 0) + total_count
 
     save_metadata(metadata)
 

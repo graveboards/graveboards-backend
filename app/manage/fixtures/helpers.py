@@ -6,22 +6,22 @@ def get_categories_to_process(
     beatmap_scores: bool,
     beatmap_attributes: bool,
     all_categories: bool | None = None,
-) -> list[tuple[str, str, str]]:
+) -> list[str]:
     if all_categories is None:
         all_categories = not any([beatmaps, beatmapsets, users, scores, beatmap_scores, beatmap_attributes])
 
     categories_to_process = []
     if all_categories or beatmaps:
-        categories_to_process.append(("beatmaps", "beatmaps", "beatmaps"))
+        categories_to_process.append("beatmaps")
     if all_categories or beatmapsets:
-        categories_to_process.append(("beatmapsets", "beatmapsets", "beatmapsets"))
+        categories_to_process.append("beatmapsets")
     if all_categories or beatmap_scores:
-        categories_to_process.append(("beatmap_scores", "beatmap_scores", "beatmap_scores"))
+        categories_to_process.append("beatmap_scores")
     if all_categories or beatmap_attributes:
-        categories_to_process.append(("beatmap_attributes", "beatmap_attributes", "beatmap_attributes"))
+        categories_to_process.append("beatmap_attributes")
     if all_categories or users:
-        categories_to_process.append(("users", "users", "users"))
+        categories_to_process.append("users")
     if all_categories or scores:
-        categories_to_process.append(("scores", "scores", "scores"))
-    
+        categories_to_process.append("scores")
+
     return categories_to_process
