@@ -42,6 +42,9 @@ async def cmd_promote_fixtures(
         beatmap_attributes=beatmap_attributes,
     )
 
+    # Phase 1: Copy all files first (before deleting anything)
+    copies = []  # list of (src_path, dst_path)
+
     for src_name, dst_name, meta_name in categories_to_promote:
         src_path = FIXTURES_DIR / src_name
         dst_path = TEST_FIXTURES_DIR / dst_name
@@ -49,40 +52,52 @@ async def cmd_promote_fixtures(
         if src_name in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
             dst_path.mkdir(parents=True, exist_ok=True)
             if src_path.exists():
-                count = len(list(src_path.glob("*.json")))
                 for filepath in src_path.glob("*.json"):
-                    copy2(filepath, dst_path / filepath.name)
-                    copied += 1
-                rmtree(src_path)
-                metadata["promoted_fixtures"][meta_name] = {
-                    "count": metadata["promoted_fixtures"][meta_name].get("count", 0) + count,
-                    "last_promoted": current_time,
-                }
+                    copies.append((filepath, dst_path / filepath.name))
         elif src_name in ["users", "scores"]:
             dst_path.mkdir(parents=True, exist_ok=True)
-            total_count = 0
             if src_path.exists():
                 for sub in src_path.iterdir():
                     if sub.is_dir():
                         sub_dst = dst_path / sub.name
                         sub_dst.mkdir(parents=True, exist_ok=True)
+                        for filepath in sub.glob("*.json"):
+                            copies.append((filepath, sub_dst / filepath.name))
+
+    # Phase 2: Perform all copies
+    for src, dst in copies:
+        copy2(src, dst)
+        copied += 1
+
+    # Phase 3: Delete source directories only after all copies succeeded
+    for src_name, dst_name, meta_name in categories_to_promote:
+        src_path = FIXTURES_DIR / src_name
+        dst_path = TEST_FIXTURES_DIR / dst_name
+
+        if src_name in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
+            count = 0
+            if src_path.exists():
+                count = len(list(src_path.glob("*.json")))
+                rmtree(src_path)
+            metadata["promoted_fixtures"][meta_name] = {
+                "count": metadata["promoted_fixtures"][meta_name].get("count", 0) + count,
+                "last_promoted": current_time,
+            }
+        elif src_name in ["users", "scores"]:
+            total_count = 0
+            if src_path.exists():
+                for sub in src_path.iterdir():
+                    if sub.is_dir():
                         count = len(list(sub.glob("*.json")))
                         total_count += count
-                        for filepath in sub.glob("*.json"):
-                            copy2(filepath, sub_dst / filepath.name)
-                            copied += 1
                         rmtree(sub)
                         if src_name == "users":
-                            if meta_name not in metadata["promoted_fixtures"]:
-                                metadata["promoted_fixtures"][meta_name] = {"count": 0, "per_ruleset": {}}
-                            if "per_ruleset" not in metadata["promoted_fixtures"][meta_name]:
-                                metadata["promoted_fixtures"][meta_name]["per_ruleset"] = {}
+                            metadata["promoted_fixtures"][meta_name] = metadata["promoted_fixtures"].setdefault(meta_name, {"count": 0, "per_ruleset": {}})
+                            metadata["promoted_fixtures"][meta_name]["per_ruleset"] = metadata["promoted_fixtures"][meta_name].setdefault("per_ruleset", {})
                             metadata["promoted_fixtures"][meta_name]["per_ruleset"][sub.name] = metadata["promoted_fixtures"][meta_name]["per_ruleset"].get(sub.name, 0) + count
                         else:
-                            if meta_name not in metadata["promoted_fixtures"]:
-                                metadata["promoted_fixtures"][meta_name] = {"count": 0, "per_type": {}}
-                            if "per_type" not in metadata["promoted_fixtures"][meta_name]:
-                                metadata["promoted_fixtures"][meta_name]["per_type"] = {}
+                            metadata["promoted_fixtures"][meta_name] = metadata["promoted_fixtures"].setdefault(meta_name, {"count": 0, "per_type": {}})
+                            metadata["promoted_fixtures"][meta_name]["per_type"] = metadata["promoted_fixtures"][meta_name].setdefault("per_type", {})
                             metadata["promoted_fixtures"][meta_name]["per_type"][sub.name] = metadata["promoted_fixtures"][meta_name]["per_type"].get(sub.name, 0) + count
                 src_path.rmdir()
                 metadata["promoted_fixtures"][meta_name]["count"] = metadata["promoted_fixtures"][meta_name].get("count", 0) + total_count
