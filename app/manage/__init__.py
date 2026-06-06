@@ -202,6 +202,8 @@ async def main():
 
     list_parser = fixtures_subparsers.add_parser("list", help="List fixture data status")
     
+    validate_parser = fixtures_subparsers.add_parser("validate", help="Validate fixture JSON files")
+
     wipe_parser = fixtures_subparsers.add_parser("wipe", help="Delete all fixtures")
     wipe_parser.add_argument(
         "--clear-failed-ids",
@@ -265,7 +267,7 @@ async def main():
                         rulesets=args.rulesets,
                         count=args.count,
                     )
-                case "list":
+              case "list":
                     await cmd_list_fixtures()
                 case "validate":
                     await cmd_validate_fixtures()
