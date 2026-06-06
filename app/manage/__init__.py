@@ -250,71 +250,79 @@ async def main():
         no_debug=no_debug
     )
 
-    match args.command:
-        case "status":
-            await cmd_status(args.target)
-        case "reset":
-            await cmd_reset(args.seed_target, force=getattr(args, 'force', False))
-        case "seed":
-            await cmd_seed(args.target)
-        case "fixtures":
-            match args.fixture_command:
-                case "fetch":
-                    await cmd_fetch_fixtures(
-                        scale=args.scale,
-                        beatmaps=args.beatmaps,
-                        beatmapsets=args.beatmapsets,
-                        users_osu=args.users_osu,
-                        users_taiko=args.users_taiko,
-                        users_fruits=args.users_fruits,
-                        users_mania=args.users_mania,
-                        scores_best=args.scores_best,
-                        scores_firsts=args.scores_firsts,
-                        scores_recent=args.scores_recent,
-                        beatmap_scores=args.beatmap_scores,
-                        beatmap_attributes=args.beatmap_attributes,
-                        use_minimal=args.minimal,
-                        beatmaps_range_min=args.beatmaps_range_min,
-                        beatmaps_range_max=args.beatmaps_range_max,
-                        beatmapsets_range_min=args.beatmapsets_range_min,
-                        beatmapsets_range_max=args.beatmapsets_range_max,
-                        users_range_min=args.users_range_min,
-                        users_range_max=args.users_range_max,
-                        no_progress=args.no_progress,
-                    )
-                case "refresh-top-players":
-                    await cmd_refresh_top_players(
-                        rulesets=args.rulesets,
-                        count=args.count,
-                    )
-                case "list":
-                    await cmd_list_fixtures()
-                case "validate":
-                    await cmd_validate_fixtures()
-                case "promote":
-                    await cmd_promote_fixtures(
-                        beatmaps=args.beatmaps,
-                        beatmapsets=args.beatmapsets,
-                        users=args.users,
-                        scores=args.scores,
-                        beatmap_scores=args.beatmap_scores,
-                        beatmap_attributes=args.beatmap_attributes,
-                        force=getattr(args, 'force', False),
-                    )
-                case "demote":
-                    await cmd_demote_fixtures(
-                        beatmaps=args.beatmaps,
-                        beatmapsets=args.beatmapsets,
-                        users=args.users,
-                        scores=args.scores,
-                        beatmap_scores=args.beatmap_scores,
-                        beatmap_attributes=args.beatmap_attributes,
-                        force=getattr(args, 'force', False),
-                    )
-                case "wipe":
-                    await cmd_wipe_fixtures(
-                        clear_failed_ids=args.clear_failed_ids,
-                        clear_top_player_ids=args.clear_top_player_ids,
-                        clear_promoted=args.clear_promoted,
-                        force=getattr(args, 'force', False),
-                    )
+    try:
+        match args.command:
+            case "status":
+                await cmd_status(args.target)
+            case "reset":
+                await cmd_reset(args.seed_target, force=getattr(args, 'force', False))
+            case "seed":
+                await cmd_seed(args.target)
+            case "fixtures":
+                match args.fixture_command:
+                    case "fetch":
+                        await cmd_fetch_fixtures(
+                            scale=args.scale,
+                            beatmaps=args.beatmaps,
+                            beatmapsets=args.beatmapsets,
+                            users_osu=args.users_osu,
+                            users_taiko=args.users_taiko,
+                            users_fruits=args.users_fruits,
+                            users_mania=args.users_mania,
+                            scores_best=args.scores_best,
+                            scores_firsts=args.scores_firsts,
+                            scores_recent=args.scores_recent,
+                            beatmap_scores=args.beatmap_scores,
+                            beatmap_attributes=args.beatmap_attributes,
+                            use_minimal=args.minimal,
+                            beatmaps_range_min=args.beatmaps_range_min,
+                            beatmaps_range_max=args.beatmaps_range_max,
+                            beatmapsets_range_min=args.beatmapsets_range_min,
+                            beatmapsets_range_max=args.beatmapsets_range_max,
+                            users_range_min=args.users_range_min,
+                            users_range_max=args.users_range_max,
+                            no_progress=args.no_progress,
+                        )
+                    case "refresh-top-players":
+                        await cmd_refresh_top_players(
+                            rulesets=args.rulesets,
+                            count=args.count,
+                        )
+                    case "list":
+                        await cmd_list_fixtures()
+                    case "validate":
+                        await cmd_validate_fixtures()
+                    case "promote":
+                        await cmd_promote_fixtures(
+                            beatmaps=args.beatmaps,
+                            beatmapsets=args.beatmapsets,
+                            users=args.users,
+                            scores=args.scores,
+                            beatmap_scores=args.beatmap_scores,
+                            beatmap_attributes=args.beatmap_attributes,
+                            force=getattr(args, 'force', False),
+                        )
+                    case "demote":
+                        await cmd_demote_fixtures(
+                            beatmaps=args.beatmaps,
+                            beatmapsets=args.beatmapsets,
+                            users=args.users,
+                            scores=args.scores,
+                            beatmap_scores=args.beatmap_scores,
+                            beatmap_attributes=args.beatmap_attributes,
+                            force=getattr(args, 'force', False),
+                        )
+                    case "wipe":
+                        await cmd_wipe_fixtures(
+                            clear_failed_ids=args.clear_failed_ids,
+                            clear_top_player_ids=args.clear_top_player_ids,
+                            clear_promoted=args.clear_promoted,
+                            force=getattr(args, 'force', False),
+                        )
+    except Exception as e:
+        import traceback
+        from rich.console import Console
+        console = Console()
+        console.print(f"\n[red]❌ Error:[/red] {e}")
+        console.print("[dim]" + traceback.format_exc() + "[/dim]")
+        raise SystemExit(1)
