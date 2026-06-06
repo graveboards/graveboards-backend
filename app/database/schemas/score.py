@@ -17,7 +17,7 @@ class ScoreSchema(BaseModel, BaseModelExtra):
     user_id: int
     beatmap_id: int
     beatmapset_id: int
-    leaderboard_id: int
+    leaderboard_id: int = 1
     accuracy: float
     created_at: datetime
     max_combo: int

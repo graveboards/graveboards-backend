@@ -6,19 +6,14 @@ def load_beatmap(filename: str) -> dict:
     """Load a beatmap fixture from JSON file."""
     fixture_path = Path(__file__).parent / "beatmaps" / f"{filename}.json"
     with open(fixture_path, "r") as f:
-        data = json.load(f)
-    data["beatmap_id"] = data["id"]
-    data["title"] = data.get("version") or data.get("title")
-    return data
+        return json.load(f)
 
 
 def load_beatmapset(filename: str) -> dict:
     """Load a beatmapset fixture from JSON file."""
     fixture_path = Path(__file__).parent / "beatmapsets" / f"{filename}.json"
     with open(fixture_path, "r") as f:
-        data = json.load(f)
-    data["beatmapset_id"] = data["id"]
-    return data
+        return json.load(f)
 
 
 def load_user(filename: str) -> dict:
@@ -66,5 +61,12 @@ def load_beatmap_attributes(filename: str) -> dict:
 def load_rankings(filename: str) -> dict:
     """Load rankings fixture from JSON file."""
     fixture_path = Path(__file__).parent / "rankings" / f"{filename}.json"
+    with open(fixture_path, "r") as f:
+        return json.load(f)
+
+
+def load_tags(filename: str = "tags") -> dict:
+    """Load tags fixture from JSON file."""
+    fixture_path = Path(__file__).parent / "tags" / f"{filename}.json"
     with open(fixture_path, "r") as f:
         return json.load(f)
