@@ -1,3 +1,5 @@
+import sys
+
 from app.database import PostgresqlDB, db_lifespan
 from app.database.seeding import SeedTarget
 from app.setup import setup
@@ -6,7 +8,13 @@ from .seed import cmd_seed
 
 
 @db_lifespan
-async def cmd_reset(db: PostgresqlDB, seed_target: SeedTarget = None):
+async def cmd_reset(db: PostgresqlDB, seed_target: SeedTarget = None, force: bool = False):
+    if not force:
+        response = input("This will drop all tables and reset the database. Continue? [y/N]: ")
+        if response.lower() not in ("y", "yes"):
+            print("Aborted.")
+            sys.exit(0)
+
     logger = get_logger(__name__)
     steps = 2 if not seed_target else 3
 

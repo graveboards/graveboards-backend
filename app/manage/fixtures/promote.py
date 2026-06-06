@@ -18,7 +18,15 @@ async def cmd_promote_fixtures(
     scores: bool,
     beatmap_scores: bool,
     beatmap_attributes: bool,
+    force: bool = False,
 ):
+    if not force:
+        from rich.prompt import Prompt
+        response = Prompt.ask("This will move fixture files and delete the originals. Continue?", choices=["y", "n"], default="n")
+        if response != "y":
+            console.print("[dim]Aborted.[/dim]")
+            return
+
     metadata = load_metadata()
     copied = 0
     current_time = datetime.now(timezone.utc).isoformat()

@@ -13,7 +13,15 @@ async def cmd_wipe_fixtures(
     clear_failed_ids: bool = False,
     clear_top_player_ids: bool = False,
     clear_promoted: bool = False,
+    force: bool = False,
 ):
+    if not force:
+        from rich.prompt import Prompt
+        response = Prompt.ask("This will delete all fixture files and reset metadata. Continue?", choices=["y", "n"], default="n")
+        if response != "y":
+            console.print("[dim]Aborted.[/dim]")
+            return
+
     console.print("\n[bold blue]Wiping fixtures...[/bold blue]\n")
 
     metadata = load_metadata()

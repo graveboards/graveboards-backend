@@ -34,6 +34,11 @@ async def main():
 
     reset_parser = subparsers.add_parser("reset", help="Reset database")
     reset_parser.add_argument(
+        "--force", "-f",
+        action="store_true",
+        help="Skip confirmation prompt",
+    )
+    reset_parser.add_argument(
         "--seed", "-s",
         dest="seed_target",
         metavar="target",
@@ -166,6 +171,11 @@ async def main():
     )
 
     promote_parser = fixtures_subparsers.add_parser("promote", help="Promote fixtures from instance to tests")
+    promote_parser.add_argument(
+        "--force", "-f",
+        action="store_true",
+        help="Skip confirmation prompt",
+    )
     promote_parser.add_argument("--beatmaps", action="store_true", help="Promote beatmaps (all if none specified)")
     promote_parser.add_argument("--beatmapsets", action="store_true",
                                 help="Promote beatmapsets (all if none specified)")
@@ -206,6 +216,11 @@ async def main():
 
     wipe_parser = fixtures_subparsers.add_parser("wipe", help="Delete all fixtures")
     wipe_parser.add_argument(
+        "--force", "-f",
+        action="store_true",
+        help="Skip confirmation prompt",
+    )
+    wipe_parser.add_argument(
         "--clear-failed-ids",
         action="store_true",
         help="Also clear failed IDs from metadata",
@@ -233,8 +248,8 @@ async def main():
     match args.command:
         case "status":
             await cmd_status(args.target)
-        case "reset":
-            await cmd_reset(args.seed_target)
+          case "reset":
+                await cmd_reset(args.seed_target, force=getattr(args, 'force', False))
         case "seed":
             await cmd_seed(args.target)
         case "fixtures":
@@ -279,6 +294,7 @@ async def main():
                         scores=args.scores,
                         beatmap_scores=args.beatmap_scores,
                         beatmap_attributes=args.beatmap_attributes,
+                        force=getattr(args, 'force', False),
                     )
                 case "demote":
                     await cmd_demote_fixtures(
@@ -294,4 +310,5 @@ async def main():
                         clear_failed_ids=args.clear_failed_ids,
                         clear_top_player_ids=args.clear_top_player_ids,
                         clear_promoted=args.clear_promoted,
+                        force=getattr(args, 'force', False),
                     )
