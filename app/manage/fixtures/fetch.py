@@ -51,6 +51,83 @@ def _add_counts_to_table(counts: dict, table: Table) -> None:
             table.add_row(category, str(count))
 
 
+def _create_progress_tasks(progress, sample_counts: dict) -> tuple[dict[str, TaskID], int]:
+    tasks: dict[str, TaskID] = {}
+    total_items = 0
+
+    if sample_counts.get("beatmaps", 0) > 0:
+        tasks["beatmaps"] = progress.add_task("Beatmaps", total=sample_counts["beatmaps"])
+        total_items += sample_counts["beatmaps"]
+
+    if sample_counts.get("beatmapsets", 0) > 0:
+        tasks["beatmapsets"] = progress.add_task("Beatmapsets", total=sample_counts["beatmapsets"])
+        total_items += sample_counts["beatmapsets"]
+
+    users = sample_counts.get("users", {})
+    user_total = sum(users.values())
+    if user_total > 0:
+        tasks["users"] = progress.add_task("Users", total=user_total)
+        total_items += user_total
+
+    scores = sample_counts.get("scores", {})
+    scores_total = sum(scores.values())
+    if scores_total > 0:
+        tasks["scores"] = progress.add_task("Scores", total=scores_total)
+        total_items += scores_total
+
+    if sample_counts.get("beatmap_scores", 0) > 0:
+        tasks["beatmap_scores"] = progress.add_task("Beatmap Scores", total=sample_counts["beatmap_scores"])
+        total_items += sample_counts["beatmap_scores"]
+
+    if sample_counts.get("beatmap_attributes", 0) > 0:
+        tasks["beatmap_attributes"] = progress.add_task("Beatmap Attributes", total=sample_counts["beatmap_attributes"])
+        total_items += sample_counts["beatmap_attributes"]
+
+    return tasks, total_items
+
+
+def _process_fetch_events(fetcher, progress, tasks, overall_task, overall_progress, sample_counts, use_live: bool):
+    if use_live:
+        progress_table = Table.grid()
+        panel = Panel.fit(
+            progress,
+            title="Fetching Fixtures",
+            border_style="green",
+            padding=(1, 3)
+        )
+        progress_table.add_row(panel)
+
+        with Live(progress_table, refresh_per_second=20):
+            async for event in fetcher.fetch_all(sample_counts):
+                category = event.category
+                if category in tasks:
+                    progress.update(tasks[category], completed=event.current)
+                else:
+                    for task_category in tasks.keys():
+                        if task_category in category:
+                            progress.update(tasks[task_category], completed=event.current)
+                            break
+                overall_progress += 1
+                progress.update(overall_task, completed=overall_progress)
+
+            panel.title = "Fetching Completed"
+            panel.border_style = "dim green"
+    else:
+        async for event in fetcher.fetch_all(sample_counts):
+            category = event.category
+            if category in tasks:
+                progress.update(tasks[category], completed=event.current)
+            else:
+                for task_category in tasks.keys():
+                    if task_category in category:
+                        progress.update(tasks[task_category], completed=event.current)
+                        break
+            overall_progress += 1
+            progress.update(overall_task, completed=overall_progress)
+
+        progress.stop()
+
+
 async def cmd_fetch_fixtures(
     scale: float,
     beatmaps: int | None,
@@ -109,141 +186,25 @@ async def cmd_fetch_fixtures(
        use_minimal=use_minimal,
     )
 
-    if not no_progress:
-        progress = Progress(
-            TextColumn("[bold blue]{task.description}"),
-            TextColumn("[white]({task.completed}/{task.total})"),
-            BarColumn(pulse_style="dim"),
-            "[progress.percentage]{task.percentage:>3.0f}%",
-            TimeRemainingColumn(compact=True),
-            TimeElapsedColumn()
-        )
+    progress = Progress(
+        TextColumn("[bold blue]{task.description}"),
+        TextColumn("[white]({task.completed}/{task.total})"),
+        BarColumn(pulse_style="dim"),
+        "[progress.percentage]{task.percentage:>3.0f}%",
+        TimeRemainingColumn(compact=True),
+        TimeElapsedColumn()
+    )
 
-        tasks: dict[str, TaskID] = {}
-        total_items = 0
+    tasks, total_items = _create_progress_tasks(progress, sample_counts)
+    overall_task = progress.add_task("Total", total=total_items)
+    overall_progress = 0
 
-        if sample_counts.get("beatmaps", 0) > 0:
-            tasks["beatmaps"] = progress.add_task("Beatmaps", total=sample_counts["beatmaps"])
-            total_items += sample_counts["beatmaps"]
+    logger.info("Fetching fixture data from osu! API...")
 
-        if sample_counts.get("beatmapsets", 0) > 0:
-            tasks["beatmapsets"] = progress.add_task("Beatmapsets", total=sample_counts["beatmapsets"])
-            total_items += sample_counts["beatmapsets"]
+    _process_fetch_events(fetcher, progress, tasks, overall_task, overall_progress, sample_counts, use_live=not no_progress)
 
-        users = sample_counts.get("users", {})
-        user_total = sum(users.values())
-        if user_total > 0:
-            tasks["users"] = progress.add_task("Users", total=user_total)
-            total_items += user_total
-
-        scores = sample_counts.get("scores", {})
-        scores_total = sum(scores.values())
-        if scores_total > 0:
-            tasks["scores"] = progress.add_task("Scores", total=scores_total)
-            total_items += scores_total
-
-        if sample_counts.get("beatmap_scores", 0) > 0:
-            tasks["beatmap_scores"] = progress.add_task("Beatmap Scores", total=sample_counts["beatmap_scores"])
-            total_items += sample_counts["beatmap_scores"]
-
-        if sample_counts.get("beatmap_attributes", 0) > 0:
-            tasks["beatmap_attributes"] = progress.add_task("Beatmap Attributes", total=sample_counts["beatmap_attributes"])
-            total_items += sample_counts["beatmap_attributes"]
-
-        overall_task = progress.add_task("Total", total=total_items)
-        overall_progress = 0
-
-        progress_table = Table.grid()
-        panel = Panel.fit(
-            progress,
-            title="Fetching Fixtures",
-            border_style="green",
-            padding=(1, 3)
-        )
-        progress_table.add_row(panel)
-
-        logger.info("Fetching fixture data from osu! API...")
-
-        with Live(progress_table, refresh_per_second=20):
-            async for event in fetcher.fetch_all(sample_counts):
-                category = event.category
-                if category in tasks:
-                    progress.update(tasks[category], completed=event.current)
-                else:
-                    for task_category in tasks.keys():
-                        if task_category in category:
-                            progress.update(tasks[task_category], completed=event.current)
-                            break
-                overall_progress += 1
-                progress.update(overall_task, completed=overall_progress)
-            
-            results = fetcher.last_fetch_results
-
-            panel.title = "Fetching Completed"
-            panel.border_style = "dim green"
-
-        logger.info(f"Fixture data fetch complete: {results}")
-    else:
-        progress = Progress(
-            TextColumn("[bold blue]{task.description}"),
-            TextColumn("[white]({task.completed}/{task.total})"),
-            BarColumn(pulse_style="dim"),
-            "[progress.percentage]{task.percentage:>3.0f}%",
-            TimeRemainingColumn(compact=True),
-            TimeElapsedColumn()
-        )
-
-        tasks: dict[str, TaskID] = {}
-        total_items = 0
-
-        if sample_counts.get("beatmaps", 0) > 0:
-            tasks["beatmaps"] = progress.add_task("Beatmaps", total=sample_counts["beatmaps"])
-            total_items += sample_counts["beatmaps"]
-
-        if sample_counts.get("beatmapsets", 0) > 0:
-            tasks["beatmapsets"] = progress.add_task("Beatmapsets", total=sample_counts["beatmapsets"])
-            total_items += sample_counts["beatmapsets"]
-
-        users = sample_counts.get("users", {})
-        user_total = sum(users.values())
-        if user_total > 0:
-            tasks["users"] = progress.add_task("Users", total=user_total)
-            total_items += user_total
-
-        scores = sample_counts.get("scores", {})
-        scores_total = sum(scores.values())
-        if scores_total > 0:
-            tasks["scores"] = progress.add_task("Scores", total=scores_total)
-            total_items += scores_total
-
-        if sample_counts.get("beatmap_scores", 0) > 0:
-            tasks["beatmap_scores"] = progress.add_task("Beatmap Scores", total=sample_counts["beatmap_scores"])
-            total_items += sample_counts["beatmap_scores"]
-
-        if sample_counts.get("beatmap_attributes", 0) > 0:
-            tasks["beatmap_attributes"] = progress.add_task("Beatmap Attributes", total=sample_counts["beatmap_attributes"])
-            total_items += sample_counts["beatmap_attributes"]
-
-        overall_task = progress.add_task("Total", total=total_items)
-        overall_progress = 0
-
-        logger.info("Fetching fixture data from osu! API...")
-
-        async for event in fetcher.fetch_all(sample_counts):
-            category = event.category
-            if category in tasks:
-                progress.update(tasks[category], completed=event.current)
-            else:
-                for task_category in tasks.keys():
-                    if task_category in category:
-                        progress.update(tasks[task_category], completed=event.current)
-                        break
-            overall_progress += 1
-            progress.update(overall_task, completed=overall_progress)
-
-        results = fetcher.last_fetch_results
-        progress.stop()
-        logger.info(f"Fixture data fetch complete: {results}")
+    results = fetcher.last_fetch_results
+    logger.info(f"Fixture data fetch complete: {results}")
 
     console.print("\n[bold]Results:[/bold]")
     result_table = Table(show_header=False)
