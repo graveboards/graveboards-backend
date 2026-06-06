@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from shutil import copy2
 
 from rich.console import Console
+from rich.prompt import Confirm
 
 from app.fixtures.utils import TEST_FIXTURES_DIR, FIXTURES_DIR, load_metadata, save_metadata
 from .helpers import get_categories_to_process
@@ -16,8 +17,16 @@ async def cmd_demote_fixtures(
     scores: bool,
     beatmap_scores: bool,
     beatmap_attributes: bool,
+    force: bool = False,
 ):
+    if not force:
+        response = Confirm.ask("This will move fixture files back to instance fixtures. Continue?", default=False)
+        if not response:
+            console.print("[dim]Aborted.[/dim]")
+            return
+
     moved = 0
+    missing = 0
     current_time = datetime.now(timezone.utc).isoformat()
 
     console.print("\n[bold]=== Demoting Fixtures ===[/bold]\n")
@@ -43,6 +52,9 @@ async def cmd_demote_fixtures(
                 files = list(src_path.glob("*.json"))
                 count = len(files)
                 for filepath in files:
+                    if not filepath.exists():
+                        missing += 1
+                        continue
                     copy2(filepath, dst_path / filepath.name)
                     moved += 1
                     filepath.unlink(missing_ok=True)
@@ -63,6 +75,9 @@ async def cmd_demote_fixtures(
                         count = len(files)
                         total_count += count
                         for filepath in files:
+                            if not filepath.exists():
+                                missing += 1
+                                continue
                             copy2(filepath, sub_dst / filepath.name)
                             moved += 1
                             filepath.unlink(missing_ok=True)
@@ -88,4 +103,6 @@ async def cmd_demote_fixtures(
 
     save_metadata(metadata)
 
+    if missing > 0:
+        console.print(f"  [yellow]⚠️ {missing} file(s) already missing, skipped[/yellow]")
     console.print(f"[green]✅ Demoted {moved} fixture files from tests/fixtures/osu/[/green]")

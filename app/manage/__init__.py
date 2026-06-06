@@ -187,6 +187,11 @@ async def main():
                                 help="Promote beatmap attributes (all if none specified)")
 
     demote_parser = fixtures_subparsers.add_parser("demote", help="Demote fixtures from tests to instance")
+    demote_parser.add_argument(
+        "--force", "-f",
+        action="store_true",
+        help="Skip confirmation prompt",
+    )
     demote_parser.add_argument("--beatmaps", action="store_true", help="Demote beatmaps (all if none specified)")
     demote_parser.add_argument("--beatmapsets", action="store_true", help="Demote beatmapsets (all if none specified)")
     demote_parser.add_argument("--users", action="store_true", help="Demote users (all if none specified)")
@@ -304,6 +309,7 @@ async def main():
                         scores=args.scores,
                         beatmap_scores=args.beatmap_scores,
                         beatmap_attributes=args.beatmap_attributes,
+                        force=getattr(args, 'force', False),
                     )
                 case "wipe":
                     await cmd_wipe_fixtures(
