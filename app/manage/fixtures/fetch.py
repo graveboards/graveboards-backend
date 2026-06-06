@@ -151,66 +151,69 @@ async def cmd_fetch_fixtures(
     no_progress: bool,
 ):
     rc = RedisClient()
-    id_ranges = {}
-    if beatmaps_range_min or beatmaps_range_max:
-        id_ranges["beatmaps"] = {
-            "min": beatmaps_range_min or 1,
-            "max": beatmaps_range_max or 1000000,
-        }
-    if beatmapsets_range_min or beatmapsets_range_max:
-        id_ranges["beatmapsets"] = {
-            "min": beatmapsets_range_min or 1,
-            "max": beatmapsets_range_max or 100000,
-        }
-    if users_range_min or users_range_max:
-        id_ranges["users"] = {
-            "min": users_range_min or 1,
-            "max": users_range_max or 10000000,
-        }
-    fetcher = FixtureDataFetcher(rc, id_ranges=id_ranges if id_ranges else None)
-    fetcher.logger = logger
+    try:
+        id_ranges = {}
+        if beatmaps_range_min or beatmaps_range_max:
+            id_ranges["beatmaps"] = {
+                "min": beatmaps_range_min or 1,
+                "max": beatmaps_range_max or 1000000,
+            }
+        if beatmapsets_range_min or beatmapsets_range_max:
+            id_ranges["beatmapsets"] = {
+                "min": beatmapsets_range_min or 1,
+                "max": beatmapsets_range_max or 100000,
+            }
+        if users_range_min or users_range_max:
+            id_ranges["users"] = {
+                "min": users_range_min or 1,
+                "max": users_range_max or 10000000,
+            }
+        fetcher = FixtureDataFetcher(rc, id_ranges=id_ranges if id_ranges else None)
+        fetcher.logger = logger
 
-    sample_counts = calculate_sample_counts(
-        scale=scale,
-        beatmaps=beatmaps,
-        beatmapsets=beatmapsets,
-        users_osu=users_osu,
-        users_taiko=users_taiko,
-        users_fruits=users_fruits,
-        users_mania=users_mania,
-        scores_best=scores_best,
-        scores_firsts=scores_firsts,
-        scores_recent=scores_recent,
-        beatmap_scores=beatmap_scores,
-        beatmap_attributes=beatmap_attributes,
-       use_minimal=use_minimal,
-    )
+        sample_counts = calculate_sample_counts(
+            scale=scale,
+            beatmaps=beatmaps,
+            beatmapsets=beatmapsets,
+            users_osu=users_osu,
+            users_taiko=users_taiko,
+            users_fruits=users_fruits,
+            users_mania=users_mania,
+            scores_best=scores_best,
+            scores_firsts=scores_firsts,
+            scores_recent=scores_recent,
+            beatmap_scores=beatmap_scores,
+            beatmap_attributes=beatmap_attributes,
+           use_minimal=use_minimal,
+        )
 
-    progress = Progress(
-        TextColumn("[bold blue]{task.description}"),
-        TextColumn("[white]({task.completed}/{task.total})"),
-        BarColumn(pulse_style="dim"),
-        "[progress.percentage]{task.percentage:>3.0f}%",
-        TimeRemainingColumn(compact=True),
-        TimeElapsedColumn()
-    )
+        progress = Progress(
+            TextColumn("[bold blue]{task.description}"),
+            TextColumn("[white]({task.completed}/{task.total})"),
+            BarColumn(pulse_style="dim"),
+            "[progress.percentage]{task.percentage:>3.0f}%",
+            TimeRemainingColumn(compact=True),
+            TimeElapsedColumn()
+        )
 
-    tasks, total_items = _create_progress_tasks(progress, sample_counts)
-    overall_task = progress.add_task("Total", total=total_items)
-    overall_progress = 0
+        tasks, total_items = _create_progress_tasks(progress, sample_counts)
+        overall_task = progress.add_task("Total", total=total_items)
+        overall_progress = 0
 
-    logger.info("Fetching fixture data from osu! API...")
+        logger.info("Fetching fixture data from osu! API...")
 
-    _process_fetch_events(fetcher, progress, tasks, overall_task, overall_progress, sample_counts, use_live=not no_progress)
+        _process_fetch_events(fetcher, progress, tasks, overall_task, overall_progress, sample_counts, use_live=not no_progress)
 
-    results = fetcher.last_fetch_results
-    logger.info(f"Fixture data fetch complete: {results}")
+        results = fetcher.last_fetch_results
+        logger.info(f"Fixture data fetch complete: {results}")
 
-    console.print("\n[bold]Results:[/bold]")
-    result_table = Table(show_header=False)
-    result_table.add_column("Category")
-    result_table.add_column("Count")
+        console.print("\n[bold]Results:[/bold]")
+        result_table = Table(show_header=False)
+        result_table.add_column("Category")
+        result_table.add_column("Count")
 
-    _add_counts_to_table(results, result_table)
-    console.print(result_table)
-    console.print()
+        _add_counts_to_table(results, result_table)
+        console.print(result_table)
+        console.print()
+    finally:
+        await rc.aclose()
