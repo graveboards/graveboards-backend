@@ -6,10 +6,8 @@ from rich.table import Table
 from rich import box
 
 from app.fixtures.utils import TEST_FIXTURES_DIR, load_metadata, FIXTURES_DIR, RULESETS, SCORE_TYPES
-from app.logging import get_logger
 
 console = Console()
-logger = get_logger(__name__)
 
 
 async def cmd_list_fixtures():

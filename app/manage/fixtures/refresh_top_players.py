@@ -6,10 +6,8 @@ from rich.table import Table
 from app.fixtures.utils import RULESETS
 from app.fixtures.fetcher import FixtureDataFetcher
 from app.redis import RedisClient
-from app.logging import get_logger
 
 console = Console()
-logger = get_logger(__name__)
 
 
 async def cmd_refresh_top_players(

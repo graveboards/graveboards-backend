@@ -4,11 +4,9 @@ from shutil import copy2
 from rich.console import Console
 
 from app.fixtures.utils import TEST_FIXTURES_DIR, FIXTURES_DIR, load_metadata, save_metadata
-from app.logging import get_logger
 from .helpers import get_categories_to_process
 
 console = Console()
-logger = get_logger(__name__)
 
 
 async def cmd_demote_fixtures(

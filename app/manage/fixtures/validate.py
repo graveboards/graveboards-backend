@@ -3,10 +3,8 @@ from pathlib import Path
 from rich.console import Console
 
 from app.fixtures.utils import get_all_fixture_files
-from app.logging import get_logger
 
 console = Console()
-logger = get_logger(__name__)
 
 
 def _validate_file(filepath: Path, errors: list[str]) -> None:

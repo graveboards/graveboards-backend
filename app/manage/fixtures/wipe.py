@@ -3,10 +3,8 @@ from shutil import rmtree
 from rich.console import Console
 
 from app.fixtures.utils import FIXTURES_DIR, load_metadata, save_metadata, RULESETS, create_empty_samples, create_empty_promoted_fixtures
-from app.logging import get_logger
 
 console = Console()
-logger = get_logger(__name__)
 
 
 async def cmd_wipe_fixtures(

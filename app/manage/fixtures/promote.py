@@ -4,11 +4,9 @@ from shutil import copy2, rmtree
 from rich.console import Console
 
 from app.fixtures.utils import FIXTURES_DIR, TEST_FIXTURES_DIR, load_metadata, save_metadata, create_empty_samples
-from app.logging import get_logger
 from .helpers import get_categories_to_process
 
 console = Console()
-logger = get_logger(__name__)
 
 
 async def cmd_promote_fixtures(
