@@ -103,9 +103,8 @@ async def cmd_promote_fixtures(
                 metadata["promoted_fixtures"][meta_name]["count"] = metadata["promoted_fixtures"][meta_name].get("count", 0) + total_count
                 metadata["promoted_fixtures"][meta_name]["last_promoted"] = current_time
 
-    if metadata.get("last_updated"):
-        metadata["last_updated"] = None
-        metadata["samples"] = create_empty_samples()
+    metadata["last_updated"] = None
+    metadata["samples"] = create_empty_samples()
     save_metadata(metadata)
 
     console.print(f"[green]✅ Promoted {copied} fixture files to tests/fixtures/osu/[/green]")
