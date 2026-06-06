@@ -1,3 +1,7 @@
+import json
+import os
+import tempfile
+from pathlib import Path
 from shutil import rmtree
 
 from rich.console import Console
@@ -5,6 +9,18 @@ from rich.console import Console
 from app.fixtures.utils import FIXTURES_DIR, load_metadata, save_metadata, RULESETS, create_empty_samples, create_empty_promoted_fixtures
 
 console = Console()
+
+
+def _atomic_save_metadata(metadata: dict, metadata_path: Path) -> None:
+    """Save metadata atomically by writing to a temp file then renaming."""
+    fd, tmp_path = tempfile.mkstemp(dir=metadata_path.parent, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w") as f:
+            json.dump(metadata, f, indent=2, default=str)
+        Path(tmp_path).replace(metadata_path)
+    except Exception:
+        Path(tmp_path).unlink(missing_ok=True)
+        raise
 
 
 async def cmd_wipe_fixtures(
@@ -24,11 +40,13 @@ async def cmd_wipe_fixtures(
 
     metadata = load_metadata()
 
+    deleted_count = 0
     if FIXTURES_DIR.exists():
         for sub_dir in FIXTURES_DIR.iterdir():
             if sub_dir.is_dir():
                 rmtree(sub_dir)
                 console.print(f"[green]✅ Deleted: {sub_dir.name}[/green]")
+                deleted_count += 1
 
     metadata["samples"] = create_empty_samples()
     if clear_failed_ids:
@@ -45,6 +63,10 @@ async def cmd_wipe_fixtures(
                 "[yellow]⚠️  WARNING: Removing promoted fixture metadata while fixture files still exist on disk![/yellow]")
             console.print("   This will cause metadata to be out of sync with actual fixture state.")
         metadata["promoted_fixtures"] = create_empty_promoted_fixtures()
-    save_metadata(metadata)
+
+    if deleted_count > 0:
+        _atomic_save_metadata(metadata, FIXTURES_DIR / "metadata.json")
+    else:
+        save_metadata(metadata)
 
     console.print("[green]✅ Fixtures wiped![/green]\n")
