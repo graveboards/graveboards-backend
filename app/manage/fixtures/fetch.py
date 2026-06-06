@@ -86,7 +86,7 @@ def _create_progress_tasks(progress, sample_counts: dict) -> tuple[dict[str, Tas
     return tasks, total_items
 
 
-def _process_fetch_events(fetcher, progress, tasks, overall_task, overall_progress, sample_counts, use_live: bool):
+async def _process_fetch_events(fetcher, progress, tasks, overall_task, overall_progress, sample_counts, use_live: bool):
     if use_live:
         progress_table = Table.grid()
         panel = Panel.fit(
@@ -202,7 +202,7 @@ async def cmd_fetch_fixtures(
 
         logger.info("Fetching fixture data from osu! API...")
 
-        _process_fetch_events(fetcher, progress, tasks, overall_task, overall_progress, sample_counts, use_live=not no_progress)
+        await _process_fetch_events(fetcher, progress, tasks, overall_task, overall_progress, sample_counts, use_live=not no_progress)
 
         results = fetcher.last_fetch_results
         logger.info(f"Fixture data fetch complete: {results}")

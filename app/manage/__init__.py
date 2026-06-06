@@ -248,8 +248,8 @@ async def main():
     match args.command:
         case "status":
             await cmd_status(args.target)
-          case "reset":
-                await cmd_reset(args.seed_target, force=getattr(args, 'force', False))
+        case "reset":
+            await cmd_reset(args.seed_target, force=getattr(args, 'force', False))
         case "seed":
             await cmd_seed(args.target)
         case "fixtures":
@@ -282,7 +282,7 @@ async def main():
                         rulesets=args.rulesets,
                         count=args.count,
                     )
-              case "list":
+                case "list":
                     await cmd_list_fixtures()
                 case "validate":
                     await cmd_validate_fixtures()
