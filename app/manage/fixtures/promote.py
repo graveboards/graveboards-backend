@@ -1,10 +1,9 @@
-from pathlib import Path
 from datetime import datetime, timezone
 from shutil import copy2, rmtree
 
 from rich.console import Console
 
-from app.fixtures.utils import FIXTURES_DIR, load_metadata, save_metadata, create_empty_samples
+from app.fixtures.utils import FIXTURES_DIR, TEST_FIXTURES_DIR, load_metadata, save_metadata, create_empty_samples
 from app.logging import get_logger
 from .helpers import get_categories_to_process
 
@@ -20,10 +19,6 @@ async def cmd_promote_fixtures(
     beatmap_scores: bool,
     beatmap_attributes: bool,
 ):
-    
-    test_fixtures_dir = Path(__file__).resolve().parent.parent.parent / "tests" / "fixtures" / "osu"
-    test_fixtures_dir.mkdir(parents=True, exist_ok=True)
-
     metadata = load_metadata()
     copied = 0
     current_time = datetime.now(timezone.utc).isoformat()
@@ -41,7 +36,7 @@ async def cmd_promote_fixtures(
 
     for src_name, dst_name, meta_name in categories_to_promote:
         src_path = FIXTURES_DIR / src_name
-        dst_path = test_fixtures_dir / dst_name
+        dst_path = TEST_FIXTURES_DIR / dst_name
 
         if src_name in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
             dst_path.mkdir(parents=True, exist_ok=True)

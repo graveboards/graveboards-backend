@@ -1,4 +1,3 @@
-from pathlib import Path
 from rich.console import Console
 from rich.columns import Columns
 from rich.console import Group
@@ -6,7 +5,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich import box
 
-from app.fixtures.utils import load_metadata, FIXTURES_DIR, RULESETS, SCORE_TYPES
+from app.fixtures.utils import TEST_FIXTURES_DIR, load_metadata, FIXTURES_DIR, RULESETS, SCORE_TYPES
 from app.logging import get_logger
 
 console = Console()
@@ -15,8 +14,6 @@ logger = get_logger(__name__)
 
 async def cmd_list_fixtures():
     metadata = load_metadata()
-
-    promoted_fixtures_dir = Path(__file__).resolve().parent.parent.parent / "tests" / "fixtures" / "osu"
 
     def count_files(path):
         return len(list(path.glob("*.json"))) if path.exists() else 0
@@ -44,16 +41,16 @@ async def cmd_list_fixtures():
     def get_promoted_counts():
         counts = {}
         for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
-            path = promoted_fixtures_dir / category
+            path = TEST_FIXTURES_DIR / category
             counts[category] = count_files(path)
 
-        users_path = promoted_fixtures_dir / "users"
+        users_path = TEST_FIXTURES_DIR / "users"
         if users_path.exists():
             counts["users"] = {r: count_files(users_path / r) for r in RULESETS}
         else:
             counts["users"] = {r: 0 for r in RULESETS}
 
-        scores_path = promoted_fixtures_dir / "scores"
+        scores_path = TEST_FIXTURES_DIR / "scores"
         if scores_path.exists():
             counts["scores"] = {t: count_files(scores_path / t) for t in SCORE_TYPES}
         else:

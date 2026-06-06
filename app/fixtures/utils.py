@@ -4,11 +4,15 @@ from pathlib import Path
 from datetime import datetime, timezone
 
 from app.logging import get_logger
+from app.config import PROJECT_ROOT
 
 logger = get_logger(__name__)
 
-FIXTURES_DIR = Path(__file__).resolve().parent.parent.parent / "instance" / "fixtures"
+FIXTURES_DIR = PROJECT_ROOT / "instance" / "fixtures"
 FIXTURES_DIR.mkdir(parents=True, exist_ok=True)
+
+TEST_FIXTURES_DIR = PROJECT_ROOT / "tests" / "fixtures" / "osu"
+TEST_FIXTURES_DIR.mkdir(parents=True, exist_ok=True)
 
 METADATA_FILE = FIXTURES_DIR / "metadata.json"
 
