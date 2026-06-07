@@ -19,13 +19,14 @@ if TYPE_CHECKING:
     from .beatmap_snapshot import BeatmapSnapshot
     from .beatmapset_tag import BeatmapsetTag
     from .profile import Profile
+    from .beatmapset_listing import BeatmapsetListing
 
 
 class BeatmapsetSnapshot(Base):
     __tablename__ = "beatmapset_snapshots"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    beatmapset_id: Mapped[int] = mapped_column(Integer, ForeignKey("beatmapsets.id"), nullable=False)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    beatmapset_id: Mapped[int] = mapped_column(Integer, ForeignKey("beatmapsets.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     snapshot_number: Mapped[int] = mapped_column(Integer, nullable=False)
     snapshot_date: Mapped[datetime] = mapped_column(AwareDateTime(), default=aware_utcnow)
     checksum: Mapped[str] = mapped_column(String(32), unique=True, nullable=False)
@@ -89,6 +90,14 @@ class BeatmapsetSnapshot(Base):
         primaryjoin="foreign(BeatmapsetSnapshot.user_id) == remote(Profile.user_id)",
         uselist=False,
         overlaps="beatmapset_snapshots",
+        lazy=True
+    )
+    beatmapset_listing: Mapped["BeatmapsetListing"] = relationship(
+        "BeatmapsetListing",
+        back_populates="beatmapset_snapshot",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        uselist=False,
         lazy=True
     )
 

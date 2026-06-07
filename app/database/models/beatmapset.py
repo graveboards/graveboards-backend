@@ -13,12 +13,13 @@ from .base import Base
 if TYPE_CHECKING:
     from .beatmap import Beatmap
     from .beatmapset_snapshot import BeatmapsetSnapshot
+    from .beatmapset_listing import BeatmapsetListing
 
 
 class Beatmapset(Base):
     __tablename__ = "beatmapsets"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
 
     # Relationships
     beatmaps: Mapped[list["Beatmap"]] = relationship(
@@ -28,6 +29,15 @@ class Beatmapset(Base):
     )
     snapshots: Mapped[list["BeatmapsetSnapshot"]] = relationship(
         "BeatmapsetSnapshot",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        lazy=True
+    )
+    listings: Mapped[list["BeatmapsetListing"]] = relationship(
+        "BeatmapsetListing",
+        back_populates="beatmapset",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
         lazy=True
     )
 

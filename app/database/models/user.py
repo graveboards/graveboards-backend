@@ -70,6 +70,8 @@ class User(Base):
     )
     beatmapsets: Mapped[list["Beatmapset"]] = relationship(
         "Beatmapset",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
         lazy=True
     )
     score_fetcher_task: Mapped["ScoreFetcherTask"] = relationship(

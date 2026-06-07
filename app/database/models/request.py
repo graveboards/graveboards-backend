@@ -19,8 +19,8 @@ class Request(Base):
     __tablename__ = "requests"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    beatmapset_id: Mapped[int] = mapped_column(Integer, ForeignKey("beatmapsets.id"), nullable=False)
-    beatmapset_snapshot_id: Mapped[int] = mapped_column(Integer, ForeignKey("beatmapset_snapshots.id"), nullable=False)
+    beatmapset_id: Mapped[int] = mapped_column(Integer, ForeignKey("beatmapsets.id", ondelete="CASCADE"), nullable=False)
+    beatmapset_snapshot_id: Mapped[int] = mapped_column(Integer, ForeignKey("beatmapset_snapshots.id", ondelete="CASCADE"), nullable=False)
     queue_id: Mapped[int] = mapped_column(Integer, ForeignKey("queues.id", ondelete="CASCADE"), nullable=False)
     comment: Mapped[str] = mapped_column(Text)
     mv_checked: Mapped[bool] = mapped_column(Boolean, default=False)

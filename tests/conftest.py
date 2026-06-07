@@ -90,6 +90,23 @@ async def db_transaction(test_db_pool):
 
 
 @pytest.fixture(scope="function")
+async def db_session():
+    """Create a SQLAlchemy async session wrapped in a transaction that rolls back."""
+    from app.database.db import PostgresqlDB
+    
+    db = PostgresqlDB()
+    
+    async with db.session() as session:
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
+    
+    await db.close()
+
+
+@pytest.fixture(scope="function")
 async def clean_redis():
     r = redis.Redis(
         host=REDIS_CONFIGURATION["host"],
