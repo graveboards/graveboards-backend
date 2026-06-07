@@ -10,7 +10,7 @@ def TestClient():
     the large OpenAPI spec file (which takes significant time due to shallow
     schema recursion).
     
-    Use this fixture for Phase 3 (API route tests) and Phase 6 (e2e smoke tests)
+    Use this fixture for Phase 3 (model validation) and Phase 6 (e2e smoke tests)
     that need to verify HTTP endpoint behavior including:
     - Middleware (CORS, GZip)
     - Security handlers

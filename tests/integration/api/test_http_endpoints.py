@@ -4,7 +4,8 @@ from tests.fixtures.starlette_client import TestClient
 
 
 @pytest.mark.integration
-def test_login_endpoint_returns_authorization_url(TestClient):
+def test_login_endpoint(TestClient):
+    """Test login endpoint via HTTP using minimal TestClient."""
     response = TestClient.get("/api/v1/login")
     
     assert response.status_code == 200

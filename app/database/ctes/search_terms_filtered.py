@@ -18,8 +18,6 @@ from .hashable_cte import HashableCTE
 from .utils import extract_cte_target_scalar
 
 
-build_search_terms_filtered_cte = search_terms_filtered_cte_factory
-
 TermName: TypeAlias = str
 
 
@@ -259,6 +257,9 @@ def get_filter_stmt(
             raise ValueError(f"Unsupported scope: {scope}")
 
     return stmt
+
+
+build_search_terms_filtered_cte = search_terms_filtered_cte_factory
 
 
 __all__ = [
