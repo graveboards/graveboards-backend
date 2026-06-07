@@ -17,6 +17,9 @@ from app.search.datastructures import SearchTermsSchema
 from .hashable_cte import HashableCTE
 from .utils import extract_cte_target_scalar
 
+
+build_search_terms_filtered_cte = search_terms_filtered_cte_factory
+
 TermName: TypeAlias = str
 
 
@@ -256,3 +259,10 @@ def get_filter_stmt(
             raise ValueError(f"Unsupported scope: {scope}")
 
     return stmt
+
+
+__all__ = [
+    "search_terms_filtered_cte_factory",
+    "build_search_terms_filtered_cte",
+    "get_filter_stmt",
+]
