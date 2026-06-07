@@ -26,6 +26,7 @@ def create_score_from_best(score_data: dict, user_id: Optional[int] = None, beat
         score=schema_data.score,
         statistics=schema_data.statistics.model_dump() if hasattr(schema_data.statistics, "model_dump") else schema_data.statistics,
         type=schema_data.type,
+        playtime=schema_data.playtime if hasattr(schema_data, "playtime") else 0,
     )
 
 
