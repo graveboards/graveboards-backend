@@ -8,12 +8,8 @@ import redis
 from app.config import POSTGRESQL_CONFIGURATION, REDIS_CONFIGURATION
 
 
-# Import TestClient for Phase 3.5 tests
-from starlette.testclient import TestClient
-
-
 @pytest.fixture(scope="function")
-def ConnexionTestClient():
+def MinimalTestClient():
     """Create a TestClient using the full Connexion app with lifespan.
     
     Use this fixture for Phase 6 (full E2E tests) that need to verify:

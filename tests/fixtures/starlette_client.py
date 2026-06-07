@@ -1,24 +1,20 @@
 """
-Starlette TestClient Fixture - Provides minimal TestClient for testing.
+Starlette TestClient Fixture - Provides minimal Starlette TestClient for testing.
 
 This fixture creates a minimal Starlette TestClient without loading the
 full OpenAPI specification. This avoids the performance cost of loading
 the large OpenAPI spec file (which takes significant time due to shallow
 schema recursion).
 
-Use this fixture for Phase 3 (model validation) and Phase 6 (e2e smoke tests)
-that need to verify HTTP endpoint behavior including:
-- Middleware (CORS, GZip)
-- Security handlers
-- Parameter parsing
-- Endpoint function behavior
+Use this fixture when you need more control over the Starlette app configuration
+than what the tests.conftest.TestClient provides.
 
 For endpoints not explicitly configured here, tests should either:
 1. Add route stubs for the specific endpoint under test
-2. Use the ConnexionTestClient fixture if full OpenAPI spec is needed
+2. Use the tests.conftest.ConnexionTestClient fixture if full OpenAPI spec is needed
 
-This module is kept for backwards compatibility but tests should import
-TestClient from tests.conftest instead.
+This module is kept for backwards compatibility but most tests should use
+tests.conftest.TestClient instead.
 """
 
 import pytest
