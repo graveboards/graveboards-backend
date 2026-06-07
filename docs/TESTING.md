@@ -261,7 +261,35 @@ Build factories using real fixture data. These are prerequisites for all integra
 ## Phase 3 — Integration API Route Tests
 **Files:** `tests/integration/api/test_auth_routes.py`, `test_beatmaps_routes.py`, `test_queues_routes.py`, `test_requests_routes.py`, `test_search_routes.py`
 
-Use `db_transaction` fixture for DB isolation and real Connexion ASGI client.
+Use `db_transaction` fixture for DB isolation and `TestClient` fixture for HTTP endpoint testing.
+
+### TestClient Fixture
+**Location:** `tests/fixtures/test_client.py`
+
+The `TestClient` fixture creates a minimal Starlette TestClient without loading the full OpenAPI specification. This avoids the performance cost of loading the large OpenAPI spec file (which takes significant time due to shallow schema recursion).
+
+**When to use TestClient:**
+- Testing endpoint functions via HTTP requests
+- Verifying middleware (CORS, GZip)
+- Testing security handlers
+- Validating parameter parsing
+- End-to-end integration tests
+
+**Current routes available in TestClient:**
+- `GET /api/v1/login` - OAuth login endpoint
+
+**Extending TestClient for additional routes:**
+```python
+from starlette.routing import Route
+from starlette.responses import JSONResponse
+
+async def my_endpoint(request):
+    return JSONResponse({"data": "test"})
+
+routes = [
+    Route("/api/v1/my-endpoint", my_endpoint, methods=["GET"]),
+]
+```
 
 | Route Tests | What to Cover |
 |------------|---------------|
