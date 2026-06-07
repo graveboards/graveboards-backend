@@ -1,6 +1,6 @@
 import pytest
 
-from tests.fixtures.starlette_client import TestClient
+from tests.conftest import TestClient
 
 
 @pytest.mark.integration

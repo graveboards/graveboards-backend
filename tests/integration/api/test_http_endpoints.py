@@ -1,11 +1,11 @@
 import pytest
 
-from tests.fixtures.starlette_client import TestClient
+from tests.conftest import TestClient
 
 
 @pytest.mark.integration
 def test_login_endpoint(TestClient):
-    """Test login endpoint via HTTP using minimal TestClient."""
+    """Test login endpoint via HTTP using minimal TestClient fixture."""
     response = TestClient.get("/api/v1/login")
     
     assert response.status_code == 200

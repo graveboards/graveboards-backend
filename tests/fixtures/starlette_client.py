@@ -1,36 +1,47 @@
+"""
+Starlette TestClient Fixture - Provides minimal TestClient for testing.
+
+This fixture creates a minimal Starlette TestClient without loading the
+full OpenAPI specification. This avoids the performance cost of loading
+the large OpenAPI spec file (which takes significant time due to shallow
+schema recursion).
+
+Use this fixture for Phase 3 (model validation) and Phase 6 (e2e smoke tests)
+that need to verify HTTP endpoint behavior including:
+- Middleware (CORS, GZip)
+- Security handlers
+- Parameter parsing
+- Endpoint function behavior
+
+For endpoints not explicitly configured here, tests should either:
+1. Add route stubs for the specific endpoint under test
+2. Use the ConnexionTestClient fixture if full OpenAPI spec is needed
+
+This module is kept for backwards compatibility but tests should import
+TestClient from tests.conftest instead.
+"""
+
 import pytest
+
+from starlette.applications import Starlette
+from starlette.testclient import TestClient as StarletteTestClient
+from starlette.routing import Route
+from starlette.responses import JSONResponse
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.gzip import GZipMiddleware
+
+from app.oauth import OAuth
 
 
 @pytest.fixture(scope="function")
-def TestClient():
+def StarletteTestClient():
     """Create a TestClient for API route testing.
     
-    This fixture creates a minimal Starlette TestClient without loading the
-    full OpenAPI specification. This avoids the performance cost of loading
-    the large OpenAPI spec file (which takes significant time due to shallow
-    schema recursion).
-    
-    Use this fixture for Phase 3 (model validation) and Phase 6 (e2e smoke tests)
-    that need to verify HTTP endpoint behavior including:
-    - Middleware (CORS, GZip)
-    - Security handlers
-    - Parameter parsing
-    - Endpoint function behavior
-    
-    For endpoints not explicitly configured here, tests should either:
-    1. Add route stubs for the specific endpoint under test
-    2. Use the Connexion app fixture if full OpenAPI spec is needed
+    Use this fixture when you need more control over the Starlette app
+    configuration than what the conftest.TestClient provides.
     """
-    from starlette.applications import Starlette
-    from starlette.testclient import TestClient as StarletteTestClient
-    from starlette.routing import Route
-    from starlette.responses import JSONResponse
-    from starlette.middleware import Middleware
-    from starlette.middleware.cors import CORSMiddleware
-    from starlette.middleware.gzip import GZipMiddleware
-    
     async def login_endpoint(request):
-        from app.oauth import OAuth
         oauth = OAuth()
         authorization_url, state = oauth.create_authorization_url()
         return JSONResponse({

@@ -61,3 +61,23 @@ ADMIN_USER_IDS = set(_admin_user_ids := parse_user_ids("ADMIN_USER_IDS", require
 PRIMARY_ADMIN_USER_ID = _admin_user_ids[0]
 MASTER_QUEUE_NAME = "Graveboards Queue"
 MASTER_QUEUE_DESCRIPTION = "Master queue for beatmaps to receive leaderboards"
+
+# Test configuration - use separate DB/Redis for clean isolation
+TEST_POSTGRESQL_CONFIGURATION = {
+    "drivername": "postgresql+asyncpg",
+    "host": os.getenv("TEST_POSTGRESQL_HOST", os.getenv("POSTGRESQL_HOST")),
+    "port": os.getenv("TEST_POSTGRESQL_PORT", os.getenv("POSTGRESQL_PORT")),
+    "username": os.getenv("TEST_POSTGRESQL_USERNAME", os.getenv("POSTGRESQL_USERNAME")),
+    "password": os.getenv("TEST_POSTGRESQL_PASSWORD", os.getenv("POSTGRESQL_PASSWORD")),
+    "database": os.getenv("TEST_POSTGRESQL_DATABASE", os.getenv("POSTGRESQL_DATABASE") + "_test")
+}
+
+TEST_REDIS_CONFIGURATION = {
+    "host": os.getenv("TEST_REDIS_HOST", os.getenv("REDIS_HOST")),
+    "port": os.getenv("TEST_REDIS_PORT", os.getenv("REDIS_PORT")),
+    "username": os.getenv("TEST_REDIS_USERNAME", os.getenv("REDIS_USERNAME")),
+    "password": os.getenv("TEST_REDIS_PASSWORD", os.getenv("REDIS_PASSWORD")),
+    "db": int(os.getenv("TEST_REDIS_DB", os.getenv("REDIS_DB", "1"))),  # Use DB 1 for tests
+    "decode_responses": True,
+    "protocol": 3
+}
