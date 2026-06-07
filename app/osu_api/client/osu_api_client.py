@@ -78,7 +78,7 @@ class OsuAPIClient(OsuAPIClientBase):
         return response.json()
 
     @rate_limit(RATE_LIMIT)
-    async def get_beatmap_attributes(self, beatmap_id: int, mods: int) -> dict:
+    async def get_beatmap_attributes(self, beatmap_id: int, mods: list[int]) -> dict:
         url = APIEndpoint.BEATMAP_ATTRIBUTES.format(beatmap=beatmap_id)
 
         headers = {
