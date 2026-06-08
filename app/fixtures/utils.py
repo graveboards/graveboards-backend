@@ -44,6 +44,8 @@ RULESETS = ["osu", "taiko", "fruits", "mania"]
 SCORE_TYPES = ["best", "firsts", "recent"]
 TOP_PLAYERS_PER_RULESET = 1000
 
+DISCUSSION_STATUSES = ["ranked", "loved", "qualified", "graveyard", "pending", "approved", "all"]
+
 
 def calculate_sample_counts(
     scale: float = 1.0,

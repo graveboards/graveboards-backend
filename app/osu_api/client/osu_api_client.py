@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Optional
 
 import httpx
 from pydantic_core import ValidationError
@@ -6,7 +6,7 @@ from pydantic_core import ValidationError
 from app.redis import rate_limit, Namespace, CACHED_BEATMAP_EXPIRY, CACHED_BEATMAPSET_EXPIRY
 from app.redis.models import Beatmap, Beatmapset
 from app.logging import get_logger
-from app.osu_api.enums import APIEndpoint, ScoreType, Ruleset
+from app.osu_api.enums import APIEndpoint, ScoreType, Ruleset, RankedStatus
 from .base import OsuAPIClientBase
 
 RATE_LIMIT = 60
@@ -132,6 +132,36 @@ class OsuAPIClient(OsuAPIClientBase):
         await self.rc.expire(cached_beatmapset_hash_name, CACHED_BEATMAPSET_EXPIRY)
 
         return beatmapset_data
+    
+    @rate_limit(RATE_LIMIT)
+    async def get_beatmapset_discussions(
+        self,
+        beatmapset_status: str = "all",
+        page: int = 1,
+        limit: int = 50,
+    ) -> dict:
+        """Fetch beatmapsets by status using discussions endpoint."""
+        url = APIEndpoint.BEATMAPSET_DISCUSSIONS.format()
+        
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            **await self.get_auth_headers()
+        }
+        
+        query_parameters: dict[str, Union[int, str]] = {
+            "beatmapset_status": beatmapset_status,
+            "cursor[page]": page,
+            "limit": limit,
+        }
+        
+        url += self.format_query_parameters(query_parameters)
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=headers)
+        
+        response.raise_for_status()
+        return response.json()
 
     # Users
     @rate_limit(RATE_LIMIT)
