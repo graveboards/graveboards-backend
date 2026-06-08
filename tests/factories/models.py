@@ -3,7 +3,7 @@ from typing import Optional
 
 import pytest
 
-from app.database.models import User, Profile, Queue, Request
+from app.database.models import User, Profile, Queue, Request, Beatmap, Beatmapset
 from app.database.schemas import ProfileSchema, QueueSchema, RequestSchema
 
 
@@ -103,3 +103,31 @@ def queue_factory():
 def request_factory():
     """Factory fixture for creating request instances."""
     return create_request
+
+
+def create_beatmap(beatmapset_id: Optional[int] = None, **kwargs) -> Beatmap:
+    """Create a beatmap model instance with defaults."""
+    return Beatmap(
+        id=kwargs.get("id", 116383),
+        beatmapset_id=beatmapset_id or kwargs.get("beatmapset_id", 35965),
+    )
+
+
+def create_beatmapset(user_id: Optional[int] = None, **kwargs) -> Beatmapset:
+    """Create a beatmapset model instance with defaults."""
+    return Beatmapset(
+        id=kwargs.get("id", 35965),
+        user_id=user_id or kwargs.get("user_id", 12345),
+    )
+
+
+@pytest.fixture
+def beatmap_factory():
+    """Factory fixture for creating beatmap instances."""
+    return create_beatmap
+
+
+@pytest.fixture
+def beatmapset_factory():
+    """Factory fixture for creating beatmapset instances."""
+    return create_beatmapset
