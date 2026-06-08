@@ -91,7 +91,14 @@ async def db_transaction(test_db_pool):
 
 @pytest.fixture(scope="function")
 async def db_session():
-    """Create a SQLAlchemy async session wrapped in a transaction that rolls back."""
+    """Create a SQLAlchemy async session wrapped in a transaction that auto-rolls back.
+    
+    Use this for most tests that don't need to control transactions manually.
+    The fixture will automatically rollback after each test, ensuring isolation.
+    
+    For tests that need to control transaction boundaries manually (commit/rollback),
+    use db_session_manual instead.
+    """
     from app.database.db import PostgresqlDB
     
     db = PostgresqlDB()
@@ -102,6 +109,25 @@ async def db_session():
         except Exception:
             await session.rollback()
             raise
+    
+    await db.close()
+
+
+@pytest.fixture(scope="function")
+async def db_session_manual():
+    """Create a SQLAlchemy async session without automatic transaction control.
+    
+    Use this for tests that need full control over commit/rollback behavior.
+    Tests must handle their own commit/rollback and cleanup.
+    """
+    from app.database.db import PostgresqlDB
+    
+    db = PostgresqlDB()
+    
+    session = db.async_session_generator()
+    
+    async with session() as s:
+        yield s
     
     await db.close()
 
