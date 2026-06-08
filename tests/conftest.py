@@ -9,28 +9,6 @@ from app.config import POSTGRESQL_CONFIGURATION, REDIS_CONFIGURATION
 
 
 @pytest.fixture(scope="function")
-def MinimalTestClient():
-    """Create a TestClient using the full Connexion app with lifespan.
-    
-    Use this fixture for Phase 6 (full E2E tests) that need to verify:
-    - Full OpenAPI parameter parsing
-    - Endpoint handlers via real API routes
-    - Full app lifecycle (lifespan, middleware, auth, DB)
-    
-    This loads the full OpenAPI spec and all registered routes.
-    Tests run slower (~300-500ms) due to full app startup.
-    
-    For fast Phase 3.5 endpoint tests, use TestClient fixture instead.
-    """
-    from starlette.testclient import TestClient
-    from app.connexion_app import create_connexion_app
-    
-    app = create_connexion_app()
-    with TestClient(app.app) as client:
-        yield client
-
-
-@pytest.fixture(scope="function")
 def TestClient():
     """Create a minimal TestClient for fast, isolated endpoint testing.
     
