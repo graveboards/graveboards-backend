@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+from .manager import FixtureManager
+
 
 def load_beatmap(filename: str) -> dict:
     """Load a beatmap fixture from JSON file."""

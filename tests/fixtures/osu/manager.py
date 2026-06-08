@@ -5,14 +5,41 @@ import random
 
 from app.logging import get_logger
 from app.config import PROJECT_ROOT
-from .utils import (
-    load_metadata,
-    save_metadata,
-    get_fixture_path,
-    RULESETS,
-)
 
 logger = get_logger(__name__)
+
+RULESETS = ["osu", "taiko", "fruits", "mania"]
+SCORE_TYPES = ["best", "firsts", "recent"]
+DISCUSSION_STATUSES = ["ranked", "loved", "qualified", "graveyard", "pending", "approved", "all"]
+
+
+def load_metadata() -> dict:
+    """Load metadata from default location."""
+    metadata_path = PROJECT_ROOT / "instance" / "fixtures" / "metadata.json"
+    if metadata_path.exists():
+        try:
+            with open(metadata_path) as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError):
+            pass
+    return {}
+
+
+def save_metadata(metadata: dict) -> None:
+    """Save metadata to default location."""
+    metadata_path = PROJECT_ROOT / "instance" / "fixtures" / "metadata.json"
+    metadata_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(metadata_path, "w") as f:
+        json.dump(metadata, f, indent=2)
+
+
+def get_fixture_path(category: str, subcategory: str | None = None) -> Path:
+    """Get fixture path for a category."""
+    path = PROJECT_ROOT / "tests" / "fixtures" / "osu" / category
+    if subcategory:
+        path = path / subcategory
+    path.mkdir(parents=True, exist_ok=True)
+    return path
 
 
 class FixtureManager:
@@ -150,7 +177,16 @@ class FixtureManager:
     ) -> list[Path]:
         """Resolve preferences to list of fixture file paths."""
         targeted_metadata = self.metadata.get("targeted", {})
-        category_metadata = targeted_metadata.get(category, {})
+        
+        # Handle subcategories (e.g., "users.osu" -> "users")
+        parts = category.split(".")
+        if len(parts) > 1:
+            main_category = parts[0]
+            category_metadata = targeted_metadata.get(main_category, {})
+        else:
+            main_category = category
+            category_metadata = targeted_metadata.get(category, {})
+        
         file_metadata = category_metadata.get("file_metadata", {})
         
         available_files = []
@@ -164,8 +200,8 @@ class FixtureManager:
                         "filepath": str(file_path),
                         "loaded": False,
                     }
-            if category in targeted_metadata:
-                targeted_metadata[category]["file_metadata"] = file_metadata
+            if main_category in targeted_metadata:
+                targeted_metadata[main_category]["file_metadata"] = file_metadata
         
         file_paths = []
         for fixture_id, meta in file_metadata.items():
@@ -297,7 +333,8 @@ class FixtureManager:
         category: str,
     ) -> list[Path]:
         """Get all fixture files for a category."""
-        path = self.fixture_dir / category
+        parts = category.split(".")
+        path = self.fixture_dir / Path(*parts)
         if not path.exists():
             return []
         return list(path.glob("*.json"))

@@ -115,6 +115,10 @@ def fixture_manager(temp_fixture_dir, mock_beatmap_file, mock_user_file):
     metadata = {
         "targeted": {
             "beatmaps": {
+                "by_status": {},
+                "by_ruleset": {},
+                "by_difficulty": {},
+                "by_playcount": {},
                 "file_metadata": {
                     "12345": {
                         "filepath": str(mock_beatmap_file),
@@ -125,7 +129,13 @@ def fixture_manager(temp_fixture_dir, mock_beatmap_file, mock_user_file):
                     }
                 }
             },
+            "beatmapsets": {
+                "by_status": {},
+                "file_metadata": {},
+            },
             "users": {
+                "by_activity": {},
+                "per_ruleset": {},
                 "file_metadata": {
                     "111111": {
                         "filepath": str(mock_user_file),
@@ -133,6 +143,11 @@ def fixture_manager(temp_fixture_dir, mock_beatmap_file, mock_user_file):
                         "ruleset": "osu",
                     }
                 }
+            },
+            "scores": {
+                "by_rank": {},
+                "by_mods": {},
+                "file_metadata": {},
             }
         }
     }
@@ -178,9 +193,44 @@ class TestFixtureManager:
         
         assert len(beatmaps) >= 1
     
-    def test_get_users_by_activity(self, fixture_manager):
+    def test_get_users_by_activity(self, temp_fixture_dir):
         """Test getting users by activity level."""
-        users = fixture_manager.get_users(
+        users_dir = temp_fixture_dir / "users" / "osu"
+        users_dir.mkdir(parents=True, exist_ok=True)
+        
+        user_data = {
+            "id": 111111,
+            "username": "test_user",
+            "statistics": {
+                "play_count": 10000,
+            },
+        }
+        
+        filepath = users_dir / "user_111111_osu.json"
+        with open(filepath, "w") as f:
+            json.dump(user_data, f)
+        
+        metadata = {
+            "targeted": {
+                "users": {
+                    "by_activity": {},
+                    "per_ruleset": {},
+                    "file_metadata": {
+                        "111111": {
+                            "filepath": str(filepath),
+                            "activity_level": "active",
+                            "ruleset": "osu",
+                        }
+                    }
+                },
+                "beatmaps": {"file_metadata": {}},
+                "beatmapsets": {"file_metadata": {}},
+                "scores": {"file_metadata": {}},
+            }
+        }
+        
+        manager = FixtureManager(temp_fixture_dir, metadata)
+        users = manager.get_users(
             ruleset="osu",
             count=1,
             activity_level="active"
@@ -215,17 +265,40 @@ class TestFixtureManager:
     
     def test_get_scores(self, temp_fixture_dir, mock_score_file):
         """Test getting scores by rank."""
+        scores_dir = temp_fixture_dir / "scores" / "best"
+        scores_dir.mkdir(parents=True, exist_ok=True)
+        
+        score_data = [
+            {
+                "id": 55555,
+                "user_id": 111111,
+                "beatmap_id": 12345,
+                "rank": "S",
+                "mods": [4, 16],
+                "score": 950000,
+            }
+        ]
+        
+        filepath = scores_dir / "scores_111111_best.json"
+        with open(filepath, "w") as f:
+            json.dump(score_data, f)
+        
         metadata = {
             "targeted": {
                 "scores": {
+                    "by_rank": {},
+                    "by_mods": {},
                     "file_metadata": {
                         "55555": {
-                            "filepath": str(mock_score_file),
+                            "filepath": str(filepath),
                             "rank": "S",
                             "mods": [4, 16],
                         }
                     }
-                }
+                },
+                "beatmaps": {"file_metadata": {}},
+                "beatmapsets": {"file_metadata": {}},
+                "users": {"file_metadata": {}},
             }
         }
         
@@ -243,9 +316,9 @@ class TestFixtureManager:
         """Test coverage report generation."""
         coverage = fixture_manager.get_coverage_report()
         
-        assert "targeted" in coverage
-        assert "beatmaps" in coverage["targeted"]
-        assert "users" in coverage["targeted"]
+        assert "beatmaps" in coverage
+        assert "users" in coverage
+        assert "file_metadata" in coverage["beatmaps"]
     
     def test_ensure_coverage(self, fixture_manager):
         """Test ensure_coverage method."""
@@ -311,7 +384,7 @@ class TestPreferenceMatching:
             "status": "ranked",
             "difficulty_rating": 4.5,
             "ruleset": "osu",
-            "playcount": 1500,
+            "playcount": 500,
         }
         
         preferences = {

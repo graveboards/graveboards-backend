@@ -16,6 +16,7 @@ from tests.fixtures.osu import (
     load_beatmap_attributes,
     load_rankings,
     load_tags,
+    FixtureManager,
 )
 
 
