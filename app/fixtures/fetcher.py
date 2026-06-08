@@ -18,7 +18,7 @@ from .utils import (
     save_top_player_ids,
 )
 
-MAX_RETRIES = 5
+MAX_RETRIES = 10
 RANKING_PAGE_SIZE = 50
 
 
@@ -48,9 +48,12 @@ class FixtureDataFetcher:
     async def fetch_beatmaps(self, count: int) -> AsyncIterator[FetchEvent]:
         path = get_fixture_path("beatmaps")
         fetched = 0
+        attempts = 0
+        max_attempts = count * 10
 
-        for i in range(count):
-            beatmap_id = self._get_random_id("beatmaps")
+        while fetched < count and attempts < max_attempts:
+            attempts += 1
+            beatmap_id = self._get_random_id("beatmaps", avoid_failed=False)
             retries = 0
             while retries < MAX_RETRIES:
                 try:
@@ -65,9 +68,13 @@ class FixtureDataFetcher:
                     self.logger.debug(f"Failed to fetch beatmap {beatmap_id} (retry {retries + 1}/{MAX_RETRIES}): {e}")
                     self._add_failed_id("beatmaps", beatmap_id)
                     retries += 1
-                    beatmap_id = self._get_random_id("beatmaps")
+                    if retries < MAX_RETRIES:
+                        beatmap_id = self._get_random_id("beatmaps", avoid_failed=True)
             
-            yield FetchEvent("beatmaps", i + 1, count)
+            yield FetchEvent("beatmaps", fetched, count)
+
+        if fetched < count:
+            self.logger.warning(f"Only fetched {fetched}/{count} beatmaps")
 
         self.metadata["samples"]["beatmaps"]["count"] += fetched
         self.metadata["samples"]["beatmaps"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
@@ -77,9 +84,12 @@ class FixtureDataFetcher:
     async def fetch_beatmapsets(self, count: int) -> AsyncIterator[FetchEvent]:
         path = get_fixture_path("beatmapsets")
         fetched = 0
+        attempts = 0
+        max_attempts = count * 10
 
-        for i in range(count):
-            beatmapset_id = self._get_random_id("beatmapsets")
+        while fetched < count and attempts < max_attempts:
+            attempts += 1
+            beatmapset_id = self._get_random_id("beatmapsets", avoid_failed=False)
             retries = 0
             while retries < MAX_RETRIES:
                 try:
@@ -94,9 +104,13 @@ class FixtureDataFetcher:
                     self.logger.debug(f"Failed to fetch beatmapset {beatmapset_id} (retry {retries + 1}/{MAX_RETRIES}): {e}")
                     self._add_failed_id("beatmapsets", beatmapset_id)
                     retries += 1
-                    beatmapset_id = self._get_random_id("beatmapsets")
+                    if retries < MAX_RETRIES:
+                        beatmapset_id = self._get_random_id("beatmapsets", avoid_failed=True)
             
-            yield FetchEvent("beatmapsets", i + 1, count)
+            yield FetchEvent("beatmapsets", fetched, count)
+
+        if fetched < count:
+            self.logger.warning(f"Only fetched {fetched}/{count} beatmapsets")
 
         self.metadata["samples"]["beatmapsets"]["count"] += fetched
         self.metadata["samples"]["beatmapsets"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
@@ -412,15 +426,18 @@ class FixtureDataFetcher:
         self.top_player_ids = self.metadata.get("top_player_ids", {r: [] for r in RULESETS})
         return fetched
 
-    def _get_random_id(self, category: str, use_top_players: bool = False) -> int:
+    def _get_random_id(self, category: str, use_top_players: bool = False, avoid_failed: bool = True) -> int:
         if use_top_players and category == "users" and self.top_player_ids:
             for ruleset in RULESETS:
                 top_ids = self.top_player_ids.get(ruleset, [])
                 if top_ids:
-                    candidate = random.choice(top_ids)
-                    failed_list = self.failed_ids.get("users", {}).get(ruleset, [])
-                    if candidate not in failed_list:
-                        return candidate
+                    if avoid_failed:
+                        failed_list = self.failed_ids.get("users", {}).get(ruleset, [])
+                        for candidate in top_ids:
+                            if candidate not in failed_list:
+                                return candidate
+                    else:
+                        return random.choice(top_ids)
         
         range_config = self.id_ranges.get(category, self.id_ranges.get(category.split(".")[0], {"min": 1, "max": 1000000}))
         min_id = range_config.get("min", 1)
@@ -428,10 +445,11 @@ class FixtureDataFetcher:
         
         failed_list = self.failed_ids.get(category, [])
         
-        for _ in range(MAX_RETRIES * 2):
-            candidate = random.randint(min_id, max_id)
-            if candidate not in failed_list:
-                return candidate
+        if avoid_failed:
+            for _ in range(MAX_RETRIES * 3):
+                candidate = random.randint(min_id, max_id)
+                if candidate not in failed_list:
+                    return candidate
         
         return random.randint(min_id, max_id)
 

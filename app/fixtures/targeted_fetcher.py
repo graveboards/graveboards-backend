@@ -135,8 +135,13 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         
         await self.fetch_top_players(rulesets=[ruleset], count_per_ruleset=500)
         
-        for _ in range(count * 5):
-            user_id = self._get_random_id("users", use_top_players=True)
+        attempts = 0
+        max_attempts = count * 10
+        
+        while fetched < count and attempts < max_attempts:
+            attempts += 1
+            use_top_players = attempts % 3 != 0
+            user_id = self._get_random_id("users", use_top_players=use_top_players, avoid_failed=True)
             mode = getattr(Ruleset, ruleset.upper()).value
             
             try:
@@ -182,6 +187,9 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
             except Exception as e:
                 self.logger.debug(f"Error fetching user {user_id}: {e}")
                 continue
+        
+        if fetched < count:
+            self.logger.warning(f"Only fetched {fetched}/{count} beatmaps for difficulty {difficulty_range}")
         
         self.metadata["samples"]["beatmaps"]["count"] += fetched
         self.metadata["samples"]["beatmaps"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
@@ -236,6 +244,9 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
                 self.logger.debug(f"Failed to fetch user {user_id}: {e}")
                 self._add_failed_id(f"users.{ruleset}", user_id)
         
+        if fetched < count:
+            self.logger.warning(f"Only fetched {fetched}/{count} users for {ruleset} {activity_level}")
+        
         self.metadata["samples"]["users"]["count"] += fetched
         self.metadata["samples"]["users"]["per_ruleset"][ruleset] = (
             self.metadata["samples"]["users"]["per_ruleset"].get(ruleset, 0) + fetched
@@ -261,8 +272,12 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
             self.playcount_ranges["medium"]
         )
         
-        for _ in range(count * 10):
-            beatmap_id = self._get_random_id("beatmaps")
+        attempts = 0
+        max_attempts = count * 10
+        
+        while fetched < count and attempts < max_attempts:
+            attempts += 1
+            beatmap_id = self._get_random_id("beatmaps", avoid_failed=True)
             
             try:
                 beatmap_data = await self.oac.get_beatmap(beatmap_id)
@@ -289,6 +304,9 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
             except Exception as e:
                 self.logger.debug(f"Failed to fetch beatmap {beatmap_id}: {e}")
                 self._add_failed_id("beatmaps", beatmap_id)
+        
+        if fetched < count:
+            self.logger.warning(f"Only fetched {fetched}/{count} beatmaps for playcount {playcount_range}")
         
         self.metadata["samples"]["beatmaps"]["count"] += fetched
         self.metadata["samples"]["beatmaps"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
