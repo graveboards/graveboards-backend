@@ -3,7 +3,6 @@ import sys
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from app.fixtures.manager import FixtureManager
 from tests.unit.osu_api.test_helpers import _get_beatmapset_with_fallback

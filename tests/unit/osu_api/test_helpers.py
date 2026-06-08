@@ -2,7 +2,6 @@ import pytest
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from tests.unit.osu_api.test_utils import (
     _create_mock_beatmap,

@@ -3,7 +3,6 @@ import sys
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from app.fixtures.manager import FixtureManager
 from tests.unit.osu_api.test_utils import _create_mock_tags, _create_mock_rankings_user
