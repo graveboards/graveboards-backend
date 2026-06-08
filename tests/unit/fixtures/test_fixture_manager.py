@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from tests.fixtures.osu.manager import FixtureManager
+from app.fixtures.manager import FixtureManager
 
 
 @pytest.fixture

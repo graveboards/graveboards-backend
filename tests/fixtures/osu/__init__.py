@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from .manager import FixtureManager
+from app.fixtures.manager import FixtureManager
 
 
 def load_beatmap(filename: str) -> dict:
