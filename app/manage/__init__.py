@@ -169,6 +169,46 @@ async def main():
         action="store_true",
         help="Disable progress bar display",
     )
+    fetch_parser.add_argument(
+        "--status",
+        action="append",
+        metavar="STATUS",
+        choices=["ranked", "loved", "qualified", "graveyard", "pending", "approved"],
+        help="Fetch beatmapsets by status (can be specified multiple times)",
+    )
+    fetch_parser.add_argument(
+        "--difficulty-range",
+        type=str,
+        metavar="RANGE",
+        choices=["easy", "medium", "hard", "expert"],
+        help="Fetch beatmaps by difficulty range (easy: 0-2, medium: 2-5, hard: 5-7, expert: 7+)",
+    )
+    fetch_parser.add_argument(
+        "--playcount-range",
+        type=str,
+        metavar="RANGE",
+        choices=["low", "medium", "high"],
+        help="Fetch beatmaps by playcount range (low: 0-100, medium: 100-1000, high: 1000+)",
+    )
+    fetch_parser.add_argument(
+        "--activity-tier",
+        type=str,
+        metavar="TIER",
+        choices=["active", "moderate", "inactive"],
+        help="Fetch users by activity tier (active: 100+ plays, moderate: 10-100, inactive: <10)",
+    )
+    fetch_parser.add_argument(
+        "--targeted",
+        action="store_true",
+        help="Enable targeted coverage mode (fetches by status/difficulty/activity)",
+    )
+    fetch_parser.add_argument(
+        "--ruleset",
+        action="append",
+        metavar="RULESET",
+        choices=["osu", "taiko", "fruits", "mania"],
+        help="Ruleset for targeted fetching (can be specified multiple times)",
+    )
 
     promote_parser = fixtures_subparsers.add_parser("promote", help="Promote fixtures from instance to tests")
     promote_parser.add_argument(
@@ -277,11 +317,17 @@ async def main():
                             use_minimal=args.minimal,
                             beatmaps_range_min=args.beatmaps_range_min,
                             beatmaps_range_max=args.beatmaps_range_max,
-                            beatmapsets_range_min=args.beatmapsets_range_min,
-                            beatmapsets_range_max=args.beatmapsets_range_max,
-                            users_range_min=args.users_range_min,
-                            users_range_max=args.users_range_max,
-                            no_progress=args.no_progress,
+                       beatmapsets_range_min=args.beatmapsets_range_min,
+                        beatmapsets_range_max=args.beatmapsets_range_max,
+                        users_range_min=args.users_range_min,
+                        users_range_max=args.users_range_max,
+                        no_progress=args.no_progress,
+                        statuses=args.status,
+                        difficulty_range=args.difficulty_range,
+                        playcount_range=args.playcount_range,
+                        activity_tier=args.activity_tier,
+                        targeted=args.targeted,
+                        rulesets=args.ruleset,
                         )
                     case "refresh-top-players":
                         await cmd_refresh_top_players(

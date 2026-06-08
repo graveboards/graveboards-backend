@@ -11,8 +11,9 @@ from rich.progress import (
     TimeElapsedColumn
 )
 
-from app.fixtures.utils import RULESETS, SCORE_TYPES, calculate_sample_counts
+from app.fixtures.utils import RULESETS, SCORE_TYPES, calculate_sample_counts, DISCUSSION_STATUSES
 from app.fixtures.fetcher import FixtureDataFetcher
+from app.fixtures.targeted_fetcher import TargetedFixtureFetcher
 from app.redis import RedisClient
 from app.logging import get_logger
 
@@ -149,6 +150,12 @@ async def cmd_fetch_fixtures(
     users_range_min: int | None,
     users_range_max: int | None,
     no_progress: bool,
+    statuses: list[str] | None,
+    difficulty_range: str | None,
+    playcount_range: str | None,
+    activity_tier: str | None,
+    targeted: bool,
+    rulesets: list[str] | None,
 ):
     rc = RedisClient()
     try:
@@ -163,13 +170,41 @@ async def cmd_fetch_fixtures(
                 "min": beatmapsets_range_min or 1,
                 "max": beatmapsets_range_max or 100000,
             }
-        if users_range_min or users_range_max:
+        if        users_range_min or users_range_max:
             id_ranges["users"] = {
                 "min": users_range_min or 1,
                 "max": users_range_max or 10000000,
             }
-        fetcher = FixtureDataFetcher(rc, id_ranges=id_ranges if id_ranges else None)
-        fetcher.logger = logger
+        
+        use_targeted = targeted or bool(statuses or difficulty_range or playcount_range or activity_tier)
+        
+        if use_targeted:
+            fetcher = TargetedFixtureFetcher(rc)
+            fetcher.logger = logger
+            
+            if statuses:
+                for status in statuses:
+                    if status not in DISCUSSION_STATUSES:
+                        console.print(f"[yellow]Warning:[/yellow] Unknown status '{status}', skipping")
+            
+            fetcher.set_targeted_fetch(
+                statuses=statuses,
+                difficulty_range=difficulty_range,
+                playcount_range=playcount_range,
+                activity_tier=activity_tier,
+                rulesets=rulesets,
+            )
+            
+            logger.info(f"Targeted fetch configured: statuses={statuses}, difficulty={difficulty_range}, playcount={playcount_range}, activity={activity_tier}, rulesets={rulesets}")
+            
+            await fetcher.fetch_targeted()
+            
+            results = fetcher.get_last_results()
+            console.print("\n[bold]Targeted fetch complete![/bold]")
+            console.print(f"Status: {statuses}, Difficulty: {difficulty_range}, Activity: {activity_tier}")
+        else:
+            fetcher = FixtureDataFetcher(rc, id_ranges=id_ranges if id_ranges else None)
+            fetcher.logger = logger
 
         sample_counts = calculate_sample_counts(
             scale=scale,
@@ -187,7 +222,17 @@ async def cmd_fetch_fixtures(
            use_minimal=use_minimal,
         )
 
-        progress = Progress(
+        if use_targeted:
+            logger.info("Fetching fixture data with targeted coverage...")
+            if hasattr(fetcher, 'fetch_targeted'):
+                async for _ in fetcher.fetch_targeted():
+                    pass
+                results = fetcher.get_last_results()
+            else:
+                await _process_fetch_events(fetcher, progress, tasks, overall_task, overall_progress, sample_counts, use_live=not no_progress)
+                results = fetcher.last_fetch_results
+        else:
+            progress = Progress(
             TextColumn("[bold blue]{task.description}"),
             TextColumn("[white]({task.completed}/{task.total})"),
             BarColumn(pulse_style="dim"),

@@ -558,3 +558,82 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
                     "file_metadata": {},
                 },
             }
+    
+    def set_targeted_fetch(
+        self,
+        statuses: list[str] | None = None,
+        difficulty_range: str | None = None,
+        playcount_range: str | None = None,
+        activity_tier: str | None = None,
+        rulesets: list[str] | None = None,
+    ):
+        """Configure targeted fetching parameters."""
+        self.targeted_statuses = statuses
+        self.targeted_difficulty_range = difficulty_range
+        self.targeted_playcount_range = playcount_range
+        self.targeted_activity_tier = activity_tier
+        self.targeted_rulesets = rulesets if rulesets else ["osu"]
+    
+    def get_last_results(self) -> dict:
+        """Get last fetch results for CLI output."""
+        results = {
+            "beatmaps": {"count": 0, "last_fetched": None},
+            "beatmapsets": {"count": 0, "last_fetched": None},
+            "users": {"count": 0, "per_ruleset": {r: 0 for r in RULESETS}, "last_fetched": None},
+            "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_fetched": None},
+            "beatmap_scores": {"count": 0, "last_fetched": None},
+            "beatmap_attributes": {"count": 0, "last_fetched": None},
+        }
+        
+        if self.targeted_statuses:
+            results["beatmapsets"]["count"] = sum(
+                self.metadata.get("targeted", {})
+                .get("beatmapsets", {})
+                .get("by_status", {})
+                .get(status, 0)
+                for status in self.targeted_statuses
+            )
+        
+        if self.targeted_difficulty_range:
+            results["beatmaps"]["count"] = (
+                self.metadata.get("targeted", {})
+                .get("beatmaps", {})
+                .get("by_difficulty", {})
+                .get(self.targeted_difficulty_range, 0)
+            )
+        
+        if self.targeted_activity_tier:
+            users_meta = self.metadata.get("targeted", {}).get("users", {})
+            per_ruleset = users_meta.get("per_ruleset", {})
+            for r in self.targeted_rulesets:
+                count = per_ruleset.get(r, {}).get(self.targeted_activity_tier, 0)
+                results["users"]["count"] += count
+                results["users"]["per_ruleset"][r] = count
+        
+        return results
+    
+    async def fetch_targeted(self):
+        """Execute targeted fetch based on configured parameters."""
+        counts = {
+            "beatmapsets": {},
+            "beatmaps": {},
+            "users": {},
+        }
+        
+        if self.targeted_statuses:
+            for status in self.targeted_statuses:
+                counts["beatmapsets"][status] = 10
+        
+        if self.targeted_difficulty_range:
+            for ruleset in self.targeted_rulesets:
+                counts["beatmaps"][f"{ruleset}_{self.targeted_difficulty_range}"] = 10
+        
+        if self.targeted_activity_tier:
+            for ruleset in self.targeted_rulesets:
+                counts["users"][f"{ruleset}_{self.targeted_activity_tier}"] = 10
+        
+        if not any(counts.values()):
+            counts = {"beatmapsets": {"ranked": 10}, "users": {"osu_active": 10}}
+        
+        async for event in self.fetch_all_targeted(counts):
+            yield event
