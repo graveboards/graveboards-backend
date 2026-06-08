@@ -14,6 +14,14 @@ FIXTURES_DIR.mkdir(parents=True, exist_ok=True)
 TEST_FIXTURES_DIR = PROJECT_ROOT / "tests" / "fixtures" / "osu"
 TEST_FIXTURES_DIR.mkdir(parents=True, exist_ok=True)
 
+
+def get_test_fixture_path(category: str, subcategory: str | None = None) -> Path:
+    path = TEST_FIXTURES_DIR / category
+    if subcategory:
+        path = path / subcategory
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
 METADATA_FILE = FIXTURES_DIR / "metadata.json"
 
 BASE_SAMPLE_COUNTS = {
