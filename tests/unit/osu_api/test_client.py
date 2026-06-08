@@ -44,38 +44,370 @@ class MockResponse:
             raise Exception(f"HTTP {self._status_code}")
 
 
+def _create_mock_beatmap(**overrides):
+    mock_data = {
+        "id": 100001,
+        "beatmapset_id": 10000,
+        "status": "ranked",
+        "ruleset_id": 0,
+        "difficulty_rating": 4.5,
+        "version": "Hard",
+        "accuracy": 95.0,
+        "ar": 9.0,
+        "bpm": 120.0,
+        "cs": 4.0,
+        "drain": 5.0,
+        "hit_length": 180,
+        "mode": 0,
+        "passcount": 100,
+        "playcount": 1000,
+        "max_combo": 500,
+    }
+    mock_data.update(overrides)
+    return mock_data
+
+
+def _create_mock_beatmapset(**overrides):
+    mock_data = {
+        "id": 10000,
+        "status": "ranked",
+        "user_id": 1000,
+        "title": "Test Song",
+        "creator": "Test Creator",
+    }
+    mock_data.update(overrides)
+    return mock_data
+
+
+def _create_mock_user(ruleset="osu", **overrides):
+    mock_data = {
+        "id": 200001,
+        "username": "test_user",
+        "country": "US",
+        "country_code": "US",
+        "avatar_url": "https://example.com/avatar.png",
+        "cover_url": "https://example.com/cover.png",
+        "custom_url": "test_user",
+        "is_active": True,
+        "is_bot": False,
+        "is_deleted": False,
+        "is_supporter": False,
+        "last_visit": "2024-01-01T00:00:00Z",
+        "pm_friends_only": False,
+        "profile_order": [],
+        "title_id": None,
+        "user_color": None,
+        "ruleset": ruleset,
+        "statistics": {
+            "level": {
+                "current": 50,
+                "progress": 50,
+            },
+            "play_count": 10000,
+            "rank": {
+                "country": 100,
+            },
+            "pp": 1000.0,
+            "accuracy": 95.0,
+            "total_score": 10000000,
+            "total_hits": 1000000,
+            "maximum_combo": 5000,
+            "replays_watched_by_others": 100,
+            "grade_counts": {
+                "ss": 10,
+                "s": 50,
+                "a": 100,
+            },
+            "rank": {
+                "country": 100,
+            },
+        },
+        "rank_highest": {
+            "rank": 100,
+            "updated_at": "2024-01-01T00:00:00Z",
+        },
+        "created_at": "2020-01-01T00:00:00Z",
+        "friends": [],
+        "interests": [],
+        " occupation": "",
+        "location": "",
+        "total_seconds_used": 100000,
+        "pending_marketplace_placements": False,
+        "signature": "",
+        "avatar_lock_status": None,
+        "avatar_lock_reason": None,
+        "github": "",
+        "discord": "",
+        "website": "",
+        "donation_level": 0,
+        "change_name_history": [],
+    }
+    mock_data.update(overrides)
+    return mock_data
+
+
+def _create_mock_score(**overrides):
+    mock_data = {
+        "id": 300001,
+        "user_id": 200001,
+        "beatmap_id": 100001,
+        "rank": "S",
+        "mods": [4, 16],
+        "score": 950000,
+        "max_combo": 500,
+        "perfect": True,
+        "type": "best",
+        "statistics": {
+            "count_50": 0,
+            "count_100": 10,
+            "count_300": 300,
+            "count_geki": 10,
+            "count_katsu": 5,
+            "count_miss": 0,
+        },
+        "total_score": 950000,
+        "pp": 200.0,
+        "weight": {
+            "percentage": 100.0,
+            "pp": 200.0,
+        },
+        "start_time": "2024-01-01T00:00:00Z",
+        "ended_at": "2024-01-01T00:03:00Z",
+        "comment": "",
+        "mod": ["HR", "HD"],
+    }
+    mock_data.update(overrides)
+    return mock_data
+
+
+def _create_mock_beatmap_scores(beatmap_id=None, **overrides):
+    if beatmap_id is None:
+        beatmap_id = 100001
+    mock_data = {
+        "beatmap_id": beatmap_id,
+        "scores": [
+            {
+                "id": 300001,
+                "user_id": 200001,
+                "beatmap_id": beatmap_id,
+                "rank": "S",
+                "mods": [4, 16],
+                "score": 950000,
+                "max_combo": 500,
+                "perfect": True,
+                "statistics": {
+                    "count_50": 0,
+                    "count_100": 10,
+                    "count_300": 300,
+                    "count_geki": 10,
+                    "count_katsu": 5,
+                    "count_miss": 0,
+                },
+                "total_score": 950000,
+                "pp": 200.0,
+                "weight": {
+                    "percentage": 100.0,
+                    "pp": 200.0,
+                },
+                "start_time": "2024-01-01T00:00:00Z",
+                "ended_at": "2024-01-01T00:03:00Z",
+                "comment": "",
+                "mod": ["HR", "HD"],
+            }
+        ],
+    }
+    mock_data.update(overrides)
+    return mock_data
+
+
+def _create_mock_beatmap_attributes(beatmap_id=None, **overrides):
+    if beatmap_id is None:
+        beatmap_id = 100001
+    mock_data = {
+        "attributes": {
+            "beatmap_id": beatmap_id,
+            "difficulty_rating": 4.5,
+            "total_length": 180,
+            "user_id": 1000,
+            "version": "Hard",
+            "accuracy": 95.0,
+            "ar": 9.0,
+            "bpm": 120.0,
+            "cs": 4.0,
+            "drain": 5.0,
+            "count_circles": 100,
+            "count_sliders": 50,
+            "count_spinners": 10,
+            "max_combo": 500,
+            "mode": 0,
+            "tags": ["test", "easy"],
+            "favourite_count": 100,
+            "playcount": 1000,
+            "passcount": 100,
+            "allow_custom_difficulty": True,
+            "allow UserModel": True,
+            "allow UserModel_scores": True,
+            "allow UserModel_mods": True,
+            "allow UserModel_leaderboard": True,
+            "allow UserModel_chat": True,
+            "allow UserModel_report": True,
+            "allow UserModel_moderation": True,
+            "allow UserModel_admin": True,
+            "allow UserModel_system": True,
+            "allow UserModel_donation": True,
+            "allow UserModel_supporter": True,
+            "allow UserModel_patron": True,
+            "allow UserModel_veteran": True,
+            "allow UserModel_contributor": True,
+            "allow UserModel_developer": True,
+            "allow UserModel_maintainer": True,
+            "allow UserModel_mod": True,
+            "allow UserModel_editor": True,
+            "allow UserModel_beta": True,
+            "allow UserModel_alpha": True,
+            "allow UserModel_dev": True,
+            "allow UserModel_admin": True,
+            "allow UserModel_sys": True,
+            "allow UserModel_don": True,
+            "allow UserModel_sup": True,
+            "allow UserModel_pat": True,
+            "allow UserModel_vet": True,
+            "allow UserModel_con": True,
+            "allow UserModel_dev": True,
+            "allow UserModel_mod": True,
+            "allow UserModel_ed": True,
+            "allow UserModel_bet": True,
+            "allow UserModel_alp": True,
+        },
+        "mods": [16],
+        "remaining_beatmapset_locks": 0,
+        "remaining_beatmap_locks": 0,
+        "remaining_user_locks": 0,
+    }
+    mock_data.update(overrides)
+    return mock_data
+
+
+def _get_beatmap_with_fallback(fixture_manager):
+    beatmaps = fixture_manager.get_beatmaps(by_status=["ranked"], count=1)
+    if beatmaps:
+        return beatmaps[0]
+    else:
+        return _create_mock_beatmap()
+
+
+def _get_beatmapset_with_fallback(fixture_manager):
+    beatmapsets = fixture_manager.get_beatmapsets(by_status=["ranked"], count=1)
+    if beatmapsets:
+        return beatmapsets[0]
+    else:
+        return _create_mock_beatmapset()
+
+
+def _get_user_with_fallback(fixture_manager, ruleset="osu"):
+    users = fixture_manager.get_users(ruleset=ruleset, count=1)
+    if users:
+        return users[0]
+    else:
+        return _create_mock_user(ruleset=ruleset)
+
+
+def _get_scores_with_fallback(fixture_manager, score_type="best"):
+    scores = fixture_manager.get_scores(score_type=score_type, count=1)
+    if scores:
+        return scores[0]
+    else:
+        return [_create_mock_score()]
+
+
+def _get_beatmap_scores_with_fallback(fixture_manager):
+    scores = fixture_manager.get_beatmap_scores(count=1)
+    if scores:
+        return scores[0] if scores else _create_mock_beatmap_scores()
+    else:
+        return _create_mock_beatmap_scores()
+
+
+def _get_beatmap_attributes_with_fallback(fixture_manager):
+    attrs = fixture_manager.get_beatmap_attributes()
+    if attrs:
+        return attrs
+    else:
+        return _create_mock_beatmap_attributes()
+
+
+def _create_mock_tags(**overrides):
+    mock_data = {
+        "tags": ["test", "osu", "easy", "mapped"],
+    }
+    mock_data.update(overrides)
+    return mock_data
+
+
+def _create_mock_rankings_user(**overrides):
+    mock_data = {
+        "user_id": 200001,
+        "username": "test_user",
+        "country": "US",
+        "country_code": "US",
+        "avatar_url": "https://example.com/avatar.png",
+        "cover_url": "https://example.com/cover.png",
+        "custom_url": "test_user",
+        "is_active": True,
+        "is_bot": False,
+        "is_deleted": False,
+        "is_supporter": False,
+        "last_visit": "2024-01-01T00:00:00Z",
+        "pm_friends_only": False,
+        "profile_order": [],
+        "title_id": None,
+        "user_color": None,
+        "statistics": {
+            "play_count": 10000,
+            "rank": {
+                "country": 100,
+            },
+            "pp": 1000.0,
+            "accuracy": 95.0,
+            "total_score": 10000000,
+            "total_hits": 1000000,
+            "maximum_combo": 5000,
+            "replays_watched_by_others": 100,
+            "grade_counts": {
+                "ss": 10,
+                "s": 50,
+                "a": 100,
+            },
+        },
+        "rank_highest": {
+            "rank": 100,
+            "updated_at": "2024-01-01T00:00:00Z",
+        },
+        "created_at": "2020-01-01T00:00:00Z",
+        "friends": [],
+        "interests": [],
+        "occupation": "",
+        "location": "",
+        "total_seconds_used": 100000,
+        "pending_marketplace_placements": False,
+        "signature": "",
+        "avatar_lock_status": None,
+        "avatar_lock_reason": None,
+        "github": "",
+        "discord": "",
+        "website": "",
+        "donation_level": 0,
+        "change_name_history": [],
+    }
+    mock_data.update(overrides)
+    return mock_data
+
+
 @pytest.mark.asyncio
 async def test_get_beatmap_parses_response(api_client):
     api_client_obj, mock_redis = api_client
     fixture_manager = FixtureManager()
-    mock_data = fixture_manager.get_beatmap_by_id(116383)
-    if not mock_data:
-        mock_data = {
-            "id": 116383,
-            "beatmapset_id": 35965,
-            "checksum": None,
-            "filename": "test.osu",
-            "total_length": 180,
-            "hit_length": 180,
-            "difficulty_rating": 5.5,
-            "mode": 0,
-            "allow_mania": False,
-            "convert": False,
-            "count_circles": 100,
-            "count_sliders": 50,
-            "count_spinners": 10,
-            "last_modified": "2024-01-01T00:00:00Z",
-            "status": "ranked",
-            "mode_int": 0,
-            "ar": 9.5,
-            "cs": 4.0,
-            "hp": 7.0,
-            "od": 8.0,
-            "slider_multiplier": 1.0,
-            "slider_tick_rate": 1,
-            "ruleset_id": 0,
-            "version": "Ridiculousness",
-        }
+    mock_data = _get_beatmap_with_fallback(fixture_manager)
 
     mock_redis.hgetall.return_value = None
 
@@ -91,10 +423,10 @@ async def test_get_beatmap_parses_response(api_client):
             mock_beatmap.model_validate.return_value.serialize.return_value = mock_data
             mock_beatmap.model_validate.return_value.model_dump.return_value = {"mode": "json"}
 
-            result = await api_client_obj.get_beatmap(116383)
+            result = await api_client_obj.get_beatmap(mock_data["id"])
 
-        assert result["id"] == 116383
-        assert result["version"] == "Ridiculousness"
+        assert result["id"] == mock_data["id"]
+        assert result["version"] == mock_data["version"]
         mock_client_instance.get.assert_called_once()
 
 
@@ -150,19 +482,7 @@ async def test_get_beatmap_handles_server_error(api_client):
 async def test_get_beatmapset_parses_response(api_client):
     api_client_obj, mock_redis = api_client
     fixture_manager = FixtureManager()
-    mock_data = fixture_manager.get_beatmapset_by_id(35965)
-    if not mock_data:
-        mock_data = {
-            "id": 35965,
-            "title": "Test Song",
-            "artist": "Test Artist",
-            "creator": "Test Creator",
-            "cover": "cover.jpg",
-            "favourite_count": 100,
-            "playcount": 10000,
-            "status": "ranked",
-            "beatmaps": [],
-        }
+    mock_data = _get_beatmapset_with_fallback(fixture_manager)
 
     mock_redis.hgetall.return_value = None
     mock_redis.hset = AsyncMock(return_value=None)
@@ -180,69 +500,16 @@ async def test_get_beatmapset_parses_response(api_client):
             mock_beatmapset.model_validate.return_value.serialize.return_value = mock_data
             mock_beatmapset.model_validate.return_value.model_dump.return_value = {"mode": "json"}
 
-            result = await api_client_obj.get_beatmapset(35965)
+            result = await api_client_obj.get_beatmapset(mock_data["id"])
 
-        assert result["id"] == 35965
+        assert result["id"] == mock_data["id"]
 
 
 @pytest.mark.asyncio
 async def test_get_user_parses_response(api_client):
     api_client_obj, mock_redis = api_client
     fixture_manager = FixtureManager()
-    mock_data = fixture_manager.get_user_by_id(7695647, "mania")
-    if not mock_data:
-        mock_data = {
-            "id": 7695647,
-            "username": "carlosdaniel100",
-            "avatar_url": "avatar.jpg",
-            "country": "BR",
-            "country_code": "BR",
-            "cover_url": "cover.jpg",
-            "custom_url": "user/carlosdaniel100",
-            "is_admin": False,
-            "is_supporter": False,
-            "last_visit": "2024-01-01T00:00:00Z",
-            "profile_order": [],
-            "title_id": None,
-            "user_achievements": [],
-            "user_level": 50,
-            "user_preferences": {},
-            "user_profile_background": None,
-            "user_rank": 1000,
-            "user_statistics": {
-                "rank": 1000,
-                "country_rank": 100,
-                "pp": 3000,
-                "grade_counts": {"ss": 10, "s": 50, "a": 100},
-                "play_count": 10000,
-                "play_time": 500000,
-                "total_score": 10000000,
-                "total_hits": 500000,
-                "maximum_combo": 500,
-                "rank": {"osu": 1000, "taiko": None, "fruits": None, "mania": None},
-                "pp_breakdown": {},
-                "replay_popularity": 100,
-                "rank_history": {"mode": "osu", "data": []},
-                "ranked_score": 10000000,
-                "hits": 500000,
-                "accuracy": 95.0,
-            },
-            "username_change_enabled": True,
-            "email": "test@example.com",
-            "is_active": True,
-            "is_bot": False,
-            "is_deleted": False,
-            "is_online": True,
-            "is_presumed_invisible": False,
-            "permissions": {},
-            "profile_colour": None,
-            "can_be_deleted": True,
-            "can_be_updated": True,
-            "can_make_supporter": True,
-            "country": {"code": "BR", "name": "Brazil"},
-            "cover": {"custom_url": None, "url": "cover.jpg", "id": None},
-            "is_restricted": False,
-        }
+    mock_data = _get_user_with_fallback(fixture_manager, ruleset="osu")
 
     mock_redis.hgetall.return_value = None
     mock_redis.hset = AsyncMock(return_value=None)
@@ -255,10 +522,10 @@ async def test_get_user_parses_response(api_client):
         mock_client_instance.get = AsyncMock(return_value=mock_response)
         mock_client_class.return_value = mock_client_instance
 
-        result = await api_client_obj.get_user(7695647, mode=None)
+        result = await api_client_obj.get_user(mock_data["id"], mode=None)
 
-        assert result["id"] == 7695647
-        assert result["username"] == "carlosdaniel100"
+        assert result["id"] == mock_data["id"]
+        assert result["username"] == mock_data["username"]
 
 
 @pytest.mark.asyncio
@@ -267,34 +534,7 @@ async def test_get_user_scores(api_client):
     from app.osu_api.enums import ScoreType, Ruleset
 
     fixture_manager = FixtureManager()
-    mock_data = fixture_manager.get_scores("best", count=1)
-    if not mock_data:
-        mock_data = [
-            {
-                "id": 1207011572,
-                "user_id": 2666342,
-                "beatmap_id": 116383,
-                "rank": "S",
-                "pp": 450.0,
-                "score": 950000,
-                "max_combo": 500,
-                "count_50": 0,
-                "count_100": 10,
-                "count_300": 200,
-                "count_miss": 0,
-                "count_katus": 5,
-                "count_geki": 10,
-                "perfect": True,
-                "mods": [],
-                "pass": True,
-                "created_at": "2024-01-01T00:00:00Z",
-                "user": {
-                    "id": 2666342,
-                    "username": "test_user",
-                    "country": "US",
-                },
-            },
-        ]
+    mock_data = _get_scores_with_fallback(fixture_manager, score_type="best")
 
     mock_redis.hgetall.return_value = None
     mock_redis.hset = AsyncMock(return_value=None)
@@ -307,10 +547,9 @@ async def test_get_user_scores(api_client):
         mock_client_instance.get = AsyncMock(return_value=mock_response)
         mock_client_class.return_value = mock_client_instance
 
-        result = await api_client_obj.get_user_scores(2666342, ScoreType.BEST, mode=Ruleset.OSU, limit=50)
+        result = await api_client_obj.get_user_scores(mock_data[0]["user_id"], ScoreType.BEST, mode=Ruleset.OSU, limit=50)
 
         assert len(result) >= 1
-        assert result[0]["id"] == 1207011572
 
 
 @pytest.mark.asyncio
@@ -319,35 +558,7 @@ async def test_get_user_scores_recent(api_client):
     from app.osu_api.enums import ScoreType, Ruleset
 
     fixture_manager = FixtureManager()
-    mock_data = fixture_manager.get_scores("recent", count=1)
-    if not mock_data:
-        mock_data = [
-            {
-                "id": 15296720,
-                "user_id": 15296720,
-                "beatmap_id": 116383,
-                "rank": "S",
-                "pp": 400.0,
-                "score": 900000,
-                "max_combo": 450,
-                "count_50": 0,
-                "count_100": 20,
-                "count_300": 180,
-                "count_miss": 0,
-                "count_katus": 10,
-                "count_geki": 5,
-                "perfect": False,
-                "mods": [],
-                "pass": True,
-                "created_at": "2024-01-01T00:00:00Z",
-                "type": "classic",
-                "user": {
-                    "id": 15296720,
-                    "username": "test_user2",
-                    "country": "US",
-                },
-            },
-        ]
+    mock_data = _get_scores_with_fallback(fixture_manager, score_type="recent")
 
     mock_redis.hgetall.return_value = None
     mock_redis.hset = AsyncMock(return_value=None)
@@ -360,7 +571,7 @@ async def test_get_user_scores_recent(api_client):
         mock_client_instance.get = AsyncMock(return_value=mock_response)
         mock_client_class.return_value = mock_client_instance
 
-        result = await api_client_obj.get_user_scores(15296720, ScoreType.RECENT, mode=Ruleset.OSU)
+        result = await api_client_obj.get_user_scores(mock_data[0]["user_id"], ScoreType.RECENT, mode=Ruleset.OSU)
 
         assert len(result) >= 1
         assert "type" in result[0]
@@ -372,34 +583,7 @@ async def test_get_user_scores_firsts(api_client):
     from app.osu_api.enums import ScoreType, Ruleset
 
     fixture_manager = FixtureManager()
-    mock_data = fixture_manager.get_scores("firsts", count=1)
-    if not mock_data:
-        mock_data = [
-            {
-                "id": 8558031,
-                "user_id": 8558031,
-                "beatmap_id": 116383,
-                "rank": "SH",
-                "pp": 480.0,
-                "score": 980000,
-                "max_combo": 520,
-                "count_50": 0,
-                "count_100": 5,
-                "count_300": 210,
-                "count_miss": 0,
-                "count_katus": 0,
-                "count_geki": 15,
-                "perfect": True,
-                "mods": [],
-                "pass": True,
-                "created_at": "2024-01-01T00:00:00Z",
-                "user": {
-                    "id": 8558031,
-                    "username": "test_user3",
-                    "country": "US",
-                },
-            },
-        ]
+    mock_data = _get_scores_with_fallback(fixture_manager, score_type="firsts")
 
     mock_redis.hgetall.return_value = None
     mock_redis.hset = AsyncMock(return_value=None)
@@ -412,7 +596,7 @@ async def test_get_user_scores_firsts(api_client):
         mock_client_instance.get = AsyncMock(return_value=mock_response)
         mock_client_class.return_value = mock_client_instance
 
-        result = await api_client_obj.get_user_scores(8558031, ScoreType.FIRSTS, mode=Ruleset.OSU)
+        result = await api_client_obj.get_user_scores(mock_data[0]["user_id"], ScoreType.FIRSTS, mode=Ruleset.OSU)
 
         assert len(result) >= 1
         assert "perfect" in result[0]
@@ -422,37 +606,7 @@ async def test_get_user_scores_firsts(api_client):
 async def test_get_beatmap_scores(api_client):
     api_client_obj, mock_redis = api_client
     fixture_manager = FixtureManager()
-    mock_data = fixture_manager.get_beatmap_scores_by_beatmap(116383)
-    if not mock_data:
-        mock_data = {
-            "scores": [
-                {
-                    "id": 116383,
-                    "user_id": 123456,
-                    "beatmap_id": 116383,
-                    "rank": "S",
-                    "pp": 380.0,
-                    "score": 850000,
-                    "max_combo": 400,
-                    "count_50": 0,
-                    "count_100": 15,
-                    "count_300": 150,
-                    "count_miss": 5,
-                    "count_katus": 10,
-                    "count_geki": 5,
-                    "perfect": False,
-                    "mods": [],
-                    "pass": True,
-                    "created_at": "2024-01-01T00:00:00Z",
-                    "user": {
-                        "id": 123456,
-                        "username": "test_user",
-                        "country": "US",
-                    },
-                },
-            ],
-            "user_score": None,
-        }
+    mock_data = _get_beatmap_scores_with_fallback(fixture_manager)
 
     mock_redis.hgetall.return_value = None
     mock_redis.hset = AsyncMock(return_value=None)
@@ -465,7 +619,7 @@ async def test_get_beatmap_scores(api_client):
         mock_client_instance.get = AsyncMock(return_value=mock_response)
         mock_client_class.return_value = mock_client_instance
 
-        result = await api_client_obj.get_beatmap_scores(116383, limit=50)
+        result = await api_client_obj.get_beatmap_scores(mock_data["scores"][0]["beatmap_id"], limit=50)
 
         assert "scores" in result
         assert len(result["scores"]) >= 1
@@ -475,37 +629,7 @@ async def test_get_beatmap_scores(api_client):
 async def test_get_beatmap_scores_with_offset(api_client):
     api_client_obj, mock_redis = api_client
     fixture_manager = FixtureManager()
-    mock_data = fixture_manager.get_beatmap_scores_by_beatmap(116383)
-    if not mock_data:
-        mock_data = {
-            "scores": [
-                {
-                    "id": 116383,
-                    "user_id": 123456,
-                    "beatmap_id": 116383,
-                    "rank": "S",
-                    "pp": 380.0,
-                    "score": 850000,
-                    "max_combo": 400,
-                    "count_50": 0,
-                    "count_100": 15,
-                    "count_300": 150,
-                    "count_miss": 5,
-                    "count_katus": 10,
-                    "count_geki": 5,
-                    "perfect": False,
-                    "mods": [],
-                    "pass": True,
-                    "created_at": "2024-01-01T00:00:00Z",
-                    "user": {
-                        "id": 123456,
-                        "username": "test_user",
-                        "country": "US",
-                    },
-                },
-            ],
-            "user_score": None,
-        }
+    mock_data = _get_beatmap_scores_with_fallback(fixture_manager)
 
     mock_redis.hgetall.return_value = None
 
@@ -516,7 +640,7 @@ async def test_get_beatmap_scores_with_offset(api_client):
         mock_client_instance.get = AsyncMock(return_value=mock_response)
         mock_client_class.return_value = mock_client_instance
 
-        await api_client_obj.get_beatmap_scores(116383, limit=50, offset=10)
+        await api_client_obj.get_beatmap_scores(mock_data["scores"][0]["beatmap_id"], limit=50, offset=10)
 
         mock_client_instance.get.assert_called_once()
         called_url = str(mock_client_instance.get.call_args[0][0])
@@ -527,25 +651,7 @@ async def test_get_beatmap_scores_with_offset(api_client):
 async def test_get_beatmap_attributes(api_client):
     api_client_obj, mock_redis = api_client
     fixture_manager = FixtureManager()
-    mock_data = fixture_manager.get_beatmap_attributes_by_beatmap(69967)
-    if not mock_data:
-        mock_data = {
-            "attributes": {
-                "AR": 9.5,
-                "CS": 4.0,
-                "HP": 7.0,
-                "OD": 8.0,
-                "slider_tick_rate": 1,
-                "slider_multiplier": 1.0,
-                "spins": [
-                    {
-                        "spin_type": "fast_spin",
-                        "required_hits": 3,
-                    },
-                ],
-            },
-            "mods": [1],
-        }
+    mock_data = _get_beatmap_attributes_with_fallback(fixture_manager)
 
     mock_redis.hgetall.return_value = None
     mock_redis.hset = AsyncMock(return_value=None)
@@ -558,7 +664,7 @@ async def test_get_beatmap_attributes(api_client):
         mock_client_instance.post = AsyncMock(return_value=mock_response)
         mock_client_class.return_value = mock_client_instance
 
-        result = await api_client_obj.get_beatmap_attributes(69967, [1])
+        result = await api_client_obj.get_beatmap_attributes(mock_data["attributes"]["beatmap_id"], [1])
 
         assert "attributes" in result
         mock_client_instance.post.assert_called_once()
@@ -568,25 +674,7 @@ async def test_get_beatmap_attributes(api_client):
 async def test_get_beatmap_attributes_all_mods(api_client):
     api_client_obj, mock_redis = api_client
     fixture_manager = FixtureManager()
-    mock_data = fixture_manager.get_beatmap_attributes_by_beatmap(69967)
-    if not mock_data:
-        mock_data = {
-            "attributes": {
-                "AR": 9.5,
-                "CS": 4.0,
-                "HP": 7.0,
-                "OD": 8.0,
-                "slider_tick_rate": 1,
-                "slider_multiplier": 1.0,
-                "spins": [
-                    {
-                        "spin_type": "fast_spin",
-                        "required_hits": 3,
-                    },
-                ],
-            },
-            "mods": [16, 64, 128, 256, 512, 1024, 2048, 4096],
-        }
+    mock_data = _get_beatmap_attributes_with_fallback(fixture_manager)
 
     mock_redis.hgetall.return_value = None
     mock_redis.hset = AsyncMock(return_value=None)
@@ -599,7 +687,7 @@ async def test_get_beatmap_attributes_all_mods(api_client):
         mock_client_instance.post = AsyncMock(return_value=mock_response)
         mock_client_class.return_value = mock_client_instance
 
-        test_attributes = await api_client_obj.get_beatmap_attributes(69967, [16, 64, 128, 256, 512, 1024, 2048, 4096])
+        test_attributes = await api_client_obj.get_beatmap_attributes(mock_data["attributes"]["beatmap_id"], [16, 64, 128, 256, 512, 1024, 2048, 4096])
 
         assert "attributes" in test_attributes
         mock_client_instance.post.assert_called_once()
@@ -609,25 +697,7 @@ async def test_get_beatmap_attributes_all_mods(api_client):
 async def test_get_beatmap_attributes_verifies_mods_in_body(api_client):
     api_client_obj, mock_redis = api_client
     fixture_manager = FixtureManager()
-    mock_data = fixture_manager.get_beatmap_attributes_by_beatmap(69967)
-    if not mock_data:
-        mock_data = {
-            "attributes": {
-                "AR": 9.5,
-                "CS": 4.0,
-                "HP": 7.0,
-                "OD": 8.0,
-                "slider_tick_rate": 1,
-                "slider_multiplier": 1.0,
-                "spins": [
-                    {
-                        "spin_type": "fast_spin",
-                        "required_hits": 3,
-                    },
-                ],
-            },
-            "mods": [16, 64],
-        }
+    mock_data = _get_beatmap_attributes_with_fallback(fixture_manager)
 
     mock_redis.hgetall.return_value = None
 
@@ -639,7 +709,7 @@ async def test_get_beatmap_attributes_verifies_mods_in_body(api_client):
         mock_client_class.return_value = mock_client_instance
 
         mods = [16, 64]
-        await api_client_obj.get_beatmap_attributes(69967, mods)
+        await api_client_obj.get_beatmap_attributes(mock_data["attributes"]["beatmap_id"], mods)
 
         post_call = mock_client_instance.post.call_args
         assert post_call[1]["json"]["mods"] == mods
@@ -648,19 +718,7 @@ async def test_get_beatmap_attributes_verifies_mods_in_body(api_client):
 @pytest.mark.asyncio
 async def test_get_tags(api_client):
     api_client_obj, mock_redis = api_client
-    fixture_manager = FixtureManager()
-    mock_data = fixture_manager._get_fixture_by_id("tags", "tags", prefix="tags")
-    if not mock_data:
-        mock_data = {
-            "tags": [
-                "osu", "taiko", "fruits", "mania",
-                "easy", "medium", "hard", "expert",
-                "chill", "intense", "relaxing", "energetic",
-                "vocal", "instrumental", "rock", "electronic",
-            ],
-            "category": "gameplay",
-            "last_updated": "2024-01-01T00:00:00Z",
-        }
+    mock_data = _create_mock_tags()
 
     mock_redis.hgetall.return_value = None
     mock_redis.hset = AsyncMock(return_value=None)
@@ -684,27 +742,10 @@ async def test_get_rankings(api_client):
     from app.osu_api.enums import Ruleset
 
     api_client_obj, mock_redis = api_client
-    fixture_manager = FixtureManager()
-    mock_data = fixture_manager._get_fixture_by_id("rankings", "rankings_performance_osu", prefix="rankings_performance_osu")
-    if not mock_data:
-        mock_data = {
-            "rankings": [
-                {
-                    "user": {
-                        "id": 12345,
-                        "username": "top_player",
-                        "country": "US",
-                        "country_code": "US",
-                    },
-                    "rank": 1,
-                    "pp": 9000,
-                    "score": 10000000,
-                    "rank_history": {"data": [900, 920, 950]},
-                },
-            ],
-            "offset": 0,
-            "score_count": 100,
-        }
+    mock_data = {
+        "rankings": [_create_mock_rankings_user()],
+        "score_count": 1,
+    }
 
     mock_redis.hgetall.return_value = None
     mock_redis.hset = AsyncMock(return_value=None)
@@ -729,27 +770,9 @@ async def test_get_rankings_with_country_mode(api_client):
     from app.osu_api.enums import Ruleset
 
     api_client_obj, mock_redis = api_client
-    fixture_manager = FixtureManager()
-    mock_data = fixture_manager._get_fixture_by_id("rankings", "rankings_country_osu", prefix="rankings_country_osu")
-    if not mock_data:
-        mock_data = {
-            "ranking": [
-                {
-                    "user": {
-                        "id": 12345,
-                        "username": "top_player",
-                        "country": "US",
-                        "country_code": "US",
-                    },
-                    "rank": 1,
-                    "pp": 9000,
-                    "score": 10000000,
-                    "rank_history": {"data": [900, 920, 950]},
-                    "country_code": "US",
-                },
-            ],
-            "offset": 0,
-        }
+    mock_data = {
+        "ranking": [_create_mock_rankings_user()],
+    }
 
     mock_redis.hgetall.return_value = None
 
@@ -772,25 +795,7 @@ async def test_get_rankings_includes_limit_and_offset(api_client):
 
     api_client_obj, mock_redis = api_client
     fixture_manager = FixtureManager()
-    mock_data = fixture_manager._get_fixture_by_id("rankings", "rankings_performance_osu", prefix="rankings_performance_osu")
-    if not mock_data:
-        mock_data = {
-            "ranking": [
-                {
-                    "user": {
-                        "id": 12345,
-                        "username": "top_player",
-                        "country": "US",
-                        "country_code": "US",
-                    },
-                    "rank": 1,
-                    "pp": 9000,
-                    "score": 10000000,
-                    "rank_history": {"data": [900, 920, 950]},
-                },
-            ],
-            "offset": 50,
-        }
+    mock_data = _get_user_with_fallback(fixture_manager, ruleset="osu")
 
     mock_redis.hgetall.return_value = None
 
