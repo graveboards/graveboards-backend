@@ -228,6 +228,8 @@ async def cmd_fetch_fixtures(
                 async for _ in fetcher.fetch_targeted():
                     pass
                 results = fetcher.get_last_results()
+                console.print("\n[bold]Targeted fetch complete![/bold]")
+                console.print(f"Status: {statuses}, Difficulty: {difficulty_range}, Activity: {activity_tier}")
             else:
                 await _process_fetch_events(fetcher, progress, tasks, overall_task, overall_progress, sample_counts, use_live=not no_progress)
                 results = fetcher.last_fetch_results

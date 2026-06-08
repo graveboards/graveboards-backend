@@ -77,6 +77,26 @@ class FixtureManager:
                 },
             }
     
+    def get_beatmap_by_id(self, beatmap_id: int) -> Optional[dict]:
+        """Get a specific beatmap by ID."""
+        return self._get_fixture_by_id("beatmaps", beatmap_id)
+    
+    def get_beatmapset_by_id(self, beatmapset_id: int) -> Optional[dict]:
+        """Get a specific beatmapset by ID."""
+        return self._get_fixture_by_id("beatmapsets", beatmapset_id)
+    
+    def get_user_by_id(self, user_id: int, ruleset: str) -> Optional[dict]:
+        """Get a specific user by ID."""
+        return self._get_fixture_by_id(f"users.{ruleset}", user_id, prefix=f"user_{user_id}_{ruleset}")
+    
+    def get_beatmap_scores_by_beatmap(self, beatmap_id: int) -> Optional[dict]:
+        """Get beatmap scores by beatmap ID."""
+        return self._get_fixture_by_id("beatmap_scores", beatmap_id, prefix=f"scores_{beatmap_id}")
+    
+    def get_beatmap_attributes_by_beatmap(self, beatmap_id: int) -> Optional[dict]:
+        """Get beatmap attributes by beatmap ID."""
+        return self._get_fixture_by_id("beatmap_attributes", beatmap_id, prefix=f"beatmap_attrs_{beatmap_id}")
+    
     # High-level fixture requests
     def get_beatmaps(
         self,
@@ -313,6 +333,29 @@ class FixtureManager:
             return True
         min_pc, max_pc = ranges[playcount_range]
         return min_pc <= playcount <= max_pc
+    
+    def _get_fixture_by_id(
+        self,
+        category: str,
+        fixture_id: int,
+        prefix: str = None,
+    ) -> Optional[dict]:
+        """Get a specific fixture by ID."""
+        file_metadata = self.metadata.get("targeted", {}).get(category, {}).get("file_metadata", {})
+        
+        if str(fixture_id) in file_metadata:
+            filepath = file_metadata[str(fixture_id)].get("filepath")
+            if filepath:
+                return self._load_fixture(category, Path(filepath))
+        
+        if prefix:
+            path = self.fixture_dir / Path(*category.split("."))
+            if path.exists():
+                file_path = path / f"{prefix}.json"
+                if file_path.exists():
+                    return self._load_fixture(category, file_path)
+        
+        return None
     
     def _load_fixture(
         self,
