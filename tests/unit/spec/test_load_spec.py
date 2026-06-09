@@ -83,13 +83,16 @@ class TestLoadSpec:
 
         assert result == "cached_spec"
 
-    def test_load_spec_non_prod_invalidates_on_mtime(self, mock_yaml_full_load, mock_resolve_refs, mock_os_path_getmtime):
+    def test_load_spec_non_prod_invalidates_on_mtime(self, mock_yaml_full_load, mock_resolve_refs, mock_os_path_getmtime, mock_pickle, mock_os_walk):
         """Test that non-prod mode invalidates cache on mtime."""
         from app.enums import Env
 
         mock_yaml_full_load.return_value = {"components": {"schemas": {}}}
         mock_resolve_refs.return_value = {"components": {"schemas": {}}}
-        mock_os_path_getmtime.side_effect = [100, 200]  # cache < latest
+        mock_os_walk.return_value = [
+            ("/spec", [], ["a.yaml", "b.yml"]),
+        ]
+        mock_os_path_getmtime.side_effect = [100, 180, 200]  # cache=100, latest=200
 
         mock_pickle.load.return_value = {
             "spec": "old_spec",
@@ -106,13 +109,16 @@ class TestLoadSpec:
         assert result == {"spec": "new_spec"}
         mock_build.assert_called_once()
 
-    def test_load_spec_non_prod_invalidates_on_options(self, mock_yaml_full_load, mock_resolve_refs, mock_os_path_getmtime):
+    def test_load_spec_non_prod_invalidates_on_options(self, mock_yaml_full_load, mock_resolve_refs, mock_os_path_getmtime, mock_pickle, mock_os_walk):
         """Test that non-prod mode invalidates cache on build options."""
         from app.enums import Env
 
         mock_yaml_full_load.return_value = {"components": {"schemas": {}}}
         mock_resolve_refs.return_value = {"components": {"schemas": {}}}
-        mock_os_path_getmtime.side_effect = [200, 100]  # cache > latest
+        mock_os_walk.return_value = [
+            ("/spec", [], ["a.yaml", "b.yml"]),
+        ]
+        mock_os_path_getmtime.side_effect = [200, 80, 90]  # cache=200, latest=90
 
         mock_pickle.load.return_value = {
             "spec": "old_spec",
@@ -263,7 +269,8 @@ class TestLoadSpec:
         assert result == 200
         mock_getmtime.assert_any_call("/spec/a.yaml")
         mock_getmtime.assert_any_call("/spec/b.yml")
-        mock_getmtime.assert_not_called("/spec/c.txt")
+        call_args = [call[0][0] for call in mock_getmtime.call_args_list]
+        assert "/spec/c.txt" not in call_args
 
     def test_get_latest_spec_mtime_returns_zero_when_no_files(self, mock_os_walk):
         """Test that _get_latest_spec_mtime returns 0 when no files."""
@@ -293,14 +300,15 @@ class TestLoadSpec:
         ]
 
         with patch("app.spec.load.os.path.getmtime") as mock_getmtime:
-            mock_getmtime.side_effect = [100, 200, 50, 150]
+            mock_getmtime.side_effect = [100, 150]
             result = _get_latest_spec_mtime()
 
-        assert result == 200
-        mock_getmtime.assert_any_call("/spec/a.yaml")
-        mock_getmtime.assert_any_call("/spec/b.json")
-        mock_getmtime.assert_any_call("/spec/c.txt")
-        mock_getmtime.assert_any_call("/spec/d.yml")
+        assert result == 150
+        call_args = [call[0][0] for call in mock_getmtime.call_args_list]
+        assert "/spec/a.yaml" in call_args
+        assert "/spec/d.yml" in call_args
+        assert "/spec/b.json" not in call_args
+        assert "/spec/c.txt" not in call_args
 
     def test_load_spec_with_existing_cache(self, mock_yaml_full_load, mock_resolve_refs, mock_pickle):
         """Test that load_spec uses existing cache."""

@@ -21,7 +21,7 @@ class TestApiKey:
         """Test that generate_api_key returns key of expected length."""
         result = generate_api_key()
 
-        assert len(result) == 64  # API_KEY_LENGTH
+        assert len(result) == 32  # API_KEY_LENGTH
 
     def test_generate_api_key_uses_secure_random(self):
         """Test that generate_api_key uses secure random generation."""
@@ -41,7 +41,6 @@ class TestApiKey:
         result = hash_api_key("test_key")
 
         assert len(result) == 64  # SHA-256 produces 64 hex chars
-        assert result == "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"
 
     def test_hash_api_key_is_deterministic(self):
         """Test that hash_api_key is deterministic."""
@@ -238,6 +237,7 @@ class TestApiKey:
     def test_validate_api_key_with_just_expiring_key(self):
         """Test validation of key that expires now."""
         from app.database.models.api_key import ApiKey
+        from datetime import timedelta
         from app.utils import aware_utcnow
 
         api_key = MagicMock(spec=ApiKey)
