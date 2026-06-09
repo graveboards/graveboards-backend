@@ -285,10 +285,8 @@ async def cmd_fixture_status(
     header_table.add_row("")
     header_panel = Panel(header_table, box=box.ROUNDED, padding=(0, 2), expand=False)
     
-    console.print(header_panel)
-    
-    # Instance table
-    if show_instance:
+    if show_instance and show_promoted:
+        # Horizontal layout - both panels side by side
         instance_table = create_instance_table(instance_counts, metadata)
         instance_panel = Panel(
             instance_table, 
@@ -296,7 +294,17 @@ async def cmd_fixture_status(
             box=box.ROUNDED, 
             padding=(0, 0)
         )
-        console.print(instance_panel)
+        
+        promoted_table = create_promoted_table(promoted_counts, metadata)
+        promoted_panel = Panel(
+            promoted_table, 
+            title="[bold cyan]Promoted (tests/)[/bold cyan]", 
+            box=box.ROUNDED, 
+            padding=(0, 0)
+        )
+        
+        side_by_side = Columns([instance_panel, promoted_panel], equal=True, padding=(0, 1))
+        console.print(Group(header_panel, side_by_side))
         
         if detailed:
             console.print("\n[bold]Instance Files:[/bold]")
@@ -324,21 +332,7 @@ async def cmd_fixture_status(
                             console.print(f"    [yellow]{ruleset}:[/yellow] {len(files)} files")
                         else:
                             console.print(f"    [red]{ruleset}: (empty)[/red]")
-        
-        console.print()
-    
-    # Promoted table
-    if show_promoted:
-        promoted_table = create_promoted_table(promoted_counts, metadata)
-        promoted_panel = Panel(
-            promoted_table, 
-            title="[bold cyan]Promoted (tests/)[/bold cyan]", 
-            box=box.ROUNDED, 
-            padding=(0, 0)
-        )
-        console.print(promoted_panel)
-        
-        if detailed:
+            
             console.print("\n[bold]Promoted Files:[/bold]")
             for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
                 path = TEST_FIXTURES_DIR / category
@@ -365,10 +359,88 @@ async def cmd_fixture_status(
                         else:
                             console.print(f"    [red]{ruleset}: (empty)[/red]")
         
-        # Gaps section (only show if gaps flag or no explicit flags)
-        if gaps or (not instance and not promoted):
-            if show_promoted:
-                show_gaps(promoted_counts)
+        if gaps:
+            show_gaps(promoted_counts)
+    
+    else:
+        # Vertical layout - one at a time
+        if show_instance:
+            instance_table = create_instance_table(instance_counts, metadata)
+            instance_panel = Panel(
+                instance_table, 
+                title="[bold cyan]Transient (instance/)[/bold cyan]", 
+                box=box.ROUNDED, 
+                padding=(0, 0)
+            )
+            console.print(instance_panel)
+            
+            if detailed:
+                console.print("\n[bold]Instance Files:[/bold]")
+                for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
+                    path = FIXTURES_DIR / category
+                    if path.exists():
+                        files = sorted([f.name for f in path.glob("*.json")])
+                        if files:
+                            console.print(f"\n  [cyan]{category}[/cyan]")
+                            for f in files[:10]:
+                                console.print(f"    {f}")
+                            if len(files) > 10:
+                                console.print(f"    ... and {len(files) - 10} more")
+                        else:
+                            console.print(f"\n  [red]{category}: (empty)[/red]")
+                
+                users_path = FIXTURES_DIR / "users"
+                if users_path.exists():
+                    console.print("\n  [cyan]users[/cyan]")
+                    for ruleset in RULESETS:
+                        rule_path = users_path / ruleset
+                        if rule_path.exists():
+                            files = sorted([f.name for f in rule_path.glob("*.json")])
+                            if files:
+                                console.print(f"    [yellow]{ruleset}:[/yellow] {len(files)} files")
+                            else:
+                                console.print(f"    [red]{ruleset}: (empty)[/red]")
+        
+        if show_promoted:
+            console.print("\n") if show_instance else None
+            promoted_table = create_promoted_table(promoted_counts, metadata)
+            promoted_panel = Panel(
+                promoted_table, 
+                title="[bold cyan]Promoted (tests/)[/bold cyan]", 
+                box=box.ROUNDED, 
+                padding=(0, 0)
+            )
+            console.print(promoted_panel)
+            
+            if detailed:
+                console.print("\n[bold]Promoted Files:[/bold]")
+                for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
+                    path = TEST_FIXTURES_DIR / category
+                    if path.exists():
+                        files = sorted([f.name for f in path.glob("*.json")])
+                        if files:
+                            console.print(f"\n  [cyan]{category}[/cyan]")
+                            for f in files[:10]:
+                                console.print(f"    {f}")
+                            if len(files) > 10:
+                                console.print(f"    ... and {len(files) - 10} more")
+                        else:
+                            console.print(f"\n  [red]{category}: (empty)[/red]")
+                
+                users_path = TEST_FIXTURES_DIR / "users"
+                if users_path.exists():
+                    console.print("\n  [cyan]users[/cyan]")
+                    for ruleset in RULESETS:
+                        rule_path = users_path / ruleset
+                        if rule_path.exists():
+                            files = sorted([f.name for f in rule_path.glob("*.json")])
+                            if files:
+                                console.print(f"    [yellow]{ruleset}:[/yellow] {len(files)} files")
+                            else:
+                                console.print(f"    [red]{ruleset}: (empty)[/red]")
+        
+        if gaps and show_promoted:
+            show_gaps(promoted_counts)
 
 
 def main():
