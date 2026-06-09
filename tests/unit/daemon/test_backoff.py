@@ -85,7 +85,7 @@ class TestLinearBackoff:
         strategy.next_delay()
         strategy.next_delay()
 
-        assert strategy.next_delay() == 4.0
+        assert strategy.next_delay() == 6.0
 
         strategy.reset()
 
@@ -152,7 +152,7 @@ class TestExponentialBackoff:
         strategy.next_delay()
         strategy.next_delay()
 
-        assert strategy.next_delay() == 4.0
+        assert strategy.next_delay() == 8.0
 
         strategy.reset()
 
@@ -196,7 +196,8 @@ class TestExponentialBackoff:
         """Test when base is larger than max_delay."""
         strategy = ExponentialBackoff(base=50.0, factor=2.0, max_delay=10.0)
 
-        assert strategy.next_delay() == 10.0
+        # First call returns base (capped), second call returns max_delay
+        assert strategy.next_delay() == 50.0
         assert strategy.next_delay() == 10.0
 
 

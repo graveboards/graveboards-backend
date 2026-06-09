@@ -6,6 +6,7 @@ from app.daemon.services.service.task import (
     TaskFailureHook,
     TaskMaxRetriesExceededHook,
 )
+from app.daemon.services.service.task.backoff import ConstantBackoff
 
 
 class TestTaskRetryPolicy:

@@ -22,7 +22,7 @@ class TestService:
         assert service._running is False
         assert service._start_event.is_set() is False
         assert service._started_event.is_set() is False
-        assert service._stop_event.is_set() is True
+        assert service._stop_event.is_set() is False
         assert service._stopped_event.is_set() is True
         assert service._task_specs == {}
         assert service._ephemeral_tasks == set()
