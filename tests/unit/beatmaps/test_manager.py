@@ -307,7 +307,7 @@ class TestBeatmapManager:
             mock_exists.return_value = True
             mock_file = MagicMock()
             mock_file.__aenter__ = AsyncMock(return_value=mock_file)
-            mock_file.read.return_value = b"test data"
+            mock_file.read = AsyncMock(return_value=b"test data")
             mock_aiofiles.open.return_value = mock_file
 
             result = await BeatmapManager.get(123, 1)
