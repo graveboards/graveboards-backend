@@ -9,6 +9,7 @@ from .helpers import get_categories_to_process
 from .health import cmd_fixture_health
 from .report import cmd_fixture_report
 from .gaps import cmd_fixture_gaps
+from .refresh import cmd_fixture_refresh
 
 __all__ = [
     "cmd_refresh_top_players",
@@ -21,5 +22,6 @@ __all__ = [
     "cmd_fixture_health",
     "cmd_fixture_report",
     "cmd_fixture_gaps",
+    "cmd_fixture_refresh",
     "get_categories_to_process",
 ]

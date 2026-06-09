@@ -18,6 +18,7 @@ from .fixtures import (
     cmd_fixture_health,
     cmd_fixture_report,
     cmd_fixture_gaps,
+    cmd_fixture_refresh,
 )
 
 
@@ -335,6 +336,18 @@ async def main():
         action="store_true",
         help="Also clear promoted fixture metadata (WARNING: will cause metadata desync if fixture files remain)",
     )
+    
+    refresh_parser = fixtures_subparsers.add_parser("refresh", help="Refresh fixture metadata to match disk state")
+    refresh_parser.add_argument(
+        "--category", "-c",
+        choices=["beatmaps", "beatmapsets", "users", "scores", "beatmap_scores", "beatmap_attributes"],
+        help="Specific category to refresh"
+    )
+    refresh_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show changes without applying them"
+    )
 
     args = parser.parse_args()
 
@@ -436,6 +449,11 @@ async def main():
                             clear_top_player_ids=args.clear_top_player_ids,
                             clear_promoted=args.clear_promoted,
                             force=getattr(args, 'force', False),
+                        )
+                    case "refresh":
+                        await cmd_fixture_refresh(
+                            category=args.category,
+                            dry_run=args.dry_run,
                         )
     except Exception as e:
         import traceback

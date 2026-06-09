@@ -422,6 +422,80 @@ class FixtureManager:
         
         return None
     
+    async def refresh_category_metadata(
+        self,
+        category: str,
+        dry_run: bool = False
+    ) -> list[dict]:
+        """Refresh metadata for a category to match disk state.
+        
+        Args:
+            category: Category to refresh
+            dry_run: If True, only return changes without applying
+            
+        Returns:
+            List of change records
+        """
+        from app.fixtures.utils import RULESETS, SCORE_TYPES
+        
+        changes = []
+        metadata = self.metadata.get("promoted_fixtures", {})
+        current_meta = metadata.get(category, {})
+        
+        # Count files on disk
+        category_path = self.fixture_dir / category
+        disk_files = []
+        
+        if category_path.exists():
+            disk_files = [f.name for f in category_path.glob("*.json")]
+        
+        disk_count = len(disk_files)
+        
+        # Check if ruleset subcategories exist
+        if category == "users":
+            for ruleset in RULESETS:
+                ruleset_path = category_path / ruleset
+                if ruleset_path.exists():
+                    ruleset_files = [f.name for f in ruleset_path.glob("*.json")]
+                    if ruleset_files:
+                        disk_count += len(ruleset_files)
+        
+        # Check if score type subcategories exist
+        elif category == "scores":
+            for score_type in SCORE_TYPES:
+                score_path = category_path / score_type
+                if score_path.exists():
+                    score_files = [f.name for f in score_path.glob("*.json")]
+                    if score_files:
+                        disk_count += len(score_files)
+        
+        # Compare with metadata
+        old_meta_count = current_meta.get("count", 0)
+        
+        if old_meta_count != disk_count:
+            change = {
+                "category": category,
+                "action": "sync" if disk_count > 0 else "remove" if old_meta_count > 0 and disk_count == 0 else "add",
+                "fixture_id": category,
+                "disk_count": disk_count,
+                "old_meta_count": old_meta_count
+            }
+            
+            if not dry_run:
+                if disk_count > 0:
+                    metadata[category] = {
+                        "count": disk_count,
+                        "last_refreshed": self._get_current_timestamp()
+                    }
+                elif old_meta_count > 0:
+                    del metadata[category]
+                self.metadata["promoted_fixtures"] = metadata
+                save_metadata(self.metadata)
+            
+            changes.append(change)
+        
+        return changes
+    
     def get_coverage_report(self) -> dict:
         """Get current fixture coverage."""
         targeted_metadata = self.metadata.get("targeted", {})
