@@ -8,8 +8,11 @@ import redis
 from app.config import POSTGRESQL_CONFIGURATION, REDIS_CONFIGURATION
 
 
-# Load benchmark hooks
-from .fixtures import benchmark  # noqa: F401
+# Load benchmark hooks (optional, for performance tracking)
+try:
+    from .fixtures import benchmark  # noqa: F401
+except ImportError:
+    pass  # benchmark fixtures not available
 
 
 @pytest.fixture(scope="function")
@@ -112,6 +115,63 @@ async def db_session_manual():
         yield s
     
     await db.close()
+
+
+# Factory fixtures (for generating test data)
+@pytest.fixture
+def beatmap_factory():
+    """Factory fixture for generating beatmap test data."""
+    from tests.fixtures.factories import generate_beatmap_data
+    
+    class BeatmapFactory:
+        def build(self, **overrides):
+            data = generate_beatmap_data(count=1, **overrides)[0]
+            return data
+    
+    return BeatmapFactory()
+
+
+@pytest.fixture
+def user_factory():
+    """Factory fixture for generating user test data."""
+    from tests.fixtures.factories import generate_user_data
+    
+    class UserFactory:
+        def build(self, **overrides):
+            data = generate_user_data(count=1, **overrides)[0]
+            return data
+    
+    return UserFactory()
+
+
+@pytest.fixture
+def beatmapset_factory():
+    """Factory fixture for generating beatmapset test data."""
+    from tests.fixtures.factories import generate_beatmapset_data
+    
+    class BeatmapsetFactory:
+        def build(self, **overrides):
+            data = generate_beatmapset_data(count=1, **overrides)[0]
+            return data
+    
+    return BeatmapsetFactory()
+
+
+@pytest.fixture
+def queue_factory():
+    """Factory fixture for generating queue test data."""
+    from tests.fixtures.factories import generate_beatmapset_data
+    
+    class QueueFactory:
+        def build(self, **overrides):
+            # Generate beatmapset data as base
+            data = generate_beatmapset_data(count=1, **overrides)[0]
+            # Add queue-specific fields
+            data["name"] = overrides.get("name", f"test_queue_{data['id']}")
+            data["visibility"] = overrides.get("visibility", "public")
+            return data
+    
+    return QueueFactory()
 
 
 @pytest.fixture(scope="function")
