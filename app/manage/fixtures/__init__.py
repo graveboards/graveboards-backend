@@ -6,6 +6,9 @@ from .promote import cmd_promote_fixtures
 from .demote import cmd_demote_fixtures
 from .wipe import cmd_wipe_fixtures
 from .helpers import get_categories_to_process
+from .health import cmd_fixture_health
+from .report import cmd_fixture_report
+from .gaps import cmd_fixture_gaps
 
 __all__ = [
     "cmd_refresh_top_players",
@@ -15,5 +18,8 @@ __all__ = [
     "cmd_promote_fixtures",
     "cmd_demote_fixtures",
     "cmd_wipe_fixtures",
+    "cmd_fixture_health",
+    "cmd_fixture_report",
+    "cmd_fixture_gaps",
     "get_categories_to_process",
 ]

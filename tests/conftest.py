@@ -14,6 +14,12 @@ try:
 except ImportError:
     pass  # benchmark fixtures not available
 
+# Load health check fixtures (optional, for fixture validation)
+try:
+    from .fixtures import health  # noqa: F401
+except ImportError:
+    pass  # health check fixtures not available
+
 
 @pytest.fixture(scope="function")
 def TestClient():
