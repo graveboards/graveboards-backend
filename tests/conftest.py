@@ -8,6 +8,10 @@ import redis
 from app.config import POSTGRESQL_CONFIGURATION, REDIS_CONFIGURATION
 
 
+# Load benchmark hooks
+from .fixtures import benchmark  # noqa: F401
+
+
 @pytest.fixture(scope="function")
 def TestClient():
     """Create a minimal TestClient for fast, isolated endpoint testing.
