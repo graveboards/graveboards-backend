@@ -277,60 +277,6 @@ async def main():
         action="store_true",
         help="Show missing fixture gaps (only for promoted)"
     )
-    
-    validate_parser = fixtures_subparsers.add_parser("validate", help="Validate fixture JSON files")
-    
-    health_parser = fixtures_subparsers.add_parser("health", help="Check fixture data health")
-    health_parser.add_argument(
-        "--category", "-c",
-        choices=["beatmaps", "beatmapsets", "users", "scores", "beatmap_scores", "beatmap_attributes"],
-        help="Specific category to check"
-    )
-    health_parser.add_argument(
-        "--detailed", "-d",
-        action="store_true",
-        help="Show detailed file lists"
-    )
-    health_parser.add_argument(
-        "--format", "-f",
-        dest="format_type",
-        choices=["text", "json"],
-        default="text",
-        help="Output format (default: text)"
-    )
-    
-    report_parser = fixtures_subparsers.add_parser("report", help="Generate fixture coverage report")
-    report_parser.add_argument(
-        "--category", "-c",
-        choices=["beatmaps", "beatmapsets", "users", "scores", "beatmap_scores", "beatmap_attributes"],
-        help="Specific category to report on"
-    )
-    report_parser.add_argument(
-        "--detailed", "-d",
-        action="store_true",
-        help="Include detailed file lists"
-    )
-    report_parser.add_argument(
-        "--format", "-f",
-        dest="format_type",
-        choices=["text", "json"],
-        default="text",
-        help="Output format (default: text)"
-    )
-    
-    gaps_parser = fixtures_subparsers.add_parser("gaps", help="Show missing fixture categories and gaps")
-    gaps_parser.add_argument(
-        "--category", "-c",
-        choices=["beatmaps", "beatmapsets", "users", "scores", "beatmap_scores", "beatmap_attributes"],
-        help="Specific category to check"
-    )
-    gaps_parser.add_argument(
-        "--format", "-f",
-        dest="format_type",
-        choices=["text", "json"],
-        default="text",
-        help="Output format (default: text)"
-    )
 
     wipe_parser = fixtures_subparsers.add_parser("wipe", help="Delete all fixtures")
     wipe_parser.add_argument(
@@ -426,23 +372,7 @@ async def main():
                             detailed=getattr(args, 'detailed', False),
                             gaps=getattr(args, 'gaps', False),
                         )
-                    case "health":
-                        await cmd_fixture_health(
-                            category=args.category,
-                            detailed=args.detailed,
-                            format_type=args.format_type
-                        )
-                    case "report":
-                        await cmd_fixture_report(
-                            category=args.category,
-                            detailed=args.detailed,
-                            format_type=args.format_type
-                        )
-                    case "gaps":
-                        await cmd_fixture_gaps(
-                            category=args.category,
-                            format_type=args.format_type
-                        )
+  
                     case "promote":
                         await cmd_promote_fixtures(
                             beatmaps=args.beatmaps,
