@@ -18,7 +18,7 @@ from rich.panel import Panel
 from rich.text import Text
 from rich.box import SIMPLE_HEAD
 
-from tests.fixtures.health import check_all_categories, check_category_health
+from app.fixtures.health import check_all_categories, check_category_health
 from app.fixtures.utils import RULESETS, SCORE_TYPES
 
 

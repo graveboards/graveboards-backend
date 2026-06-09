@@ -18,7 +18,7 @@ from rich.panel import Panel
 from rich.text import Text
 from rich.box import SIMPLE_HEAD
 
-from tests.fixtures.health import get_category_gaps, get_incomplete_categories
+from app.fixtures.health import get_category_gaps, get_incomplete_categories
 from app.fixtures.utils import RULESETS, SCORE_TYPES
 
 
