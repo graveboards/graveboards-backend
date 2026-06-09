@@ -108,6 +108,7 @@ def create_instance_table(instance_counts, metadata):
     """Create table for instance/ fixtures."""
     table = Table(box=box.SQUARE, padding=0)
     table.add_column("Category", style="bold cyan", width=14)
+    table.add_column("Meta", style="magenta", width=8)
     table.add_column("Disk", style="yellow", width=8)
     table.add_column("Status", style="", width=8)
 
@@ -117,29 +118,29 @@ def create_instance_table(instance_counts, metadata):
         disk_count = instance_counts.get(category, 0)
         meta_count = sample_metadata.get(category, {}).get("count", 0)
         status = format_status_icon(disk_count, meta_count, is_empty_ok=False)
-        table.add_row(category, str(disk_count), status)
+        table.add_row(category, str(meta_count), str(disk_count), status)
 
     users_disk = sum(instance_counts.get("users", {}).values())
     users_meta = sample_metadata.get("users", {}).get("count", 0)
     users_status = format_status_icon(users_disk, users_meta, is_empty_ok=True)
-    table.add_row("[b]users[/b]", str(users_disk), users_status)
+    table.add_row("[b]users[/b]", str(users_meta), str(users_disk), users_status)
 
     for ruleset in RULESETS:
         rule_disk = instance_counts.get("users", {}).get(ruleset, 0)
         rule_meta = sample_metadata.get("users", {}).get("per_ruleset", {}).get(ruleset, 0)
         rule_status = format_status_icon(rule_disk, rule_meta, is_empty_ok=True)
-        table.add_row(f"  {ruleset}", str(rule_disk), rule_status)
+        table.add_row(f"  {ruleset}", str(rule_meta), str(rule_disk), rule_status)
 
     scores_disk = sum(instance_counts.get("scores", {}).values())
     scores_meta = sample_metadata.get("scores", {}).get("count", 0)
     scores_status = format_status_icon(scores_disk, scores_meta, is_empty_ok=True)
-    table.add_row("[b]scores[/b]", str(scores_disk), scores_status)
+    table.add_row("[b]scores[/b]", str(scores_meta), str(scores_disk), scores_status)
 
     for score_type in SCORE_TYPES:
         type_disk = instance_counts.get("scores", {}).get(score_type, 0)
         type_meta = sample_metadata.get("scores", {}).get("per_type", {}).get(score_type, 0)
         type_status = format_status_icon(type_disk, type_meta, is_empty_ok=True)
-        table.add_row(f"  {score_type}", str(type_disk), type_status)
+        table.add_row(f"  {score_type}", str(type_meta), str(type_disk), type_status)
 
     return table
 
