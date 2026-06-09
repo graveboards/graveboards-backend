@@ -302,7 +302,9 @@ class TestBeatmapManager:
         """Test get beatmap snapshot."""
         manager._session = MagicMock()
 
-        with patch("app.beatmaps.manager.aiofiles") as mock_aiofiles:
+        with patch("app.beatmaps.manager.aiofiles") as mock_aiofiles, \
+             patch("app.beatmaps.manager.os.path.exists") as mock_exists:
+            mock_exists.return_value = True
             mock_file = MagicMock()
             mock_file.__aenter__ = AsyncMock(return_value=mock_file)
             mock_file.read.return_value = b"test data"
@@ -314,9 +316,12 @@ class TestBeatmapManager:
 
     async def test_get_beatmap_path(self, manager):
         """Test get beatmap path."""
-        result = BeatmapManager.get_path(123, 1)
+        with patch("app.beatmaps.manager.os.path.exists") as mock_exists:
+            mock_exists.return_value = True
+            
+            result = BeatmapManager.get_path(123, 1)
 
-        assert isinstance(result, str)
+            assert isinstance(result, str)
 
     async def test_get_zip(self, manager):
         """Test get zip archive."""

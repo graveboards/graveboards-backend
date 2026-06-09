@@ -1,4 +1,5 @@
 import pytest
+from app.database.db import PostgresqlDB
 from sqlalchemy import insert
 from sqlalchemy.sql import select
 
@@ -6,18 +7,18 @@ from app.database.models import User, Profile, Queue, Request, Beatmapset, Beatm
 
 
 @pytest.mark.asyncio
-async def test_cascade_delete_request_on_user(db_session_transaction):
+async def test_cascade_delete_request_on_user(db_session):
     """Test that deleting User cascades to Requests."""
     db = PostgresqlDB()
     
-    user = await db.add(User, session=db_session_transaction, id=1014)
-    queue = await db.add(Queue, session=db_session_transaction, user_id=1014, name="Test Queue", description="Test")
+    user = await db.add(User, session=db_session, id=1014)
+    queue = await db.add(Queue, session=db_session, user_id=1014, name="Test Queue", description="Test")
     
     beatmapset_data = {
         "id": 10014,
         "user_id": 1014,
     }
-    beatmapset = await db.add(Beatmapset, session=db_session_transaction, **beatmapset_data)
+    beatmapset = await db.add(Beatmapset, session=db_session, **beatmapset_data)
     
     snapshot_data = {
         "beatmapset_id": 10014,
@@ -61,7 +62,7 @@ async def test_cascade_delete_request_on_user(db_session_transaction):
         "title_unicode": "Test",
         "video": False,
     }
-    beatmapset_snapshot = await db.add(BeatmapsetSnapshot, session=db_session_transaction, **snapshot_data)
+    beatmapset_snapshot = await db.add(BeatmapsetSnapshot, session=db_session, **snapshot_data)
     
     request_data = {
         "user_id": 1014,
@@ -70,11 +71,11 @@ async def test_cascade_delete_request_on_user(db_session_transaction):
         "beatmapset_snapshot_id": beatmapset_snapshot.id,
         "comment": "Test",
     }
-    request = await db.add(Request, session=db_session_transaction, **request_data)
+    request = await db.add(Request, session=db_session, **request_data)
     
-    await db.delete(User, session=db_session_transaction, id=1014)
+    await db.delete(User, session=db_session, id=1014)
     
-    fetched_request = await db.get(Request, session=db_session_transaction, id=request.id)
+    fetched_request = await db.get(Request, session=db_session, id=request.id)
     assert fetched_request is None
     
     result = await session.execute(
