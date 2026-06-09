@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import logging
 
 from app.database.status import STATUS_TARGETS
@@ -9,15 +10,11 @@ from .reset import cmd_reset
 from .seed import cmd_seed
 from .fixtures import (
     cmd_fetch_fixtures,
-    cmd_list_fixtures,
-    cmd_validate_fixtures,
+    cmd_fixture_status,
     cmd_promote_fixtures,
     cmd_demote_fixtures,
     cmd_wipe_fixtures,
     cmd_refresh_top_players,
-    cmd_fixture_health,
-    cmd_fixture_report,
-    cmd_fixture_gaps,
     cmd_fixture_refresh,
 )
 
@@ -259,7 +256,27 @@ async def main():
         help="Number of player IDs to collect per ruleset (default: 1000)",
     )
 
-    list_parser = fixtures_subparsers.add_parser("list", help="List fixture data status")
+    status_parser = fixtures_subparsers.add_parser("status", help="Show fixture status")
+    status_parser.add_argument(
+        "--instance", "-i",
+        action="store_true",
+        help="Show only instance/ fixtures"
+    )
+    status_parser.add_argument(
+        "--promoted", "-p",
+        action="store_true",
+        help="Show only tests/fixtures/ promoted fixtures"
+    )
+    status_parser.add_argument(
+        "--detailed", "-d",
+        action="store_true",
+        help="Include detailed file lists"
+    )
+    status_parser.add_argument(
+        "--gaps", "-g",
+        action="store_true",
+        help="Show missing fixture gaps (only for promoted)"
+    )
     
     validate_parser = fixtures_subparsers.add_parser("validate", help="Validate fixture JSON files")
     
@@ -402,10 +419,13 @@ async def main():
                             rulesets=args.rulesets,
                             count=args.count,
                         )
-                    case "list":
-                        await cmd_list_fixtures()
-                    case "validate":
-                        await cmd_validate_fixtures()
+                    case "status":
+                        await cmd_fixture_status(
+                            instance=getattr(args, 'instance', False),
+                            promoted=getattr(args, 'promoted', False),
+                            detailed=getattr(args, 'detailed', False),
+                            gaps=getattr(args, 'gaps', False),
+                        )
                     case "health":
                         await cmd_fixture_health(
                             category=args.category,
