@@ -12,6 +12,11 @@ from app.spec.schema import (
 class TestSchemaResolution:
     """Test OpenAPI schema resolution."""
 
+    @pytest.fixture(autouse=True)
+    def clear_schema_cache(self):
+        """Clear the schema cache before each test to prevent flaky tests."""
+        _get_spec_cached.cache_clear()
+
     @pytest.fixture
     def mock_spec(self):
         """Create a mock OpenAPI spec."""
