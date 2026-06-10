@@ -10,7 +10,7 @@ async def test_beatmap_model_creation():
         id=116383,
         beatmapset_id=35965
     )
-    
+
     assert beatmap.id == 116383
     assert beatmap.beatmapset_id == 35965
 
@@ -22,7 +22,7 @@ async def test_beatmap_relationships():
         id=116383,
         beatmapset_id=35965
     )
-    
+
     assert hasattr(beatmap, 'beatmapset')
     assert hasattr(beatmap, 'snapshots')
 
@@ -34,7 +34,7 @@ async def test_beatmap_num_snapshots():
         id=116383,
         beatmapset_id=35965
     )
-    
+
     assert hasattr(beatmap, 'num_snapshots')
 
 
@@ -45,7 +45,7 @@ async def test_beatmapset_model_creation():
         id=35965,
         user_id=12345678
     )
-    
+
     assert beatmapset.id == 35965
     assert beatmapset.user_id == 12345678
 
@@ -57,7 +57,7 @@ async def test_beatmapset_relationships():
         id=35965,
         user_id=12345678
     )
-    
+
     assert hasattr(beatmapset, 'beatmaps')
     assert hasattr(beatmapset, 'snapshots')
 
@@ -69,7 +69,7 @@ async def test_beatmapset_num_snapshots():
         id=35965,
         user_id=12345678
     )
-    
+
     assert hasattr(beatmapset, 'num_snapshots')
 
 
@@ -80,12 +80,12 @@ async def test_beatmap_beatmapset_relationship():
         id=35965,
         user_id=12345678
     )
-    
+
     beatmap = Beatmap(
         id=116383,
         beatmapset_id=beatmapset.id
     )
-    
+
     assert beatmap.beatmapset_id == beatmapset.id
 
 
@@ -96,15 +96,15 @@ async def test_beatmapset_beatmap_relationship():
         id=35965,
         user_id=12345678
     )
-    
+
     beatmap1 = Beatmap(
         id=116383,
         beatmapset_id=beatmapset.id
     )
-    
+
     beatmap2 = Beatmap(
         id=116384,
         beatmapset_id=beatmapset.id
     )
-    
+
     assert beatmap1.beatmapset_id == beatmap2.beatmapset_id

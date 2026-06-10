@@ -1,6 +1,5 @@
 import pytest
 
-from tests.conftest import TestClient
 
 
 @pytest.mark.integration
@@ -8,7 +7,7 @@ from tests.conftest import TestClient
 def test_login_endpoint(TestClient):
     """Test login endpoint via HTTP using minimal TestClient fixture."""
     response = TestClient.get("/api/v1/login")
-    
+
     assert response.status_code == 200
     data = response.json()
     assert "authorization_url" in data

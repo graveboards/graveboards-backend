@@ -135,6 +135,9 @@ def validate_value(value: Any, schema: dict, path: list[str]) -> None:
         case "boolean":
             if not isinstance(value, bool):
                 raise DeepObjectValidationError(path, f"Expected boolean, got {type(value).__name__}")
+        case "null":
+            if value is not None:
+                raise DeepObjectValidationError(path, f"Expected null, got {type(value).__name__}")
         case _:
             raise DeepObjectValidationError(path, "Invalid filter schema definition")
 

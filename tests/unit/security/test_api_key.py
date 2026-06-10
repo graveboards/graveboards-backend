@@ -76,7 +76,7 @@ class TestApiKey:
     def test_validate_api_key_valid(self):
         """Test validation of valid API key."""
         from app.database.models.api_key import ApiKey
-        from datetime import datetime, timedelta
+        from datetime import timedelta
         from app.utils import aware_utcnow
 
         api_key = MagicMock(spec=ApiKey)
@@ -101,7 +101,7 @@ class TestApiKey:
     def test_validate_api_key_expired(self):
         """Test validation of expired API key."""
         from app.database.models.api_key import ApiKey
-        from datetime import datetime, timedelta
+        from datetime import timedelta
         from app.utils import aware_utcnow
 
         api_key = MagicMock(spec=ApiKey)
@@ -116,7 +116,7 @@ class TestApiKey:
     def test_validate_api_key_revoked(self):
         """Test validation of revoked API key."""
         from app.database.models.api_key import ApiKey
-        from datetime import datetime, timedelta
+        from datetime import timedelta
         from app.utils import aware_utcnow
 
         api_key = MagicMock(spec=ApiKey)
@@ -131,7 +131,7 @@ class TestApiKey:
     def test_validate_api_key_payload_structure(self):
         """Test that validate_api_key returns correct payload structure."""
         from app.database.models.api_key import ApiKey
-        from datetime import datetime, timedelta
+        from datetime import timedelta
         from app.utils import aware_utcnow
 
         api_key = MagicMock(spec=ApiKey)
@@ -154,7 +154,7 @@ class TestApiKey:
     def test_validate_api_key_timestamps_are_integers(self):
         """Test that validate_api_key returns integer timestamps."""
         from app.database.models.api_key import ApiKey
-        from datetime import datetime, timedelta
+        from datetime import timedelta
         from app.utils import aware_utcnow
 
         api_key = MagicMock(spec=ApiKey)
@@ -173,7 +173,7 @@ class TestApiKey:
     def test_validate_api_key_exp_after_iat(self):
         """Test that exp is after iat in payload."""
         from app.database.models.api_key import ApiKey
-        from datetime import datetime, timedelta
+        from datetime import timedelta
         from app.utils import aware_utcnow
 
         api_key = MagicMock(spec=ApiKey)

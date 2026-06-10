@@ -41,12 +41,12 @@ def test_search_engine_with_search_terms():
         terms=["artist", "title"],
         field_weights={"beatmapset": {"artist": 3, "title": 2}},
     )
-    
+
     engine = SearchEngine(
         scope=Scope.BEATMAPSETS,
         search_terms=search_terms,
     )
-    
+
     assert engine.search_terms is not None
     assert engine.search_terms.terms == ["artist", "title"]
 
@@ -63,12 +63,12 @@ def test_search_engine_with_sorting():
             {"field": ModelField.BEATMAPSETSNAPSHOT__TITLE, "order": SortingOrder.ASCENDING},
         ]
     )
-    
+
     engine = SearchEngine(
         scope=Scope.BEATMAPSETS,
         sorting=sorting,
     )
-    
+
     assert engine.sorting is not None
     items = list(engine.sorting)
     assert len(items) == 2
@@ -80,12 +80,12 @@ def test_search_engine_with_filters():
     filters = FiltersSchema(
         beatmapset={"status": "ranked"}
     )
-    
+
     engine = SearchEngine(
         scope=Scope.BEATMAPSETS,
         filters=filters,
     )
-    
+
     assert engine.filters is not None
 
 
@@ -95,12 +95,12 @@ def test_search_engine_query_compilation():
     search_terms = SearchTermsSchema(
         terms=["test"],
     )
-    
+
     engine = SearchEngine(
         scope=Scope.BEATMAPSETS,
         search_terms=search_terms,
     )
-    
+
     assert engine.compiled_query is not None
 
 

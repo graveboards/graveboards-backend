@@ -44,17 +44,17 @@ def StarletteTestClient():
             "authorization_url": authorization_url,
             "state": state
         })
-    
+
     middleware = [
         Middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]),
         Middleware(GZipMiddleware),
     ]
-    
+
     routes = [
         Route("/api/v1/login", login_endpoint, methods=["GET"]),
     ]
-    
+
     app = Starlette(routes=routes, middleware=middleware)
     client = StarletteTestClient(app)
-    
-    yield client
+
+    return client

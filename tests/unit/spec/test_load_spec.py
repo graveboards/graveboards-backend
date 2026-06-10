@@ -1,7 +1,5 @@
 import pytest
-import os
-from unittest.mock import MagicMock, patch, mock_open
-from datetime import datetime
+from unittest.mock import patch, mock_open
 
 from app.spec.load import (
     load_spec,

@@ -1,4 +1,3 @@
-import pytest
 
 from app.redis.enums import Namespace
 
@@ -9,7 +8,7 @@ class TestNamespaceKeys:
     def test_namespace_has_hash_name_method(self):
         """Test that namespace has hash_name method."""
         assert hasattr(Namespace, "hash_name")
-        assert callable(getattr(Namespace, "hash_name"))
+        assert callable(Namespace.hash_name)
 
     def test_lock_namespace(self):
         """Test lock namespace key generation."""
@@ -65,7 +64,7 @@ class TestNamespaceKeys:
         """Test that different namespaces have different prefixes."""
         lock_key = Namespace.LOCK.hash_name("test")
         rate_key = Namespace.RATE_LIMIT_COUNTER.hash_name("test")
-        
+
         assert lock_key != rate_key
         assert lock_key.startswith("lock:")
         assert rate_key.startswith("rate_limit_counter:")
@@ -74,7 +73,7 @@ class TestNamespaceKeys:
         """Test that hash_name is deterministic."""
         result1 = Namespace.LOCK.hash_name("test")
         result2 = Namespace.LOCK.hash_name("test")
-        
+
         assert result1 == result2
 
     def test_namespace_values(self):
@@ -110,7 +109,7 @@ class TestNamespaceKeys:
             Namespace.CACHED_BEATMAP,
             Namespace.CACHED_BEATMAPSET,
         ]
-        
+
         for ns in namespaces:
             result = ns.hash_name("test")
             assert isinstance(result, str)

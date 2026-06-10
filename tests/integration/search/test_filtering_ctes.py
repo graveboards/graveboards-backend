@@ -7,7 +7,7 @@ must match (AND logic) across the appropriate field categories.
 import pytest
 from app.search.enums import Scope
 from app.database.ctes.search_terms_filtered import search_terms_filtered_cte_factory
-from app.search.datastructures import SearchTermsSchema, FieldWeights
+from app.search.datastructures import SearchTermsSchema
 
 
 @pytest.mark.integration
@@ -17,9 +17,9 @@ def test_search_terms_filtered_cte_creation():
         terms=["artist", "title"],
         field_weights={"beatmapset": {"artist": 3, "title": 2}},
     )
-    
+
     cte = search_terms_filtered_cte_factory(Scope.BEATMAPSETS, search_terms)
-    
+
     assert cte is not None
     assert hasattr(cte, "c")
     assert hasattr(cte.c, "id")
@@ -32,9 +32,9 @@ def test_search_terms_filtered_single_term():
         terms=["test"],
         field_weights={"beatmapset": {"artist": 3}},
     )
-    
+
     cte = search_terms_filtered_cte_factory(Scope.BEATMAPSETS, search_terms)
-    
+
     assert cte is not None
 
 
@@ -45,13 +45,13 @@ def test_search_terms_filtered_beatmaps_scope():
         terms=["version"],
         field_weights={"beatmap": {"version": 3}},
     )
-    
+
     cte = search_terms_filtered_cte_factory(Scope.BEATMAPS, search_terms)
-    
+
     assert cte is not None
 
 
-@pytest.mark.integration  
+@pytest.mark.integration
 def test_search_terms_filtered_case_sensitive():
     """Test filtering CTE with case sensitive flag."""
     search_terms = SearchTermsSchema(
@@ -59,9 +59,9 @@ def test_search_terms_filtered_case_sensitive():
         field_weights={"beatmapset": {"artist": 3}},
         case_sensitive=True,
     )
-    
+
     cte = search_terms_filtered_cte_factory(Scope.BEATMAPSETS, search_terms)
-    
+
     assert cte is not None
 
 
@@ -72,7 +72,7 @@ def test_search_terms_filtered_no_match():
         terms=["nonexistent_xyz_123"],
         field_weights={"beatmapset": {"artist": 3}},
     )
-    
+
     cte = search_terms_filtered_cte_factory(Scope.BEATMAPSETS, search_terms)
-    
+
     assert cte is not None

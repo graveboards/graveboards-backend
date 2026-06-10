@@ -1,7 +1,6 @@
 import pytest
 
 from app.database.models import Queue
-from tests.fixtures.osu import load_user
 
 
 def create_queue_from_user_id(user_id: int, name: str = "Test Queue", **kwargs) -> Queue:

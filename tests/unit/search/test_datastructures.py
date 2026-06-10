@@ -1,10 +1,8 @@
 import pytest
-from unittest.mock import MagicMock, patch
 
 from app.search.datastructures import (
     SearchSchema,
     Conditions,
-    ConditionValue,
     SearchTermsSchema,
     SortingSchema,
     SortingOption,
@@ -16,7 +14,6 @@ from app.search.datastructures import (
 from app.search.enums import Scope
 
 
-@pytest.mark.skip(reason="Field name validation issues - tests use MagicMock")
 class TestDatastructures:
     """Test search data structures."""
 
@@ -58,19 +55,19 @@ class TestDatastructures:
     def test_sorting_option_creation(self):
         """Test SortingOption creation."""
         option = SortingOption(
-            field=MagicMock(),
+            field="BeatmapSnapshot.beatmap_id",
             order="asc"
         )
 
-        assert option.order == "asc"
+        assert option.order.value == "asc"
 
     def test_sorting_schema_creation(self):
         """Test SortingSchema creation."""
         schema = SortingSchema(root=[
-            SortingOption(field=MagicMock())
+            SortingOption(field="BeatmapSnapshot.beatmap_id")
         ])
 
-        assert len(schema) == 1
+        assert len(schema.root) == 1
 
     def test_field_filters_creation(self):
         """Test FieldFilters creation."""
@@ -118,7 +115,7 @@ class TestDatastructures:
         """Test SearchSchema with search terms."""
         schema = SearchSchema(
             scope=Scope.BEATMAPS,
-            search_terms=SearchTermsSchema()
+            search_terms=SearchTermsSchema(terms=["beatmap"])
         )
 
         assert schema.search_terms is not None
@@ -179,17 +176,16 @@ class TestDatastructures:
 
     def test_search_terms_creation(self):
         """Test SearchTerms creation."""
-        terms = SearchTermsSchema()
+        terms = SearchTermsSchema(terms=["beatmap"])
 
         assert terms is not None
 
     def test_conditions_values_for_validation(self):
         """Test conditions values for validation."""
-        conditions = Conditions(
-            eq=123,
-            gt=100,
-            in_=[1, 2, 3]
-        )
+        conditions = Conditions.model_validate({
+            "gt": 100,
+            "in": [123, 2, 3]
+        })
 
         values = conditions.values_for_validation()
 
@@ -210,8 +206,8 @@ class TestDatastructures:
     def test_sorting_schema_iteration(self):
         """Test SortingSchema iteration."""
         schema = SortingSchema(root=[
-            SortingOption(field=MagicMock()),
-            SortingOption(field=MagicMock())
+            SortingOption(field="BeatmapSnapshot.beatmap_id"),
+            SortingOption(field="BeatmapSnapshot.beatmap_id")
         ])
 
         options = list(schema)
@@ -228,7 +224,7 @@ class TestDatastructures:
 
     def test_search_terms_validate_against_scope(self):
         """Test SearchTerms validate against scope."""
-        terms = SearchTermsSchema()
+        terms = SearchTermsSchema(terms=["beatmap"])
 
         # Should not raise
         terms.validate_against_scope(Scope.BEATMAPS)
@@ -256,4 +252,4 @@ class TestDatastructures:
     def test_conditions_eq_not_in_not_in(self):
         """Test Conditions eq not in not_in."""
         with pytest.raises(Exception):
-            Conditions(eq=2, not_in=[1, 2, 3])
+            Conditions(eq=2, not_in_=[1, 2, 3])

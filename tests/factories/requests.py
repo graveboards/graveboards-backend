@@ -1,7 +1,6 @@
 import pytest
 
-from app.database.models import Request, Queue
-from tests.fixtures.osu import load_beatmapset
+from app.database.models import Request
 
 
 def create_request_from_beatmapset_id(beatmapset_id: int, queue_id: int = 1, **kwargs) -> Request:
@@ -21,7 +20,7 @@ def create_request_from_user_and_beatmapset(user_id: int, beatmapset_id: int, qu
         user_id=user_id,
         beatmapset_id=beatmapset_id,
         queue_id=queue_id,
-        comment=kwargs.get("comment", f"Please rank this beatmapset"),
+        comment=kwargs.get("comment", "Please rank this beatmapset"),
         mv_checked=kwargs.get("mv_checked", False),
         status=kwargs.get("status", 0),
     )

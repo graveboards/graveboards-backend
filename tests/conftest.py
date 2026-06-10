@@ -40,9 +40,8 @@ def TestClient():
     Current routes available:
     - GET /api/v1/login - OAuth login endpoint
     """
-    from starlette.testclient import TestClient
     from app.test_app import create_test_client
-    
+
     return create_test_client()
 
 
@@ -52,7 +51,7 @@ def event_loop():
         loop = asyncio.get_running_loop()
     except RuntimeError:
         loop = asyncio.new_event_loop()
-    yield loop
+    return loop
 
 
 @pytest.fixture(scope="session")
@@ -91,16 +90,16 @@ async def db_session():
     use db_session_manual instead.
     """
     from app.database.db import PostgresqlDB
-    
+
     db = PostgresqlDB()
-    
+
     async with db.session() as session:
         try:
             yield session
         except Exception:
             await session.rollback()
             raise
-    
+
     await db.close()
 
 
@@ -112,14 +111,14 @@ async def db_session_manual():
     Tests must handle their own commit/rollback and cleanup.
     """
     from app.database.db import PostgresqlDB
-    
+
     db = PostgresqlDB()
-    
+
     session = db.async_session_generator()
-    
+
     async with session() as s:
         yield s
-    
+
     await db.close()
 
 
@@ -128,12 +127,12 @@ async def db_session_manual():
 def beatmap_factory():
     """Factory fixture for generating beatmap test data."""
     from tests.fixtures.factories import generate_beatmap_data
-    
+
     class BeatmapFactory:
         def build(self, **overrides):
             data = generate_beatmap_data(count=1, **overrides)[0]
             return data
-    
+
     return BeatmapFactory()
 
 
@@ -141,12 +140,12 @@ def beatmap_factory():
 def user_factory():
     """Factory fixture for generating user test data."""
     from tests.fixtures.factories import generate_user_data
-    
+
     class UserFactory:
         def build(self, **overrides):
             data = generate_user_data(count=1, **overrides)[0]
             return data
-    
+
     return UserFactory()
 
 
@@ -154,12 +153,12 @@ def user_factory():
 def beatmapset_factory():
     """Factory fixture for generating beatmapset test data."""
     from tests.fixtures.factories import generate_beatmapset_data
-    
+
     class BeatmapsetFactory:
         def build(self, **overrides):
             data = generate_beatmapset_data(count=1, **overrides)[0]
             return data
-    
+
     return BeatmapsetFactory()
 
 
@@ -167,7 +166,7 @@ def beatmapset_factory():
 def queue_factory():
     """Factory fixture for generating queue test data."""
     from tests.fixtures.factories import generate_beatmapset_data
-    
+
     class QueueFactory:
         def build(self, **overrides):
             # Generate beatmapset data as base
@@ -176,7 +175,7 @@ def queue_factory():
             data["name"] = overrides.get("name", f"test_queue_{data['id']}")
             data["visibility"] = overrides.get("visibility", "public")
             return data
-    
+
     return QueueFactory()
 
 

@@ -1,26 +1,25 @@
 import pytest
 from app.database.db import PostgresqlDB
-from sqlalchemy import insert
 from sqlalchemy.sql import select
 
-from app.database.models import User, Profile, Queue, Request, Beatmapset, BeatmapsetSnapshot, BeatmapsetListing
+from app.database.models import User, Queue, Request, Beatmapset, BeatmapsetSnapshot, BeatmapsetListing
 
 
-@pytest.mark.skip(reason="fixture name mismatch in test")
+
 @pytest.mark.asyncio
 async def test_cascade_delete_request_on_user(db_session):
     """Test that deleting User cascades to Requests."""
     db = PostgresqlDB()
-    
+
     user = await db.add(User, session=db_session, id=1014)
     queue = await db.add(Queue, session=db_session, user_id=1014, name="Test Queue", description="Test")
-    
+
     beatmapset_data = {
         "id": 10014,
         "user_id": 1014,
     }
     beatmapset = await db.add(Beatmapset, session=db_session, **beatmapset_data)
-    
+
     snapshot_data = {
         "beatmapset_id": 10014,
         "user_id": 1014,
@@ -64,7 +63,7 @@ async def test_cascade_delete_request_on_user(db_session):
         "video": False,
     }
     beatmapset_snapshot = await db.add(BeatmapsetSnapshot, session=db_session, **snapshot_data)
-    
+
     request_data = {
         "user_id": 1014,
         "queue_id": queue.id,
@@ -73,31 +72,31 @@ async def test_cascade_delete_request_on_user(db_session):
         "comment": "Test",
     }
     request = await db.add(Request, session=db_session, **request_data)
-    
+
     await db.delete(User, session=db_session, id=1014)
-    
+
     fetched_request = await db.get(Request, session=db_session, id=request.id)
     assert fetched_request is None
-    
-    result = await session.execute(
+
+    result = await db_session.execute(
         select(Queue).where(Queue.user_id == 1014)
     )
     fetched_queue = result.scalars().first()
     assert fetched_queue is None
-    
-    result = await session.execute(
+
+    result = await db_session.execute(
         select(Beatmapset).where(Beatmapset.user_id == 1014)
     )
     fetched_beatmapset = result.scalars().first()
     assert fetched_beatmapset is None
-    
-    result = await session.execute(
+
+    result = await db_session.execute(
         select(BeatmapsetSnapshot).where(BeatmapsetSnapshot.user_id == 1014)
     )
     fetched_snapshot = result.scalars().first()
     assert fetched_snapshot is None
-    
-    result = await session.execute(
+
+    result = await db_session.execute(
         select(BeatmapsetListing).where(BeatmapsetListing.beatmapset_id == 10014)
     )
     fetched_listing = result.scalars().first()

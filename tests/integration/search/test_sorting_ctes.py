@@ -70,7 +70,7 @@ def test_sorting_order_enum():
 def test_sorting_schema_validation():
     """Test sorting schema validation."""
     from app.search.datastructures import SortingSchema
-    from app.search.enums import ModelField, SortingOrder
+    from app.search.enums import ModelField
 
     from app.search.datastructures.sorting import SortingOption
 

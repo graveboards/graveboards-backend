@@ -1,12 +1,10 @@
 import pytest
-from unittest.mock import MagicMock, patch
 from pydantic import BaseModel
 import json
 
-from app.redis.rc import RedisClient
 
 
-@pytest.mark.skip(reason="JSON serialization format issues (spaces in output)")
+
 class TestRedisModelSerialization:
     """Test Redis model serialization."""
 
@@ -20,8 +18,8 @@ class TestRedisModelSerialization:
         result = user.model_dump_json()
 
         assert isinstance(result, str)
-        assert '"id": 123' in result
-        assert '"username": "testuser"' in result
+        assert '"id":123' in result
+        assert '"username":"testuser"' in result
 
     def test_deserialize_model_with_pydantic_model(self):
         """Test deserialization of JSON to Pydantic model."""
@@ -71,7 +69,7 @@ class TestRedisModelSerialization:
         result = parent.model_dump_json()
 
         assert isinstance(result, str)
-        assert '"parent_id": 1' in result
+        assert '"parent_id":1' in result
         assert '"nested":' in result
 
     def test_deserialize_restore_nested_structures(self):
@@ -179,9 +177,9 @@ class TestRedisModelSerialization:
         result = person.model_dump_json()
 
         assert isinstance(result, str)
-        assert '"name": "John Doe"' in result
-        assert '"age": 30' in result
-        assert '"street": "123 Main St"' in result
+        assert '"name":"John Doe"' in result
+        assert '"age":30' in result
+        assert '"street":"123 Main St"' in result
         assert '"hobbies":' in result
 
     def test_deserialize_model_with_complex_nested_structure(self):

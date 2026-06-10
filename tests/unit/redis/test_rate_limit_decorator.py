@@ -1,13 +1,11 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime, timedelta
-from functools import wraps
 
 from app.redis.decorators import rate_limit
 from app.exceptions import RateLimitExceededError
 
 
-@pytest.mark.skip(reason="Redis client mocking issues in tests")
+@pytest.mark.skip(reason="Redis client mocking issues - decorator expects RedisClient instance or object with 'rc' attribute")
 class TestRateLimitDecorator:
     """Test rate_limit decorator behavior."""
 
@@ -24,7 +22,7 @@ class TestRateLimitDecorator:
         """Create mock Redis client with configurable count."""
         def set_incr_count(count):
             mock_redis_client.incr = AsyncMock(return_value=count)
-        
+
         set_incr_count(1)
         return mock_redis_client, set_incr_count
 
@@ -145,7 +143,7 @@ class TestRateLimitDecorator:
 
         with patch('app.redis.decorators.asyncio.sleep') as mock_sleep:
             mock_sleep.return_value = AsyncMock()
-            
+
             with pytest.raises(RateLimitExceededError):
                 await test_func(mock_redis_client)
 

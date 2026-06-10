@@ -4,7 +4,6 @@ from typing import Optional
 import pytest
 
 from app.database.models import User, Profile, Queue, Request, Beatmap, Beatmapset
-from app.database.schemas import ProfileSchema, QueueSchema, RequestSchema
 
 
 def create_user(**kwargs) -> User:

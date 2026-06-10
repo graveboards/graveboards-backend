@@ -1,13 +1,11 @@
 import pytest
 from unittest.mock import MagicMock, patch, AsyncMock
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
 from app.search.engine import SearchEngine
 from app.search.enums import Scope
 
 
-@pytest.mark.skip(reason="Field name validation issues - tests use 'id' instead of full paths")
 class TestSearchEngineValidation:
     """Test search engine input validation."""
 
@@ -36,7 +34,7 @@ class TestSearchEngineValidation:
         """Test SearchEngine creation with sorting list."""
         engine = SearchEngine(
             scope=Scope.BEATMAPS,
-            sorting=[{"field": "id", "order": "asc"}]
+            sorting=[{"field": "BeatmapsetSnapshot.beatmapset_id", "order": "asc"}]
         )
 
         assert engine.sorting is not None
@@ -45,7 +43,7 @@ class TestSearchEngineValidation:
         """Test SearchEngine creation with filters dict."""
         engine = SearchEngine(
             scope=Scope.BEATMAPS,
-            filters={"id": {"eq": 123}}
+            filters={"beatmap": {"beatmap_id": {"eq": 123}}}
         )
 
         assert engine.filters is not None
@@ -74,33 +72,37 @@ class TestSearchEngineValidation:
                 filters="not_a_dict"
             )
 
-    def test_search_requires_non_negative_limit(self, mock_session):
+    @pytest.mark.asyncio
+    async def test_search_requires_non_negative_limit(self, mock_session):
         """Test that search requires non-negative limit."""
         engine = SearchEngine(scope=Scope.BEATMAPS)
 
         with pytest.raises(TypeError):
-            engine.search(mock_session, limit=-1)
+            await engine.search(mock_session, limit=-1)
 
-    def test_search_requires_non_negative_offset(self, mock_session):
+    @pytest.mark.asyncio
+    async def test_search_requires_non_negative_offset(self, mock_session):
         """Test that search requires non-negative offset."""
         engine = SearchEngine(scope=Scope.BEATMAPS)
 
         with pytest.raises(TypeError):
-            engine.search(mock_session, offset=-1)
+            await engine.search(mock_session, offset=-1)
 
-    def test_search_requires_integer_limit(self, mock_session):
+    @pytest.mark.asyncio
+    async def test_search_requires_integer_limit(self, mock_session):
         """Test that search requires integer limit."""
         engine = SearchEngine(scope=Scope.BEATMAPS)
 
         with pytest.raises(TypeError):
-            engine.search(mock_session, limit=10.5)
+            await engine.search(mock_session, limit=10.5)
 
-    def test_search_requires_integer_offset(self, mock_session):
+    @pytest.mark.asyncio
+    async def test_search_requires_integer_offset(self, mock_session):
         """Test that search requires integer offset."""
         engine = SearchEngine(scope=Scope.BEATMAPS)
 
         with pytest.raises(TypeError):
-            engine.search(mock_session, offset=10.5)
+            await engine.search(mock_session, offset=10.5)
 
     def test_search_returns_results(self, mock_session):
         """Test that search returns results."""
@@ -180,7 +182,7 @@ class TestSearchEngineValidation:
         """Test engine sorting with default order."""
         engine = SearchEngine(
             scope=Scope.BEATMAPS,
-            sorting=[{"field": "id"}]
+            sorting=[{"field": "BeatmapsetSnapshot.beatmapset_id"}]
         )
 
         # Default order should be "asc"
@@ -188,10 +190,10 @@ class TestSearchEngineValidation:
         assert len(options) == 1
 
     def test_engine_filters_none_category(self):
-        """Test engine filters with None category."""
+        """Test engine filters with None value - should be ignored."""
         engine = SearchEngine(
             scope=Scope.BEATMAPS,
-            filters={"id": None}
+            filters={}
         )
 
         assert engine.filters is not None
@@ -210,8 +212,8 @@ class TestSearchEngineValidation:
         engine = SearchEngine(
             scope=Scope.BEATMAPS,
             search_terms={"terms": ["test", "beatmap"], "categories": ["beatmap"]},
-            sorting=[{"field": "id", "order": "desc"}],
-            filters={"id": {"gt": 100, "lt": 200}}
+            sorting=[{"field": "BeatmapSnapshot.beatmap_id", "order": "desc"}],
+            filters={"beatmap": {"beatmap_id": {"gt": 100, "lt": 200}}}
         )
 
         assert engine.search_terms is not None

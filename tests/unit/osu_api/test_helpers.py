@@ -1,6 +1,3 @@
-import pytest
-import sys
-from pathlib import Path
 
 
 from tests.unit.osu_api.test_utils import (
@@ -10,8 +7,6 @@ from tests.unit.osu_api.test_utils import (
     _create_mock_score,
     _create_mock_beatmap_scores,
     _create_mock_beatmap_attributes,
-    _create_mock_tags,
-    _create_mock_rankings_user,
 )
 
 

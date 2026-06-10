@@ -1,12 +1,7 @@
 import pytest
-from unittest.mock import MagicMock, AsyncMock
-from sqlalchemy import column
 
-from app.database.utils import validate_type
-from app.database.enums import FilterOperator
-from app.database.crud import c, r, u, d
-from app.database.crud.types import Sorting, Conditions, Filters, Include
-from app.exceptions import TypeValidationError, FieldValidationError
+from app.database.crud import c
+from app.database.crud.types import Sorting, Filters, Include
 
 
 @pytest.mark.skip(reason="Create/Update schemas not yet implemented")
@@ -15,7 +10,6 @@ class TestCreateInputValidation:
 
     def test_create_with_required_fields(self, db_session):
         """Test create with all required fields."""
-        from app.database.models import Beatmapset
         from app.database.schemas import BeatmapsetCreateSchema
 
         data = {
@@ -29,7 +23,6 @@ class TestCreateInputValidation:
 
     def test_create_with_optional_fields(self, db_session):
         """Test create with optional fields."""
-        from app.database.models import Beatmapset
         from app.database.schemas import BeatmapsetCreateSchema
 
         data = {
@@ -112,7 +105,6 @@ class TestReadInputValidation:
         }
         assert include["user"] is True
 
-    @pytest.mark.skip(reason="Include key has extra space - fix test data")
     def test_include_with_explicit_false(self):
         """Test include with explicit false."""
         include: Include = {
@@ -124,10 +116,10 @@ class TestReadInputValidation:
     def test_invalid_include_type(self):
         """Test include validates boolean or nested object."""
         from app.patches.validators.include import validate_include
-        
+
         include = {"user": "not_a_boolean"}
         schema = {"properties": {"user": {"type": "boolean"}}}
-        
+
         with pytest.raises(Exception):
             validate_include(include, schema)
 
@@ -138,7 +130,6 @@ class TestUpdateInputValidation:
 
     def test_update_with_valid_data(self, db_session):
         """Test update with valid data."""
-        from app.database.models import Beatmapset
         from app.database.schemas import BeatmapsetUpdateSchema
 
         data = {
@@ -173,7 +164,7 @@ class TestUpdateInputValidation:
         assert schema.channel_id == 789
 
 
-@pytest.mark.skip(reason="Delete tests use incorrect CRUD interface")
+@pytest.mark.skip(reason="Delete tests use incorrect CRUD interface - delete() is async, needs db = PostgresqlDB()")
 class TestDeleteInputValidation:
     """Test CRUD delete operation input validation."""
 
@@ -181,7 +172,7 @@ class TestDeleteInputValidation:
         """Test delete with valid primary key."""
         from app.database.models import Beatmapset
 
-        result = c.delete(Beatmapset, 123, session=db_session)
+        result = c.delete(Beatmapset, session=db_session, id=123)
         assert result is None
 
     def test_delete_rejects_invalid_id_type(self, db_session):
@@ -189,7 +180,7 @@ class TestDeleteInputValidation:
         from app.database.models import Beatmapset
 
         with pytest.raises(Exception):
-            c.delete(Beatmapset, "not_an_int", session=db_session)
+            c.delete(Beatmapset, session=db_session, id="not_an_int")
 
 
 class TestComplexValidationScenarios:
@@ -208,7 +199,7 @@ class TestComplexValidationScenarios:
                 }
             }
         }
-        
+
         assert filters["beatmaps"]["checksum"]["eq"] == "abc123"
         assert filters["user"]["username"]["regex"] == "test.*"
 
@@ -219,7 +210,7 @@ class TestComplexValidationScenarios:
             {"field": "Beatmapset.id", "order": "asc"},
             {"field": "Beatmapset.channel_id", "order": "desc"}
         ]
-        
+
         assert len(sorting) == 3
         assert sorting[0]["order"] == "desc"
 
@@ -233,7 +224,7 @@ class TestComplexValidationScenarios:
             },
             "user.profile": True
         }
-        
+
         assert include["user"] is True
         assert include["beatmaps"]["owner_profiles"] is True
 
@@ -243,7 +234,7 @@ class TestComplexValidationScenarios:
             "id": {"gt": 100, "lt": 200},
             "created_at": {"gte": "2024-01-01T00:00:00+00:00"}
         }
-        
+
         assert filters["id"]["gt"] == 100
         assert filters["id"]["lt"] == 200
 
@@ -256,7 +247,7 @@ class TestComplexValidationScenarios:
                 "in": [1, 2, 3, 4, 5]
             }
         }
-        
+
         assert filters["id"]["eq"] == 123
         assert filters["id"]["in"] == [1, 2, 3, 4, 5]
 
@@ -266,6 +257,6 @@ class TestComplexValidationScenarios:
             "deleted_at": {"is_null": True},
             "scheduled_end": {"is_null": False}
         }
-        
+
         assert filters["deleted_at"]["is_null"] is True
         assert filters["scheduled_end"]["is_null"] is False

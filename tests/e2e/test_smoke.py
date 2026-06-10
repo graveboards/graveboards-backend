@@ -11,7 +11,7 @@ def test_e2e_marker_enabled():
 def test_app_has_openapi_spec(TestClient):
     """Test that OpenAPI spec is available."""
     response = TestClient.get("/api/v1/openapi.json")
-    
+
     assert response.status_code == 200
     spec = response.json()
     assert "openapi" in spec
@@ -26,7 +26,7 @@ def test_cors_middleware_enabled(TestClient):
         "Origin": "http://localhost:3000",
         "Access-Control-Request-Method": "GET",
     })
-    
+
     assert "access-control-allow-origin" in response.headers
 
 
@@ -36,6 +36,6 @@ def test_gzip_middleware_enabled(TestClient):
     response = TestClient.get("/api/v1/openapi.json", headers={
         "Accept-Encoding": "gzip",
     })
-    
+
     assert response.status_code == 200
     assert "gzip" in response.headers.get("content-encoding", "")

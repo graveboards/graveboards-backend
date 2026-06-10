@@ -42,7 +42,7 @@ def create_profile_from_user(user_data: dict) -> Profile:
     """Create a Profile model instance from osu! API user data."""
     schema_data = ProfileSchema.model_validate(user_data)
     profile_data = schema_data.model_dump(exclude_unset=True, exclude={"user_id"})
-    
+
     return Profile(
         user_id=user_data.get("id"),
         **profile_data,

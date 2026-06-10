@@ -13,7 +13,7 @@ async def test_search_schema_creation():
         sorting=None,
         filters=None
     )
-    
+
     assert search_query.scope == Scope.BEATMAPS
     assert search_query.search_terms is None
     assert search_query.sorting is None
@@ -24,7 +24,7 @@ async def test_search_schema_creation():
 @pytest.mark.asyncio
 async def test_search_schema_all_scopes():
     scopes = [Scope.BEATMAPS, Scope.BEATMAPSETS, Scope.QUEUES, Scope.REQUESTS]
-    
+
     for scope in scopes:
         search_query = SearchSchema(
             scope=scope,
@@ -44,9 +44,9 @@ async def test_search_query_serialization():
         sorting=None,
         filters=None
     )
-    
+
     serialized = search_query.serialize()
-    
+
     assert serialized is not None
     assert isinstance(serialized, bytes)
     assert len(serialized) > 0
@@ -61,10 +61,10 @@ async def test_search_query_deserialization():
         sorting=None,
         filters=None
     )
-    
+
     serialized = search_query.serialize()
     deserialized = SearchSchema.deserialize(serialized)
-    
+
     assert deserialized.scope == search_query.scope
 
 
@@ -77,11 +77,11 @@ async def test_compress_decompress_roundtrip():
         sorting=None,
         filters=None
     )
-    
+
     serialized = search_query.serialize()
-    
+
     from app.search import compress_query, decompress_query
     compressed = compress_query(serialized)
     decompressed = decompress_query(compressed)
-    
+
     assert decompressed == serialized

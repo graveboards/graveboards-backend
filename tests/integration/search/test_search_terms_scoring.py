@@ -12,7 +12,6 @@ pytestmark = [pytest.mark.integration]
 @pytest.mark.integration
 def test_scoring_schema_not_implemented():
     """Test that ScoringSchema is not yet implemented."""
-    import sys
     try:
         from app.search.datastructures import ScoringSchema
         assert False, "ScoringSchema should not be importable yet"

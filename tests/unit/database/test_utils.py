@@ -20,8 +20,8 @@ class TestGetFilterCondition:
 
         assert condition is not None
 
-    def test_unsupported_operator_raises_attribute_error(self):
-        with pytest.raises(AttributeError):
+    def test_unsupported_operator_raises_value_error(self):
+        with pytest.raises(ValueError):
             get_filter_condition("invalid_operator", None, 42)
 
 

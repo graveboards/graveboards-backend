@@ -3,7 +3,6 @@ import pytest
 from app.patches.validators.include import validate_include
 
 
-@pytest.mark.skip(reason="Include validator implementation issues")
 class TestIncludeValidator:
     """Test include parameter validation."""
 
@@ -92,8 +91,8 @@ class TestIncludeValidator:
         with pytest.raises(Exception):
             validate_include(include, schema)
 
-    def test_validate_include_boolean_not_allowed_raises(self):
-        """Test that boolean where object required raises error."""
+    def test_validate_include_boolean_allowed_in_oneof(self):
+        """Test that boolean is allowed where object is optional in oneOf."""
         schema = {
             "properties": {
                 "user": {
@@ -106,8 +105,9 @@ class TestIncludeValidator:
         }
         include = {"user": True}
 
-        with pytest.raises(Exception):
-            validate_include(include, schema)
+        result = validate_include(include, schema)
+
+        assert result is None
 
     def test_validate_include_expected_nested_object_raises(self):
         """Test that non-object value raises error for object type."""

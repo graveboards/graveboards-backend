@@ -5,7 +5,7 @@ from connexion.lifecycle import ConnexionRequest
 from app.patches.parameter import ParameterValidatorPatched
 
 
-@pytest.mark.skip(reason="Import error - connexion.validators.URIArgumentParser not available")
+@pytest.mark.skip(reason="Requires connexion library update - URIArgumentParser removed in connexion 3.x")
 class TestParameterValidator:
     """Test parameter validation."""
 

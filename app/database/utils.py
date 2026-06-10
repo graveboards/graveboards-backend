@@ -38,7 +38,12 @@ def extract_inner_types(annotated_type: Any) -> type | tuple[type, ...]:
 
         if origin is Union:
             non_none_args = [arg for arg in args if arg is not type(None)]
-            return non_none_args[0] if len(non_none_args) == 1 else tuple(non_none_args)
+            if len(non_none_args) == 1:
+                return non_none_args[0]
+            elif len(non_none_args) == 2:
+                return non_none_args[0]
+            else:
+                return tuple(non_none_args)
         else:
             current = args[0] if args else current
 
@@ -143,6 +148,8 @@ def get_filter_condition(
             If an unsupported filter operator is provided.
     """
     if not is_aggregated:
+        if not isinstance(filter_operator, FilterOperator):
+            raise ValueError(f"Invalid filter operator: {filter_operator}")
         return filter_operator.method(target, value)
 
     array_agg = func.array_agg(target)

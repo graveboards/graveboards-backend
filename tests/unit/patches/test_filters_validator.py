@@ -1,11 +1,8 @@
 import pytest
-from datetime import datetime
-from unittest.mock import MagicMock
 
-from app.patches.validators.filters import validate_filters, validate_value
+from app.patches.validators.filters import validate_filters
 
 
-@pytest.mark.skip(reason="validate_filters null value handling issues")
 class TestFiltersValidator:
     """Test filter parameter validation."""
 

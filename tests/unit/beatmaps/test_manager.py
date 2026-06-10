@@ -1,7 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
 from io import BytesIO
-from datetime import datetime
 
 from app.beatmaps.manager import BeatmapManager
 from app.redis import RedisClient
@@ -318,7 +317,7 @@ class TestBeatmapManager:
         """Test get beatmap path."""
         with patch("app.beatmaps.manager.os.path.exists") as mock_exists:
             mock_exists.return_value = True
-            
+
             result = BeatmapManager.get_path(123, 1)
 
             assert isinstance(result, str)

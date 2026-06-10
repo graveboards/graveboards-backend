@@ -3,8 +3,6 @@ from unittest.mock import MagicMock
 
 from app.daemon.services.service.task import (
     TaskRetryPolicy,
-    TaskFailureHook,
-    TaskMaxRetriesExceededHook,
 )
 from app.daemon.services.service.task.backoff import ConstantBackoff
 

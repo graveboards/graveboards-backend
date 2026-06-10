@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import MagicMock
+from sqlalchemy import column
 
 from app.database.utils import (
     extract_inner_types,
@@ -10,35 +10,34 @@ from app.exceptions import TypeValidationError
 from app.database.enums import FilterOperator
 
 
-@pytest.mark.skip(reason="extract_inner_types returns tuple for unions")
 class TestExtractInnerTypes:
     def test_unwraps_optional_type(self):
         from typing import Optional
-        
+
         result = extract_inner_types(Optional[int])
         assert result is int
 
     def test_unwraps_union_type(self):
         from typing import Union
-        
+
         result = extract_inner_types(Union[int, str])
         assert result is int
 
     def test_unwraps_list_type(self):
         from typing import List
-        
+
         result = extract_inner_types(List[int])
         assert result is int
 
     def test_unwraps_tuple_type(self):
         from typing import Tuple
-        
+
         result = extract_inner_types(Tuple[int, str])
         assert result is int
 
     def test_unwraps_nested_optional(self):
         from typing import Optional, List
-        
+
         result = extract_inner_types(Optional[List[int]])
         assert result is List[int]
 
@@ -48,7 +47,7 @@ class TestExtractInnerTypes:
 
     def test_returns_tuple_when_multiple_union_types(self):
         from typing import Union
-        
+
         result = extract_inner_types(Union[int, str, float])
         assert result == (int, str, float)
 
@@ -94,7 +93,6 @@ class TestValidateType:
         validate_type(Dict[str, Dict[str, int]], {"a": {"b": 1}})
 
     def test_rejects_string_for_int(self):
-        from typing import List
         with pytest.raises(TypeValidationError):
             validate_type(int, "string")
 
@@ -143,18 +141,16 @@ class TestValidateType:
             validate_type(Union[int, str], 3.14)
 
 
-@pytest.mark.skip(reason="get_filter_condition tests need implementation review")
 class TestGetFilterCondition:
     def test_eq_operator_on_column(self, db_session):
         from app.database.models import User
-        from sqlalchemy import column
-        
+
         condition = get_filter_condition(
             FilterOperator.EQ,
             User.id,
             123
         )
-        
+
         assert condition is not None
 
     def test_eq_operator_on_clause(self, db_session):
@@ -163,7 +159,7 @@ class TestGetFilterCondition:
             column("test_column"),
             123
         )
-        
+
         assert condition is not None
 
     def test_neq_operator(self, db_session):
@@ -172,7 +168,7 @@ class TestGetFilterCondition:
             column("test_column"),
             123
         )
-        
+
         assert condition is not None
 
     def test_gt_operator(self, db_session):
@@ -181,7 +177,7 @@ class TestGetFilterCondition:
             column("test_column"),
             100
         )
-        
+
         assert condition is not None
 
     def test_lt_operator(self, db_session):
@@ -190,7 +186,7 @@ class TestGetFilterCondition:
             column("test_column"),
             100
         )
-        
+
         assert condition is not None
 
     def test_gte_operator(self, db_session):
@@ -199,7 +195,7 @@ class TestGetFilterCondition:
             column("test_column"),
             100
         )
-        
+
         assert condition is not None
 
     def test_lte_operator(self, db_session):
@@ -208,7 +204,7 @@ class TestGetFilterCondition:
             column("test_column"),
             100
         )
-        
+
         assert condition is not None
 
     def test_in_operator(self, db_session):
@@ -217,7 +213,7 @@ class TestGetFilterCondition:
             column("test_column"),
             [1, 2, 3]
         )
-        
+
         assert condition is not None
 
     def test_not_in_operator(self, db_session):
@@ -226,7 +222,7 @@ class TestGetFilterCondition:
             column("test_column"),
             [1, 2, 3]
         )
-        
+
         assert condition is not None
 
     def test_is_null_operator(self, db_session):
@@ -235,7 +231,7 @@ class TestGetFilterCondition:
             column("test_column"),
             None
         )
-        
+
         assert condition is not None
 
     def test_regex_operator(self, db_session):
@@ -244,7 +240,7 @@ class TestGetFilterCondition:
             column("test_column"),
             "pattern"
         )
-        
+
         assert condition is not None
 
     def test_not_regex_operator(self, db_session):
@@ -253,16 +249,15 @@ class TestGetFilterCondition:
             column("test_column"),
             "pattern"
         )
-        
+
         assert condition is not None
 
     def test_invalid_operator_raises_value_error(self, db_session):
-        from app.database.enums import FilterOperator
-        
+
         with pytest.raises(ValueError):
             class FakeOperator:
                 pass
-            
+
             fake_op = FakeOperator()
             fake_op.method = lambda x, y: None
             get_filter_condition(fake_op, column("test"), 1)
@@ -274,7 +269,7 @@ class TestGetFilterCondition:
             123,
             is_aggregated=True
         )
-        
+
         assert condition is not None
 
     def test_aggregated_neq_operator(self, db_session):
@@ -284,7 +279,7 @@ class TestGetFilterCondition:
             123,
             is_aggregated=True
         )
-        
+
         assert condition is not None
 
     def test_aggregated_gt_operator(self, db_session):
@@ -294,7 +289,7 @@ class TestGetFilterCondition:
             100,
             is_aggregated=True
         )
-        
+
         assert condition is not None
 
     def test_aggregated_lt_operator(self, db_session):
@@ -304,7 +299,7 @@ class TestGetFilterCondition:
             100,
             is_aggregated=True
         )
-        
+
         assert condition is not None
 
     def test_aggregated_gte_operator(self, db_session):
@@ -314,7 +309,7 @@ class TestGetFilterCondition:
             100,
             is_aggregated=True
         )
-        
+
         assert condition is not None
 
     def test_aggregated_lte_operator(self, db_session):
@@ -324,7 +319,7 @@ class TestGetFilterCondition:
             100,
             is_aggregated=True
         )
-        
+
         assert condition is not None
 
     def test_aggregated_in_operator(self, db_session):
@@ -334,7 +329,7 @@ class TestGetFilterCondition:
             [1, 2, 3],
             is_aggregated=True
         )
-        
+
         assert condition is not None
 
     def test_aggregated_not_in_operator(self, db_session):
@@ -344,7 +339,7 @@ class TestGetFilterCondition:
             [1, 2, 3],
             is_aggregated=True
         )
-        
+
         assert condition is not None
 
     def test_aggregated_is_null_operator(self, db_session):
@@ -354,7 +349,7 @@ class TestGetFilterCondition:
             None,
             is_aggregated=True
         )
-        
+
         assert condition is not None
 
     def test_aggregated_regex_operator(self, db_session):
@@ -364,7 +359,7 @@ class TestGetFilterCondition:
             "pattern",
             is_aggregated=True
         )
-        
+
         assert condition is not None
 
     def test_aggregated_not_regex_operator(self, db_session):
@@ -374,5 +369,5 @@ class TestGetFilterCondition:
             "pattern",
             is_aggregated=True
         )
-        
+
         assert condition is not None

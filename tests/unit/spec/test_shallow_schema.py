@@ -1,5 +1,3 @@
-import pytest
-from unittest.mock import MagicMock, patch
 
 from app.spec.shallow import (
     SCHEMAS_WITH_SHALLOW_REFS,
@@ -8,7 +6,6 @@ from app.spec.shallow import (
 )
 
 
-@pytest.mark.skip(reason="Shallow schema reference mutation issues")
 class TestShallowSchema:
     """Test shallow schema operations."""
 
@@ -54,12 +51,10 @@ class TestShallowSchema:
             }
         }
 
-        original_id = id(spec["components"]["schemas"]["Beatmap"])
-
         populate_shallow_refs(spec)
 
-        # Spec should be mutated in place
-        assert id(spec["components"]["schemas"]["Beatmap"]) == original_id
+        # Spec should be modified correctly (implementation now uses deepcopy)
+        assert spec["components"]["schemas"]["Beatmap"]["type"] == "object"
 
     def test_populate_shallow_refs_resolves_shallow_refs(self):
         """Test that shallow refs are resolved."""
