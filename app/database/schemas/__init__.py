@@ -6,10 +6,10 @@ from .api_key import ApiKeySchema
 from .oauth_token import OAuthTokenSchema
 from .score_fetcher_task import ScoreFetcherTaskSchema
 from .profile_fetcher_task import ProfileFetcherTaskSchema
-from .beatmap import BeatmapSchema
+from .beatmap import BeatmapSchema, BeatmapCreateSchema, BeatmapUpdateSchema
 from .beatmap_snapshot import BeatmapSnapshotSchema
 from .beatmap_listing import BeatmapListingSchema
-from .beatmapset import BeatmapsetSchema
+from .beatmapset import BeatmapsetSchema, BeatmapsetCreateSchema, BeatmapsetUpdateSchema
 from .beatmapset_snapshot import BeatmapsetSnapshotSchema
 from .beatmapset_listing import BeatmapsetListingSchema
 from .leaderboard import LeaderboardSchema
@@ -28,10 +28,14 @@ OAuthTokenSchema.model_rebuild()
 ScoreFetcherTaskSchema.model_rebuild()
 ProfileFetcherTaskSchema.model_rebuild()
 BeatmapSchema.model_rebuild()
+BeatmapCreateSchema.model_rebuild()
+BeatmapUpdateSchema.model_rebuild()
 BeatmapSnapshotSchema.model_rebuild()
 BeatmapListingSchema.model_rebuild()
 BeatmapTagSchema.model_rebuild()
 BeatmapsetSchema.model_rebuild()
+BeatmapsetCreateSchema.model_rebuild()
+BeatmapsetUpdateSchema.model_rebuild()
 BeatmapsetSnapshotSchema.model_rebuild()
 BeatmapsetListingSchema.model_rebuild()
 BeatmapsetTagSchema.model_rebuild()

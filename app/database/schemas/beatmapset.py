@@ -18,3 +18,15 @@ class BeatmapsetSchema(BaseModel, BaseModelExtra):
 
     beatmaps: list["BeatmapSchema"] = []
     snapshots: list["BeatmapsetSnapshotSchema"] = []
+
+
+class BeatmapsetCreateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    user_id: int
+
+
+class BeatmapsetUpdateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    user_id: Optional[int] = None

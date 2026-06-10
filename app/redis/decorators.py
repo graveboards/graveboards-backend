@@ -20,9 +20,17 @@ logger = get_logger(__name__)
 
 @runtime_checkable
 class _HasRedisClient(Protocol):
-    """Protocol for objects exposing a ``RedisClient`` via `rc`."""
+    """Protocol for objects exposing a Redis client via `rc`."""
 
-    rc: RedisClient
+    rc: object
+
+
+@runtime_checkable
+class _HasIncrExpire(Protocol):
+    """Protocol for Redis-like objects with async incr and expire methods."""
+
+    async def incr(self, name: str) -> int: ...
+    async def expire(self, name: str, time: int) -> bool: ...
 
 
 def rate_limit(
@@ -51,15 +59,17 @@ def rate_limit(
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             obj = args[0] if args else None
-            rc: RedisClient | None = None
+            rc: RedisClient | object | None = None
 
             if isinstance(obj, RedisClient):
                 rc = obj
-            elif isinstance(obj, _HasRedisClient):
+            elif obj is not None and hasattr(obj, 'rc'):
                 rc = obj.rc
+            elif obj is not None and hasattr(obj, 'incr') and hasattr(obj, 'expire'):
+                rc = obj
 
             if rc is None:
-                raise ValueError(f"First argument of '{func.__name__}' must be either an instance of {RedisClient.__name__} or an object that contains a {RedisClient.__name__} instance attribute named 'rc'")
+                raise ValueError(f"First argument of '{func.__name__}' must be either an instance of {RedisClient.__name__}, an object that contains a 'rc' attribute, or a Redis-like object with 'incr' and 'expire' methods")
 
             async def sub_wrapper() -> T:
                 now = datetime.now()
@@ -68,7 +78,8 @@ def rate_limit(
                 window_delta_seconds = int((window_end - now).total_seconds() + 1)
                 counter_hash_name = Namespace.RATE_LIMIT_COUNTER.hash_name(int(window_start.timestamp()))
 
-                if (current_count := await rc.incr(counter_hash_name)) == 1:
+                current_count = await rc.incr(counter_hash_name)
+                if current_count == 1:
                     await rc.expire(counter_hash_name, window_delta_seconds)
 
                 if current_count > limit_per_window:

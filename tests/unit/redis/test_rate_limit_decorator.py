@@ -1,29 +1,34 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 from app.redis.decorators import rate_limit
 from app.exceptions import RateLimitExceededError
 
 
-@pytest.mark.skip(reason="Redis client mocking issues - decorator expects RedisClient instance or object with 'rc' attribute")
 class TestRateLimitDecorator:
     """Test rate_limit decorator behavior."""
 
     @pytest.fixture
     def mock_redis_client(self):
-        """Create a mock Redis client."""
-        mock_client = MagicMock()
-        mock_client.incr = AsyncMock(return_value=1)
-        mock_client.expire = AsyncMock(return_value=True)
-        return mock_client
+        """Create a mock Redis client with async methods."""
+
+        class MockRedis:
+            def __init__(self):
+                self.incr = AsyncMock(return_value=1)
+                self.expire = AsyncMock(return_value=True)
+
+        return MockRedis()
 
     @pytest.fixture
     def mock_redis_with_count(self, mock_redis_client):
         """Create mock Redis client with configurable count."""
-        def set_incr_count(count):
-            mock_redis_client.incr = AsyncMock(return_value=count)
 
-        set_incr_count(1)
+        def set_incr_count(count):
+            mock_client = AsyncMock()
+            mock_client.incr = AsyncMock(return_value=count)
+            mock_client.expire = AsyncMock(return_value=True)
+            return mock_client
+
         return mock_redis_client, set_incr_count
 
     async def test_rate_limit_allows_under_limit(self, mock_redis_client):
@@ -104,7 +109,7 @@ class TestRateLimitDecorator:
 
         class Service:
             def __init__(self):
-                self.rc = MagicMock()
+                self.rc = AsyncMock()
 
             @rate_limit(limit_per_window=5, auto_retry=False)
             async def test_method(self):
@@ -212,11 +217,11 @@ class TestRateLimitDecorator:
         async def func_b(self):
             return "b"
 
-        mock_client_a = MagicMock()
+        mock_client_a = AsyncMock()
         mock_client_a.incr = AsyncMock(side_effect=[1, 2, 3])
         mock_client_a.expire = AsyncMock(return_value=True)
 
-        mock_client_b = MagicMock()
+        mock_client_b = AsyncMock()
         mock_client_b.incr = AsyncMock(side_effect=[1, 2, 3, 4])
         mock_client_b.expire = AsyncMock(return_value=True)
 

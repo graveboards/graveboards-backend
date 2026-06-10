@@ -4,42 +4,36 @@ from app.database.crud import c
 from app.database.crud.types import Sorting, Filters, Include
 
 
-@pytest.mark.skip(reason="Create/Update schemas not yet implemented")
 class TestCreateInputValidation:
     """Test CRUD create operation input validation."""
 
-    def test_create_with_required_fields(self, db_session):
+    def test_create_with_required_fields_beatmapset(self):
         """Test create with all required fields."""
         from app.database.schemas import BeatmapsetCreateSchema
 
         data = {
-            "id": 123,
             "user_id": 456,
         }
 
         schema = BeatmapsetCreateSchema.model_validate(data)
-        assert schema.id == 123
         assert schema.user_id == 456
 
-    def test_create_with_optional_fields(self, db_session):
-        """Test create with optional fields."""
-        from app.database.schemas import BeatmapsetCreateSchema
+    def test_create_with_required_fields_beatmap(self):
+        """Test create with all required fields."""
+        from app.database.schemas import BeatmapCreateSchema
 
         data = {
-            "id": 123,
-            "user_id": 456,
-            "channel_id": 789,
+            "beatmapset_id": 456,
         }
 
-        schema = BeatmapsetCreateSchema.model_validate(data)
-        assert schema.id == 123
+        schema = BeatmapCreateSchema.model_validate(data)
+        assert schema.beatmapset_id == 456
 
-    def test_create_rejects_extra_fields(self, db_session):
+    def test_create_rejects_extra_fields_beatmapset(self):
         """Test create rejects unknown fields."""
         from app.database.schemas import BeatmapsetCreateSchema
 
         data = {
-            "id": 123,
             "user_id": 456,
             "unknown_field": "value"
         }
@@ -47,17 +41,54 @@ class TestCreateInputValidation:
         with pytest.raises(Exception):
             BeatmapsetCreateSchema.model_validate(data)
 
-    def test_create_validates_types(self, db_session):
+    def test_create_validates_types_beatmapset(self):
         """Test create validates field types."""
         from app.database.schemas import BeatmapsetCreateSchema
 
         data = {
-            "id": "not_an_int",
-            "user_id": 456,
+            "user_id": "not_an_int",
         }
 
         with pytest.raises(Exception):
             BeatmapsetCreateSchema.model_validate(data)
+
+    def test_create_validates_types_beatmap(self):
+        """Test create validates field types."""
+        from app.database.schemas import BeatmapCreateSchema
+
+        data = {
+            "beatmapset_id": "not_an_int",
+        }
+
+        with pytest.raises(Exception):
+            BeatmapCreateSchema.model_validate(data)
+
+
+class TestBeatmapCreateInputValidation:
+    """Test CRUD create operation input validation for beatmap."""
+
+    def test_create_with_required_fields(self):
+        """Test create with all required fields."""
+        from app.database.schemas import BeatmapCreateSchema
+
+        data = {
+            "beatmapset_id": 456,
+        }
+
+        schema = BeatmapCreateSchema.model_validate(data)
+        assert schema.beatmapset_id == 456
+
+    def test_create_rejects_extra_fields(self):
+        """Test create rejects unknown fields."""
+        from app.database.schemas import BeatmapCreateSchema
+
+        data = {
+            "beatmapset_id": 456,
+            "unknown_field": "value"
+        }
+
+        with pytest.raises(Exception):
+            BeatmapCreateSchema.model_validate(data)
 
 
 class TestReadInputValidation:
@@ -124,44 +155,56 @@ class TestReadInputValidation:
             validate_include(include, schema)
 
 
-@pytest.mark.skip(reason="Create/Update schemas not yet implemented")
 class TestUpdateInputValidation:
     """Test CRUD update operation input validation."""
 
-    def test_update_with_valid_data(self, db_session):
+    def test_update_with_valid_data(self):
         """Test update with valid data."""
         from app.database.schemas import BeatmapsetUpdateSchema
 
         data = {
-            "channel_id": 789,
-            "scheduled_end": "2025-01-01T00:00:00+00:00"
+            "user_id": 789,
         }
 
         schema = BeatmapsetUpdateSchema.model_validate(data)
-        assert schema.channel_id == 789
+        assert schema.user_id == 789
 
-    def test_update_rejects_id_field(self, db_session):
-        """Test update rejects primary key modification."""
+    def test_update_allows_none_fields(self):
+        """Test update allows None fields for partial updates."""
         from app.database.schemas import BeatmapsetUpdateSchema
 
         data = {
-            "id": 999,
-            "channel_id": 789
+            "user_id": None
         }
 
         schema = BeatmapsetUpdateSchema.model_validate(data)
-        assert schema.channel_id == 789
+        assert schema.user_id is None
 
-    def test_update_partial_fields(self, db_session):
+    def test_update_partial_fields(self):
         """Test update with partial fields."""
         from app.database.schemas import BeatmapsetUpdateSchema
 
         data = {
-            "channel_id": 789
+            "user_id": 789
         }
 
         schema = BeatmapsetUpdateSchema.model_validate(data)
-        assert schema.channel_id == 789
+        assert schema.user_id == 789
+
+    def test_update_with_beatmap_schema(self):
+        """Test update with beatmap schema."""
+        from app.database.schemas import BeatmapUpdateSchema
+
+        data = {
+            "beatmapset_id": 789
+        }
+
+        schema = BeatmapUpdateSchema.model_validate(data)
+        assert schema.beatmapset_id == 789
+
+
+
+
 
 
 @pytest.mark.skip(reason="Delete tests use incorrect CRUD interface - delete() is async, needs db = PostgresqlDB()")
@@ -172,15 +215,15 @@ class TestDeleteInputValidation:
         """Test delete with valid primary key."""
         from app.database.models import Beatmapset
 
-        result = c.delete(Beatmapset, session=db_session, id=123)
+        result = c.delete(Beatmapset, id=123)
         assert result is None
 
-    def test_delete_rejects_invalid_id_type(self, db_session):
+    def test_delete_rejects_invalid_id_type(self):
         """Test delete validates primary key type."""
         from app.database.models import Beatmapset
 
         with pytest.raises(Exception):
-            c.delete(Beatmapset, session=db_session, id="not_an_int")
+            c.delete(Beatmapset, id="not_an_int")
 
 
 class TestComplexValidationScenarios:
