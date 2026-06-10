@@ -58,6 +58,7 @@ class ParameterValidatorPatched(ParameterValidator):
 
         if param_name == "sorting" and value:
             try:
+                value = value[0] if isinstance(value, list) and len(value) == 1 else value
                 return validate_sorting(value, param.get("schema"))
             except ArrayValidationError as e:
                 raise bad_request_factory(e)
@@ -69,7 +70,8 @@ class ParameterValidatorPatched(ParameterValidator):
                 raise bad_request_factory(e)
         elif param_name == "include" and value:
             try:
-                if self.request_scopes[request]["path"] == os.path.join(API_BASE_PATH, "search"):
+                request_scope = self.request_scopes.get(request, {})
+                if request_scope.get("path") == os.path.join(API_BASE_PATH, "search"):
                     # The /search include schema is ambiguous due to multiple possibilities depending on the scope
                     # Neither the scope nor the respective include schema can be determined at this point
                     # Delegate this validation to be run by the operation function where the context is available
