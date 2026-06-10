@@ -30,3 +30,24 @@ class RequestSchema(BaseModel, BaseModelExtra):
     beatmapset_snapshot: Optional["BeatmapsetSnapshotSchema"] = None
     user_profile: Optional["ProfileSchema"] = None
     queue: Optional["QueueSchema"] = None
+
+
+class RequestCreateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    user_id: int
+    beatmapset_id: int
+    beatmapset_snapshot_id: Optional[int] = None
+    queue_id: int
+    comment: Optional[str] = None
+    mv_checked: bool = False
+
+
+class RequestUpdateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    beatmapset_snapshot_id: Optional[int] = None
+    queue_id: Optional[int] = None
+    comment: Optional[str] = None
+    mv_checked: Optional[bool] = None
+    status: Optional[RequestStatusIntLiteral] = None

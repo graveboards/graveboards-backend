@@ -11,3 +11,15 @@ class BeatmapsetTagSchema(BaseModel, BaseModelExtra):
 
     id: Optional[int] = None
     name: str
+
+
+class BeatmapsetTagCreateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    name: str
+
+
+class BeatmapsetTagUpdateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    name: Optional[str] = None

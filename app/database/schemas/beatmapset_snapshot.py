@@ -33,14 +33,19 @@ class BeatmapsetSnapshotSchema(BeatmapsetOsuApiSchema, BaseModelExtra):
     beatmaps: Optional[list["BeatmapOsuApiSchema"]] = Field(exclude=True, default=None)
     user: dict[str, Any] = Field(exclude=True, default=None)
 
-    @model_validator(mode="before")
-    @classmethod
-    def from_osu_api_format(cls, data: Any) -> Any:
-        if isinstance(data, dict):
-            data_copy = copy(data)
-            data_copy["beatmapset_id"] = data_copy.pop("id")
-            data_copy["checksum"] = combine_checksums([beatmap["checksum"] for beatmap in data_copy["beatmaps"]])
 
-            return data_copy
+class BeatmapsetSnapshotCreateSchema(BeatmapsetOsuApiSchema, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
 
-        return data
+    beatmapset_id: int
+    snapshot_number: Optional[int] = None
+    checksum: str
+    verified: Optional[bool] = None
+
+
+class BeatmapsetSnapshotUpdateSchema(BeatmapsetOsuApiSchema, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    snapshot_number: Optional[int] = None
+    checksum: Optional[str] = None
+    verified: Optional[bool] = None

@@ -23,3 +23,18 @@ class LeaderboardSchema(BaseModel, BaseModelExtra):
 
     beatmap_snapshot: Optional["BeatmapSnapshotSchema"] = None
     scores: list["ScoreSchema"] = []
+
+
+class LeaderboardCreateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    beatmap_id: int
+    beatmap_snapshot_id: int
+    frozen: bool = False
+
+
+class LeaderboardUpdateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    beatmap_snapshot_id: Optional[int] = None
+    frozen: Optional[bool] = None

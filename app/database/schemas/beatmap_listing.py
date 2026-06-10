@@ -19,3 +19,16 @@ class BeatmapListingSchema(BaseModel, BaseModelExtra):
     updated_at: datetime
 
     beatmap_snapshot: "BeatmapSnapshotSchema"
+
+
+class BeatmapListingCreateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    beatmap_id: int
+    beatmap_snapshot_id: int
+
+
+class BeatmapListingUpdateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    beatmap_snapshot_id: Optional[int] = None

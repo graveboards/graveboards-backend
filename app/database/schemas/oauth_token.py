@@ -17,3 +17,19 @@ class OAuthTokenSchema(BaseModel, BaseModelExtra):
     is_revoked: bool = False
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+
+
+class OAuthTokenCreateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    user_id: int
+    access_token: str
+    expires_at: int
+
+
+class OAuthTokenUpdateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    access_token: Optional[str] = None
+    expires_at: Optional[int] = None
+    is_revoked: Optional[bool] = None

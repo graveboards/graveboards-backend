@@ -16,3 +16,20 @@ class BeatmapTagSchema(BaseModel, BaseModelExtra):
     description: str
     created_at: datetime
     updated_at: datetime
+
+
+class BeatmapTagCreateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    name: str
+    ruleset_id: Optional[int] = None
+    description: str
+
+
+class BeatmapTagUpdateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    name: Optional[str] = None
+    ruleset_id: Optional[int] = None
+    description: Optional[str] = None
+    updated_at: Optional[datetime] = None

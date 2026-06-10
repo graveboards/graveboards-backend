@@ -32,15 +32,15 @@ class BeatmapSnapshotSchema(BeatmapOsuApiSchema, BaseModelExtra):
     owners: Optional[list[dict[str, Any]]] = Field(exclude=True, default=None)
     top_tag_ids: Optional[list[dict[str, int]]] = Field(exclude=True, default=None)
 
-    @model_validator(mode="before")
-    @classmethod
-    def from_osu_api_format(cls, data: Any) -> Any:
-        if isinstance(data, dict):
-            data_copy = copy(data)
 
-            if "beatmap_id" not in data_copy:
-                data_copy["beatmap_id"] = data_copy.pop("id")
+class BeatmapSnapshotCreateSchema(BeatmapOsuApiSchema, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
 
-            return data_copy
+    beatmap_id: int
+    snapshot_number: Optional[int] = None
 
-        return data
+
+class BeatmapSnapshotUpdateSchema(BeatmapOsuApiSchema, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    snapshot_number: Optional[int] = None

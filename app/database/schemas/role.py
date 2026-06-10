@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic.main import BaseModel
 from pydantic.config import ConfigDict
 
@@ -10,3 +11,15 @@ class RoleSchema(BaseModel, BaseModelExtra):
 
     id: int
     name: RoleNameLiteral
+
+
+class RoleCreateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    name: RoleNameLiteral
+
+
+class RoleUpdateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    name: Optional[RoleNameLiteral] = None

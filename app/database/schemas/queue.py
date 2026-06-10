@@ -28,3 +28,22 @@ class QueueSchema(BaseModel, BaseModelExtra):
     managers: list["UserSchema"] = []
     user_profile: Optional["ProfileSchema"] = None
     manager_profiles: list["ProfileSchema"] = []
+
+
+class QueueCreateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    user_id: int
+    name: str
+    description: Optional[str] = None
+    visibility: Optional[int] = None
+
+
+class QueueUpdateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    user_id: Optional[int] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    is_open: Optional[bool] = None
+    visibility: Optional[int] = None

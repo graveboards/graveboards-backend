@@ -27,3 +27,28 @@ class UserSchema(BaseModel, BaseModelExtra):
     queues: list["QueueSchema"] = []
     requests: list["RequestSchema"] = []
     beatmapsets: list["BeatmapsetSchema"] = []
+
+
+class UserCreateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    osu_id: int
+    username: str
+
+
+class UserUpdateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    osu_id: Optional[int] = None
+    username: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+
+    profile: Optional["ProfileSchema"] = None
+    roles: list["RoleSchema"] = []
+    scores: list["ScoreSchema"] = []
+    tokens: list["OAuthTokenSchema"] = []
+    queues: list["QueueSchema"] = []
+    requests: list["RequestSchema"] = []
+    beatmapsets: list["BeatmapsetSchema"] = []

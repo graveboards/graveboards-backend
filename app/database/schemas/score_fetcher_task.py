@@ -14,3 +14,17 @@ class ScoreFetcherTaskSchema(BaseModel, BaseModelExtra):
     user_id: int
     enabled: bool = False
     last_fetch: Optional[datetime] = None
+
+
+class ScoreFetcherTaskCreateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    user_id: int
+    enabled: bool = False
+
+
+class ScoreFetcherTaskUpdateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    enabled: Optional[bool] = None
+    last_fetch: Optional[datetime] = None

@@ -104,6 +104,82 @@ class ProfileSchema(BaseModel, BaseModelExtra):
     username: Optional[str]
     website: Optional[str]
 
+
+class ProfileCreateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    user_id: int
+
+
+class ProfileUpdateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    updated_at: Optional[datetime] = None
+    is_restricted: Optional[bool] = None
+    active_tournament_banners: Optional[list["ProfileBannerSchema"]] = None
+    avatar_url: Optional[str] = None
+    badges: Optional[list["UserBadgeSchema"]] = None
+    beatmap_playcounts_count: Optional[int] = None
+    comments_count: Optional[int] = None
+    country_code: Optional[str] = None
+    country: Optional["CountrySchema"] = None
+    cover: Optional["CoverSchema"] = None
+    daily_challenge_user_stats: Optional["DailyChallengeUserStatsSchema"] = None
+    default_group: Optional[str] = None
+    discord: Optional[str] = None
+    favourite_beatmapset_count: Optional[int] = None
+    follower_count: Optional[int] = None
+    graveyard_beatmapset_count: Optional[int] = None
+    groups: Optional[list["UserGroupSchema"]] = None
+    guest_beatmapset_count: Optional[int] = None
+    has_supported: Optional[bool] = None
+    interests: Optional[str] = None
+    is_active: Optional[bool] = None
+    is_bot: Optional[bool] = None
+    is_deleted: Optional[bool] = None
+    is_online: Optional[bool] = None
+    is_supporter: Optional[bool] = None
+    join_date: Optional[datetime] = None
+    kudosu: Optional["KudosuSchema"] = None
+    location: Optional[str] = None
+    loved_beatmapset_count: Optional[int] = None
+    last_visit: Optional[datetime] = None
+    mapping_follower_count: Optional[int] = None
+    matchmaking_stats: Optional[list["MatchmakingStatsSchema"]] = None
+    max_blocks: Optional[int] = None
+    max_friends: Optional[int] = None
+    monthly_playcounts: Optional[list["UserMonthlyPlaycountSchema"]] = None
+    nominated_beatmapset_count: Optional[int] = None
+    occupation: Optional[str] = None
+    page: Optional["PageSchema"] = None
+    pending_beatmapset_count: Optional[int] = None
+    playmode: Optional[RulesetLiteral] = None
+    playstyle: Optional[list[PlaystyleLiteral]] = None
+    pm_friends_only: Optional[bool] = None
+    post_count: Optional[int] = None
+    previous_usernames: Optional[list[str]] = None
+    profile_colour: Optional[str] = None
+    profile_hue: Optional[int] = None
+    profile_order: Optional[list[ProfilePageLiteral]] = None
+    rank_highest: Optional["RankHighestSchema"] = None
+    rank_history: Optional["RankHistorySchema"] = None
+    ranked_and_approved_beatmapset_count: Optional[int] = None
+    ranked_beatmapset_count: Optional[int] = None
+    replays_watched_counts: Optional[list["ReplayWatchedCountSchema"]] = None
+    scores_best_count: Optional[int] = None
+    scores_first_count: Optional[int] = None
+    scores_pinned_count: Optional[int] = None
+    scores_recent_count: Optional[int] = None
+    statistics: Optional["UserStatisticsSchema"] = None
+    support_level: Optional[int] = None
+    team: Optional["TeamSchema"] = None
+    title: Optional[str] = None
+    title_url: Optional[str] = None
+    twitter: Optional[str] = None
+    user_achievements: Optional[list["UserAchievementSchema"]] = None
+    username: Optional[str] = None
+    website: Optional[str] = None
+
     @model_validator(mode="before")
     @classmethod
     def from_osu_api_format(cls, data: Any) -> Any:

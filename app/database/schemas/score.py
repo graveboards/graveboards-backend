@@ -43,3 +43,39 @@ class ScoreSchema(BaseModel, BaseModelExtra):
             return data_copy
 
         return data
+
+
+class ScoreCreateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    beatmap_id: int
+    user_id: int
+    accuracy: float
+    max_combo: int
+    mode: str
+    mode_int: int
+    mods: list[str]
+    perfect: bool
+    rank: str
+    score: int
+    statistics: ScoreStatisticsSchema
+    type: str
+    leaderboard_id: Optional[int] = None
+    pp: Optional[float] = None
+
+
+class ScoreUpdateSchema(BaseModel, BaseModelExtra):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    leaderboard_id: Optional[int] = None
+    accuracy: Optional[float] = None
+    max_combo: Optional[int] = None
+    mode: Optional[str] = None
+    mode_int: Optional[int] = None
+    mods: Optional[list[str]] = None
+    perfect: Optional[bool] = None
+    pp: Optional[float] = None
+    rank: Optional[str] = None
+    score: Optional[int] = None
+    statistics: Optional[ScoreStatisticsSchema] = None
+    type: Optional[str] = None
