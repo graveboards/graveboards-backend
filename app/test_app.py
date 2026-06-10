@@ -33,6 +33,29 @@ from app.lifespan import lifespan as production_lifespan
 from app.patches import OpenAPIURIParserPatched, ParameterValidatorPatched
 from app.spec import load_spec
 from app.error_handlers import forbidden
+from app.redis import RedisClient
+
+
+class MockRedisMiddleware:
+    """Minimal Redis middleware for testing.
+    
+    Provides a mock Redis client with async methods for testing endpoints
+    that require Redis in request.state without needing the full app setup.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        from unittest.mock import AsyncMock
+        
+        rc = AsyncMock(spec=RedisClient)
+        rc.incr = AsyncMock(return_value=1)
+        rc.expire = AsyncMock(return_value=True)
+        rc.set = AsyncMock(return_value=True)
+        
+        scope["state"]["rc"] = rc
+        await self.app(scope, receive, send)
 
 
 def get_debug_api_key() -> str:
@@ -71,6 +94,10 @@ def create_test_app() -> AsyncApp:
     )
     connexion_app.add_middleware(
         GZipMiddleware,
+        position=MiddlewarePosition.BEFORE_EXCEPTION
+    )
+    connexion_app.add_middleware(
+        MockRedisMiddleware,
         position=MiddlewarePosition.BEFORE_EXCEPTION
     )
 
