@@ -164,9 +164,12 @@ class TestSchemaResolution:
                 schema_name="TestInclude"
             )
 
-    @pytest.mark.skip(reason="Flaky - test isolation issue with lru_cache from other tests")
     def test_schema_caching_with_lru(self, mock_spec):
         """Test that schema loading is cached."""
+        from app.spec import schema as schema_module
+
+        schema_module._get_spec_cached.cache_clear()
+
         with patch("app.spec.schema.load_spec", return_value=mock_spec) as mock_load:
             with patch("app.spec.schema._get_spec_cached"):
                 _get_spec_cached()

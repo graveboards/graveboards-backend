@@ -5,17 +5,17 @@ from connexion.lifecycle import ConnexionRequest
 from app.patches.parameter import ParameterValidatorPatched
 
 
-@pytest.mark.skip(reason="Requires connexion library update - URIArgumentParser removed in connexion 3.x")
+@pytest.mark.skip(reason="Requires connexion 3.x API updates - OpenAPIURIParser init changed")
 class TestParameterValidator:
     """Test parameter validation."""
 
     @pytest.fixture
     def validator(self):
         """Create a parameter validator instance."""
-        from connexion.validators import URIArgumentParser
+        from connexion.uri_parsing import OpenAPIURIParser
 
         parameters = []
-        uri_parser = URIArgumentParser()
+        uri_parser = OpenAPIURIParser(param_defns={}, body_defn=None)
         return ParameterValidatorPatched(
             parameters=parameters,
             uri_parser=uri_parser,
