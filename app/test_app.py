@@ -11,6 +11,7 @@ import asyncio
 import os
 from contextlib import asynccontextmanager
 from typing import Never
+from unittest.mock import AsyncMock
 
 from connexion import AsyncApp
 from connexion.exceptions import Forbidden
@@ -58,6 +59,25 @@ class MockRedisMiddleware:
         await self.app(scope, receive, send)
 
 
+class MockDatabaseMiddleware:
+    """Minimal database middleware for testing.
+    
+    Provides a mock database connection for testing endpoints
+    that require db in request.state without needing the full app setup.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        from unittest.mock import AsyncMock
+        from app.database.db import PostgresqlDB
+        
+        db = AsyncMock(spec=PostgresqlDB)
+        scope["state"]["db"] = db
+        await self.app(scope, receive, send)
+
+
 def get_debug_api_key() -> str:
     """Get or generate a debug API key for testing."""
     if DEBUG_API_KEY:
@@ -96,8 +116,29 @@ def create_test_app() -> AsyncApp:
         GZipMiddleware,
         position=MiddlewarePosition.BEFORE_EXCEPTION
     )
+    # Use AsyncMock for Redis to support await calls like rc.hgetall()
+    async_mock_rc = AsyncMock(spec=RedisClient)
+    async_mock_rc.incr = AsyncMock(return_value=1)
+    async_mock_rc.expire = AsyncMock(return_value=True)
+    async_mock_rc.set = AsyncMock(return_value=True)
+    async_mock_rc.hgetall = AsyncMock(return_value=None)
+    async_mock_rc.getdel = AsyncMock(return_value=None)
+    
+    class MockRedisMiddleware:
+        """Minimal Redis middleware for testing with async methods."""
+        def __init__(self, app):
+            self.app = app
+
+        async def __call__(self, scope, receive, send):
+            scope["state"]["rc"] = async_mock_rc
+            await self.app(scope, receive, send)
+
     connexion_app.add_middleware(
         MockRedisMiddleware,
+        position=MiddlewarePosition.BEFORE_EXCEPTION
+    )
+    connexion_app.add_middleware(
+        MockDatabaseMiddleware,
         position=MiddlewarePosition.BEFORE_EXCEPTION
     )
 
