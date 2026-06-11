@@ -207,23 +207,47 @@ class TestUpdateInputValidation:
 
 
 
-@pytest.mark.skip(reason="Delete tests use incorrect CRUD interface - delete() is async, needs db = PostgresqlDB()")
 class TestDeleteInputValidation:
     """Test CRUD delete operation input validation."""
 
-    def test_delete_with_valid_id(self, db_session):
+    @pytest.mark.asyncio
+    async def test_delete_with_valid_id(self, db_session):
         """Test delete with valid primary key."""
-        from app.database.models import Beatmapset
+        from app.database.db import PostgresqlDB
+        from app.database.models import User, Beatmapset
 
-        result = c.delete(Beatmapset, id=123)
-        assert result is None
+        db = PostgresqlDB()
 
-    def test_delete_rejects_invalid_id_type(self):
-        """Test delete validates primary key type."""
-        from app.database.models import Beatmapset
+        user = await db.add(User, session=db_session, id=99999)
+        created = await db.add(
+            Beatmapset,
+            session=db_session,
+            id=99999,
+            user_id=99999,
+        )
+        await db.delete(Beatmapset, session=db_session, id=created.id)
 
-        with pytest.raises(Exception):
-            c.delete(Beatmapset, id="not_an_int")
+        fetched = await db.get(Beatmapset, session=db_session, id=created.id)
+        assert fetched is None
+
+    @pytest.mark.asyncio
+    async def test_delete_rejects_invalid_id_type(self, db_session):
+        """Test delete raises ValueError for non-existent record."""
+        from app.database.db import PostgresqlDB
+        from app.database.models import User, Beatmapset
+
+        db = PostgresqlDB()
+
+        user = await db.add(User, session=db_session, id=99998)
+        created = await db.add(
+            Beatmapset,
+            session=db_session,
+            id=99998,
+            user_id=99998,
+        )
+
+        with pytest.raises(ValueError, match="No Beatmapset matches the provided filters"):
+            await db.delete(Beatmapset, session=db_session, id=99999)
 
 
 class TestComplexValidationScenarios:

@@ -136,10 +136,6 @@ class TestRateLimitDecorator:
         with pytest.raises(RateLimitExceededError):
             await test_func(mock_redis_client)
 
-    async def test_rate_limit_auto_retry_enabled(self):
-        """Test auto_retry=True waits and retries."""
-        pytest.skip("Complex integration test - tests retry behavior over time")
-
     async def test_rate_limit_with_custom_limit(self, mock_redis_client):
         """Test rate limit with custom limit value."""
 
