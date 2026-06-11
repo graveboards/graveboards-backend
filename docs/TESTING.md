@@ -2,6 +2,8 @@
 
 This project has a layered test suite with unit, integration, and e2e tests. Keep most tests fast and isolated, then add a smaller number of infrastructure-backed tests for PostgreSQL, Redis, daemon services, and osu! API behavior.
 
+**For comprehensive test coverage analysis and implementation roadmap, see [TESTING2.md](TESTING2.md).**
+
 ## Running Tests
 
 ```bash
@@ -657,3 +659,44 @@ Track progress implementing the test plan above.
 
 ### Remaining Work
 No Phase 7 tests remaining. All implementations verified and passing.
+
+---
+
+## Phase 10 — Critical API Endpoints & Security (Planned)
+
+See [TESTING2.md](TESTING2.md) for comprehensive coverage gap analysis and implementation roadmap.
+
+**Status:** Analysis Complete  
+**Coverage:** 567 tests passing (26% API coverage, ~35% code coverage)  
+**Gap:** 45 API endpoints missing tests, 12 critical gaps identified
+
+### Planned Phases:
+- **Phase 10 (Weeks 1-2):** Critical API endpoints & security decorators
+- **Phase 11 (Weeks 3-4):** Daemon services unit tests  
+- **Phase 12 (Weeks 5-6):** Database CTEs & search engine tests
+- **Phase 13 (Weeks 7-8):** Remaining API endpoints
+- **Phase 14 (Weeks 9-10):** OSU API client integration tests
+
+**Target:** 800+ tests (90% API coverage, ~65% code coverage)
+
+### Key Gaps Identified:
+- **CRITICAL:** 12 gaps requiring immediate attention
+  - Auth token exchange endpoint
+  - Admin beatmap archival
+  - Admin score submission
+  - Request creation with background jobs
+  - Security decorators
+  - Queue request handler
+  - Search scoring CTE
+
+- **HIGH:** 28 gaps for next sprint
+  - All remaining API endpoints
+  - Daemon service base classes
+  - Search engine orchestrator
+
+- **MEDIUM:** 15 gaps for 2-3 sprints
+  - Beatmap/beatmapset tags
+  - Daemon scheduled services
+  - CTE utility functions
+
+**See [TESTING2.md](TESTING2.md) for detailed breakdown by endpoint, module, and implementation priority.**
