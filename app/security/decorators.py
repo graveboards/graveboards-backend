@@ -80,10 +80,10 @@ def role_authorization(
 
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-            db: PostgresqlDB = request.state.db
-
             if DISABLE_SECURITY:
                 return await func(*args, **kwargs)
+
+            db: PostgresqlDB = request.state.db
 
             try:
                 user_id = _get_authenticated_user_id(kwargs)
@@ -156,10 +156,10 @@ def ownership_authorization(
 
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-            db: PostgresqlDB = request.state.db
-
             if DISABLE_SECURITY:
                 return await func(*args, **kwargs)
+
+            db: PostgresqlDB = request.state.db
 
             try:
                 authorized_user_id = _get_authenticated_user_id(kwargs, authorized_user_id_lookup)

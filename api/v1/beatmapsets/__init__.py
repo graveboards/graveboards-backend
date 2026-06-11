@@ -65,14 +65,17 @@ async def get(beatmapset_id: int, **kwargs):
 
 
 @role_authorization(RoleName.ADMIN)
-async def post(body: dict, **kwargs):
-    rc: RedisClient = request.state.rc
-    db: PostgresqlDB = request.state.db
+async def post(body: dict, rc: RedisClient = None, db: PostgresqlDB = None, bm: BeatmapManager = None, **kwargs):
+    if rc is None:
+        rc = request.state.rc
+    if db is None:
+        db = request.state.db
 
     beatmapset_id = body["id"]
 
     try:
-        bm = BeatmapManager(rc, db)
+        if bm is None:
+            bm = BeatmapManager(rc, db)
         changelog = await bm.archive(beatmapset_id)
     except httpx.HTTPStatusError as e:
         return e.response.json(), e.response.status_code, {"Content-Type": "application/problem+json"}  # Inconsistent with other error formats, fix later
