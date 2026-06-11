@@ -1,13 +1,7 @@
 """
-Integration tests for POST /api/v1/beatmapsets endpoint (admin-only).
+Unit tests for POST /api/v1/beatmapsets endpoint (admin-only).
 
-Tests the beatmap archival functionality with both:
-1. Unit tests: Direct function calls with mocked dependencies (fast, isolated)
-2. Integration tests: Full HTTP stack with mocked dependencies (comprehensive)
-
-Note: Integration tests for DISABLE_SECURITY=False require different environment
-setup (separate process with ENV=test). These tests focus on the endpoint logic
-with DISABLE_SECURITY=True.
+Tests the beatmap archival logic with mocked dependencies (fast, isolated).
 """
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
