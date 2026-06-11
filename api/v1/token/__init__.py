@@ -20,9 +20,17 @@ async def search(token: str):
     return jwt_claims, 200, {"Content-Type": "application/json"}
 
 
-async def post(body: dict):
-    rc: RedisClient = request.state.rc
-    db: PostgresqlDB = request.state.db
+async def post(
+    body: dict,
+    oauth: OAuth = None,
+    osu_api_client: OsuAPIClient = None,
+    db: PostgresqlDB = None,
+    rc: RedisClient = None,
+):
+    if rc is None:
+        rc = request.state.rc
+    if db is None:
+        db = request.state.db
 
     code = body.get("code")
     state = body.get("state")
@@ -40,7 +48,8 @@ async def post(body: dict):
         raise BadRequest("Invalid or expired state")
 
     try:
-        oauth = OAuth()
+        if oauth is None:
+            oauth = OAuth()
         token = await oauth.fetch_token(
             grant_type="authorization_code",
             scope="public identify",
@@ -52,8 +61,9 @@ async def post(body: dict):
     except OAuthError as e:
         raise OsuOAuthError(e)
 
-    oac = OsuAPIClient(rc)
-    user_data = await oac.get_own_data(access_token)
+    if osu_api_client is None:
+        osu_api_client = OsuAPIClient(rc)
+    user_data = await osu_api_client.get_own_data(access_token)
     user_id = user_data["id"]
 
     if not await db.get(User, id=user_id):
