@@ -16,6 +16,7 @@ from .fixtures import (
     cmd_wipe_fixtures,
     cmd_refresh_top_players,
     cmd_fixture_refresh,
+    cmd_refresh_archives,
 )
 
 
@@ -210,6 +211,11 @@ async def main():
         choices=["osu", "taiko", "fruits", "mania"],
         help="Ruleset for targeted fetching (can be specified multiple times)",
     )
+    fetch_parser.add_argument(
+        "--archive",
+        action="store_true",
+        help="Use osu.sh archives as primary data source for player IDs",
+    )
 
     promote_parser = fixtures_subparsers.add_parser("promote", help="Promote fixtures from instance to tests")
     promote_parser.add_argument(
@@ -300,6 +306,13 @@ async def main():
         help="Also clear promoted fixture metadata (WARNING: will cause metadata desync if fixture files remain)",
     )
     
+    refresh_archives_parser = fixtures_subparsers.add_parser("refresh-archives", help="Refresh archive index from osu.sh")
+    refresh_archives_parser.add_argument(
+        "--force", "-f",
+        action="store_true",
+        help="Force refresh even if recently updated"
+    )
+    
     refresh_parser = fixtures_subparsers.add_parser("refresh", help="Refresh fixture metadata to match disk state")
     refresh_parser.add_argument(
         "--category", "-c",
@@ -359,6 +372,7 @@ async def main():
                         activity_tier=args.activity_tier,
                         targeted=args.targeted,
                         rulesets=args.ruleset,
+                        archive=args.archive,
                         )
                     case "refresh-top-players":
                         await cmd_refresh_top_players(
@@ -394,10 +408,14 @@ async def main():
                             force=getattr(args, 'force', False),
                         )
                     case "wipe":
-                        await cmd_wipe_fixtures(
-                            clear_failed_ids=args.clear_failed_ids,
-                            clear_top_player_ids=args.clear_top_player_ids,
-                            clear_promoted=args.clear_promoted,
+                         await cmd_wipe_fixtures(
+                             clear_failed_ids=args.clear_failed_ids,
+                             clear_top_player_ids=args.clear_top_player_ids,
+                             clear_promoted=args.clear_promoted,
+                             force=getattr(args, 'force', False),
+                         )
+                    case "refresh-archives":
+                        await cmd_refresh_archives(
                             force=getattr(args, 'force', False),
                         )
                     case "refresh":

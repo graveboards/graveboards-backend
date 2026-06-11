@@ -14,6 +14,7 @@ from rich.progress import (
 from app.fixtures.utils import RULESETS, SCORE_TYPES, calculate_sample_counts, DISCUSSION_STATUSES
 from app.fixtures.fetcher import FixtureDataFetcher
 from app.fixtures.targeted_fetcher import TargetedFixtureFetcher
+from app.fixtures.archive_fetcher import ArchiveBasedFixtureFetcher
 from app.redis import RedisClient
 from app.logging import get_logger
 
@@ -156,6 +157,7 @@ async def cmd_fetch_fixtures(
     activity_tier: str | None,
     targeted: bool,
     rulesets: list[str] | None,
+    archive: bool = False,
 ):
     rc = RedisClient()
     try:
@@ -170,7 +172,7 @@ async def cmd_fetch_fixtures(
                 "min": beatmapsets_range_min or 1,
                 "max": beatmapsets_range_max or 100000,
             }
-        if        users_range_min or users_range_max:
+        if users_range_min or users_range_max:
             id_ranges["users"] = {
                 "min": users_range_min or 1,
                 "max": users_range_max or 10000000,
@@ -203,8 +205,13 @@ async def cmd_fetch_fixtures(
             console.print("\n[bold]Targeted fetch complete![/bold]")
             console.print(f"Status: {statuses}, Difficulty: {difficulty_range}, Activity: {activity_tier}")
         else:
-            fetcher = FixtureDataFetcher(rc, id_ranges=id_ranges if id_ranges else None)
-            fetcher.logger = logger
+            if archive:
+                fetcher = ArchiveBasedFixtureFetcher(rc, id_ranges=id_ranges if id_ranges else None)
+                fetcher.logger = logger
+                console.print("[bold blue]Using osu.sh archives as primary data source...[/bold blue]")
+            else:
+                fetcher = FixtureDataFetcher(rc, id_ranges=id_ranges if id_ranges else None)
+                fetcher.logger = logger
 
         sample_counts = calculate_sample_counts(
             scale=scale,
@@ -219,7 +226,7 @@ async def cmd_fetch_fixtures(
             scores_recent=scores_recent,
             beatmap_scores=beatmap_scores,
             beatmap_attributes=beatmap_attributes,
-           use_minimal=use_minimal,
+            use_minimal=use_minimal,
         )
 
         if use_targeted:
@@ -230,29 +237,32 @@ async def cmd_fetch_fixtures(
                 results = fetcher.get_last_results()
                 console.print("\n[bold]Targeted fetch complete![/bold]")
                 console.print(f"Status: {statuses}, Difficulty: {difficulty_range}, Activity: {activity_tier}")
-            else:
-                await _process_fetch_events(fetcher, progress, tasks, overall_task, overall_progress, sample_counts, use_live=not no_progress)
-                results = fetcher.last_fetch_results
         else:
             progress = Progress(
-            TextColumn("[bold blue]{task.description}"),
-            TextColumn("[white]({task.completed}/{task.total})"),
-            BarColumn(pulse_style="dim"),
-            "[progress.percentage]{task.percentage:>3.0f}%",
-            TimeRemainingColumn(compact=True),
-            TimeElapsedColumn()
-        )
+                TextColumn("[bold blue]{task.description}"),
+                TextColumn("[white]({task.completed}/{task.total})"),
+                BarColumn(pulse_style="dim"),
+                "[progress.percentage]{task.percentage:>3.0f}%",
+                TimeRemainingColumn(compact=True),
+                TimeElapsedColumn()
+            )
 
-        tasks, total_items = _create_progress_tasks(progress, sample_counts)
-        overall_task = progress.add_task("Total", total=total_items)
-        overall_progress = 0
+            tasks, total_items = _create_progress_tasks(progress, sample_counts)
+            overall_task = progress.add_task("Total", total=total_items)
+            overall_progress = 0
 
-        logger.info("Fetching fixture data from osu! API...")
+            logger.info("Fetching fixture data from osu! API...")
+    
+            if archive:
+                console.print("[bold]Fetching player IDs from osu.sh archives...[/bold]")
+                await fetcher.refresh_archive_data()
+                console.print(f"[green]Loaded {sum(len(ids) for ids in fetcher.archive_player_ids.values())} archived player IDs[/green]")
+                logger.info("Using osu.sh archives for fixture data source")
 
-        await _process_fetch_events(fetcher, progress, tasks, overall_task, overall_progress, sample_counts, use_live=not no_progress)
+            await _process_fetch_events(fetcher, progress, tasks, overall_task, overall_progress, sample_counts, use_live=not no_progress)
 
-        results = fetcher.last_fetch_results
-        logger.info(f"Fixture data fetch complete: {results}")
+            results = fetcher.last_fetch_results
+            logger.info(f"Fixture data fetch complete: {results}")
 
         console.print("\n[bold]Results:[/bold]")
         result_table = Table(show_header=False)

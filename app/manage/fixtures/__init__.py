@@ -7,6 +7,7 @@ from .wipe import cmd_wipe_fixtures
 from .helpers import get_categories_to_process
 # health, report, gaps commands removed - replaced by status command
 from .refresh import cmd_fixture_refresh
+from .refresh_archives import cmd_refresh_archives
 
 __all__ = [
     "cmd_refresh_top_players",
@@ -16,5 +17,6 @@ __all__ = [
     "cmd_demote_fixtures",
     "cmd_wipe_fixtures",
     "cmd_fixture_refresh",
+    "cmd_refresh_archives",
     "get_categories_to_process",
 ]
