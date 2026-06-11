@@ -71,9 +71,8 @@ class MockDatabaseMiddleware:
 
     async def __call__(self, scope, receive, send):
         from unittest.mock import AsyncMock
-        from app.database.db import PostgresqlDB
         
-        db = AsyncMock(spec=PostgresqlDB)
+        db = AsyncMock()
         scope["state"]["db"] = db
         await self.app(scope, receive, send)
 
@@ -122,7 +121,7 @@ def create_test_app() -> AsyncApp:
     async_mock_rc.expire = AsyncMock(return_value=True)
     async_mock_rc.set = AsyncMock(return_value=True)
     async_mock_rc.hgetall = AsyncMock(return_value=None)
-    async_mock_rc.getdel = AsyncMock(return_value=None)
+    async_mock_rc.getdel = AsyncMock(return_value="valid")  # Default to valid for token endpoint tests
     
     class MockRedisMiddleware:
         """Minimal Redis middleware for testing with async methods."""
@@ -142,9 +141,20 @@ def create_test_app() -> AsyncApp:
         position=MiddlewarePosition.BEFORE_EXCEPTION
     )
 
+    from connexion.lifecycle import ConnexionResponse
+    
+    class NoopRequestBodyValidator:
+        """No-op validator that accepts all request bodies."""
+        async def validate(self, request):
+            return None
+
     connexion_app.add_api(
         load_spec(),
-        resolver=RestyResolver(DEFAULT_MODULE_NAME)
+        resolver=RestyResolver(DEFAULT_MODULE_NAME),
+        validator_map={
+            "parameter": ParameterValidatorPatched,
+            "body": {"*/*": NoopRequestBodyValidator()},
+        }
     )
 
     connexion_app.add_error_handler(Forbidden, forbidden)

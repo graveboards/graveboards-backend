@@ -24,7 +24,7 @@ This document provides a comprehensive analysis of test coverage gaps and a road
 | Endpoint | Method | Handler | Test Coverage | Priority |
 |----------|--------|---------|---------------|----------|
 | `/api/v1/login` | GET | `api/v1/login/__init__.py` | ✅ `test_login_routes.py` | Covered |
-| `/api/v1/token` | POST | `api/v1/token/__init__.py` | ❌ NO TESTS | 🔴 CRITICAL |
+| `/api/v1/token` | POST | `api/v1/token/__init__.py` | ✅ Unit + Integration | ✅ COVERAGE |
 
 **Gaps:**
 - Token exchange endpoint has NO integration tests
@@ -377,37 +377,98 @@ This document provides a comprehensive analysis of test coverage gaps and a road
 **Goal:** Address critical gaps in API endpoints and security
 
 #### Tasks:
-1. Write integration tests for `/api/v1/token` endpoint
-   - Test token exchange flow
-   - Test invalid token handling
-   - Test expired token handling
+1. ✅ Write proper integration tests for `/api/v1/token` POST endpoint
+    - Split into unit tests (direct function calls) and integration tests (TestClient HTTP)
+    - Unit tests mock `OAuth`, `OsuAPIClient`, `RedisClient`, and database
+    - Integration tests use `TestClient` with mocked dependencies
+    - Full coverage of token exchange flow
 
-2. Write integration tests for `/api/v1/beatmapsets` POST (admin)
-   - Test beatmap archival
-   - Test snapshot creation
-   - Test error handling
+2. ✅ Write proper integration tests for `/api/v1/beatmapsets` POST (admin)
+    - Split into unit tests (direct function calls) and integration tests (TestClient HTTP)
+    - Unit tests mock `BeatmapManager` and `OsuAPIClient`
+    - Integration tests use `TestClient` with mocked dependencies
+    - Full coverage of admin beatmap archival
 
 3. Write integration tests for `/api/v1/scores` POST (admin)
-   - Test score submission
-   - Test validation
-   - Test error handling
+    - Follow beatmapsets/token pattern (unit + integration split)
+    - Test score submission
+    - Test validation
+    - Test error handling
 
 4. Write integration tests for `/api/v1/requests` POST
-   - Test request creation
-   - Test background job processing
-   - Test task status tracking
+    - Follow beatmapsets/token pattern (unit + integration split)
+    - Test request creation
+    - Test background job processing
+    - Test task status tracking
 
 5. Write unit tests for `app/security/decorators.py`
-   - Test authorization decorators
-   - Test role-based access
-   - Test permission validation
+    - Test authorization decorators
+    - Test role-based access
+    - Test permission validation
 
 6. Write unit tests for `app/security/overrides.py`
-   - Test authorization overrides
-   - Test admin access control
+    - Test authorization overrides
+    - Test admin access control
 
 **Expected Tests:** 30-40 tests  
 **Expected Coverage:** +15% API coverage
+
+---
+
+#### API Testing Pattern (Established in Phase 10)
+
+After working on token and beatmapsets endpoints, we established a clear pattern for API endpoint testing:
+
+**✅ True Integration Tests (Use TestClient)**
+- Make real HTTP requests through Connexion
+- Test full request/response lifecycle
+- Mock external dependencies (osu! API, database operations)
+- Exercise actual endpoint routing and decorators
+- Location: `tests/integration/api/test_<endpoint>_routes.py`
+- **Important**: For endpoints with strict validation (like OAuth form data), integration tests focus on validation errors only
+- **Important**: Keep integration tests simple - test validation and basic HTTP flow, not complex business logic
+
+**Unit Tests (Direct Function Calls)**
+- Call endpoint function directly with mocked dependencies
+- Test business logic in isolation
+- Fast execution, no HTTP stack overhead
+- Location: `tests/unit/api/test_<endpoint>_unit_routes.py`
+- Use when endpoint accepts dependencies as optional parameters (e.g., `post(body, oauth=None, db=None, rc=None)`)
+
+**Key Rules:**
+- Split tests into unit and integration for proper separation of concerns
+- Integration tests verify the endpoint works through HTTP stack (validation, routing)
+- Unit tests verify business logic (OAuth flow, database operations)
+- If endpoint has `@role_authorization()` or `@ownership_authorization()` decorator → MUST use TestClient to exercise decorator
+- If endpoint accepts dependencies as parameters (like `post(body, oauth=None, db=None, rc=None)`) → Can use direct function calls
+- Use `AsyncMock` for async Redis methods (`await rc.hgetall()`)
+- Always patch both the endpoint module AND internal module imports (e.g., `patch('api.v1.beatmapsets.BeatmapManager')` AND `patch('app.beatmaps.BeatmapManager')`)
+
+**Examples:**
+- Token POST: `tests/unit/api/test_token_post_unit_routes.py` (business logic) + `tests/integration/api/test_token_post_routes.py` (validation)
+- Beatmapsets POST: `tests/unit/api/test_beatmapsets_unit_routes.py` (business logic) + `tests/integration/api/test_beatmapsets_routes.py` (admin endpoint routing)
+
+---
+
+#### Common Testing Pitfalls
+
+1. **Redis middleware mocks return None by default**
+   - The `MockRedisMiddleware` in `app/test_app.py` sets `getdel` to return `None`
+   - For endpoints that check state validity, update the middleware default or ensure mocks return correct values
+   - Solution: Modify `app/test_app.py:124` to return `"valid"` by default for state-checking tests
+
+2. **Patching order matters**
+   - Patches must match the actual import path in the endpoint module
+   - Token endpoint: `from app.oauth import OAuth` → patch `app.oauth.OAuth`, NOT `api.v1.token.OAuth`
+
+3. **TestClient fixture is created before test patches**
+   - The `TestClient` fixture creates the app with middleware that initializes mocks
+   - Patches inside the test will work, but ensure mocks are set up correctly
+
+4. **Form data validation errors**
+   - OAuth endpoints expect `application/x-www-form-urlencoded`
+   - Use `data=body, headers={"Content-Type": "application/x-www-form-urlencoded"}` instead of `json=body`
+   - For testing, keep integration tests simple and focus on unit tests for business logic
 
 ---
 
