@@ -179,16 +179,45 @@ def queue_factory():
     return QueueFactory()
 
 
-@pytest.fixture(scope="function")
-async def clean_redis():
-    r = redis.Redis(
-        host=REDIS_CONFIGURATION["host"],
-        port=REDIS_CONFIGURATION["port"],
-        db=REDIS_CONFIGURATION["db"],
-        decode_responses=REDIS_CONFIGURATION["decode_responses"],
-    )
-    r.flushdb()
-    r.flushdb()
+@pytest.fixture(scope="function", autouse=True)
+def reset_middleware_after_test():
+    """Ensure MockDatabaseMiddleware is reset after each test."""
+    from app.test_app import MockDatabaseMiddleware
+    
+    import inspect
+    original_source = inspect.getsource(MockDatabaseMiddleware.__call__)
+    
+    yield
+    
+    # Always reset middleware to original state to prevent test pollution
+    async def reset_call(self, scope, receive, send):
+        from unittest.mock import AsyncMock, MagicMock
+        
+        db = AsyncMock()
+        
+        mock_user = MagicMock()
+        mock_user.id = 99999999
+        mock_user.roles = []
+        
+        db.get = AsyncMock(return_value=mock_user)
+        db.add = AsyncMock()
+        db.update = AsyncMock()
+        
+        class MockSession:
+            def __init__(self, autoflush=True):
+                self.autoflush = autoflush
+            
+            async def __aenter__(self):
+                return MagicMock()
+            async def __aexit__(self, *args):
+                pass
+        
+        db.session = MockSession
+        
+        scope["state"]["db"] = db
+        await self.app(scope, receive, send)
+    
+    MockDatabaseMiddleware.__call__ = reset_call
 
 
 @pytest.fixture

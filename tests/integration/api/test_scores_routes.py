@@ -7,6 +7,8 @@ import os
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from api.v1.scores import post as scores_post
+
 
 class TestScoresPostIntegration:
     """Integration tests for POST /api/v1/scores admin endpoint."""

@@ -5,13 +5,12 @@ Tests the token exchange flow via full HTTP stack.
 These tests verify that the Connexion endpoint correctly:
 - Validates required parameters (code, state)
 - Rejects invalid requests (missing params, invalid state)
-
-The happy path (valid token exchange) is tested in unit tests as it requires
-complex mocking that's better handled at the unit level.
 """
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 from datetime import datetime, timedelta, timezone
+
+from app.test_app import MockDatabaseMiddleware
 
 
 class TestTokenPostIntegration:
@@ -45,17 +44,13 @@ class TestTokenPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    @pytest.mark.skip("Flaky test - issue with test ordering and DB mocking")
-    async def test_token_exchange_success(self, TestClient, admin_user_token):
+    async def test_token_exchange_success(self):
         """Test successful token exchange via HTTP stack with mocked dependencies."""
         state = "test_csrf_state_12345"
         code = "test_authorization_code"
 
         body = f"code={code}&state={state}"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-
-        async def async_mock_getdel(*args, **kwargs):
-            return "valid"
 
         async def async_mock_fetch_token(*args, **kwargs):
             return {
@@ -71,27 +66,39 @@ class TestTokenPostIntegration:
                 "avatar_url": "https://example.com/avatar.png",
             }
 
-        mock_oauth = MagicMock()
+        mock_oauth = AsyncMock()
         mock_oauth.fetch_token = AsyncMock(side_effect=async_mock_fetch_token)
 
-        mock_osu_client = MagicMock()
+        mock_osu_client = AsyncMock()
         mock_osu_client.get_own_data = AsyncMock(side_effect=async_mock_get_own_data)
-
-        mock_rc = AsyncMock()
-        mock_rc.getdel = AsyncMock(side_effect=async_mock_getdel)
 
         mock_db = AsyncMock()
         mock_user = MagicMock()
         mock_user.id = 12345678
+        mock_user.roles = []
         mock_db.get = AsyncMock(return_value=mock_user)
         mock_db.add = AsyncMock()
+        mock_db.update = AsyncMock()
+
+        original_call = MockDatabaseMiddleware.__call__
+
+        async def patched_call(self, scope, receive, send):
+            scope["state"]["db"] = mock_db
+            await self.app(scope, receive, send)
+
+        MockDatabaseMiddleware.__call__ = patched_call
 
         with patch('app.oauth.OAuth', return_value=mock_oauth), \
              patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client), \
-             patch('app.database.db.PostgresqlDB') as MockDB:
-            MockDB.return_value = mock_db
+             patch('api.v1.token.OAuth', return_value=mock_oauth), \
+             patch('api.v1.token.OsuAPIClient', return_value=mock_osu_client):
+            # Create TestClient inside patches to ensure they're active
+            from app.test_app import create_test_client
+            client = create_test_client()
+            
+            response = client.post("/api/v1/token", data=body, headers=headers)
 
-            response = TestClient.post("/api/v1/token", data=body, headers=headers)
+        MockDatabaseMiddleware.__call__ = original_call
 
         assert response.status_code == 201
         data = response.json()
