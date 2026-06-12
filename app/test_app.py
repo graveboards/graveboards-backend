@@ -48,12 +48,25 @@ class MockRedisMiddleware:
         self.app = app
 
     async def __call__(self, scope, receive, send):
-        from unittest.mock import AsyncMock
+        from unittest.mock import AsyncMock, MagicMock
         
         rc = AsyncMock(spec=RedisClient)
         rc.incr = AsyncMock(return_value=1)
         rc.expire = AsyncMock(return_value=True)
         rc.set = AsyncMock(return_value=True)
+        rc.hgetall = AsyncMock()
+        rc.hgetall.return_value = None
+        rc.hset = AsyncMock(return_value=True)
+        rc.getdel = AsyncMock(return_value="valid")
+        
+        # Mock lock_ctx as async context manager
+        class MockLockCtx:
+            async def __aenter__(self):
+                return None
+            async def __aexit__(self, *args):
+                pass
+        
+        rc.lock_ctx = MagicMock(return_value=MockLockCtx())
         
         scope["state"]["rc"] = rc
         await self.app(scope, receive, send)
@@ -70,9 +83,30 @@ class MockDatabaseMiddleware:
         self.app = app
 
     async def __call__(self, scope, receive, send):
-        from unittest.mock import AsyncMock
+        from unittest.mock import AsyncMock, MagicMock
         
         db = AsyncMock()
+        
+        mock_user = MagicMock()
+        mock_user.id = 99999999
+        mock_user.roles = []
+        
+        db.get = AsyncMock(return_value=mock_user)
+        db.add = AsyncMock()
+        db.update = AsyncMock()
+        
+        # Create async context manager for session
+        class MockSession:
+            def __init__(self, autoflush=True):
+                self.autoflush = autoflush
+            
+            async def __aenter__(self):
+                return MagicMock()
+            async def __aexit__(self, *args):
+                pass
+        
+        db.session = MockSession
+        
         scope["state"]["db"] = db
         await self.app(scope, receive, send)
 
@@ -115,15 +149,16 @@ def create_test_app() -> AsyncApp:
         GZipMiddleware,
         position=MiddlewarePosition.BEFORE_EXCEPTION
     )
-    # Use AsyncMock for Redis to support await calls like rc.hgetall()
     async_mock_rc = AsyncMock(spec=RedisClient)
     async_mock_rc.incr = AsyncMock(return_value=1)
     async_mock_rc.expire = AsyncMock(return_value=True)
     async_mock_rc.set = AsyncMock(return_value=True)
-    async_mock_rc.hgetall = AsyncMock(return_value=None)
-    async_mock_rc.getdel = AsyncMock(return_value="valid")  # Default to valid for token endpoint tests
+    async_mock_rc.hgetall = AsyncMock()
+    async_mock_rc.hgetall.return_value = None
+    async_mock_rc.hset = AsyncMock(return_value=True)
+    async_mock_rc.getdel = AsyncMock(return_value="valid")
     
-    class MockRedisMiddleware:
+    class MockRedisMiddlewareInternal:
         """Minimal Redis middleware for testing with async methods."""
         def __init__(self, app):
             self.app = app
@@ -133,7 +168,7 @@ def create_test_app() -> AsyncApp:
             await self.app(scope, receive, send)
 
     connexion_app.add_middleware(
-        MockRedisMiddleware,
+        MockRedisMiddlewareInternal,
         position=MiddlewarePosition.BEFORE_EXCEPTION
     )
     connexion_app.add_middleware(

@@ -80,28 +80,34 @@ async def post(body: dict, rc: RedisClient = None, db: PostgresqlDB = None, bm: 
     except httpx.HTTPStatusError as e:
         return e.response.json(), e.response.status_code, {"Content-Type": "application/problem+json"}  # Inconsistent with other error formats, fix later
 
-    if changelog["snapshotted_beatmapset"] or changelog["snapshotted_beatmaps"]:
-        num_snapshotted_beatmaps = len(changelog["snapshotted_beatmaps"])
+    if changelog.get("snapshotted_beatmapset") or changelog.get("snapshotted_beatmaps"):
+        num_snapshotted_beatmaps = len(changelog.get("snapshotted_beatmaps", []))
         changelog["message"] = f"Snapshotted {num_snapshotted_beatmaps} beatmap(s)"
-        del changelog["updated_beatmapset"]
-        del changelog["updated_beatmaps"]
+        if "updated_beatmapset" in changelog:
+            del changelog["updated_beatmapset"]
+        if "updated_beatmaps" in changelog:
+            del changelog["updated_beatmaps"]
         status_code = 201
-    elif changelog["updated_beatmapset"] or changelog["updated_beatmaps"]:
-        num_beatmaps = len(changelog["updated_beatmaps"])
-        num_beatmapset_fields = len(changelog["updated_beatmapset"]) - 1 if changelog["updated_beatmapset"] else 0  # Subtract inherent beatmapset_id
-        num_beatmap_fields = sum((len(fields) for fields in changelog["updated_beatmaps"])) - num_beatmaps  # Subtract inherent beatmap_id(s)
+    elif changelog.get("updated_beatmapset") or changelog.get("updated_beatmaps"):
+        num_beatmaps = len(changelog.get("updated_beatmaps", []))
+        num_beatmapset_fields = len(changelog.get("updated_beatmapset", {})) - 1 if changelog.get("updated_beatmapset") else 0
+        num_beatmap_fields = sum((len(fields) for fields in changelog.get("updated_beatmaps", []))) - num_beatmaps if num_beatmaps else 0
         changelog["message"] = (
             f"Updated {num_beatmapset_fields} field(s) in the beatmapset "
             f"and {num_beatmap_fields} field(s) "
             f"in {num_beatmaps} beatmap(s)"
         )
-        del changelog["snapshotted_beatmapset"]
-        del changelog["snapshotted_beatmaps"]
+        if "snapshotted_beatmapset" in changelog:
+            del changelog["snapshotted_beatmapset"]
+        if "snapshotted_beatmaps" in changelog:
+            del changelog["snapshotted_beatmaps"]
         status_code = 200
     else:
         changelog["message"] = "The beatmapset and its beatmaps are fully up-to-date"
-        del changelog["snapshotted_beatmapset"]
-        del changelog["snapshotted_beatmaps"]
+        if "snapshotted_beatmapset" in changelog:
+            del changelog["snapshotted_beatmapset"]
+        if "snapshotted_beatmaps" in changelog:
+            del changelog["snapshotted_beatmaps"]
         status_code = 200
 
     return changelog, status_code, {"Content-Type": "application/json"}

@@ -188,5 +188,76 @@ async def clean_redis():
         decode_responses=REDIS_CONFIGURATION["decode_responses"],
     )
     r.flushdb()
-    yield r
     r.flushdb()
+
+
+@pytest.fixture
+def admin_user_token():
+    """Generate JWT for admin user (PRIMARY_ADMIN_USER_ID)."""
+    from app.security import create_token_payload, encode_token
+    from app.config import PRIMARY_ADMIN_USER_ID
+
+    payload = create_token_payload(PRIMARY_ADMIN_USER_ID)
+    return encode_token(payload)
+
+
+@pytest.fixture
+def mock_beatmap_manager():
+    """Factory fixture for creating BeatmapManager mocks."""
+    from unittest.mock import MagicMock, AsyncMock
+
+    def _create_manager(result):
+        mock_bm = MagicMock()
+        mock_bm.archive = AsyncMock(return_value=result)
+        return mock_bm
+
+    return _create_manager
+
+
+@pytest.fixture
+def mock_rc():
+    """Fixture for creating mock Redis client."""
+    from unittest.mock import AsyncMock
+
+    mock_rc = AsyncMock()
+    mock_rc.hgetall = AsyncMock(return_value=None)
+    mock_rc.getdel = AsyncMock(return_value=None)
+    mock_rc.hset = AsyncMock(return_value=True)
+    mock_rc.expire = AsyncMock(return_value=True)
+    return mock_rc
+
+
+@pytest.fixture
+def mock_osu_client(mock_rc):
+    """Fixture for creating mock OsuAPIClient."""
+    from unittest.mock import MagicMock
+
+    mock_client = MagicMock()
+    mock_client.rc = mock_rc
+    return mock_client
+
+
+@pytest.fixture
+def mock_db_session():
+    """Fixture for creating mock database session."""
+    from unittest.mock import MagicMock, AsyncMock
+
+    mock = MagicMock()
+    mock.get = AsyncMock()
+    mock.add = AsyncMock()
+    mock.update = AsyncMock()
+    return mock
+
+
+@pytest.fixture
+def mock_db_with_side_effect():
+    """Fixture for creating mock database with custom get side effects."""
+    from unittest.mock import AsyncMock
+
+    def _create_db(*side_effects):
+        mock = AsyncMock()
+        mock.get = AsyncMock(side_effect=list(side_effects))
+        mock.add = AsyncMock()
+        return mock
+
+    return _create_db
