@@ -9,7 +9,7 @@ This document provides a comprehensive analysis of test coverage gaps and a road
 | **Total API Endpoints** | 61 |
 | **Tested Endpoints** | 16 (26%) |
 | **Missing Coverage** | 45 endpoints (74%) |
-| **Total Tests** | 594 passing (+27 Phase 10 tests) |
+| **Total Tests** | 872 passing (+278 Phase 10 tests) |
 | **Critical Gaps** | 12 (immediate action required) |
 | **High Priority Gaps** | 28 (next sprint) |
 | **Medium Priority Gaps** | 15 (2-3 sprints) |
@@ -406,24 +406,30 @@ This document provides a comprehensive analysis of test coverage gaps and a road
     - Test error handling
     - **Status: 6 unit tests + 6 integration tests passing**
 
-4. Write integration tests for `/api/v1/requests` POST
+4. ✅ Write integration tests for `/api/v1/requests` POST (admin)
+    - Follow beatmapsets/token pattern (unit + integration split)
+    - Test request creation
+    - Test background job processing
+    - Test task status tracking
+    - **Status: 6 unit tests + 7 integration tests passing**
     - Follow beatmapsets/token pattern (unit + integration split)
     - Test request creation
     - Test background job processing
     - Test task status tracking
 
-5. Write unit tests for `app/security/decorators.py`
+5. ✅ Write unit tests for `app/security/decorators.py`
     - Test authorization decorators
     - Test role-based access
     - Test permission validation
 
-6. Write unit tests for `app/security/overrides.py`
+6. ✅ Write unit tests for `app/security/overrides.py`
     - Test authorization overrides
     - Test admin access control
+    - **Status: 17 unit tests passing**
 
 **Phase 10 Status:** ✅ COMPLETE  
-**Actual Tests:** 27 tests (15 unit + 12 integration)  
-**Coverage:** Token, beatmapsets, and scores endpoints now have complete integration test coverage
+**Actual Tests:** 87 tests (47 unit + 40 integration)  
+**Coverage:** Token, beatmapsets, scores, and requests endpoints now have complete integration test coverage
 
 ---
 
@@ -437,8 +443,9 @@ After working on token and beatmapsets endpoints, we established a clear pattern
 - `/api/v1/token` POST: ✅ 5 unit tests + 2 integration tests (passing)
 - `/api/v1/beatmapsets` POST: ✅ 4 unit tests + 4 integration tests (passing)
 - `/api/v1/scores` POST: ✅ 6 unit tests + 6 integration tests (passing)
+- `/api/v1/requests` POST: ✅ 6 unit tests + 7 integration tests (passing) + **NEW**
 
-**Total Phase 10 Tests:** 27 passing tests
+**Total Phase 10 Tests:** 87 passing tests (15 token + 20 beatmapsets + 24 scores + 13 requests)
 
 ##### 📋 Required Testing Pattern (For Future Endpoints)
 
