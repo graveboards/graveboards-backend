@@ -77,6 +77,8 @@ class MockDatabaseMiddleware:
     
     Provides a mock database connection for testing endpoints
     that require db in request.state without needing the full app setup.
+    
+    Supports configurable user data via middleware configuration in scope.
     """
 
     def __init__(self, app):
@@ -88,8 +90,8 @@ class MockDatabaseMiddleware:
         db = AsyncMock()
         
         mock_user = MagicMock()
-        mock_user.id = 99999999
-        mock_user.roles = []
+        mock_user.id = scope["state"].get("test_user_id", 99999999)
+        mock_user.roles = scope["state"].get("test_user_roles", [])
         
         db.get = AsyncMock(return_value=mock_user)
         db.add = AsyncMock()
