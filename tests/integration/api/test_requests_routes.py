@@ -7,9 +7,6 @@ import os
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.database.models import Request, Queue
-from app.test_app import MockDatabaseMiddleware
-
 
 class TestRequestsPostIntegration:
     """Integration tests for POST /api/v1/requests endpoint."""
@@ -65,6 +62,8 @@ class TestRequestsPostIntegration:
 
         mock_osu_client.get_beatmapset = AsyncMock(side_effect=mock_get_beatmapset_wip)
 
+        from app.test_app import MockDatabaseMiddleware
+
         original_call = MockDatabaseMiddleware.__call__
 
         async def patched_call(self, scope, receive, send):
@@ -104,6 +103,8 @@ class TestRequestsPostIntegration:
         mock_db.get.return_value = None
         mock_db.add = AsyncMock()
 
+        from app.test_app import MockDatabaseMiddleware
+
         original_call = MockDatabaseMiddleware.__call__
 
         async def patched_call(self, scope, receive, send):
@@ -135,6 +136,8 @@ class TestRequestsPostIntegration:
         mock_db = AsyncMock()
         mock_db.get.return_value = mock_queue
         mock_db.add = AsyncMock()
+
+        from app.test_app import MockDatabaseMiddleware
 
         original_call = MockDatabaseMiddleware.__call__
 
@@ -172,6 +175,8 @@ class TestRequestsPostIntegration:
         ]
         mock_db.add = AsyncMock()
 
+        from app.test_app import MockDatabaseMiddleware
+
         original_call = MockDatabaseMiddleware.__call__
 
         async def patched_call(self, scope, receive, send):
@@ -189,7 +194,7 @@ class TestRequestsPostIntegration:
         data = response.json()
         assert f"The request with beatmapset ID '{self.TEST_BEATMAPSET_ID}' already exists in queue '{mock_queue.name}'" in data["detail"]
 
- 
+  
 
     @pytest.mark.integration
     @pytest.mark.asyncio
@@ -241,6 +246,8 @@ class TestRequestsPostIntegration:
             }
 
         mock_osu_client.get_beatmapset = AsyncMock(side_effect=mock_get_beatmapset_wip)
+
+        from app.test_app import MockDatabaseMiddleware
 
         original_call = MockDatabaseMiddleware.__call__
 
@@ -305,6 +312,8 @@ class TestRequestsPostIntegration:
 
         mock_osu_client.get_beatmapset = AsyncMock(side_effect=mock_get_beatmapset_wip)
 
+        from app.test_app import MockDatabaseMiddleware
+
         original_call = MockDatabaseMiddleware.__call__
 
         async def patched_call(self, scope, receive, send):
@@ -329,6 +338,8 @@ class TestRequestsPostIntegration:
     @pytest.mark.asyncio
     async def test_bypass_security_with_flag(self, TestClient, valid_request_body):
         """Test DISABLE_SECURITY=True bypasses authorization."""
+        from app.test_app import MockDatabaseMiddleware
+
         os.environ["DISABLE_SECURITY"] = "True"
 
         mock_queue = MagicMock()
@@ -381,6 +392,8 @@ class TestRequestsPostIntegration:
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_request_model_creation():
+    from app.database.models import Request, Queue
+
     request = Request(
         user_id=12345678,
         beatmapset_id=35965,
@@ -397,6 +410,8 @@ async def test_request_model_creation():
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_request_with_comment():
+    from app.database.models import Request
+
     request = Request(
         user_id=12345678,
         beatmapset_id=35965,
@@ -410,6 +425,8 @@ async def test_request_with_comment():
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_request_mv_checked():
+    from app.database.models import Request
+
     request = Request(
         user_id=12345678,
         beatmapset_id=35965,
@@ -426,6 +443,8 @@ async def test_request_mv_checked():
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_request_status_values():
+    from app.database.models import Request
+
     request = Request(
         user_id=12345678,
         beatmapset_id=35965,
@@ -445,6 +464,8 @@ async def test_request_status_values():
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_request_relationships():
+    from app.database.models import Request
+
     request = Request(
         user_id=12345678,
         beatmapset_id=35965,
@@ -459,6 +480,8 @@ async def test_request_relationships():
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_request_unique_constraint():
+    from app.database.models import Request, Queue
+
     queue = Queue(
         user_id=12345678,
         name="Test Queue"

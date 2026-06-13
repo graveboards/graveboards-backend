@@ -7,9 +7,6 @@ import os
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.test_app import MockDatabaseMiddleware
-from api.v1.scores import post as scores_post
-
 
 class TestScoresPostIntegration:
     """Integration tests for POST /api/v1/scores admin endpoint."""
@@ -40,8 +37,8 @@ class TestScoresPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_submission_creates_score(self, TestClient, valid_score_body):
         """Test successful score submission that creates new score."""
-        from app.test_app import MockDatabaseMiddleware
-
+        mock_db = AsyncMock()
+        
         mock_user = MagicMock()
         mock_user.id = self.TEST_USER_ID
         mock_beatmap = MagicMock()
@@ -51,8 +48,7 @@ class TestScoresPostIntegration:
         mock_snapshot.beatmap_id = self.TEST_BEATMAP_ID
         mock_leaderboard = MagicMock()
         mock_leaderboard.id = 1
-
-        mock_db = AsyncMock()
+        
         mock_db.get.side_effect = [
             mock_user,
             mock_beatmap,
@@ -61,6 +57,8 @@ class TestScoresPostIntegration:
             None,
         ]
         mock_db.add = AsyncMock()
+
+        from app.test_app import MockDatabaseMiddleware
 
         original_call = MockDatabaseMiddleware.__call__
 
@@ -84,11 +82,11 @@ class TestScoresPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_user_not_found(self, TestClient, valid_score_body):
         """Test score submission fails when user doesn't exist."""
-        from app.test_app import MockDatabaseMiddleware
-
         mock_db = AsyncMock()
         mock_db.get.return_value = None
         mock_db.add = AsyncMock()
+
+        from app.test_app import MockDatabaseMiddleware
 
         original_call = MockDatabaseMiddleware.__call__
 
@@ -113,13 +111,13 @@ class TestScoresPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_beatmap_not_found(self, TestClient, valid_score_body):
         """Test score submission fails when beatmap doesn't exist."""
-        from app.test_app import MockDatabaseMiddleware
-
         mock_db = AsyncMock()
         mock_user = MagicMock()
         mock_user.id = self.TEST_USER_ID
         mock_db.get.side_effect = [mock_user, None]
         mock_db.add = AsyncMock()
+
+        from app.test_app import MockDatabaseMiddleware
 
         original_call = MockDatabaseMiddleware.__call__
 
@@ -144,8 +142,6 @@ class TestScoresPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_beatmap_snapshot_not_found(self, TestClient, valid_score_body):
         """Test score submission fails when beatmap snapshot doesn't exist."""
-        from app.test_app import MockDatabaseMiddleware
-
         mock_db = AsyncMock()
         mock_user = MagicMock()
         mock_user.id = self.TEST_USER_ID
@@ -153,6 +149,8 @@ class TestScoresPostIntegration:
         mock_beatmap.id = self.TEST_BEATMAP_ID
         mock_db.get.side_effect = [mock_user, mock_beatmap, None]
         mock_db.add = AsyncMock()
+
+        from app.test_app import MockDatabaseMiddleware
 
         original_call = MockDatabaseMiddleware.__call__
 
@@ -177,8 +175,6 @@ class TestScoresPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_leaderboard_not_found(self, TestClient, valid_score_body):
         """Test score submission fails when leaderboard doesn't exist."""
-        from app.test_app import MockDatabaseMiddleware
-
         mock_db = AsyncMock()
         mock_user = MagicMock()
         mock_user.id = self.TEST_USER_ID
@@ -189,6 +185,8 @@ class TestScoresPostIntegration:
         mock_snapshot.beatmap_id = self.TEST_BEATMAP_ID
         mock_db.get.side_effect = [mock_user, mock_beatmap, mock_snapshot, None]
         mock_db.add = AsyncMock()
+
+        from app.test_app import MockDatabaseMiddleware
 
         original_call = MockDatabaseMiddleware.__call__
 
@@ -213,8 +211,6 @@ class TestScoresPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_duplicate_score(self, TestClient, valid_score_body):
         """Test score submission fails when duplicate exists."""
-        from app.test_app import MockDatabaseMiddleware
-
         mock_db = AsyncMock()
         mock_user = MagicMock()
         mock_user.id = self.TEST_USER_ID
@@ -226,6 +222,8 @@ class TestScoresPostIntegration:
         mock_leaderboard = MagicMock()
         mock_leaderboard.id = 1
         mock_db.add = AsyncMock()
+
+        from app.test_app import MockDatabaseMiddleware
 
         original_call = MockDatabaseMiddleware.__call__
 
@@ -250,13 +248,14 @@ class TestScoresPostIntegration:
     @pytest.mark.asyncio
     async def test_non_admin_user_gets_forbidden(self, TestClient, valid_score_body):
         """Test that non-admin user gets 403 Forbidden."""
-
         mock_db = AsyncMock()
         mock_user = MagicMock()
         mock_user.id = 99999999
         mock_user.roles = []
         mock_db.get = AsyncMock(return_value=mock_user)
         mock_db.add = AsyncMock()
+
+        from app.test_app import MockDatabaseMiddleware
 
         original_call = MockDatabaseMiddleware.__call__
 
@@ -287,7 +286,7 @@ class TestScoresPostIntegration:
 
         decoded_token = decode_token(admin_user_token)
         user_id = int(decoded_token["sub"])
-
+        
         mock_db = AsyncMock()
         
         mock_user = MagicMock()
@@ -315,6 +314,8 @@ class TestScoresPostIntegration:
         ]
         mock_db.add = AsyncMock()
 
+        from app.test_app import MockDatabaseMiddleware
+
         original_call = MockDatabaseMiddleware.__call__
 
         async def patched_call(self, scope, receive, send):
@@ -333,9 +334,6 @@ class TestScoresPostIntegration:
         data = response.json()
         assert "message" in data
         assert data["message"] == "Score added successfully!"
-
-    @pytest.mark.integration
-    @pytest.mark.asyncio
 
     @pytest.mark.integration
     @pytest.mark.asyncio
@@ -386,7 +384,6 @@ class TestScoresPostIntegration:
     async def test_bypass_security_with_flag(self, TestClient, valid_score_body):
         """Test DISABLE_SECURITY=True bypasses authorization."""
         from app.test_app import MockDatabaseMiddleware
-        import os
 
         os.environ["DISABLE_SECURITY"] = "True"
 

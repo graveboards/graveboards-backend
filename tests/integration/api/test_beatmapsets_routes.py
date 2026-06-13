@@ -7,8 +7,6 @@ import os
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.test_app import MockDatabaseMiddleware
-
 
 class TestBeatmapsetsPostIntegration:
     """Integration tests for POST /api/v1/beatmapsets admin endpoint."""
@@ -161,6 +159,8 @@ class TestBeatmapsetsPostIntegration:
         mock_db.add = AsyncMock()
         mock_db.update = AsyncMock()
 
+        from app.test_app import MockDatabaseMiddleware
+
         original_call = MockDatabaseMiddleware.__call__
 
         async def patched_call(self, scope, receive, send):
@@ -213,6 +213,8 @@ class TestBeatmapsetsPostIntegration:
         mock_db.add = AsyncMock()
         mock_db.update = AsyncMock()
 
+        from app.test_app import MockDatabaseMiddleware
+
         original_call = MockDatabaseMiddleware.__call__
 
         async def patched_call(self, scope, receive, send):
@@ -237,9 +239,6 @@ class TestBeatmapsetsPostIntegration:
         data = response.json()
         assert "message" in data
         assert "Snapshotted" in data["message"]
-
-    @pytest.mark.integration
-    @pytest.mark.asyncio
 
     @pytest.mark.integration
     @pytest.mark.asyncio

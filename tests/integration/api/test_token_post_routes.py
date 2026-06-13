@@ -10,8 +10,6 @@ import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 from datetime import datetime, timedelta, timezone
 
-from app.test_app import MockDatabaseMiddleware
-
 
 class TestTokenPostIntegration:
     """Integration tests for POST /api/v1/token endpoint."""
@@ -44,7 +42,7 @@ class TestTokenPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_token_exchange_success(self):
+    async def test_token_exchange_success(self, TestClient):
         """Test successful token exchange via HTTP stack with mocked dependencies."""
         state = "test_csrf_state_12345"
         code = "test_authorization_code"
@@ -72,15 +70,16 @@ class TestTokenPostIntegration:
         mock_osu_client = AsyncMock()
         mock_osu_client.get_own_data = AsyncMock(side_effect=async_mock_get_own_data)
 
+        from app.test_app import MockDatabaseMiddleware
+
+        original_call = MockDatabaseMiddleware.__call__
+
         mock_db = AsyncMock()
         mock_user = MagicMock()
         mock_user.id = 12345678
-        mock_user.roles = []
         mock_db.get = AsyncMock(return_value=mock_user)
         mock_db.add = AsyncMock()
         mock_db.update = AsyncMock()
-
-        original_call = MockDatabaseMiddleware.__call__
 
         async def patched_call(self, scope, receive, send):
             scope["state"]["db"] = mock_db
@@ -88,17 +87,14 @@ class TestTokenPostIntegration:
 
         MockDatabaseMiddleware.__call__ = patched_call
 
-        with patch('app.oauth.OAuth', return_value=mock_oauth), \
-             patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client), \
-             patch('api.v1.token.OAuth', return_value=mock_oauth), \
-             patch('api.v1.token.OsuAPIClient', return_value=mock_osu_client):
-            # Create TestClient inside patches to ensure they're active
-            from app.test_app import create_test_client
-            client = create_test_client()
-            
-            response = client.post("/api/v1/token", data=body, headers=headers)
-
-        MockDatabaseMiddleware.__call__ = original_call
+        try:
+            with patch('app.oauth.OAuth', return_value=mock_oauth), \
+                 patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client), \
+                 patch('api.v1.token.OAuth', return_value=mock_oauth), \
+                 patch('api.v1.token.OsuAPIClient', return_value=mock_osu_client):
+                response = TestClient.post("/api/v1/token", data=body, headers=headers)
+        finally:
+            MockDatabaseMiddleware.__call__ = original_call
 
         assert response.status_code == 201
         data = response.json()
