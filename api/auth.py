@@ -27,8 +27,14 @@ async def api_key_info(key: str, request: ConnexionRequest) -> dict | None:
         return None
 
 
-async def bearer_info(token: str) -> dict | None:
+async def bearer_info(token: str, request: ConnexionRequest = None) -> dict | None:
     """Validate and decode a bearer JWT token.
+
+    Args:
+        token:
+            Bearer token string.
+        request:
+            Incoming request context.
 
     Returns:
         Decoded token payload if valid, otherwise ``None``.
