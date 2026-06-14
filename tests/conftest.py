@@ -45,6 +45,30 @@ def TestClient():
     return create_test_client()
 
 
+@pytest.fixture(scope="function")
+def TestClientWithMocks():
+    """Create a TestClient with custom mock objects injected into middleware.
+    
+    Use this for tests that need isolated mock objects to avoid middleware pollution.
+    Each test gets its own middleware instances with its own mocks.
+    
+    Args:
+        mock_rc: Optional mock Redis client
+        mock_db: Optional mock database client
+        
+    Returns:
+        A TestClient with middleware instances that use the provided mocks
+    """
+    from app.test_app import create_test_app
+    from starlette.testclient import TestClient
+
+    def _create_client(mock_rc=None, mock_db=None):
+        app = create_test_app(mock_rc=mock_rc, mock_db=mock_db)
+        return TestClient(app)
+
+    return _create_client
+
+
 @pytest.fixture(scope="session")
 def event_loop():
     try:

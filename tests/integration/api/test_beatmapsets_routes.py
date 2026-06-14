@@ -48,7 +48,7 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_archival_creates_snapshot(self, TestClient, mock_beatmap_manager, mock_osu_client):
+    async def test_admin_archival_creates_snapshot(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client):
         """Test successful beatmap archival that creates new snapshot."""
         mock_bm = mock_beatmap_manager({
             "message": "Snapshotted 1 beatmap(s)",
@@ -58,11 +58,13 @@ class TestBeatmapsetsPostIntegration:
             "snapshotted_beatmaps": [{"id": 1, "beatmap_id": 116383, "snapshot_number": 1, "checksum": "abc"}],
         })
 
+        test_client = TestClientWithMocks()
+
         with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
              patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \
              patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client):
             body = {"id": self.TEST_BEATMAPSET_ID}
-            response = TestClient.post("/api/v1/beatmapsets", json=body)
+            response = test_client.post("/api/v1/beatmapsets", json=body)
 
         assert response.status_code == 201
         data = response.json()
@@ -71,7 +73,7 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_archival_updates_existing(self, TestClient, mock_beatmap_manager, mock_osu_client):
+    async def test_admin_archival_updates_existing(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client):
         """Test successful beatmap archival that updates existing data."""
         mock_bm = mock_beatmap_manager({
             "message": "Updated 2 field(s) in the beatmapset and 1 field(s) in 1 beatmap(s)",
@@ -81,11 +83,13 @@ class TestBeatmapsetsPostIntegration:
             "snapshotted_beatmaps": [],
         })
 
+        test_client = TestClientWithMocks()
+
         with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
              patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \
              patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client):
             body = {"id": self.TEST_BEATMAPSET_ID}
-            response = TestClient.post("/api/v1/beatmapsets", json=body)
+            response = test_client.post("/api/v1/beatmapsets", json=body)
 
         assert response.status_code == 200
         data = response.json()
@@ -94,7 +98,7 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_archival_up_to_date(self, TestClient, mock_beatmap_manager, mock_osu_client):
+    async def test_admin_archival_up_to_date(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client):
         """Test successful beatmap archival that detects up-to-date data."""
         mock_bm = mock_beatmap_manager({
             "message": "The beatmapset and its beatmaps are fully up-to-date",
@@ -104,11 +108,13 @@ class TestBeatmapsetsPostIntegration:
             "snapshotted_beatmaps": [],
         })
 
+        test_client = TestClientWithMocks()
+
         with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
              patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \
              patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client):
             body = {"id": self.TEST_BEATMAPSET_ID}
-            response = TestClient.post("/api/v1/beatmapsets", json=body)
+            response = test_client.post("/api/v1/beatmapsets", json=body)
 
         assert response.status_code == 200
         data = response.json()
@@ -117,7 +123,7 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_osu_api_error_handling(self, TestClient, mock_beatmap_manager, mock_osu_client):
+    async def test_osu_api_error_handling(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client):
         """Test that osu! API errors are properly handled."""
         import httpx
         from unittest.mock import MagicMock
@@ -129,11 +135,13 @@ class TestBeatmapsetsPostIntegration:
             response=MagicMock(status_code=404, json=lambda: {"error": "Beatmapset not found"}),
         ))
 
+        test_client = TestClientWithMocks()
+
         with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
              patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \
              patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client):
             body = {"id": self.TEST_BEATMAPSET_ID}
-            response = TestClient.post("/api/v1/beatmapsets", json=body)
+            response = test_client.post("/api/v1/beatmapsets", json=body)
 
         assert response.status_code == 404
         data = response.json()
@@ -141,7 +149,7 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_non_admin_user_gets_forbidden(self, TestClient, mock_beatmap_manager, mock_osu_client):
+    async def test_non_admin_user_gets_forbidden(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client):
         """Test that non-admin user gets 403 Forbidden."""
         mock_bm = mock_beatmap_manager({
             "message": "Snapshotted 1 beatmap(s)",
@@ -159,27 +167,16 @@ class TestBeatmapsetsPostIntegration:
         mock_db.add = AsyncMock()
         mock_db.update = AsyncMock()
 
-        from app.test_app import MockDatabaseMiddleware
+        test_client = TestClientWithMocks(mock_db=mock_db)
 
-        original_call = MockDatabaseMiddleware.__call__
-
-        async def patched_call(self, scope, receive, send):
-            scope["state"]["db"] = mock_db
-            await self.app(scope, receive, send)
-
-        MockDatabaseMiddleware.__call__ = patched_call
-
-        try:
-            with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
-                 patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \
-                 patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client), \
-                 patch('app.security.decorators.DISABLE_SECURITY', False), \
-                 patch('app.security.decorators._get_authenticated_user_id', return_value=99999999):
-                headers = {"Authorization": "Bearer test_token_not_admin"}
-                body = {"id": self.TEST_BEATMAPSET_ID}
-                response = TestClient.post("/api/v1/beatmapsets", json=body, headers=headers)
-        finally:
-            MockDatabaseMiddleware.__call__ = original_call
+        with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
+             patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \
+             patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client), \
+             patch('app.security.decorators.DISABLE_SECURITY', False), \
+             patch('app.security.decorators._get_authenticated_user_id', return_value=99999999):
+            headers = {"Authorization": "Bearer test_token_not_admin"}
+            body = {"id": self.TEST_BEATMAPSET_ID}
+            response = test_client.post("/api/v1/beatmapsets", json=body, headers=headers)
 
         assert response.status_code == 403
         data = response.json()
@@ -187,7 +184,7 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_access_succeeds_with_token(self, TestClient, mock_beatmap_manager, mock_osu_client, admin_user_token):
+    async def test_admin_access_succeeds_with_token(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, admin_user_token):
         """Test that admin user can successfully post beatmapset with valid token."""
         from app.security import decode_token
         from app.database.enums import RoleName
@@ -213,27 +210,16 @@ class TestBeatmapsetsPostIntegration:
         mock_db.add = AsyncMock()
         mock_db.update = AsyncMock()
 
-        from app.test_app import MockDatabaseMiddleware
+        test_client = TestClientWithMocks(mock_db=mock_db)
 
-        original_call = MockDatabaseMiddleware.__call__
-
-        async def patched_call(self, scope, receive, send):
-            scope["state"]["db"] = mock_db
-            await self.app(scope, receive, send)
-
-        MockDatabaseMiddleware.__call__ = patched_call
-
-        try:
-            with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
-                 patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \
-                 patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client), \
-                 patch('app.security.decorators.DISABLE_SECURITY', False), \
-                 patch('app.security.decorators._get_authenticated_user_id', return_value=user_id):
-                headers = {"Authorization": f"Bearer {admin_user_token}"}
-                body = {"id": self.TEST_BEATMAPSET_ID}
-                response = TestClient.post("/api/v1/beatmapsets", json=body, headers=headers)
-        finally:
-            MockDatabaseMiddleware.__call__ = original_call
+        with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
+             patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \
+             patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client), \
+             patch('app.security.decorators.DISABLE_SECURITY', False), \
+             patch('app.security.decorators._get_authenticated_user_id', return_value=user_id):
+            headers = {"Authorization": f"Bearer {admin_user_token}"}
+            body = {"id": self.TEST_BEATMAPSET_ID}
+            response = test_client.post("/api/v1/beatmapsets", json=body, headers=headers)
 
         assert response.status_code == 201
         data = response.json()
@@ -242,7 +228,7 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_success_with_auth(self, TestClient, mock_beatmap_manager, mock_osu_client, admin_user_token):
+    async def test_admin_success_with_auth(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, admin_user_token):
         """Test that admin user can successfully post beatmapset with valid token."""
         mock_bm = mock_beatmap_manager({
             "message": "Snapshotted 1 beatmap(s)",
@@ -253,11 +239,13 @@ class TestBeatmapsetsPostIntegration:
         })
 
         headers = {"Authorization": f"Bearer {admin_user_token}"}
+        test_client = TestClientWithMocks()
+
         with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
              patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \
              patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client):
             body = {"id": self.TEST_BEATMAPSET_ID}
-            response = TestClient.post("/api/v1/beatmapsets", json=body, headers=headers)
+            response = test_client.post("/api/v1/beatmapsets", json=body, headers=headers)
 
         assert response.status_code == 201
         data = response.json()
@@ -266,10 +254,8 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_bypass_security_with_flag(self, TestClient, mock_beatmap_manager, mock_osu_client):
+    async def test_bypass_security_with_flag(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client):
         """Test DISABLE_SECURITY=True bypasses authorization."""
-        os.environ["DISABLE_SECURITY"] = "True"
-
         mock_bm = mock_beatmap_manager({
             "message": "Snapshotted 1 beatmap(s)",
             "updated_beatmapset": None,
@@ -278,15 +264,16 @@ class TestBeatmapsetsPostIntegration:
             "snapshotted_beatmaps": [{"id": 1, "beatmap_id": 116383, "snapshot_number": 1, "checksum": "abc"}],
         })
 
+        test_client = TestClientWithMocks()
+
         with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
              patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \
-             patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client):
+             patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client), \
+             patch('app.security.decorators.DISABLE_SECURITY', True):
             body = {"id": self.TEST_BEATMAPSET_ID}
-            response = TestClient.post("/api/v1/beatmapsets", json=body)
+            response = test_client.post("/api/v1/beatmapsets", json=body)
 
         assert response.status_code == 201
         data = response.json()
         assert "message" in data
         assert "Snapshotted" in data["message"]
-
-        del os.environ["DISABLE_SECURITY"]

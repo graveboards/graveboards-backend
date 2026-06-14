@@ -42,31 +42,36 @@ class MockRedisMiddleware:
     
     Provides a mock Redis client with async methods for testing endpoints
     that require Redis in request.state without needing the full app setup.
+    
+    Accepts optional mock_rc parameter for custom Redis mock objects.
     """
 
-    def __init__(self, app):
+    def __init__(self, app, mock_rc=None):
         self.app = app
+        self.mock_rc = mock_rc
 
     async def __call__(self, scope, receive, send):
         from unittest.mock import AsyncMock, MagicMock
         
-        rc = AsyncMock(spec=RedisClient)
-        rc.incr = AsyncMock(return_value=1)
-        rc.expire = AsyncMock(return_value=True)
-        rc.set = AsyncMock(return_value=True)
-        rc.hgetall = AsyncMock()
-        rc.hgetall.return_value = None
-        rc.hset = AsyncMock(return_value=True)
-        rc.getdel = AsyncMock(return_value="valid")
-        
-        # Mock lock_ctx as async context manager
-        class MockLockCtx:
-            async def __aenter__(self):
-                return None
-            async def __aexit__(self, *args):
-                pass
-        
-        rc.lock_ctx = MagicMock(return_value=MockLockCtx())
+        if self.mock_rc is not None:
+            rc = self.mock_rc
+        else:
+            rc = AsyncMock(spec=RedisClient)
+            rc.incr = AsyncMock(return_value=1)
+            rc.expire = AsyncMock(return_value=True)
+            rc.set = AsyncMock(return_value=True)
+            rc.hgetall = AsyncMock()
+            rc.hgetall.return_value = None
+            rc.hset = AsyncMock(return_value=True)
+            rc.getdel = AsyncMock(return_value="valid")
+            
+            class MockLockCtx:
+                async def __aenter__(self):
+                    return None
+                async def __aexit__(self, *args):
+                    pass
+            
+            rc.lock_ctx = MagicMock(return_value=MockLockCtx())
         
         scope["state"]["rc"] = rc
         await self.app(scope, receive, send)
@@ -78,36 +83,39 @@ class MockDatabaseMiddleware:
     Provides a mock database connection for testing endpoints
     that require db in request.state without needing the full app setup.
     
-    Supports configurable user data via middleware configuration in scope.
+    Accepts optional mock_db parameter for custom database mock objects.
     """
 
-    def __init__(self, app):
+    def __init__(self, app, mock_db=None):
         self.app = app
+        self.mock_db = mock_db
 
     async def __call__(self, scope, receive, send):
         from unittest.mock import AsyncMock, MagicMock
         
-        db = AsyncMock()
-        
-        mock_user = MagicMock()
-        mock_user.id = scope["state"].get("test_user_id", 99999999)
-        mock_user.roles = scope["state"].get("test_user_roles", [])
-        
-        db.get = AsyncMock(return_value=mock_user)
-        db.add = AsyncMock()
-        db.update = AsyncMock()
-        
-        # Create async context manager for session
-        class MockSession:
-            def __init__(self, autoflush=True):
-                self.autoflush = autoflush
+        if self.mock_db is not None:
+            db = self.mock_db
+        else:
+            db = AsyncMock()
             
-            async def __aenter__(self):
-                return MagicMock()
-            async def __aexit__(self, *args):
-                pass
-        
-        db.session = MockSession
+            mock_user = MagicMock()
+            mock_user.id = scope["state"].get("test_user_id", 99999999)
+            mock_user.roles = scope["state"].get("test_user_roles", [])
+            
+            db.get = AsyncMock(return_value=mock_user)
+            db.add = AsyncMock()
+            db.update = AsyncMock()
+            
+            class MockSession:
+                def __init__(self, autoflush=True):
+                    self.autoflush = autoflush
+                
+                async def __aenter__(self):
+                    return MagicMock()
+                async def __aexit__(self, *args):
+                    pass
+            
+            db.session = MockSession
         
         scope["state"]["db"] = db
         await self.app(scope, receive, send)
@@ -122,7 +130,7 @@ def get_debug_api_key() -> str:
     return __import__('hashlib').sha256(seed.encode()).hexdigest()[:32]
 
 
-def create_test_app() -> AsyncApp:
+def create_test_app(mock_rc=None, mock_db=None) -> AsyncApp:
     """Create a minimal Connexion app for testing.
     
     This creates an app without:
@@ -130,6 +138,10 @@ def create_test_app() -> AsyncApp:
     - Real osu! API calls during startup
     
     Use with TestClient for fast, isolated endpoint tests.
+    
+    Args:
+        mock_rc: Optional custom Redis mock to inject into MockRedisMiddleware
+        mock_db: Optional custom database mock to inject into MockDatabaseMiddleware
     """
     connexion_app = AsyncApp(
         __name__,
@@ -151,31 +163,15 @@ def create_test_app() -> AsyncApp:
         GZipMiddleware,
         position=MiddlewarePosition.BEFORE_EXCEPTION
     )
-    async_mock_rc = AsyncMock(spec=RedisClient)
-    async_mock_rc.incr = AsyncMock(return_value=1)
-    async_mock_rc.expire = AsyncMock(return_value=True)
-    async_mock_rc.set = AsyncMock(return_value=True)
-    async_mock_rc.hgetall = AsyncMock()
-    async_mock_rc.hgetall.return_value = None
-    async_mock_rc.hset = AsyncMock(return_value=True)
-    async_mock_rc.getdel = AsyncMock(return_value="valid")
-    
-    class MockRedisMiddlewareInternal:
-        """Minimal Redis middleware for testing with async methods."""
-        def __init__(self, app):
-            self.app = app
-
-        async def __call__(self, scope, receive, send):
-            scope["state"]["rc"] = async_mock_rc
-            await self.app(scope, receive, send)
-
     connexion_app.add_middleware(
-        MockRedisMiddlewareInternal,
-        position=MiddlewarePosition.BEFORE_EXCEPTION
+        MockRedisMiddleware,
+        position=MiddlewarePosition.BEFORE_EXCEPTION,
+        mock_rc=mock_rc
     )
     connexion_app.add_middleware(
         MockDatabaseMiddleware,
-        position=MiddlewarePosition.BEFORE_EXCEPTION
+        position=MiddlewarePosition.BEFORE_EXCEPTION,
+        mock_db=mock_db
     )
 
     from connexion.lifecycle import ConnexionResponse

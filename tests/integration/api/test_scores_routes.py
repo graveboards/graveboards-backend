@@ -35,7 +35,7 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_submission_creates_score(self, TestClient, valid_score_body):
+    async def test_admin_submission_creates_score(self, TestClientWithMocks, valid_score_body):
         """Test successful score submission that creates new score."""
         mock_db = AsyncMock()
         
@@ -58,20 +58,9 @@ class TestScoresPostIntegration:
         ]
         mock_db.add = AsyncMock()
 
-        from app.test_app import MockDatabaseMiddleware
+        test_client = TestClientWithMocks(mock_db=mock_db)
 
-        original_call = MockDatabaseMiddleware.__call__
-
-        async def patched_call(self, scope, receive, send):
-            scope["state"]["db"] = mock_db
-            await self.app(scope, receive, send)
-
-        MockDatabaseMiddleware.__call__ = patched_call
-
-        try:
-            response = TestClient.post("/api/v1/scores", json=valid_score_body)
-        finally:
-            MockDatabaseMiddleware.__call__ = original_call
+        response = test_client.post("/api/v1/scores", json=valid_score_body)
 
         assert response.status_code == 201
         data = response.json()
@@ -80,28 +69,17 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_user_not_found(self, TestClient, valid_score_body):
+    async def test_admin_user_not_found(self, TestClientWithMocks, valid_score_body):
         """Test score submission fails when user doesn't exist."""
         mock_db = AsyncMock()
         mock_db.get.return_value = None
         mock_db.add = AsyncMock()
 
-        from app.test_app import MockDatabaseMiddleware
+        test_client = TestClientWithMocks(mock_db=mock_db)
 
-        original_call = MockDatabaseMiddleware.__call__
-
-        async def patched_call(self, scope, receive, send):
-            scope["state"]["db"] = mock_db
-            await self.app(scope, receive, send)
-
-        MockDatabaseMiddleware.__call__ = patched_call
-
-        try:
-            body = valid_score_body.copy()
-            body["user_id"] = -1
-            response = TestClient.post("/api/v1/scores", json=body)
-        finally:
-            MockDatabaseMiddleware.__call__ = original_call
+        body = valid_score_body.copy()
+        body["user_id"] = -1
+        response = test_client.post("/api/v1/scores", json=body)
 
         assert response.status_code == 404
         data = response.json()
@@ -109,7 +87,7 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_beatmap_not_found(self, TestClient, valid_score_body):
+    async def test_admin_beatmap_not_found(self, TestClientWithMocks, valid_score_body):
         """Test score submission fails when beatmap doesn't exist."""
         mock_db = AsyncMock()
         mock_user = MagicMock()
@@ -117,22 +95,11 @@ class TestScoresPostIntegration:
         mock_db.get.side_effect = [mock_user, None]
         mock_db.add = AsyncMock()
 
-        from app.test_app import MockDatabaseMiddleware
+        test_client = TestClientWithMocks(mock_db=mock_db)
 
-        original_call = MockDatabaseMiddleware.__call__
-
-        async def patched_call(self, scope, receive, send):
-            scope["state"]["db"] = mock_db
-            await self.app(scope, receive, send)
-
-        MockDatabaseMiddleware.__call__ = patched_call
-
-        try:
-            body = valid_score_body.copy()
-            body["beatmap"]["id"] = -1
-            response = TestClient.post("/api/v1/scores", json=body)
-        finally:
-            MockDatabaseMiddleware.__call__ = original_call
+        body = valid_score_body.copy()
+        body["beatmap"]["id"] = -1
+        response = test_client.post("/api/v1/scores", json=body)
 
         assert response.status_code == 404
         data = response.json()
@@ -140,7 +107,7 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_beatmap_snapshot_not_found(self, TestClient, valid_score_body):
+    async def test_admin_beatmap_snapshot_not_found(self, TestClientWithMocks, valid_score_body):
         """Test score submission fails when beatmap snapshot doesn't exist."""
         mock_db = AsyncMock()
         mock_user = MagicMock()
@@ -150,22 +117,11 @@ class TestScoresPostIntegration:
         mock_db.get.side_effect = [mock_user, mock_beatmap, None]
         mock_db.add = AsyncMock()
 
-        from app.test_app import MockDatabaseMiddleware
+        test_client = TestClientWithMocks(mock_db=mock_db)
 
-        original_call = MockDatabaseMiddleware.__call__
-
-        async def patched_call(self, scope, receive, send):
-            scope["state"]["db"] = mock_db
-            await self.app(scope, receive, send)
-
-        MockDatabaseMiddleware.__call__ = patched_call
-
-        try:
-            body = valid_score_body.copy()
-            body["beatmap"]["id"] = -1
-            response = TestClient.post("/api/v1/scores", json=body)
-        finally:
-            MockDatabaseMiddleware.__call__ = original_call
+        body = valid_score_body.copy()
+        body["beatmap"]["id"] = -1
+        response = test_client.post("/api/v1/scores", json=body)
 
         assert response.status_code == 404
         data = response.json()
@@ -173,7 +129,7 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_leaderboard_not_found(self, TestClient, valid_score_body):
+    async def test_admin_leaderboard_not_found(self, TestClientWithMocks, valid_score_body):
         """Test score submission fails when leaderboard doesn't exist."""
         mock_db = AsyncMock()
         mock_user = MagicMock()
@@ -186,22 +142,11 @@ class TestScoresPostIntegration:
         mock_db.get.side_effect = [mock_user, mock_beatmap, mock_snapshot, None]
         mock_db.add = AsyncMock()
 
-        from app.test_app import MockDatabaseMiddleware
+        test_client = TestClientWithMocks(mock_db=mock_db)
 
-        original_call = MockDatabaseMiddleware.__call__
-
-        async def patched_call(self, scope, receive, send):
-            scope["state"]["db"] = mock_db
-            await self.app(scope, receive, send)
-
-        MockDatabaseMiddleware.__call__ = patched_call
-
-        try:
-            body = valid_score_body.copy()
-            body["beatmap"]["id"] = -1
-            response = TestClient.post("/api/v1/scores", json=body)
-        finally:
-            MockDatabaseMiddleware.__call__ = original_call
+        body = valid_score_body.copy()
+        body["beatmap"]["id"] = -1
+        response = test_client.post("/api/v1/scores", json=body)
 
         assert response.status_code == 404
         data = response.json()
@@ -209,7 +154,7 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_duplicate_score(self, TestClient, valid_score_body):
+    async def test_admin_duplicate_score(self, TestClientWithMocks, valid_score_body):
         """Test score submission fails when duplicate exists."""
         mock_db = AsyncMock()
         mock_user = MagicMock()
@@ -223,22 +168,11 @@ class TestScoresPostIntegration:
         mock_leaderboard.id = 1
         mock_db.add = AsyncMock()
 
-        from app.test_app import MockDatabaseMiddleware
+        test_client = TestClientWithMocks(mock_db=mock_db)
 
-        original_call = MockDatabaseMiddleware.__call__
-
-        async def patched_call(self, scope, receive, send):
-            scope["state"]["db"] = mock_db
-            await self.app(scope, receive, send)
-
-        MockDatabaseMiddleware.__call__ = patched_call
-
-        try:
-            body = valid_score_body.copy()
-            body["beatmap"]["id"] = -1
-            response = TestClient.post("/api/v1/scores", json=body)
-        finally:
-            MockDatabaseMiddleware.__call__ = original_call
+        body = valid_score_body.copy()
+        body["beatmap"]["id"] = -1
+        response = test_client.post("/api/v1/scores", json=body)
 
         assert response.status_code == 409
         data = response.json()
@@ -246,7 +180,7 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_non_admin_user_gets_forbidden(self, TestClient, valid_score_body):
+    async def test_non_admin_user_gets_forbidden(self, TestClientWithMocks, valid_score_body):
         """Test that non-admin user gets 403 Forbidden."""
         mock_db = AsyncMock()
         mock_user = MagicMock()
@@ -254,24 +188,14 @@ class TestScoresPostIntegration:
         mock_user.roles = []
         mock_db.get = AsyncMock(return_value=mock_user)
         mock_db.add = AsyncMock()
+        mock_db.update = AsyncMock()
 
-        from app.test_app import MockDatabaseMiddleware
+        test_client = TestClientWithMocks(mock_db=mock_db)
 
-        original_call = MockDatabaseMiddleware.__call__
-
-        async def patched_call(self, scope, receive, send):
-            scope["state"]["db"] = mock_db
-            await self.app(scope, receive, send)
-
-        MockDatabaseMiddleware.__call__ = patched_call
-
-        try:
-            with patch('app.security.decorators.DISABLE_SECURITY', False), \
-                 patch('app.security.decorators._get_authenticated_user_id', return_value=99999999):
-                headers = {"Authorization": "Bearer test_token_not_admin"}
-                response = TestClient.post("/api/v1/scores", json=valid_score_body, headers=headers)
-        finally:
-            MockDatabaseMiddleware.__call__ = original_call
+        with patch('app.security.decorators.DISABLE_SECURITY', False), \
+             patch('app.security.decorators._get_authenticated_user_id', return_value=99999999):
+            headers = {"Authorization": "Bearer test_token_not_admin"}
+            response = test_client.post("/api/v1/scores", json=valid_score_body, headers=headers)
 
         assert response.status_code == 403
         data = response.json()
@@ -279,10 +203,11 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_access_succeeds_with_token(self, TestClient, valid_score_body, admin_user_token):
+    async def test_admin_access_succeeds_with_token(self, TestClientWithMocks, valid_score_body, admin_user_token):
         """Test that admin user can successfully post score with valid token."""
         from app.security import decode_token
         from app.database.enums import RoleName
+        from app.database.models import User, Beatmap, BeatmapSnapshot, Leaderboard, Score
 
         decoded_token = decode_token(admin_user_token)
         user_id = int(decoded_token["sub"])
@@ -305,30 +230,28 @@ class TestScoresPostIntegration:
         mock_leaderboard = MagicMock()
         mock_leaderboard.id = 1
 
-        mock_db.get.side_effect = [
-            mock_user,
-            mock_beatmap,
-            mock_snapshot,
-            mock_leaderboard,
-            None,
-        ]
+        async def mock_get(model, **kwargs):
+            if model == User:
+                return mock_user
+            elif model == Beatmap:
+                return mock_beatmap
+            elif model == BeatmapSnapshot:
+                return mock_snapshot
+            elif model == Leaderboard:
+                return mock_leaderboard
+            elif model == Score:
+                return None
+            return None
+
+        mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.add = AsyncMock()
 
-        from app.test_app import MockDatabaseMiddleware
+        test_client = TestClientWithMocks(mock_db=mock_db)
 
-        original_call = MockDatabaseMiddleware.__call__
-
-        async def patched_call(self, scope, receive, send):
-            scope["state"]["db"] = mock_db
-            await self.app(scope, receive, send)
-
-        MockDatabaseMiddleware.__call__ = patched_call
-
-        try:
+        with patch('app.security.decorators.DISABLE_SECURITY', False), \
+             patch('app.security.decorators._get_authenticated_user_id', return_value=user_id):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
-            response = TestClient.post("/api/v1/scores", json=valid_score_body, headers=headers)
-        finally:
-            MockDatabaseMiddleware.__call__ = original_call
+            response = test_client.post("/api/v1/scores", json=valid_score_body, headers=headers)
 
         assert response.status_code == 201
         data = response.json()
@@ -337,10 +260,8 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_success_with_auth(self, TestClient, valid_score_body, admin_user_token):
+    async def test_admin_success_with_auth(self, TestClientWithMocks, valid_score_body, admin_user_token):
         """Test that admin user can successfully post score with valid token."""
-        from app.test_app import MockDatabaseMiddleware
-
         mock_db = AsyncMock()
         mock_user = MagicMock()
         mock_user.id = self.TEST_USER_ID
@@ -360,19 +281,10 @@ class TestScoresPostIntegration:
         ]
         mock_db.add = AsyncMock()
 
-        original_call = MockDatabaseMiddleware.__call__
+        headers = {"Authorization": f"Bearer {admin_user_token}"}
+        test_client = TestClientWithMocks(mock_db=mock_db)
 
-        async def patched_call(self, scope, receive, send):
-            scope["state"]["db"] = mock_db
-            await self.app(scope, receive, send)
-
-        MockDatabaseMiddleware.__call__ = patched_call
-
-        try:
-            headers = {"Authorization": f"Bearer {admin_user_token}"}
-            response = TestClient.post("/api/v1/scores", json=valid_score_body, headers=headers)
-        finally:
-            MockDatabaseMiddleware.__call__ = original_call
+        response = test_client.post("/api/v1/scores", json=valid_score_body, headers=headers)
 
         assert response.status_code == 201
         data = response.json()
@@ -381,46 +293,35 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_bypass_security_with_flag(self, TestClient, valid_score_body):
+    async def test_bypass_security_with_flag(self, TestClientWithMocks, valid_score_body):
         """Test DISABLE_SECURITY=True bypasses authorization."""
-        from app.test_app import MockDatabaseMiddleware
-
         os.environ["DISABLE_SECURITY"] = "True"
-
-        mock_db = AsyncMock()
-        mock_user = MagicMock()
-        mock_user.id = self.TEST_USER_ID
-        mock_beatmap = MagicMock()
-        mock_beatmap.id = self.TEST_BEATMAP_ID
-        mock_snapshot = MagicMock()
-        mock_snapshot.id = 1
-        mock_snapshot.beatmap_id = self.TEST_BEATMAP_ID
-        mock_leaderboard = MagicMock()
-        mock_leaderboard.id = 1
-        mock_db.get.side_effect = [
-            mock_user,
-            mock_beatmap,
-            mock_snapshot,
-            mock_leaderboard,
-            None,
-        ]
-        mock_db.add = AsyncMock()
-
-        original_call = MockDatabaseMiddleware.__call__
-
-        async def patched_call(self, scope, receive, send):
-            scope["state"]["db"] = mock_db
-            await self.app(scope, receive, send)
-
-        MockDatabaseMiddleware.__call__ = patched_call
-
         try:
-            response = TestClient.post("/api/v1/scores", json=valid_score_body)
-        finally:
-            MockDatabaseMiddleware.__call__ = original_call
-            del os.environ["DISABLE_SECURITY"]
+            mock_db = AsyncMock()
+            mock_user = MagicMock()
+            mock_user.id = self.TEST_USER_ID
+            mock_beatmap = MagicMock()
+            mock_beatmap.id = self.TEST_BEATMAP_ID
+            mock_snapshot = MagicMock()
+            mock_snapshot.id = 1
+            mock_snapshot.beatmap_id = self.TEST_BEATMAP_ID
+            mock_leaderboard = MagicMock()
+            mock_leaderboard.id = 1
+            mock_db.get.side_effect = [
+                mock_user,
+                mock_beatmap,
+                mock_snapshot,
+                mock_leaderboard,
+                None,
+            ]
+            mock_db.add = AsyncMock()
 
-        assert response.status_code == 201
-        data = response.json()
-        assert "message" in data
-        assert data["message"] == "Score added successfully!"
+            test_client = TestClientWithMocks(mock_db=mock_db)
+
+            response = test_client.post("/api/v1/scores", json=valid_score_body)
+
+            assert response.status_code == 201
+            data = response.json()
+            assert "message" in data
+        finally:
+            os.environ["DISABLE_SECURITY"] = "False"

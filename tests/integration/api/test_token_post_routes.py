@@ -42,7 +42,7 @@ class TestTokenPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_token_exchange_success(self, TestClient):
+    async def test_token_exchange_success(self, TestClientWithMocks):
         """Test successful token exchange via HTTP stack with mocked dependencies."""
         state = "test_csrf_state_12345"
         code = "test_authorization_code"
@@ -70,10 +70,6 @@ class TestTokenPostIntegration:
         mock_osu_client = AsyncMock()
         mock_osu_client.get_own_data = AsyncMock(side_effect=async_mock_get_own_data)
 
-        from app.test_app import MockDatabaseMiddleware
-
-        original_call = MockDatabaseMiddleware.__call__
-
         mock_db = AsyncMock()
         mock_user = MagicMock()
         mock_user.id = 12345678
@@ -81,20 +77,13 @@ class TestTokenPostIntegration:
         mock_db.add = AsyncMock()
         mock_db.update = AsyncMock()
 
-        async def patched_call(self, scope, receive, send):
-            scope["state"]["db"] = mock_db
-            await self.app(scope, receive, send)
+        test_client = TestClientWithMocks(mock_db=mock_db)
 
-        MockDatabaseMiddleware.__call__ = patched_call
-
-        try:
-            with patch('app.oauth.OAuth', return_value=mock_oauth), \
-                 patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client), \
-                 patch('api.v1.token.OAuth', return_value=mock_oauth), \
-                 patch('api.v1.token.OsuAPIClient', return_value=mock_osu_client):
-                response = TestClient.post("/api/v1/token", data=body, headers=headers)
-        finally:
-            MockDatabaseMiddleware.__call__ = original_call
+        with patch('app.oauth.OAuth', return_value=mock_oauth), \
+             patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client), \
+             patch('api.v1.token.OAuth', return_value=mock_oauth), \
+             patch('api.v1.token.OsuAPIClient', return_value=mock_osu_client):
+            response = test_client.post("/api/v1/token", data=body, headers=headers)
 
         assert response.status_code == 201
         data = response.json()
