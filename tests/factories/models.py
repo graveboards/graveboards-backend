@@ -3,7 +3,7 @@ from typing import Optional
 
 import pytest
 
-from app.database.models import User, Profile, Queue, Request, Beatmap, Beatmapset
+from app.database.models import User, Profile, Queue, Request, Beatmap, Beatmapset, BeatmapListing, BeatmapTag, BeatmapsetListing, BeatmapsetTag
 
 
 def create_user(**kwargs) -> User:
@@ -130,3 +130,67 @@ def beatmap_factory():
 def beatmapset_factory():
     """Factory fixture for creating beatmapset instances."""
     return create_beatmapset
+
+
+def create_beatmap_listing(beatmap_id: Optional[int] = None, beatmap_snapshot_id: Optional[int] = None, **kwargs) -> BeatmapListing:
+    """Create a beatmap listing model instance with defaults."""
+    return BeatmapListing(
+        id=kwargs.get("id"),
+        beatmap_id=beatmap_id or kwargs.get("beatmap_id", 116383),
+        beatmap_snapshot_id=beatmap_snapshot_id or kwargs.get("beatmap_snapshot_id", 1),
+        updated_at=kwargs.get("updated_at"),
+    )
+
+
+def create_beatmap_tag(**kwargs) -> BeatmapTag:
+    """Create a beatmap tag model instance with defaults."""
+    return BeatmapTag(
+        id=kwargs.get("id", 1),
+        name=kwargs.get("name", "Test Tag"),
+        ruleset_id=kwargs.get("ruleset_id"),
+        description=kwargs.get("description", "A test beatmap tag"),
+        created_at=kwargs.get("created_at"),
+        updated_at=kwargs.get("updated_at"),
+    )
+
+
+def create_beatmapset_listing(beatmapset_id: Optional[int] = None, beatmapset_snapshot_id: Optional[int] = None, **kwargs) -> BeatmapsetListing:
+    """Create a beatmapset listing model instance with defaults."""
+    return BeatmapsetListing(
+        id=kwargs.get("id"),
+        beatmapset_id=beatmapset_id or kwargs.get("beatmapset_id", 35965),
+        beatmapset_snapshot_id=beatmapset_snapshot_id or kwargs.get("beatmapset_snapshot_id", 1),
+        updated_at=kwargs.get("updated_at"),
+    )
+
+
+def create_beatmapset_tag(**kwargs) -> BeatmapsetTag:
+    """Create a beatmapset tag model instance with defaults."""
+    return BeatmapsetTag(
+        id=kwargs.get("id", 1),
+        name=kwargs.get("name", "Test Beatmapset Tag"),
+    )
+
+
+@pytest.fixture
+def beatmap_listing_factory():
+    """Factory fixture for creating beatmap listing instances."""
+    return create_beatmap_listing
+
+
+@pytest.fixture
+def beatmap_tag_factory():
+    """Factory fixture for creating beatmap tag instances."""
+    return create_beatmap_tag
+
+
+@pytest.fixture
+def beatmapset_listing_factory():
+    """Factory fixture for creating beatmapset listing instances."""
+    return create_beatmapset_listing
+
+
+@pytest.fixture
+def beatmapset_tag_factory():
+    """Factory fixture for creating beatmapset tag instances."""
+    return create_beatmapset_tag
