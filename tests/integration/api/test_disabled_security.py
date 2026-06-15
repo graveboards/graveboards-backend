@@ -2,7 +2,7 @@
 Integration tests for DISABLE_SECURITY environment variable coverage.
 
 Tests that verify security can be enabled/disabled via the DISABLE_SECURITY
-environment variable as specified in Phase 10.11 of TESTING_GAPS.md.
+environment variable.
 """
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
