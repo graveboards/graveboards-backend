@@ -239,4 +239,80 @@ class TestQueuesPatchIntegration:
         assert "forbidden" in data.get("detail", "").lower() or "not authorized" in data.get("detail", "").lower()
 
 
+class TestQueuesGetIntegration:
+    """Integration tests for GET /api/v1/queues/{id} endpoint."""
+
+    TEST_QUEUE_ID = 1
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    async def test_get_queue_by_id(self, TestClientWithMocks, admin_user_token):
+        """Test GET /api/v1/queues/{id} returns specific queue."""
+        from app.database.schemas import QueueSchema
+        from app.database.models import Queue
+
+        mock_db = AsyncMock()
+
+        queue_data = {
+            "id": self.TEST_QUEUE_ID,
+            "user_id": 12345678,
+            "name": "Test Queue",
+            "description": "A test queue",
+            "visibility": 0,
+            "is_open": True,
+        }
+
+        mock_queue = QueueSchema.model_validate(queue_data)
+
+        async def mock_get(model, **kwargs):
+            if model == Queue:
+                return mock_queue
+            mock_user = MagicMock()
+            mock_user.id = 11111111
+            admin_role = MagicMock()
+            admin_role.name = "admin"
+            mock_user.roles = [admin_role]
+            return mock_user
+
+        mock_db.get = AsyncMock(side_effect=mock_get)
+
+        test_client = TestClientWithMocks(mock_db=mock_db)
+
+        headers = {"Authorization": f"Bearer {admin_user_token}"}
+        response = test_client.get(f"/api/v1/queues/{self.TEST_QUEUE_ID}", headers=headers)
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["id"] == self.TEST_QUEUE_ID
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    async def test_queue_not_found(self, TestClientWithMocks, admin_user_token):
+        """Test GET /api/v1/queues/{id} returns 404 for non-existent queue."""
+        from app.database.models import Queue
+
+        mock_db = AsyncMock()
+
+        async def mock_get(model, **kwargs):
+            if model == Queue:
+                return None
+            mock_user = MagicMock()
+            mock_user.id = 11111111
+            admin_role = MagicMock()
+            admin_role.name = "admin"
+            mock_user.roles = [admin_role]
+            return mock_user
+
+        mock_db.get = AsyncMock(side_effect=mock_get)
+
+        test_client = TestClientWithMocks(mock_db=mock_db)
+
+        headers = {"Authorization": f"Bearer {admin_user_token}"}
+        response = test_client.get("/api/v1/queues/999999", headers=headers)
+
+        assert response.status_code == 404
+        data = response.json()
+        assert "not found" in data["detail"].lower()
+
+
 # Unit tests

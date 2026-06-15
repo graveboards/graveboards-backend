@@ -516,24 +516,28 @@ class TestRequestsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="Skipping - requires proper mock data matching Pydantic schemas")
-    async def test_get_request_not_found(self, TestClientWithMocks):
+    async def test_get_request_not_found(self, TestClientWithMocks, admin_user_token):
         """Test GET /api/v1/requests/{id} returns 404 for non-existent request."""
-        mock_db = AsyncMock()
-        mock_db.get = AsyncMock(return_value=None)
+        from app.database.models import Request
 
-        mock_user = MagicMock()
-        mock_user.id = 12345678
-        mock_user.roles = []
-        mock_db.get = AsyncMock(return_value=mock_user)
+        mock_db = AsyncMock()
+
+        async def mock_get(model, **kwargs):
+            if model == Request:
+                return None
+            mock_user = MagicMock()
+            mock_user.id = 11111111
+            admin_role = MagicMock()
+            admin_role.name = "admin"
+            mock_user.roles = [admin_role]
+            return mock_user
+
+        mock_db.get = AsyncMock(side_effect=mock_get)
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.DISABLE_SECURITY', False), \
-             patch('app.security.decorators._get_authenticated_user_id', return_value=12345678), \
-             patch('app.security.decorators.ownership_authorization', lambda *args, **kwargs: lambda f: f):
-            headers = {"Authorization": "Bearer test_token"}
-            response = test_client.get("/api/v1/requests/999999", headers=headers)
+        headers = {"Authorization": f"Bearer {admin_user_token}"}
+        response = test_client.get("/api/v1/requests/999999", headers=headers)
 
         assert response.status_code == 404
         data = response.json()

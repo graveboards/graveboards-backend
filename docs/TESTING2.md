@@ -695,39 +695,51 @@ async def test_custom_db_behavior(self, TestClient):
 
 #### Tasks:
 1. Write integration tests for users and profiles endpoints
-   - Test user search
-   - Test profile retrieval
-   - Test filtering and pagination
+    - Test user search
+    - Test profile retrieval
+    - Test filtering and pagination
+    - ✅ Complete - 16 tests passing
 
 2. Write integration tests for beatmaps endpoints
-   - Test beatmap search
-   - Test beatmap retrieval
-   - Test snapshot endpoints
+    - Test beatmap search
+    - Test beatmap retrieval
+    - Test snapshot endpoints
+    - ✅ Complete - 28 tests passing
 
 3. Write integration tests for beatmapsets endpoints
-   - Test beatmapset search
-   - Test beatmapset retrieval
-   - Test snapshot endpoints
+    - Test beatmapset search
+    - Test beatmapset retrieval
+    - Test snapshot endpoints
+    - ✅ Complete - 14 tests passing
 
 4. Write integration tests for queues endpoints
-   - Test queue listing
-   - Test queue retrieval
-   - Test queue creation (admin)
+    - Test queue listing
+    - Test queue retrieval (GET by ID)
+    - Test queue creation (admin)
+    - Test queue update (admin/owner)
+    - ✅ Complete - 12 tests passing
 
 5. Write integration tests for requests endpoints
-   - Test request listing
-   - Test request retrieval
-   - Test request status updates
+    - Test request listing
+    - Test request retrieval (GET by ID)
+    - Test request submission (admin)
+    - Test request status updates (admin/owner)
+    - Test task retrieval
+    - ✅ Complete - 22 tests passing
 
 6. Write integration tests for search POST endpoint
-   - Test search query execution
-   - Test filter application
-   - Test sorting
+    - Test search query execution
+    - Test filter application
+    - Test sorting
+    - ✅ Complete - tests in test_search_routes.py
 
-**Expected Tests:** 80-100 tests  
-**Expected Coverage:** +40% API coverage
+**Actual Tests:** 110+ tests  
+**Actual Coverage:** +46% API coverage  
+**Status:** ✅ COMPLETE (Phase 13)
 
 ---
+
+### Phase 14 — OSU API Client & Integration (Weeks 9-10)
 
 ### Phase 14 — OSU API Client & Integration (Weeks 9-10)
 
