@@ -109,7 +109,7 @@ manage fixtures fetch --users-osu 100 --users-taiko 50
 
 Archives are cached at:
 ```
-instance/osu_sh_archives/
+instance/data_ppy_sh/
 ├── archive_index.json          # Index of all available archives
 ├── sql_cache/                  # Extracted SQL files
 │   ├── 2026_01_01_performance_osu_top_1000/
@@ -222,7 +222,7 @@ await fetcher.refresh_archive_data()  # Load IDs from archives
 ## Support
 
 For issues:
-1. Check `instance/osu_sh_archives/archive_index.json` for latest index
+1. Check `instance/data_ppy_sh/archive_index.json` for latest index
 2. Verify network access to `https://data.ppy.sh/`
 3. Ensure sufficient disk space (~5GB for archives)
 
