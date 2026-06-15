@@ -277,3 +277,150 @@ class TestBeatmapsetsPostIntegration:
         data = response.json()
         assert "message" in data
         assert "Snapshotted" in data["message"]
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    async def test_get_beatmapset_list(self, TestClientWithMocks):
+        """Test GET /api/v1/beatmapsets returns list of beatmapsets."""
+        mock_db = AsyncMock()
+        mock_beatmapset1 = MagicMock()
+        mock_beatmapset1.id = 35965
+        mock_beatmapset2 = MagicMock()
+        mock_beatmapset2.id = 35966
+        mock_db.get_many = AsyncMock(return_value=[mock_beatmapset1, mock_beatmapset2])
+
+        test_client = TestClientWithMocks(mock_db=mock_db)
+
+        response = test_client.get("/api/v1/beatmapsets")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
+        assert len(data) == 2
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    async def test_get_beatmapset_by_id(self, TestClientWithMocks):
+        """Test GET /api/v1/beatmapsets/{id} returns specific beatmapset."""
+        mock_db = AsyncMock()
+        mock_beatmapset = MagicMock()
+        mock_beatmapset.id = 35965
+        mock_beatmapset.user_id = 12345678
+        mock_db.get = AsyncMock(return_value=mock_beatmapset)
+
+        test_client = TestClientWithMocks(mock_db=mock_db)
+
+        response = test_client.get("/api/v1/beatmapsets/35965")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["id"] == 35965
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    async def test_get_beatmapset_not_found(self, TestClientWithMocks):
+        """Test GET /api/v1/beatmapsets/{id} returns 404 for non-existent beatmapset."""
+        mock_db = AsyncMock()
+        mock_db.get = AsyncMock(return_value=None)
+
+        test_client = TestClientWithMocks(mock_db=mock_db)
+
+        response = test_client.get("/api/v1/beatmapsets/999999")
+
+        assert response.status_code == 404
+        data = response.json()
+        assert "not found" in data["detail"].lower()
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_get_beatmapset_zip(TestClientWithMocks):
+    """Test GET /api/v1/beatmapsets/{id}/snapshots/{n}/zip returns zip file."""
+    from app.beatmaps import BeatmapManager
+    from io import BytesIO
+
+    mock_db = AsyncMock()
+    mock_beatmapset_snapshot = MagicMock()
+    mock_beatmapset_snapshot.id = 1
+    mock_beatmapset_snapshot.beatmapset_id = 35965
+    mock_beatmapset_snapshot.snapshot_number = 1
+
+    mock_beatmap_snapshot1 = MagicMock()
+    mock_beatmap_snapshot1.beatmap_id = 116383
+    mock_beatmap_snapshot1.snapshot_number = 1
+
+    mock_beatmap_snapshot2 = MagicMock()
+    mock_beatmap_snapshot2.beatmap_id = 116384
+    mock_beatmap_snapshot2.snapshot_number = 1
+
+    mock_beatmapset_snapshot.beatmap_snapshots = [mock_beatmap_snapshot1, mock_beatmap_snapshot2]
+    mock_db.get = AsyncMock(return_value=mock_beatmapset_snapshot)
+
+    mock_rc = AsyncMock()
+    mock_bm = MagicMock()
+    mock_bm.get_zip = AsyncMock(return_value=BytesIO(b"fake zip content"))
+
+    test_client = TestClientWithMocks(mock_db=mock_db, mock_rc=mock_rc)
+
+    with patch('api.v1.beatmapsets.snapshots.zip.BeatmapManager', return_value=mock_bm):
+        response = test_client.get("/api/v1/beatmapsets/35965/snapshots/1/zip")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "application/zip"
+    assert "attachment" in response.headers["content-disposition"]
+    assert "35965.zip" in response.headers["content-disposition"]
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_get_beatmapset_zip_not_found(TestClientWithMocks):
+    """Test 404 when zip file doesn't exist."""
+    mock_db = AsyncMock()
+    mock_db.get = AsyncMock(return_value=None)
+
+    mock_rc = AsyncMock()
+    mock_bm = MagicMock()
+    mock_bm.get_zip = AsyncMock(side_effect=ValueError("No snapshot found"))
+
+    test_client = TestClientWithMocks(mock_db=mock_db, mock_rc=mock_rc)
+
+    with patch('app.beatmaps.BeatmapManager', return_value=mock_bm):
+        response = test_client.get("/api/v1/beatmapsets/999999/snapshots/1/zip")
+
+    assert response.status_code == 404
+    data = response.json()
+    assert "snapshot" in data["detail"].lower() or "not found" in data["detail"].lower()
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_get_snapshot(TestClientWithMocks):
+    """Test GET /api/v1/beatmapsets/{id}/snapshots/{n} returns snapshot."""
+    mock_db = AsyncMock()
+    mock_beatmapset_snapshot = MagicMock()
+    mock_beatmapset_snapshot.id = 1
+    mock_beatmapset_snapshot.beatmapset_id = 35965
+    mock_beatmapset_snapshot.snapshot_number = 1
+    mock_beatmapset_snapshot.checksum = "abc123"
+    mock_beatmapset_snapshot.created_at = "2024-01-01T00:00:00Z"
+    mock_db.get = AsyncMock(return_value=mock_beatmapset_snapshot)
+
+    test_client = TestClientWithMocks(mock_db=mock_db)
+
+    with patch('app.database.schemas.beatmapset_snapshot.BeatmapsetSnapshotSchema.model_validate') as mock_validate:
+        mock_validate.return_value = MagicMock(
+            model_dump=MagicMock(return_value={
+                "id": 1,
+                "beatmapset_id": 35965,
+                "snapshot_number": 1,
+                "checksum": "abc123"
+            })
+        )
+        response = test_client.get("/api/v1/beatmapsets/35965/snapshots/1")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == 1
+    assert data["beatmapset_id"] == 35965
+    assert data["snapshot_number"] == 1
+    assert data["checksum"] == "abc123"

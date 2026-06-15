@@ -325,3 +325,158 @@ class TestScoresPostIntegration:
             assert "message" in data
         finally:
             os.environ["DISABLE_SECURITY"] = "False"
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    async def test_get_score_list(self, TestClientWithMocks):
+        """Test GET /api/v1/scores returns list of scores."""
+        from app.database.schemas import ScoreSchema, ScoreStatisticsSchema
+        from pydantic import TypeAdapter
+        from datetime import datetime
+
+        mock_db = AsyncMock()
+        
+        score_data_1 = {
+            "id": 1,
+            "user_id": self.TEST_USER_ID,
+            "beatmap": {"id": self.TEST_BEATMAP_ID},
+            "beatmapset": {"id": 35965},
+            "beatmap_id": self.TEST_BEATMAP_ID,
+            "beatmapset_id": 35965,
+            "leaderboard_id": 1,
+            "accuracy": 99.99,
+            "created_at": datetime.fromisoformat("2024-01-15T12:30:45+00:00"),
+            "max_combo": 500,
+            "mode": "osu",
+            "mode_int": 0,
+            "mods": [],
+            "perfect": False,
+            "pp": None,
+            "rank": "SSH",
+            "score": 100000,
+            "statistics": {
+                "count_300": 300,
+                "count_100": 50,
+                "count_50": 10,
+                "count_miss": 0,
+                "count_geki": 0,
+                "count_katu": 0,
+            },
+            "type": "approved",
+        }
+        score_data_2 = {
+            "id": 2,
+            "user_id": self.TEST_USER_ID + 1,
+            "beatmap": {"id": self.TEST_BEATMAP_ID},
+            "beatmapset": {"id": 35965},
+            "beatmap_id": self.TEST_BEATMAP_ID,
+            "beatmapset_id": 35965,
+            "leaderboard_id": 1,
+            "accuracy": 98.5,
+            "created_at": datetime.fromisoformat("2024-01-16T12:30:45+00:00"),
+            "max_combo": 450,
+            "mode": "osu",
+            "mode_int": 0,
+            "mods": [],
+            "perfect": False,
+            "pp": None,
+            "rank": "S",
+            "score": 95000,
+            "statistics": {
+                "count_300": 280,
+                "count_100": 45,
+                "count_50": 15,
+                "count_miss": 5,
+                "count_geki": 0,
+                "count_katu": 0,
+            },
+            "type": "approved",
+        }
+        
+        mock_score1 = ScoreSchema.model_validate(score_data_1)
+        mock_score2 = ScoreSchema.model_validate(score_data_2)
+        mock_db.get_many = AsyncMock(return_value=[mock_score1, mock_score2])
+
+        test_client = TestClientWithMocks(mock_db=mock_db)
+
+        response = test_client.get("/api/v1/scores")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
+        assert len(data) == 2
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    async def test_get_score_by_id(self, TestClientWithMocks):
+        """Test GET /api/v1/scores/{id} returns specific score."""
+        from app.database.schemas import ScoreSchema
+        from datetime import datetime
+
+        mock_db = AsyncMock()
+        
+        score_data = {
+            "id": 1,
+            "user_id": self.TEST_USER_ID,
+            "beatmap": {"id": self.TEST_BEATMAP_ID},
+            "beatmapset": {"id": 35965},
+            "beatmap_id": self.TEST_BEATMAP_ID,
+            "beatmapset_id": 35965,
+            "leaderboard_id": 1,
+            "accuracy": 99.99,
+            "created_at": datetime.fromisoformat("2024-01-15T12:30:45+00:00"),
+            "max_combo": 500,
+            "mode": "osu",
+            "mode_int": 0,
+            "mods": [],
+            "perfect": False,
+            "pp": None,
+            "rank": "SSH",
+            "score": 100000,
+            "statistics": {
+                "count_300": 300,
+                "count_100": 50,
+                "count_50": 10,
+                "count_miss": 0,
+                "count_geki": 0,
+                "count_katu": 0,
+            },
+            "type": "approved",
+        }
+        
+        mock_score = ScoreSchema.model_validate(score_data)
+        mock_db.get = AsyncMock(return_value=mock_score)
+
+        test_client = TestClientWithMocks(mock_db=mock_db)
+
+        response = test_client.get("/api/v1/scores/1")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "id" in data
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    async def test_get_score_not_found(self, TestClientWithMocks):
+        """Test GET /api/v1/scores/{id} returns 404 for non-existent score."""
+        from app.database.models import Score
+
+        mock_db = AsyncMock()
+        
+        async def mock_get(model, **kwargs):
+            if model.__name__ == "Score":
+                return None
+            mock_user = MagicMock()
+            mock_user.id = 12345678
+            mock_user.roles = []
+            return mock_user
+        
+        mock_db.get = AsyncMock(side_effect=mock_get)
+
+        test_client = TestClientWithMocks(mock_db=mock_db)
+
+        response = test_client.get("/api/v1/scores/999999")
+
+        assert response.status_code == 404
+        data = response.json()
+        assert "not found" in data["detail"].lower()
