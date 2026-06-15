@@ -3,13 +3,16 @@ from connexion import request
 from api.decorators import api_query
 from api.utils import build_pydantic_include
 from app.database import PostgresqlDB
-from app.database.models import Profile, ModelClass
+from app.database.models import Profile, ModelClass, User
 from app.database.schemas import ProfileSchema
 from app.exceptions import NotFound
 from app.spec import get_include_schema
+from app.security import ownership_authorization
+from app.security.overrides import matching_user_id_override
 
 
 @api_query(ModelClass.PROFILE, many=True)
+@ownership_authorization()
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
 
@@ -36,6 +39,7 @@ async def search(**kwargs):
 
 
 @api_query(ModelClass.PROFILE)
+@ownership_authorization()
 async def get(user_id: int, **kwargs):
     db: PostgresqlDB = request.state.db
 

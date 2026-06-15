@@ -18,7 +18,7 @@ from app.fixtures.utils import RULESETS
 logger = get_logger(__name__)
 
 ARCHIVE_BASE_URL = "https://data.ppy.sh/"
-ARCHIVE_DIR = PROJECT_ROOT / "instance" / "osu_sh_archives"
+ARCHIVE_DIR = PROJECT_ROOT / "instance" / "data_ppy_sh"
 ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
 
 INDEX_FILE = ARCHIVE_DIR / "archive_index.json"

@@ -39,6 +39,23 @@ class ProfileSchema(BaseModel, BaseModelExtra):
     updated_at: Optional[datetime] = None
     is_restricted: Optional[bool] = None
 
+    @model_validator(mode="before")
+    @classmethod
+    def from_osu_api_format(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            data_copy = copy(data)
+            data_copy["user_id"] = data_copy.pop("id")
+
+            if data_copy["username"] in {"[deleted user]", f"DeletedUser_{data_copy["user_id"]}"}:
+                data_copy["is_deleted"] = True
+
+            if data_copy["is_deleted"]:
+                data_copy["username"] = None
+
+            return data_copy
+
+        return data
+
     account_history: Optional[list["UserAccountHistorySchema"]]
     active_tournament_banners: Optional[list["ProfileBannerSchema"]]
     avatar_url: Optional[str]

@@ -135,7 +135,7 @@ def ownership_authorization(
     The decorated function must:
         - Be async
         - Accept ``**kwargs``
-        - Return a tuple of ``(data, status_code)``
+        - Return a tuple of ``(data, status_code)`` or ``(data, status_code, headers)``
         - Return data as a dict or sequence of dicts
 
     Args:
@@ -172,12 +172,14 @@ def ownership_authorization(
 
             if (
                 not isinstance(result, tuple)
+                or len(result) < 2
                 or not isinstance(result[0], (dict, Sequence))
                 or not isinstance(result[1], int)
             ):
                 raise ValueError(f"Unexpected result received from function '{func.__name__}', unable to evaluate authorization eligibility")
 
-            data, status = result
+            data, status = result[0], result[1]
+            has_headers = len(result) >= 3
 
             if status >= 400:
                 return result
@@ -206,7 +208,9 @@ def ownership_authorization(
                     if not check_item_ownership(item):
                         raise Forbidden(detail="You are not authorized to access this resource")
 
-            return result
+            if has_headers:
+                return (data, status) + (result[2],)
+            return (data, status)
 
         wrapper.__security_authorization__ = True
         return wrapper
