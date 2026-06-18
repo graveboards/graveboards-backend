@@ -14,13 +14,13 @@ DISABLE_SECURITY = os.getenv("DISABLE_SECURITY", "false").lower() in ("true", "1
 DEBUG_API_KEY = os.getenv("DEBUG_API_KEY")
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-API_BASE_PATH = "api/v1/"
 SPEC_DIR = os.path.abspath("api/v1/spec")
-CACHE_FILE = os.path.join(SPEC_DIR, ".spec_cache.pkl")
 OPENAPI_ENTRYPOINT = os.path.join(SPEC_DIR, "openapi.yaml")
-DEFAULT_MODULE_NAME = "api.v1"
 INSTANCE_DIR = os.path.abspath("instance")
+CACHE_FILE = os.path.join(INSTANCE_DIR, ".spec_cache.pkl")
 LOGS_DIR = os.path.join(INSTANCE_DIR, "logs")
+API_BASE_PATH = "api/v1/"
+DEFAULT_MODULE_NAME = "api.v1"
 
 FRONTEND_BASE_URL = os.getenv("BASE_URL", "http://localhost:3000")
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
