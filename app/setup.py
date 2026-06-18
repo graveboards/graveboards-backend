@@ -1,8 +1,6 @@
 import hashlib
 from datetime import timedelta
 
-from sqlalchemy import text
-
 from app.redis import RedisClient
 from app.database import PostgresqlDB
 from app.database.enums import RoleName
@@ -29,33 +27,6 @@ def get_debug_api_key() -> str:
     return hashlib.sha256(seed.encode()).hexdigest()[:32]
 
 
-async def migrate_api_key_schema(db: PostgresqlDB):
-    async with db.engine.begin() as conn:
-        result = await conn.execute(text("""
-            SELECT column_name
-            FROM information_schema.columns
-            WHERE table_schema = 'public'
-              AND table_name = 'api_keys'
-              AND column_name IN ('key', 'hashed_key')
-        """))
-        columns = {row.column_name for row in result}
-
-        if "key" not in columns or "hashed_key" in columns:
-            return
-
-        await conn.execute(text("ALTER TABLE api_keys RENAME COLUMN key TO hashed_key"))
-        await conn.execute(text("ALTER TABLE api_keys ALTER COLUMN hashed_key TYPE VARCHAR(64)"))
-
-        result = await conn.execute(text("SELECT id, hashed_key FROM api_keys"))
-
-        for row in result:
-            if len(row.hashed_key) != 64:
-                await conn.execute(
-                    text("UPDATE api_keys SET hashed_key = :hashed_key WHERE id = :id"),
-                    {"id": row.id, "hashed_key": hash_api_key(row.hashed_key)}
-                )
-
-
 async def setup(rc: RedisClient = None, db: PostgresqlDB = None):
     logger = get_logger(__name__)
     primary_raw_key = None
@@ -68,7 +39,6 @@ async def setup(rc: RedisClient = None, db: PostgresqlDB = None):
 
     await rc.flushdb()
     await db.create_database()
-    await migrate_api_key_schema(db)
 
     if await db.is_empty():
         async with db.session(autoflush=False) as session:
