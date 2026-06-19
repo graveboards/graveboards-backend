@@ -1,9 +1,8 @@
 # Instance
 instance/
 
-# Dotenv (contains sensitive data)
+# Dotenv
 .env
-.env.docker
 .env.test
 
 # Python virtual environment
@@ -16,9 +15,6 @@ venv/
 
 # Pycache
 **/__pycache__/
-
-# Coverage
-.coverage
 
 # Specification cache
 api/v1/spec/.spec_cache.pkl

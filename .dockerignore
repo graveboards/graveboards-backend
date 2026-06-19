@@ -1,2 +1,17 @@
 .env
+.env.*
 instance/
+node_modules/
+.git/
+.gitignore
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.venv/
+.eggs/
+*.egg-info/
+dist/
+build/
+*.log

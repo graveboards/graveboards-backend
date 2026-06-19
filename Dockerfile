@@ -1,10 +1,25 @@
-FROM python:3.14
+FROM python:3.14-slim AS builder
 
-WORKDIR /app
+ENV DEBIAN_FRONTEND=noninteractive
+
+WORKDIR /build
 
 COPY requirements.txt .
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --prefix=/usr/local --root-user-action=ignore -r requirements.txt
+
+FROM python:3.14-slim AS runner
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+COPY --from=builder /usr/local /usr/local
 
 COPY . .
 
@@ -14,6 +29,8 @@ COPY wait-for-it.sh /app
 RUN mkdir -p /app/instance/logs && \
     sed -i 's/\r$//' /app/entrypoint.sh /app/wait-for-it.sh && \
     chmod +x /app/entrypoint.sh /app/wait-for-it.sh
+
+EXPOSE 8000
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 
