@@ -1,0 +1,90 @@
+HealthResponse:
+    type: object
+    required:
+        - status
+        - timestamp
+        - version
+        - checks
+    properties:
+        status:
+            type: string
+            enum: [healthy, degraded, unhealthy]
+        timestamp:
+            type: string
+            format: date-time
+        version:
+            type: string
+        checks:
+            type: object
+            required:
+                - database
+                - redis
+            properties:
+                database:
+                    type: object
+                    required:
+                        - status
+                        - response_time_ms
+                    properties:
+                        status:
+                            type: string
+                            enum: [ok, error]
+                        response_time_ms:
+                            type: number
+                        message:
+                            type: string
+                redis:
+                    type: object
+                    required:
+                        - status
+                        - response_time_ms
+                    properties:
+                        status:
+                            type: string
+                            enum: [ok, error]
+                        response_time_ms:
+                            type: number
+                        message:
+                            type: string
+                osu_api:
+                    type: object
+                    required:
+                        - status
+                        - response_time_ms
+                    properties:
+                        status:
+                            type: string
+                            enum: [ok, error]
+                        response_time_ms:
+                            type: number
+                        message:
+                            type: string
+
+HealthErrorResponse:
+    type: object
+    required:
+        - status
+        - timestamp
+        - version
+        - error
+    properties:
+        status:
+            type: string
+            enum: [healthy, degraded, unhealthy]
+        timestamp:
+            type: string
+            format: date-time
+        version:
+            type: string
+        error:
+            type: object
+            required:
+                - code
+                - message
+            properties:
+                code:
+                    type: string
+                message:
+                    type: string
+                details:
+                    type: object

@@ -1,3 +1,7 @@
+# System
+/health:
+    $ref: "./health.yaml#/Health"
+
 # Auth
 /login:
     $ref: "./auth.yaml#/Login"

@@ -1,0 +1,21 @@
+# Health
+Health:
+    get:
+        summary: Health check endpoint
+        description: Returns the health status of all Graveboards services including PostgreSQL, Redis, and osu! API
+        operationId: api.v1.health.health_check
+        tags:
+            - system
+        responses:
+            "200":
+                description: Health status
+                content:
+                    application/json:
+                        schema:
+                            $ref: "../schemas/health.yaml#/HealthResponse"
+            "503":
+                description: Service unavailable
+                content:
+                    application/json:
+                        schema:
+                            $ref: "../schemas/health.yaml#/HealthErrorResponse"

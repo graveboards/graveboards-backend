@@ -140,3 +140,10 @@ RequestTaskInclude:
 
 SearchInclude:
     $ref: "./include/search.yaml#/SearchInclude"
+
+# Health
+HealthResponse:
+    $ref: "./health.yaml#/HealthResponse"
+
+HealthErrorResponse:
+    $ref: "./health.yaml#/HealthErrorResponse"

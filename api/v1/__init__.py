@@ -1,6 +1,7 @@
 from . import (
     beatmaps,
     beatmapsets,
+    health,
     login,
     profiles,
     queues,
