@@ -1,109 +1,145 @@
 # Graveboards Backend
 
-## Quickstart (Docker)
-1. Close the repository: `git clone https://github.com/graveboards/graveboards-backend.git && cd graveboards`
-2. Ensure docker is installed and running on your system
-3. Launch the run script
-   - `run.bat` (Windows)
-   - `run.sh` (Linux)
-4. Follow the instructions to automatically fill out `.env.docker`
-5. The backend should now be running on http://localhost:8000
+> Python/Connextion backend for Graveboards
 
-## Installation (Non-docker)
+## Quick Start
 
 ### Prerequisites
 
-- Python 3.14+
-- PostgreSQL
-- Redis
+- Docker Engine 24+
+- Docker Compose 2.0+
+- Git
 
-### Setup
+### Installation
 
-1. Clone the repository:
-    ```bash
-    git clone https://github.com/graveboards/graveboards-backend.git
-    cd graveboards
-    ```
+```bash
+# Clone all repositories
+git clone https://github.com/graveboards/graveboards-frontend.git
+git clone https://github.com/graveboards/graveboards-backend.git
+git clone https://github.com/graveboards/graveboards-deploy.git
 
-2. Create and activate a virtual environment:
-    ```bash
-    python -m venv venv  # On Windows use: py -m venv venv
-    source venv/bin/activate  # On Windows use: venv\Scripts\activate
-    ```
-
-3. Install the dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-4. Create the `.env` file:
-    ```shell
-    ENV=dev
-    DEBUG=true
-    DISABLE_SECURITY=false
-    BASE_URL=<frontend-base-url>  # http://localhost:3000
-    JWT_SECRET_KEY=<private-encryption-key>
-    JWT_ALGORITHM=<symmetric-algorithm>  # HS256
-    ADMIN_USER_IDS=<comma-delimmed-osu-user-ids>  # 2,124493,873961 ...
-    
-    OSU_CLIENT_ID=<osu-oauth-client-id>
-    OSU_CLIENT_SECRET=<osu-oauth-client-secret>
-    
-    POSTGRESQL_HOST=<db-host>  # localhost
-    POSTGRESQL_PORT=<db-port>  # 5432
-    POSTGRESQL_USERNAME=<db-username>  # postgres
-    POSTGRESQL_PASSWORD=<db-password>
-    POSTGRESQL_DATABASE=<db-dbname>
-    
-    REDIS_HOST=<redis-host>  # localhost
-    REDIS_PORT=<redis-port>  # 6379
-    REDIS_USERNAME=<redis-acl-username>
-    REDIS_PASSWORD=<redis-acl-password>
-    REDIS_DB=<redis-db-number>  # 0
-    ```
-
-5. Run the application:
-    ```bash
-     python main.py  # On Windows use: py main.py
-    ```
-
-## Management (docker)
-
-A Makefile has been provided for quick and convenient maintenance:
-
-```text
--------------Docker-------------
-make up        - Start all services
-make down      - Stop all services
-make build     - Rebuild project image
-make logs      - View backend logs
-make shell     - Open backend shell
-make wipe      - Destroy database volumes
-------------Database------------
-make status    - View database status
-make reset     - Reset database
-make seed      - Seed database
-make fresh     - Reset & seed database      
+# Start all services
+cd graveboards-deploy
+./deploy.sh up dev
 ```
 
-## Management (non-docker)
+**Access:**
+- Frontend: http://localhost:3000
+- Backend: http://localhost:8000
+- API Docs: http://localhost:8000/api/v1/ui
 
-Utilize the `manage.py` script to perform maintenance:
+---
 
-```text
-usage: manage.py [-h] {status,reset,seed} ...
+## Management
 
-positional arguments:
-  {status,reset,seed}
-    status             View database status
-    reset              Reset database
-    seed               Seed database
+### Orchestrator (Docker)
+
+```bash
+cd graveboards-deploy
+./deploy.sh up [mode]               # Start services
+./deploy.sh down [mode]             # Stop services
+./deploy.sh logs [mode] [service]   # View logs
+./deploy.sh test                    # Run tests
+./deploy.sh build [mode]            # Build images
+./deploy.sh status                  # Show status
+./deploy.sh clean                   # Remove volumes and images
 ```
+
+**Modes:**
+- `dev` - Development (default)
+- `prod` - Production
+- `test` - Testing
+
+**Services:**
+- `all` - All services (default)
+- `backend` - Backend service
+- `frontend` - Frontend service
+- `postgres` - PostgreSQL database
+- `redis` - Redis cache
+
+```
+### Backend (Docker)
+
+```bash
+cd graveboards-backend
+make status    # Database status
+make reset     # Reset database
+make seed      # Seed database
+make logs      # View logs
+make shell     # Open shell
+make clean     # Remove Docker resources
+```
+
+### Backend (manage.py)
+
+```bash
+cd graveboards-backend
+python manage.py <command> [options]
+```
+
+**Available commands:**
+- `status <target>` - View database status
+- `reset [--seed <target>]` - Reset database
+- `seed <target>` - Seed database
+- `fixtures <subcommand>` - Manage test fixtures
+  - `fetch` - Fetch data from osu! API
+  - `promote` - Promote fixtures to tests
+  - `demote` - Demote fixtures to instance
+  - `wipe` - Delete all fixtures
+  - `status` - Show fixture status
+  - `refresh` - Refresh fixture metadata
+
+---
+
+## Configuration
+
+### Environment Files
+
+| File           | Purpose                      |
+|----------------|------------------------------|
+| `.env`         | Primary config               |
+| `.env.test`    | Test-specific overrides      |
+| `.env.example` | Template for creating `.env` |
+
+Copy `.env.example` to `.env` (and optionally `.env.test`) and fill in the appropriate values
+
+**Required Variables:**
+- `JWT_SECRET_KEY` - JWT signing key (32+ chars)
+- `OSU_CLIENT_ID`, `OSU_CLIENT_SECRET` - osu! OAuth credentials
+- `ADMIN_USER_IDS` - Comma-separated osu! user IDs
+- `POSTGRESQL_*` - PostgreSQL connection
+- `REDIS_*` - Redis connection
+
+---
+
+## Development
+
+### Without Docker
+
+```bash
+# Setup
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env  # Configure environment
+
+# Run
+python main.py
+
+# Manage
+python manage.py
+```
+
+---
 
 ## Documentation
 
-The API spec can be viewed locally at: http://localhost:8000/api/v1/ui
+- [Frontend README](../graveboards-frontend/README.md)
+- [Architecture Docs](./docs)
+- [Production Deployment Guide](../graveboards-deploy/docs/PRODUCTION_DEPLOYMENT.md)
+
+---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License
