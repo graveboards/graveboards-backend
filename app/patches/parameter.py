@@ -58,7 +58,6 @@ class ParameterValidatorPatched(ParameterValidator):
 
         if param_name == "sorting" and value:
             try:
-                value = value[0] if isinstance(value, list) and len(value) == 1 else value
                 return validate_sorting(value, param.get("schema"))
             except ArrayValidationError as e:
                 raise bad_request_factory(e)

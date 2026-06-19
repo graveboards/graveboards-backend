@@ -32,11 +32,17 @@ class PostgresqlDB(CRUD):
     """
     def __init__(self):
         """Initialize the async engine and register connection hooks."""
-        self.engine: AsyncEngine = create_async_engine(DATABASE_URI)
+        self.engine: AsyncEngine = create_async_engine(
+            DATABASE_URI,
+            pool_size=20,
+            max_overflow=10,
+            pool_recycle=300,
+            pool_pre_ping=True
+        )
 
         @event.listens_for(self.engine.sync_engine, "first_connect")
         def on_connect(dbapi_connection: Connection, connection_record: ConnectionPoolEntry):
-            logger.info(f"Connected to PostgreSQL at '{DATABASE_URI}'")
+            logger.debug(f"Connected to PostgreSQL at '{DATABASE_URI}'")
 
     def async_session_generator(self) -> async_sessionmaker[AsyncSession]:
         """Return a configured async session factory.
@@ -49,15 +55,11 @@ class PostgresqlDB(CRUD):
         """
         return async_sessionmaker(self.engine, expire_on_commit=False)
 
-    async def close(self):
-        """Dispose of the underlying engine and release pooled connections."""
-        await self.engine.dispose()
-
     async def test_connection(self):
         """Verify database connectivity.
 
         Executes a lightweight `SELECT 1` to ensure the database is reachable and
-        operational.
+        operational. Uses pooled connections without closing the engine.
 
         Raises:
             SQLAlchemyError:
@@ -65,6 +67,18 @@ class PostgresqlDB(CRUD):
         """
         async with self.engine.connect() as conn:
             await conn.execute(select(1))
+    
+    async def __aenter__(self):
+        """Context manager entry."""
+        return self
+    
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit - dispose engine."""
+        await self.close()
+    
+    async def close(self):
+        """Close the engine."""
+        await self.engine.dispose()
 
     @asynccontextmanager
     async def session(self, autoflush: bool = True) -> AsyncIterator[AsyncSession]:
