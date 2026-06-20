@@ -9,6 +9,8 @@ import redis
 from app.config import POSTGRESQL_CONFIGURATION, REDIS_CONFIGURATION
 from app.test_app import create_test_app
 from app.test_app import MockRedisMiddleware, MockDatabaseMiddleware
+from app.database.db import PostgresqlDB
+from app.database.models import Base
 
 
 def pytest_load_initial_conftests(early_config, args, parser):
@@ -74,3 +76,27 @@ def admin_user_token():
     """
     from app.security import generate_token
     return generate_token(11111111)
+
+
+@pytest.fixture(scope="function")
+async def db_session():
+    """Create a database session for CRUD operations.
+    
+    Uses PostgresqlDB with automatic transaction rollback between tests
+    to ensure test isolation.
+    
+    Yields:
+        AsyncSession: Database session for the test
+    """
+    db = PostgresqlDB()
+    
+    async with db.engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    
+    async with db.session() as session:
+        yield session
+    
+    async with db.engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+    
+    await db.close()
