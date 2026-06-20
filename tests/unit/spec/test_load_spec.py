@@ -72,7 +72,7 @@ class TestLoadSpec:
         """Test that prod mode returns cached spec."""
         from app.enums import Env
 
-        mock_pickle.load.return_value = {"spec": "cached_spec"}
+        mock_pickle.load.return_value = {"spec": "cached_spec", "build_options": {}}
 
         with patch("app.spec.load.os.path.exists", return_value=True):
             with patch("app.spec.load.ENV", Env.PROD):
@@ -310,11 +310,13 @@ class TestLoadSpec:
 
     def test_load_spec_with_existing_cache(self, mock_yaml_full_load, mock_resolve_refs, mock_pickle):
         """Test that load_spec uses existing cache."""
-        mock_pickle.load.return_value = {"spec": "cached"}
+        from app.enums import Env
+
+        mock_pickle.load.return_value = {"spec": "cached", "build_options": {}}
 
         with patch("app.spec.load.os.path.exists", return_value=True):
-            with patch("app.spec.load._build_spec") as mock_build:
-                result = load_spec()
+            with patch("app.spec.load.ENV", Env.PROD):
+                with patch("builtins.open", mock_open(read_data="data")):
+                    result = load_spec()
 
         assert result == "cached"
-        mock_build.assert_not_called()

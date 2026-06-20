@@ -26,7 +26,7 @@ def load_spec() -> dict:
     if not cache_exists:
         return _build_spec()
 
-    if ENV is Env.PROD:
+    if ENV == Env.PROD:
         with open(CACHE_FILE, "rb") as f:
             payload = pickle.load(f)
 
