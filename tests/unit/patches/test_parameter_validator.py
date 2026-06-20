@@ -192,7 +192,7 @@ class TestParameterValidator:
         }
 
         request = make_request(
-            query_params={"sorting": '[{"field": "Beatmap.id", "order": "asc"}]'},
+            query_params={"sorting": '[{\"field\": \"Beatmap.id\", \"order\": \"asc\"}]'},
             scope_path="/api/v1/beatmaps",
             validator=validator
         )
@@ -260,11 +260,11 @@ class TestParameterValidator:
                         ]
                     }
                 }
-            }
+         }
         }
 
         request = make_request(
-            query_params={"include[id]": "true", "include[beatmapset]": "false"},
+            query_params={"sorting": '[{\"field\": \"Beatmap.id\", \"order\": \"asc\"}]'},
             scope_path="/api/v1/beatmaps",
             validator=validator
         )
