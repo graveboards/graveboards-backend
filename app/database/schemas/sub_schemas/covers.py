@@ -22,7 +22,7 @@ class CoversSchema(BaseModel):
         included = info.include
 
         return {
-            self.model_fields[field].alias or field: value
+            type(self).model_fields[field].alias or field: value
             for field, value in self.__dict__.items()
             if included is None or field in included
         }

@@ -120,7 +120,7 @@ class FieldWeights(BaseModel):
             if category not in SCOPE_CATEGORIES_MAPPING[scope]:
                 continue
 
-            if any(getattr(model, field) is not None for field in model.model_fields):
+            if any(getattr(model, field) is not None for field in type(model).model_fields):
                 return
 
         raise AllValuesNullError("field_weights")
