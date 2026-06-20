@@ -1,6 +1,6 @@
 from typing import TypeAlias, Union, Literal
 
-from sqlalchemy.sql import select, union_all, and_, exists
+from sqlalchemy.sql import select, union_all, and_, exists, true
 from sqlalchemy.sql.selectable import CTE, Select
 from sqlalchemy.orm import InstrumentedAttribute
 
@@ -78,6 +78,7 @@ def search_terms_filtered_cte_factory(
         select(term_ctes[terms[0]].c.id)
         .where(
             and_(
+                true(),
                 *[
                     exists()
                     .where(term_ctes[terms[0]].c.id == term_ctes[term].c.id)
