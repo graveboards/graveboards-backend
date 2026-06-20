@@ -269,7 +269,14 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
             return []
 
         if isinstance(value, str):
-            value = [value]
+            try:
+                parsed = json.loads(value)
+                if isinstance(parsed, list):
+                    value = parsed
+                else:
+                    value = [parsed]
+            except json.JSONDecodeError:
+                value = [value]
 
         coerced = []
 
@@ -278,7 +285,10 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
                 continue
 
             try:
-                coerced.append(json.loads(item))
+                if isinstance(item, str):
+                    coerced.append(json.loads(item))
+                else:
+                    coerced.append(item)
             except json.JSONDecodeError:
                 raise
 
