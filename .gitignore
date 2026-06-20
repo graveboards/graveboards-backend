@@ -16,5 +16,8 @@ venv/
 # Pycache
 **/__pycache__/
 
+# Coverage
+.coverage
+
 # Specification cache
 api/v1/spec/.spec_cache.pkl

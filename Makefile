@@ -5,7 +5,7 @@ COMPOSE=docker compose
 help:
 	@echo "Available commands:"
 	@echo "  -------------Docker-------------"
-	@echo "  make up        - Start all services (uses graveboards-deploy)"
+	@echo "  make up        - Start all services"
 	@echo "  make down      - Stop all services"
 	@echo "  make build     - Rebuild project image"
 	@echo "  make logs      - View backend logs"
@@ -30,13 +30,13 @@ build:
 	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml build
 
 logs:
-	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml logs -f graveboards-backend
+	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml logs -f backend
 
 shell:
-	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml exec graveboards-backend sh
+	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml exec backend sh
 
 status:
-	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml run --rm graveboards-backend python -m manage status
+	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml exec backend python -m manage status
 
 reset:
 	@printf "This operation will reset the database. Continue? [y/N] "
@@ -45,10 +45,10 @@ reset:
 		echo "Aborted."; \
 		exit 1; \
 	fi
-	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml run --rm graveboards-backend python -m manage reset
+	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml exec backend python -m manage reset
 
 seed:
-	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml run --rm graveboards-backend python -m manage seed all
+	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml exec backend python -m manage seed all
 
 fresh:
 	@printf "This operation will reset the database. Continue? [y/N] "
@@ -57,7 +57,7 @@ fresh:
 		echo "Aborted."; \
 		exit 1; \
 	fi
-	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml run --rm graveboards-backend python -m manage reset --seed all
+	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml exec backend python -m manage reset --seed all
 
 test:
 	pytest
