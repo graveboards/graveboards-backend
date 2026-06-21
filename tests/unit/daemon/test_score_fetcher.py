@@ -15,16 +15,23 @@ class TestScoreFetcher:
         db = MagicMock()
         return ScoreFetcher(rc, db)
 
+    @pytest.mark.asyncio
     async def test_preload_jobs_schedules_enabled_tasks(self, service):
         """Test that preload_jobs schedules enabled score fetch tasks."""
-        task1 = ScoreFetcherTask(id=1, user_id=123, enabled=True, last_fetch=None)
-        task2 = ScoreFetcherTask(id=2, user_id=456, enabled=False, last_fetch=None)
-        service._db.get_many = AsyncMock(return_value=[task1, task2])
-        service._load_job = AsyncMock()
+        with patch('app.database.events.score_fetcher_task.redis_connection') as mock_redis:
+            mock_redis_ctx = MagicMock()
+            mock_redis.return_value = mock_redis_ctx
+            mock_redis_ctx.__enter__ = MagicMock()
+            mock_redis_ctx.__exit__ = MagicMock()
+            
+            task1 = ScoreFetcherTask(id=1, user_id=123, enabled=True, last_fetch=None)
+            task2 = ScoreFetcherTask(id=2, user_id=456, enabled=False, last_fetch=None)
+            service._db.get_many = AsyncMock(return_value=[task1, task2])
+            service._load_job = AsyncMock()
 
-        await service._preload_jobs()
+            await service._preload_jobs()
 
-        assert service._load_job.call_count == 1
+            assert service._load_job.call_count == 1
 
     async def test_preload_jobs_skips_disabled_tasks(self, service):
         """Test that disabled score fetch tasks are skipped."""

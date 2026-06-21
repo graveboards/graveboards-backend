@@ -55,6 +55,9 @@ def user_after_insert(mapper: Mapper[User], connection: Connection, target: User
     profile_fetcher_task_id = insert_profile_fetcher_result.scalar()
     logger.debug(f"Inserted new ScoreFetcherTask and ProfileFetcherTask with user_id={target.id}")
 
-    with redis_connection() as rc:
-        rc.publish(ChannelName.PROFILE_FETCHER_TASKS.value, profile_fetcher_task_id)
-        logger.debug(f"Published ProfileFetcherTask ID to redis channel '{ChannelName.PROFILE_FETCHER_TASKS.value}': {profile_fetcher_task_id}")
+    try:
+        with redis_connection() as rc:
+            rc.publish(ChannelName.PROFILE_FETCHER_TASKS.value, profile_fetcher_task_id)
+            logger.debug(f"Published ProfileFetcherTask ID to redis channel '{ChannelName.PROFILE_FETCHER_TASKS.value}': {profile_fetcher_task_id}")
+    except Exception as e:
+        logger.warning(f"Failed to publish to Redis (may not be available): {e}")

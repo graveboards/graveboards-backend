@@ -33,6 +33,9 @@ def score_fetcher_task_enabled_set(target: ScoreFetcherTask, value: bool, oldval
         Publishes task ID to Redis.
     """
     if value:
-        with redis_connection() as rc:
-            rc.publish(ChannelName.SCORE_FETCHER_TASKS.value, target.id)
-            logger.debug(f"Published ScoreFetcherTask ID to redis channel '{ChannelName.SCORE_FETCHER_TASKS.value}': {target.id}")
+        try:
+            with redis_connection() as rc:
+                rc.publish(ChannelName.SCORE_FETCHER_TASKS.value, target.id)
+                logger.debug(f"Published ScoreFetcherTask ID to redis channel '{ChannelName.SCORE_FETCHER_TASKS.value}': {target.id}")
+        except Exception as e:
+            logger.warning(f"Failed to publish to Redis (may not be available): {e}")

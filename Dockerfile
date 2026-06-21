@@ -5,8 +5,17 @@ ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /build
 
 COPY requirements.txt .
-
 RUN pip install --no-cache-dir --prefix=/usr/local --root-user-action=ignore -r requirements.txt
+
+FROM python:3.14-slim AS test-builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+WORKDIR /build
+
+COPY requirements.txt .
+COPY requirements-dev.txt .
+RUN pip install --no-cache-dir --prefix=/usr/local --root-user-action=ignore -r requirements.txt -r requirements-dev.txt
 
 FROM python:3.14-slim AS runner
 
@@ -42,3 +51,27 @@ CMD [ \
     "--port", "8000", \
     "--log-config", "logging.uvicorn.yaml" \
 ]
+
+FROM python:3.14-slim AS test-runner
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+COPY --from=test-builder /usr/local /usr/local
+
+COPY --chmod=755 . .
+
+RUN mkdir -p /app/instance/logs && \
+    sed -i 's/\r$//' /app/entrypoint.sh /app/wait-for-it.sh
+
+EXPOSE 8000
+
+ENTRYPOINT ["/app/entrypoint.sh"]
+
+CMD [ "pytest", "-v" ]

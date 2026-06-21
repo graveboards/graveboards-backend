@@ -19,7 +19,13 @@ async def test_login_flow_returns_authorization_url():
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_csrf_state_is_validated():
-    rc = RedisClient()
+    from unittest.mock import AsyncMock
+    
+    rc = AsyncMock(spec=RedisClient)
+    rc.set = AsyncMock(return_value=True)
+    rc.get = AsyncMock(return_value="valid")
+    rc.delete = AsyncMock(return_value=True)
+    
     oauth = OAuth()
     authorization_url, state = oauth.create_authorization_url()
 

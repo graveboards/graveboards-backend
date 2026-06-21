@@ -60,7 +60,12 @@ fresh:
 	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml exec backend python -m manage reset --seed all
 
 test:
-	pytest
+	@echo "Starting test services (PostgreSQL, Redis, and backend)..."
+	$(COMPOSE) -f ../graveboards-deploy/docker-compose.test.yml --profile test up --build -d
+	@echo "Waiting for backend test container to complete..."
+	$(COMPOSE) -f ../graveboards-deploy/docker-compose.test.yml logs -f backend
+	@echo "Test completed, cleaning up..."
+	$(COMPOSE) -f ../graveboards-deploy/docker-compose.test.yml down -v --remove-orphans
 
 clean:
 	@printf "This operation will wipe the database and redis containers. Continue? [y/N] "
@@ -71,3 +76,5 @@ clean:
 	fi
 	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml down -v --remove-orphans
 	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml rm -f
+	$(COMPOSE) -f ../graveboards-deploy/docker-compose.test.yml down -v --remove-orphans
+	$(COMPOSE) -f ../graveboards-deploy/docker-compose.test.yml rm -f
