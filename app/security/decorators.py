@@ -73,6 +73,10 @@ def role_authorization(
         if not inspect.iscoroutinefunction(func):
             raise ValueError(f"Function '{func.__name__}' must be async to use @role_authorization")
 
+        sig = inspect.signature(func)
+        if not any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()):
+            raise ValueError(f"Decorated function '{func.__module__}.{func.__name__}' must accept **kwargs to use @role_authorization")
+
         if required_roles and one_of is not None:
             raise ValueError("Arg(s) 'required_roles' and kwarg 'one_of' are mutually exclusive")
         elif not required_roles and one_of is None:
@@ -153,6 +157,10 @@ def ownership_authorization(
     def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
         if not inspect.iscoroutinefunction(func):
             raise ValueError(f"Function '{func.__name__}' must be async to use @check_ownership")
+
+        sig = inspect.signature(func)
+        if not any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()):
+            raise ValueError(f"Decorated function '{func.__module__}.{func.__name__}' must accept **kwargs to use @ownership_authorization")
 
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
