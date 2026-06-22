@@ -58,8 +58,8 @@ async def search(beatmap_id: int, snapshot_number: int = -1, **kwargs):
     return leaderboard_data, 200, {"Content-Type": "application/json"}
 
 
-@role_authorization(RoleName.ADMIN)
 @coerce_arguments(snapshot_number={"latest": -1})
+@role_authorization(RoleName.ADMIN)
 async def post(body: dict, beatmap_id: int, snapshot_number: int = -1, **kwargs):
     db: PostgresqlDB = request.state.db
 
@@ -104,8 +104,8 @@ async def post(body: dict, beatmap_id: int, snapshot_number: int = -1, **kwargs)
     return {"message": "Leaderboard added successfully!"}, 201, {"Content-Type": "application/json"}
 
 
-@role_authorization(RoleName.ADMIN)
 @coerce_arguments(snapshot_number={"latest": -1})
+@role_authorization(RoleName.ADMIN)
 async def patch(body: dict, beatmap_id: int, snapshot_number: int = -1, **kwargs):
     db: PostgresqlDB = request.state.db
 

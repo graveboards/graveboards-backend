@@ -62,6 +62,7 @@ async def get(score_id: int, **kwargs):
     return score_data, 200, {"Content-Type": "application/json"}
 
 
+@api_query(ModelClass.SCORE)
 @role_authorization(RoleName.ADMIN)
 async def post(body: dict, db: PostgresqlDB = None, **kwargs):
     if db is None:

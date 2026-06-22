@@ -64,6 +64,7 @@ async def get(beatmapset_id: int, **kwargs):
     return beatmapset_data, 200, {"Content-Type": "application/json"}
 
 
+@api_query(ModelClass.BEATMAPSET)
 @role_authorization(RoleName.ADMIN)
 async def post(body: dict, rc: RedisClient = None, db: PostgresqlDB = None, bm: BeatmapManager = None, **kwargs):
     if rc is None:

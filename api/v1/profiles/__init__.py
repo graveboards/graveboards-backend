@@ -11,8 +11,8 @@ from app.security import ownership_authorization
 from app.security.overrides import matching_user_id_override
 
 
-@api_query(ModelClass.PROFILE, many=True)
 @ownership_authorization()
+@api_query(ModelClass.PROFILE, many=True)
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
 
@@ -38,8 +38,8 @@ async def search(**kwargs):
     return profiles_data, 200, {"Content-Type": "application/json"}
 
 
-@api_query(ModelClass.PROFILE)
 @ownership_authorization()
+@api_query(ModelClass.PROFILE)
 async def get(user_id: int, **kwargs):
     db: PostgresqlDB = request.state.db
 

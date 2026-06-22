@@ -12,8 +12,8 @@ from app.security.overrides import matching_user_id_override
 from app.spec import get_include_schema
 
 
-@api_query(ModelClass.USER, many=True)
 @role_authorization(RoleName.ADMIN)
+@api_query(ModelClass.USER, many=True)
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
 
@@ -39,8 +39,8 @@ async def search(**kwargs):
     return users_data, 200, {"Content-Type": "application/json"}
 
 
-@api_query(ModelClass.USER)
 @role_authorization(RoleName.ADMIN, override=matching_user_id_override)
+@api_query(ModelClass.USER)
 async def get(user_id: int, **kwargs):
     db: PostgresqlDB = request.state.db
 
