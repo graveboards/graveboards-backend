@@ -7,9 +7,25 @@ from connexion import request
 from connexion.exceptions import Forbidden
 
 from app.database.enums import RoleName
-from app.config import DISABLE_SECURITY
+from app.config import load_config
 from app.database.models import User
 from app.utils import get_nested_value
+
+
+class _DynamicDISABLE_SECURITY:
+    """Dynamic property for DISABLE_SECURITY that reads from config on each access."""
+    
+    def __bool__(self):
+        return load_config()["DISABLE_SECURITY"]
+    
+    def __repr__(self):
+        return repr(load_config()["DISABLE_SECURITY"])
+    
+    def __str__(self):
+        return str(load_config()["DISABLE_SECURITY"])
+
+
+DISABLE_SECURITY = _DynamicDISABLE_SECURITY()
 
 if TYPE_CHECKING:
     from app.database import PostgresqlDB
@@ -18,16 +34,34 @@ P = ParamSpec("P")
 T = TypeVar("T")
 
 
+
+
+
 def _get_authenticated_user_id(kwargs: dict[str, Any], user_lookup: str = "user") -> int:
+    # First, try to get from kwargs (most common case)
     try:
         return get_nested_value(kwargs, user_lookup)
     except KeyError:
         pass
 
+    # Try to get from token_info
     try:
         return kwargs["token_info"]["sub"]
     except KeyError:
-        raise KeyError(user_lookup)
+        pass
+
+    # If we're in a Connexion request context, try to get user ID from request context
+    try:
+        from connexion import request
+        # Connexion stores user info in request_context after OAuth
+        if hasattr(request, "user") and request.user:
+            return request.user.get("sub") if isinstance(request.user, dict) else request.user
+        if hasattr(request, "token_info") and request.token_info:
+            return request.token_info.get("sub")
+    except (AttributeError, KeyError):
+        pass
+
+    raise KeyError(user_lookup)
 
 
 def _strip_auth_info(kwargs: dict[str, Any]) -> None:
