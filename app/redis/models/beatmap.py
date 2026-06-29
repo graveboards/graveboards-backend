@@ -44,16 +44,16 @@ class Beatmap(BeatmapOsuApiSchema):
         for key, value in serialized_dict.items():
             match key:
                 case "id" | "user_id" | "count_circles" | "count_sliders" | "count_spinners" | "hit_length" | "max_combo" | "mode_int" | "passcount" | "playcount" | "ranked" | "total_length":
-                    value = int(value)
+                    value = int(value) if value != "" else None
                 case "accuracy" | "ar" | "bpm" | "cs" | "difficulty_rating" | "drain":
-                    value = float(value)
+                    value = float(value) if value != "" else None
                 case (
                     "is_scoreable" |  # Bools
                     "failtimes" | "owners" | "top_tag_ids"  # Lists
                 ):
-                    value = literal_eval(value)
+                    value = literal_eval(value) if value != "" else None
                 case "deleted_at" | "last_updated":
-                    value = datetime.fromisoformat(value) if value else None
+                    value = datetime.fromisoformat(value) if value != "" else None
 
             deserialized_dict[key] = value
 

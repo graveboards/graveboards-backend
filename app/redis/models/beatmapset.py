@@ -51,7 +51,7 @@ class Beatmapset(BeatmapsetOsuApiSchema):
                 case "id" | "user_id" | "favourite_count" | "offset" | "play_count" | "ranked" | "track_id":
                     value = int(value) if value != "" else None
                 case "bpm" | "rating":
-                    value = float(value)
+                    value = float(value) if value != "" else None
                 case (
                     "verified" | "nsfw" | "video" | "is_scoreable" | "spotlight" | "discussion_enabled" | "discussion_locked" | "can_be_hyped" | "storyboard" |  # Bools
                     "availability" | "description" | "nominations_summary" | "user" | "covers" | "genre" | "hype" | "language" |  # Dicts

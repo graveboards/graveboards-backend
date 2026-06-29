@@ -76,4 +76,6 @@ class BeatmapOsuApiSchema(BaseModel):
     @field_validator("top_tag_ids", mode="before")
     @classmethod
     def filter_tag_keys(cls, value: Any):
+        if value is None:
+            return None
         return [{"tag_id": item["tag_id"]} for item in value]
