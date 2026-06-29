@@ -293,38 +293,35 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_bypass_security_with_flag(self, TestClientWithMocks, valid_score_body):
+    async def test_bypass_security_with_flag(self, TestClientWithMocks, valid_score_body, monkeypatch):
         """Test DISABLE_SECURITY=True bypasses authorization."""
-        os.environ["DISABLE_SECURITY"] = "True"
-        try:
-            mock_db = AsyncMock()
-            mock_user = MagicMock()
-            mock_user.id = self.TEST_USER_ID
-            mock_beatmap = MagicMock()
-            mock_beatmap.id = self.TEST_BEATMAP_ID
-            mock_snapshot = MagicMock()
-            mock_snapshot.id = 1
-            mock_snapshot.beatmap_id = self.TEST_BEATMAP_ID
-            mock_leaderboard = MagicMock()
-            mock_leaderboard.id = 1
-            mock_db.get.side_effect = [
-                mock_user,
-                mock_beatmap,
-                mock_snapshot,
-                mock_leaderboard,
-                None,
-            ]
-            mock_db.add = AsyncMock()
+        monkeypatch.setenv("DISABLE_SECURITY", "True")
+        mock_db = AsyncMock()
+        mock_user = MagicMock()
+        mock_user.id = self.TEST_USER_ID
+        mock_beatmap = MagicMock()
+        mock_beatmap.id = self.TEST_BEATMAP_ID
+        mock_snapshot = MagicMock()
+        mock_snapshot.id = 1
+        mock_snapshot.beatmap_id = self.TEST_BEATMAP_ID
+        mock_leaderboard = MagicMock()
+        mock_leaderboard.id = 1
+        mock_db.get.side_effect = [
+            mock_user,
+            mock_beatmap,
+            mock_snapshot,
+            mock_leaderboard,
+            None,
+        ]
+        mock_db.add = AsyncMock()
 
-            test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = TestClientWithMocks(mock_db=mock_db)
 
-            response = test_client.post("/api/v1/scores", json=valid_score_body)
+        response = test_client.post("/api/v1/scores", json=valid_score_body)
 
-            assert response.status_code == 201
-            data = response.json()
-            assert "message" in data
-        finally:
-            os.environ["DISABLE_SECURITY"] = "False"
+        assert response.status_code == 201
+        data = response.json()
+        assert "message" in data
 
     @pytest.mark.integration
     @pytest.mark.asyncio

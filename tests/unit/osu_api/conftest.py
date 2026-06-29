@@ -13,8 +13,11 @@ def mock_rate_limit_decorator():
 @pytest.fixture
 def api_client():
     from app.osu_api.client.osu_api_client import OsuAPIClient
+    from app.oauth import OAuth
 
     mock_redis = MagicMock()
+    
+    # Use a mock that can be easily overridden by tests
     mock_redis.hgetall = AsyncMock(return_value=None)
     mock_redis.hset = AsyncMock(return_value=None)
     mock_redis.expire = AsyncMock(return_value=None)
@@ -24,7 +27,19 @@ def api_client():
     mock_redis.lock_ctx.__aexit__ = AsyncMock(return_value=None)
 
     client = OsuAPIClient(mock_redis)
-    return client, mock_redis
+    
+    # Patch OAuth's fetch_token to avoid real API calls
+    async def mock_fetch_token(*args, **kwargs):
+        import time
+        return {
+            "access_token": "test-token",
+            "token_type": "Bearer",
+            "expires_in": 3600,
+            "expires_at": int(time.time()) + 3600,
+        }
+    
+    with patch.object(OAuth, 'fetch_token', mock_fetch_token):
+        yield client, mock_redis
 
 
 class MockResponse:

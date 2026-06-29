@@ -21,9 +21,24 @@ async def test_get_beatmap_from_redis_cache(api_client):
     fixture_manager = FixtureManager()
     mock_data = _get_beatmap_with_fallback(fixture_manager)
     
-    mock_redis.hgetall.return_value = mock_data
+    from app.redis.models import Beatmap
+    beatmap_obj = Beatmap.model_validate(mock_data)
+    serialized_beatmap = beatmap_obj.serialize()
     
-    result = await api_client_obj.get_beatmap(mock_data["id"])
+    async def mock_hgetall(key: str):
+        if key == f"cached_beatmap:{mock_data['id']}":
+            return serialized_beatmap
+        return None
+    mock_redis.hgetall = AsyncMock(side_effect=mock_hgetall)
+    
+    with patch('app.osu_api.client.osu_api_client.httpx.AsyncClient') as mock_client_class:
+        mock_response = MockResponse(mock_data)
+        mock_client_instance = MagicMock()
+        mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
+        mock_client_instance.get = AsyncMock(return_value=mock_response)
+        mock_client_class.return_value = mock_client_instance
+        
+        result = await api_client_obj.get_beatmap(mock_data["id"])
     
     assert result["id"] == mock_data["id"]
 
@@ -138,9 +153,27 @@ async def test_get_beatmapset_from_redis_cache(api_client):
     fixture_manager = FixtureManager()
     mock_data = _get_beatmapset_with_fallback(fixture_manager)
     
-    mock_redis.hgetall.return_value = mock_data
+    from app.redis.models import Beatmapset
+    beatmapset_obj = Beatmapset.model_validate(mock_data)
+    serialized_beatmapset = beatmapset_obj.serialize()
     
-    result = await api_client_obj.get_beatmapset(mock_data["id"])
+    async def mock_hgetall(key: str):
+        if key == "osu_client_oauth_token":
+            return None
+        if key == f"cached_beatmapset:{mock_data['id']}":
+            return serialized_beatmapset
+        return None
+    mock_redis.hgetall = AsyncMock(side_effect=mock_hgetall)
+    
+    # Mock httpx to avoid real API calls
+    with patch('app.osu_api.client.osu_api_client.httpx.AsyncClient') as mock_client_class:
+        mock_response = MockResponse(mock_data)
+        mock_client_instance = MagicMock()
+        mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
+        mock_client_instance.get = AsyncMock(return_value=mock_response)
+        mock_client_class.return_value = mock_client_instance
+        
+        result = await api_client_obj.get_beatmapset(mock_data["id"])
     
     assert result["id"] == mock_data["id"]
 

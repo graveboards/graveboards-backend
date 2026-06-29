@@ -16,7 +16,7 @@ from app.database.models import Base
 def pytest_load_initial_conftests(early_config, args, parser):
     """Configure test environment BEFORE any conftest files are loaded."""
     # Disable security for tests - MUST be set before app.config import
-    os.environ["DISABLE_SECURITY"] = "true"
+    os.environ["DISABLE_SECURITY"] = "false"
     os.environ["ENV"] = "test"
     # Remove .spec_cache.pkl to force fresh spec load with correct env
     cache_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "api", "v1", "spec", ".spec_cache.pkl")

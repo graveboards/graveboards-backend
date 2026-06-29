@@ -365,16 +365,20 @@ class TestRequestsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="Skipping - requires proper mock data matching Pydantic schemas for requests list endpoint")
     async def test_user_can_get_own_requests(self, TestClientWithMocks, admin_user_token):
         """Test that user can get their own requests."""
+        from app.database.schemas import RequestSchema
+
         mock_db = AsyncMock()
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.user_id = 12345678
-        mock_request.beatmapset_id = 35965
-        mock_request.queue_id = 1
-        mock_request.status = 0
+        request_data = {
+            "id": 1,
+            "user_id": 12345678,
+            "beatmapset_id": 35965,
+            "queue_id": 1,
+            "status": 0,
+            "mv_checked": False,
+        }
+        mock_request = RequestSchema.model_validate(request_data)
         mock_db.get_many = AsyncMock(return_value=[mock_request])
 
         mock_user = MagicMock()
@@ -396,16 +400,20 @@ class TestRequestsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="Skipping - requires proper mock data matching Pydantic schemas for requests list endpoint")
     async def test_user_gets_forbidden_on_other_users_requests(self, TestClientWithMocks):
         """Test that user gets 403 Forbidden on other users' requests."""
+        from app.database.schemas import RequestSchema
+
         mock_db = AsyncMock()
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.user_id = 99999999
-        mock_request.beatmapset_id = 35965
-        mock_request.queue_id = 1
-        mock_request.status = 0
+        request_data = {
+            "id": 1,
+            "user_id": 99999999,
+            "beatmapset_id": 35965,
+            "queue_id": 1,
+            "status": 0,
+            "mv_checked": False,
+        }
+        mock_request = RequestSchema.model_validate(request_data)
         mock_db.get_many = AsyncMock(return_value=[mock_request])
 
         mock_user = MagicMock()
@@ -426,24 +434,31 @@ class TestRequestsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="Skipping - requires proper mock data matching Pydantic schemas for requests list endpoint")
     async def test_admin_can_get_all_requests(self, TestClientWithMocks, admin_user_token):
         """Test that admin can get all requests."""
+        from app.database.schemas import RequestSchema
+
         mock_db = AsyncMock()
 
-        mock_admin_request = MagicMock()
-        mock_admin_request.id = 1
-        mock_admin_request.user_id = 99999999
-        mock_admin_request.beatmapset_id = 35965
-        mock_admin_request.queue_id = 1
-        mock_admin_request.status = 0
+        admin_request_data = {
+            "id": 1,
+            "user_id": 99999999,
+            "beatmapset_id": 35965,
+            "queue_id": 1,
+            "status": 0,
+            "mv_checked": False,
+        }
+        mock_admin_request = RequestSchema.model_validate(admin_request_data)
 
-        mock_user_request = MagicMock()
-        mock_user_request.id = 2
-        mock_user_request.user_id = 12345678
-        mock_user_request.beatmapset_id = 35966
-        mock_user_request.queue_id = 1
-        mock_user_request.status = 0
+        user_request_data = {
+            "id": 2,
+            "user_id": 12345678,
+            "beatmapset_id": 35966,
+            "queue_id": 1,
+            "status": 0,
+            "mv_checked": False,
+        }
+        mock_user_request = RequestSchema.model_validate(user_request_data)
 
         mock_db.get_many = AsyncMock(return_value=[mock_admin_request, mock_user_request])
 
