@@ -3,7 +3,7 @@ import asyncio
 import sys
 from datetime import datetime, timezone
 
-from httpx import HTTPStatusError, TimeoutException
+from httpx import HTTPStatusError
 
 from app.database import PostgresqlDB
 from app.database.models import Beatmapset, BeatmapsetSnapshot, Request, User
@@ -13,7 +13,7 @@ from app.logging import setup_logging
 from app.setup import setup
 from app.logging import get_logger
 
-TIMEOUT_SECS = 120.0
+TIMEOUT_SECS = 60.0
 
 
 async def migrate(input_path: str = "requests.json"):
@@ -47,7 +47,7 @@ async def migrate(input_path: str = "requests.json"):
                             timeout=TIMEOUT_SECS
                         )
                         row["beatmapset_snapshot_id"] = changelog["snapshotted_beatmapset"]["id"]
-                    except (HTTPStatusError, TimeoutException) as e:
+                    except (HTTPStatusError, asyncio.TimeoutError) as e:
                         if isinstance(e, HTTPStatusError) and e.response.status_code == 404:
                             logger.warning(f"Beatmapset {beatmapset_id} not found, skipping")
                             continue
