@@ -7,25 +7,9 @@ from connexion import request
 from connexion.exceptions import Forbidden
 
 from app.database.enums import RoleName
-from app.config import load_config
+from app.config import get_security_enabled
 from app.database.models import User
 from app.utils import get_nested_value
-
-
-class _DynamicDISABLE_SECURITY:
-    """Dynamic property for DISABLE_SECURITY that reads from config on each access."""
-    
-    def __bool__(self):
-        return load_config()["DISABLE_SECURITY"]
-    
-    def __repr__(self):
-        return repr(load_config()["DISABLE_SECURITY"])
-    
-    def __str__(self):
-        return str(load_config()["DISABLE_SECURITY"])
-
-
-DISABLE_SECURITY = _DynamicDISABLE_SECURITY()
 
 if TYPE_CHECKING:
     from app.database import PostgresqlDB
@@ -118,7 +102,7 @@ def role_authorization(
 
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-            if DISABLE_SECURITY:
+            if not get_security_enabled():
                 return await func(*args, **kwargs)
 
             db: PostgresqlDB = request.state.db
@@ -198,7 +182,7 @@ def ownership_authorization(
 
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-            if DISABLE_SECURITY:
+            if not get_security_enabled():
                 return await func(*args, **kwargs)
 
             db: PostgresqlDB = request.state.db

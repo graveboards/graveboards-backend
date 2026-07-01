@@ -5,7 +5,7 @@ import yaml
 from connexion.spec import resolve_refs
 
 from app.enums import Env
-from app.config import ENV, DISABLE_SECURITY, SPEC_DIR, CACHE_FILE, OPENAPI_ENTRYPOINT
+from app.config import ENV, get_security_enabled, SPEC_DIR, CACHE_FILE, OPENAPI_ENTRYPOINT
 from .shallow import populate_shallow_refs
 
 
@@ -86,7 +86,7 @@ def _apply_mutations(spec: dict) -> None:
     """
     populate_shallow_refs(spec)
 
-    if DISABLE_SECURITY and ENV is not Env.PROD:
+    if not get_security_enabled() and ENV is not Env.PROD:
         spec.pop("security", None)
 
         for path in spec.get("paths", {}).values():
@@ -105,7 +105,7 @@ def _current_build_options() -> dict:
     """
     return {
         "env": ENV,
-        "disable_security": DISABLE_SECURITY
+        "disable_security": not get_security_enabled()
     }
 
 
