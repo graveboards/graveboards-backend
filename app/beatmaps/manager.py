@@ -111,6 +111,8 @@ class BeatmapManager:
                 await self._populate_beatmapset(beatmapset_dict)
 
                 if not await self.db.get(BeatmapsetSnapshot, checksum=checksum):
+                    beatmapset_dict["beatmapset_id"] = beatmapset_dict["id"]
+                    beatmapset_dict["checksum"] = checksum
                     await self._snapshot_beatmapset(beatmapset_dict)
 
                     if download:
@@ -175,6 +177,7 @@ class BeatmapManager:
             beatmap_snapshot = await self.db.get(BeatmapSnapshot, checksum=beatmap_dict["checksum"], session=self._session)
 
             if not beatmap_snapshot:
+                beatmap_dict["beatmap_id"] = beatmap_dict["id"]
                 beatmap_snapshot_dict = BeatmapSnapshotSchema.model_validate(beatmap_dict).model_dump(
                     exclude={"beatmapset_snapshots", "beatmap_tags", "leaderboard", "owner_profiles"}
                 )
