@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from httpx import HTTPStatusError
 
 from app.database import PostgresqlDB
-from app.database.models import Beatmapset, BeatmapsetSnapshot, Request
+from app.database.models import Beatmapset, BeatmapsetSnapshot, Request, User
 from app.beatmaps import BeatmapManager
 from app.redis import RedisClient
 from app.logging import setup_logging
@@ -28,10 +28,15 @@ async def migrate(input_path: str = "requests.json"):
     try:
         for i, row in enumerate(rows, start=1):
             beatmapset_id = row["beatmapset_id"]
+            user_id = row["user_id"]
             row["created_at"] = datetime.fromisoformat(row["created_at"]).replace(tzinfo=timezone.utc)
             row["updated_at"] = datetime.fromisoformat(row["updated_at"]).replace(tzinfo=timezone.utc)
 
             async with db.session() as session:
+                if not await db.get(User, id=user_id, session=session):
+                    await db.add(User, id=user_id, session=session)
+                    logger.debug(f"Added user: {user_id}")
+
                 if not await db.get(Beatmapset, id=beatmapset_id, session=session):
                     try:
                         bm = BeatmapManager(rc, db)
