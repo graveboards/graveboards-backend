@@ -62,7 +62,7 @@ async def migrate():
 
         logger.info("Migration complete!")
     finally:
-        await rc.close()
+        await rc.aclose()
         await db.close()
 
 

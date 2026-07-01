@@ -30,14 +30,6 @@ class RedisClient(AsyncRedis):
         """Initialize the Redis client using configured connection settings."""
         super().__init__(**REDIS_CONFIGURATION)
         logger.debug(f"Redis client initialized at '{REDIS_BASE_URL}'")
-    
-    async def aclose(self):
-        """Close the Redis connection pool.
-        
-        Unlike sync Redis, AsyncRedis doesn't have a pool that needs explicit cleanup.
-        This method exists for API consistency with the sync version.
-        """
-        pass
 
     async def paginate_scan(
         self,
