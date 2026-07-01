@@ -1,5 +1,6 @@
 import json
 import asyncio
+import sys
 from datetime import datetime, timezone
 
 from httpx import HTTPStatusError
@@ -13,11 +14,11 @@ from app.setup import setup
 from app.logging import get_logger
 
 
-async def migrate():
+async def migrate(input_path: str = "requests.json"):
     logger = get_logger("migrate")
     logger.info("Starting migration...")
 
-    with open("requests.json", "r") as file:
+    with open(input_path, "r") as file:
         rows: list[dict] = sorted(json.load(file), key=lambda r: r["id"])
         total_rows = len(rows)
 
@@ -69,4 +70,6 @@ async def migrate():
 if __name__ == "__main__":
     setup_logging()
     asyncio.run(setup())
-    asyncio.run(migrate())
+    
+    requests_input_path = sys.argv[1] if len(sys.argv) > 1 else "requests.json"
+    asyncio.run(migrate(requests_input_path))
