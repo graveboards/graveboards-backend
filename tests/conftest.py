@@ -1,27 +1,43 @@
-import asyncio
 import os
+from pathlib import Path
 
 import pytest
 
-import asyncpg
-import redis
 
-from app.config import POSTGRESQL_CONFIGURATION, REDIS_CONFIGURATION
-from app.test_app import create_test_app
-from app.test_app import MockRedisMiddleware, MockDatabaseMiddleware
-from app.database.db import PostgresqlDB
-from app.database.models import Base
+def _clear_spec_cache() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    cache_files = (
+        project_root / "instance" / ".spec_cache.pkl",
+        project_root / "api" / "v1" / "spec" / ".spec_cache.pkl",
+    )
+    for cache_file in cache_files:
+        if cache_file.exists():
+            cache_file.unlink()
 
 
-def pytest_load_initial_conftests(early_config, args, parser):
-    """Configure test environment BEFORE any conftest files are loaded."""
-    # Disable security for tests - MUST be set before app.config import
+def pytest_configure(config):
+    """Configure test environment before test modules are collected."""
     os.environ["DISABLE_SECURITY"] = "false"
-    os.environ["ENV"] = "test"
-    # Remove .spec_cache.pkl to force fresh spec load with correct env
-    cache_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "api", "v1", "spec", ".spec_cache.pkl")
-    if os.path.exists(cache_file):
-        os.remove(cache_file)
+    os.environ.setdefault("ENV", "test")
+    _clear_spec_cache()
+
+
+@pytest.fixture
+def security_disabled():
+    """Temporarily disable runtime security checks for a test."""
+    from app.config import override_security_enabled
+
+    with override_security_enabled(False):
+        yield
+
+
+@pytest.fixture
+def security_enabled():
+    """Temporarily enable runtime security checks for a test."""
+    from app.config import override_security_enabled
+
+    with override_security_enabled(True):
+        yield
 
 
 def TestClientWithMocksFactory(request, mock_rc=None, mock_db=None):
@@ -34,6 +50,7 @@ def TestClientWithMocksFactory(request, mock_rc=None, mock_db=None):
     Returns:
         TestClient configured with the provided mocks
     """
+    from app.test_app import create_test_app
     from starlette.testclient import TestClient
     
     test_client = TestClient(create_test_app(mock_rc=mock_rc, mock_db=mock_db))
@@ -88,6 +105,9 @@ async def db_session():
     Yields:
         AsyncSession: Database session for the test
     """
+    from app.database.db import PostgresqlDB
+    from app.database.models import Base
+
     db = PostgresqlDB()
     
     async with db.engine.begin() as conn:
