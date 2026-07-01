@@ -127,7 +127,7 @@ def get_security_enabled() -> bool:
     if override is not None:
         return override
 
-    return not DISABLE_SECURITY
+    return os.getenv("DISABLE_SECURITY", "false").lower() not in ("true", "1", "yes")
 
 
 @contextmanager
