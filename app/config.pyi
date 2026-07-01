@@ -1,6 +1,6 @@
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 class Env(Enum):
     PROD = "prod"
@@ -34,3 +34,5 @@ TEST_POSTGRESQL_CONFIGURATION: dict[str, Any]
 TEST_REDIS_CONFIGURATION: dict[str, Any]
 
 def load_config() -> dict[str, Any]: ...
+def get_security_enabled() -> bool: ...
+def override_security_enabled(enabled: bool) -> Iterator[None]: ...

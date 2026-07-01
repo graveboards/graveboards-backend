@@ -1,11 +1,19 @@
 import os
-import sys
+from contextlib import contextmanager
+from contextvars import ContextVar
 from pathlib import Path
+from typing import Iterator
 
 from dotenv import load_dotenv
 
 from .utils import parse_user_ids
 from .enums import Env
+
+
+_SECURITY_ENABLED_OVERRIDE: ContextVar[bool | None] = ContextVar(
+    "security_enabled_override",
+    default=None
+)
 
 
 def load_config() -> dict:
@@ -113,18 +121,23 @@ def load_config() -> dict:
     }
 
 
-class _DynamicConfigModule:
-    """Module that dynamically loads config on each attribute access."""
-    
-    def __getattr__(self, name):
-        # Special handling for load_config function
-        if name == "load_config":
-            return load_config
-        
-        config = load_config()
-        if name in config:
-            return config[name]
-        raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+def get_security_enabled() -> bool:
+    """Return whether runtime security checks should be enforced."""
+    override = _SECURITY_ENABLED_OVERRIDE.get()
+    if override is not None:
+        return override
+
+    return not DISABLE_SECURITY
 
 
-sys.modules[__name__] = _DynamicConfigModule()
+@contextmanager
+def override_security_enabled(enabled: bool) -> Iterator[None]:
+    """Temporarily override runtime security enforcement."""
+    token = _SECURITY_ENABLED_OVERRIDE.set(enabled)
+    try:
+        yield
+    finally:
+        _SECURITY_ENABLED_OVERRIDE.reset(token)
+
+
+globals().update(load_config())

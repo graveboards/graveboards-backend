@@ -28,7 +28,6 @@ from app.config import (
     DEBUG_API_KEY,
     JWT_SECRET_KEY,
     PRIMARY_ADMIN_USER_ID,
-    DISABLE_SECURITY,
 )
 from app.lifespan import lifespan as production_lifespan
 from app.patches import OpenAPIURIParserPatched, ParameterValidatorPatched
