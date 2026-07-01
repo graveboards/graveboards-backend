@@ -3,7 +3,7 @@ import asyncio
 import sys
 from datetime import datetime, timezone
 
-from httpx import HTTPStatusError
+from httpx import HTTPStatusError, TimeoutException
 
 from app.database import PostgresqlDB
 from app.database.models import Beatmapset, BeatmapsetSnapshot, Request, User
@@ -12,6 +12,8 @@ from app.redis import RedisClient
 from app.logging import setup_logging
 from app.setup import setup
 from app.logging import get_logger
+
+TIMEOUT_SECS = 120.0
 
 
 async def migrate(input_path: str = "requests.json"):
@@ -40,10 +42,17 @@ async def migrate(input_path: str = "requests.json"):
                 if not await db.get(Beatmapset, id=beatmapset_id, session=session):
                     try:
                         bm = BeatmapManager(rc, db)
-                        changelog = await bm.archive(beatmapset_id)
+                        changelog = await asyncio.wait_for(
+                            bm.archive(beatmapset_id),
+                            timeout=TIMEOUT_SECS
+                        )
                         row["beatmapset_snapshot_id"] = changelog["snapshotted_beatmapset"]["id"]
-                    except HTTPStatusError as e:
-                        if e.response.status_code == 404:
+                    except (HTTPStatusError, TimeoutException) as e:
+                        if isinstance(e, HTTPStatusError) and e.response.status_code == 404:
+                            logger.warning(f"Beatmapset {beatmapset_id} not found, skipping")
+                            continue
+                        else:
+                            logger.error(f"Error archiving beatmapset {beatmapset_id}: {e}, skipping")
                             continue
                 else:
                     beatmapset_snapshot = await db.get(
