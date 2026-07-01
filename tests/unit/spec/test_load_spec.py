@@ -214,7 +214,7 @@ class TestLoadSpec:
         }
 
         with patch("app.spec.load.populate_shallow_refs"):
-            with patch("app.spec.load.DISABLE_SECURITY", True):
+            with patch("app.spec.load.get_security_enabled", return_value=False):
                 with patch("app.spec.load.ENV", Env.DEV):
                     _apply_mutations(spec)
 
@@ -236,7 +236,7 @@ class TestLoadSpec:
         }
 
         with patch("app.spec.load.populate_shallow_refs"):
-            with patch("app.spec.load.DISABLE_SECURITY", False):
+            with patch("app.spec.load.get_security_enabled", return_value=True):
                 with patch("app.spec.load.ENV", Env.PROD):
                     _apply_mutations(spec)
 
@@ -248,7 +248,7 @@ class TestLoadSpec:
         from app.enums import Env
 
         with patch("app.spec.load.ENV", Env.DEV):
-            with patch("app.spec.load.DISABLE_SECURITY", True):
+            with patch("app.spec.load.get_security_enabled", return_value=False):
                 result = _current_build_options()
 
         assert result["env"] == Env.DEV

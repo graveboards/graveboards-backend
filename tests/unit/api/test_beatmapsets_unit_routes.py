@@ -14,7 +14,7 @@ class TestBeatmapsetsPostUnit:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_admin_archival_creates_snapshot(self):
+    async def test_admin_archival_creates_snapshot(self, security_disabled):
         """Test that admin can create beatmapset snapshot."""
         mock_rc = AsyncMock()
         mock_db = AsyncMock()
@@ -42,7 +42,7 @@ class TestBeatmapsetsPostUnit:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_admin_archival_updates_existing(self):
+    async def test_admin_archival_updates_existing(self, security_disabled):
         """Test that admin can update existing beatmapset."""
         mock_rc = AsyncMock()
         mock_db = AsyncMock()
@@ -70,7 +70,7 @@ class TestBeatmapsetsPostUnit:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_admin_archival_up_to_date(self):
+    async def test_admin_archival_up_to_date(self, security_disabled):
         """Test that up-to-date beatmapset returns 200 with message."""
         mock_rc = AsyncMock()
         mock_db = AsyncMock()
@@ -98,7 +98,7 @@ class TestBeatmapsetsPostUnit:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_osu_api_error_handling(self):
+    async def test_osu_api_error_handling(self, security_disabled):
         """Test that osu! API errors are properly handled."""
         import httpx
         

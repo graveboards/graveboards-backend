@@ -34,7 +34,7 @@ class TestScoresPostUnit:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_admin_submission_creates_score(self, valid_score_body):
+    async def test_admin_submission_creates_score(self, valid_score_body, security_disabled):
         """Test that admin can submit a new score."""
         mock_db = AsyncMock()
         
@@ -66,7 +66,7 @@ class TestScoresPostUnit:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_admin_submission_user_not_found(self, valid_score_body):
+    async def test_admin_submission_user_not_found(self, valid_score_body, security_disabled):
         """Test that score submission fails when user doesn't exist."""
         mock_db = AsyncMock()
         mock_db.get.side_effect = [None]
@@ -82,7 +82,7 @@ class TestScoresPostUnit:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_admin_submission_beatmap_not_found(self, valid_score_body):
+    async def test_admin_submission_beatmap_not_found(self, valid_score_body, security_disabled):
         """Test that score submission fails when beatmap doesn't exist."""
         mock_db = AsyncMock()
         mock_db.get.side_effect = [
@@ -101,7 +101,7 @@ class TestScoresPostUnit:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_admin_submission_beatmap_snapshot_not_found(self, valid_score_body):
+    async def test_admin_submission_beatmap_snapshot_not_found(self, valid_score_body, security_disabled):
         """Test that score submission fails when beatmap snapshot doesn't exist."""
         mock_db = AsyncMock()
         mock_db.get.side_effect = [
@@ -121,7 +121,7 @@ class TestScoresPostUnit:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_admin_submission_leaderboard_not_found(self, valid_score_body):
+    async def test_admin_submission_leaderboard_not_found(self, valid_score_body, security_disabled):
         """Test that score submission fails when leaderboard doesn't exist."""
         mock_db = AsyncMock()
         
@@ -151,7 +151,7 @@ class TestScoresPostUnit:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_admin_submission_duplicate_score(self, valid_score_body):
+    async def test_admin_submission_duplicate_score(self, valid_score_body, security_disabled):
         """Test that score submission fails when duplicate exists."""
         mock_db = AsyncMock()
         
