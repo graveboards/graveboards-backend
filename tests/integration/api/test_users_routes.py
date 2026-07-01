@@ -15,11 +15,8 @@ class TestUsersGetIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_can_get_users_list(self, TestClientWithMocks, monkeypatch):
+    async def test_admin_can_get_users_list(self, TestClientWithMocks, security_disabled):
         """Test admin can get users list."""
-        monkeypatch.setenv("DISABLE_SECURITY", "true")
-        monkeypatch.setenv("ENV", "test")
-        
         mock_db = AsyncMock()
         
         # Return plain dicts that match the schema format
@@ -40,11 +37,8 @@ class TestUsersGetIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_can_get_user_by_id(self, TestClientWithMocks, monkeypatch):
+    async def test_admin_can_get_user_by_id(self, TestClientWithMocks, security_disabled):
         """Test admin can get user by id."""
-        monkeypatch.setenv("DISABLE_SECURITY", "true")
-        monkeypatch.setenv("ENV", "test")
-        
         mock_db = AsyncMock()
         
         user = {"id": self.TEST_USER_ID, "profile": None, "roles": []}
@@ -62,11 +56,8 @@ class TestUsersGetIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_user_not_found(self, TestClientWithMocks, monkeypatch):
+    async def test_admin_user_not_found(self, TestClientWithMocks, security_disabled):
         """Test admin gets 404 when user doesn't exist."""
-        monkeypatch.setenv("DISABLE_SECURITY", "true")
-        monkeypatch.setenv("ENV", "test")
-        
         mock_db = AsyncMock()
         mock_db.get = AsyncMock(return_value=None)
         mock_db.update = AsyncMock()
@@ -81,11 +72,8 @@ class TestUsersGetIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_bypass_security_with_flag(self, TestClientWithMocks, monkeypatch):
-        """Test DISABLE_SECURITY=True bypasses authorization."""
-        monkeypatch.setenv("DISABLE_SECURITY", "true")
-        monkeypatch.setenv("ENV", "test")
-        
+    async def test_bypass_security_with_flag(self, TestClientWithMocks, security_disabled):
+        """Test security disabled bypasses authorization."""
         mock_db = AsyncMock()
         
         user1 = {"id": self.TEST_USER_ID, "profile": None, "roles": []}

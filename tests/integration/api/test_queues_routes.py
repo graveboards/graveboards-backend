@@ -140,8 +140,7 @@ class TestQueuesPatchIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.DISABLE_SECURITY', False), \
-             patch('app.security.decorators._get_authenticated_user_id', return_value=11111111):
+        with patch('app.security.decorators._get_authenticated_user_id', return_value=11111111):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.patch(
                 f"/api/v1/queues/{self.TEST_QUEUE_ID}",
@@ -193,8 +192,7 @@ class TestQueuesPatchIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.DISABLE_SECURITY', False), \
-             patch('app.security.decorators._get_authenticated_user_id', return_value=99999999):
+        with patch('app.security.decorators._get_authenticated_user_id', return_value=99999999):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.patch(
                 f"/api/v1/queues/{self.TEST_QUEUE_ID}",
@@ -210,6 +208,7 @@ class TestQueuesPatchIntegration:
     @pytest.mark.asyncio
     async def test_non_admin_gets_forbidden_on_queue_patch(self, TestClientWithMocks, admin_user_token):
         """Test non-admin user gets 403 Forbidden on queue patch."""
+        from app.security import generate_token
         from app.database.models import Queue
         
         mock_db = AsyncMock()
@@ -225,9 +224,8 @@ class TestQueuesPatchIntegration:
         
         test_client = TestClientWithMocks(mock_db=mock_db)
         
-        with patch('app.security.decorators.DISABLE_SECURITY', False), \
-             patch('app.security.decorators._get_authenticated_user_id', return_value=88888888):
-            headers = {"Authorization": "Bearer test_token_not_admin"}
+        with patch('app.security.decorators._get_authenticated_user_id', return_value=88888888):
+            headers = {"Authorization": f"Bearer {generate_token(88888888)}"}
             response = test_client.patch(
                 f"/api/v1/queues/{self.TEST_QUEUE_ID}",
                 json={"name": "Hacked Queue"},

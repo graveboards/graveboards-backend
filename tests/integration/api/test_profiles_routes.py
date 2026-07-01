@@ -15,13 +15,10 @@ class TestProfilesGetIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_can_get_profiles_list(self, TestClientWithMocks, monkeypatch):
+    async def test_admin_can_get_profiles_list(self, TestClientWithMocks, security_disabled):
         """Test admin can get profiles list."""
         from app.database.models import Profile
 
-        monkeypatch.setenv("DISABLE_SECURITY", "true")
-        monkeypatch.setenv("ENV", "test")
-        
         mock_db = AsyncMock()
         
         profile1 = Profile()
@@ -46,13 +43,10 @@ class TestProfilesGetIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_can_get_profile_by_user_id(self, TestClientWithMocks, monkeypatch):
+    async def test_admin_can_get_profile_by_user_id(self, TestClientWithMocks, security_disabled):
         """Test admin can get profile by user id."""
         from app.database.models import Profile
 
-        monkeypatch.setenv("DISABLE_SECURITY", "true")
-        monkeypatch.setenv("ENV", "test")
-        
         mock_db = AsyncMock()
         
         profile = Profile()
@@ -72,11 +66,8 @@ class TestProfilesGetIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_profile_not_found(self, TestClientWithMocks, monkeypatch):
+    async def test_admin_profile_not_found(self, TestClientWithMocks, security_disabled):
         """Test admin gets 404 when profile doesn't exist."""
-        monkeypatch.setenv("DISABLE_SECURITY", "true")
-        monkeypatch.setenv("ENV", "test")
-        
         mock_db = AsyncMock()
         mock_db.get = AsyncMock(return_value=None)
         mock_db.update = AsyncMock()
@@ -91,13 +82,10 @@ class TestProfilesGetIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_bypass_security_with_flag(self, TestClientWithMocks, monkeypatch):
-        """Test DISABLE_SECURITY=True bypasses authorization on profiles."""
+    async def test_bypass_security_with_flag(self, TestClientWithMocks, security_disabled):
+        """Test security disabled bypasses authorization on profiles."""
         from app.database.models import Profile
 
-        monkeypatch.setenv("DISABLE_SECURITY", "true")
-        monkeypatch.setenv("ENV", "test")
-        
         mock_db = AsyncMock()
         
         profile1 = Profile()

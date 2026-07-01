@@ -9,6 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from app.database.enums import RoleName
 from app.database.schemas import RequestSchema, QueueSchema
+from app.security import generate_token
 
 
 class TestRoleAuthorizationWithOneOf:
@@ -16,11 +17,8 @@ class TestRoleAuthorizationWithOneOf:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_user_with_one_of_required_roles_succeeds(self, TestClientWithMocks, monkeypatch):
+    async def test_user_with_one_of_required_roles_succeeds(self, TestClientWithMocks):
         """Test user with one of the required roles succeeds."""
-        monkeypatch.setenv("DISABLE_SECURITY", "false")
-        monkeypatch.setenv("ENV", "test")
-        
         mock_db = AsyncMock()
         
         mock_user = MagicMock()
@@ -40,9 +38,12 @@ class TestRoleAuthorizationWithOneOf:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.DISABLE_SECURITY', False), \
-             patch('app.security.decorators._get_authenticated_user_id', return_value=12345678):
-            response = test_client.patch("/api/v1/requests/1", json={"status": 1})
+        with patch('app.security.decorators._get_authenticated_user_id', return_value=12345678):
+            response = test_client.patch(
+                "/api/v1/requests/1",
+                json={"status": 1},
+                headers={"Authorization": f"Bearer {generate_token(12345678)}"}
+            )
 
         assert response.status_code == 200
         data = response.json()
@@ -50,11 +51,8 @@ class TestRoleAuthorizationWithOneOf:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_user_with_none_of_required_roles_fails(self, TestClientWithMocks, monkeypatch):
+    async def test_user_with_none_of_required_roles_fails(self, TestClientWithMocks):
         """Test user with none of the required roles fails."""
-        monkeypatch.setenv("DISABLE_SECURITY", "false")
-        monkeypatch.setenv("ENV", "test")
-        
         mock_db = AsyncMock()
         
         mock_user = MagicMock()
@@ -64,9 +62,12 @@ class TestRoleAuthorizationWithOneOf:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.DISABLE_SECURITY', False), \
-             patch('app.security.decorators._get_authenticated_user_id', return_value=12345678):
-            response = test_client.patch("/api/v1/requests/1", json={"status": 1})
+        with patch('app.security.decorators._get_authenticated_user_id', return_value=12345678):
+            response = test_client.patch(
+                "/api/v1/requests/1",
+                json={"status": 1},
+                headers={"Authorization": f"Bearer {generate_token(12345678)}"}
+            )
 
         assert response.status_code == 403
         data = response.json()
@@ -80,7 +81,7 @@ class TestRoleAuthorizationWithCustomOverride:
     @pytest.mark.asyncio
     async def test_override_callback_success(self, TestClientWithMocks, monkeypatch):
         """Test that custom override callback allows access."""
-        monkeypatch.setenv("DISABLE_SECURITY", "false")
+
         monkeypatch.setenv("ENV", "test")
         
         mock_db = AsyncMock()
@@ -107,9 +108,12 @@ class TestRoleAuthorizationWithCustomOverride:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.DISABLE_SECURITY', False), \
-             patch('app.security.decorators._get_authenticated_user_id', return_value=99999999):
-            response = test_client.patch("/api/v1/queues/1", json={"name": "Updated"})
+        with patch('app.security.decorators._get_authenticated_user_id', return_value=99999999):
+            response = test_client.patch(
+                "/api/v1/queues/1",
+                json={"name": "Updated"},
+                headers={"Authorization": f"Bearer {generate_token(99999999)}"}
+            )
 
         assert response.status_code == 200
         data = response.json()
@@ -119,7 +123,7 @@ class TestRoleAuthorizationWithCustomOverride:
     @pytest.mark.asyncio
     async def test_override_callback_failure(self, TestClientWithMocks, monkeypatch):
         """Test that custom override callback denies access when it returns False."""
-        monkeypatch.setenv("DISABLE_SECURITY", "false")
+
         monkeypatch.setenv("ENV", "test")
         
         mock_db = AsyncMock()
@@ -145,9 +149,12 @@ class TestRoleAuthorizationWithCustomOverride:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.DISABLE_SECURITY', False), \
-             patch('app.security.decorators._get_authenticated_user_id', return_value=99999999):
-            response = test_client.patch("/api/v1/queues/1", json={"name": "Hacked"})
+        with patch('app.security.decorators._get_authenticated_user_id', return_value=99999999):
+            response = test_client.patch(
+                "/api/v1/queues/1",
+                json={"name": "Hacked"},
+                headers={"Authorization": f"Bearer {generate_token(99999999)}"}
+            )
 
         assert response.status_code == 403
         data = response.json()
@@ -161,7 +168,7 @@ class TestOwnershipAuthorizationSuccess:
     @pytest.mark.asyncio
     async def test_user_can_get_own_requests(self, TestClientWithMocks, monkeypatch):
         """Test that user can get their own requests via ownership."""
-        monkeypatch.setenv("DISABLE_SECURITY", "false")
+
         monkeypatch.setenv("ENV", "test")
         
         mock_db = AsyncMock()
@@ -184,10 +191,12 @@ class TestOwnershipAuthorizationSuccess:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.DISABLE_SECURITY', False), \
-             patch('app.security.decorators._get_authenticated_user_id', return_value=12345678), \
+        with patch('app.security.decorators._get_authenticated_user_id', return_value=12345678), \
              patch('app.security.decorators.ownership_authorization', lambda *args, **kwargs: lambda f: f):
-            response = test_client.get("/api/v1/requests")
+            response = test_client.get(
+                "/api/v1/requests",
+                headers={"Authorization": f"Bearer {generate_token(12345678)}"}
+            )
 
         assert response.status_code == 200
         data = response.json()
@@ -198,7 +207,7 @@ class TestOwnershipAuthorizationSuccess:
     @pytest.mark.asyncio
     async def test_user_can_get_request_by_id_with_ownership(self, TestClientWithMocks, monkeypatch):
         """Test that user can get specific request they own via ownership."""
-        monkeypatch.setenv("DISABLE_SECURITY", "false")
+
         monkeypatch.setenv("ENV", "test")
         
         mock_db = AsyncMock()
@@ -227,10 +236,12 @@ class TestOwnershipAuthorizationSuccess:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.DISABLE_SECURITY', False), \
-             patch('app.security.decorators._get_authenticated_user_id', return_value=12345678), \
+        with patch('app.security.decorators._get_authenticated_user_id', return_value=12345678), \
              patch('app.security.decorators.ownership_authorization', lambda *args, **kwargs: lambda f: f):
-            response = test_client.get("/api/v1/requests/1")
+            response = test_client.get(
+                "/api/v1/requests/1",
+                headers={"Authorization": f"Bearer {generate_token(12345678)}"}
+            )
 
         assert response.status_code == 200
         data = response.json()
@@ -244,7 +255,7 @@ class TestOwnershipAuthorizationFailure:
     @pytest.mark.asyncio
     async def test_user_cannot_get_other_users_requests(self, TestClientWithMocks, monkeypatch):
         """Test that user gets 403 when trying to access other users' requests."""
-        monkeypatch.setenv("DISABLE_SECURITY", "false")
+
         monkeypatch.setenv("ENV", "test")
         
         mock_db = AsyncMock()
@@ -267,9 +278,11 @@ class TestOwnershipAuthorizationFailure:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.DISABLE_SECURITY', False), \
-             patch('app.security.decorators._get_authenticated_user_id', return_value=12345678):
-            response = test_client.get("/api/v1/requests")
+        with patch('app.security.decorators._get_authenticated_user_id', return_value=12345678):
+            response = test_client.get(
+                "/api/v1/requests",
+                headers={"Authorization": f"Bearer {generate_token(12345678)}"}
+            )
 
         assert response.status_code == 403
         data = response.json()
@@ -279,7 +292,7 @@ class TestOwnershipAuthorizationFailure:
     @pytest.mark.asyncio
     async def test_user_cannot_get_request_by_id_without_ownership(self, TestClientWithMocks, monkeypatch):
         """Test that user gets 403 when trying to access request they don't own."""
-        monkeypatch.setenv("DISABLE_SECURITY", "false")
+
         monkeypatch.setenv("ENV", "test")
         
         mock_db = AsyncMock()
@@ -308,9 +321,11 @@ class TestOwnershipAuthorizationFailure:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.DISABLE_SECURITY', False), \
-             patch('app.security.decorators._get_authenticated_user_id', return_value=12345678):
-            response = test_client.get("/api/v1/requests/1")
+        with patch('app.security.decorators._get_authenticated_user_id', return_value=12345678):
+            response = test_client.get(
+                "/api/v1/requests/1",
+                headers={"Authorization": f"Bearer {generate_token(12345678)}"}
+            )
 
         assert response.status_code == 403
         data = response.json()
@@ -324,7 +339,7 @@ class TestOwnershipAuthorizationAdminOverride:
     @pytest.mark.asyncio
     async def test_admin_can_get_all_requests_despite_ownership(self, TestClientWithMocks, admin_user_token, monkeypatch):
         """Test that admin can get all requests regardless of ownership."""
-        monkeypatch.setenv("DISABLE_SECURITY", "false")
+
         monkeypatch.setenv("ENV", "test")
         
         mock_db = AsyncMock()
@@ -360,8 +375,7 @@ class TestOwnershipAuthorizationAdminOverride:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.DISABLE_SECURITY', False), \
-             patch('app.security.decorators._get_authenticated_user_id', return_value=11111111), \
+        with patch('app.security.decorators._get_authenticated_user_id', return_value=11111111), \
              patch('app.security.decorators.ownership_authorization', lambda *args, **kwargs: lambda f: f):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.get("/api/v1/requests", headers=headers)
@@ -375,7 +389,7 @@ class TestOwnershipAuthorizationAdminOverride:
     @pytest.mark.asyncio
     async def test_admin_can_get_request_by_id_despite_ownership(self, TestClientWithMocks, admin_user_token, monkeypatch):
         """Test that admin can get specific request regardless of ownership."""
-        monkeypatch.setenv("DISABLE_SECURITY", "false")
+
         monkeypatch.setenv("ENV", "test")
         
         mock_db = AsyncMock()
@@ -406,8 +420,7 @@ class TestOwnershipAuthorizationAdminOverride:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.DISABLE_SECURITY', False), \
-             patch('app.security.decorators._get_authenticated_user_id', return_value=11111111), \
+        with patch('app.security.decorators._get_authenticated_user_id', return_value=11111111), \
              patch('app.security.decorators.ownership_authorization', lambda *args, **kwargs: lambda f: f):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.get("/api/v1/requests/1", headers=headers)

@@ -223,8 +223,7 @@ class TestLeaderboardPatchIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.DISABLE_SECURITY', False), \
-             patch('app.security.decorators._get_authenticated_user_id', return_value=11111111):
+        with patch('app.security.decorators._get_authenticated_user_id', return_value=11111111):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.patch(
                 f"/api/v1/beatmaps/{self.TEST_BEATMAP_ID}/snapshots/{self.TEST_SNAPSHOT_NUMBER}/leaderboard",
@@ -241,6 +240,7 @@ class TestLeaderboardPatchIntegration:
     @pytest.mark.asyncio
     async def test_non_admin_gets_forbidden_on_leaderboard_patch(self, TestClientWithMocks, admin_user_token):
         """Test non-admin user gets 403 Forbidden on leaderboard patch."""
+        from app.security import generate_token
         from app.database.models import BeatmapSnapshot, Leaderboard
 
         mock_db = AsyncMock()
@@ -272,9 +272,8 @@ class TestLeaderboardPatchIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.DISABLE_SECURITY', False), \
-             patch('app.security.decorators._get_authenticated_user_id', return_value=99999999):
-            headers = {"Authorization": "Bearer test_token_not_admin"}
+        with patch('app.security.decorators._get_authenticated_user_id', return_value=99999999):
+            headers = {"Authorization": f"Bearer {generate_token(99999999)}"}
             response = test_client.patch(
                 f"/api/v1/beatmaps/{self.TEST_BEATMAP_ID}/snapshots/{self.TEST_SNAPSHOT_NUMBER}/leaderboard",
                 json={"frozen": True},
@@ -398,6 +397,9 @@ async def test_get_leaderboard(TestClientWithMocks):
 @pytest.mark.asyncio
 async def test_admin_create_leaderboard(TestClientWithMocks, admin_user_token):
     """Test POST /api/v1/beatmaps/{id}/snapshots/{n}/leaderboard creates leaderboard."""
+    from app.database.enums import RoleName
+    from app.database.models import BeatmapSnapshot, Leaderboard, User
+
     mock_db = AsyncMock()
     mock_beatmap_snapshot = MagicMock()
     mock_beatmap_snapshot.id = 1
@@ -411,7 +413,22 @@ async def test_admin_create_leaderboard(TestClientWithMocks, admin_user_token):
     mock_leaderboard.beatmap_snapshot_id = 1
     mock_leaderboard.frozen = False
 
-    mock_db.get = AsyncMock(side_effect=[mock_beatmap_snapshot, None])
+    mock_user = MagicMock()
+    mock_user.id = 11111111
+    admin_role = MagicMock()
+    admin_role.name = RoleName.ADMIN.value
+    mock_user.roles = [admin_role]
+
+    async def mock_get(model, **kwargs):
+        if model == User:
+            return mock_user
+        if model == BeatmapSnapshot:
+            return mock_beatmap_snapshot
+        if model == Leaderboard:
+            return None
+        return None
+
+    mock_db.get = AsyncMock(side_effect=mock_get)
     mock_db.add = AsyncMock()
 
     test_client = TestClientWithMocks(mock_db=mock_db)
@@ -433,6 +450,9 @@ async def test_admin_create_leaderboard(TestClientWithMocks, admin_user_token):
 @pytest.mark.asyncio
 async def test_admin_patch_leaderboard(TestClientWithMocks, admin_user_token):
     """Test PATCH /api/v1/beatmaps/{id}/snapshots/{n}/leaderboard updates leaderboard."""
+    from app.database.enums import RoleName
+    from app.database.models import BeatmapSnapshot, Leaderboard, User
+
     mock_db = AsyncMock()
     mock_beatmap_snapshot = MagicMock()
     mock_beatmap_snapshot.id = 1
@@ -446,7 +466,22 @@ async def test_admin_patch_leaderboard(TestClientWithMocks, admin_user_token):
     mock_leaderboard.beatmap_snapshot_id = 1
     mock_leaderboard.frozen = False
 
-    mock_db.get = AsyncMock(side_effect=[mock_beatmap_snapshot, mock_leaderboard])
+    mock_user = MagicMock()
+    mock_user.id = 11111111
+    admin_role = MagicMock()
+    admin_role.name = RoleName.ADMIN.value
+    mock_user.roles = [admin_role]
+
+    async def mock_get(model, **kwargs):
+        if model == User:
+            return mock_user
+        if model == BeatmapSnapshot:
+            return mock_beatmap_snapshot
+        if model == Leaderboard:
+            return mock_leaderboard
+        return None
+
+    mock_db.get = AsyncMock(side_effect=mock_get)
     mock_db.update = AsyncMock()
 
     test_client = TestClientWithMocks(mock_db=mock_db)

@@ -35,7 +35,7 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_submission_creates_score(self, TestClientWithMocks, valid_score_body):
+    async def test_admin_submission_creates_score(self, TestClientWithMocks, valid_score_body, security_disabled):
         """Test successful score submission that creates new score."""
         mock_db = AsyncMock()
         
@@ -69,7 +69,7 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_user_not_found(self, TestClientWithMocks, valid_score_body):
+    async def test_admin_user_not_found(self, TestClientWithMocks, valid_score_body, security_disabled):
         """Test score submission fails when user doesn't exist."""
         mock_db = AsyncMock()
         mock_db.get.return_value = None
@@ -87,7 +87,7 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_beatmap_not_found(self, TestClientWithMocks, valid_score_body):
+    async def test_admin_beatmap_not_found(self, TestClientWithMocks, valid_score_body, security_disabled):
         """Test score submission fails when beatmap doesn't exist."""
         mock_db = AsyncMock()
         mock_user = MagicMock()
@@ -107,7 +107,7 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_beatmap_snapshot_not_found(self, TestClientWithMocks, valid_score_body):
+    async def test_admin_beatmap_snapshot_not_found(self, TestClientWithMocks, valid_score_body, security_disabled):
         """Test score submission fails when beatmap snapshot doesn't exist."""
         mock_db = AsyncMock()
         mock_user = MagicMock()
@@ -129,7 +129,7 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_leaderboard_not_found(self, TestClientWithMocks, valid_score_body):
+    async def test_admin_leaderboard_not_found(self, TestClientWithMocks, valid_score_body, security_disabled):
         """Test score submission fails when leaderboard doesn't exist."""
         mock_db = AsyncMock()
         mock_user = MagicMock()
@@ -154,7 +154,7 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_duplicate_score(self, TestClientWithMocks, valid_score_body):
+    async def test_admin_duplicate_score(self, TestClientWithMocks, valid_score_body, security_disabled):
         """Test score submission fails when duplicate exists."""
         mock_db = AsyncMock()
         mock_user = MagicMock()
@@ -182,6 +182,8 @@ class TestScoresPostIntegration:
     @pytest.mark.asyncio
     async def test_non_admin_user_gets_forbidden(self, TestClientWithMocks, valid_score_body):
         """Test that non-admin user gets 403 Forbidden."""
+        from app.security import generate_token
+
         mock_db = AsyncMock()
         mock_user = MagicMock()
         mock_user.id = 99999999
@@ -192,9 +194,8 @@ class TestScoresPostIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.DISABLE_SECURITY', False), \
-             patch('app.security.decorators._get_authenticated_user_id', return_value=99999999):
-            headers = {"Authorization": "Bearer test_token_not_admin"}
+        with patch('app.security.decorators._get_authenticated_user_id', return_value=99999999):
+            headers = {"Authorization": f"Bearer {generate_token(99999999)}"}
             response = test_client.post("/api/v1/scores", json=valid_score_body, headers=headers)
 
         assert response.status_code == 403
@@ -248,8 +249,7 @@ class TestScoresPostIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.DISABLE_SECURITY', False), \
-             patch('app.security.decorators._get_authenticated_user_id', return_value=user_id):
+        with patch('app.security.decorators._get_authenticated_user_id', return_value=user_id):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.post("/api/v1/scores", json=valid_score_body, headers=headers)
 
@@ -262,9 +262,14 @@ class TestScoresPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_success_with_auth(self, TestClientWithMocks, valid_score_body, admin_user_token):
         """Test that admin user can successfully post score with valid token."""
+        from app.database.models import User, Beatmap, BeatmapSnapshot, Leaderboard, Score
+
         mock_db = AsyncMock()
         mock_user = MagicMock()
         mock_user.id = self.TEST_USER_ID
+        admin_role = MagicMock()
+        admin_role.name = "admin"
+        mock_user.roles = [admin_role]
         mock_beatmap = MagicMock()
         mock_beatmap.id = self.TEST_BEATMAP_ID
         mock_snapshot = MagicMock()
@@ -272,13 +277,21 @@ class TestScoresPostIntegration:
         mock_snapshot.beatmap_id = self.TEST_BEATMAP_ID
         mock_leaderboard = MagicMock()
         mock_leaderboard.id = 1
-        mock_db.get.side_effect = [
-            mock_user,
-            mock_beatmap,
-            mock_snapshot,
-            mock_leaderboard,
-            None,
-        ]
+
+        async def mock_get(model, **kwargs):
+            if model == User:
+                return mock_user
+            if model == Beatmap:
+                return mock_beatmap
+            if model == BeatmapSnapshot:
+                return mock_snapshot
+            if model == Leaderboard:
+                return mock_leaderboard
+            if model == Score:
+                return None
+            return None
+
+        mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.add = AsyncMock()
 
         headers = {"Authorization": f"Bearer {admin_user_token}"}
@@ -293,9 +306,8 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_bypass_security_with_flag(self, TestClientWithMocks, valid_score_body, monkeypatch):
-        """Test DISABLE_SECURITY=True bypasses authorization."""
-        monkeypatch.setenv("DISABLE_SECURITY", "True")
+    async def test_bypass_security_with_flag(self, TestClientWithMocks, valid_score_body, security_disabled):
+        """Test security disabled bypasses authorization."""
         mock_db = AsyncMock()
         mock_user = MagicMock()
         mock_user.id = self.TEST_USER_ID
