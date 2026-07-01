@@ -39,22 +39,26 @@ async def migrate(input_path: str = "requests.json"):
                     await db.add(User, id=user_id, session=session)
                     logger.debug(f"Added user: {user_id}")
 
-                if not await db.get(Beatmapset, id=beatmapset_id, session=session):
-                    try:
-                        bm = BeatmapManager(rc, db)
-                        changelog = await asyncio.wait_for(
-                            bm.archive(beatmapset_id),
-                            timeout=TIMEOUT_SECS
-                        )
-                        row["beatmapset_snapshot_id"] = changelog["snapshotted_beatmapset"]["id"]
-                    except (HTTPStatusError, asyncio.TimeoutError) as e:
-                        if isinstance(e, HTTPStatusError) and e.response.status_code == 404:
-                            logger.warning(f"Beatmapset {beatmapset_id} not found, skipping")
-                            continue
-                        else:
-                            logger.error(f"Error archiving beatmapset {beatmapset_id}: {e}, skipping")
-                            continue
-                else:
+            async with db.session() as session:
+                beatmapset_exists = bool(await db.get(Beatmapset, id=beatmapset_id, session=session))
+
+            if not beatmapset_exists:
+                try:
+                    bm = BeatmapManager(rc, db)
+                    changelog = await asyncio.wait_for(
+                        bm.archive(beatmapset_id),
+                        timeout=TIMEOUT_SECS
+                    )
+                    row["beatmapset_snapshot_id"] = changelog["snapshotted_beatmapset"]["id"]
+                except (HTTPStatusError, asyncio.TimeoutError) as e:
+                    if isinstance(e, HTTPStatusError) and e.response.status_code == 404:
+                        logger.warning(f"Beatmapset {beatmapset_id} not found, skipping")
+                        continue
+                    else:
+                        logger.error(f"Error archiving beatmapset {beatmapset_id}: {e}, skipping")
+                        continue
+            else:
+                async with db.session() as session:
                     beatmapset_snapshot = await db.get(
                         BeatmapsetSnapshot,
                         beatmapset_id=beatmapset_id,
@@ -62,11 +66,12 @@ async def migrate(input_path: str = "requests.json"):
                         session=session
                     )
 
-                    if beatmapset_snapshot is None:
-                        raise ValueError(f"BeatmapsetSnapshot for beatmapset {beatmapset_id} not found")
+                if beatmapset_snapshot is None:
+                    raise ValueError(f"BeatmapsetSnapshot for beatmapset {beatmapset_id} not found")
 
-                    row["beatmapset_snapshot_id"] = beatmapset_snapshot.id
+                row["beatmapset_snapshot_id"] = beatmapset_snapshot.id
 
+            async with db.session() as session:
                 if not await db.get(Request, **row, session=session):
                     await db.add(Request, **row, session=session)
 
@@ -84,6 +89,6 @@ async def migrate(input_path: str = "requests.json"):
 if __name__ == "__main__":
     setup_logging()
     asyncio.run(setup())
-    
+
     requests_input_path = sys.argv[1] if len(sys.argv) > 1 else "requests.json"
     asyncio.run(migrate(requests_input_path))
