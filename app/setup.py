@@ -1,7 +1,7 @@
 import hashlib
 from datetime import timedelta
 
-from app.redis import RedisClient
+from app.redis import RedisClient, Namespace
 from app.database import PostgresqlDB
 from app.database.enums import RoleName
 from app.database.models import ApiKey, ScoreFetcherTask, User, Role, Queue
@@ -37,7 +37,6 @@ async def setup(rc: RedisClient = None, db: PostgresqlDB = None):
     if db is None:
         db = PostgresqlDB()
 
-    await rc.flushdb()
     await db.create_database()
 
     if await db.is_empty():
@@ -115,3 +114,39 @@ async def setup(rc: RedisClient = None, db: PostgresqlDB = None):
 
     await rc.aclose()
     await db.close()
+
+
+async def cleanup_stale_tasks(rc: RedisClient) -> int:
+    """Remove orphaned queue request handler tasks from Redis.
+
+    Orphaned tasks are tasks that were never marked as completed or failed,
+    typically left behind after a daemon crash. These tasks can be safely
+    deleted as they will be re-submitted if needed.
+
+    Args:
+        rc:
+            Redis client instance.
+
+    Returns:
+        Number of tasks cleaned up.
+    """
+    logger = get_logger(__name__)
+    cleaned = 0
+
+    task_pattern = f"{Namespace.QUEUE_REQUEST_HANDLER_TASK.value}:*"
+    task_hash_names = await rc.paginate_scan(task_pattern, type_="HASH")
+
+    for task_hash_name in task_hash_names:
+        task_data = await rc.hgetall(task_hash_name)
+
+        completed_at = task_data.get("completed_at")
+        failed_at = task_data.get("failed_at")
+
+        if not completed_at and not failed_at:
+            await rc.delete(task_hash_name)
+            cleaned += 1
+
+    if cleaned > 0:
+        logger.info(f"Cleaned up {cleaned} stale queue request handler task(s)")
+
+    return cleaned

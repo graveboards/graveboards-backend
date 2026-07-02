@@ -8,7 +8,7 @@ from .database import PostgresqlDB
 from .config import get_security_enabled
 from .logging import setup_logging, get_logger
 from .daemon import Daemon
-from .setup import setup
+from .setup import setup, cleanup_stale_tasks
 
 
 @asynccontextmanager
@@ -24,6 +24,8 @@ async def lifespan(app: ConnexionMiddleware):
 
     rc = RedisClient()
     db = PostgresqlDB()
+
+    await cleanup_stale_tasks(rc)
 
     daemon_app = Daemon(rc, db)
     await daemon_app.start()
