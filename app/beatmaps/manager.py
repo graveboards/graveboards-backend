@@ -145,8 +145,9 @@ class BeatmapManager:
             beatmapset_dict:
                 Raw beatmapset payload from osu! API.
         """
+        # Exclude "id" in the osu! payload it is the beatmapset id, which must not become the snapshot's surrogate primary key
         beatmapset_snapshot_dict = BeatmapsetSnapshotSchema.model_validate(beatmapset_dict).model_dump(
-            exclude={"beatmap_snapshots", "beatmapset_tags", "user_profile"}
+            exclude={"id", "beatmap_snapshots", "beatmapset_tags", "user_profile"}
         )
         beatmapset_snapshot_dict["beatmap_snapshots"] = await self._snapshot_beatmaps(beatmapset_dict["beatmaps"])
         beatmapset_snapshot_dict["beatmapset_tags"] = await self._populate_beatmapset_tags(beatmapset_dict["tags"])
@@ -178,8 +179,9 @@ class BeatmapManager:
 
             if not beatmap_snapshot:
                 beatmap_dict["beatmap_id"] = beatmap_dict["id"]
+                # Exclude "id" in the osu! payload it is the beatmap id, which must not become the snapshot's surrogate primary key
                 beatmap_snapshot_dict = BeatmapSnapshotSchema.model_validate(beatmap_dict).model_dump(
-                    exclude={"beatmapset_snapshots", "beatmap_tags", "leaderboard", "owner_profiles"}
+                    exclude={"id", "beatmapset_snapshots", "beatmap_tags", "leaderboard", "owner_profiles"}
                 )
                 beatmap_snapshot_dict["beatmap_tags"] = await self._populate_beatmap_tags(beatmap_dict["top_tag_ids"])
                 owners = beatmap_dict["owners"] or [{"id": beatmap_dict["user_id"]}]
