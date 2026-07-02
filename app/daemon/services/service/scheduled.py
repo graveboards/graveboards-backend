@@ -265,7 +265,9 @@ class ScheduledService(Service, ABC):
     async def _on_job_error(self, job_id: int, exc: Exception) -> None:
         """Execute after a job failed due to an exception.
 
-        Subclasses can override this to perform logging, alerting, or metrics.
+        ``_handle_job`` already logs the failure with a full traceback, so this default
+        is a no-op. Subclasses can override it to perform alerting, metrics, or other
+        error handling.
 
         Args:
             job_id:
@@ -273,7 +275,6 @@ class ScheduledService(Service, ABC):
             exc:
                 Exception that was raised from the job.
         """
-        self.logger.error(f"Job with ID '{job_id}' failed with error: {exc}", exc_info=True)
 
     async def _on_job_finish(self, job_id: int) -> None:
         """Execute after a job has finished.
