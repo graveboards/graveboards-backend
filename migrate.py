@@ -80,6 +80,11 @@ async def migrate(input_path: str = "requests.json"):
             spaces = " " * (50 - len(bar))
             logger.info(f"[requests] [{bar}{spaces}] {progress}% ({i}/{total_rows})")
 
+        # Rows above were inserted with explicit primary keys, which does not advance
+        # the backing SERIAL sequences. Realign them so the app's next server-generated
+        # insert doesn't collide with a migrated id.
+        await db.reset_sequences()
+
         logger.info("Migration complete!")
     finally:
         await rc.aclose()
