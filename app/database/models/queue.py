@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from .request import Request
     from .user import User
     from .profile import Profile
+    from .queue_restriction import QueueRestriction
 
 
 class Queue(Base):
@@ -55,6 +56,13 @@ class Queue(Base):
         primaryjoin="Queue.id == queue_manager_association.c.queue_id",
         secondaryjoin="Profile.user_id == queue_manager_association.c.user_id",
         viewonly=True,
+        lazy=True
+    )
+    restrictions: Mapped[list["QueueRestriction"]] = relationship(
+        "QueueRestriction",
+        back_populates="queue",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
         lazy=True
     )
 
