@@ -11,6 +11,7 @@ from asyncpg.connection import Connection
 from app.config import POSTGRESQL_CONFIGURATION
 from app.logging import get_logger
 from .crud import CRUD
+from . import events
 
 DATABASE_URI = URL.create(**POSTGRESQL_CONFIGURATION)
 logger = get_logger(__name__)
