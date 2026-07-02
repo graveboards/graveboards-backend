@@ -5,6 +5,7 @@ from pydantic.main import BaseModel
 from pydantic.config import ConfigDict
 
 from .base_model_extra import BaseModelExtra
+from .restriction import RestrictionSchema
 
 if TYPE_CHECKING:
     from .request import RequestSchema
@@ -28,6 +29,7 @@ class QueueSchema(BaseModel, BaseModelExtra):
     managers: list["UserSchema"] = []
     user_profile: Optional["ProfileSchema"] = None
     manager_profiles: list["ProfileSchema"] = []
+    restrictions: list[RestrictionSchema] = []
 
 
 class QueueCreateSchema(BaseModel, BaseModelExtra):
@@ -47,3 +49,4 @@ class QueueUpdateSchema(BaseModel, BaseModelExtra):
     description: Optional[str] = None
     is_open: Optional[bool] = None
     visibility: Optional[int] = None
+    restrictions: Optional[list[RestrictionSchema]] = None
