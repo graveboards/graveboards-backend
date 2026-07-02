@@ -1,0 +1,108 @@
+QueueRestriction:
+    title: QueueRestriction
+    type: object
+    properties:
+        id:
+            type: integer
+        queue_id:
+            type: integer
+        restriction_type:
+            type: string
+            enum:
+                - rate_limit
+                - cooldown
+                - blacklist
+        config:
+            type: object
+            additionalProperties: true
+        is_active:
+            type: boolean
+            default: true
+        created_at:
+            type: string
+            format: date-time
+        updated_at:
+            type: string
+            format: date-time
+
+RateLimitConfig:
+    title: RateLimitConfig
+    type: object
+    properties:
+        max_requests:
+            type: integer
+            minimum: 1
+        period:
+            type: string
+            description: Time period (day, week, month, year, or seconds as integer string)
+        scope:
+            type: string
+            enum: [user, beatmapset_type, artist, creator, custom]
+            default: user
+        target:
+            type: array
+            items:
+                type: integer
+            nullable: true
+            description: Optional list of user IDs to apply this restriction to. Empty/null means all users.
+
+CooldownConfig:
+    title: CooldownConfig
+    type: object
+    properties:
+        cooldown_seconds:
+            type: integer
+            minimum: 1
+        scope:
+            type: string
+            enum: [user, beatmapset_type, artist, creator, custom]
+            default: user
+        target:
+            type: array
+            items:
+                type: integer
+            nullable: true
+            description: Optional list of user IDs to apply this restriction to. Empty/null means all users.
+
+BlacklistConfig:
+    title: BlacklistConfig
+    type: object
+    properties:
+        scope:
+            type: string
+            enum: [user, beatmapset_type, artist, creator, custom]
+            default: user
+        target:
+            type: array
+            items:
+                type: integer
+            description: List of user IDs to blacklist
+
+RestrictionCreate:
+    title: RestrictionCreate
+    type: object
+    properties:
+        restriction_type:
+            type: string
+            enum:
+                - rate_limit
+                - cooldown
+                - blacklist
+        config:
+            type: object
+            additionalProperties: true
+    required:
+        - restriction_type
+        - config
+
+RestrictionUpdate:
+    title: RestrictionUpdate
+    type: object
+    properties:
+        id:
+            type: integer
+        is_active:
+            type: boolean
+        config:
+            type: object
+            additionalProperties: true
