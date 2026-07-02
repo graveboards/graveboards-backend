@@ -1,6 +1,7 @@
 import asyncio
 import sys
 
+from sqlalchemy.sql import text
 from app.database import PostgresqlDB
 from app.logging import setup_logging
 from app.setup import setup
@@ -17,7 +18,7 @@ async def migrate():
     try:
         async with db.engine.begin() as conn:
             result = await conn.execute(
-                "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'queue_restrictions')"
+                text("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'queue_restrictions')")
             )
             table_exists = result.scalar()
 
@@ -26,7 +27,7 @@ async def migrate():
             return
 
         async with db.engine.begin() as conn:
-            await conn.execute("""
+            await conn.execute(text("""
                 CREATE TABLE queue_restrictions (
                     id SERIAL PRIMARY KEY,
                     queue_id INTEGER NOT NULL REFERENCES queues(id) ON DELETE CASCADE,
@@ -36,7 +37,7 @@ async def migrate():
                     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
                 )
-            """)
+            """))
 
         logger.info("queue_restrictions table created successfully")
     finally:
