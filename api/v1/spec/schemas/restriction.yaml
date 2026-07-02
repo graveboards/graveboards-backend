@@ -1,23 +1,33 @@
 QueueRestriction:
     title: QueueRestriction
+    description:
+        $ref: "#/QueueRestrictionDescription"
     type: object
     properties:
         id:
             type: integer
+            description: Auto-generated restriction ID
         queue_id:
             type: integer
+            description: The queue this restriction applies to
         restriction_type:
             type: string
             enum:
                 - rate_limit
                 - cooldown
                 - blacklist
+            description: The type of restriction
         config:
             type: object
-            additionalProperties: true
+            description: Restriction-specific configuration (see individual type schemas)
+            oneOf:
+                - $ref: "#/RateLimitConfig"
+                - $ref: "#/CooldownConfig"
+                - $ref: "#/BlacklistConfig"
         is_active:
             type: boolean
             default: true
+            description: When false, the restriction is disabled but preserved
         created_at:
             type: string
             format: date-time
@@ -27,18 +37,29 @@ QueueRestriction:
 
 RateLimitConfig:
     title: RateLimitConfig
+    description: |
+        Limits the number of requests a user can submit within a time period.
+        
+        Uses Redis for tracking. Counter resets when the period expires.
     type: object
+    required:
+        - max_requests
+        - period
+        - scope
     properties:
         max_requests:
             type: integer
             minimum: 1
+            description: Maximum number of requests allowed per period
         period:
             type: string
-            description: Time period (day, week, month, year, or seconds as integer string)
+            enum: [day, week, month, year]
+            description: Time period for the rate limit
         scope:
             type: string
             enum: [user, beatmapset_type, artist, creator, custom]
             default: user
+            description: Who this restriction applies to
         target:
             type: array
             items:
@@ -48,15 +69,24 @@ RateLimitConfig:
 
 CooldownConfig:
     title: CooldownConfig
+    description: |
+        Prevents users from submitting requests for a specified duration after their last submission.
+        
+        Useful for preventing spam or giving time between submissions.
     type: object
+    required:
+        - cooldown_seconds
+        - scope
     properties:
         cooldown_seconds:
             type: integer
             minimum: 1
+            description: Duration in seconds before the user can submit again
         scope:
             type: string
             enum: [user, beatmapset_type, artist, creator, custom]
             default: user
+            description: Who this restriction applies to
         target:
             type: array
             items:
@@ -66,12 +96,20 @@ CooldownConfig:
 
 BlacklistConfig:
     title: BlacklistConfig
+    description: |
+        Blocks specific users from submitting requests to the queue.
+        
+        The target array specifies which user IDs are blocked.
     type: object
+    required:
+        - scope
+        - target
     properties:
         scope:
             type: string
             enum: [user, beatmapset_type, artist, creator, custom]
             default: user
+            description: Who this restriction applies to
         target:
             type: array
             items:
@@ -80,7 +118,14 @@ BlacklistConfig:
 
 RestrictionCreate:
     title: RestrictionCreate
+    description: |
+        A new restriction to add to a queue. 
+        
+        The config object must match the structure for the specified restriction_type.
     type: object
+    required:
+        - restriction_type
+        - config
     properties:
         restriction_type:
             type: string
@@ -88,21 +133,85 @@ RestrictionCreate:
                 - rate_limit
                 - cooldown
                 - blacklist
+            description: The type of restriction
         config:
             type: object
-            additionalProperties: true
-    required:
-        - restriction_type
-        - config
+            description: Restriction-specific configuration (see individual type schemas)
+            oneOf:
+                - $ref: "#/RateLimitConfig"
+                - $ref: "#/CooldownConfig"
+                - $ref: "#/BlacklistConfig"
 
 RestrictionUpdate:
     title: RestrictionUpdate
+    description: Update an existing restriction
     type: object
     properties:
         id:
             type: integer
+            description: The restriction ID to update
         is_active:
             type: boolean
+            description: Enable or disable the restriction
         config:
             type: object
-            additionalProperties: true
+            description: Restriction-specific configuration (see individual type schemas)
+            oneOf:
+                - $ref: "#/RateLimitConfig"
+                - $ref: "#/CooldownConfig"
+                - $ref: "#/BlacklistConfig"
+
+QueueRestrictionDescription: |
+    A queue restriction rule applied when users submit requests.
+    
+    Multiple restrictions of the same type can be added (e.g., multiple blacklist rules for different users).
+    Duplicate rules (same type + same config) are rejected with 409 Conflict.
+    
+    Examples of valid restriction configurations for each type:
+
+    Rate Limit (limit user to 1 requests per week):
+    ```
+    {
+        "restriction_type": "rate_limit",
+        "config": {
+            "max_requests": 1,
+            "period": "day",
+            "scope": "user"
+        }
+    }
+    ```
+
+    Cooldown (30 second cooldown for all users):
+    ```
+    {
+        "restriction_type": "cooldown",
+        "config": {
+            "cooldown_seconds": 30,
+            "scope": "user"
+        }
+    }
+    ```
+
+    Blacklist specific users:
+    ```
+    {
+        "restriction_type": "blacklist",
+        "config": {
+            "scope": "user",
+            "target": [123, 456, 789]
+        }
+    }
+    ```
+
+    Rate limit for specific users:
+    ```
+    {
+        "restriction_type": "rate_limit",
+        "config": {
+            "max_requests": 5,
+            "period": "week",
+            "scope": "user",
+            "target": [123]
+        }
+    }
+    ```

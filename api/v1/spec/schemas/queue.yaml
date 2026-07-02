@@ -66,3 +66,5 @@ QueuePatch:
             type: array
             items:
                 $ref: "./restriction.yaml#/RestrictionCreate"
+            description:
+                $ref: "./restriction.yaml#/QueueRestrictionDescription"
