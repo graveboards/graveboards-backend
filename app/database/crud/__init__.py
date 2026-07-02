@@ -1,6 +1,8 @@
 from sqlalchemy.sql import select, text
 
+from app.logging import get_logger
 from app.database.models import ModelClass, Base
+from app.database.sql import RESET_SEQUENCES_SQL
 from .decorators import session_manager, session_manager_stream, ensure_required, SessionResolver, db_session_resolver
 from .protocol import DatabaseProtocol
 from .misc import Misc
@@ -8,6 +10,8 @@ from .c import C
 from .r import R
 from .u import U
 from .d import D
+
+logger = get_logger(__name__)
 
 
 class CRUD(C, R, U, D, Misc, DatabaseProtocol):
@@ -50,3 +54,17 @@ class CRUD(C, R, U, D, Misc, DatabaseProtocol):
                     return False
 
         return True
+
+    async def reset_sequences(self):
+        """Realign all owned sequences with the current max id of their table.
+
+        After bulk-inserting rows with explicit primary keys (e.g. during a data
+        migration), PostgreSQL does not advance the backing ``SERIAL`` sequences, so the
+        next server-generated insert would reuse an existing id and raise a
+        ``UniqueViolationError``. Run this once after such an insert to make generated
+        ids continue from the right place. Idempotent and safe to run at any time.
+        """
+        async with self.engine.begin() as conn:
+            await conn.execute(text(RESET_SEQUENCES_SQL))
+
+        logger.info("Reset all table sequences to their current max id")
