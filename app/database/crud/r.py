@@ -252,14 +252,18 @@ class _R:
         else:
             select_stmt = select(model_class.value)
 
+        joined_models: dict[str, type[BaseType]] = {}
+
         if _join is not None:
-            select_stmt = _R._apply_join(select_stmt, _join)
+            select_stmt, joined_models = _R._apply_join(select_stmt, _join)
 
         if _where:
             select_stmt = _R._apply_where(select_stmt, _where)
 
         if _sorting is not None:
-            select_stmt = _R._apply_sorting(select_stmt, model_class, _sorting)
+            select_stmt = _R._apply_sorting(
+                select_stmt, model_class, _sorting, joined_models=joined_models
+            )
         else:
             select_stmt = select_stmt.order_by(*model_class.primary_keys)
 
@@ -332,7 +336,7 @@ class _R:
     def _apply_join(
         select_stmt: Select,
         join: Union[type[BaseType], tuple[type[BaseType], BinaryExpression], Iterable[type[BaseType]], Iterable[tuple[type[BaseType], BinaryExpression]]]
-    ) -> Select:
+    ) -> tuple[Select, dict[str, type[BaseType]]]:
         """Apply one or more JOIN clauses to a ``Select`` statement.
 
         Accepts model classes or (model, condition) tuples. Input is normalized into an
@@ -345,7 +349,8 @@ class _R:
                 Join specification(s).
 
         Returns:
-            The ``Select`` statement with joins applied.
+            A tuple of the ``Select`` statement with joins applied, and a mapping of
+            joined model names to their types.
 
         Raises:
             TypeError:
@@ -372,10 +377,13 @@ class _R:
         else:
             raise TypeError(f"Invalid input for join: {join}")
 
+        joined_models: dict[str, type[BaseType]] = {}
+
         for target in join:
             select_stmt = select_stmt.join(*target)
+            joined_models[target[0].__name__] = target[0]
 
-        return select_stmt
+        return select_stmt, joined_models
 
     @staticmethod
     def _apply_where(
@@ -402,11 +410,13 @@ class _R:
     def _apply_sorting(
         select_stmt: Select,
         model_class: ModelClass,
-        sorting: Sorting
+        sorting: Sorting,
+        joined_models: dict[str, type[BaseType]] | None = None
     ) -> Select:
         """Apply validated sorting clauses to a ``Select`` statement.
 
-        Only model columns and hybrid properties are sortable.
+        Only model columns and hybrid properties are sortable. Sorting by fields on
+        joined models is also supported when ``joined_models`` is provided.
 
         Args:
             select_stmt:
@@ -415,6 +425,9 @@ class _R:
                 Wrapped model metadata for validation.
             sorting:
                 List of dictionaries describing sorting rules.
+            joined_models:
+                Mapping of joined model names to their types, allowing sorting by
+                their columns.
 
         Returns:
             The ``Select`` statement with ORDER BY clauses applied.
@@ -448,13 +461,20 @@ class _R:
             except ValueError:
                 raise ValueError(f"Invalid field format '{field}' in item #{i}. Expected 'Model.field'")
 
-            if prefix != model_name:
-                raise ValueError(f"Sorting field '{field}' in item #{i} does not match model '{model_name}'")
+            if prefix == model_name:
+                target_model = model
+                valid_target_fields = valid_fields
+            elif joined_models is not None and prefix in joined_models:
+                target_model = joined_models[prefix]
+                target_model_class = ModelClass(target_model)
+                valid_target_fields = target_model_class.column_names | target_model_class.hybrid_property_names
+            else:
+                raise ValueError(f"Sorting field '{field}' in item #{i} does not match model '{model_name}' or any joined model")
 
-            if attr_name not in valid_fields:
-                raise ValueError(f"Attribute '{attr_name}' in item #{i} is not a valid column or hybrid property of {model_name}")
+            if attr_name not in valid_target_fields:
+                raise ValueError(f"Attribute '{attr_name}' in item #{i} is not a valid column or hybrid property of {prefix}")
 
-            attr = getattr(model, attr_name)
+            attr = getattr(target_model, attr_name)
 
             if order not in ("asc", "desc"):
                 raise ValueError(f"Invalid sorting order '{order}' in item #{i}. Must be 'asc' or 'desc'")

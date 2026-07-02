@@ -68,3 +68,4 @@ BeatmapsetSnapshotSortingField:
         - BeatmapsetSnapshot.hit_lengths_min
         - BeatmapsetSnapshot.hit_lengths_max
         - BeatmapsetSnapshot.hit_lengths_avg
+        - BeatmapsetListing.updated_at
