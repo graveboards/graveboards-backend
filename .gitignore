@@ -24,3 +24,6 @@ api/v1/spec/.spec_cache.pkl
 
 # pytest
 .pytest_cache/
+
+# egg-info
+**/*.egg-info
