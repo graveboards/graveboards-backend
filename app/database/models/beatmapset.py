@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 class Beatmapset(Base):
     __tablename__ = "beatmapsets"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
 
     # Relationships
