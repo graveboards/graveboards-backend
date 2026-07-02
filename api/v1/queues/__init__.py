@@ -10,6 +10,7 @@ from app.security import role_authorization
 from app.security.overrides import queue_owner_override
 from app.database.enums import RoleName
 from app.spec import get_include_schema
+from app.database.crud.restrictions import RestrictionCRUD
 
 
 @api_query(ModelClass.QUEUE, many=True)
@@ -89,7 +90,7 @@ async def patch(queue_id: int, body: dict, **kwargs):
 
     body = bleach_body(
         body,
-        whitelisted_keys={"name", "description", "visibility", "is_open"}
+        whitelisted_keys={"name", "description", "visibility", "is_open", "restrictions"}
     )
 
     queue = await db.get(Queue, id=queue_id)
@@ -100,12 +101,17 @@ async def patch(queue_id: int, body: dict, **kwargs):
     delta = {}
 
     for key, value in body.items():
+        if key == "restrictions":
+            continue
         if value != getattr(queue, key):
             delta[key] = value
 
-    if not delta:
-        return {"message": "No changes"}, 200, {"Content-Type": "application/json"}
+    if delta:
+        await db.update(Queue, queue_id, **delta)
 
-    await db.update(Queue, queue_id, **delta)
+    if "restrictions" in body:
+        restriction_crud = RestrictionCRUD()
+        async with db.session() as session:
+            await restriction_crud.upsert_restrictions(queue_id, body["restrictions"], session=session)
 
     return {"message": "Queue updated successfully!"}, 200, {"Content-Type": "application/json"}

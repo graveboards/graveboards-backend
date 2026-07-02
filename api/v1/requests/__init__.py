@@ -14,6 +14,8 @@ from app.database.enums import RoleName
 from app.redis import Namespace, ChannelName, RedisClient
 from app.redis.models import QueueRequestHandlerTask
 from app.spec import get_include_schema
+from app.database.restrictions.registry import get_validator
+from app.database.crud.restrictions import RestrictionCRUD
 from . import tasks
 
 
@@ -75,6 +77,7 @@ async def post(body: dict, **kwargs):
 
     beatmapset_id = body["beatmapset_id"]
     queue_id = body["queue_id"]
+    user_id = body["user_id"]
     queue = await db.get(Queue, id=queue_id)
 
     if not queue:
@@ -85,6 +88,8 @@ async def post(body: dict, **kwargs):
 
     if await db.get(Request, beatmapset_id=beatmapset_id, queue_id=queue_id):
         raise Conflict(f"The request with beatmapset ID '{beatmapset_id}' already exists in queue '{queue.name}'")
+
+    await _check_queue_restrictions(queue_id, user_id, db, rc)
 
     oac = OsuAPIClient(rc)
     beatmapset_dict = await oac.get_beatmapset(beatmapset_id)
@@ -108,6 +113,29 @@ async def post(body: dict, **kwargs):
     await rc.publish(ChannelName.QUEUE_REQUEST_HANDLER_TASKS.value, task.hashed_id)
 
     return {"message": "Request submitted and queued for processing!", "task_id": task.hashed_id}, 202, {"Content-Type": "application/json"}
+
+
+async def _check_queue_restrictions(
+    queue_id: int, user_id: int, db: PostgresqlDB, rc: RedisClient
+) -> None:
+    restriction_crud = RestrictionCRUD()
+    async with db.session() as session:
+        restrictions = await restriction_crud.get_restrictions(queue_id, only_active=True, session=session)
+
+    for restriction in restrictions:
+        validator_cls = get_validator(restriction.restriction_type)
+
+        if validator_cls is None:
+            continue
+
+        validator = validator_cls()
+        await validator.check(
+            queue_id=queue_id,
+            user_id=user_id,
+            db=db,
+            redis=rc,
+            config=restriction.config,
+        )
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override, override_kwargs={"from_request": True})
