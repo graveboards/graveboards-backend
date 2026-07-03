@@ -40,6 +40,9 @@ class RedisClient(AsyncRedis):
     ) -> list[str]:
         """Scan keys matching a pattern with offset/limit pagination.
 
+        Uses Redis SCAN with a batch count to minimize round trips. Offset filtering
+        is performed in Python since Redis SCAN does not support server-side offset.
+
         Args:
             pattern:
                 Glob-style key pattern.
@@ -54,17 +57,18 @@ class RedisClient(AsyncRedis):
             A list of matching Redis keys.
         """
         keys = []
-        count = 0
+        scanned = 0
+        scan_count = max(limit or 100, 100)
 
-        async for key in self.scan_iter(match=pattern, _type=type_):
-            if count < offset:
-                count += 1
+        async for key in self.scan_iter(match=pattern, _type=type_, count=scan_count):
+            if scanned < offset:
+                scanned += 1
                 continue
+
+            keys.append(key)
 
             if limit is not None and len(keys) >= limit:
                 break
-
-            keys.append(key)
 
         return keys
 
