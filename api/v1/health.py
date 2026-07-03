@@ -28,7 +28,8 @@ async def health_check() -> dict:
     has_error = False
     degraded = False
     
-    # Check PostgreSQL (use engine without closing for health check)
+    # Check PostgreSQL
+    db = None
     db_start = time.time()
     try:
         db = PostgresqlDB()
@@ -38,8 +39,12 @@ async def health_check() -> dict:
         checks["database"]["status"] = "error"
         checks["database"]["message"] = str(e)
         has_error = True
-    
+    finally:
+        if db is not None:
+            await db.close()
+
     # Check Redis
+    rc = None
     redis_start = time.time()
     try:
         rc = RedisClient()
@@ -49,6 +54,9 @@ async def health_check() -> dict:
         checks["redis"]["status"] = "error"
         checks["redis"]["message"] = str(e)
         has_error = True
+    finally:
+        if rc is not None:
+            await rc.aclose()
     
     # Check osu! API (optional - only if credentials available)
     try:
