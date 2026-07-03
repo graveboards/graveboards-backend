@@ -36,6 +36,9 @@ def beatmap_snapshot_before_insert(mapper: Mapper[BeatmapSnapshot], connection: 
     Side Effects:
         Mutates ``target.snapshot_number`` prior to persistence.
     """
+    if target.snapshot_number is not None:
+        return
+
     select_stmt = (
         select(func.max(BeatmapSnapshot.snapshot_number))
         .where(BeatmapSnapshot.beatmap_id == target.beatmap_id)
