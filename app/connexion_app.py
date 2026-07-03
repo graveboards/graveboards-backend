@@ -28,6 +28,7 @@ def create_connexion_app() -> AsyncApp:
         }
     )
 
+    # TODO: Restrict CORS to known frontend domains before production deployment
     connexion_app.add_middleware(
         CORSMiddleware,
         position=MiddlewarePosition.BEFORE_EXCEPTION,
