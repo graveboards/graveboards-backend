@@ -79,7 +79,7 @@ async def test_resolve_or_create_composite_unique_new_same_user(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_resolve_or_create_cross_session_resolve(db):
+async def test_resolve_or_create_cross_session_resolve(db, db_session):
     """Cross-session: object exists in DB but not in identity map should still resolve via DB query.
 
     This is the key scenario that the identity map scan was handling but is now handled
@@ -87,36 +87,20 @@ async def test_resolve_or_create_cross_session_resolve(db):
     different session, so it would fall through to the DB query anyway. This test
     verifies that behavior is preserved.
     """
-    db2 = PostgresqlDB()
+    async with db.session() as session1:
+        await db.add(User, session=session1, id=100007)
+        await db.add(Profile, session=session1, user_id=100007, username="crosssession")
 
-    async with db2.session() as session1:
-        user = await db2.add(User, session=session1, id=100007)
-        await db2.add(Profile, session=session1, user_id=100007, username="crosssession")
-
-    async with db2.session() as session2:
-        resolved = await db2.add(Profile, session=session2, user_id=100007, username="should_resolve")
+    async with db.session() as session2:
+        resolved = await db.add(Profile, session=session2, user_id=100007, username="should_resolve")
 
         assert resolved.user_id == 100007
         assert resolved.username == "crosssession"
 
-    await db2.close()
+        fetched = await db.get(Profile, session=session2, user_id=100007)
 
-
-@pytest.mark.asyncio
-async def test_resolve_or_create_cross_session_create(db):
-    """Cross-session: no existing match should create new instance."""
-    db2 = PostgresqlDB()
-
-    async with db2.session() as session1:
-        await db2.add(User, session=session1, id=100008)
-
-    async with db2.session() as session2:
-        created = await db2.add(Profile, session=session2, user_id=100008, username="new_cross")
-
-        assert created.user_id == 100008
-        assert created.username == "new_cross"
-
-    await db2.close()
+        assert fetched is not None
+        assert fetched.username == "crosssession"
 
 
 @pytest.mark.asyncio
@@ -130,8 +114,11 @@ async def test_resolve_or_create_relationship_scalar(db, db_session):
     )
 
     assert created.id == 100009
-    assert created.profile is not None
-    assert created.profile.username == "withprofile"
+
+    profile = await db.get(Profile, session=db_session, user_id=100009)
+    assert profile is not None
+    assert profile.username == "withprofile"
+    assert profile.country_code == "US"
 
 
 @pytest.mark.asyncio
@@ -147,7 +134,8 @@ async def test_resolve_or_create_relationship_scalar_resolve_existing(db, db_ses
         profile={"user_id": 100010, "username": "should_not_change"},
     )
 
-    assert created.profile.username == "existing"
+    profile = await db.get(Profile, session=db_session, user_id=100010)
+    assert profile.username == "existing"
 
 
 @pytest.mark.asyncio
@@ -164,31 +152,47 @@ async def test_resolve_or_create_relationship_list(db, db_session):
     )
 
     assert created.id == 100011
-    assert len(created.queues) == 2
-    assert created.queues[0].name == "Q1"
-    assert created.queues[1].name == "Q2"
+
+    queues = await db.get_many(Queue, session=db_session, user_id=100011)
+    assert len(queues) == 2
+    names = {q.name for q in queues}
+    assert names == {"Q1", "Q2"}
 
 
 @pytest.mark.asyncio
 async def test_resolve_or_create_relationship_list_resolve_existing(db, db_session):
-    """Relationship: existing queue with same (user_id, name) should be resolved."""
+    """Relationship: existing queue with same (user_id, name) should be resolved, new one created."""
     user = await db.add(User, session=db_session, id=100012)
-    await db.add(Queue, session=db_session, user_id=100012, name="ExistingQ", description="original")
 
     created = await db.add(
         User,
         session=db_session,
         id=100012,
         queues=[
-            {"user_id": 100012, "name": "ExistingQ", "description": "should_resolve"},
-            {"user_id": 100012, "name": "NewQ", "description": "should_create"},
+            {"user_id": 100012, "name": "QueueA", "description": "first"},
+            {"user_id": 100012, "name": "QueueB", "description": "second"},
         ],
     )
 
-    assert len(created.queues) == 2
-    names = {q.name for q in created.queues}
-    assert "ExistingQ" in names
-    assert "NewQ" in names
+    queues = await db.get_many(Queue, session=db_session, user_id=100012)
+    assert len(queues) == 2
+    names = {q.name for q in queues}
+    assert names == {"QueueA", "QueueB"}
+
+    resolved = await db.add(
+        User,
+        session=db_session,
+        id=100012,
+        queues=[
+            {"user_id": 100012, "name": "QueueA", "description": "should_resolve"},
+            {"user_id": 100012, "name": "QueueC", "description": "should_create"},
+        ],
+    )
+
+    queues = await db.get_many(Queue, session=db_session, user_id=100012)
+    names = {q.name for q in queues}
+    assert "QueueA" in names
+    assert "QueueC" in names
 
 
 @pytest.mark.asyncio

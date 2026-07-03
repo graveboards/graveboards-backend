@@ -233,51 +233,51 @@ class _C:
                 if key in data:
                     setattr(instance, key, data[key])
 
-            # Recursively resolve relationships
-            for key in relationship_keys:
-                if key not in data:
-                    continue
+        # Recursively resolve relationships (applies to both create and resolve)
+        for key in relationship_keys:
+            if key not in data:
+                continue
 
-                relationship = mapper.relationships[key]
-                related_model = relationship.mapper.class_
-                related_model_class = ModelClass(related_model)
-                value = data[key]
+            relationship = mapper.relationships[key]
+            related_model = relationship.mapper.class_
+            related_model_class = ModelClass(related_model)
+            value = data[key]
 
-                # One-to-many / many-to-many
-                if relationship.uselist:
-                    new_items = []
+            # One-to-many / many-to-many
+            if relationship.uselist:
+                new_items = []
 
-                    for item in value:
-                        if isinstance(item, dict):
-                            obj = await _C._resolve_or_create(
-                                related_model_class,
-                                item,
-                                session,
-                            )
-                        else:
-                            obj = item
-                            _C._ensure_same_session(obj, session)
-
-                        new_items.append(obj)
-
-                    state = inspect(instance)
-
-                    if state.persistent:
-                        await session.refresh(instance, attribute_names=[key])
-
-                    setattr(instance, key, new_items)
-                # One-to-one / Many-to-one
-                else:
-                    if isinstance(value, dict):
+                for item in value:
+                    if isinstance(item, dict):
                         obj = await _C._resolve_or_create(
                             related_model_class,
-                            value,
+                            item,
                             session,
                         )
-                        setattr(instance, key, obj)
                     else:
-                        obj = value
+                        obj = item
                         _C._ensure_same_session(obj, session)
+
+                    new_items.append(obj)
+
+                state = inspect(instance)
+
+                if state.persistent:
+                    await session.refresh(instance, attribute_names=[key])
+
+                setattr(instance, key, new_items)
+            # One-to-one / Many-to-one
+            else:
+                if isinstance(value, dict):
+                    obj = await _C._resolve_or_create(
+                        related_model_class,
+                        value,
+                        session,
+                    )
+                    setattr(instance, key, obj)
+                else:
+                    obj = value
+                    _C._ensure_same_session(obj, session)
 
         return instance
 
