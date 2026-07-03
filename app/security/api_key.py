@@ -45,7 +45,7 @@ def validate_api_key(api_key: ApiKey) -> dict[str, int]:
     if not api_key:
         raise ValueError("API key not found")
 
-    if api_key.expires_at <= aware_utcnow():
+    if api_key.expires_at < aware_utcnow():
         raise ValueError("API key has expired")
 
     if api_key.is_revoked:
