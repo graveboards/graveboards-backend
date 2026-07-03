@@ -17,6 +17,8 @@ class OsuAPIClient(OsuAPIClientBase):
     # Beatmaps
     @rate_limit(RATE_LIMIT)
     async def get_beatmap(self, beatmap_id: int) -> dict:
+        cached_beatmap_hash_name = Namespace.CACHED_BEATMAP.hash_name(beatmap_id)
+
         async def get_cached_beatmap_from_redis() -> Beatmap | None:
             if serialized_beatmap := await self.rc.hgetall(cached_beatmap_hash_name):
                 try:
@@ -25,8 +27,6 @@ class OsuAPIClient(OsuAPIClientBase):
                     logger.warning(f"Error when deserializing from redis cache: {e}")
 
             return None
-
-        cached_beatmap_hash_name = Namespace.CACHED_BEATMAP.hash_name(beatmap_id)
 
         if cached_beatmap := await get_cached_beatmap_from_redis():
             return cached_beatmap.model_dump(mode="json")
@@ -99,6 +99,8 @@ class OsuAPIClient(OsuAPIClientBase):
     # Beatmapsets
     @rate_limit(RATE_LIMIT)
     async def get_beatmapset(self, beatmapset_id: int) -> dict:
+        cached_beatmapset_hash_name = Namespace.CACHED_BEATMAPSET.hash_name(beatmapset_id)
+
         async def get_cached_beatmapset_from_redis() -> Beatmapset | None:
             if serialized_beatmapset := await self.rc.hgetall(cached_beatmapset_hash_name):
                 try:
@@ -107,8 +109,6 @@ class OsuAPIClient(OsuAPIClientBase):
                     logger.warning(f"Error when deserializing from redis cache: {e}, falling back to fetching directly from osu! API")
 
             return None
-
-        cached_beatmapset_hash_name = Namespace.CACHED_BEATMAPSET.hash_name(beatmapset_id)
 
         if cached_beatmapset := await get_cached_beatmapset_from_redis():
             return cached_beatmapset.model_dump(mode="json")
