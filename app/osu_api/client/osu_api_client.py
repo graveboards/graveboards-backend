@@ -181,7 +181,7 @@ class OsuAPIClient(OsuAPIClientBase):
         return response.json()
 
     @rate_limit(RATE_LIMIT)
-    async def get_user_scores(self, user_id: int, score_type: ScoreType, legacy_only: int = 0, include_fails: int = 0, mode: Ruleset | None = None, limit: int | None = None, offset: int | None = None):
+    async def get_user_scores(self, user_id: int, score_type: ScoreType, legacy_only: int = 0, include_fails: int = 0, mode: Ruleset | None = None, limit: int | None = None, offset: int | None = None) -> dict:
         url = APIEndpoint.SCORES.format(user=user_id, type=score_type.value)
 
         headers = {
