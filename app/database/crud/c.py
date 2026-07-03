@@ -135,9 +135,7 @@ class _C:
         Resolution strategy (in order):
 
         1. Primary key lookup (if all PK fields are present).
-        2. Unique column or composite unique constraint lookup.
-            - Checks in-memory identity map first.
-            - Falls back to database query if not found.
+        2. Unique column or composite unique constraint lookup via database query.
         3. Instance creation if no match exists.
 
         Relationship values are processed recursively:
