@@ -210,16 +210,6 @@ class _C:
                 if not all(col in data for col in columns):
                     continue
 
-                for obj in session.identity_map.values():
-                    if isinstance(obj, model):
-                        if all(getattr(obj, col) == data[col] for col in columns):
-                            instance = obj
-                            _C._ensure_same_session(instance, session)
-                            break
-
-                if instance:
-                    break
-
                 conditions = [
                     getattr(model, col) == data[col]
                     for col in columns
