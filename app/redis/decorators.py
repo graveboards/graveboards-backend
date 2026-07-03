@@ -2,10 +2,11 @@ import asyncio
 import inspect
 from typing import Callable, Awaitable, ParamSpec, TypeVar, runtime_checkable, Protocol
 from functools import wraps
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from app.exceptions import RateLimitExceededError
 from app.logging import get_logger
+from app.utils import aware_utcnow
 from .rc import RedisClient
 from .enums import Namespace
 
@@ -72,8 +73,8 @@ def rate_limit(
                 raise ValueError(f"First argument of '{func.__name__}' must be either an instance of {RedisClient.__name__}, an object that contains a 'rc' attribute, or a Redis-like object with 'incr' and 'expire' methods")
 
             async def sub_wrapper() -> T:
-                now = datetime.now()
-                window_start = now - timedelta(seconds=now.second, microseconds=now.microsecond)
+                now = aware_utcnow()
+                window_start = now.replace(second=0, microsecond=0)
                 window_end = window_start + timedelta(minutes=1)
                 window_delta_seconds = int((window_end - now).total_seconds() + 1)
                 counter_hash_name = Namespace.RATE_LIMIT_COUNTER.hash_name(int(window_start.timestamp()))

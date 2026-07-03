@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Any, Sequence, TYPE_CHECKING
 
+from app.utils import aware_utcnow
+
 from authlib.integrations.base_client.errors import OAuthError
 from connexion.exceptions import BadRequestProblem, ClientProblem
 
@@ -145,7 +147,7 @@ class RateLimitExceededError(Exception):
 
     @property
     def remaining_time(self) -> float:
-        return (self.next_window - datetime.now()).total_seconds()
+        return (self.next_window - aware_utcnow()).total_seconds()
 
 
 class RedisLockTimeoutError(TimeoutError):
