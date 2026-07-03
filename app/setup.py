@@ -18,6 +18,8 @@ from app.config import (
     PRIMARY_ADMIN_USER_ID
 )
 
+# TODO: Rework setup.py to support configurable setup (e.g. pyproject.toml, dynamic entry points)
+
 
 def get_debug_api_key() -> str:
     if DEBUG_API_KEY:
