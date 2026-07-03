@@ -107,10 +107,6 @@ async def setup(rc: RedisClient = None, db: PostgresqlDB = None):
                     )
 
     logger.debug(f"Primary admin user ID: {PRIMARY_ADMIN_USER_ID}")
-    if primary_raw_key is not None:
-        logger.debug(f"Primary API key: {primary_raw_key}")
-    else:
-        logger.debug("Primary API key is not available")
 
     await rc.aclose()
     await db.close()
