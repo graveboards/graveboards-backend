@@ -96,6 +96,7 @@ class FetchCriteria:
     dry_run: bool = False
     concurrent: bool = False
     concurrency: int = 3
+    exclude_ids: list[int] = field(default_factory=list)
 
     # Custom fixtures directory
     fixtures_dir: str | None = None
@@ -218,14 +219,19 @@ class FixtureOrchestrator:
             fixtures_dir = Path(self.criteria.fixtures_dir)
 
         if self.criteria.is_search_test:
-            fetcher = SearchTestFixtureFetcher(self.rc, fixtures_dir=fixtures_dir)
+            fetcher = SearchTestFixtureFetcher(
+                self.rc, fixtures_dir=fixtures_dir, exclude_ids=self.criteria.exclude_ids
+            )
         elif self.criteria.is_targeted:
-            fetcher = TargetedFixtureFetcher(self.rc, fixtures_dir=fixtures_dir)
+            fetcher = TargetedFixtureFetcher(
+                self.rc, fixtures_dir=fixtures_dir, exclude_ids=self.criteria.exclude_ids
+            )
         else:
             fetcher = FixtureDataFetcher(
                 self.rc,
                 force_fetch=self.criteria.force_fetch,
                 fixtures_dir=fixtures_dir,
+                exclude_ids=self.criteria.exclude_ids,
             )
 
         fetcher.logger = get_logger(__name__)

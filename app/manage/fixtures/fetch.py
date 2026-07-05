@@ -67,6 +67,7 @@ async def cmd_fetch_fixtures(
     dry_run: bool = False,
     concurrent: bool = False,
     concurrency: int = 3,
+    exclude_ids: str | None = None,
 ):
     """Fetch fixture data using the orchestrator with composable criteria."""
     rc = RedisClient()
@@ -107,6 +108,7 @@ async def cmd_fetch_fixtures(
             dry_run=dry_run,
             concurrent=concurrent,
             concurrency=concurrency,
+            exclude_ids=exclude_ids,
         )
 
         orchestrator = FixtureOrchestrator(fetch_criteria, rc)
@@ -157,6 +159,7 @@ def _build_criteria(
     dry_run: bool = False,
     concurrent: bool = False,
     concurrency: int = 3,
+    exclude_ids: str | None = None,
 ) -> FetchCriteria:
     """Build FetchCriteria from CLI arguments."""
     # Resolve criteria from explicit --criteria or legacy flags
@@ -197,6 +200,10 @@ def _build_criteria(
             full=full,
         )
 
+    exclude_ids_list = []
+    if exclude_ids:
+        exclude_ids_list = [int(x.strip()) for x in exclude_ids.split(",") if x.strip().isdigit()]
+
     return FetchCriteria(
         criteria=resolved_criteria,
         source=src,
@@ -224,6 +231,7 @@ def _build_criteria(
         dry_run=dry_run,
         concurrent=concurrent,
         concurrency=concurrency,
+        exclude_ids=exclude_ids_list,
     )
 
 

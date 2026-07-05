@@ -86,13 +86,15 @@ class ProgressBar:
 
 class FixtureDataFetcher:
     def __init__(self, rc: RedisClient, id_ranges: dict | None = None, force_fetch: bool = False,
-                 id_source: IDSource | None = None, fixtures_dir: Path | None = None):
+                 id_source: IDSource | None = None, fixtures_dir: Path | None = None,
+                 exclude_ids: list[int] | None = None):
         self.rc = rc
         self.oac = OsuAPIClient(rc)
         self.logger = None
         self.force_fetch = force_fetch
         self.id_source = id_source
         self.fixtures_dir = fixtures_dir
+        self.exclude_ids = set(exclude_ids) if exclude_ids else set()
         self.metadata = load_metadata(fixtures_dir=fixtures_dir)
         self.failed_ids = self.metadata.get("failed_ids", {
             "beatmaps": [],
@@ -136,6 +138,15 @@ class FixtureDataFetcher:
                         self._seen_ids.add(int(parts[1]))
                 except ValueError:
                     continue
+        self._seen_ids.update(self.exclude_ids)
+
+    def _should_skip_id(self, id_: int) -> bool:
+        """Check if an ID should be skipped (seen, failed, or excluded)."""
+        if id_ in self._seen_ids:
+            return True
+        if id_ in self.exclude_ids:
+            return True
+        return False
 
     def _mark_metadata_dirty(self) -> None:
         """Mark metadata as dirty so it gets flushed later."""
@@ -172,7 +183,7 @@ class FixtureDataFetcher:
             attempts += 1
             beatmap_id = self._get_random_id("beatmaps", avoid_failed=False)
 
-            if skip_existing and beatmap_id in self._seen_ids:
+            if skip_existing and self._should_skip_id(beatmap_id):
                 continue
 
             retries = 0
@@ -216,7 +227,7 @@ class FixtureDataFetcher:
             attempts += 1
             beatmapset_id = self._get_random_id("beatmapsets", avoid_failed=False)
 
-            if skip_existing and beatmapset_id in self._seen_ids:
+            if skip_existing and self._should_skip_id(beatmapset_id):
                 continue
 
             retries = 0
@@ -278,7 +289,7 @@ class FixtureDataFetcher:
             for i in range(count):
                 user_id = self._get_random_id(f"users.{ruleset}")
                 
-                if skip_existing and user_id in self._seen_ids:
+                if skip_existing and self._should_skip_id(user_id):
                     continue
 
                 mode = getattr(Ruleset, ruleset.upper()).value
@@ -343,7 +354,7 @@ class FixtureDataFetcher:
                 use_top_players = score_type in ["firsts", "recent"]
                 user_id = self._get_random_id("users", use_top_players=use_top_players)
 
-                if skip_existing and user_id in self._seen_ids:
+                if skip_existing and self._should_skip_id(user_id):
                     continue
 
                 mode = Ruleset.OSU
@@ -409,7 +420,7 @@ class FixtureDataFetcher:
                 else:
                     beatmap_id = self._get_random_id("beatmaps", avoid_failed=True)
 
-                if skip_existing and beatmap_id in self._seen_ids:
+                if skip_existing and self._should_skip_id(beatmap_id):
                     continue
 
                 try:
@@ -468,7 +479,7 @@ class FixtureDataFetcher:
                 else:
                     beatmap_id = self._get_random_id("beatmaps", avoid_failed=True)
 
-                if skip_existing and beatmap_id in self._seen_ids:
+                if skip_existing and self._should_skip_id(beatmap_id):
                     continue
 
                 mods = random.choice([0, 8, 16, 24, 64, 80])
