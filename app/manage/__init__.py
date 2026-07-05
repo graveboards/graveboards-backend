@@ -334,7 +334,7 @@ async def main():
 
     args = parser.parse_args()
 
-    verbose = getattr(args, 'verbose', False) or '-v' in sys.argv or '--verbose' in sys.argv
+    verbose = getattr(args, 'verbose', False)
     no_debug = not verbose
     setup_logging(
         enabled_loggers=["manage", "database", "fixtures"],
