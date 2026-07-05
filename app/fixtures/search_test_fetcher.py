@@ -684,30 +684,41 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
         """Fetch random users via rankings and classify into all buckets.
 
         One get_user() call fills: country_code, is_restricted.
+        Cycles through all rulesets (osu, taiko, fruits, mania) for diverse country codes.
 
         Returns a dict of {bucket_name: count_of_newly_filled_buckets}.
         """
+        from .utils import RULESETS
+        from app.osu_api.enums import Ruleset as RulesetEnum
+
         path = get_fixture_path("users")
         newly_filled: dict[str, int] = {}
         total_calls = 0
         seen_ids: set[int] = set()
         page = 1
+        ruleset_index = 0
+        rulesets = [RulesetEnum.OSU, RulesetEnum.TAIKO, RulesetEnum.FRUITS, RulesetEnum.MANIA]
 
         while total_calls < max_calls:
+            ruleset = rulesets[ruleset_index % len(rulesets)]
+            ruleset_name = ruleset.name.lower()
+
             try:
                 data = await self.oac.get_rankings(
-                    ruleset=Ruleset.OSU,
+                    ruleset=ruleset,
                     mode="performance",
                     cursor_page=page,
                     limit=50,
                 )
             except Exception as e:
-                self.logger.debug(f"Error fetching rankings page={page}: {e}")
+                self.logger.debug(f"Error fetching rankings page={page} for {ruleset_name}: {e}")
                 break
 
             players = data.get("ranking", [])
             if not players:
-                break
+                ruleset_index += 1
+                page = 1
+                continue
 
             for player in players:
                 if total_calls >= max_calls:
@@ -723,18 +734,17 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
                 seen_ids.add(user_id)
 
                 try:
-                    user_data = await self.oac.get_user(user_id, Ruleset.OSU)
+                    user_data = await self.oac.get_user(user_id, ruleset)
                 except Exception as e:
                     self.logger.debug(f"Failed to fetch user {user_id}: {e}")
-                    self._add_failed_id("users.osu", user_id)
+                    self._add_failed_id(f"users.{ruleset_name}", user_id)
                     continue
 
                 # Save the JSON fixture file
-                ruleset_path = path / "osu"
+                ruleset_path = path / ruleset_name
                 ruleset_path.mkdir(parents=True, exist_ok=True)
-                filepath = ruleset_path / f"user_{user_id}_osu.json"
-                with open(filepath, "w") as f:
-                    json.dump(user_data, f, indent=2)
+                filepath = ruleset_path / f"user_{user_id}_{ruleset_name}.json"
+                self._atomic_write(filepath, user_data, "user")
 
                 # Classify into all buckets
                 classifications = self._classify_user(user_data, user_id)
@@ -750,19 +760,22 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
                 self.metadata["samples"]["users"]["count"] = (
                     self.metadata["samples"]["users"].get("count", 0) + 1
                 )
-                self.metadata["samples"]["users"]["per_ruleset"]["osu"] = (
-                    self.metadata["samples"]["users"]["per_ruleset"].get("osu", 0) + 1
+                self.metadata["samples"]["users"]["per_ruleset"][ruleset_name] = (
+                    self.metadata["samples"]["users"]["per_ruleset"].get(ruleset_name, 0) + 1
                 )
 
                 self.logger.debug(
-                    f"Fetched user {user_id} "
+                    f"Fetched user {user_id} ({ruleset_name}) "
                     f"(country={user_data.get('country_code')}, "
                     f"restricted={user_data.get('is_restricted')})"
                 )
 
             page += 1
             if len(players) < 50:
-                break
+                ruleset_index += 1
+                page = 1
+            else:
+                ruleset_index += 1
 
         self.metadata["samples"]["users"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
         self._save_search_test_coverage_metadata()
