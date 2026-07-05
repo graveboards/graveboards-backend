@@ -11,12 +11,19 @@ from .lifespan import lifespan
 from .patches import OpenAPIURIParserPatched, ParameterValidatorPatched
 from .spec import load_spec
 from .error_handlers import forbidden
-from .config import SPEC_DIR, DEFAULT_MODULE_NAME, INSTANCE_DIR, LOGS_DIR
+from .config import SPEC_DIR, DEFAULT_MODULE_NAME, INSTANCE_DIR, LOGS_DIR, ENV, DISABLE_SECURITY
+from .enums import Env
 
 
 def create_connexion_app() -> AsyncApp:
     os.makedirs(INSTANCE_DIR, exist_ok=True)
     os.makedirs(LOGS_DIR, exist_ok=True)
+
+    if DISABLE_SECURITY and ENV is not Env.DEV:
+        raise RuntimeError(
+            "DISABLE_SECURITY=True is not allowed outside of dev environments. "
+            "Set ENV=dev or remove DISABLE_SECURITY from your environment."
+        )
 
     connexion_app = AsyncApp(
         __name__,
