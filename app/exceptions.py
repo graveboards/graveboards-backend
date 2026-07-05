@@ -174,15 +174,29 @@ class RedisLockTimeoutError(TimeoutError):
 class ArrayValidationError(ValueError):
     def __init__(self, index: int, message: str):
         self.index = index
-        self.message = message
-        super().__init__(f"At index {index}: {message}")
+        self._message = message
+        super().__init__(self.message)
+
+    def __str__(self):
+        return self.message
+
+    @property
+    def message(self) -> str:
+        return f"At index {self.index}: {self._message}"
 
 
 class DeepObjectValidationError(ValueError):
     def __init__(self, path: Sequence[str], message: str):
         self.path = path
-        self.message = message
-        super().__init__(f"{'.'.join(path)}: {message}")
+        self._message = message
+        super().__init__(self.message)
+
+    def __str__(self):
+        return self.message
+
+    @property
+    def message(self) -> str:
+        return f"{'.'.join(self.path)}: {self._message}"
 
 
 class BadRequest(BadRequestProblem):
