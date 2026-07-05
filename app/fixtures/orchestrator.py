@@ -263,13 +263,14 @@ class FixtureOrchestrator:
 
     async def _execute_search_test(self) -> FetchReport:
         """Execute search-test fetch: coverage-gated rounds."""
+        from app.manage.fixtures.fetch import _print_coverage_gaps
+
         st = self.criteria.search_test
         if st.quick:
             st.min_per_category = 1
             st.max_total = 20
 
         if st.gaps:
-            from app.manage.fixtures.fetch import _print_coverage_gaps
             _print_coverage_gaps(self.fetcher)
             return FetchReport(criteria=self.criteria.criteria)
 
@@ -283,7 +284,6 @@ class FixtureOrchestrator:
                 skip_covered=False,
             )
         else:
-            from app.manage.fixtures.fetch import _print_coverage_gaps
             _print_coverage_gaps(self.fetcher)
             self.fetcher.logger.info(
                 f"Starting search test fetch: max {st.max_total} API calls, "
