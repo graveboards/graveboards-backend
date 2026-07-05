@@ -6,7 +6,7 @@ import random
 from app.logging import get_logger
 from app.config import PROJECT_ROOT
 
-from .utils import load_metadata, save_metadata, get_fixture_path, RULESETS, SCORE_TYPES
+from .utils import load_metadata, save_metadata, get_fixture_path, RULESETS, SCORE_TYPES, create_targeted_metadata
 
 logger = get_logger(__name__)
 
@@ -22,39 +22,7 @@ class FixtureManager:
     def _init_metadata(self):
         """Initialize metadata structure for targeted fixtures."""
         if "targeted" not in self.metadata:
-            self.metadata["targeted"] = {
-                "beatmaps": {
-                    "by_status": {},
-                    "by_ruleset": {},
-                    "by_difficulty": {},
-                    "by_playcount": {},
-                    "file_metadata": {},
-                },
-                "beatmapsets": {
-                    "by_status": {},
-                    "file_metadata": {},
-                },
-                "users": {
-                    "by_activity": {},
-                    "per_ruleset": {},
-                    "file_metadata": {},
-                },
-                "scores": {
-                    "by_rank": {},
-                    "by_mods": {},
-                    "file_metadata": {},
-                },
-                "queues": {
-                    "by_visibility": {},
-                    "by_is_open": {},
-                    "file_metadata": {},
-                },
-                "requests": {
-                    "by_status": {},
-                    "by_mv_checked": {},
-                    "file_metadata": {},
-                },
-            }
+            self.metadata["targeted"] = create_targeted_metadata()
     
     @staticmethod
     def _get_current_timestamp() -> str:

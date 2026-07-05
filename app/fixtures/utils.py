@@ -62,6 +62,43 @@ RULESETS = ["osu", "taiko", "fruits", "mania"]
 SCORE_TYPES = ["best", "firsts", "recent"]
 TOP_PLAYERS_PER_RULESET = 1000
 
+
+def create_targeted_metadata() -> dict:
+    """Create the standard targeted fixtures metadata structure."""
+    return {
+        "beatmaps": {
+            "by_status": {},
+            "by_ruleset": {},
+            "by_difficulty": {},
+            "by_playcount": {},
+            "file_metadata": {},
+        },
+        "beatmapsets": {
+            "by_status": {},
+            "file_metadata": {},
+        },
+        "users": {
+            "by_activity": {},
+            "per_ruleset": {},
+            "file_metadata": {},
+        },
+        "scores": {
+            "by_rank": {},
+            "by_mods": {},
+            "file_metadata": {},
+        },
+        "queues": {
+            "by_visibility": {},
+            "by_is_open": {},
+            "file_metadata": {},
+        },
+        "requests": {
+            "by_status": {},
+            "by_mv_checked": {},
+            "file_metadata": {},
+        },
+    }
+
 DISCUSSION_STATUSES = ["ranked", "loved", "qualified", "graveyard", "pending", "approved", "all"]
 
 
