@@ -100,9 +100,20 @@ def beatmapset_snapshot_after_insert(mapper: Mapper[BeatmapsetSnapshot], connect
         connection.execute(update_beatmapset_listing_stmt)
         logger.debug(f"Updated existing BeatmapsetListing with beatmapset_snapshot_id={target.id}")
 
+    older_snapshot_ids_subq = (
+        select(BeatmapsetSnapshot.id)
+        .where(
+            BeatmapsetSnapshot.beatmapset_id == target.beatmapset_id,
+            BeatmapsetSnapshot.snapshot_number < target.snapshot_number,
+        )
+    )
+
     update_request_stmt = (
         update(Request)
-        .where(Request.beatmapset_id == target.beatmapset_id)
+        .where(
+            Request.beatmapset_id == target.beatmapset_id,
+            Request.beatmapset_snapshot_id.in_(older_snapshot_ids_subq),
+        )
         .values(beatmapset_snapshot_id=target.id)
     )
 
