@@ -38,7 +38,7 @@ class OsuAPIClient(OsuAPIClientBase):
             **await self.get_auth_headers()
         }
 
-        async with httpx.AsyncClient() as client:
+        async with self._http_client as client:
             response = await client.get(url, headers=headers)
 
         response.raise_for_status()
@@ -70,7 +70,7 @@ class OsuAPIClient(OsuAPIClientBase):
 
         url += self.format_query_parameters(query_parameters)
 
-        async with httpx.AsyncClient() as client:
+        async with self._http_client as client:
             response = await client.get(url, headers=headers)
 
         response.raise_for_status()
@@ -89,7 +89,7 @@ class OsuAPIClient(OsuAPIClientBase):
             "mods": mods
         }
 
-        async with httpx.AsyncClient() as client:
+        async with self._http_client as client:
             response = await client.post(url, headers=headers, json=body)
 
         response.raise_for_status()
@@ -120,7 +120,7 @@ class OsuAPIClient(OsuAPIClientBase):
             **await self.get_auth_headers()
         }
 
-        async with httpx.AsyncClient() as client:
+        async with self._http_client as client:
             response = await client.get(url, headers=headers)
 
         response.raise_for_status()
@@ -156,7 +156,7 @@ class OsuAPIClient(OsuAPIClientBase):
         
         url += self.format_query_parameters(query_parameters)
 
-        async with httpx.AsyncClient() as client:
+        async with self._http_client as client:
             response = await client.get(url, headers=headers)
         
         response.raise_for_status()
@@ -202,7 +202,7 @@ class OsuAPIClient(OsuAPIClientBase):
 
         url += self.format_query_parameters(query_parameters)
 
-        async with httpx.AsyncClient() as client:
+        async with self._http_client as client:
             response = await client.get(url, headers=headers)
 
         response.raise_for_status()
@@ -219,7 +219,7 @@ class OsuAPIClient(OsuAPIClientBase):
             **await self.get_auth_headers(access_token)
         }
 
-        async with httpx.AsyncClient() as client:
+        async with self._http_client as client:
             response = await client.get(url, headers=headers)
 
         response.raise_for_status()
@@ -251,7 +251,7 @@ class OsuAPIClient(OsuAPIClientBase):
 
         url += self.format_query_parameters(query_parameters)
 
-        async with httpx.AsyncClient() as client:
+        async with self._http_client as client:
             response = await client.get(url, headers=headers)
 
         response.raise_for_status()
@@ -268,8 +268,8 @@ class OsuAPIClient(OsuAPIClientBase):
             **await self.get_auth_headers()
         }
 
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url, headers=headers)  # httpx.readtimeout ??
+        async with self._http_client as client:
+            response = await client.get(url, headers=headers)
 
         response.raise_for_status()
         return response.json()
@@ -285,7 +285,7 @@ class OsuAPIClient(OsuAPIClientBase):
             **await self.get_auth_headers()
         }
 
-        async with httpx.AsyncClient() as client:
+        async with self._http_client as client:
             response = await client.get(url, headers=headers)
 
         response.raise_for_status()
@@ -314,7 +314,7 @@ class OsuAPIClient(OsuAPIClientBase):
 
         url += self.format_query_parameters(query_parameters)
 
-        async with httpx.AsyncClient() as client:
+        async with self._http_client as client:
             response = await client.get(url, headers=headers)
 
         response.raise_for_status()

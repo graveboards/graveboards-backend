@@ -19,6 +19,7 @@ class OsuAPIClientBase:
         self.rc = rc
         self._oauth = OAuth()
         self._token: OsuClientOAuthToken | None = None
+        self._http_client = httpx.AsyncClient(timeout=httpx.Timeout(10.0, connect=5.0))
 
     async def get_token(self) -> str:
         async def get_valid_token_from_redis() -> OsuClientOAuthToken | None:
