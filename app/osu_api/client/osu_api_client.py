@@ -9,13 +9,12 @@ from app.logging import get_logger
 from app.osu_api.enums import APIEndpoint, ScoreType, Ruleset, RankedStatus
 from .base import OsuAPIClientBase
 
-RATE_LIMIT = 60
 logger = get_logger(__name__)
 
 
 class OsuAPIClient(OsuAPIClientBase):
     # Beatmaps
-    @rate_limit(RATE_LIMIT)
+    @rate_limit(min_interval=0.5, limit_per_window=120, window_size=60)
     async def get_beatmap(self, beatmap_id: int) -> dict:
         cached_beatmap_hash_name = Namespace.CACHED_BEATMAP.hash_name(beatmap_id)
 
@@ -51,7 +50,7 @@ class OsuAPIClient(OsuAPIClientBase):
 
         return beatmap_data
 
-    @rate_limit(RATE_LIMIT)
+    @rate_limit(min_interval=0.5, limit_per_window=120, window_size=60)
     async def get_beatmap_scores(self, beatmap_id: int, limit: int | None = None, offset: int | None = None) -> dict:
         url = APIEndpoint.BEATMAP_SCORES.format(beatmap=beatmap_id)
 
@@ -77,7 +76,7 @@ class OsuAPIClient(OsuAPIClientBase):
         response.raise_for_status()
         return response.json()
 
-    @rate_limit(RATE_LIMIT)
+    @rate_limit(min_interval=0.5, limit_per_window=120, window_size=60)
     async def get_beatmap_attributes(self, beatmap_id: int, mods: list[int]) -> dict:
         url = APIEndpoint.BEATMAP_ATTRIBUTES.format(beatmap=beatmap_id)
 
@@ -97,7 +96,7 @@ class OsuAPIClient(OsuAPIClientBase):
         return response.json()
 
     # Beatmapsets
-    @rate_limit(RATE_LIMIT)
+    @rate_limit(min_interval=0.5, limit_per_window=120, window_size=60)
     async def get_beatmapset(self, beatmapset_id: int) -> dict:
         cached_beatmapset_hash_name = Namespace.CACHED_BEATMAPSET.hash_name(beatmapset_id)
 
@@ -133,7 +132,7 @@ class OsuAPIClient(OsuAPIClientBase):
 
         return beatmapset_data
     
-    @rate_limit(RATE_LIMIT)
+    @rate_limit(min_interval=0.5, limit_per_window=120, window_size=60)
     async def get_beatmapset_discussions(
         self,
         beatmapset_status: str = "all",
@@ -156,15 +155,61 @@ class OsuAPIClient(OsuAPIClientBase):
         }
         
         url += self.format_query_parameters(query_parameters)
-        
+
         async with httpx.AsyncClient() as client:
             response = await client.get(url, headers=headers)
         
         response.raise_for_status()
         return response.json()
 
+    # Beatmapsets - Search
+    @rate_limit(min_interval=0.5, limit_per_window=120, window_size=60)
+    async def search_beatmapsets(
+        self,
+        status: str | None = None,
+        genre: int | None = None,
+        language: int | None = None,
+        mode: int | None = None,
+        nsfw: bool | None = None,
+        page: int = 1,
+        sort: str | None = None,
+    ) -> dict:
+        """Search beatmapsets with server-side filters."""
+        url = APIEndpoint.BEATMAPSET_SEARCH.format()
+
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            **await self.get_auth_headers()
+        }
+
+        query_parameters: dict[str, Union[int, str]] = {}
+
+        if status is not None:
+            query_parameters["s"] = status
+        if genre is not None:
+            query_parameters["g"] = genre
+        if language is not None:
+            query_parameters["l"] = language
+        if mode is not None:
+            query_parameters["m"] = mode
+        if nsfw is not None:
+            query_parameters["nsfw"] = "true" if nsfw else "false"
+        if page is not None:
+            query_parameters["page"] = page
+        if sort is not None:
+            query_parameters["sort"] = sort
+
+        url += self.format_query_parameters(query_parameters)
+
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=headers)
+
+        response.raise_for_status()
+        return response.json()
+
     # Users
-    @rate_limit(RATE_LIMIT)
+    @rate_limit(min_interval=0.5, limit_per_window=120, window_size=60)
     async def get_own_data(self, access_token: str) -> dict:
         url = APIEndpoint.ME.value
 
@@ -180,7 +225,7 @@ class OsuAPIClient(OsuAPIClientBase):
         response.raise_for_status()
         return response.json()
 
-    @rate_limit(RATE_LIMIT)
+    @rate_limit(min_interval=0.5, limit_per_window=120, window_size=60)
     async def get_user_scores(self, user_id: int, score_type: ScoreType, legacy_only: int = 0, include_fails: int = 0, mode: Ruleset | None = None, limit: int | None = None, offset: int | None = None) -> dict:
         url = APIEndpoint.SCORES.format(user=user_id, type=score_type.value)
 
@@ -212,7 +257,7 @@ class OsuAPIClient(OsuAPIClientBase):
         response.raise_for_status()
         return response.json()
 
-    @rate_limit(RATE_LIMIT)
+    @rate_limit(min_interval=0.5, limit_per_window=120, window_size=60)
     async def get_user(self, user_id: int, mode: Ruleset | None = None) -> dict:
         mode_str = mode.value if mode is not None else ""
         url = APIEndpoint.USER.format(user=user_id, mode=mode_str)
@@ -230,7 +275,7 @@ class OsuAPIClient(OsuAPIClientBase):
         return response.json()
 
     # Tags
-    @rate_limit(RATE_LIMIT)
+    @rate_limit(min_interval=0.5, limit_per_window=120, window_size=60)
     async def get_tags(self) -> dict[str, list[dict[str, Union[int, str]]]]:
         url = APIEndpoint.TAGS.value
 
@@ -246,7 +291,7 @@ class OsuAPIClient(OsuAPIClientBase):
         response.raise_for_status()
         return response.json()
 
-    @rate_limit(RATE_LIMIT)
+    @rate_limit(min_interval=0.5, limit_per_window=120, window_size=60)
     async def get_rankings(self, ruleset: Ruleset, mode: str, limit: int | None = None, offset: int | None = None, cursor_page: int | None = None) -> dict:
         url = APIEndpoint.RANKINGS.format(ruleset=ruleset.value, mode=mode)
 
