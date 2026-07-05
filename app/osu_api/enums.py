@@ -31,6 +31,7 @@ class APIEndpoint(Enum):
     BEATMAPSET_LOOKUP = API_BASEURL + "/beatmapsets/lookup"
     BEATMAPSET = API_BASEURL + "/beatmapsets/{beatmapset}"
     BEATMAPSET_DISCUSSIONS = API_BASEURL + "/beatmapsets/discussions"
+    BEATMAPSET_SEARCH = API_BASEURL + "/beatmapsets/search"
 
     # Users
     ME = API_BASEURL + "/me"
