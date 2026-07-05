@@ -11,18 +11,7 @@ class Misc:
         target: StatusTarget = "summary",
         session: AsyncSession = None
     ) -> dict:
-        match target:
-            case "summary":
-                return await get_summary_status(session)
-            case "users":
-                raise NotImplementedError
-            case "beatmaps":
-                raise NotImplementedError
-            case "beatmapsets":
-                raise NotImplementedError
-            case "queues":
-                raise NotImplementedError
-            case "requests":
-                raise NotImplementedError
-            case _:
-                raise NotImplementedError
+        if target == "summary":
+            return await get_summary_status(session)
+
+        return {"target": target, "error": f"Status target '{target}' is not yet implemented"}
