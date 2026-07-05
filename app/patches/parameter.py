@@ -63,7 +63,7 @@ class ParameterValidatorPatched(ParameterValidator):
                 raise bad_request_factory(e)
         elif param_name == "filters" and value:
             try:
-                resolved_schema = get_filter_schema(schema_name=param["schema"]["title"])  # F**k Connexion
+                resolved_schema = get_filter_schema(schema_name=param["schema"]["title"])  # Connexion doesn't expose the schema title here; we resolve it manually.
                 return validate_filters(value, resolved_schema)
             except DeepObjectValidationError as e:
                 raise bad_request_factory(e)
@@ -76,7 +76,7 @@ class ParameterValidatorPatched(ParameterValidator):
                     # Delegate this validation to be run by the operation function where the context is available
                     return None
 
-                resolved_schema = get_include_schema(schema_name=param["schema"]["title"])  # F**k Connexion
+                resolved_schema = get_include_schema(schema_name=param["schema"]["title"])  # Connexion doesn't expose the schema title here; we resolve it manually.
                 return validate_include(value, resolved_schema)
             except DeepObjectValidationError as e:
                 raise bad_request_factory(e)
