@@ -96,7 +96,7 @@ def rate_limit(
 
                 # --- min_interval gate ---
                 if min_interval > 0:
-                    last_call_key = Namespace.RATE_LIMIT_LAST_CALL.hash_name(int(now.timestamp()))
+                    last_call_key = Namespace.RATE_LIMIT_LAST_CALL.hash_name(func.__name__)
                     last_ts_raw = await rc.get(last_call_key)
                     if last_ts_raw is not None:
                         last_ts = float(last_ts_raw)
