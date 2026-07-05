@@ -1,4 +1,5 @@
 import json
+import os
 import random
 from datetime import datetime, timezone
 from pathlib import Path
@@ -19,6 +20,7 @@ from .utils import (
     save_top_player_ids,
 )
 from .id_source import IDSource
+from .validation import validate_data
 
 MAX_RETRIES = 10
 MAX_RETRIES_SCORES = 50
@@ -145,6 +147,21 @@ class FixtureDataFetcher:
             save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
             self._metadata_dirty = False
 
+    def _atomic_write(self, filepath: Path, data: dict, data_type: str = "") -> None:
+        """Write data to filepath atomically using tmp file + os.replace.
+        
+        Validates data if data_type is provided. Logs warning if invalid but still writes.
+        """
+        if data_type:
+            is_valid, error_msg = validate_data(data, data_type)
+            if not is_valid:
+                self.logger.warning(f"Validation failed for {data_type}: {error_msg}")
+        
+        tmp_path = filepath.with_suffix(filepath.suffix + ".tmp")
+        with open(tmp_path, "w") as f:
+            json.dump(data, f, indent=2)
+        os.replace(tmp_path, filepath)
+
     async def fetch_beatmaps(self, count: int, skip_existing: bool = True) -> AsyncIterator[FetchEvent]:
         path = get_fixture_path("beatmaps", fixtures_dir=self.fixtures_dir)
         fetched = 0
@@ -164,11 +181,11 @@ class FixtureDataFetcher:
                 try:
                     data = await self.oac.get_beatmap(beatmap_id)
                     filepath = path / f"beatmap_{beatmap_id}.json"
-                    with open(filepath, "w") as f:
-                        json.dump(data, f, indent=2)
+                    self._atomic_write(filepath, data, "beatmap")
                     fetched += 1
                     self._valid_beatmap_ids.append(beatmap_id)
                     self._seen_ids.add(beatmap_id)
+                    self._add_fetched_id("beatmaps", beatmap_id)
                     self.logger.debug(f"Fetched beatmap {beatmap_id} ({fetched}/{count})")
                     break
                 except Exception as e:
@@ -208,10 +225,10 @@ class FixtureDataFetcher:
                 try:
                     data = await self.oac.get_beatmapset(beatmapset_id)
                     filepath = path / f"beatmapset_{beatmapset_id}.json"
-                    with open(filepath, "w") as f:
-                        json.dump(data, f, indent=2)
+                    self._atomic_write(filepath, data, "beatmapset")
                     fetched += 1
                     self._seen_ids.add(beatmapset_id)
+                    self._add_fetched_id("beatmapsets", beatmapset_id)
                     self.logger.debug(f"Fetched beatmapset {beatmapset_id} ({fetched}/{count})")
                     break
                 except Exception as e:
@@ -270,10 +287,10 @@ class FixtureDataFetcher:
                     try:
                         data = await self.oac.get_user(user_id, Ruleset(mode))
                         filepath = ruleset_path / f"user_{user_id}_{ruleset}.json"
-                        with open(filepath, "w") as f:
-                            json.dump(data, f, indent=2)
+                        self._atomic_write(filepath, data, "user")
                         fetched[ruleset] += 1
                         self._seen_ids.add(user_id)
+                        self._add_fetched_id(f"users.{ruleset}", user_id)
                         self.logger.debug(f"Fetched user {user_id} ({ruleset}) ({fetched[ruleset]}/{count})")
                         break
                     except Exception as e:
@@ -344,10 +361,10 @@ class FixtureDataFetcher:
                                 user_id = self._get_random_id("users", use_top_players=use_top_players)
                             continue
                         filepath = type_path / f"scores_{user_id}_{score_type}.json"
-                        with open(filepath, "w") as f:
-                            json.dump(data, f, indent=2)
+                        self._atomic_write(filepath, data, "scores")
                         fetched[score_type] += 1
                         self._seen_ids.add(user_id)
+                        self._add_fetched_id("users", user_id)
                         self.logger.debug(f"Fetched scores for user {user_id} ({score_type}) ({fetched[score_type]}/{count})")
                         break
                     except Exception as e:
@@ -407,10 +424,10 @@ class FixtureDataFetcher:
                         continue
                     consecutive_empty = 0
                     filepath = path / f"beatmap_scores_{beatmap_id}.json"
-                    with open(filepath, "w") as f:
-                        json.dump(data, f, indent=2)
+                    self._atomic_write(filepath, data, "beatmap_scores")
                     fetched += 1
                     self._seen_ids.add(beatmap_id)
+                    self._add_fetched_id("beatmaps", beatmap_id)
                     self.logger.debug(f"Fetched beatmap scores {beatmap_id} ({fetched}/{count})")
                     break
                 except Exception as e:
@@ -459,10 +476,10 @@ class FixtureDataFetcher:
                     data = await self.oac.get_beatmap_attributes(beatmap_id, mods)
                     consecutive_errors = 0
                     filepath = path / f"beatmap_attrs_{beatmap_id}_mods{mods}.json"
-                    with open(filepath, "w") as f:
-                        json.dump(data, f, indent=2)
+                    self._atomic_write(filepath, data, "beatmap_attributes")
                     fetched += 1
                     self._seen_ids.add(beatmap_id)
+                    self._add_fetched_id("beatmaps", beatmap_id)
                     self.logger.debug(f"Fetched beatmap attributes {beatmap_id} ({fetched}/{count})")
                     break
                 except Exception as e:
@@ -669,3 +686,30 @@ class FixtureDataFetcher:
             if category.startswith("users."):
                 subcategory = category.split(".", 1)[1]
             self.id_source.add_failed(category, id_, subcategory)
+
+    def _add_fetched_id(self, category: str, id_: int) -> None:
+        """Track a successfully fetched ID in metadata."""
+        fetched_ids = self.metadata.setdefault("fetched_ids", {
+            "beatmaps": [],
+            "beatmapsets": [],
+            "users": {r: [] for r in RULESETS},
+        })
+        
+        if category not in fetched_ids:
+            fetched_ids[category] = []
+        
+        category_ids = fetched_ids[category]
+        
+        if isinstance(category_ids, dict):
+            for subcategory in category_ids.values():
+                if id_ not in subcategory:
+                    subcategory.append(id_)
+                    if len(subcategory) > 10000:
+                        subcategory[:] = subcategory[-10000:]
+        else:
+            if id_ not in category_ids:
+                category_ids.append(id_)
+                if len(category_ids) > 10000:
+                    category_ids[:] = category_ids[-10000:]
+        
+        self._mark_metadata_dirty()
