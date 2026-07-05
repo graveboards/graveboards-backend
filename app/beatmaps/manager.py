@@ -1,3 +1,24 @@
+"""Beatmap archiving, versioning, and downloadable artifact generation.
+
+This module is intentionally monolithic (``~676 lines``) because ``BeatmapManager``
+coordinates a tightly coupled workflow:
+
+    osu! API  -->  database writes  -->  filesystem snapshots  -->  ZIP archives
+
+Splitting it into smaller classes would fragment the archive pipeline across
+multiple objects that all share the same session, lock state, and changelog.
+The class is well-documented with per-method docstrings and grouped into
+logical sections (snapshotting, updating, population, tags, downloads, archives)
+to aid navigation.
+
+Responsibilities:
+    - Fetching beatmapsets from the osu! API and determining whether to create a
+      new snapshot or apply field-level deltas.
+    - Creating ``BeatmapSnapshot`` / ``BeatmapsetSnapshot`` records with proper
+      relationship resolution (tags, owners, users, profiles).
+    - Downloading ``.osu`` files to the local filesystem for new snapshots.
+    - Generating ZIP archives of beatmap files for download.
+"""
 import os
 import asyncio
 from io import BytesIO
