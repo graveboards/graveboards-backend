@@ -135,18 +135,26 @@ class RestrictedUserError(ValueError):
 
 
 class RateLimitExceededError(Exception):
-    def __init__(self, next_window: datetime):
+    def __init__(self, next_window: datetime | None = None, last_call_timestamp: float | None = None):
         self.next_window = next_window
+        self.last_call_timestamp = last_call_timestamp
 
     def __str__(self):
         return self.message
 
     @property
     def message(self) -> str:
-        return f"Rate limit exceeded. Try again in {self.remaining_time:.2f} seconds."
+        parts = ["Rate limit exceeded"]
+        if self.last_call_timestamp is not None:
+            parts.append(f"Last call: {self.last_call_timestamp}")
+        if self.next_window is not None:
+            parts.append(f"Try again in {self.remaining_time:.2f} seconds.")
+        return ". ".join(parts)
 
     @property
     def remaining_time(self) -> float:
+        if self.next_window is None:
+            return 0.0
         return (self.next_window - aware_utcnow()).total_seconds()
 
 
