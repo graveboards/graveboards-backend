@@ -105,6 +105,10 @@ loggers:
         level: INFO
         handlers: [ console, maintenance_file ]
         propagate: False
+    fixtures:
+        level: INFO
+        handlers: [ console, maintenance_file ]
+        propagate: False
     migrate:
         level: INFO
         handlers: [ console, maintenance_file ]
