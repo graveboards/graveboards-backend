@@ -1,220 +1,76 @@
+"""CLI command to fetch fixture data from the osu! API.
+
+Uses the FixtureOrchestrator with composable criteria:
+  --criteria {minimal, standard, targeted, search-test}
+  --source {auto, archive, top-players}
+
+Usage:
+    manage fixtures fetch --criteria minimal
+    manage fixtures fetch --criteria standard --beatmaps 50 --users-osu 20
+    manage fixtures fetch --criteria targeted --status ranked --difficulty easy
+    manage fixtures fetch --criteria search-test
+    manage fixtures fetch --criteria search-test --archive --quick
+"""
 from rich.console import Console
 from rich.table import Table
-from rich.live import Live
-from rich.panel import Panel
-from rich.progress import (
-    Progress,
-    BarColumn,
-    TextColumn,
-    TimeRemainingColumn,
-    TaskID,
-    TimeElapsedColumn
-)
 
-from app.fixtures.utils import RULESETS, SCORE_TYPES, calculate_sample_counts, DISCUSSION_STATUSES
-from app.fixtures.fetcher import FixtureDataFetcher
-from app.fixtures.targeted_fetcher import TargetedFixtureFetcher
-from app.fixtures.archive_fetcher import ArchiveBasedFixtureFetcher
 from app.redis import RedisClient
 from app.logging import get_logger
+from app.fixtures.orchestrator import (
+    Criteria,
+    FetchCriteria,
+    FetchReport,
+    FixtureOrchestrator,
+    Source,
+    SearchTestOverrides,
+    TargetedOverrides,
+)
 
 console = Console()
 logger = get_logger(__name__)
 
 
-def _create_empty_samples() -> dict:
-    return {
-        "beatmaps": {"count": 0, "last_fetched": None},
-        "beatmapsets": {"count": 0, "last_fetched": None},
-        "users": {"count": 0, "per_ruleset": {r: 0 for r in RULESETS}, "last_fetched": None},
-        "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_fetched": None},
-        "beatmap_scores": {"count": 0, "last_fetched": None},
-        "beatmap_attributes": {"count": 0, "last_fetched": None},
-    }
-
-
-def _create_empty_promoted_fixtures() -> dict:
-    return {
-        "beatmaps": {"count": 0, "last_promoted": None},
-        "beatmapsets": {"count": 0, "last_promoted": None},
-        "users": {"count": 0, "per_ruleset": {r: 0 for r in RULESETS}, "last_promoted": None},
-        "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_promoted": None},
-        "beatmap_scores": {"count": 0, "last_promoted": None},
-        "beatmap_attributes": {"count": 0, "last_promoted": None},
-    }
-
-
-def _add_counts_to_table(counts: dict, table: Table) -> None:
-    for category, count in counts.items():
-        if isinstance(count, dict):
-            for subcat, subcount in count.items():
-                table.add_row(f"{category}.{subcat}", str(subcount))
-        else:
-            table.add_row(category, str(count))
-
-
-def _create_progress_tasks(progress, sample_counts: dict) -> tuple[dict[str, TaskID], int]:
-    tasks: dict[str, TaskID] = {}
-    total_items = 0
-
-    if sample_counts.get("beatmaps", 0) > 0:
-        tasks["beatmaps"] = progress.add_task("Beatmaps", total=sample_counts["beatmaps"])
-        total_items += sample_counts["beatmaps"]
-
-    if sample_counts.get("beatmapsets", 0) > 0:
-        tasks["beatmapsets"] = progress.add_task("Beatmapsets", total=sample_counts["beatmapsets"])
-        total_items += sample_counts["beatmapsets"]
-
-    users = sample_counts.get("users", {})
-    user_total = sum(users.values())
-    if user_total > 0:
-        tasks["users"] = progress.add_task("Users", total=user_total)
-        total_items += user_total
-
-    scores = sample_counts.get("scores", {})
-    scores_total = sum(scores.values())
-    if scores_total > 0:
-        tasks["scores"] = progress.add_task("Scores", total=scores_total)
-        total_items += scores_total
-
-    if sample_counts.get("beatmap_scores", 0) > 0:
-        tasks["beatmap_scores"] = progress.add_task("Beatmap Scores", total=sample_counts["beatmap_scores"])
-        total_items += sample_counts["beatmap_scores"]
-
-    if sample_counts.get("beatmap_attributes", 0) > 0:
-        tasks["beatmap_attributes"] = progress.add_task("Beatmap Attributes", total=sample_counts["beatmap_attributes"])
-        total_items += sample_counts["beatmap_attributes"]
-
-    return tasks, total_items
-
-
-async def _process_fetch_events(fetcher, progress, tasks, overall_task, overall_progress, sample_counts, use_live: bool):
-    if use_live:
-        progress_table = Table.grid()
-        panel = Panel.fit(
-            progress,
-            title="Fetching Fixtures",
-            border_style="green",
-            padding=(1, 3)
-        )
-        progress_table.add_row(panel)
-
-        with Live(progress_table, refresh_per_second=20):
-            async for event in fetcher.fetch_all(sample_counts):
-                category = event.category
-                if category in tasks:
-                    progress.update(tasks[category], completed=event.current)
-                else:
-                    for task_category in tasks.keys():
-                        if task_category in category:
-                            progress.update(tasks[task_category], completed=event.current)
-                            break
-                overall_progress += 1
-                progress.update(overall_task, completed=overall_progress)
-
-            panel.title = "Fetching Completed"
-            panel.border_style = "dim green"
-    else:
-        async for event in fetcher.fetch_all(sample_counts):
-            category = event.category
-            if category in tasks:
-                progress.update(tasks[category], completed=event.current)
-            else:
-                for task_category in tasks.keys():
-                    if task_category in category:
-                        progress.update(tasks[task_category], completed=event.current)
-                        break
-            overall_progress += 1
-            progress.update(overall_task, completed=overall_progress)
-
-        progress.stop()
-
-
 async def cmd_fetch_fixtures(
-    scale: float,
-    beatmaps: int | None,
-    beatmapsets: int | None,
-    users_osu: int | None,
-    users_taiko: int | None,
-    users_fruits: int | None,
-    users_mania: int | None,
-    scores_best: int | None,
-    scores_firsts: int | None,
-    scores_recent: int | None,
-    beatmap_scores: int | None,
-    beatmap_attributes: int | None,
-    use_minimal: bool,
-    beatmaps_range_min: int | None,
-    beatmaps_range_max: int | None,
-    beatmapsets_range_min: int | None,
-    beatmapsets_range_max: int | None,
-    users_range_min: int | None,
-    users_range_max: int | None,
-    no_progress: bool,
-    statuses: list[str] | None,
-    difficulty_range: str | None,
-    playcount_range: str | None,
-    activity_tier: str | None,
-    targeted: bool,
-    rulesets: list[str] | None,
+    criteria: str = Criteria.STANDARD,
+    source: str = Source.AUTO,
+    minimal: bool = False,
+    beatmaps: int | None = None,
+    beatmapsets: int | None = None,
+    users_osu: int | None = None,
+    users_taiko: int | None = None,
+    users_fruits: int | None = None,
+    users_mania: int | None = None,
+    scores_best: int | None = None,
+    scores_firsts: int | None = None,
+    scores_recent: int | None = None,
+    beatmap_scores: int | None = None,
+    beatmap_attributes: int | None = None,
+    targeted: bool = False,
+    status: list[str] | None = None,
+    difficulty_range: str | None = None,
+    playcount_range: str | None = None,
+    activity_tier: str | None = None,
+    rulesets: list[str] | None = None,
+    search_test: bool = False,
     archive: bool = False,
+    top_players: bool = False,
+    force_fetch: bool = False,
+    no_progress: bool = False,
+    verbose: bool = False,
+    min_per_category: int = 1,
+    max_total: int = 500,
+    gaps: bool = False,
+    full: bool = False,
+    quick: bool = False,
+    fixtures_dir: str | None = None,
 ):
+    """Fetch fixture data using the orchestrator with composable criteria."""
     rc = RedisClient()
     try:
-        id_ranges = {}
-        if beatmaps_range_min or beatmaps_range_max:
-            id_ranges["beatmaps"] = {
-                "min": beatmaps_range_min or 1,
-                "max": beatmaps_range_max or 1000000,
-            }
-        if beatmapsets_range_min or beatmapsets_range_max:
-            id_ranges["beatmapsets"] = {
-                "min": beatmapsets_range_min or 1,
-                "max": beatmapsets_range_max or 100000,
-            }
-        if users_range_min or users_range_max:
-            id_ranges["users"] = {
-                "min": users_range_min or 1,
-                "max": users_range_max or 10000000,
-            }
-        
-        use_targeted = targeted or bool(statuses or difficulty_range or playcount_range or activity_tier)
-        
-        if use_targeted:
-            fetcher = TargetedFixtureFetcher(rc)
-            fetcher.logger = logger
-            
-            if statuses:
-                for status in statuses:
-                    if status not in DISCUSSION_STATUSES:
-                        console.print(f"[yellow]Warning:[/yellow] Unknown status '{status}', skipping")
-            
-            fetcher.set_targeted_fetch(
-                statuses=statuses,
-                difficulty_range=difficulty_range,
-                playcount_range=playcount_range,
-                activity_tier=activity_tier,
-                rulesets=rulesets,
-            )
-            
-            logger.info(f"Targeted fetch configured: statuses={statuses}, difficulty={difficulty_range}, playcount={playcount_range}, activity={activity_tier}, rulesets={rulesets}")
-            
-            await fetcher.fetch_targeted()
-            
-            results = fetcher.get_last_results()
-            console.print("\n[bold]Targeted fetch complete![/bold]")
-            console.print(f"Status: {statuses}, Difficulty: {difficulty_range}, Activity: {activity_tier}")
-        else:
-            if archive:
-                fetcher = ArchiveBasedFixtureFetcher(rc, id_ranges=id_ranges if id_ranges else None)
-                fetcher.logger = logger
-                console.print("[bold blue]Using osu.sh archives as primary data source...[/bold blue]")
-            else:
-                fetcher = FixtureDataFetcher(rc, id_ranges=id_ranges if id_ranges else None)
-                fetcher.logger = logger
-
-        sample_counts = calculate_sample_counts(
-            scale=scale,
+        fetch_criteria = _build_criteria(
+            criteria=criteria,
+            source=source,
+            minimal=minimal,
             beatmaps=beatmaps,
             beatmapsets=beatmapsets,
             users_osu=users_osu,
@@ -226,51 +82,325 @@ async def cmd_fetch_fixtures(
             scores_recent=scores_recent,
             beatmap_scores=beatmap_scores,
             beatmap_attributes=beatmap_attributes,
-            use_minimal=use_minimal,
+            targeted=targeted,
+            status=status,
+            difficulty_range=difficulty_range,
+            playcount_range=playcount_range,
+            activity_tier=activity_tier,
+            rulesets=rulesets,
+            search_test=search_test,
+            archive=archive,
+            top_players=top_players,
+            force_fetch=force_fetch,
+            no_progress=no_progress,
+            verbose=verbose,
+            min_per_category=min_per_category,
+            max_total=max_total,
+            gaps=gaps,
+            full=full,
+            quick=quick,
+            fixtures_dir=fixtures_dir,
         )
 
-        if use_targeted:
-            logger.info("Fetching fixture data with targeted coverage...")
-            if hasattr(fetcher, 'fetch_targeted'):
-                async for _ in fetcher.fetch_targeted():
-                    pass
-                results = fetcher.get_last_results()
-                console.print("\n[bold]Targeted fetch complete![/bold]")
-                console.print(f"Status: {statuses}, Difficulty: {difficulty_range}, Activity: {activity_tier}")
-        else:
-            progress = Progress(
-                TextColumn("[bold blue]{task.description}"),
-                TextColumn("[white]({task.completed}/{task.total})"),
-                BarColumn(pulse_style="dim"),
-                "[progress.percentage]{task.percentage:>3.0f}%",
-                TimeRemainingColumn(compact=True),
-                TimeElapsedColumn()
-            )
+        orchestrator = FixtureOrchestrator(fetch_criteria, rc)
+        report = await orchestrator.execute()
 
-            tasks, total_items = _create_progress_tasks(progress, sample_counts)
-            overall_task = progress.add_task("Total", total=total_items)
-            overall_progress = 0
-
-            logger.info("Fetching fixture data from osu! API...")
-    
-            if archive:
-                console.print("[bold]Fetching player IDs from osu.sh archives...[/bold]")
-                await fetcher.refresh_archive_data()
-                console.print(f"[green]Loaded {sum(len(ids) for ids in fetcher.archive_player_ids.values())} archived player IDs[/green]")
-                logger.info("Using osu.sh archives for fixture data source")
-
-            await _process_fetch_events(fetcher, progress, tasks, overall_task, overall_progress, sample_counts, use_live=not no_progress)
-
-            results = fetcher.last_fetch_results
-            logger.info(f"Fixture data fetch complete: {results}")
-
-        console.print("\n[bold]Results:[/bold]")
-        result_table = Table(show_header=False)
-        result_table.add_column("Category")
-        result_table.add_column("Count")
-
-        _add_counts_to_table(results, result_table)
-        console.print(result_table)
-        console.print()
+        _print_report(report)
     finally:
         await rc.aclose()
+
+
+def _build_criteria(
+    criteria: str,
+    source: str,
+    minimal: bool = False,
+    targeted: bool = False,
+    search_test: bool = False,
+    archive: bool = False,
+    top_players: bool = False,
+    force_fetch: bool = False,
+    no_progress: bool = False,
+    verbose: bool = False,
+    beatmaps: int | None = None,
+    beatmapsets: int | None = None,
+    users_osu: int | None = None,
+    users_taiko: int | None = None,
+    users_fruits: int | None = None,
+    users_mania: int | None = None,
+    scores_best: int | None = None,
+    scores_firsts: int | None = None,
+    scores_recent: int | None = None,
+    beatmap_scores: int | None = None,
+    beatmap_attributes: int | None = None,
+    status: list[str] | None = None,
+    difficulty_range: str | None = None,
+    playcount_range: str | None = None,
+    activity_tier: str | None = None,
+    rulesets: list[str] | None = None,
+    min_per_category: int = 1,
+    max_total: int = 500,
+    gaps: bool = False,
+    full: bool = False,
+    quick: bool = False,
+    fixtures_dir: str | None = None,
+) -> FetchCriteria:
+    """Build FetchCriteria from CLI arguments."""
+    # Resolve criteria from explicit --criteria or legacy flags
+    resolved_criteria = criteria
+    if minimal:
+        resolved_criteria = Criteria.MINIMAL
+    elif search_test:
+        resolved_criteria = Criteria.SEARCH_TEST
+    elif targeted:
+        resolved_criteria = Criteria.TARGETED
+
+    # Resolve source from explicit --source or legacy flags
+    src = source
+    if archive:
+        src = Source.ARCHIVE
+    elif top_players:
+        src = Source.TOP_PLAYERS
+
+    # Build targeted overrides
+    targeted_overrides = None
+    if resolved_criteria == Criteria.TARGETED:
+        targeted_overrides = TargetedOverrides(
+            statuses=status,
+            difficulty_range=difficulty_range,
+            playcount_range=playcount_range,
+            activity_tier=activity_tier,
+            rulesets=rulesets,
+        )
+
+    # Build search-test overrides
+    search_test_overrides = None
+    if resolved_criteria == Criteria.SEARCH_TEST:
+        search_test_overrides = SearchTestOverrides(
+            quick=quick,
+            min_per_category=min_per_category,
+            max_total=max_total,
+            gaps=gaps,
+            full=full,
+        )
+
+    return FetchCriteria(
+        criteria=resolved_criteria,
+        source=src,
+        targeted=targeted_overrides,
+        search_test=search_test_overrides,
+        beatmaps=beatmaps or 0,
+        beatmapsets=beatmapsets or 0,
+        users={
+            "osu": users_osu or 0,
+            "taiko": users_taiko or 0,
+            "fruits": users_fruits or 0,
+            "mania": users_mania or 0,
+        },
+        scores={
+            "best": scores_best or 0,
+            "firsts": scores_firsts or 0,
+            "recent": scores_recent or 0,
+        },
+        beatmap_scores=beatmap_scores or 0,
+        beatmap_attributes=beatmap_attributes or 0,
+        force_fetch=force_fetch,
+        no_progress=no_progress,
+        verbose=verbose,
+        fixtures_dir=fixtures_dir,
+    )
+
+
+def _print_report(report: FetchReport) -> None:
+    """Print fetch results to the console."""
+    if report.errors:
+        for error in report.errors:
+            console.print(f"[red]Error:[/red] {error}")
+
+    if report.criteria == Criteria.SEARCH_TEST and report.coverage:
+        _print_coverage_report(report.coverage)
+        return
+
+    if not report.results:
+        return
+
+    console.print("\n[bold]Results:[/bold]")
+    result_table = Table(show_header=False)
+    result_table.add_column("Category")
+    result_table.add_column("Count")
+
+    for category, count in report.results.items():
+        if isinstance(count, dict):
+            for subcat, subcount in count.items():
+                result_table.add_row(f"{category}.{subcat}", str(subcount))
+        else:
+            result_table.add_row(category, str(count))
+
+    console.print(result_table)
+    console.print()
+
+
+def _print_coverage_gaps(fetcher) -> None:
+    """Print coverage gaps from metadata.json."""
+    console.print("[bold]Coverage status from metadata.json:[/bold]")
+
+    search_cov = fetcher.metadata.get("search_test_coverage", {})
+    if not search_cov:
+        console.print("  [yellow]No previous coverage data found.[/yellow]")
+        console.print("  Will fetch all buckets from scratch.")
+        return
+
+    last_updated = search_cov.get("last_updated", "unknown")
+    console.print(f"  Last updated: {last_updated}")
+    console.print()
+
+    gap_items = []
+    full_items = []
+
+    genres = search_cov.get("beatmapset_genres", [])
+    if genres:
+        sample = ', '.join(str(g) for g in genres[:5])
+        full_items.append(f"genres ({len(genres)} total)")
+        if len(genres) > 5:
+            full_items.append(f"    samples: {sample}, ...")
+        else:
+            full_items.append(f"    values: {sample}")
+    else:
+        gap_items.append("beatmapset_genres")
+
+    langs = search_cov.get("beatmapset_languages", [])
+    if langs:
+        sample = ', '.join(str(l) for l in langs[:5])
+        full_items.append(f"languages ({len(langs)} total)")
+        if len(langs) > 5:
+            full_items.append(f"    samples: {sample}, ...")
+        else:
+            full_items.append(f"    values: {sample}")
+    else:
+        gap_items.append("beatmapset_languages")
+
+    nsfw_true = search_cov.get("beatmapset_nsfw_true_ids", [])
+    nsfw_false = search_cov.get("beatmapset_nsfw_false_ids", [])
+    if nsfw_true and nsfw_false:
+        full_items.append(f"nsfw (true: {len(nsfw_true)}, false: {len(nsfw_false)})")
+    else:
+        if not nsfw_true:
+            gap_items.append("nsfw=true")
+        if not nsfw_false:
+            gap_items.append("nsfw=false")
+
+    modes = search_cov.get("beatmap_modes", [])
+    if modes:
+        full_items.append(f"beatmap_modes ({len(modes)} total)")
+        full_items.append(f"    values: {', '.join(str(m) for m in modes)}")
+    else:
+        gap_items.append("beatmap_modes")
+
+    countries = search_cov.get("country_codes", [])
+    if countries:
+        full_items.append(f"countries ({len(countries)} total)")
+        if len(countries) > 5:
+            full_items.append(f"    samples: {', '.join(countries[:5])}, ...")
+        else:
+            full_items.append(f"    values: {', '.join(countries)}")
+    else:
+        gap_items.append("country_codes")
+
+    restr = search_cov.get("restricted_users", {})
+    restr_true = restr.get("true_ids", [])
+    restr_false = restr.get("false_ids", [])
+    if restr_true and restr_false:
+        full_items.append(f"restricted (true: {len(restr_true)}, false: {len(restr_false)})")
+    else:
+        if not restr_true:
+            gap_items.append("restricted=true")
+        if not restr_false:
+            gap_items.append("restricted=false")
+
+    statuses = search_cov.get("beatmapset_statuses", [])
+    if statuses:
+        full_items.append(f"statuses ({len(statuses)} total)")
+        if len(statuses) > 5:
+            full_items.append(f"    samples: {', '.join(statuses[:5])}, ...")
+        else:
+            full_items.append(f"    values: {', '.join(statuses)}")
+    else:
+        gap_items.append("beatmapset_statuses")
+
+    if full_items:
+        console.print("  [green]Covered:[/green]")
+        for item in full_items:
+            console.print(f"    {item}")
+
+    if gap_items:
+        console.print("  [yellow]Gaps:[/yellow]")
+        for item in gap_items:
+            console.print(f"    - {item}")
+
+    if not gap_items:
+        console.print("\n  [green]All major buckets covered![/green]")
+
+
+def _print_coverage_report(coverage: dict) -> None:
+    """Print the full coverage report as a table."""
+    console.print("\n[bold]Search test fixture coverage:[/bold]")
+
+    table = Table(show_header=True, header_style="bold")
+    table.add_column("Category")
+    table.add_column("Status")
+    table.add_column("Details")
+
+    _add_row(table, "Beatmapset Genres", "OK" if coverage.get("beatmapset_genres") else "MISSING",
+             str(len(coverage.get("beatmapset_genres", {}))))
+    _add_row(table, "Beatmapset Languages", "OK" if coverage.get("beatmapset_languages") else "MISSING",
+             str(len(coverage.get("beatmapset_languages", {}))))
+    nsfw = coverage.get("beatmapset_nsfw", {})
+    _add_row(table, "Beatmapset NSFW", "OK" if nsfw.get("true", {}).get("count", 0) > 0 and nsfw.get("false", {}).get("count", 0) > 0 else "PARTIAL",
+             f"true:{nsfw.get('true', {}).get('count', 0)}, false:{nsfw.get('false', {}).get('count', 0)}")
+    _add_row(table, "Beatmapset Statuses", "OK" if coverage.get("beatmapset_statuses") else "MISSING",
+             str(len(coverage.get("beatmapset_statuses", []))))
+    _add_row(table, "Beatmapset Ratings", "OK" if any(coverage.get("beatmapset_ratings", {}).get(c, {}).get("count", 0) > 0 for c in ("low", "medium", "high")) else "MISSING",
+             ", ".join(f"{c}:{coverage.get('beatmapset_ratings', {}).get(c, {}).get('count', 0)}" for c in ("low", "medium", "high")))
+    _add_row(table, "Beatmapset Favourites", "OK" if any(coverage.get("beatmapset_favourite_counts", {}).get(c, {}).get("count", 0) > 0 for c in ("low", "medium", "high")) else "MISSING",
+             ", ".join(f"{c}:{coverage.get('beatmapset_favourite_counts', {}).get(c, {}).get('count', 0)}" for c in ("low", "medium", "high")))
+    _add_row(table, "Beatmapset Play Counts", "OK" if any(coverage.get("beatmapset_play_counts", {}).get(c, {}).get("count", 0) > 0 for c in ("low", "medium", "high")) else "MISSING",
+             ", ".join(f"{c}:{coverage.get('beatmapset_play_counts', {}).get(c, {}).get('count', 0)}" for c in ("low", "medium", "high")))
+    _add_row(table, "Beatmapset Has Description", "OK" if coverage.get("beatmapset_has_description") else "MISSING", "")
+    _add_row(table, "Beatmapset Has Pack Tags", "OK" if coverage.get("beatmapset_has_pack_tags") else "MISSING", "")
+    _add_row(table, "Beatmapset Video", "OK" if coverage.get("beatmapset_videos") else "MISSING", "")
+    _add_row(table, "Beatmapset Storyboard", "OK" if coverage.get("beatmapset_storyboards") else "MISSING", "")
+    _add_row(table, "Beatmapset Hype", "OK" if coverage.get("beatmapset_hype") else "MISSING", "")
+    _add_row(table, "Beatmapset Nominations", "OK" if coverage.get("beatmapset_nominations") else "MISSING", "")
+    _add_row(table, "Beatmapset SR Gaps", "OK" if coverage.get("beatmapset_sr_gaps") else "MISSING", "")
+    _add_row(table, "Beatmapset Hit Lengths", "OK" if coverage.get("beatmapset_hit_lengths") else "MISSING", "")
+
+    bm_modes = coverage.get("beatmap_modes", {})
+    _add_row(table, "Beatmap Modes", "OK" if bm_modes else "MISSING",
+             str(len(bm_modes)))
+    bm_diffs = coverage.get("beatmap_difficulties", {})
+    _add_row(table, "Beatmap Difficulties", "OK" if any(bm_diffs.get(c, {}).get("count", 0) > 0 for c in ("easy", "medium", "hard", "expert")) else "MISSING",
+             ", ".join(f"{c}:{bm_diffs.get(c, {}).get('count', 0)}" for c in ("easy", "medium", "hard", "expert")))
+    bm_pc = coverage.get("beatmap_playcounts", {})
+    _add_row(table, "Beatmap Playcounts", "OK" if any(bm_pc.get(c, {}).get("count", 0) > 0 for c in ("low", "medium", "high")) else "MISSING",
+             ", ".join(f"{c}:{bm_pc.get(c, {}).get('count', 0)}" for c in ("low", "medium", "high")))
+    _add_row(table, "Beatmap BPM", "OK" if any(coverage.get("beatmap_bpm", {}).get(c, {}).get("count", 0) > 0 for c in ("low", "medium", "high")) else "MISSING",
+             ", ".join(f"{c}:{coverage.get('beatmap_bpm', {}).get(c, {}).get('count', 0)}" for c in ("low", "medium", "high")))
+    _add_row(table, "Beatmap Accuracy", "OK" if any(coverage.get("beatmap_accuracy", {}).get(c, {}).get("count", 0) > 0 for c in ("low", "medium", "high")) else "MISSING",
+             ", ".join(f"{c}:{coverage.get('beatmap_accuracy', {}).get(c, {}).get('count', 0)}" for c in ("low", "medium", "high")))
+    _add_row(table, "Beatmap Versions", "OK" if coverage.get("beatmap_versions") else "MISSING",
+             str(len(coverage.get("beatmap_versions", []))))
+
+    cc = coverage.get("country_codes", {})
+    _add_row(table, "Country Codes", "OK" if cc else "MISSING", str(len(cc)))
+    restr = coverage.get("restricted_users", {})
+    _add_row(table, "Restricted Users", "OK" if restr.get("true", {}).get("count", 0) > 0 and restr.get("false", {}).get("count", 0) > 0 else "PARTIAL",
+             f"true:{restr.get('true', {}).get('count', 0)}, false:{restr.get('false', {}).get('count', 0)}")
+
+
+def _add_row(table, category: str, status: str, details: str) -> None:
+    if status == "OK":
+        style = "green"
+    elif status == "PARTIAL":
+        style = "yellow"
+    else:
+        style = "red"
+    table.add_row(f"[{style}]{category}[/{style}]", f"[{style}]{status}[/{style}]", details)

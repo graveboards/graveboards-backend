@@ -6,40 +6,9 @@ import random
 from app.logging import get_logger
 from app.config import PROJECT_ROOT
 
+from .utils import load_metadata, save_metadata, get_fixture_path, RULESETS, SCORE_TYPES
+
 logger = get_logger(__name__)
-
-RULESETS = ["osu", "taiko", "fruits", "mania"]
-SCORE_TYPES = ["best", "firsts", "recent"]
-DISCUSSION_STATUSES = ["ranked", "loved", "qualified", "graveyard", "pending", "approved", "all"]
-
-
-def load_metadata() -> dict:
-    """Load metadata from default location."""
-    metadata_path = PROJECT_ROOT / "instance" / "fixtures" / "metadata.json"
-    if metadata_path.exists():
-        try:
-            with open(metadata_path) as f:
-                return json.load(f)
-        except (json.JSONDecodeError, IOError):
-            pass
-    return {}
-
-
-def save_metadata(metadata: dict) -> None:
-    """Save metadata to default location."""
-    metadata_path = PROJECT_ROOT / "instance" / "fixtures" / "metadata.json"
-    metadata_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(metadata_path, "w") as f:
-        json.dump(metadata, f, indent=2)
-
-
-def get_fixture_path(category: str, subcategory: str | None = None) -> Path:
-    """Get fixture path for a category."""
-    path = PROJECT_ROOT / "tests" / "fixtures" / "osu" / category
-    if subcategory:
-        path = path / subcategory
-    path.mkdir(parents=True, exist_ok=True)
-    return path
 
 
 class FixtureManager:
@@ -75,7 +44,23 @@ class FixtureManager:
                     "by_mods": {},
                     "file_metadata": {},
                 },
+                "queues": {
+                    "by_visibility": {},
+                    "by_is_open": {},
+                    "file_metadata": {},
+                },
+                "requests": {
+                    "by_status": {},
+                    "by_mv_checked": {},
+                    "file_metadata": {},
+                },
             }
+    
+    @staticmethod
+    def _get_current_timestamp() -> str:
+        """Get current UTC timestamp in ISO format."""
+        from datetime import datetime, timezone
+        return datetime.now(timezone.utc).isoformat()
     
     def get_beatmap_by_id(self, beatmap_id: int) -> Optional[dict]:
         """Get a specific beatmap by ID."""
@@ -167,6 +152,34 @@ class FixtureManager:
         fixtures = self._get_fixtures("beatmap_attributes", 1, preferences)
         return fixtures[0] if fixtures else None
     
+    def get_queue_by_id(self, queue_id: int) -> Optional[dict]:
+        """Get a specific queue by ID."""
+        return self._get_fixture_by_id("queues", queue_id)
+    
+    def get_request_by_id(self, request_id: int) -> Optional[dict]:
+        """Get a specific request by ID."""
+        return self._get_fixture_by_id("requests", request_id)
+    
+    def get_queues(
+        self,
+        count: int = 1,
+        by_visibility: int = None,
+        by_is_open: bool = None,
+    ) -> list[dict]:
+        """Get queue fixtures by preference."""
+        preferences = {"by_visibility": by_visibility, "by_is_open": by_is_open}
+        return self._get_fixtures("queues", count, preferences)
+    
+    def get_requests(
+        self,
+        count: int = 1,
+        by_status: int = None,
+        by_mv_checked: bool = None,
+    ) -> list[dict]:
+        """Get request fixtures by preference."""
+        preferences = {"by_status": by_status, "by_mv_checked": by_mv_checked}
+        return self._get_fixtures("requests", count, preferences)
+    
     def _get_fixtures(
         self,
         category: str,
@@ -225,7 +238,7 @@ class FixtureManager:
         
         file_paths = []
         for fixture_id, meta in file_metadata.items():
-            if self._matches_preferences(meta, preferences):
+            if self._matches_preferences(meta, preferences, category=category):
                 filepath = meta.get("filepath")
                 if filepath:
                     file_paths.append(Path(filepath))
@@ -236,6 +249,7 @@ class FixtureManager:
         self,
         metadata: dict,
         preferences: dict,
+        category: str = "",
     ) -> bool:
         """Check if fixture metadata matches preferences."""
         for pref_key, pref_value in preferences.items():
@@ -287,6 +301,27 @@ class FixtureManager:
             elif pref_key == "mods":
                 fixture_mods = metadata.get("mods", [])
                 if set(pref_value) != set(fixture_mods):
+                    return False
+            
+            elif pref_key == "by_visibility":
+                fixture_visibility = metadata.get("visibility")
+                if fixture_visibility is not None and fixture_visibility != pref_value:
+                    return False
+            
+            elif pref_key == "by_is_open":
+                fixture_is_open = metadata.get("is_open")
+                if fixture_is_open is not None and fixture_is_open != pref_value:
+                    return False
+            
+            elif pref_key == "by_status":
+                if category == "requests":
+                    fixture_status = metadata.get("status")
+                    if fixture_status is not None and fixture_status != pref_value:
+                        return False
+            
+            elif pref_key == "by_mv_checked":
+                fixture_mv_checked = metadata.get("mv_checked")
+                if fixture_mv_checked is not None and fixture_mv_checked != pref_value:
                     return False
         
         return True
@@ -419,6 +454,14 @@ class FixtureManager:
                 parts = filename.split("_")
                 if len(parts) >= 2:
                     return int(parts[2])
+        
+        elif category == "queues":
+            if filename.startswith("queue_"):
+                return int(filename[6:])
+        
+        elif category == "requests":
+            if filename.startswith("request_"):
+                return int(filename[8:])
         
         return None
     

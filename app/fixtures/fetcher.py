@@ -34,13 +34,14 @@ class FetchEvent:
 
 class FixtureDataFetcher:
     def __init__(self, rc: RedisClient, id_ranges: dict | None = None, force_fetch: bool = False,
-                 id_source: IDSource | None = None):
+                 id_source: IDSource | None = None, fixtures_dir: Path | None = None):
         self.rc = rc
         self.oac = OsuAPIClient(rc)
         self.logger = None
         self.force_fetch = force_fetch
         self.id_source = id_source
-        self.metadata = load_metadata()
+        self.fixtures_dir = fixtures_dir
+        self.metadata = load_metadata(fixtures_dir=fixtures_dir)
         self.failed_ids = self.metadata.get("failed_ids", {
             "beatmaps": [],
             "beatmapsets": [],
@@ -57,7 +58,7 @@ class FixtureDataFetcher:
     def _scan_existing_fixtures(self) -> None:
         """Scan existing fixture files and populate _seen_ids."""
         for category in ["beatmaps", "beatmapsets"]:
-            path = get_fixture_path(category)
+            path = get_fixture_path(category, fixtures_dir=self.fixtures_dir)
             for f in path.glob(f"{category}_*.json"):
                 try:
                     id_str = f.stem.replace(f"{category}_", "")
@@ -65,7 +66,7 @@ class FixtureDataFetcher:
                 except ValueError:
                     continue
         for ruleset in RULESETS:
-            path = get_fixture_path("users") / ruleset
+            path = get_fixture_path("users", fixtures_dir=self.fixtures_dir) / ruleset
             for f in path.glob("user_*.json"):
                 try:
                     parts = f.stem.split("_")
@@ -74,7 +75,7 @@ class FixtureDataFetcher:
                 except ValueError:
                     continue
         for score_type in SCORE_TYPES:
-            path = get_fixture_path("scores") / score_type
+            path = get_fixture_path("scores", fixtures_dir=self.fixtures_dir) / score_type
             for f in path.glob("scores_*.json"):
                 try:
                     parts = f.stem.split("_")
@@ -84,7 +85,7 @@ class FixtureDataFetcher:
                     continue
 
     async def fetch_beatmaps(self, count: int, skip_existing: bool = True) -> AsyncIterator[FetchEvent]:
-        path = get_fixture_path("beatmaps")
+        path = get_fixture_path("beatmaps", fixtures_dir=self.fixtures_dir)
         fetched = 0
         attempts = 0
         max_attempts = count * 10 if not self.force_fetch else count * 50
@@ -123,11 +124,11 @@ class FixtureDataFetcher:
 
         self.metadata["samples"]["beatmaps"]["count"] += fetched
         self.metadata["samples"]["beatmaps"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
-        save_metadata(self.metadata)
+        save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
         self._current_session_results["beatmaps"] = fetched
 
     async def fetch_beatmapsets(self, count: int, skip_existing: bool = True) -> AsyncIterator[FetchEvent]:
-        path = get_fixture_path("beatmapsets")
+        path = get_fixture_path("beatmapsets", fixtures_dir=self.fixtures_dir)
         fetched = 0
         attempts = 0
         max_attempts = count * 10 if not self.force_fetch else count * 50
@@ -165,7 +166,7 @@ class FixtureDataFetcher:
 
         self.metadata["samples"]["beatmapsets"]["count"] += fetched
         self.metadata["samples"]["beatmapsets"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
-        save_metadata(self.metadata)
+        save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
         self._current_session_results["beatmapsets"] = fetched
 
     async def fetch_users(
@@ -176,7 +177,7 @@ class FixtureDataFetcher:
         users_mania: int,
         skip_existing: bool = True,
     ) -> AsyncIterator[FetchEvent]:
-        path = get_fixture_path("users")
+        path = get_fixture_path("users", fixtures_dir=self.fixtures_dir)
         fetched = {r: 0 for r in RULESETS}
 
         ruleset_counts = {
@@ -226,7 +227,7 @@ class FixtureDataFetcher:
             r: self.metadata["samples"]["users"]["per_ruleset"].get(r, 0) + fetched[r] for r in RULESETS
         }
         self.metadata["samples"]["users"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
-        save_metadata(self.metadata)
+        save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
         self._current_session_results["users"] = fetched.copy()
 
     async def fetch_scores(
@@ -240,7 +241,7 @@ class FixtureDataFetcher:
             self.logger.info("Top player IDs not found or empty. Fetching top players first...")
             await self.fetch_top_players()
 
-        path = get_fixture_path("scores")
+        path = get_fixture_path("scores", fixtures_dir=self.fixtures_dir)
         fetched = {t: 0 for t in SCORE_TYPES}
 
         type_counts = {
@@ -302,11 +303,11 @@ class FixtureDataFetcher:
             t: self.metadata["samples"]["scores"]["per_type"].get(t, 0) + fetched[t] for t in SCORE_TYPES
         }
         self.metadata["samples"]["scores"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
-        save_metadata(self.metadata)
+        save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
         self._current_session_results["scores"] = fetched.copy()
 
     async def fetch_beatmap_scores(self, count: int, skip_existing: bool = True) -> AsyncIterator[FetchEvent]:
-        path = get_fixture_path("beatmap_scores")
+        path = get_fixture_path("beatmap_scores", fixtures_dir=self.fixtures_dir)
         fetched = 0
         valid_ids = list(self._valid_beatmap_ids)
         random.shuffle(valid_ids)
@@ -360,11 +361,11 @@ class FixtureDataFetcher:
 
         self.metadata["samples"]["beatmap_scores"]["count"] += fetched
         self.metadata["samples"]["beatmap_scores"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
-        save_metadata(self.metadata)
+        save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
         self._current_session_results["beatmap_scores"] = fetched
 
     async def fetch_beatmap_attributes(self, count: int, skip_existing: bool = True) -> AsyncIterator[FetchEvent]:
-        path = get_fixture_path("beatmap_attributes")
+        path = get_fixture_path("beatmap_attributes", fixtures_dir=self.fixtures_dir)
         fetched = 0
         valid_ids = list(self._valid_beatmap_ids)
         random.shuffle(valid_ids)
@@ -414,7 +415,7 @@ class FixtureDataFetcher:
 
         self.metadata["samples"]["beatmap_attributes"]["count"] += fetched
         self.metadata["samples"]["beatmap_attributes"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
-        save_metadata(self.metadata)
+        save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
         self._current_session_results["beatmap_attributes"] = fetched
 
     def refresh_top_player_ids_from_metadata(self) -> None:
@@ -471,7 +472,7 @@ class FixtureDataFetcher:
             async for event in self.fetch_beatmap_attributes(beatmap_attributes_count, skip_existing=True):
                 yield event
         
-        self.metadata = load_metadata()
+        self.metadata = load_metadata(fixtures_dir=self.fixtures_dir)
         results = {
             "beatmaps": self._current_session_results["beatmaps"],
             "beatmapsets": self._current_session_results["beatmapsets"],
@@ -536,10 +537,10 @@ class FixtureDataFetcher:
             fetched[ruleset_name] = player_ids[:count_per_ruleset]
             self.logger.info(f"Fetched {len(player_ids)} top players for {ruleset_name}")
         
-        current_top_ids = load_top_player_ids()
+        current_top_ids = load_top_player_ids(fixtures_dir=self.fixtures_dir)
         current_top_ids.update(fetched)
-        save_top_player_ids(current_top_ids)
-        self.metadata = load_metadata()
+        save_top_player_ids(current_top_ids, fixtures_dir=self.fixtures_dir)
+        self.metadata = load_metadata(fixtures_dir=self.fixtures_dir)
         self.top_player_ids = self.metadata.get("top_player_ids", {r: [] for r in RULESETS})
         return fetched
 

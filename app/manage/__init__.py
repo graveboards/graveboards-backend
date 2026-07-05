@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import logging
+import sys
 
 from app.database.status import STATUS_TARGETS
 from app.database.seeding import SeedTarget
@@ -15,8 +16,9 @@ from .fixtures import (
     cmd_demote_fixtures,
     cmd_wipe_fixtures,
     cmd_refresh_top_players,
-    cmd_fixture_refresh,
     cmd_refresh_archives,
+    cmd_reconcile,
+    cmd_generate,
 )
 
 
@@ -64,157 +66,138 @@ async def main():
     fixtures_parser = subparsers.add_parser("fixtures", help="Manage test fixtures")
     fixtures_subparsers = fixtures_parser.add_subparsers(dest="fixture_command", required=True)
 
-    fetch_parser = fixtures_subparsers.add_parser("fetch", help="Fetch fresh fixture data from osu! API")
-    fetch_parser.add_argument(
-        "--scale", "-s",
-        type=float,
-        default=1.0,
-        help="Scale factor for sample counts (default: 1.0)",
+    fetch_parser = fixtures_subparsers.add_parser(
+        "fetch",
+        help="Fetch fixture data from osu! API",
+        description=(
+            "Fetch fixtures with two orthogonal dimensions:\n"
+            "  --criteria: what variety to achieve (minimal, standard, targeted, search-test)\n"
+            "  --source: where to get IDs (auto, archive, top-players)"
+        ),
     )
     fetch_parser.add_argument(
-        "--minimal",
+        "--criteria",
+        choices=["minimal", "standard", "targeted", "search-test"],
+        default="standard",
+        help="Coverage criteria (default: standard)",
+    )
+    fetch_parser.add_argument(
+        "--source",
+        choices=["auto", "archive", "top-players"],
+        default="auto",
+        help="ID source priority (default: auto)",
+    )
+    fetch_parser.add_argument(
+        "--beatmaps", type=int, help="Number of beatmaps to fetch"
+    )
+    fetch_parser.add_argument(
+        "--beatmapsets", type=int, help="Number of beatmapsets to fetch"
+    )
+    fetch_parser.add_argument(
+        "--users-osu", type=int, help="Number of osu! users to fetch"
+    )
+    fetch_parser.add_argument(
+        "--users-taiko", type=int, help="Number of taiko users to fetch"
+    )
+    fetch_parser.add_argument(
+        "--users-fruits", type=int, help="Number of fruits users to fetch"
+    )
+    fetch_parser.add_argument(
+        "--users-mania", type=int, help="Number of mania users to fetch"
+    )
+    fetch_parser.add_argument(
+        "--scores-best", type=int, help="Number of best scores to fetch"
+    )
+    fetch_parser.add_argument(
+        "--scores-firsts", type=int, help="Number of firsts scores to fetch"
+    )
+    fetch_parser.add_argument(
+        "--scores-recent", type=int, help="Number of recent scores to fetch"
+    )
+    fetch_parser.add_argument(
+        "--beatmap-scores", type=int, help="Number of beatmap scores to fetch"
+    )
+    fetch_parser.add_argument(
+        "--beatmap-attributes", type=int, help="Number of beatmap attributes to fetch"
+    )
+    fetch_parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Enable verbose/debug logging"
+    )
+    fetch_parser.add_argument(
+        "--no-progress", action="store_true", help="Disable progress bar display"
+    )
+    fetch_parser.add_argument(
+        "--force-fetch",
         action="store_true",
-        help="Use minimal profile (1 of each type)",
+        help="Force fetching until all counts are met (removes retry limits)",
     )
     fetch_parser.add_argument(
-        "--beatmaps",
-        type=int,
-        help="Number of beatmaps to fetch",
+        "--fixtures-dir",
+        type=str,
+        default=None,
+        help="Custom directory for fixture files and metadata (default: instance/fixtures/)",
     )
-    fetch_parser.add_argument(
-        "--beatmapsets",
-        type=int,
-        help="Number of beatmapsets to fetch",
-    )
-    fetch_parser.add_argument(
-        "--users-osu",
-        type=int,
-        help="Number of osu! users to fetch",
-    )
-    fetch_parser.add_argument(
-        "--users-taiko",
-        type=int,
-        help="Number of taiko users to fetch",
-    )
-    fetch_parser.add_argument(
-        "--users-fruits",
-        type=int,
-        help="Number of fruits users to fetch",
-    )
-    fetch_parser.add_argument(
-        "--users-mania",
-        type=int,
-        help="Number of mania users to fetch",
-    )
-    fetch_parser.add_argument(
-        "--scores-best",
-        type=int,
-        help="Number of best scores to fetch",
-    )
-    fetch_parser.add_argument(
-        "--scores-firsts",
-        type=int,
-        help="Number of firsts scores to fetch",
-    )
-    fetch_parser.add_argument(
-        "--scores-recent",
-        type=int,
-        help="Number of recent scores to fetch",
-    )
-    fetch_parser.add_argument(
-        "--beatmap-scores",
-        type=int,
-        help="Number of beatmap scores to fetch",
-    )
-    fetch_parser.add_argument(
-        "--beatmap-attributes",
-        type=int,
-        help="Number of beatmap attributes to fetch",
-    )
-    fetch_parser.add_argument(
-        "--beatmaps-range-min",
-        type=int,
-        help="Minimum beatmap ID to fetch",
-    )
-    fetch_parser.add_argument(
-        "--beatmaps-range-max",
-        type=int,
-        help="Maximum beatmap ID to fetch",
-    )
-    fetch_parser.add_argument(
-        "--beatmapsets-range-min",
-        type=int,
-        help="Minimum beatmapset ID to fetch",
-    )
-    fetch_parser.add_argument(
-        "--beatmapsets-range-max",
-        type=int,
-        help="Maximum beatmapset ID to fetch",
-    )
-    fetch_parser.add_argument(
-        "--users-range-min",
-        type=int,
-        help="Minimum user ID to fetch",
-    )
-    fetch_parser.add_argument(
-        "--users-range-max",
-        type=int,
-        help="Maximum user ID to fetch",
-    )
-    fetch_parser.add_argument(
-        "-v", "--verbose",
-        action="store_true",
-        help="Enable verbose/debug logging",
-    )
-    fetch_parser.add_argument(
-        "--no-progress",
-        action="store_true",
-        help="Disable progress bar display",
-    )
-    fetch_parser.add_argument(
+
+    targeted_group = fetch_parser.add_argument_group("targeted overrides")
+    targeted_group.add_argument(
         "--status",
         action="append",
         metavar="STATUS",
         choices=["ranked", "loved", "qualified", "graveyard", "pending", "approved"],
-        help="Fetch beatmapsets by status (can be specified multiple times)",
+        help="Fetch beatmapsets by status (--criteria targeted)",
     )
-    fetch_parser.add_argument(
+    targeted_group.add_argument(
         "--difficulty-range",
         type=str,
         metavar="RANGE",
         choices=["easy", "medium", "hard", "expert"],
-        help="Fetch beatmaps by difficulty range (easy: 0-2, medium: 2-5, hard: 5-7, expert: 7+)",
+        help="Fetch beatmaps by difficulty range (--criteria targeted)",
     )
-    fetch_parser.add_argument(
+    targeted_group.add_argument(
         "--playcount-range",
         type=str,
         metavar="RANGE",
         choices=["low", "medium", "high"],
-        help="Fetch beatmaps by playcount range (low: 0-100, medium: 100-1000, high: 1000+)",
+        help="Fetch beatmaps by playcount range (--criteria targeted)",
     )
-    fetch_parser.add_argument(
+    targeted_group.add_argument(
         "--activity-tier",
         type=str,
         metavar="TIER",
         choices=["active", "moderate", "inactive"],
-        help="Fetch users by activity tier (active: 100+ plays, moderate: 10-100, inactive: <10)",
+        help="Fetch users by activity tier (--criteria targeted)",
     )
-    fetch_parser.add_argument(
-        "--targeted",
-        action="store_true",
-        help="Enable targeted coverage mode (fetches by status/difficulty/activity)",
-    )
-    fetch_parser.add_argument(
+    targeted_group.add_argument(
         "--ruleset",
         action="append",
         metavar="RULESET",
         choices=["osu", "taiko", "fruits", "mania"],
-        help="Ruleset for targeted fetching (can be specified multiple times)",
+        help="Ruleset for targeted fetching (--criteria targeted)",
     )
-    fetch_parser.add_argument(
-        "--archive",
+
+    search_group = fetch_parser.add_argument_group("search-test overrides")
+    search_group.add_argument(
+        "--quick",
         action="store_true",
-        help="Use osu.sh archives as primary data source for player IDs",
+        help="Quick mode: --min-per-category=1 --max-total=20 (--criteria search-test)",
+    )
+    search_group.add_argument(
+        "--min-per-category",
+        type=int,
+        default=1,
+        help="Minimum items per coverage bucket (--criteria search-test)",
+    )
+    search_group.add_argument(
+        "--max-total",
+        type=int,
+        default=500,
+        help="Maximum total API calls before stopping (--criteria search-test)",
+    )
+    search_group.add_argument(
+        "--gaps", action="store_true", help="Only show coverage gaps, don't fetch"
+    )
+    search_group.add_argument(
+        "--full", action="store_true", help="Ignore metadata, fetch everything from scratch"
     )
 
     promote_parser = fixtures_subparsers.add_parser("promote", help="Promote fixtures from instance to tests")
@@ -232,6 +215,8 @@ async def main():
                                 help="Promote beatmap scores (all if none specified)")
     promote_parser.add_argument("--beatmap-attributes", action="store_true",
                                 help="Promote beatmap attributes (all if none specified)")
+    promote_parser.add_argument("--queues", action="store_true", help="Promote queues (all if none specified)")
+    promote_parser.add_argument("--requests", action="store_true", help="Promote requests (all if none specified)")
 
     demote_parser = fixtures_subparsers.add_parser("demote", help="Demote fixtures from tests to instance")
     demote_parser.add_argument(
@@ -247,6 +232,8 @@ async def main():
                                help="Demote beatmap scores (all if none specified)")
     demote_parser.add_argument("--beatmap-attributes", action="store_true",
                                help="Demote beatmap attributes (all if none specified)")
+    demote_parser.add_argument("--queues", action="store_true", help="Demote queues (all if none specified)")
+    demote_parser.add_argument("--requests", action="store_true", help="Demote requests (all if none specified)")
     refresh_parser = fixtures_subparsers.add_parser("refresh-top-players", help="Fetch top players from osu! API")
     refresh_parser.add_argument(
         "--ruleset", "-r",
@@ -305,31 +292,52 @@ async def main():
         action="store_true",
         help="Also clear promoted fixture metadata (WARNING: will cause metadata desync if fixture files remain)",
     )
-    
+
     refresh_archives_parser = fixtures_subparsers.add_parser("refresh-archives", help="Refresh archive index from osu.sh")
     refresh_archives_parser.add_argument(
         "--force", "-f",
         action="store_true",
         help="Force refresh even if recently updated"
     )
-    
-    refresh_parser = fixtures_subparsers.add_parser("refresh", help="Refresh fixture metadata to match disk state")
-    refresh_parser.add_argument(
+
+    reconcile_parser = fixtures_subparsers.add_parser(
+        "reconcile",
+        help="Reconcile fixture metadata counts with actual disk state"
+    )
+    reconcile_parser.add_argument(
         "--category", "-c",
         choices=["beatmaps", "beatmapsets", "users", "scores", "beatmap_scores", "beatmap_attributes"],
-        help="Specific category to refresh"
+        help="Specific category to reconcile"
     )
-    refresh_parser.add_argument(
+    reconcile_parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Show changes without applying them"
     )
 
+    generate_parser = fixtures_subparsers.add_parser(
+        "generate",
+        help="Generate diverse queue and request fixtures for testing"
+    )
+    generate_parser.add_argument(
+        "--queue-count",
+        type=int,
+        default=50,
+        help="Number of queues to generate (default: 50)",
+    )
+    generate_parser.add_argument(
+        "--request-count",
+        type=int,
+        default=100,
+        help="Number of requests to generate (default: 100)",
+    )
+
     args = parser.parse_args()
 
-    no_debug = not getattr(args, 'verbose', False)
+    verbose = getattr(args, 'verbose', False) or '-v' in sys.argv or '--verbose' in sys.argv
+    no_debug = not verbose
     setup_logging(
-        enabled_loggers=["manage", "database"],
+        enabled_loggers=["manage", "database", "fixtures"],
         level_overrides={"database": logging.WARNING},
         no_debug=no_debug
     )
@@ -346,7 +354,8 @@ async def main():
                 match args.fixture_command:
                     case "fetch":
                         await cmd_fetch_fixtures(
-                            scale=args.scale,
+                            criteria=args.criteria,
+                            source=args.source,
                             beatmaps=args.beatmaps,
                             beatmapsets=args.beatmapsets,
                             users_osu=args.users_osu,
@@ -358,21 +367,19 @@ async def main():
                             scores_recent=args.scores_recent,
                             beatmap_scores=args.beatmap_scores,
                             beatmap_attributes=args.beatmap_attributes,
-                            use_minimal=args.minimal,
-                            beatmaps_range_min=args.beatmaps_range_min,
-                            beatmaps_range_max=args.beatmaps_range_max,
-                       beatmapsets_range_min=args.beatmapsets_range_min,
-                        beatmapsets_range_max=args.beatmapsets_range_max,
-                        users_range_min=args.users_range_min,
-                        users_range_max=args.users_range_max,
-                        no_progress=args.no_progress,
-                        statuses=args.status,
-                        difficulty_range=args.difficulty_range,
-                        playcount_range=args.playcount_range,
-                        activity_tier=args.activity_tier,
-                        targeted=args.targeted,
-                        rulesets=args.ruleset,
-                        archive=args.archive,
+                            status=args.status,
+                            difficulty_range=args.difficulty_range,
+                            playcount_range=args.playcount_range,
+                            activity_tier=args.activity_tier,
+                            rulesets=args.ruleset,
+                            force_fetch=args.force_fetch,
+                            no_progress=args.no_progress,
+                            verbose=args.verbose,
+                            min_per_category=args.min_per_category,
+                            max_total=args.max_total,
+                            gaps=args.gaps,
+                            full=args.full,
+                            quick=args.quick,
                         )
                     case "refresh-top-players":
                         await cmd_refresh_top_players(
@@ -386,7 +393,7 @@ async def main():
                             detailed=getattr(args, 'detailed', False),
                             gaps=getattr(args, 'gaps', False),
                         )
-  
+
                     case "promote":
                         await cmd_promote_fixtures(
                             beatmaps=args.beatmaps,
@@ -395,6 +402,8 @@ async def main():
                             scores=args.scores,
                             beatmap_scores=args.beatmap_scores,
                             beatmap_attributes=args.beatmap_attributes,
+                            queues=getattr(args, 'queues', False),
+                            requests=getattr(args, 'requests', False),
                             force=getattr(args, 'force', False),
                         )
                     case "demote":
@@ -405,23 +414,30 @@ async def main():
                             scores=args.scores,
                             beatmap_scores=args.beatmap_scores,
                             beatmap_attributes=args.beatmap_attributes,
+                            queues=getattr(args, 'queues', False),
+                            requests=getattr(args, 'requests', False),
                             force=getattr(args, 'force', False),
                         )
                     case "wipe":
-                         await cmd_wipe_fixtures(
-                             clear_failed_ids=args.clear_failed_ids,
-                             clear_top_player_ids=args.clear_top_player_ids,
-                             clear_promoted=args.clear_promoted,
-                             force=getattr(args, 'force', False),
-                         )
+                        await cmd_wipe_fixtures(
+                            clear_failed_ids=args.clear_failed_ids,
+                            clear_top_player_ids=args.clear_top_player_ids,
+                            clear_promoted=args.clear_promoted,
+                            force=getattr(args, 'force', False),
+                        )
                     case "refresh-archives":
                         await cmd_refresh_archives(
                             force=getattr(args, 'force', False),
                         )
-                    case "refresh":
-                        await cmd_fixture_refresh(
+                    case "reconcile":
+                        await cmd_reconcile(
                             category=args.category,
                             dry_run=args.dry_run,
+                        )
+                    case "generate":
+                        await cmd_generate(
+                            queue_count=args.queue_count,
+                            request_count=args.request_count,
                         )
     except Exception as e:
         import traceback

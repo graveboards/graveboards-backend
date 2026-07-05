@@ -28,8 +28,8 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
     """Enhanced fetcher with targeted coverage strategies."""
     
     def __init__(self, rc: RedisClient, id_ranges: dict | None = None,
-                 id_source: IDSource | None = None):
-        super().__init__(rc, id_ranges, id_source=id_source)
+                 id_source: IDSource | None = None, fixtures_dir: Path | None = None):
+        super().__init__(rc, id_ranges, id_source=id_source, fixtures_dir=fixtures_dir)
         self.difficulty_ranges = {
             "easy": (0, 2.0),
             "medium": (2.0, 5.0),
@@ -50,7 +50,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         skip_existing: bool = True,
     ) -> AsyncIterator[FetchEvent]:
         """Fetch beatmapsets by status using discussions endpoint."""
-        path = get_fixture_path("beatmapsets")
+        path = get_fixture_path("beatmapsets", fixtures_dir=self.fixtures_dir)
         fetched = 0
         page = 1
         fetched_ids = set()
@@ -112,7 +112,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         
         self.metadata["samples"]["beatmapsets"]["count"] += fetched
         self.metadata["samples"]["beatmapsets"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
-        save_metadata(self.metadata)
+        save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
         self._current_session_results["beatmapsets"] = fetched
         
         for i in range(count):
@@ -126,7 +126,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         skip_existing: bool = True,
     ) -> AsyncIterator[FetchEvent]:
         """Fetch beatmaps within difficulty range."""
-        path = get_fixture_path("beatmaps")
+        path = get_fixture_path("beatmaps", fixtures_dir=self.fixtures_dir)
         fetched = 0
         
         if ruleset not in RULESETS:
@@ -202,7 +202,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         
         self.metadata["samples"]["beatmaps"]["count"] += fetched
         self.metadata["samples"]["beatmaps"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
-        save_metadata(self.metadata)
+        save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
         self._current_session_results["beatmaps"] = fetched
         
         for i in range(count):
@@ -216,7 +216,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         skip_existing: bool = True,
     ) -> AsyncIterator[FetchEvent]:
         """Fetch users with specified activity level."""
-        path = get_fixture_path("users")
+        path = get_fixture_path("users", fixtures_dir=self.fixtures_dir)
         ruleset_path = path / ruleset
         ruleset_path.mkdir(parents=True, exist_ok=True)
         fetched = 0
@@ -266,7 +266,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
             self.metadata["samples"]["users"]["per_ruleset"].get(ruleset, 0) + fetched
         )
         self.metadata["samples"]["users"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
-        save_metadata(self.metadata)
+        save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
         self._current_session_results["users"] = {ruleset: fetched}
         
         for i in range(count):
@@ -279,7 +279,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         skip_existing: bool = True,
     ) -> AsyncIterator[FetchEvent]:
         """Fetch beatmaps within playcount range."""
-        path = get_fixture_path("beatmaps")
+        path = get_fixture_path("beatmaps", fixtures_dir=self.fixtures_dir)
         fetched = 0
         
         min_pc, max_pc = self.playcount_ranges.get(
@@ -329,7 +329,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         
         self.metadata["samples"]["beatmaps"]["count"] += fetched
         self.metadata["samples"]["beatmaps"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
-        save_metadata(self.metadata)
+        save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
         self._current_session_results["beatmaps"] = fetched
         
         for i in range(count):
@@ -445,7 +445,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         file_meta = beatmaps_meta.setdefault("file_metadata", {})
         
         file_meta[str(beatmap_id)] = {
-            "filepath": str(get_fixture_path("beatmaps") / f"beatmap_{beatmap_id}.json"),
+            "filepath": str(get_fixture_path("beatmaps", fixtures_dir=self.fixtures_dir) / f"beatmap_{beatmap_id}.json"),
             "status": beatmap_data.get("status"),
             "ruleset": "osu",
             "difficulty_rating": beatmap_data.get("difficulty_rating", 0),
@@ -457,7 +457,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         self._update_difficulty_metadata(beatmaps_meta, beatmap_data)
         self._update_playcount_metadata(beatmaps_meta, beatmap_data)
         
-        save_metadata(self.metadata)
+        save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
     
     def _update_beatmapset_metadata(self, beatmapset_data: dict):
         """Update targeted metadata for a beatmapset."""
@@ -478,14 +478,14 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         file_meta = beatmapsets_meta.setdefault("file_metadata", {})
         
         file_meta[str(beatmapset_id)] = {
-            "filepath": str(get_fixture_path("beatmapsets") / f"beatmapset_{beatmapset_id}.json"),
+            "filepath": str(get_fixture_path("beatmapsets", fixtures_dir=self.fixtures_dir) / f"beatmapset_{beatmapset_id}.json"),
             "status": beatmapset_data.get("status"),
             "fetched_at": datetime.now(timezone.utc).isoformat(),
         }
         
         self._update_status_metadata(beatmapsets_meta, beatmapset_data)
         
-        save_metadata(self.metadata)
+        save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
     
     def _update_user_metadata(
         self,
@@ -512,7 +512,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         file_meta = users_meta.setdefault("file_metadata", {})
         
         file_meta[str(user_id)] = {
-            "filepath": str(get_fixture_path("users") / ruleset / f"user_{user_id}_{ruleset}.json"),
+            "filepath": str(get_fixture_path("users", fixtures_dir=self.fixtures_dir) / ruleset / f"user_{user_id}_{ruleset}.json"),
             "activity_level": activity_level,
             "ruleset": ruleset,
             "fetched_at": datetime.now(timezone.utc).isoformat(),
@@ -528,7 +528,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
             ruleset_meta[ruleset] = {l: 0 for l in self.activity_levels}
         ruleset_meta[ruleset][activity_level] = ruleset_meta[ruleset].get(activity_level, 0) + 1
         
-        save_metadata(self.metadata)
+        save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
     
     def _update_status_metadata(self, category_meta: dict, data: dict):
         """Update status counts in metadata."""

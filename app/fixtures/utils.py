@@ -14,6 +14,12 @@ FIXTURES_DIR.mkdir(parents=True, exist_ok=True)
 TEST_FIXTURES_DIR = PROJECT_ROOT / "tests" / "fixtures" / "osu"
 TEST_FIXTURES_DIR.mkdir(parents=True, exist_ok=True)
 
+QUEUE_TEST_FIXTURES_DIR = PROJECT_ROOT / "tests" / "fixtures" / "queues"
+QUEUE_TEST_FIXTURES_DIR.mkdir(parents=True, exist_ok=True)
+
+REQUEST_TEST_FIXTURES_DIR = PROJECT_ROOT / "tests" / "fixtures" / "requests"
+REQUEST_TEST_FIXTURES_DIR.mkdir(parents=True, exist_ok=True)
+
 
 def get_test_fixture_path(category: str, subcategory: str | None = None) -> Path:
     path = TEST_FIXTURES_DIR / category
@@ -31,6 +37,8 @@ BASE_SAMPLE_COUNTS = {
     "scores": {"best": 15, "firsts": 15, "recent": 15},
     "beatmap_scores": 20,
     "beatmap_attributes": 20,
+    "queues": 50,
+    "requests": 100,
 }
 
 ID_RANGES = {
@@ -46,6 +54,8 @@ MINIMAL_PROFILE = {
     "scores": {"best": 1, "firsts": 1, "recent": 1},
     "beatmap_scores": 1,
     "beatmap_attributes": 1,
+    "queues": 1,
+    "requests": 1,
 }
 
 RULESETS = ["osu", "taiko", "fruits", "mania"]
@@ -135,19 +145,55 @@ def calculate_sample_counts(
     return result
 
 
-def get_fixture_path(category: str, subcategory: str | None = None) -> Path:
-    path = FIXTURES_DIR / category
+def get_fixture_path(category: str, subcategory: str | None = None, fixtures_dir: Path | None = None) -> Path:
+    base = fixtures_dir or FIXTURES_DIR
+    path = base / category
     if subcategory:
         path = path / subcategory
     path.mkdir(parents=True, exist_ok=True)
     return path
 
 
-def load_metadata() -> dict:
-    if METADATA_FILE.exists():
-        with open(METADATA_FILE) as f:
+def _metadata_path(fixtures_dir: Path | None = None) -> Path:
+    base = fixtures_dir or FIXTURES_DIR
+    return base / "metadata.json"
+
+
+def load_metadata(fixtures_dir: Path | None = None) -> dict:
+    metadata_file = _metadata_path(fixtures_dir)
+    if metadata_file.exists():
+        with open(metadata_file) as f:
             return json.load(f)
     return create_empty_metadata()
+
+
+def save_metadata(metadata: dict, fixtures_dir: Path | None = None) -> None:
+    metadata["last_updated"] = datetime.now(timezone.utc).isoformat()
+    metadata.setdefault("promoted_fixtures", {
+        "beatmaps": {"count": 0, "last_promoted": None},
+        "beatmapsets": {"count": 0, "last_promoted": None},
+        "users": {"count": 0, "per_ruleset": {r: 0 for r in RULESETS}, "last_promoted": None},
+        "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_promoted": None},
+        "beatmap_scores": {"count": 0, "last_promoted": None},
+        "beatmap_attributes": {"count": 0, "last_promoted": None},
+        "queues": {"count": 0, "last_promoted": None},
+        "requests": {"count": 0, "last_promoted": None},
+    })
+    metadata.setdefault("failed_ids", {
+        "beatmaps": [],
+        "beatmapsets": [],
+        "users": {r: [] for r in RULESETS},
+    })
+    metadata.setdefault("top_player_ids", {r: [] for r in RULESETS})
+    metadata.setdefault("id_ranges", {
+        "beatmaps": {"min": 1, "max": 1000000},
+        "beatmapsets": {"min": 1, "max": 100000},
+        "users": {"min": 1, "max": 10000000},
+    })
+    metadata_file = _metadata_path(fixtures_dir)
+    metadata_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(metadata_file, "w") as f:
+        json.dump(metadata, f, indent=2)
 
 
 def create_empty_metadata() -> dict:
@@ -160,6 +206,8 @@ def create_empty_metadata() -> dict:
             "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_fetched": None},
             "beatmap_scores": {"count": 0, "last_fetched": None},
             "beatmap_attributes": {"count": 0, "last_fetched": None},
+            "queues": {"count": 0, "last_fetched": None},
+            "requests": {"count": 0, "last_fetched": None},
         },
         "promoted_fixtures": {
             "beatmaps": {"count": 0, "last_promoted": None},
@@ -168,6 +216,8 @@ def create_empty_metadata() -> dict:
             "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_promoted": None},
             "beatmap_scores": {"count": 0, "last_promoted": None},
             "beatmap_attributes": {"count": 0, "last_promoted": None},
+            "queues": {"count": 0, "last_promoted": None},
+            "requests": {"count": 0, "last_promoted": None},
         },
         "failed_ids": {
             "beatmaps": [],
@@ -193,6 +243,8 @@ def create_empty_samples() -> dict:
         "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_fetched": None},
         "beatmap_scores": {"count": 0, "last_fetched": None},
         "beatmap_attributes": {"count": 0, "last_fetched": None},
+        "queues": {"count": 0, "last_fetched": None},
+        "requests": {"count": 0, "last_fetched": None},
     }
 
 
@@ -204,6 +256,8 @@ def create_empty_promoted_fixtures() -> dict:
         "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_promoted": None},
         "beatmap_scores": {"count": 0, "last_promoted": None},
         "beatmap_attributes": {"count": 0, "last_promoted": None},
+        "queues": {"count": 0, "last_promoted": None},
+        "requests": {"count": 0, "last_promoted": None},
     }
 
 
@@ -216,6 +270,8 @@ def save_metadata(metadata: dict) -> None:
         "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_promoted": None},
         "beatmap_scores": {"count": 0, "last_promoted": None},
         "beatmap_attributes": {"count": 0, "last_promoted": None},
+        "queues": {"count": 0, "last_promoted": None},
+        "requests": {"count": 0, "last_promoted": None},
     })
     metadata.setdefault("failed_ids", {
         "beatmaps": [],
@@ -232,21 +288,22 @@ def save_metadata(metadata: dict) -> None:
         json.dump(metadata, f, indent=2)
 
 
-def get_fixture_count(category: str, subcategory: str | None = None) -> int:
-    path = get_fixture_path(category, subcategory)
+def get_fixture_count(category: str, subcategory: str | None = None, fixtures_dir: Path | None = None) -> int:
+    path = get_fixture_path(category, subcategory, fixtures_dir=fixtures_dir)
     if not path.exists():
         return 0
     return len(list(path.glob("*.json")))
 
 
-def get_all_fixture_files() -> dict[str, list[Path]]:
+def get_all_fixture_files(fixtures_dir: Path | None = None) -> dict[str, list[Path]]:
+    base = fixtures_dir or FIXTURES_DIR
     fixtures = {}
-    for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
-        path = FIXTURES_DIR / category
+    for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"]:
+        path = base / category
         if path.exists():
             fixtures[category] = list(path.glob("*.json"))
     for category in ["users", "scores"]:
-        path = FIXTURES_DIR / category
+        path = base / category
         if path.exists():
             fixtures[category] = {}
             for sub in path.iterdir():
@@ -255,29 +312,31 @@ def get_all_fixture_files() -> dict[str, list[Path]]:
     return fixtures
 
 
-def load_top_player_ids() -> dict[str, list[int]]:
-    metadata = load_metadata()
+def load_top_player_ids(fixtures_dir: Path | None = None) -> dict[str, list[int]]:
+    metadata = load_metadata(fixtures_dir=fixtures_dir)
     return metadata.get("top_player_ids", {r: [] for r in RULESETS})
 
 
-def save_top_player_ids(top_player_ids: dict[str, list[int]]) -> None:
-    metadata = load_metadata()
+def save_top_player_ids(top_player_ids: dict[str, list[int]], fixtures_dir: Path | None = None) -> None:
+    metadata = load_metadata(fixtures_dir=fixtures_dir)
     metadata["top_player_ids"] = top_player_ids
-    save_metadata(metadata)
+    save_metadata(metadata, fixtures_dir=fixtures_dir)
 
 
-def wipe_all_fixtures(clear_failed_ids: bool = False, clear_top_player_ids: bool = False) -> None:
-    if FIXTURES_DIR.exists():
-        shutil.rmtree(FIXTURES_DIR)
-    FIXTURES_DIR.mkdir(parents=True, exist_ok=True)
+def wipe_all_fixtures(clear_failed_ids: bool = False, clear_top_player_ids: bool = False, fixtures_dir: Path | None = None) -> None:
+    base = fixtures_dir or FIXTURES_DIR
+    if base.exists():
+        shutil.rmtree(base)
+    base.mkdir(parents=True, exist_ok=True)
     
     metadata = create_empty_metadata()
-    if not clear_failed_ids and METADATA_FILE.exists():
-        existing_metadata = load_metadata()
+    metadata_file = _metadata_path(fixtures_dir)
+    if not clear_failed_ids and metadata_file.exists():
+        existing_metadata = load_metadata(fixtures_dir=fixtures_dir)
         metadata["failed_ids"] = existing_metadata.get("failed_ids", metadata["failed_ids"])
-    if not clear_top_player_ids and METADATA_FILE.exists():
-        existing_metadata = load_metadata()
+    if not clear_top_player_ids and metadata_file.exists():
+        existing_metadata = load_metadata(fixtures_dir=fixtures_dir)
         metadata["top_player_ids"] = existing_metadata.get("top_player_ids", metadata["top_player_ids"])
     
-    save_metadata(metadata)
+    save_metadata(metadata, fixtures_dir=fixtures_dir)
     logger.info("All fixtures wiped")
