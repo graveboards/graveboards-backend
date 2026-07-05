@@ -19,6 +19,7 @@ from .utils import (
     load_top_player_ids,
     save_top_player_ids,
     get_fixture_count,
+    create_targeted_metadata,
 )
 from .fetcher import FixtureDataFetcher, FetchEvent
 from .id_source import IDSource
@@ -586,29 +587,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
     def _init_metadata(self):
         """Initialize targeted metadata structure."""
         if "targeted" not in self.metadata:
-            self.metadata["targeted"] = {
-                "beatmaps": {
-                    "by_status": {},
-                    "by_ruleset": {},
-                    "by_difficulty": {},
-                    "by_playcount": {},
-                    "file_metadata": {},
-                },
-                "beatmapsets": {
-                    "by_status": {},
-                    "file_metadata": {},
-                },
-                "users": {
-                    "by_activity": {},
-                    "per_ruleset": {},
-                    "file_metadata": {},
-                },
-                "scores": {
-                    "by_rank": {},
-                    "by_mods": {},
-                    "file_metadata": {},
-                },
-            }
+            self.metadata["targeted"] = create_targeted_metadata()
     
     def set_targeted_fetch(
         self,
@@ -686,7 +665,12 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
             }
         
         if not any(counts.values()):
-            counts = {"beatmapsets": {"by_status": {"ranked": 10}}, "users": {"by_activity": {"active": {"osu": 10}}}}
+            self.logger.warning(
+                "No targeted criteria specified. "
+                "Use --status, --difficulty-range, --playcount-range, or --activity-tier. "
+                "Returning without fetching."
+            )
+            return
         
         async for event in self.fetch_all_targeted(counts):
             yield event
