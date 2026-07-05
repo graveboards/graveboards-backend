@@ -404,7 +404,7 @@ class FixtureDataFetcher:
                 if skip_existing and beatmap_id in self._seen_ids:
                     continue
 
-                mods = random.choice([0, 1, 2, 64, 128, 256])
+                mods = random.choice([0, 8, 16, 24, 64, 80])
                 try:
                     data = await self.oac.get_beatmap_attributes(beatmap_id, mods)
                     consecutive_errors = 0
