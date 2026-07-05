@@ -120,3 +120,31 @@ async def db_session():
         await conn.run_sync(Base.metadata.drop_all)
     
     await db.close()
+
+
+@pytest.fixture(scope="function")
+async def db_transaction():
+    """Create a database session that commits changes.
+    
+    Unlike db_session, this fixture commits changes so seeded data
+    is visible to search queries within the test.
+    
+    Yields:
+        AsyncSession: Database session for the test
+    """
+    from app.database.db import PostgresqlDB
+    from app.database.models import Base
+
+    db = PostgresqlDB()
+    
+    async with db.engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    
+    async with db.session() as session:
+        yield session
+        await session.commit()
+    
+    async with db.engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+    
+    await db.close()
