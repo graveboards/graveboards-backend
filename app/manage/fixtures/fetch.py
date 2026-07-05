@@ -64,6 +64,9 @@ async def cmd_fetch_fixtures(
     full: bool = False,
     quick: bool = False,
     fixtures_dir: str | None = None,
+    dry_run: bool = False,
+    concurrent: bool = False,
+    concurrency: int = 3,
 ):
     """Fetch fixture data using the orchestrator with composable criteria."""
     rc = RedisClient()
@@ -101,11 +104,18 @@ async def cmd_fetch_fixtures(
             full=full,
             quick=quick,
             fixtures_dir=fixtures_dir,
+            dry_run=dry_run,
+            concurrent=concurrent,
+            concurrency=concurrency,
         )
 
         orchestrator = FixtureOrchestrator(fetch_criteria, rc)
+        
+        if dry_run:
+            _print_dry_run(fetch_criteria)
+            return
+        
         report = await orchestrator.execute()
-
         _print_report(report)
     finally:
         await rc.aclose()
@@ -144,6 +154,9 @@ def _build_criteria(
     full: bool = False,
     quick: bool = False,
     fixtures_dir: str | None = None,
+    dry_run: bool = False,
+    concurrent: bool = False,
+    concurrency: int = 3,
 ) -> FetchCriteria:
     """Build FetchCriteria from CLI arguments."""
     # Resolve criteria from explicit --criteria or legacy flags
@@ -208,7 +221,77 @@ def _build_criteria(
         no_progress=no_progress,
         verbose=verbose,
         fixtures_dir=fixtures_dir,
+        dry_run=dry_run,
+        concurrent=concurrent,
+        concurrency=concurrency,
     )
+
+
+def _print_dry_run(criteria: FetchCriteria) -> None:
+    """Print what would be fetched without making any API calls."""
+    console.print("[bold]Dry Run — What would be fetched:[/bold]\n")
+    console.print(f"  Criteria: {criteria.criteria}")
+    console.print(f"  Source: {criteria.source}")
+    
+    if criteria.is_standard or criteria.is_minimal:
+        console.print(f"  Would fetch:")
+        if criteria.beatmaps:
+            console.print(f"    - {criteria.beatmaps} beatmaps (via random IDs)")
+        if criteria.beatmapsets:
+            console.print(f"    - {criteria.beatmapsets} beatmapsets (via random IDs)")
+        users = criteria.users
+        if users.get("osu"):
+            console.print(f"    - {users['osu']} osu users")
+        if users.get("taiko"):
+            console.print(f"    - {users['taiko']} taiko users")
+        if users.get("fruits"):
+            console.print(f"    - {users['fruits']} fruits users")
+        if users.get("mania"):
+            console.print(f"    - {users['mania']} mania users")
+        scores = criteria.scores
+        if scores.get("best"):
+            console.print(f"    - {scores['best']} best scores")
+        if scores.get("firsts"):
+            console.print(f"    - {scores['firsts']} firsts scores")
+        if scores.get("recent"):
+            console.print(f"    - {scores['recent']} recent scores")
+        if criteria.beatmap_scores:
+            console.print(f"    - {criteria.beatmap_scores} beatmap scores")
+        if criteria.beatmap_attributes:
+            console.print(f"    - {criteria.beatmap_attributes} beatmap attributes")
+        
+        total = (
+            criteria.beatmaps or 0 +
+            criteria.beatmapsets or 0 +
+            sum(criteria.users.values()) +
+            sum(criteria.scores.values()) +
+            criteria.beatmap_scores or 0 +
+            criteria.beatmap_attributes or 0
+        )
+        console.print(f"\n  Estimated API calls: ~{total}")
+    
+    elif criteria.is_targeted:
+        console.print("  Would fetch targeted fixtures based on:")
+        if criteria.targeted.statuses:
+            console.print(f"    - Statuses: {', '.join(criteria.targeted.statuses)}")
+        if criteria.targeted.difficulty_range:
+            console.print(f"    - Difficulty: {criteria.targeted.difficulty_range}")
+        if criteria.targeted.playcount_range:
+            console.print(f"    - Playcount: {criteria.targeted.playcount_range}")
+        if criteria.targeted.activity_tier:
+            console.print(f"    - Activity: {criteria.targeted.activity_tier}")
+        if criteria.targeted.rulesets:
+            console.print(f"    - Rulesets: {', '.join(criteria.targeted.rulesets)}")
+    
+    elif criteria.is_search_test:
+        st = criteria.search_test
+        console.print(f"  Would fetch search-test coverage:")
+        console.print(f"    - Max total API calls: {st.max_total}")
+        console.print(f"    - Min per category: {st.min_per_category}")
+        if st.full:
+            console.print(f"    - Mode: full (skip_covered=False)")
+        else:
+            console.print(f"    - Mode: incremental (skip_covered=True)")
 
 
 def _print_report(report: FetchReport) -> None:
@@ -389,6 +472,14 @@ def _print_coverage_report(coverage: dict) -> None:
              ", ".join(f"{c}:{coverage.get('beatmap_accuracy', {}).get(c, {}).get('count', 0)}" for c in ("low", "medium", "high")))
     _add_row(table, "Beatmap Versions", "OK" if coverage.get("beatmap_versions") else "MISSING",
              str(len(coverage.get("beatmap_versions", []))))
+    _add_row(table, "Beatmap Max Combos", "OK" if any(coverage.get("beatmap_max_combos", {}).get(c, {}).get("count", 0) > 0 for c in ("low", "medium", "high")) else "MISSING",
+             ", ".join(f"{c}:{coverage.get('beatmap_max_combos', {}).get(c, {}).get('count', 0)}" for c in ("low", "medium", "high")))
+    _add_row(table, "Beatmap Drain", "OK" if any(coverage.get("beatmap_drain", {}).get(c, {}).get("count", 0) > 0 for c in ("low", "medium", "high")) else "MISSING",
+             ", ".join(f"{c}:{coverage.get('beatmap_drain', {}).get(c, {}).get('count', 0)}" for c in ("low", "medium", "high")))
+    _add_row(table, "Beatmap AR", "OK" if any(coverage.get("beatmap_ar", {}).get(c, {}).get("count", 0) > 0 for c in ("low", "medium", "high")) else "MISSING",
+             ", ".join(f"{c}:{coverage.get('beatmap_ar', {}).get(c, {}).get('count', 0)}" for c in ("low", "medium", "high")))
+    _add_row(table, "Beatmap CS", "OK" if any(coverage.get("beatmap_cs", {}).get(c, {}).get("count", 0) > 0 for c in ("low", "medium", "high")) else "MISSING",
+             ", ".join(f"{c}:{coverage.get('beatmap_cs', {}).get(c, {}).get('count', 0)}" for c in ("low", "medium", "high")))
 
     cc = coverage.get("country_codes", {})
     _add_row(table, "Country Codes", "OK" if cc else "MISSING", str(len(cc)))
