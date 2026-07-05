@@ -29,7 +29,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich import box
 
-from app.fixtures.utils import TEST_FIXTURES_DIR, load_metadata, FIXTURES_DIR, RULESETS, SCORE_TYPES
+from app.fixtures.utils import TEST_FIXTURES_DIR, QUEUE_TEST_FIXTURES_DIR, REQUEST_TEST_FIXTURES_DIR, load_metadata, save_metadata, FIXTURES_DIR, RULESETS, SCORE_TYPES
 from app.fixtures.health import check_category_health
 
 console = Console()
@@ -59,6 +59,10 @@ def get_instance_counts():
     else:
         counts["scores"] = {t: 0 for t in SCORE_TYPES}
 
+    for category in ["queues", "requests"]:
+        path = FIXTURES_DIR / category
+        counts[category] = count_files(path)
+
     return counts
 
 
@@ -80,6 +84,9 @@ def get_promoted_counts():
         counts["scores"] = {t: count_files(scores_path / t) for t in SCORE_TYPES}
     else:
         counts["scores"] = {t: 0 for t in SCORE_TYPES}
+
+    counts["queues"] = count_files(QUEUE_TEST_FIXTURES_DIR)
+    counts["requests"] = count_files(REQUEST_TEST_FIXTURES_DIR)
 
     return counts
 
@@ -142,6 +149,12 @@ def create_instance_table(instance_counts, metadata):
         type_status = format_status_icon(type_disk, type_meta, is_empty_ok=True)
         table.add_row(f"  {score_type}", str(type_meta), str(type_disk), type_status)
 
+    for category in ["queues", "requests"]:
+        disk_count = instance_counts.get(category, 0)
+        meta_count = sample_metadata.get(category, {}).get("count", 0)
+        status = format_status_icon(disk_count, meta_count, is_empty_ok=True)
+        table.add_row(f"[b]{category}[/b]", str(meta_count), str(disk_count), status)
+
     return table
 
 
@@ -188,6 +201,13 @@ def create_promoted_table(promoted_counts, metadata):
         type_status = format_status_icon(type_disk, type_meta, is_empty_ok=True)
         type_coverage = format_coverage(type_disk, type_meta)
         table.add_row(f"  {score_type}", str(type_meta), str(type_disk), type_status, type_coverage)
+
+    for category in ["queues", "requests"]:
+        meta_count = promoted_metadata.get(category, {}).get("count", 0)
+        disk_count = promoted_counts.get(category, 0)
+        status = format_status_icon(disk_count, meta_count, is_empty_ok=True)
+        coverage = format_coverage(disk_count, meta_count)
+        table.add_row(f"[b]{category}[/b]", str(meta_count), str(disk_count), status, coverage)
 
     return table
 
@@ -268,7 +288,49 @@ async def cmd_fixture_status(
         detailed: Include detailed file lists
         gaps: Show missing fixture gaps (only for promoted)
     """
+    from app.fixtures.manager import FixtureManager
+    from app.fixtures.utils import FIXTURES_DIR, get_fixture_path
+
     metadata = load_metadata()
+
+    manager = FixtureManager()
+    for cat in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "users", "scores"]:
+        await manager.refresh_category_metadata(cat)
+
+    samples = metadata.get("samples", {})
+    for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
+        cat_path = FIXTURES_DIR / category
+        disk_count = len(list(cat_path.glob("*.json"))) if cat_path.exists() else 0
+        samples.setdefault(category, {})["count"] = disk_count
+
+    if samples.get("users"):
+        users_path = FIXTURES_DIR / "users"
+        total = 0
+        per_ruleset = samples["users"].get("per_ruleset", {})
+        for ruleset in ["osu", "taiko", "fruits", "mania"]:
+            rpath = users_path / ruleset
+            rc = len(list(rpath.glob("*.json"))) if rpath.exists() else 0
+            total += rc
+            per_ruleset[ruleset] = rc
+        samples["users"]["count"] = total
+        samples["users"]["per_ruleset"] = per_ruleset
+
+    if samples.get("scores"):
+        scores_path = FIXTURES_DIR / "scores"
+        total = 0
+        per_type = samples["scores"].get("per_type", {})
+        for stype in ["best", "firsts", "recent"]:
+            spath = scores_path / stype
+            sc = len(list(spath.glob("*.json"))) if spath.exists() else 0
+            total += sc
+            per_type[stype] = sc
+        samples["scores"]["count"] = total
+        samples["scores"]["per_type"] = per_type
+
+    metadata["samples"] = samples
+    save_metadata(metadata)
+    metadata = load_metadata()
+
     instance_counts = get_instance_counts()
     promoted_counts = get_promoted_counts()
     
@@ -309,7 +371,7 @@ async def cmd_fixture_status(
         
         if detailed:
             console.print("\n[bold]Instance Files:[/bold]")
-            for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
+            for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"]:
                 path = FIXTURES_DIR / category
                 if path.exists():
                     files = sorted([f.name for f in path.glob("*.json")])
@@ -335,7 +397,7 @@ async def cmd_fixture_status(
                             console.print(f"    [red]{ruleset}: (empty)[/red]")
             
             console.print("\n[bold]Promoted Files:[/bold]")
-            for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
+            for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"]:
                 path = TEST_FIXTURES_DIR / category
                 if path.exists():
                     files = sorted([f.name for f in path.glob("*.json")])
@@ -377,7 +439,7 @@ async def cmd_fixture_status(
             
             if detailed:
                 console.print("\n[bold]Instance Files:[/bold]")
-                for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
+                for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"]:
                     path = FIXTURES_DIR / category
                     if path.exists():
                         files = sorted([f.name for f in path.glob("*.json")])
@@ -415,7 +477,7 @@ async def cmd_fixture_status(
             
             if detailed:
                 console.print("\n[bold]Promoted Files:[/bold]")
-                for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
+                for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"]:
                     path = TEST_FIXTURES_DIR / category
                     if path.exists():
                         files = sorted([f.name for f in path.glob("*.json")])

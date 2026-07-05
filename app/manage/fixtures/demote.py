@@ -4,7 +4,7 @@ from shutil import copy2
 from rich.console import Console
 from rich.prompt import Confirm
 
-from app.fixtures.utils import TEST_FIXTURES_DIR, FIXTURES_DIR, load_metadata, save_metadata
+from app.fixtures.utils import TEST_FIXTURES_DIR, QUEUE_TEST_FIXTURES_DIR, REQUEST_TEST_FIXTURES_DIR, FIXTURES_DIR, load_metadata, save_metadata
 from .helpers import get_categories_to_process
 
 console = Console()
@@ -17,6 +17,8 @@ async def cmd_demote_fixtures(
     scores: bool,
     beatmap_scores: bool,
     beatmap_attributes: bool,
+    queues: bool = False,
+    requests: bool = False,
     force: bool = False,
 ):
     if not force:
@@ -38,15 +40,22 @@ async def cmd_demote_fixtures(
         scores=scores,
         beatmap_scores=beatmap_scores,
         beatmap_attributes=beatmap_attributes,
+        queues=queues,
+        requests=requests,
     )
 
     metadata = load_metadata()
 
     for category in categories_to_demote:
-        src_path = TEST_FIXTURES_DIR / category
+        if category in ["queues"]:
+            src_path = QUEUE_TEST_FIXTURES_DIR
+        elif category in ["requests"]:
+            src_path = REQUEST_TEST_FIXTURES_DIR
+        else:
+            src_path = TEST_FIXTURES_DIR / category
         dst_path = FIXTURES_DIR / category
 
-        if category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
+        if category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"]:
             dst_path.mkdir(parents=True, exist_ok=True)
             if src_path.exists():
                 files = list(src_path.glob("*.json"))

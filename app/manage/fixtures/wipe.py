@@ -49,6 +49,8 @@ async def cmd_wipe_fixtures(
                 deleted_count += 1
 
     metadata["samples"] = create_empty_samples()
+    metadata.pop("search_test_coverage", None)
+    metadata.pop("targeted", None)
     if clear_failed_ids:
         metadata["failed_ids"] = {
             "beatmaps": [],

@@ -3,7 +3,7 @@ from shutil import copy2, rmtree
 
 from rich.console import Console
 
-from app.fixtures.utils import FIXTURES_DIR, TEST_FIXTURES_DIR, load_metadata, save_metadata, create_empty_samples
+from app.fixtures.utils import FIXTURES_DIR, TEST_FIXTURES_DIR, QUEUE_TEST_FIXTURES_DIR, REQUEST_TEST_FIXTURES_DIR, load_metadata, save_metadata, create_empty_samples
 from .helpers import get_categories_to_process
 
 console = Console()
@@ -16,6 +16,8 @@ async def cmd_promote_fixtures(
     scores: bool,
     beatmap_scores: bool,
     beatmap_attributes: bool,
+    queues: bool = False,
+    requests: bool = False,
     force: bool = False,
 ):
     if not force:
@@ -38,6 +40,8 @@ async def cmd_promote_fixtures(
         scores=scores,
         beatmap_scores=beatmap_scores,
         beatmap_attributes=beatmap_attributes,
+        queues=queues,
+        requests=requests,
     )
 
     # Phase 1: Copy all files first (before deleting anything)
@@ -45,9 +49,15 @@ async def cmd_promote_fixtures(
 
     for category in categories_to_promote:
         src_path = FIXTURES_DIR / category
-        dst_path = TEST_FIXTURES_DIR / category
+        
+        if category in ["queues"]:
+            dst_path = QUEUE_TEST_FIXTURES_DIR
+        elif category in ["requests"]:
+            dst_path = REQUEST_TEST_FIXTURES_DIR
+        else:
+            dst_path = TEST_FIXTURES_DIR / category
 
-        if category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
+        if category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"]:
             dst_path.mkdir(parents=True, exist_ok=True)
             if src_path.exists():
                 for filepath in src_path.glob("*.json"):
@@ -70,17 +80,23 @@ async def cmd_promote_fixtures(
     # Phase 3: Delete source directories only after all copies succeeded
     for category in categories_to_promote:
         src_path = FIXTURES_DIR / category
-        dst_path = TEST_FIXTURES_DIR / category
+        
+        if category in ["queues"]:
+            dst_path = QUEUE_TEST_FIXTURES_DIR
+        elif category in ["requests"]:
+            dst_path = REQUEST_TEST_FIXTURES_DIR
+        else:
+            dst_path = TEST_FIXTURES_DIR / category
 
-        if category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
+        if category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"]:
             count = 0
             if src_path.exists():
                 count = len(list(src_path.glob("*.json")))
                 rmtree(src_path)
-            metadata["promoted_fixtures"][category] = {
-                "count": metadata["promoted_fixtures"][category].get("count", 0) + count,
-                "last_promoted": current_time,
-            }
+            if category not in metadata["promoted_fixtures"]:
+                metadata["promoted_fixtures"][category] = {"count": 0, "last_promoted": None}
+            metadata["promoted_fixtures"][category]["count"] = metadata["promoted_fixtures"][category].get("count", 0) + count
+            metadata["promoted_fixtures"][category]["last_promoted"] = current_time
         elif category in ["users", "scores"]:
             total_count = 0
             if src_path.exists():
@@ -105,5 +121,5 @@ async def cmd_promote_fixtures(
     metadata["samples"] = create_empty_samples()
     save_metadata(metadata)
 
-    console.print(f"[green]✅ Promoted {copied} fixture files to tests/fixtures/osu/[/green]")
+    console.print(f"[green]✅ Promoted {copied} fixture files to tests/fixtures/[/green]")
     console.print("   [dim]Instance fixtures cleaned up[/dim]\n")
