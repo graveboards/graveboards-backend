@@ -20,14 +20,16 @@ from .utils import (
     save_top_player_ids,
     get_fixture_count,
 )
-from .fetcher import FixtureDataFetcher
+from .fetcher import FixtureDataFetcher, FetchEvent
+from .id_source import IDSource
 
 
 class TargetedFixtureFetcher(FixtureDataFetcher):
     """Enhanced fetcher with targeted coverage strategies."""
     
-    def __init__(self, rc: RedisClient, id_ranges: dict | None = None):
-        super().__init__(rc, id_ranges)
+    def __init__(self, rc: RedisClient, id_ranges: dict | None = None,
+                 id_source: IDSource | None = None):
+        super().__init__(rc, id_ranges, id_source=id_source)
         self.difficulty_ranges = {
             "easy": (0, 2.0),
             "medium": (2.0, 5.0),
@@ -45,6 +47,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         self,
         status: str = "ranked",
         count: int = 10,
+        skip_existing: bool = True,
     ) -> AsyncIterator[FetchEvent]:
         """Fetch beatmapsets by status using discussions endpoint."""
         path = get_fixture_path("beatmapsets")
@@ -68,12 +71,12 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
                     if fetched >= count:
                         break
                     
-                    beatmap = discussion.get("beatmap")
-                    if not beatmap:
+                    beatmapset_id = discussion.get("beatmapset_id")
+                    if not beatmapset_id or beatmapset_id in fetched_ids:
                         continue
                     
-                    beatmapset_id = beatmap.get("beatmapset_id")
-                    if not beatmapset_id or beatmapset_id in fetched_ids:
+                    if skip_existing and beatmapset_id in self._seen_ids:
+                        fetched_ids.add(beatmapset_id)
                         continue
                     
                     try:
@@ -84,6 +87,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
                         
                         fetched += 1
                         fetched_ids.add(beatmapset_id)
+                        self._seen_ids.add(beatmapset_id)
                         self.logger.debug(
                             f"Fetched beatmapset {beatmapset_id} (status={status}) "
                             f"({fetched}/{count})"
@@ -119,6 +123,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         ruleset: str = "osu",
         difficulty_range: str = "medium",
         count: int = 10,
+        skip_existing: bool = True,
     ) -> AsyncIterator[FetchEvent]:
         """Fetch beatmaps within difficulty range."""
         path = get_fixture_path("beatmaps")
@@ -156,6 +161,9 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
                     if not beatmap_id:
                         continue
                     
+                    if skip_existing and beatmap_id in self._seen_ids:
+                        continue
+                    
                     diff = beatmap.get("difficulty_rating", 0)
                     if not (min_diff <= diff <= max_diff):
                         continue
@@ -167,6 +175,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
                             json.dump(beatmap_data, f, indent=2)
                         
                         fetched += 1
+                        self._seen_ids.add(beatmap_id)
                         self.logger.debug(
                             f"Fetched beatmap {beatmap_id} (difficulty={diff}) "
                             f"({fetched}/{count})"
@@ -204,6 +213,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         ruleset: str,
         activity_level: str = "active",
         count: int = 25,
+        skip_existing: bool = True,
     ) -> AsyncIterator[FetchEvent]:
         """Fetch users with specified activity level."""
         path = get_fixture_path("users")
@@ -224,6 +234,9 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
             if fetched >= count:
                 break
             
+            if skip_existing and user_id in self._seen_ids:
+                continue
+            
             mode = getattr(Ruleset, ruleset.upper()).value
             
             try:
@@ -233,6 +246,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
                     json.dump(user_data, f, indent=2)
                 
                 fetched += 1
+                self._seen_ids.add(user_id)
                 self.logger.debug(
                     f"Fetched user {user_id} ({ruleset}, {activity_level}) "
                     f"({fetched}/{count})"
@@ -262,6 +276,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         self,
         playcount_range: str = "medium",
         count: int = 10,
+        skip_existing: bool = True,
     ) -> AsyncIterator[FetchEvent]:
         """Fetch beatmaps within playcount range."""
         path = get_fixture_path("beatmaps")
@@ -279,6 +294,9 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
             attempts += 1
             beatmap_id = self._get_random_id("beatmaps", avoid_failed=True)
             
+            if skip_existing and beatmap_id in self._seen_ids:
+                continue
+            
             try:
                 beatmap_data = await self.oac.get_beatmap(beatmap_id)
                 playcount = beatmap_data.get("playcount", 0)
@@ -291,6 +309,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
                     json.dump(beatmap_data, f, indent=2)
                 
                 fetched += 1
+                self._seen_ids.add(beatmap_id)
                 self.logger.debug(
                     f"Fetched beatmap {beatmap_id} (playcount={playcount}) "
                     f"({fetched}/{count})"
@@ -345,6 +364,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
                     async for event in self.fetch_beatmapsets_by_status(
                         status=status,
                         count=status_count,
+                        skip_existing=True,
                     ):
                         yield event
         
@@ -356,6 +376,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
                             ruleset=ruleset,
                             difficulty_range=difficulty,
                             count=diff_count,
+                            skip_existing=True,
                         ):
                             yield event
         
@@ -365,6 +386,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
                     async for event in self.fetch_beatmaps_by_playcount(
                         playcount_range=playcount,
                         count=pc_count,
+                        skip_existing=True,
                     ):
                         yield event
         
@@ -377,15 +399,16 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
                             ruleset=ruleset,
                             activity_level=activity,
                             count=activity_count,
+                            skip_existing=True,
                         ):
                             yield event
         
         if beatmapsets_count > 0 and not beatmaps_targeted.get("by_status"):
-            async for event in super().fetch_beatmapsets(beatmapsets_count):
+            async for event in super().fetch_beatmapsets(beatmapsets_count, skip_existing=True):
                 yield event
         
         if beatmaps_count > 0 and not beatmaps_targeted.get("by_difficulty"):
-            async for event in super().fetch_beatmaps(beatmaps_count):
+            async for event in super().fetch_beatmaps(beatmaps_count, skip_existing=True):
                 yield event
         
         self.metadata = load_metadata()
@@ -639,19 +662,21 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         }
         
         if self.targeted_statuses:
-            for status in self.targeted_statuses:
-                counts["beatmapsets"][status] = 10
+            counts["beatmapsets"]["by_status"] = {status: 10 for status in self.targeted_statuses}
         
         if self.targeted_difficulty_range:
-            for ruleset in self.targeted_rulesets:
-                counts["beatmaps"][f"{ruleset}_{self.targeted_difficulty_range}"] = 10
+            counts["beatmaps"]["by_difficulty"] = {self.targeted_difficulty_range: 10}
+        
+        if self.targeted_playcount_range:
+            counts["beatmaps"]["by_playcount"] = {self.targeted_playcount_range: 10}
         
         if self.targeted_activity_tier:
-            for ruleset in self.targeted_rulesets:
-                counts["users"][f"{ruleset}_{self.targeted_activity_tier}"] = 10
+            counts["users"]["by_activity"] = {
+                self.targeted_activity_tier: {ruleset: 10 for ruleset in self.targeted_rulesets}
+            }
         
         if not any(counts.values()):
-            counts = {"beatmapsets": {"ranked": 10}, "users": {"osu_active": 10}}
+            counts = {"beatmapsets": {"by_status": {"ranked": 10}}, "users": {"by_activity": {"active": {"osu": 10}}}}
         
         async for event in self.fetch_all_targeted(counts):
             yield event
