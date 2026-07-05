@@ -16,6 +16,7 @@ from rich.table import Table
 
 from app.redis import RedisClient
 from app.logging import get_logger
+from app.fixtures.search_test_fetcher import SearchTestFixtureFetcher
 from app.fixtures.orchestrator import (
     Criteria,
     FetchCriteria,
@@ -239,7 +240,7 @@ def _print_report(report: FetchReport) -> None:
     console.print()
 
 
-def _print_coverage_gaps(fetcher) -> None:
+def _print_coverage_gaps(fetcher: "SearchTestFixtureFetcher") -> None:
     """Print coverage gaps from metadata.json."""
     console.print("[bold]Coverage status from metadata.json:[/bold]")
 
