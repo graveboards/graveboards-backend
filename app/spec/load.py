@@ -6,7 +6,10 @@ from connexion.spec import resolve_refs
 
 from app.enums import Env
 from app.config import ENV, get_security_enabled, SPEC_DIR, CACHE_FILE, OPENAPI_ENTRYPOINT
+from app.logging import get_logger
 from .shallow import populate_shallow_refs
+
+logger = get_logger(__name__)
 
 
 def load_spec() -> dict:
@@ -27,16 +30,24 @@ def load_spec() -> dict:
         return _build_spec()
 
     if ENV == Env.PROD:
-        with open(CACHE_FILE, "rb") as f:
-            payload = pickle.load(f)
+        try:
+            with open(CACHE_FILE, "rb") as f:
+                payload = pickle.load(f)
+        except (pickle.UnpicklingError, EOFError, ValueError, OSError) as e:
+            logger.warning(f"Corrupted spec cache at {CACHE_FILE}, rebuilding: {e}")
+            return _build_spec()
 
         return payload["spec"]
 
     cache_mtime = os.path.getmtime(CACHE_FILE)
     latest_spec_mtime = _get_latest_spec_mtime()
 
-    with open(CACHE_FILE, "rb") as f:
-        payload = pickle.load(f)
+    try:
+        with open(CACHE_FILE, "rb") as f:
+            payload = pickle.load(f)
+    except (pickle.UnpicklingError, EOFError, ValueError, OSError) as e:
+        logger.warning(f"Corrupted spec cache at {CACHE_FILE}, rebuilding: {e}")
+        return _build_spec()
 
     cached_options = payload.get("build_options", {})
 
