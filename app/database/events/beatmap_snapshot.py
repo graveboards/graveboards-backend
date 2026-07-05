@@ -1,4 +1,4 @@
-from sqlalchemy import event
+from sqlalchemy import event, text
 from sqlalchemy.engine.base import Connection
 from sqlalchemy.sql import select, func, insert, update
 from sqlalchemy.orm.mapper import Mapper
@@ -38,6 +38,11 @@ def beatmap_snapshot_before_insert(mapper: Mapper[BeatmapSnapshot], connection: 
     """
     if target.snapshot_number is not None:
         return
+
+    connection.execute(
+        text("SELECT pg_advisory_xact_lock(:beatmap_id)")
+        .bindparams(beatmap_id=target.beatmap_id)
+    )
 
     select_stmt = (
         select(func.max(BeatmapSnapshot.snapshot_number))
