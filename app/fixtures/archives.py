@@ -4,6 +4,7 @@ This module provides tools to discover, index, and extract data from
 the osu.sh data archives (https://data.ppy.sh/).
 """
 import re
+import asyncio
 from pathlib import Path
 from datetime import datetime
 from typing import Optional
@@ -116,10 +117,20 @@ async def fetch_archive_index() -> list[str]:
     return filenames
 
 
+_cached_archive_index: ArchiveIndex | None = None
+
+
 def load_archive_index() -> ArchiveIndex:
-    """Load the cached archive index."""
+    """Load the cached archive index (cached in memory)."""
+    global _cached_archive_index
+    
+    if _cached_archive_index is not None:
+        return _cached_archive_index
+    
+    _cached_archive_index = ArchiveIndex()
+    
     if not INDEX_FILE.exists():
-        return ArchiveIndex()
+        return _cached_archive_index
     
     import json
     try:
@@ -147,10 +158,17 @@ def load_archive_index() -> ArchiveIndex:
                 if archive.selection in ["top", "random"]:
                     index.ruleset_archives[archive.ruleset][archive.selection].append(archive)
         
-        return index
+        _cached_archive_index = index
     except (json.JSONDecodeError, ValueError) as e:
         logger.warning(f"Failed to load archive index: {e}")
-        return ArchiveIndex()
+    
+    return _cached_archive_index
+
+
+def clear_archive_index_cache() -> None:
+    """Clear the cached archive index."""
+    global _cached_archive_index
+    _cached_archive_index = None
 
 
 def save_archive_index(index: ArchiveIndex) -> None:
@@ -207,16 +225,77 @@ async def refresh_archive_index() -> ArchiveIndex:
     return index
 
 
-def extract_sql_from_archive(archive_info: ArchiveInfo) -> Optional[Path]:
-    """Extract SQL files from a performance archive."""
+async def download_archive(archive_info: ArchiveInfo) -> Optional[Path]:
+    """Download an archive from osu.sh."""
+    archive_path = ARCHIVE_DIR / archive_info.filename
+    
+    if archive_path.exists():
+        logger.info(f"Archive already exists: {archive_path}")
+        return archive_path
+    
+    logger.info(f"Downloading {archive_info.filename}...")
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            async with client.stream("GET", archive_info.url) as response:
+                response.raise_for_status()
+                with open(archive_path, "wb") as f:
+                    async for chunk in response.aiter_bytes():
+                        f.write(chunk)
+        
+        logger.info(f"Downloaded {archive_info.filename} ({archive_path.stat().st_size / 1024 / 1024:.1f} MB)")
+        return archive_path
+    except Exception as e:
+        logger.warning(f"Archive unavailable at {archive_info.url}: {e}")
+        if archive_path.exists():
+            archive_path.unlink()
+        return None
+
+
+def cleanup_archives() -> int:
+    """Delete tar.bz2 files for archives that have been extracted.
+    
+    Returns the number of files deleted.
+    """
+    deleted = 0
+    
+    for archive_path in ARCHIVE_DIR.glob("*.tar.bz2"):
+        extraction_name = archive_path.name.replace(".tar.bz2", "")
+        extraction_dir = SQL_CACHE_DIR / extraction_name
+        
+        if extraction_dir.exists():
+            archive_path.unlink()
+            logger.info(f"Deleted archive (extraction exists): {archive_path}")
+            deleted += 1
+    
+    return deleted
+
+
+async def extract_sql_from_archive(archive_info: ArchiveInfo, allow_download: bool = False) -> Optional[Path]:
+    """Extract SQL files from a performance archive.
+    
+    Args:
+        archive_info: Archive metadata
+        allow_download: If True, download missing archives. If False, only use cached/local files.
+    """
+    extraction_dir = SQL_CACHE_DIR / archive_info.filename.replace(".tar.bz2", "")
+    
+    if extraction_dir.exists():
+        logger.info(f"Using cached extraction: {extraction_dir}")
+        return extraction_dir
+    
     archive_path = ARCHIVE_DIR / archive_info.filename
     
     if not archive_path.exists():
-        logger.warning(f"Archive not found: {archive_path}")
-        return None
+        if allow_download:
+            logger.info(f"Archive not cached locally, downloading...")
+            archive_path = await download_archive(archive_info)
+            if not archive_path:
+                return None
+        else:
+            return None
     
-    extraction_dir = SQL_CACHE_DIR / archive_info.filename.replace(".tar.bz2", "")
-    extraction_dir.mkdir(exist_ok=True)
+    extraction_dir.mkdir(parents=True, exist_ok=True)
     
     try:
         import tarfile
@@ -225,6 +304,11 @@ def extract_sql_from_archive(archive_info: ArchiveInfo) -> Optional[Path]:
             tar.extractall(extraction_dir, members=sql_members)
         
         logger.info(f"Extracted SQL from {archive_info.filename} to {extraction_dir}")
+        
+        if archive_path.exists():
+            archive_path.unlink()
+            logger.info(f"Deleted archive after extraction: {archive_path}")
+        
         return extraction_dir
     except Exception as e:
         logger.error(f"Failed to extract {archive_path}: {e}")
@@ -308,9 +392,9 @@ def parse_sql_values(values: str) -> list:
     return parsed
 
 
-def get_user_ids_from_archive(archive_info: ArchiveInfo, min_playcount: int = 100) -> list[int]:
+async def get_user_ids_from_archive(archive_info: ArchiveInfo, min_playcount: int = 100, allow_download: bool = False) -> list[int]:
     """Extract player IDs from a performance archive."""
-    extraction_dir = extract_sql_from_archive(archive_info)
+    extraction_dir = await extract_sql_from_archive(archive_info, allow_download=allow_download)
     if not extraction_dir:
         return []
     
@@ -349,9 +433,9 @@ def get_user_ids_from_archive(archive_info: ArchiveInfo, min_playcount: int = 10
     return sorted(user_ids)
 
 
-def get_beatmap_ids_from_archive(archive_info: ArchiveInfo) -> list[int]:
+async def get_beatmap_ids_from_archive(archive_info: ArchiveInfo, allow_download: bool = False) -> list[int]:
     """Extract beatmap IDs from an osu_files archive."""
-    extraction_dir = extract_sql_from_archive(archive_info)
+    extraction_dir = await extract_sql_from_archive(archive_info, allow_download=allow_download)
     if not extraction_dir:
         return []
     
