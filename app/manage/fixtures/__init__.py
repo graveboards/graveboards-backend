@@ -6,8 +6,9 @@ from .demote import cmd_demote_fixtures
 from .wipe import cmd_wipe_fixtures
 from .helpers import get_categories_to_process
 # health, report, gaps commands removed - replaced by status command
-from .refresh import cmd_fixture_refresh
+from .reconcile import cmd_reconcile
 from .refresh_archives import cmd_refresh_archives
+from .generate import cmd_generate
 
 __all__ = [
     "cmd_refresh_top_players",
@@ -16,7 +17,8 @@ __all__ = [
     "cmd_promote_fixtures",
     "cmd_demote_fixtures",
     "cmd_wipe_fixtures",
-    "cmd_fixture_refresh",
+    "cmd_reconcile",
     "cmd_refresh_archives",
+    "cmd_generate",
     "get_categories_to_process",
 ]

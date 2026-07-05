@@ -1,12 +1,12 @@
-"""CLI command to refresh fixture metadata from disk.
+"""CLI command to reconcile fixture metadata with disk state.
 
 Usage:
-    manage fixtures refresh [--category CATEGORY] [--dry-run]
+    manage fixtures reconcile [--category CATEGORY] [--dry-run]
 
 Examples:
-    manage fixtures refresh
-    manage fixtures refresh --category beatmaps
-    manage fixtures refresh --dry-run
+    manage fixtures reconcile
+    manage fixtures reconcile --category beatmaps
+    manage fixtures reconcile --dry-run
 """
 
 import argparse
@@ -25,15 +25,15 @@ from rich.box import SIMPLE_HEAD
 console = Console()
 
 
-async def cmd_fixture_refresh(category: Optional[str] = None, dry_run: bool = False) -> None:
-    """Refresh fixture metadata to match disk state.
-    
+async def cmd_reconcile(category: Optional[str] = None, dry_run: bool = False) -> None:
+    """Reconcile fixture metadata counts with actual disk state.
+
     Args:
-        category: Specific category to refresh (None for all)
+        category: Specific category to reconcile (None for all)
         dry_run: Show changes without applying them
     """
     manager = FixtureManager()
-    
+
     if category:
         categories = [category]
     else:
@@ -41,33 +41,33 @@ async def cmd_fixture_refresh(category: Optional[str] = None, dry_run: bool = Fa
             "beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes",
             "users", "scores"
         ]
-    
+
     changes = []
-    
+
     for cat in categories:
         cat_changes = await manager.refresh_category_metadata(cat, dry_run=dry_run)
         changes.extend(cat_changes)
-    
+
     if not changes:
         console.print("[green]No changes needed. Metadata is already in sync with disk.[/green]")
         return
-    
+
     if dry_run:
         console.print(Panel(
             f"[yellow]Dry run: {len(changes)} change(s) would be made[/yellow]"
         ))
     else:
         console.print(Panel(
-            f"[green]Refreshed {len(changes)} fixture(s) from disk[/green]"
+            f"[green]Reconciled {len(changes)} fixture(s) from disk[/green]"
         ))
-    
+
     table = Table(box=SIMPLE_HEAD)
     table.add_column("Category", style="cyan")
     table.add_column("Action", style="white")
     table.add_column("Fixture ID", style="white")
     table.add_column("Disk Count", style="white")
     table.add_column("Old Meta Count", style="white")
-    
+
     for change in changes[:20]:
         table.add_row(
             change["category"],
@@ -76,31 +76,31 @@ async def cmd_fixture_refresh(category: Optional[str] = None, dry_run: bool = Fa
             str(change["disk_count"]),
             str(change.get("old_meta_count", "N/A"))
         )
-    
+
     if len(changes) > 20:
         table.add_row(f"... and {len(changes) - 20} more", "", "", "", "")
-    
+
     console.print(table)
 
 
 def main():
     """CLI entry point."""
     parser = argparse.ArgumentParser(
-        description="Refresh fixture metadata from disk"
+        description="Reconcile fixture metadata with disk state"
     )
     parser.add_argument(
         "--category", "-c",
         choices=["beatmaps", "beatmapsets", "users", "scores", "beatmap_scores", "beatmap_attributes"],
-        help="Specific category to refresh"
+        help="Specific category to reconcile"
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Show changes without applying them"
     )
-    
+
     args = parser.parse_args()
-    asyncio.run(cmd_fixture_refresh(
+    asyncio.run(cmd_reconcile(
         category=args.category,
         dry_run=args.dry_run
     ))
