@@ -129,6 +129,7 @@ class _C:
         model_class: ModelClass,
         data: dict[str, Any],
         session: AsyncSession,
+        _load_relationships: bool = True,
     ) -> BaseType:
         """Resolve an existing instance or create one from structured input.
 
@@ -150,6 +151,10 @@ class _C:
                 Field dictionary containing column and/or relationship values.
             session:
                 Active async SQLAlchemy session.
+            _load_relationships:
+                If ``True``, eagerly load all relationships on lookup queries.
+                Set to ``False`` when the caller only needs the primary key, to
+                avoid unnecessary ``selectinload`` queries. Defaults to ``True``.
 
         Returns:
             An existing or newly created model instance.
@@ -166,7 +171,7 @@ class _C:
         relationship_loaders = [
             selectinload(getattr(model, rel.key))
             for rel in mapper.relationships
-        ]
+        ] if _load_relationships else []
         instance = None
 
         # Lookup via primary key
@@ -176,7 +181,7 @@ class _C:
             if len(identity) == 1:
                 identity = identity[0]
 
-            instance = await session.get(model, identity, options=relationship_loaders)
+            instance = await session.get(model, identity, options=relationship_loaders or None)
 
             if instance is not None:
                 _C._ensure_same_session(instance, session)
@@ -259,11 +264,6 @@ class _C:
                         _C._ensure_same_session(obj, session)
 
                     new_items.append(obj)
-
-                state = inspect(instance)
-
-                if state.persistent:
-                    await session.refresh(instance, attribute_names=[key])
 
                 setattr(instance, key, new_items)
             # One-to-one / Many-to-one
