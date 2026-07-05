@@ -93,6 +93,9 @@ class FetchCriteria:
     force_fetch: bool = False
     no_progress: bool = False
     verbose: bool = False
+    dry_run: bool = False
+    concurrent: bool = False
+    concurrency: int = 3
 
     # Custom fixtures directory
     fixtures_dir: str | None = None
@@ -234,11 +237,75 @@ class FixtureOrchestrator:
 
     async def _execute_standard(self) -> FetchReport:
         """Execute standard/minimal fetch: hit counts for each data type."""
+        from app.fixtures.fetcher import ProgressBar
+        
         sample_counts = self.criteria.resolve_sample_counts()
-        async for _ in self.fetcher.fetch_all(sample_counts):
-            pass
+        progress = ProgressBar(no_progress=self.criteria.no_progress)
+        progress.start()
+        
+        try:
+            if self.criteria.concurrent:
+                await self._execute_concurrent(sample_counts, progress)
+            else:
+                async for event in self.fetcher.fetch_all(sample_counts):
+                    progress.update(event.category, event.current, event.total)
+        finally:
+            progress.stop()
+        
         results = self.fetcher.last_fetch_results
         return FetchReport(criteria=self.criteria.criteria, results=results)
+    
+    async def _execute_concurrent(self, sample_counts: dict, progress: "ProgressBar") -> None:
+        """Execute fetches concurrently for independent categories."""
+        import asyncio
+        
+        users = sample_counts.get("users", {})
+        scores = sample_counts.get("scores", {})
+        
+        beatmaps_count = sample_counts.get("beatmaps", 0)
+        beatmapsets_count = sample_counts.get("beatmapsets", 0)
+        users_osu = users.get("osu", 0)
+        users_taiko = users.get("taiko", 0)
+        users_fruits = users.get("fruits", 0)
+        users_mania = users.get("mania", 0)
+        scores_best = scores.get("best", 0)
+        scores_firsts = scores.get("firsts", 0)
+        scores_recent = scores.get("recent", 0)
+        beatmap_scores_count = sample_counts.get("beatmap_scores", 0)
+        beatmap_attributes_count = sample_counts.get("beatmap_attributes", 0)
+        
+        semaphore = asyncio.Semaphore(self.criteria.concurrency)
+        
+        async def limited_fetch(coroutine):
+            async with semaphore:
+                async for event in coroutine:
+                    progress.update(event.category, event.current, event.total)
+        
+        tasks = []
+        
+        if beatmaps_count > 0:
+            tasks.append(limited_fetch(self.fetcher.fetch_beatmaps(beatmaps_count)))
+        if beatmapsets_count > 0:
+            tasks.append(limited_fetch(self.fetcher.fetch_beatmapsets(beatmapsets_count)))
+        if users_osu > 0 or users_taiko > 0 or users_fruits > 0 or users_mania > 0:
+            tasks.append(limited_fetch(
+                self.fetcher.fetch_users(users_osu, users_taiko, users_fruits, users_mania)
+            ))
+        
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
+        
+        if scores_best > 0 or scores_firsts > 0 or scores_recent > 0:
+            async for event in self.fetcher.fetch_scores(scores_best, scores_firsts, scores_recent):
+                progress.update(event.category, event.current, event.total)
+        
+        if beatmap_scores_count > 0:
+            async for event in self.fetcher.fetch_beatmap_scores(beatmap_scores_count):
+                progress.update(event.category, event.current, event.total)
+        
+        if beatmap_attributes_count > 0:
+            async for event in self.fetcher.fetch_beatmap_attributes(beatmap_attributes_count):
+                progress.update(event.category, event.current, event.total)
 
     async def _execute_targeted(self) -> FetchReport:
         """Execute targeted fetch: criterion-based coverage."""
