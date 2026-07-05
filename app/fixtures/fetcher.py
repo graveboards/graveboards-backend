@@ -54,6 +54,7 @@ class FixtureDataFetcher:
         self._valid_beatmap_ids: list[int] = []
         self._seen_ids: set[int] = set()
         self._scan_existing_fixtures()
+        self._metadata_dirty = False
 
     def _scan_existing_fixtures(self) -> None:
         """Scan existing fixture files and populate _seen_ids."""
@@ -83,6 +84,16 @@ class FixtureDataFetcher:
                         self._seen_ids.add(int(parts[1]))
                 except ValueError:
                     continue
+
+    def _mark_metadata_dirty(self) -> None:
+        """Mark metadata as dirty so it gets flushed later."""
+        self._metadata_dirty = True
+
+    def _flush_metadata(self) -> None:
+        """Write metadata to disk if it has been modified."""
+        if self._metadata_dirty:
+            save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
+            self._metadata_dirty = False
 
     async def fetch_beatmaps(self, count: int, skip_existing: bool = True) -> AsyncIterator[FetchEvent]:
         path = get_fixture_path("beatmaps", fixtures_dir=self.fixtures_dir)
@@ -124,7 +135,8 @@ class FixtureDataFetcher:
 
         self.metadata["samples"]["beatmaps"]["count"] += fetched
         self.metadata["samples"]["beatmaps"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
-        save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
+        self._mark_metadata_dirty()
+        self._flush_metadata()
         self._current_session_results["beatmaps"] = fetched
 
     async def fetch_beatmapsets(self, count: int, skip_existing: bool = True) -> AsyncIterator[FetchEvent]:
@@ -166,7 +178,8 @@ class FixtureDataFetcher:
 
         self.metadata["samples"]["beatmapsets"]["count"] += fetched
         self.metadata["samples"]["beatmapsets"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
-        save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
+        self._mark_metadata_dirty()
+        self._flush_metadata()
         self._current_session_results["beatmapsets"] = fetched
 
     async def fetch_users(
@@ -227,7 +240,8 @@ class FixtureDataFetcher:
             r: self.metadata["samples"]["users"]["per_ruleset"].get(r, 0) + fetched[r] for r in RULESETS
         }
         self.metadata["samples"]["users"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
-        save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
+        self._mark_metadata_dirty()
+        self._flush_metadata()
         self._current_session_results["users"] = fetched.copy()
 
     async def fetch_scores(
@@ -303,7 +317,8 @@ class FixtureDataFetcher:
             t: self.metadata["samples"]["scores"]["per_type"].get(t, 0) + fetched[t] for t in SCORE_TYPES
         }
         self.metadata["samples"]["scores"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
-        save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
+        self._mark_metadata_dirty()
+        self._flush_metadata()
         self._current_session_results["scores"] = fetched.copy()
 
     async def fetch_beatmap_scores(self, count: int, skip_existing: bool = True) -> AsyncIterator[FetchEvent]:
@@ -361,7 +376,8 @@ class FixtureDataFetcher:
 
         self.metadata["samples"]["beatmap_scores"]["count"] += fetched
         self.metadata["samples"]["beatmap_scores"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
-        save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
+        self._mark_metadata_dirty()
+        self._flush_metadata()
         self._current_session_results["beatmap_scores"] = fetched
 
     async def fetch_beatmap_attributes(self, count: int, skip_existing: bool = True) -> AsyncIterator[FetchEvent]:
@@ -415,7 +431,8 @@ class FixtureDataFetcher:
 
         self.metadata["samples"]["beatmap_attributes"]["count"] += fetched
         self.metadata["samples"]["beatmap_attributes"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
-        save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
+        self._mark_metadata_dirty()
+        self._flush_metadata()
         self._current_session_results["beatmap_attributes"] = fetched
 
     def refresh_top_player_ids_from_metadata(self) -> None:
