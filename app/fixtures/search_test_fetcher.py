@@ -201,10 +201,19 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
 
     @staticmethod
     def _categorize_range(value: float, ranges: dict[str, tuple[float, float]]) -> str | None:
-        """Return the category key for a numeric value, or None if out of range."""
-        for category, (lo, hi) in ranges.items():
-            if lo <= value <= hi:
-                return category
+        """Return the category key for a numeric value, or None if out of range.
+
+        Uses half-open intervals: all ranges except the last are [lo, hi).
+        The last range is [lo, hi] to catch edge values.
+        """
+        items = list(ranges.items())
+        for i, (category, (lo, hi)) in enumerate(items):
+            if i == len(items) - 1:
+                if lo <= value <= hi:
+                    return category
+            else:
+                if lo <= value < hi:
+                    return category
         return None
 
     def _classify_beatmap(self, beatmap_data: dict, beatmap_id: int) -> dict[str, Any]:

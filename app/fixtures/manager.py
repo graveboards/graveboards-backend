@@ -341,7 +341,7 @@ class FixtureManager:
         difficulty: float,
         difficulty_range: str,
     ) -> bool:
-        """Check if difficulty is in allowed range."""
+        """Check if difficulty is in allowed range using half-open intervals."""
         ranges = {
             "easy": (0, 2.0),
             "medium": (2.0, 5.0),
@@ -351,14 +351,14 @@ class FixtureManager:
         if difficulty_range not in ranges:
             return True
         min_diff, max_diff = ranges[difficulty_range]
-        return min_diff <= difficulty <= max_diff
+        return min_diff <= difficulty < max_diff
     
     def _in_playcount_range(
         self,
         playcount: int,
         playcount_range: str,
     ) -> bool:
-        """Check if playcount is in allowed range."""
+        """Check if playcount is in allowed range using half-open intervals."""
         ranges = {
             "low": (0, 100),
             "medium": (100, 1000),
@@ -367,7 +367,7 @@ class FixtureManager:
         if playcount_range not in ranges:
             return True
         min_pc, max_pc = ranges[playcount_range]
-        return min_pc <= playcount <= max_pc
+        return min_pc <= playcount < max_pc
     
     def _get_fixture_by_id(
         self,

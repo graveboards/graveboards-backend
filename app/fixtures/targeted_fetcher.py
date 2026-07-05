@@ -560,17 +560,27 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         by_playcount[playcount_cat] = by_playcount.get(playcount_cat, 0) + 1
     
     def _categorize_difficulty(self, difficulty: float) -> str:
-        """Categorize difficulty rating."""
-        for category, (min_val, max_val) in self.difficulty_ranges.items():
-            if min_val <= difficulty <= max_val:
-                return category
+        """Categorize difficulty rating using half-open intervals."""
+        items = list(self.difficulty_ranges.items())
+        for i, (category, (min_val, max_val)) in enumerate(items):
+            if i == len(items) - 1:
+                if min_val <= difficulty <= max_val:
+                    return category
+            else:
+                if min_val <= difficulty < max_val:
+                    return category
         return "expert"
     
     def _categorize_playcount(self, playcount: int) -> str:
-        """Categorize playcount."""
-        for category, (min_val, max_val) in self.playcount_ranges.items():
-            if min_val <= playcount <= max_val:
-                return category
+        """Categorize playcount using half-open intervals."""
+        items = list(self.playcount_ranges.items())
+        for i, (category, (min_val, max_val)) in enumerate(items):
+            if i == len(items) - 1:
+                if min_val <= playcount <= max_val:
+                    return category
+            else:
+                if min_val <= playcount < max_val:
+                    return category
         return "high"
     
     def _init_metadata(self):
