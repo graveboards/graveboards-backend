@@ -1001,30 +1001,31 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
 
     def _save_search_test_coverage_metadata(self) -> None:
         """Persist current coverage state to metadata.json."""
+        MAX_COVERAGE_LIST_SIZE = 200
         self.metadata["search_test_coverage"] = {
-            "beatmapset_genres": sorted(self.fetched_beatmapset_genres.keys()),
-            "beatmapset_languages": sorted(self.fetched_beatmapset_languages.keys()),
-            "beatmapset_nsfw_true_ids": sorted(self.fetched_beatmapset_nsfw[True]),
-            "beatmapset_nsfw_false_ids": sorted(self.fetched_beatmapset_nsfw[False]),
-            "beatmapset_statuses": sorted(self.fetched_beatmapset_statuses),
-            "beatmapset_titles": sorted(self.fetched_beatmapset_titles)[:50],
-            "beatmapset_artists": sorted(self.fetched_beatmapset_artists)[:50],
-            "beatmapset_creators": sorted(self.fetched_beatmapset_creators)[:50],
-            "beatmapset_sources": sorted(self.fetched_beatmapset_sources)[:50],
-            "beatmapset_tags": sorted(self.fetched_beatmapset_tags)[:50],
-            "beatmap_modes": sorted(self.fetched_beatmap_modes.keys()),
-            "beatmap_statuses": sorted(self.fetched_beatmap_statuses.keys()),
+            "beatmapset_genres": sorted(self.fetched_beatmapset_genres.keys())[:MAX_COVERAGE_LIST_SIZE],
+            "beatmapset_languages": sorted(self.fetched_beatmapset_languages.keys())[:MAX_COVERAGE_LIST_SIZE],
+            "beatmapset_nsfw_true_ids": sorted(self.fetched_beatmapset_nsfw[True])[:MAX_COVERAGE_LIST_SIZE],
+            "beatmapset_nsfw_false_ids": sorted(self.fetched_beatmapset_nsfw[False])[:MAX_COVERAGE_LIST_SIZE],
+            "beatmapset_statuses": sorted(self.fetched_beatmapset_statuses)[:MAX_COVERAGE_LIST_SIZE],
+            "beatmapset_titles": sorted(self.fetched_beatmapset_titles)[:MAX_COVERAGE_LIST_SIZE],
+            "beatmapset_artists": sorted(self.fetched_beatmapset_artists)[:MAX_COVERAGE_LIST_SIZE],
+            "beatmapset_creators": sorted(self.fetched_beatmapset_creators)[:MAX_COVERAGE_LIST_SIZE],
+            "beatmapset_sources": sorted(self.fetched_beatmapset_sources)[:MAX_COVERAGE_LIST_SIZE],
+            "beatmapset_tags": sorted(self.fetched_beatmapset_tags)[:MAX_COVERAGE_LIST_SIZE],
+            "beatmap_modes": sorted(self.fetched_beatmap_modes.keys())[:MAX_COVERAGE_LIST_SIZE],
+            "beatmap_statuses": sorted(self.fetched_beatmap_statuses.keys())[:MAX_COVERAGE_LIST_SIZE],
             "beatmap_difficulties": {
-                k: sorted(v) for k, v in self.fetched_beatmap_difficulties.items()
+                k: sorted(v)[:MAX_COVERAGE_LIST_SIZE] for k, v in self.fetched_beatmap_difficulties.items()
             },
             "beatmap_playcounts": {
-                k: sorted(v) for k, v in self.fetched_beatmap_playcounts.items()
+                k: sorted(v)[:MAX_COVERAGE_LIST_SIZE] for k, v in self.fetched_beatmap_playcounts.items()
             },
-            "beatmap_versions": sorted(self.fetched_beatmap_versions)[:50],
-            "country_codes": sorted(self.fetched_country_codes.keys()),
+            "beatmap_versions": sorted(self.fetched_beatmap_versions)[:MAX_COVERAGE_LIST_SIZE],
+            "country_codes": sorted(self.fetched_country_codes.keys())[:MAX_COVERAGE_LIST_SIZE],
             "restricted_users": {
-                "true_ids": sorted(self.fetched_restricted_users[True]),
-                "false_ids": sorted(self.fetched_restricted_users[False]),
+                "true_ids": sorted(self.fetched_restricted_users[True])[:MAX_COVERAGE_LIST_SIZE],
+                "false_ids": sorted(self.fetched_restricted_users[False])[:MAX_COVERAGE_LIST_SIZE],
             },
             "last_updated": datetime.now(timezone.utc).isoformat(),
         }

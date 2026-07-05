@@ -221,6 +221,11 @@ def save_metadata(metadata: dict, fixtures_dir: Path | None = None) -> None:
         "beatmapsets": [],
         "users": {r: [] for r in RULESETS},
     })
+    metadata.setdefault("fetched_ids", {
+        "beatmaps": [],
+        "beatmapsets": [],
+        "users": {r: [] for r in RULESETS},
+    })
     metadata.setdefault("top_player_ids", {r: [] for r in RULESETS})
     metadata.setdefault("id_ranges", {
         "beatmaps": {"min": 1, "max": 1000000},
