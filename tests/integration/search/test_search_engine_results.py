@@ -50,6 +50,11 @@ def test_search_engine_with_search_terms():
     assert engine.search_terms is not None
     assert engine.search_terms.terms == ["artist", "title"]
 
+    compiled = engine.compiled_query.lower()
+    assert "beatmapset_snapshot" in compiled
+    assert "artist" in compiled
+    assert "title" in compiled
+
 
 @pytest.mark.integration
 def test_search_engine_with_sorting():
@@ -72,6 +77,9 @@ def test_search_engine_with_sorting():
     assert engine.sorting is not None
     items = list(engine.sorting)
     assert len(items) == 2
+
+    compiled = engine.compiled_query.lower()
+    assert "ranked" in compiled or "order by" in compiled
 
 
 @pytest.mark.integration
@@ -101,7 +109,12 @@ def test_search_engine_query_compilation():
         search_terms=search_terms,
     )
 
-    assert engine.compiled_query is not None
+    compiled = engine.compiled_query.lower()
+    assert "beatmapset_snapshot" in compiled
+    assert "select" in compiled
+    assert "order by" in compiled
+    assert "limit" not in compiled
+    assert "total_score" in compiled
 
 
 @pytest.mark.integration
