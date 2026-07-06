@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import AsyncMock
 
 from app.search.datastructures import SearchSchema
 from app.search.enums import Scope
@@ -85,3 +86,52 @@ async def test_compress_decompress_roundtrip():
     decompressed = decompress_query(compressed)
 
     assert decompressed == serialized
+
+
+class TestSearchHttpIntegration:
+    """Integration tests for search HTTP endpoints."""
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    async def test_search_post_returns_201(self, TestClientWithMocks):
+        """Test POST /api/v1/search returns 201 with compressed query."""
+        from app.search import compress_query
+
+        mock_rc = AsyncMock()
+
+        test_client = TestClientWithMocks(mock_rc=mock_rc)
+
+        response = test_client.post(
+            "/api/v1/search",
+            json={
+                "scope": "beatmaps",
+                "search_terms": None,
+                "sorting": None,
+                "filters": None,
+            }
+        )
+
+        assert response.status_code == 201
+        data = response.json()
+        assert "q" in data
+        assert "message" in data
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    async def test_search_post_invalid_scope_returns_400(self, TestClientWithMocks):
+        """Test POST /api/v1/search with invalid scope returns 400."""
+        mock_rc = AsyncMock()
+
+        test_client = TestClientWithMocks(mock_rc=mock_rc)
+
+        response = test_client.post(
+            "/api/v1/search",
+            json={
+                "scope": "invalid_scope",
+                "search_terms": None,
+                "sorting": None,
+                "filters": None,
+            }
+        )
+
+        assert response.status_code == 400
