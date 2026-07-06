@@ -5,6 +5,7 @@ from io import BytesIO
 from app.beatmaps.manager import BeatmapManager
 from app.redis import RedisClient
 from app.database import PostgresqlDB
+from app.database.models import BeatmapTag
 
 
 class TestBeatmapManager:
@@ -274,6 +275,144 @@ class TestBeatmapManager:
 
                 assert tags is not None
 
+    async def test_populate_beatmap_tags_creates_missing(self, manager):
+        """Test populate beatmap tags creates new records when tags don't exist locally."""
+        manager._session = MagicMock()
+
+        mock_new_tag = MagicMock()
+        mock_new_tag.id = 1
+        mock_new_tag.name = "metal"
+
+        async def mock_update_and_add():
+            manager.db.add(BeatmapTag, id=1, name="metal", description="Metal tag", ruleset_id=0, session=manager._session)
+            return None
+
+        with patch.object(manager, "_update_beatmap_tags_from_osu", side_effect=mock_update_and_add):
+            with patch.object(manager.db, "get") as mock_get:
+                mock_get.side_effect = [None, mock_new_tag]
+
+                with patch.object(manager.db, "add") as mock_add:
+                    mock_add.return_value = mock_new_tag
+
+                    tags = await manager._populate_beatmap_tags([{"tag_id": 1}])
+
+                    mock_add.assert_called_once()
+                    assert len(tags) == 1
+                    assert tags[0].id == 1
+
+    async def test_populate_beatmap_tags_empty_input(self, manager):
+        """Test populate beatmap tags returns empty list for empty input."""
+        manager._session = MagicMock()
+
+        tags = await manager._populate_beatmap_tags([])
+
+        assert tags == []
+
+    async def test_populate_beatmap_tags_none_input(self, manager):
+        """Test populate beatmap tags returns empty list for None input."""
+        manager._session = MagicMock()
+
+        tags = await manager._populate_beatmap_tags(None)
+
+        assert tags == []
+
+    async def test_snapshot_beatmaps_populates_tags(self, manager):
+        """Test snapshot beatmaps creates BeatmapTag records and associates them."""
+        manager._session = MagicMock()
+        manager._changelog = {"snapshotted_beatmaps": []}
+
+        mock_tag = MagicMock()
+        mock_tag.id = 1
+        mock_tag.name = "metal"
+
+        mock_beatmap_snapshot = MagicMock()
+        mock_beatmap_snapshot.id = 1
+        mock_beatmap_snapshot.beatmap_id = 1
+        mock_beatmap_snapshot.snapshot_number = 1
+        mock_beatmap_snapshot.checksum = "abc123"
+
+        with patch.object(manager.db, "get") as mock_get:
+            mock_get.return_value = None
+
+            with patch("app.beatmaps.manager.BeatmapSnapshotSchema") as mock_schema:
+                mock_schema.model_validate.return_value.model_dump.return_value = {
+                    "beatmap_id": 1,
+                    "checksum": "abc123",
+                }
+
+                with patch.object(manager.db, "add") as mock_add:
+                    mock_add.return_value = mock_beatmap_snapshot
+
+                    with patch.object(manager, "_populate_beatmap_tags") as mock_populate_tags:
+                        mock_populate_tags.return_value = [mock_tag]
+
+                        with patch.object(manager, "_populate_owner_profiles"):
+                            beatmap_dicts = [{"id": 1, "checksum": "abc123", "top_tag_ids": [{"tag_id": 1}], "user_id": 123, "owners": [{"id": 123}]}]
+                            result = await manager._snapshot_beatmaps(beatmap_dicts)
+
+                            mock_populate_tags.assert_called_once_with([{"tag_id": 1}])
+                            mock_add.assert_called_once()
+                            assert len(result) == 1
+
+    async def test_archive_populates_beatmap_tags_on_first_snapshot(self, manager):
+        """Test that archiving a beatmapset for the first time populates BeatmapTag records."""
+        manager._session = MagicMock()
+
+        mock_tag = MagicMock()
+        mock_tag.id = 5
+        mock_tag.name = "rock"
+
+        mock_beatmap_snapshot = MagicMock()
+        mock_beatmap_snapshot.id = 1
+        mock_beatmap_snapshot.beatmap_id = 100
+        mock_beatmap_snapshot.snapshot_number = 1
+        mock_beatmap_snapshot.checksum = "checksum123"
+
+        mock_beatmapset_snapshot = MagicMock()
+        mock_beatmapset_snapshot.id = 1
+        mock_beatmapset_snapshot.beatmapset_id = 2581319
+        mock_beatmapset_snapshot.snapshot_number = 1
+        mock_beatmapset_snapshot.checksum = "bs_checksum"
+
+        with patch.object(manager, "oac") as mock_oac:
+            mock_oac.get_beatmapset = AsyncMock(return_value={
+                "id": 2581319,
+                "user_id": 4882979,
+                "beatmaps": [{"id": 100, "checksum": "checksum123", "top_tag_ids": [{"tag_id": 5}], "user_id": 4882979, "owners": [{"id": 4882979}]}],
+                "checksum": "bs_checksum",
+                "tags": "rock",
+            })
+
+            with patch.object(manager, "_populate_beatmapset"):
+                with patch("app.beatmaps.manager.BeatmapsetSnapshotSchema") as mock_bs_schema:
+                    mock_bs_schema.model_validate.return_value.model_dump.return_value = {
+                        "beatmapset_id": 2581319,
+                        "checksum": "bs_checksum",
+                    }
+
+                    with patch("app.beatmaps.manager.BeatmapSnapshotSchema") as mock_b_schema:
+                        mock_b_schema.model_validate.return_value.model_dump.return_value = {
+                            "beatmap_id": 100,
+                            "checksum": "checksum123",
+                        }
+
+                        with patch.object(manager.db, "get") as mock_get:
+                            mock_get.side_effect = [None, None, mock_beatmap_snapshot]
+
+                            with patch.object(manager.db, "add") as mock_add:
+                                mock_add.side_effect = [mock_tag, mock_beatmap_snapshot, mock_beatmapset_snapshot]
+
+                                with patch.object(manager, "_populate_beatmap_tags") as mock_populate_tags:
+                                    mock_populate_tags.return_value = [mock_tag]
+
+                                    with patch.object(manager, "_populate_owner_profiles"):
+                                        with patch.object(manager, "_populate_beatmapset_tags"):
+                                            with patch.object(manager, "_download"):
+                                                result = await manager.archive(2581319)
+
+                                                mock_populate_tags.assert_called_once()
+                                                mock_populate_tags.assert_called_with([{"tag_id": 5}])
+
     async def test_download_beatmaps(self, manager):
         """Test download beatmaps."""
         manager._session = MagicMock()
@@ -360,3 +499,6 @@ class TestBeatmapManager:
         assert "snapshotted_beatmaps" in manager._changelog
         assert "updated_beatmapset" in manager._changelog
         assert "updated_beatmaps" in manager._changelog
+
+
+
