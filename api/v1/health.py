@@ -67,7 +67,7 @@ async def health_check() -> dict:
             try:
                 async with OsuAPIClient(rc) as client:
                     # Test API connectivity by fetching client credentials token
-                    await client.get_client_credentials_token()
+                    await client.refresh_token()
                     checks["osu_api"]["response_time_ms"] = round((time.time() - api_start) * 1000, 2)
             except Exception as e:
                 checks["osu_api"]["status"] = "error"
