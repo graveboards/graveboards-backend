@@ -5,9 +5,18 @@ must match (AND logic) across the appropriate field categories.
 """
 
 import pytest
+from sqlalchemy.dialects import postgresql
 from app.search.enums import Scope
 from app.database.ctes.search_terms_filtered import search_terms_filtered_cte_factory
 from app.search.datastructures import SearchTermsSchema
+
+
+def _compile_postgres(cte):
+    """Compile a CTE with PostgreSQL dialect for accurate SQL inspection."""
+    return str(cte.compile(
+        dialect=postgresql.dialect(),
+        compile_kwargs={"literal_binds": True}
+    )).lower()
 
 
 @pytest.mark.integration
@@ -23,6 +32,9 @@ def test_search_terms_filtered_cte_creation():
     assert cte is not None
     assert hasattr(cte, "c")
     assert hasattr(cte.c, "id")
+    compiled = _compile_postgres(cte)
+    assert "beatmapset_snapshot" in compiled
+    assert "ilike" in compiled
 
 
 @pytest.mark.integration
@@ -36,6 +48,9 @@ def test_search_terms_filtered_single_term():
     cte = search_terms_filtered_cte_factory(Scope.BEATMAPSETS, search_terms)
 
     assert cte is not None
+    assert hasattr(cte.c, "id")
+    compiled = _compile_postgres(cte)
+    assert "ilike" in compiled
 
 
 @pytest.mark.integration
@@ -49,6 +64,10 @@ def test_search_terms_filtered_beatmaps_scope():
     cte = search_terms_filtered_cte_factory(Scope.BEATMAPS, search_terms)
 
     assert cte is not None
+    assert hasattr(cte.c, "id")
+    compiled = _compile_postgres(cte)
+    assert "beatmap_snapshot" in compiled
+    assert "ilike" in compiled
 
 
 @pytest.mark.integration
@@ -63,6 +82,10 @@ def test_search_terms_filtered_case_sensitive():
     cte = search_terms_filtered_cte_factory(Scope.BEATMAPSETS, search_terms)
 
     assert cte is not None
+    assert hasattr(cte.c, "id")
+    compiled = _compile_postgres(cte)
+    assert "like " in compiled
+    assert "ilike" not in compiled
 
 
 @pytest.mark.integration
@@ -76,3 +99,6 @@ def test_search_terms_filtered_no_match():
     cte = search_terms_filtered_cte_factory(Scope.BEATMAPSETS, search_terms)
 
     assert cte is not None
+    assert hasattr(cte.c, "id")
+    compiled = _compile_postgres(cte)
+    assert "nonexistent_xyz_123" in compiled
