@@ -17,17 +17,13 @@ async def test_get_tags(api_client):
     mock_redis.hset = AsyncMock(return_value=None)
     mock_redis.expire = AsyncMock(return_value=None)
 
-    with patch('app.osu_api.client.osu_api_client.httpx.AsyncClient') as mock_client_class:
-        mock_response = MockResponse(mock_data)
-        mock_client_instance = MagicMock()
-        mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_client_instance.get = AsyncMock(return_value=mock_response)
-        mock_client_class.return_value = mock_client_instance
+    mock_response = MockResponse(mock_data)
+    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
 
-        result = await api_client_obj.get_tags()
+    result = await api_client_obj.get_tags()
 
-        assert "tags" in result
-        assert len(result["tags"]) >= 1
+    assert "tags" in result
+    assert len(result["tags"]) >= 1
 
 
 @pytest.mark.asyncio
@@ -36,26 +32,22 @@ async def test_get_rankings(api_client):
 
     api_client_obj, mock_redis = api_client
     mock_data = {
-        "rankings": [_create_mock_rankings_user()],
-        "score_count": 1,
+    "rankings": [_create_mock_rankings_user()],
+    "score_count": 1,
     }
 
     mock_redis.hgetall.return_value = None
     mock_redis.hset = AsyncMock(return_value=None)
     mock_redis.expire = AsyncMock(return_value=None)
 
-    with patch('app.osu_api.client.osu_api_client.httpx.AsyncClient') as mock_client_class:
-        mock_response = MockResponse(mock_data)
-        mock_client_instance = MagicMock()
-        mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_client_instance.get = AsyncMock(return_value=mock_response)
-        mock_client_class.return_value = mock_client_instance
+    mock_response = MockResponse(mock_data)
+    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
 
-        result = await api_client_obj.get_rankings(Ruleset.OSU, "performance", limit=50)
+    result = await api_client_obj.get_rankings(Ruleset.OSU, "performance", limit=50)
 
-        assert "rankings" in result
-        assert len(result["rankings"]) >= 1
-        assert "score_count" in result
+    assert "rankings" in result
+    assert len(result["rankings"]) >= 1
+    assert "score_count" in result
 
 
 @pytest.mark.asyncio
@@ -64,22 +56,18 @@ async def test_get_rankings_with_country_mode(api_client):
 
     api_client_obj, mock_redis = api_client
     mock_data = {
-        "ranking": [_create_mock_rankings_user()],
+    "ranking": [_create_mock_rankings_user()],
     }
 
     mock_redis.hgetall.return_value = None
 
-    with patch('app.osu_api.client.osu_api_client.httpx.AsyncClient') as mock_client_class:
-        mock_response = MockResponse(mock_data)
-        mock_client_instance = MagicMock()
-        mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_client_instance.get = AsyncMock(return_value=mock_response)
-        mock_client_class.return_value = mock_client_instance
+    mock_response = MockResponse(mock_data)
+    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
 
-        result = await api_client_obj.get_rankings(Ruleset.OSU, "country", limit=50)
+    result = await api_client_obj.get_rankings(Ruleset.OSU, "country", limit=50)
 
-        assert "ranking" in result
-        assert "country_code" in result["ranking"][0]
+    assert "ranking" in result
+    assert "country_code" in result["ranking"][0]
 
 
 @pytest.mark.asyncio
@@ -92,16 +80,10 @@ async def test_get_rankings_includes_limit_and_offset(api_client):
 
     mock_redis.hgetall.return_value = None
 
-    with patch('app.osu_api.client.osu_api_client.httpx.AsyncClient') as mock_client_class:
-        mock_response = MockResponse(mock_data)
-        mock_client_instance = MagicMock()
-        mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_client_instance.get = AsyncMock(return_value=mock_response)
-        mock_client_class.return_value = mock_client_instance
+    mock_response = MockResponse(mock_data)
+    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
 
-        await api_client_obj.get_rankings(Ruleset.OSU, "performance", limit=100, offset=50)
-
-        mock_client_instance.get.assert_called_once()
-        called_url = str(mock_client_instance.get.call_args[0][0])
-        assert "limit=100" in called_url
-        assert "offset=50" in called_url
+    await api_client_obj.get_rankings(Ruleset.OSU, "performance", limit=100, offset=50)
+    called_url = str(api_client_obj._http_client.get.call_args[0][0])
+    assert "limit=100" in called_url
+    assert "offset=50" in called_url

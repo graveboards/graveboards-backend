@@ -65,7 +65,7 @@ async def health_check() -> dict:
         if os.getenv("OSU_CLIENT_ID") and os.getenv("OSU_CLIENT_SECRET"):
             api_start = time.time()
             try:
-                client = OsuAPIClient()
+                client = OsuAPIClient(rc)
                 # Test API connectivity by fetching client credentials token
                 await client.get_client_credentials_token()
                 checks["osu_api"]["response_time_ms"] = round((time.time() - api_start) * 1000, 2)

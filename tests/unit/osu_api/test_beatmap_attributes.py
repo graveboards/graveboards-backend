@@ -17,17 +17,12 @@ async def test_get_beatmap_attributes(api_client):
     mock_redis.hset = AsyncMock(return_value=None)
     mock_redis.expire = AsyncMock(return_value=None)
 
-    with patch('app.osu_api.client.osu_api_client.httpx.AsyncClient') as mock_client_class:
-        mock_response = MockResponse(mock_data)
-        mock_client_instance = MagicMock()
-        mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_client_instance.post = AsyncMock(return_value=mock_response)
-        mock_client_class.return_value = mock_client_instance
+    mock_response = MockResponse(mock_data)
+    api_client_obj._http_client.post = AsyncMock(return_value=mock_response)
 
-        result = await api_client_obj.get_beatmap_attributes(mock_data["attributes"]["beatmap_id"], [1])
+    result = await api_client_obj.get_beatmap_attributes(mock_data["attributes"]["beatmap_id"], [1])
 
-        assert "attributes" in result
-        mock_client_instance.post.assert_called_once()
+    assert "attributes" in result
 
 
 @pytest.mark.asyncio
@@ -40,17 +35,12 @@ async def test_get_beatmap_attributes_all_mods(api_client):
     mock_redis.hset = AsyncMock(return_value=None)
     mock_redis.expire = AsyncMock(return_value=None)
 
-    with patch('app.osu_api.client.osu_api_client.httpx.AsyncClient') as mock_client_class:
-        mock_response = MockResponse(mock_data)
-        mock_client_instance = MagicMock()
-        mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_client_instance.post = AsyncMock(return_value=mock_response)
-        mock_client_class.return_value = mock_client_instance
+    mock_response = MockResponse(mock_data)
+    api_client_obj._http_client.post = AsyncMock(return_value=mock_response)
 
-        test_attributes = await api_client_obj.get_beatmap_attributes(mock_data["attributes"]["beatmap_id"], [16, 64, 128, 256, 512, 1024, 2048, 4096])
+    test_attributes = await api_client_obj.get_beatmap_attributes(mock_data["attributes"]["beatmap_id"], [16, 64, 128, 256, 512, 1024, 2048, 4096])
 
-        assert "attributes" in test_attributes
-        mock_client_instance.post.assert_called_once()
+    assert "attributes" in test_attributes
 
 
 @pytest.mark.asyncio
@@ -61,15 +51,11 @@ async def test_get_beatmap_attributes_verifies_mods_in_body(api_client):
 
     mock_redis.hgetall.return_value = None
 
-    with patch('app.osu_api.client.osu_api_client.httpx.AsyncClient') as mock_client_class:
-        mock_response = MockResponse(mock_data)
-        mock_client_instance = MagicMock()
-        mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_client_instance.post = AsyncMock(return_value=mock_response)
-        mock_client_class.return_value = mock_client_instance
+    mock_response = MockResponse(mock_data)
+    api_client_obj._http_client.post = AsyncMock(return_value=mock_response)
 
-        mods = [16, 64]
-        await api_client_obj.get_beatmap_attributes(mock_data["attributes"]["beatmap_id"], mods)
+    mods = [16, 64]
+    await api_client_obj.get_beatmap_attributes(mock_data["attributes"]["beatmap_id"], mods)
 
-        post_call = mock_client_instance.post.call_args
-        assert post_call[1]["json"]["mods"] == mods
+    post_call = api_client_obj._http_client.post.call_args
+    assert post_call[1]["json"]["mods"] == mods

@@ -38,8 +38,7 @@ class OsuAPIClient(OsuAPIClientBase):
             **await self.get_auth_headers()
         }
 
-        async with self._http_client as client:
-            response = await client.get(url, headers=headers)
+        response = await self._http_client.get(url, headers=headers)
 
         response.raise_for_status()
         beatmap_data = response.json()
@@ -70,8 +69,7 @@ class OsuAPIClient(OsuAPIClientBase):
 
         url += self.format_query_parameters(query_parameters)
 
-        async with self._http_client as client:
-            response = await client.get(url, headers=headers)
+        response = await self._http_client.get(url, headers=headers)
 
         response.raise_for_status()
         return response.json()
@@ -89,8 +87,7 @@ class OsuAPIClient(OsuAPIClientBase):
             "mods": mods
         }
 
-        async with self._http_client as client:
-            response = await client.post(url, headers=headers, json=body)
+        response = await self._http_client.post(url, headers=headers, json=body)
 
         response.raise_for_status()
         return response.json()
@@ -120,8 +117,7 @@ class OsuAPIClient(OsuAPIClientBase):
             **await self.get_auth_headers()
         }
 
-        async with self._http_client as client:
-            response = await client.get(url, headers=headers)
+        response = await self._http_client.get(url, headers=headers)
 
         response.raise_for_status()
         beatmapset_data = response.json()
@@ -156,8 +152,7 @@ class OsuAPIClient(OsuAPIClientBase):
         
         url += self.format_query_parameters(query_parameters)
 
-        async with self._http_client as client:
-            response = await client.get(url, headers=headers)
+        response = await self._http_client.get(url, headers=headers)
         
         response.raise_for_status()
         return response.json()
@@ -202,8 +197,7 @@ class OsuAPIClient(OsuAPIClientBase):
 
         url += self.format_query_parameters(query_parameters)
 
-        async with self._http_client as client:
-            response = await client.get(url, headers=headers)
+        response = await self._http_client.get(url, headers=headers)
 
         response.raise_for_status()
         return response.json()
@@ -219,8 +213,7 @@ class OsuAPIClient(OsuAPIClientBase):
             **await self.get_auth_headers(access_token)
         }
 
-        async with self._http_client as client:
-            response = await client.get(url, headers=headers)
+        response = await self._http_client.get(url, headers=headers)
 
         response.raise_for_status()
         return response.json()
@@ -251,8 +244,7 @@ class OsuAPIClient(OsuAPIClientBase):
 
         url += self.format_query_parameters(query_parameters)
 
-        async with self._http_client as client:
-            response = await client.get(url, headers=headers)
+        response = await self._http_client.get(url, headers=headers)
 
         response.raise_for_status()
         return response.json()
@@ -268,8 +260,7 @@ class OsuAPIClient(OsuAPIClientBase):
             **await self.get_auth_headers()
         }
 
-        async with self._http_client as client:
-            response = await client.get(url, headers=headers)
+        response = await self._http_client.get(url, headers=headers)
 
         response.raise_for_status()
         return response.json()
@@ -285,8 +276,7 @@ class OsuAPIClient(OsuAPIClientBase):
             **await self.get_auth_headers()
         }
 
-        async with self._http_client as client:
-            response = await client.get(url, headers=headers)
+        response = await self._http_client.get(url, headers=headers)
 
         response.raise_for_status()
         return response.json()
@@ -314,8 +304,7 @@ class OsuAPIClient(OsuAPIClientBase):
 
         url += self.format_query_parameters(query_parameters)
 
-        async with self._http_client as client:
-            response = await client.get(url, headers=headers)
+        response = await self._http_client.get(url, headers=headers)
 
         response.raise_for_status()
         return response.json()

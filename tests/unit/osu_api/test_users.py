@@ -17,17 +17,13 @@ async def test_get_user_parses_response(api_client):
     mock_redis.hset = AsyncMock(return_value=None)
     mock_redis.expire = AsyncMock(return_value=None)
 
-    with patch('app.osu_api.client.osu_api_client.httpx.AsyncClient') as mock_client_class:
-        mock_response = MockResponse(mock_data)
-        mock_client_instance = MagicMock()
-        mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_client_instance.get = AsyncMock(return_value=mock_response)
-        mock_client_class.return_value = mock_client_instance
+    mock_response = MockResponse(mock_data)
+    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
 
-        result = await api_client_obj.get_user(mock_data["id"], mode=None)
+    result = await api_client_obj.get_user(mock_data["id"], mode=None)
 
-        assert result["id"] == mock_data["id"]
-        assert result["username"] == mock_data["username"]
+    assert result["id"] == mock_data["id"]
+    assert result["username"] == mock_data["username"]
 
 
 @pytest.mark.asyncio
@@ -42,16 +38,12 @@ async def test_get_user_scores(api_client):
     mock_redis.hset = AsyncMock(return_value=None)
     mock_redis.expire = AsyncMock(return_value=None)
 
-    with patch('app.osu_api.client.osu_api_client.httpx.AsyncClient') as mock_client_class:
-        mock_response = MockResponse(mock_data)
-        mock_client_instance = MagicMock()
-        mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_client_instance.get = AsyncMock(return_value=mock_response)
-        mock_client_class.return_value = mock_client_instance
+    mock_response = MockResponse(mock_data)
+    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
 
-        result = await api_client_obj.get_user_scores(mock_data[0]["user_id"], ScoreType.BEST, mode=Ruleset.OSU, limit=50)
+    result = await api_client_obj.get_user_scores(mock_data[0]["user_id"], ScoreType.BEST, mode=Ruleset.OSU, limit=50)
 
-        assert len(result) >= 1
+    assert len(result) >= 1
 
 
 @pytest.mark.asyncio
@@ -66,17 +58,13 @@ async def test_get_user_scores_recent(api_client):
     mock_redis.hset = AsyncMock(return_value=None)
     mock_redis.expire = AsyncMock(return_value=None)
 
-    with patch('app.osu_api.client.osu_api_client.httpx.AsyncClient') as mock_client_class:
-        mock_response = MockResponse(mock_data)
-        mock_client_instance = MagicMock()
-        mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_client_instance.get = AsyncMock(return_value=mock_response)
-        mock_client_class.return_value = mock_client_instance
+    mock_response = MockResponse(mock_data)
+    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
 
-        result = await api_client_obj.get_user_scores(mock_data[0]["user_id"], ScoreType.RECENT, mode=Ruleset.OSU)
+    result = await api_client_obj.get_user_scores(mock_data[0]["user_id"], ScoreType.RECENT, mode=Ruleset.OSU)
 
-        assert len(result) >= 1
-        assert "type" in result[0]
+    assert len(result) >= 1
+    assert "type" in result[0]
 
 
 @pytest.mark.asyncio
@@ -91,14 +79,10 @@ async def test_get_user_scores_firsts(api_client):
     mock_redis.hset = AsyncMock(return_value=None)
     mock_redis.expire = AsyncMock(return_value=None)
 
-    with patch('app.osu_api.client.osu_api_client.httpx.AsyncClient') as mock_client_class:
-        mock_response = MockResponse(mock_data)
-        mock_client_instance = MagicMock()
-        mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_client_instance.get = AsyncMock(return_value=mock_response)
-        mock_client_class.return_value = mock_client_instance
+    mock_response = MockResponse(mock_data)
+    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
 
-        result = await api_client_obj.get_user_scores(mock_data[0]["user_id"], ScoreType.FIRSTS, mode=Ruleset.OSU)
+    result = await api_client_obj.get_user_scores(mock_data[0]["user_id"], ScoreType.FIRSTS, mode=Ruleset.OSU)
 
-        assert len(result) >= 1
-        assert "perfect" in result[0]
+    assert len(result) >= 1
+    assert "perfect" in result[0]

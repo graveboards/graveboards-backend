@@ -17,17 +17,13 @@ async def test_get_beatmap_scores(api_client):
     mock_redis.hset = AsyncMock(return_value=None)
     mock_redis.expire = AsyncMock(return_value=None)
 
-    with patch('app.osu_api.client.osu_api_client.httpx.AsyncClient') as mock_client_class:
-        mock_response = MockResponse(mock_data)
-        mock_client_instance = MagicMock()
-        mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_client_instance.get = AsyncMock(return_value=mock_response)
-        mock_client_class.return_value = mock_client_instance
+    mock_response = MockResponse(mock_data)
+    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
 
-        result = await api_client_obj.get_beatmap_scores(mock_data["scores"][0]["beatmap_id"], limit=50)
+    result = await api_client_obj.get_beatmap_scores(mock_data["scores"][0]["beatmap_id"], limit=50)
 
-        assert "scores" in result
-        assert len(result["scores"]) >= 1
+    assert "scores" in result
+    assert len(result["scores"]) >= 1
 
 
 @pytest.mark.asyncio
@@ -38,15 +34,9 @@ async def test_get_beatmap_scores_with_offset(api_client):
 
     mock_redis.hgetall.return_value = None
 
-    with patch('app.osu_api.client.osu_api_client.httpx.AsyncClient') as mock_client_class:
-        mock_response = MockResponse(mock_data)
-        mock_client_instance = MagicMock()
-        mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_client_instance.get = AsyncMock(return_value=mock_response)
-        mock_client_class.return_value = mock_client_instance
+    mock_response = MockResponse(mock_data)
+    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
 
-        await api_client_obj.get_beatmap_scores(mock_data["scores"][0]["beatmap_id"], limit=50, offset=10)
-
-        mock_client_instance.get.assert_called_once()
-        called_url = str(mock_client_instance.get.call_args[0][0])
-        assert "offset=10" in called_url
+    await api_client_obj.get_beatmap_scores(mock_data["scores"][0]["beatmap_id"], limit=50, offset=10)
+    called_url = str(api_client_obj._http_client.get.call_args[0][0])
+    assert "offset=10" in called_url
