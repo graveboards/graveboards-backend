@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 import factory
-from factory import Sequence, LazyAttribute, Faker
+from factory import Sequence, LazyAttribute
 
 
 
@@ -21,51 +21,19 @@ class BeatmapFactory(factory.Factory):
         model = dict
 
     id = Sequence(lambda n: 100000 + n)
-    beatmapset_id = Sequence(lambda n: 50000 + n)
-    version = Faker('lexify', text='???')
-    creator = Faker('user_name')
+    beatmapset_id = LazyAttribute(lambda o: o.id // 2)
+    version = LazyAttribute(lambda o: f'Factory {o.id}')
+    creator = LazyAttribute(lambda o: f'FactoryCreator{o.id}')
     bpm = Sequence(lambda n: 60.0 + (n % 140))
-    difficulty_rating = Sequence(lambda n: round(0.5 + (n % 9), 2))
     total_length = Sequence(lambda n: 60 + (n % 240))
     hit_length = LazyAttribute(lambda o: int(o.total_length * 0.9))
-    mode = Sequence(lambda n: n % 4)
     status = Sequence(lambda n: ['ranked', 'loved', 'qualified', 'graveyard', 'pending', 'approved'][n % 6])
-
-    difficulty_rating = LazyAttribute(lambda o: round(0.5 + (hash(str(o.id)) % 900) / 100.0, 2))
-    playcount = Sequence(lambda n: n * 100 + 50)
-    passcount = LazyAttribute(lambda o: int(o.playcount * 0.3 + hash(str(o.id)) % 100))
+    difficulty_rating = LazyAttribute(lambda o: round(0.5 + (o.id % 900) / 100.0, 2))
+    playcount = LazyAttribute(lambda o: o.id * 100 + 50)
+    passcount = LazyAttribute(lambda o: int(o.playcount * 0.3 + (o.id % 100)))
+    mode = Sequence(lambda n: n % 4)
     created_at = LazyAttribute(lambda o: datetime.utcnow().isoformat() + '+00:00')
     updated_at = LazyAttribute(lambda o: datetime.utcnow().isoformat() + '+00:00')
-
-    difficulty_rating = LazyAttribute(lambda o: round(0.5 + (o.id % 900) / 100.0, 2))
-    playcount = Sequence(lambda n: n * 100 + 50)
-    passcount = LazyAttribute(lambda o: int(o.playcount * 0.3 + (o.id % 100)))
-
-    mode = Sequence(lambda n: n % 4)
-
-    @LazyAttribute
-    def beatmapset_id(self):
-        return self.id // 2
-
-    @LazyAttribute
-    def version(self):
-        return f'Factory {self.id}'
-
-    @LazyAttribute
-    def creator(self):
-        return f'FactoryCreator{self.id}'
-
-    @LazyAttribute
-    def difficulty_rating(self):
-        return round(0.5 + (self.id % 900) / 100.0, 2)
-
-    @LazyAttribute
-    def playcount(self):
-        return self.id * 100 + 50
-
-    @LazyAttribute
-    def passcount(self):
-        return int(self.playcount * 0.3 + (self.id % 100))
 
 
 def generate_beatmap_data(
