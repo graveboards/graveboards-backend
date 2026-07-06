@@ -169,7 +169,7 @@ QueueRestrictionDescription: |
     
     Examples of valid restriction configurations for each type:
 
-    Rate Limit (limit user to 1 requests per week):
+    Rate Limit (limit all users to 1 requests per day):
     ```
     {
         "restriction_type": "rate_limit",
@@ -211,7 +211,7 @@ QueueRestrictionDescription: |
             "max_requests": 5,
             "period": "week",
             "scope": "user",
-            "target": [123]
+            "target": [123, 456, 789]
         }
     }
     ```
