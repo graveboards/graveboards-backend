@@ -178,10 +178,12 @@ class _C:
         if all(pk in data for pk in pk_keys):
             identity = tuple(data[pk] for pk in pk_keys)
 
-            if len(identity) == 1:
-                identity = identity[0]
-
-            instance = await session.get(model, identity, options=relationship_loaders or None)
+            pk_conditions = [
+                getattr(model, pk) == identity[i]
+                for i, pk in enumerate(pk_keys)
+            ]
+            stmt = select(model).where(and_(*pk_conditions)).options(*relationship_loaders)
+            instance = await session.scalar(stmt)
 
             if instance is not None:
                 _C._ensure_same_session(instance, session)
@@ -196,7 +198,7 @@ class _C:
 
             for constraint in mapper.local_table.constraints:
                 if isinstance(constraint, UniqueConstraint):
-                    cols = [col.name for col in constraint.columns]
+                    cols = [col.key for col in constraint.columns]
                     unique_sets.append(cols)
 
             seen = set()
@@ -265,10 +267,16 @@ class _C:
 
                     new_items.append(obj)
 
+                # Set the resolved items directly. The recursive _resolve_or_create
+                # already handles deduplication by primary key, so existing items
+                # with matching IDs are resolved to the same instance rather than
+                # being duplicated.
                 setattr(instance, key, new_items)
             # One-to-one / Many-to-one
             else:
-                if isinstance(value, dict):
+                if value is None:
+                    setattr(instance, key, None)
+                elif isinstance(value, dict):
                     obj = await _C._resolve_or_create(
                         related_model_class,
                         value,
