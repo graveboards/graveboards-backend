@@ -6,6 +6,7 @@ from typing import Iterator
 
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings.sources import YamlConfigSettingsSource
 
 from .enums import Env
 
@@ -14,6 +15,8 @@ _SECURITY_ENABLED_OVERRIDE: ContextVar[bool | None] = ContextVar(
     "security_enabled_override",
     default=None
 )
+
+_bootstrap_yaml_file: str = "config/bootstrap.yaml"
 
 
 class QueueConfig(BaseSettings):
@@ -51,6 +54,23 @@ class BootstrapConfig(BaseSettings):
         "seed_api_keys",
         "seed_queues",
     ]
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings,
+        env_settings,
+        dotenv_settings,
+        file_secret_settings,
+    ):
+        return (
+            init_settings,
+            env_settings,
+            dotenv_settings,
+            YamlConfigSettingsSource(settings_cls, yaml_file=_bootstrap_yaml_file),
+            file_secret_settings,
+        )
 
 
 class Config:
@@ -128,8 +148,9 @@ class Config:
 
     @property
     def bootstrap(self) -> BootstrapConfig:
-        yaml_file = "config/bootstrap.test.yaml" if self.ENV == Env.TEST else "config/bootstrap.yaml"
-        return BootstrapConfig(_env_file=None, yaml_file=yaml_file)
+        global _bootstrap_yaml_file
+        _bootstrap_yaml_file = "config/bootstrap.test.yaml" if self.ENV == Env.TEST else "config/bootstrap.yaml"
+        return BootstrapConfig(_env_file=None)
 
 
 CONFIG = Config()
