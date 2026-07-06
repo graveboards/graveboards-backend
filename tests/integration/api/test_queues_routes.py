@@ -237,6 +237,118 @@ class TestQueuesPatchIntegration:
         assert "forbidden" in data.get("detail", "").lower() or "not authorized" in data.get("detail", "").lower()
 
 
+class TestQueuesPostIntegration:
+    """Integration tests for POST /api/v1/queues endpoint."""
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    async def test_admin_can_create_queue(self, TestClientWithMocks, admin_user_token):
+        """Test admin can create a new queue."""
+        from app.database.models import Queue
+
+        mock_db = AsyncMock()
+
+        async def mock_get(model, **kwargs):
+            if model == Queue:
+                return None
+            mock_user = MagicMock()
+            mock_user.id = 11111111
+            admin_role = MagicMock()
+            admin_role.name = "admin"
+            mock_user.roles = [admin_role]
+            return mock_user
+
+        mock_db.get = AsyncMock(side_effect=mock_get)
+        mock_db.add = AsyncMock()
+
+        test_client = TestClientWithMocks(mock_db=mock_db)
+
+        with patch('app.security.decorators._get_authenticated_user_id', return_value=11111111):
+            headers = {"Authorization": f"Bearer {admin_user_token}"}
+            response = test_client.post(
+                "/api/v1/queues",
+                json={"name": "New Queue", "user_id": 12345678},
+                headers=headers
+            )
+
+        assert response.status_code == 201
+        data = response.json()
+        assert "added successfully" in data["message"].lower()
+        mock_db.add.assert_called_once()
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    async def test_non_admin_cannot_create_queue(self, TestClientWithMocks):
+        """Test non-admin gets 403 on queue creation."""
+        from app.security import generate_token
+        from app.database.models import Queue
+
+        mock_db = AsyncMock()
+
+        mock_user = MagicMock()
+        mock_user.id = 88888888
+        mock_user.roles = []
+
+        async def mock_get(model, **kwargs):
+            return mock_user
+
+        mock_db.get = AsyncMock(side_effect=mock_get)
+
+        test_client = TestClientWithMocks(mock_db=mock_db)
+
+        with patch('app.security.decorators._get_authenticated_user_id', return_value=88888888):
+            headers = {"Authorization": f"Bearer {generate_token(88888888)}"}
+            response = test_client.post(
+                "/api/v1/queues",
+                json={"name": "Hacked Queue", "user_id": 12345678},
+                headers=headers
+            )
+
+        assert response.status_code == 403
+        data = response.json()
+        assert "forbidden" in data.get("detail", "").lower() or "not authorized" in data.get("detail", "").lower()
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    async def test_create_queue_with_all_fields(self, TestClientWithMocks, admin_user_token):
+        """Test queue creation with all optional fields."""
+        from app.database.models import Queue
+
+        mock_db = AsyncMock()
+
+        async def mock_get(model, **kwargs):
+            if model == Queue:
+                return None
+            mock_user = MagicMock()
+            mock_user.id = 11111111
+            admin_role = MagicMock()
+            admin_role.name = "admin"
+            mock_user.roles = [admin_role]
+            return mock_user
+
+        mock_db.get = AsyncMock(side_effect=mock_get)
+        mock_db.add = AsyncMock()
+
+        test_client = TestClientWithMocks(mock_db=mock_db)
+
+        with patch('app.security.decorators._get_authenticated_user_id', return_value=11111111):
+            headers = {"Authorization": f"Bearer {admin_user_token}"}
+            response = test_client.post(
+                "/api/v1/queues",
+                json={
+                    "name": "Full Queue",
+                    "user_id": 12345678,
+                    "description": "A queue with all fields",
+                    "visibility": 1,
+                },
+                headers=headers
+            )
+
+        assert response.status_code == 201
+        data = response.json()
+        assert "added successfully" in data["message"].lower()
+
+
 class TestQueuesGetIntegration:
     """Integration tests for GET /api/v1/queues/{id} endpoint."""
 
