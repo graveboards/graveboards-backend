@@ -79,11 +79,9 @@ class TestRoleAuthorizationWithCustomOverride:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_override_callback_success(self, TestClientWithMocks, monkeypatch):
+    async def test_override_callback_success(self, TestClientWithMocks):
         """Test that custom override callback allows access."""
 
-        monkeypatch.setenv("ENV", "test")
-        
         mock_db = AsyncMock()
         
         mock_queue = MagicMock()
@@ -121,11 +119,9 @@ class TestRoleAuthorizationWithCustomOverride:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_override_callback_failure(self, TestClientWithMocks, monkeypatch):
+    async def test_override_callback_failure(self, TestClientWithMocks):
         """Test that custom override callback denies access when it returns False."""
 
-        monkeypatch.setenv("ENV", "test")
-        
         mock_db = AsyncMock()
         
         mock_queue = MagicMock()
@@ -166,11 +162,9 @@ class TestOwnershipAuthorizationSuccess:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_user_can_get_own_requests(self, TestClientWithMocks, monkeypatch):
+    async def test_user_can_get_own_requests(self, TestClientWithMocks):
         """Test that user can get their own requests via ownership."""
 
-        monkeypatch.setenv("ENV", "test")
-        
         mock_db = AsyncMock()
         
         request_data = {
@@ -205,11 +199,9 @@ class TestOwnershipAuthorizationSuccess:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_user_can_get_request_by_id_with_ownership(self, TestClientWithMocks, monkeypatch):
+    async def test_user_can_get_request_by_id_with_ownership(self, TestClientWithMocks):
         """Test that user can get specific request they own via ownership."""
 
-        monkeypatch.setenv("ENV", "test")
-        
         mock_db = AsyncMock()
         
         request_data = {
@@ -253,11 +245,9 @@ class TestOwnershipAuthorizationFailure:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_user_cannot_get_other_users_requests(self, TestClientWithMocks, monkeypatch):
+    async def test_user_cannot_get_other_users_requests(self, TestClientWithMocks):
         """Test that user gets 403 when trying to access other users' requests."""
 
-        monkeypatch.setenv("ENV", "test")
-        
         mock_db = AsyncMock()
         
         request_data = {
@@ -290,11 +280,9 @@ class TestOwnershipAuthorizationFailure:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_user_cannot_get_request_by_id_without_ownership(self, TestClientWithMocks, monkeypatch):
+    async def test_user_cannot_get_request_by_id_without_ownership(self, TestClientWithMocks):
         """Test that user gets 403 when trying to access request they don't own."""
 
-        monkeypatch.setenv("ENV", "test")
-        
         mock_db = AsyncMock()
         
         request_data = {
@@ -337,11 +325,9 @@ class TestOwnershipAuthorizationAdminOverride:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_can_get_all_requests_despite_ownership(self, TestClientWithMocks, admin_user_token, monkeypatch):
+    async def test_admin_can_get_all_requests_despite_ownership(self, TestClientWithMocks, admin_user_token):
         """Test that admin can get all requests regardless of ownership."""
 
-        monkeypatch.setenv("ENV", "test")
-        
         mock_db = AsyncMock()
         
         request_data1 = {
@@ -387,11 +373,9 @@ class TestOwnershipAuthorizationAdminOverride:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_can_get_request_by_id_despite_ownership(self, TestClientWithMocks, admin_user_token, monkeypatch):
+    async def test_admin_can_get_request_by_id_despite_ownership(self, TestClientWithMocks, admin_user_token):
         """Test that admin can get specific request regardless of ownership."""
 
-        monkeypatch.setenv("ENV", "test")
-        
         mock_db = AsyncMock()
         
         request_data = {
