@@ -28,15 +28,6 @@ class TestRequestsPostIntegration:
         return mock_rc
 
     @pytest.fixture
-    def mock_osu_client(self, mock_rc):
-        """Create a mock osu client."""
-        from unittest.mock import MagicMock
-
-        mock_client = MagicMock()
-        mock_client.rc = mock_rc
-        return mock_client
-
-    @pytest.fixture
     def valid_request_body(self):
         """Return a valid request submission body."""
         return {
