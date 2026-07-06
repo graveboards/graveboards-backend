@@ -38,6 +38,14 @@ class TestRestrictionsOnRequestSubmission:
         mock_queue.name = "test_queue"
         mock_queue.is_open = True
 
+        class MockSession:
+            async def __aenter__(self):
+                sess = AsyncMock()
+                sess.execute = AsyncMock(return_value=MagicMock())
+                return sess
+            async def __aexit__(self, *args):
+                pass
+
         mock_db = AsyncMock()
         mock_db.get.side_effect = [
             mock_queue,
@@ -45,6 +53,7 @@ class TestRestrictionsOnRequestSubmission:
             None,
         ]
         mock_db.add = AsyncMock()
+        mock_db.session = MockSession
 
         mock_rc = AsyncMock()
         mock_rc.incr = AsyncMock(return_value=1)
@@ -92,14 +101,6 @@ class TestRestrictionsOnRequestSubmission:
         mock_queue.name = "test_queue"
         mock_queue.is_open = True
 
-        mock_db = AsyncMock()
-        mock_db.get.side_effect = [
-            mock_queue,
-            None,
-            None,
-        ]
-        mock_db.add = AsyncMock()
-
         mock_restriction = MagicMock()
         mock_restriction.id = 1
         mock_restriction.queue_id = self.TEST_QUEUE_ID
@@ -110,6 +111,26 @@ class TestRestrictionsOnRequestSubmission:
             "scope": "user",
         }
         mock_restriction.is_active = True
+
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = [mock_restriction]
+
+        class MockSession:
+            async def __aenter__(self):
+                sess = AsyncMock()
+                sess.execute = AsyncMock(return_value=mock_result)
+                return sess
+            async def __aexit__(self, *args):
+                pass
+
+        mock_db = AsyncMock()
+        mock_db.get.side_effect = [
+            mock_queue,
+            None,
+            None,
+        ]
+        mock_db.add = AsyncMock()
+        mock_db.session = MockSession
 
         mock_rc = AsyncMock()
         mock_rc.incr = AsyncMock(return_value=2)
@@ -158,14 +179,6 @@ class TestRestrictionsOnRequestSubmission:
         mock_queue.name = "test_queue"
         mock_queue.is_open = True
 
-        mock_db = AsyncMock()
-        mock_db.get.side_effect = [
-            mock_queue,
-            None,
-            None,
-        ]
-        mock_db.add = AsyncMock()
-
         mock_restriction = MagicMock()
         mock_restriction.id = 1
         mock_restriction.queue_id = self.TEST_QUEUE_ID
@@ -176,8 +189,28 @@ class TestRestrictionsOnRequestSubmission:
         }
         mock_restriction.is_active = True
 
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = [mock_restriction]
+
+        class MockSession:
+            async def __aenter__(self):
+                sess = AsyncMock()
+                sess.execute = AsyncMock(return_value=mock_result)
+                return sess
+            async def __aexit__(self, *args):
+                pass
+
+        mock_db = AsyncMock()
+        mock_db.get.side_effect = [
+            mock_queue,
+            None,
+            None,
+        ]
+        mock_db.add = AsyncMock()
+        mock_db.session = MockSession
+
         now = datetime.now(timezone.utc)
-        one_hour_ago = int((now - timedelta(hours=1)).timestamp())
+        thirty_minutes_ago = int((now - timedelta(minutes=30)).timestamp())
 
         mock_rc = AsyncMock()
         mock_rc.incr = AsyncMock(return_value=1)
@@ -186,7 +219,7 @@ class TestRestrictionsOnRequestSubmission:
         mock_rc.hset = AsyncMock(return_value=True)
         mock_rc.publish = AsyncMock(return_value=True)
         mock_rc.hgetall = AsyncMock(return_value=None)
-        mock_rc.get = AsyncMock(return_value=str(one_hour_ago))
+        mock_rc.get = AsyncMock(return_value=str(thirty_minutes_ago))
         mock_rc.set = AsyncMock(return_value=True)
 
         class MockLockCtx:
@@ -226,14 +259,6 @@ class TestRestrictionsOnRequestSubmission:
         mock_queue.name = "test_queue"
         mock_queue.is_open = True
 
-        mock_db = AsyncMock()
-        mock_db.get.side_effect = [
-            mock_queue,
-            None,
-            None,
-        ]
-        mock_db.add = AsyncMock()
-
         mock_restriction = MagicMock()
         mock_restriction.id = 1
         mock_restriction.queue_id = self.TEST_QUEUE_ID
@@ -243,6 +268,26 @@ class TestRestrictionsOnRequestSubmission:
             "target": [self.TEST_USER_ID],
         }
         mock_restriction.is_active = True
+
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = [mock_restriction]
+
+        class MockSession:
+            async def __aenter__(self):
+                sess = AsyncMock()
+                sess.execute = AsyncMock(return_value=mock_result)
+                return sess
+            async def __aexit__(self, *args):
+                pass
+
+        mock_db = AsyncMock()
+        mock_db.get.side_effect = [
+            mock_queue,
+            None,
+            None,
+        ]
+        mock_db.add = AsyncMock()
+        mock_db.session = MockSession
 
         mock_rc = AsyncMock()
         mock_rc.incr = AsyncMock(return_value=1)
@@ -289,6 +334,14 @@ class TestRestrictionsOnRequestSubmission:
         mock_queue.name = "test_queue"
         mock_queue.is_open = True
 
+        class MockSession:
+            async def __aenter__(self):
+                sess = AsyncMock()
+                sess.execute = AsyncMock(return_value=MagicMock())
+                return sess
+            async def __aexit__(self, *args):
+                pass
+
         mock_db = AsyncMock()
         mock_db.get.side_effect = [
             mock_queue,
@@ -296,6 +349,7 @@ class TestRestrictionsOnRequestSubmission:
             None,
         ]
         mock_db.add = AsyncMock()
+        mock_db.session = MockSession
 
         mock_rc = AsyncMock()
         mock_rc.incr = AsyncMock(return_value=1)
@@ -351,6 +405,14 @@ class TestRestrictionsOnRequestSubmission:
         mock_queue.name = "test_queue"
         mock_queue.is_open = True
 
+        class MockSession:
+            async def __aenter__(self):
+                sess = AsyncMock()
+                sess.execute = AsyncMock(return_value=MagicMock())
+                return sess
+            async def __aexit__(self, *args):
+                pass
+
         mock_db = AsyncMock()
         mock_db.get.side_effect = [
             mock_queue,
@@ -358,6 +420,7 @@ class TestRestrictionsOnRequestSubmission:
             None,
         ]
         mock_db.add = AsyncMock()
+        mock_db.session = MockSession
 
         mock_restriction = MagicMock()
         mock_restriction.id = 1
@@ -430,9 +493,18 @@ class TestQueueRestrictionsPatch:
                 return mock_queue
             return mock_user
 
+        class MockSession:
+            async def __aenter__(self):
+                sess = AsyncMock()
+                sess.execute = AsyncMock(return_value=MagicMock())
+                return sess
+            async def __aexit__(self, *args):
+                pass
+
         mock_db = AsyncMock()
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.update = AsyncMock()
+        mock_db.session = MockSession
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
@@ -486,9 +558,18 @@ class TestQueueRestrictionsPatch:
                 return mock_queue
             return mock_user
 
+        class MockSession:
+            async def __aenter__(self):
+                sess = AsyncMock()
+                sess.execute = AsyncMock(return_value=MagicMock())
+                return sess
+            async def __aexit__(self, *args):
+                pass
+
         mock_db = AsyncMock()
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.update = AsyncMock()
+        mock_db.session = MockSession
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 

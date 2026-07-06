@@ -65,6 +65,17 @@ class TestRequestsPostIntegration:
         mock_queue.name = "test_queue"
         mock_queue.is_open = True
 
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = []
+
+        class MockSession:
+            async def __aenter__(self):
+                sess = AsyncMock()
+                sess.execute = AsyncMock(return_value=mock_result)
+                return sess
+            async def __aexit__(self, *args):
+                pass
+
         mock_db = AsyncMock()
         mock_db.get.side_effect = [
             mock_queue,
@@ -72,6 +83,7 @@ class TestRequestsPostIntegration:
             None,
         ]
         mock_db.add = AsyncMock()
+        mock_db.session = MockSession
 
         mock_rc = AsyncMock()
         mock_rc.incr = AsyncMock(return_value=1)
@@ -194,12 +206,21 @@ class TestRequestsPostIntegration:
         mock_queue.name = "test_queue"
         mock_queue.is_open = True
 
+        class MockSession:
+            async def __aenter__(self):
+                sess = AsyncMock()
+                sess.execute = AsyncMock(return_value=MagicMock())
+                return sess
+            async def __aexit__(self, *args):
+                pass
+
         mock_db = AsyncMock()
         mock_db.get.side_effect = [
             mock_queue,
             None,
         ]
         mock_db.add = AsyncMock()
+        mock_db.session = MockSession
 
         mock_rc = AsyncMock()
         mock_rc.incr = AsyncMock(return_value=2)
@@ -262,12 +283,21 @@ class TestRequestsPostIntegration:
         mock_queue.name = "test_queue"
         mock_queue.is_open = True
 
+        class MockSession:
+            async def __aenter__(self):
+                sess = AsyncMock()
+                sess.execute = AsyncMock(return_value=MagicMock())
+                return sess
+            async def __aexit__(self, *args):
+                pass
+
         mock_db = AsyncMock()
         mock_db.get.side_effect = [
             mock_queue,
             None,
         ]
         mock_db.add = AsyncMock()
+        mock_db.session = MockSession
 
         mock_rc = AsyncMock()
         mock_rc.incr = AsyncMock(return_value=2)
@@ -322,6 +352,14 @@ class TestRequestsPostIntegration:
         mock_queue.name = "test_queue"
         mock_queue.is_open = True
 
+        class MockSession:
+            async def __aenter__(self):
+                sess = AsyncMock()
+                sess.execute = AsyncMock(return_value=MagicMock())
+                return sess
+            async def __aexit__(self, *args):
+                pass
+
         mock_db = AsyncMock()
         mock_db.get.side_effect = [
             mock_queue,
@@ -329,6 +367,7 @@ class TestRequestsPostIntegration:
             None,
         ]
         mock_db.add = AsyncMock()
+        mock_db.session = MockSession
 
         mock_rc = AsyncMock()
         mock_rc.incr = AsyncMock(return_value=1)
