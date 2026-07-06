@@ -9,9 +9,9 @@ from app.database import PostgresqlDB
 from app.database.models import Beatmapset, BeatmapsetSnapshot, Request, User
 from app.beatmaps import BeatmapManager
 from app.redis import RedisClient
-from app.logging import setup_logging
-from app.setup import setup
-from app.logging import get_logger
+from app.config import CONFIG
+from app.bootstrap import SetupRunner
+from app.logging import setup_logging, get_logger
 
 TIMEOUT_SECS = 60.0
 
@@ -93,7 +93,7 @@ async def migrate(input_path: str = "requests.json"):
 
 if __name__ == "__main__":
     setup_logging()
-    asyncio.run(setup())
+    asyncio.run(SetupRunner(CONFIG.bootstrap).run(steps=["create_database"]))
 
     requests_input_path = sys.argv[1] if len(sys.argv) > 1 else "requests.json"
     asyncio.run(migrate(requests_input_path))

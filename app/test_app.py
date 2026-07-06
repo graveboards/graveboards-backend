@@ -27,7 +27,7 @@ from app.config import (
     DEBUG,
     DEBUG_API_KEY,
     JWT_SECRET_KEY,
-    PRIMARY_ADMIN_USER_ID,
+    CONFIG,
 )
 from app.lifespan import lifespan as production_lifespan
 from app.patches import OpenAPIURIParserPatched, ParameterValidatorPatched
@@ -125,7 +125,9 @@ def get_debug_api_key() -> str:
     if DEBUG_API_KEY:
         return DEBUG_API_KEY
 
-    seed = f"{JWT_SECRET_KEY}:{PRIMARY_ADMIN_USER_ID}:debug-api-key"
+    bootstrap = CONFIG.bootstrap
+    primary_user_id = bootstrap.initial_users[0].user_id if bootstrap.initial_users else 0
+    seed = f"{JWT_SECRET_KEY}:{primary_user_id}:debug-api-key"
     return __import__('hashlib').sha256(seed.encode()).hexdigest()[:32]
 
 

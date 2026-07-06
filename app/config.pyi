@@ -2,6 +2,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Iterator
 
+from app.bootstrap import SetupRunner
+
 
 class Env(Enum):
     PROD = "prod"
@@ -28,10 +30,6 @@ class Config:
     POSTGRESQL_CONFIGURATION: dict[str, Any]
     REDIS_CONFIGURATION: dict[str, Any]
     OAUTH_CONFIGURATION: dict[str, Any]
-    ADMIN_USER_IDS: set[int]
-    PRIMARY_ADMIN_USER_ID: int
-    MASTER_QUEUE_NAME: str
-    MASTER_QUEUE_DESCRIPTION: str
     TEST_POSTGRESQL_CONFIGURATION: dict[str, Any]
     TEST_REDIS_CONFIGURATION: dict[str, Any]
 
@@ -55,10 +53,6 @@ JWT_ALGORITHM: str
 POSTGRESQL_CONFIGURATION: dict[str, Any]
 REDIS_CONFIGURATION: dict[str, Any]
 OAUTH_CONFIGURATION: dict[str, Any]
-ADMIN_USER_IDS: set[int]
-PRIMARY_ADMIN_USER_ID: int
-MASTER_QUEUE_NAME: str
-MASTER_QUEUE_DESCRIPTION: str
 TEST_POSTGRESQL_CONFIGURATION: dict[str, Any]
 TEST_REDIS_CONFIGURATION: dict[str, Any]
 

@@ -5,8 +5,8 @@ from pathlib import Path
 from typing import Iterator
 
 from dotenv import load_dotenv
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from .utils import parse_user_ids
 from .enums import Env
 
 
@@ -14,6 +14,43 @@ _SECURITY_ENABLED_OVERRIDE: ContextVar[bool | None] = ContextVar(
     "security_enabled_override",
     default=None
 )
+
+
+class QueueConfig(BaseSettings):
+    model_config = SettingsConfigDict(extra="ignore")
+
+    name: str = "Graveboards Queue"
+    description: str = "Master queue for beatmaps to receive leaderboards"
+    user_id: int = 0
+
+
+class UserConfig(BaseSettings):
+    model_config = SettingsConfigDict(extra="ignore")
+
+    user_id: int
+    roles: list[str] = ["admin"]
+    generate_api_key: bool = True
+    enable_score_fetcher: bool = True
+
+
+class BootstrapConfig(BaseSettings):
+    model_config = SettingsConfigDict(
+        yaml_file="config/bootstrap.yaml",
+        yaml_file_encoding="utf-8",
+        extra="ignore"
+    )
+
+    master_queue: QueueConfig = QueueConfig()
+    extra_queues: list[QueueConfig] = []
+    initial_users: list[UserConfig] = []
+    initial_roles: list[str] = ["admin"]
+    setup_steps: list[str] = [
+        "create_database",
+        "seed_roles",
+        "seed_users",
+        "seed_api_keys",
+        "seed_queues",
+    ]
 
 
 class Config:
@@ -70,12 +107,6 @@ class Config:
             "token_endpoint_auth_method": "client_secret_basic"
         }
 
-        admin_user_ids = parse_user_ids("ADMIN_USER_IDS", required=True)
-        self.ADMIN_USER_IDS = set(admin_user_ids)
-        self.PRIMARY_ADMIN_USER_ID = admin_user_ids[0]
-        self.MASTER_QUEUE_NAME = "Graveboards Queue"
-        self.MASTER_QUEUE_DESCRIPTION = "Master queue for beatmaps to receive leaderboards"
-
         self.TEST_POSTGRESQL_CONFIGURATION = {
             "drivername": "postgresql+asyncpg",
             "host": os.getenv("TEST_POSTGRESQL_HOST", os.getenv("POSTGRESQL_HOST")),
@@ -94,6 +125,11 @@ class Config:
             "decode_responses": True,
             "protocol": 3
         }
+
+    @property
+    def bootstrap(self) -> BootstrapConfig:
+        yaml_file = "config/bootstrap.test.yaml" if self.ENV == Env.TEST else "config/bootstrap.yaml"
+        return BootstrapConfig(_env_file=None, yaml_file=yaml_file)
 
 
 CONFIG = Config()
@@ -136,9 +172,5 @@ JWT_ALGORITHM = CONFIG.JWT_ALGORITHM
 POSTGRESQL_CONFIGURATION = CONFIG.POSTGRESQL_CONFIGURATION
 REDIS_CONFIGURATION = CONFIG.REDIS_CONFIGURATION
 OAUTH_CONFIGURATION = CONFIG.OAUTH_CONFIGURATION
-ADMIN_USER_IDS = CONFIG.ADMIN_USER_IDS
-PRIMARY_ADMIN_USER_ID = CONFIG.PRIMARY_ADMIN_USER_ID
-MASTER_QUEUE_NAME = CONFIG.MASTER_QUEUE_NAME
-MASTER_QUEUE_DESCRIPTION = CONFIG.MASTER_QUEUE_DESCRIPTION
 TEST_POSTGRESQL_CONFIGURATION = CONFIG.TEST_POSTGRESQL_CONFIGURATION
 TEST_REDIS_CONFIGURATION = CONFIG.TEST_REDIS_CONFIGURATION

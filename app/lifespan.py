@@ -5,10 +5,10 @@ from connexion.middleware import ConnexionMiddleware
 
 from .redis import RedisClient
 from .database import PostgresqlDB
-from .config import get_security_enabled
+from .config import CONFIG, get_security_enabled
 from .logging import setup_logging, get_logger
 from .daemon import Daemon
-from .setup import setup, cleanup_stale_tasks
+from .bootstrap import SetupRunner
 
 
 @asynccontextmanager
@@ -17,7 +17,8 @@ async def lifespan(app: ConnexionMiddleware):
     logger = get_logger(__name__)
     logger.info("Start of app lifespan")
 
-    await setup()
+    runner = SetupRunner(CONFIG.bootstrap)
+    await runner.run()
 
     if not get_security_enabled():
         logger.warning("Security has been disabled!")
@@ -25,7 +26,8 @@ async def lifespan(app: ConnexionMiddleware):
     rc = RedisClient()
     db = PostgresqlDB()
 
-    await cleanup_stale_tasks(rc)
+    cleanup_runner = SetupRunner(CONFIG.bootstrap, rc=rc)
+    await cleanup_runner.cleanup_stale_tasks()
 
     daemon_app = Daemon(rc, db)
     await daemon_app.start()
