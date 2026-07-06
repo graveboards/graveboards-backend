@@ -91,8 +91,8 @@ async def post(body: dict, **kwargs):
 
     await _check_queue_restrictions(queue_id, user_id, db, rc)
 
-    oac = OsuAPIClient(rc)
-    beatmapset_dict = await oac.get_beatmapset(beatmapset_id)
+    async with OsuAPIClient(rc) as oac:
+        beatmapset_dict = await oac.get_beatmapset(beatmapset_id)
 
     if (status := beatmapset_dict["status"]) in {"ranked", "approved", "qualified", "loved"}:
         raise BadRequest(f"The beatmapset is already {status} on osu!")

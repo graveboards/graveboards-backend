@@ -78,6 +78,15 @@ class OsuAPIClientBase:
     async def get_auth_headers(self, access_token: str = None) -> dict:
         return {"Authorization": f"Bearer {access_token or await self.get_token()}"}
 
+    async def close(self) -> None:
+        await self._http_client.aclose()
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *args):
+        await self.close()
+
     @staticmethod
     def format_query_parameters(query_parameters: dict) -> str:
         from urllib.parse import urlencode

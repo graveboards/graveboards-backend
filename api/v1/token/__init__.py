@@ -63,7 +63,8 @@ async def post(
 
     if osu_api_client is None:
         osu_api_client = OsuAPIClient(rc)
-    user_data = await osu_api_client.get_own_data(access_token)
+    async with osu_api_client:
+        user_data = await osu_api_client.get_own_data(access_token)
     user_id = user_data["id"]
 
     if not await db.get(User, id=user_id):
