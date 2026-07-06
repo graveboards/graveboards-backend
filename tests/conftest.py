@@ -1,3 +1,16 @@
+"""
+Test configuration and shared fixtures for the Graveboards backend test suite.
+
+Fixture hierarchy:
+- db_session: Creates tables, rolls back after each test (test isolation)
+- db_transaction: Creates tables, commits after each test (visible to search queries)
+- TestClient: Full Connexion app with mock middleware (no real Redis/DB)
+- TestClientWithMocks: TestClient with injectable mock_rc and mock_db
+- admin_user_token: JWT for admin user ID 11111111
+- security_disabled: Context manager to bypass security decorators
+- security_enabled: Context manager to enforce security decorators
+"""
+
 import os
 from pathlib import Path
 
