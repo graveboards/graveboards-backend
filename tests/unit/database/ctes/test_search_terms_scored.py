@@ -31,30 +31,46 @@ class TestSearchTermsScoredCTE:
     def test_search_terms_scored_ctes_factory_beatmaps(self, mock_search_terms):
         """Test scoring CTE factory for beatmaps scope."""
         ctes = search_terms_scored_ctes_factory(Scope.BEATMAPS, mock_search_terms)
-        
+
         assert isinstance(ctes, dict)
         assert len(ctes) > 0
+        for category, cte in ctes.items():
+            assert hasattr(cte, "c")
+            assert hasattr(cte.c, "id")
+            assert hasattr(cte.c, "score")
+            assert hasattr(cte.c, "score_details")
+            assert category in SearchableFieldCategory
 
     def test_search_terms_scored_ctes_factory_beatmapsets(self, mock_search_terms):
         """Test scoring CTE factory for beatmapsets scope."""
         ctes = search_terms_scored_ctes_factory(Scope.BEATMAPSETS, mock_search_terms)
-        
+
         assert isinstance(ctes, dict)
         assert len(ctes) > 0
+        for category, cte in ctes.items():
+            assert hasattr(cte.c, "id")
+            assert hasattr(cte.c, "score")
+            assert category in SearchableFieldCategory
 
     def test_search_terms_scored_ctes_factory_queues(self, mock_search_terms):
         """Test scoring CTE factory for queues scope."""
         ctes = search_terms_scored_ctes_factory(Scope.QUEUES, mock_search_terms)
-        
+
         assert isinstance(ctes, dict)
         assert len(ctes) > 0
+        for category, cte in ctes.items():
+            assert hasattr(cte.c, "id")
+            assert category in SearchableFieldCategory
 
     def test_search_terms_scored_ctes_factory_requests(self, mock_search_terms):
         """Test scoring CTE factory for requests scope."""
         ctes = search_terms_scored_ctes_factory(Scope.REQUESTS, mock_search_terms)
-        
+
         assert isinstance(ctes, dict)
         assert len(ctes) > 0
+        for category, cte in ctes.items():
+            assert hasattr(cte.c, "id")
+            assert category in SearchableFieldCategory
 
     def test_search_terms_scored_ctes_factory_multiple_terms(self):
         """Test scoring CTE factory with multiple terms."""
@@ -63,11 +79,14 @@ class TestSearchTermsScoredCTE:
             case_sensitive=False,
             field_weights=FieldWeights()
         )
-        
+
         ctes = search_terms_scored_ctes_factory(Scope.BEATMAPS, terms)
-        
+
         assert isinstance(ctes, dict)
         assert len(ctes) > 0
+        for category, cte in ctes.items():
+            assert hasattr(cte.c, "id")
+            assert hasattr(cte.c, "score")
 
     def test_search_terms_scored_ctes_factory_case_sensitive(self):
         """Test scoring CTE factory with case sensitive search."""
@@ -76,11 +95,14 @@ class TestSearchTermsScoredCTE:
             case_sensitive=True,
             field_weights=FieldWeights()
         )
-        
+
         ctes = search_terms_scored_ctes_factory(Scope.BEATMAPS, terms)
-        
+
         assert isinstance(ctes, dict)
         assert len(ctes) > 0
+        for category, cte in ctes.items():
+            assert hasattr(cte.c, "id")
+            assert hasattr(cte.c, "score")
 
 
 class TestGenerateTermScoreStmts:
