@@ -96,6 +96,11 @@ class SetupRunner:
                 if not user_cfg.generate_api_key:
                     continue
 
+                existing_key = await self.db.get(ApiKey, user_id=user_cfg.user_id, session=session)
+
+                if existing_key is not None:
+                    continue
+
                 expires_at = aware_utcnow() + timedelta(weeks=1)
                 raw_key = generate_api_key()
                 await self.db.add(
