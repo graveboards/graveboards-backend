@@ -113,15 +113,20 @@ class TestSearchEngineValidation:
         mock_result.mappings.return_value.all.return_value = []
         mock_session.execute = AsyncMock(return_value=mock_result)
 
-        # This would normally call the database, so we just test the validation
-        with patch.object(engine, "_compose_query"):
-            engine._compose_query()
+        # Verify composed query is valid SQL targeting the correct table
+        engine._compose_query()
+        compiled = engine.compiled_query.lower()
+        assert "beatmap_snapshot" in compiled
+        assert "select" in compiled
 
     def test_engine_composes_query(self):
         """Test that engine composes query."""
         engine = SearchEngine(scope=Scope.BEATMAPS)
 
         assert engine.query is not None
+        compiled = engine.compiled_query.lower()
+        assert "beatmap_snapshot" in compiled
+        assert "select" in compiled
 
     def test_engine_scope_beatmaps(self):
         """Test engine scope beats."""
@@ -219,6 +224,12 @@ class TestSearchEngineValidation:
         assert engine.search_terms is not None
         assert engine.sorting is not None
         assert engine.filters is not None
+
+        compiled = engine.compiled_query.lower()
+        assert "beatmap_snapshot" in compiled
+        assert "beatmap_id" in compiled
+        assert "order by" in compiled
+        assert "limit" not in compiled
 
     def test_engine_search_with_debug(self, mock_session):
         """Test search with debug mode."""
