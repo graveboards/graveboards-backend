@@ -9,6 +9,10 @@ from app.logging import get_logger
 from app.utils import aware_utcnow
 from .rc import RedisClient
 from .enums import Namespace
+from app.metrics.rate_limit_metrics import (
+    rate_limit_attempts_total,
+    rate_limit_retries_total,
+)
 
 __all__ = [
     "rate_limit"
@@ -93,6 +97,7 @@ def rate_limit(
 
             async def sub_wrapper() -> T:
                 now = aware_utcnow()
+                endpoint = func.__name__
 
                 # --- min_interval gate ---
                 if min_interval > 0:
@@ -124,6 +129,8 @@ def rate_limit(
                         await rc.expire(counter_hash_name, window_delta_seconds)
 
                     if current_count > limit_per_window:
+                        rate_limit_attempts_total.labels(endpoint=endpoint, result="blocked").inc()
+
                         if not auto_retry:
                             raise RateLimitExceededError(
                                 next_window=window_end,
@@ -135,9 +142,11 @@ def rate_limit(
                             f"{current_count}/{limit_per_window} calls in window, "
                             f"retrying in {window_delta_seconds}s"
                         )
+                        rate_limit_retries_total.labels(endpoint=endpoint).inc()
                         await asyncio.sleep(window_delta_seconds)
                         return await sub_wrapper()
 
+                rate_limit_attempts_total.labels(endpoint=endpoint, result="allowed").inc()
                 return await func(*args, **kwargs)
 
             return await sub_wrapper()
