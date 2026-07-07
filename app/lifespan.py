@@ -9,6 +9,7 @@ from .config import CONFIG, get_security_enabled
 from .logging import setup_logging, get_logger
 from .daemon import Daemon
 from .bootstrap import SetupRunner
+from .metrics.system_collector import start_system_metrics, stop_system_metrics
 
 
 @asynccontextmanager
@@ -22,6 +23,8 @@ async def lifespan(app: ConnexionMiddleware):
 
     if not get_security_enabled():
         logger.warning("Security has been disabled!")
+
+    start_system_metrics()
 
     rc = RedisClient()
     db = PostgresqlDB()
@@ -50,4 +53,7 @@ async def lifespan(app: ConnexionMiddleware):
 
         from app.redis.pool import connection_pool
         connection_pool.close()
+
+        stop_system_metrics()
+
         logger.info("End of app lifespan")
