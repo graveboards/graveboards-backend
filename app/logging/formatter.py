@@ -1,6 +1,7 @@
 import logging
 import copy
 
+from app.metrics.request_id import get_request_id
 from .utils import get_alias
 from .colors import *
 
@@ -11,6 +12,7 @@ class LogFormatter(logging.Formatter):
     Behavior and features:
         - Rewrites logger names into short aliases
         - Supports structured prefix injection
+        - Includes request_id when available for request correlation
         - Optionally applies ANSI color codes by level
         - Ensures safe record mutation via shallow copy
 
@@ -32,6 +34,7 @@ class LogFormatter(logging.Formatter):
         Applies:
             - Alias transformation
             - Prefix formatting
+            - Request ID injection
             - Level-based coloring (if enabled)
 
         Args:
@@ -43,6 +46,7 @@ class LogFormatter(logging.Formatter):
         """
         record = copy.copy(record)
         record.alias = get_alias(record.name)
+        record.request_id = get_request_id() or ""
 
         if asctime := getattr(record, "asctime", None):
             record.asctime = asctime
