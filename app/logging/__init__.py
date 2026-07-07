@@ -2,6 +2,7 @@ __all__ = [
     "setup_logging",
     "Logger",
     "LogFormatter",
+    "JSONLogFormatter",
     "get_logger",
     "log_stack_warning",
 ]
@@ -22,6 +23,11 @@ def __getattr__(name):
         from .formatter import LogFormatter
 
         return LogFormatter
+
+    if name == "JSONLogFormatter":
+        from .json_formatter import JSONLogFormatter
+
+        return JSONLogFormatter
 
     if name in {"get_logger", "log_stack_warning"}:
         from . import utils
