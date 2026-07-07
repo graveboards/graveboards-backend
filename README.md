@@ -1,6 +1,6 @@
 # Graveboards Backend
 
-> Python/Connextion backend for Graveboards
+> Python/Connexion async REST API backend for Graveboards
 
 ## Quick Start
 
@@ -46,9 +46,10 @@ cd graveboards-deploy
 ```
 
 **Modes:**
-- `dev` - Development (default)
-- `prod` - Production
-- `test` - Testing
+- `dev`      - Development (default)
+- `prod`     - Production (Docker volumes)
+- `prod-nas` - Production (NAS volumes)
+- `test`     - Testing (isolated DB/Redis, runs pytest)
 
 **Services:**
 - `all` - All services (default)
@@ -57,16 +58,20 @@ cd graveboards-deploy
 - `postgres` - PostgreSQL database
 - `redis` - Redis cache
 
-```
-### Backend (Docker)
+### Backend (Docker/Make)
 
 ```bash
 cd graveboards-backend
-make status    # Database status
-make reset     # Reset database
+make up        # Start all services
+make down      # Stop all services
+make build     # Rebuild project image
+make logs      # View backend logs
+make shell     # Open backend shell
+make status    # View database status
+make reset     # Reset database (with confirmation)
 make seed      # Seed database
-make logs      # View logs
-make shell     # Open shell
+make fresh     # Reset & seed database
+make test      # Run test suite
 make clean     # Remove Docker resources
 ```
 
@@ -78,16 +83,19 @@ python manage.py <command> [options]
 ```
 
 **Available commands:**
-- `status <target>` - View database status
-- `reset [--seed <target>]` - Reset database
-- `seed <target>` - Seed database
+- `status [target]` - View database status (default: `summary`)
+- `reset [--force] [--seed <target>]` - Reset database (drop/recreate, optionally seed)
+- `seed <target>` - Seed database (e.g. `all`, `users`, `beatmaps`, `queues`, `requests`)
 - `fixtures <subcommand>` - Manage test fixtures
-  - `fetch` - Fetch data from osu! API
-  - `promote` - Promote fixtures to tests
-  - `demote` - Demote fixtures to instance
-  - `wipe` - Delete all fixtures
+  - `fetch` - Fetch fixture data from osu! API
+  - `promote` - Promote fixtures from instance to tests
+  - `demote` - Demote fixtures from tests to instance
   - `status` - Show fixture status
-  - `refresh` - Refresh fixture metadata
+  - `wipe` - Delete all fixtures
+  - `refresh-top-players` - Fetch top players from osu! API
+  - `refresh-archives` - Refresh archive index from osu.sh
+  - `reconcile` - Reconcile fixture metadata with disk state
+  - `generate` - Generate diverse queue/request fixtures
 
 ---
 
@@ -101,14 +109,22 @@ python manage.py <command> [options]
 | `.env.test`    | Test-specific overrides      |
 | `.env.example` | Template for creating `.env` |
 
-Copy `.env.example` to `.env` (and optionally `.env.test`) and fill in the appropriate values
+Copy `.env.example` to `.env` (and optionally `.env.test`) and fill in the appropriate values.
 
 **Required Variables:**
 - `JWT_SECRET_KEY` - JWT signing key (32+ chars)
+- `JWT_ALGORITHM` - JWT algorithm (default: `HS256`)
 - `OSU_CLIENT_ID`, `OSU_CLIENT_SECRET` - osu! OAuth credentials
 - `ADMIN_USER_IDS` - Comma-separated osu! user IDs
-- `POSTGRESQL_*` - PostgreSQL connection
-- `REDIS_*` - Redis connection
+- `POSTGRESQL_HOST`, `POSTGRESQL_PORT`, `POSTGRESQL_USERNAME`, `POSTGRESQL_PASSWORD`, `POSTGRESQL_DATABASE` - PostgreSQL connection
+- `REDIS_HOST`, `REDIS_PORT`, `REDIS_USERNAME`, `REDIS_PASSWORD`, `REDIS_DB` - Redis connection
+
+**Optional Variables:**
+- `DEBUG` - Enable debug mode (default: `false`)
+- `DISABLE_SECURITY` - Disable security (dev only, default: `false`)
+- `BASE_URL` - Frontend base URL (default: `http://localhost:3000`)
+- `ENV` - Environment mode: `prod`, `dev`, `test` (default: `prod`)
+- `DEBUG_API_KEY` - Fixed debug API key
 
 ---
 

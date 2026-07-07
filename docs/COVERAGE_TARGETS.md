@@ -4,9 +4,14 @@ This document defines the minimum code coverage requirements for the Graveboards
 
 ## Overview
 
-The test suite enforces minimum coverage percentages per module to ensure test quality and prevent regression.
+The test suite enforces minimum coverage percentages to ensure test quality and prevent regression. Coverage is configured in `pyproject.toml` via `addopts`.
 
 ## Coverage Requirements
+
+### Overall Project Coverage
+
+- **Minimum (CI fail-under)**: 70%
+- Configured in `pyproject.toml` as `--cov-fail-under=70`
 
 ### Module Coverage Targets
 
@@ -19,12 +24,6 @@ The test suite enforces minimum coverage percentages per module to ensure test q
 | `app/search/` | 60% | Search functionality |
 | `app/redis/` | 65% | Redis caching |
 | `app/spec/` | 50% | OpenAPI spec handling |
-
-### Overall Project Coverage
-
-- **Minimum**: 60%
-- **Target**: 70%
-- **Quality Gate**: 65% (CI will fail below this)
 
 ## Exclusions
 
@@ -39,7 +38,7 @@ The following are excluded from coverage:
 
 ### Run with coverage
 ```bash
-pytest --cov=app --cov-report=term-missing
+pytest --cov=app --cov=api --cov-report=term-missing
 ```
 
 ### Check specific module
@@ -49,7 +48,12 @@ pytest --cov=app/database --cov-report=term-missing
 
 ### Generate HTML report
 ```bash
-pytest --cov=app --cov-report=html
+pytest --cov=app --cov=api --cov-report=html
+```
+
+### Enforce minimum locally
+```bash
+pytest --cov=app --cov=api --cov-fail-under=70
 ```
 
 ## Enforcing Coverage
@@ -59,16 +63,12 @@ pytest --cov=app --cov-report=html
 Before committing, ensure coverage targets are met:
 
 ```bash
-pytest --cov=app --cov-fail-under=65
+pytest --cov=app --cov=api --cov-fail-under=70
 ```
 
 ### CI/CD
 
-The CI pipeline will fail if:
-
-1. Overall coverage < 65%
-2. Any module coverage < minimum (see table above)
-3. New code has 0% coverage
+The CI pipeline will fail if overall coverage is below 70%.
 
 ## Coverage Best Practices
 
@@ -100,19 +100,12 @@ The CI pipeline will fail if:
 View coverage trends over time:
 
 ```bash
-pytest --cov=app --cov-report=term-missing --cov-report=html
+pytest --cov=app --cov=api --cov-report=term-missing --cov-report=html
 open htmlcov/index.html
 ```
 
-## Coverage Targets History
-
-| Date | Overall Target | Change |
-|------|---------------|--------|
-| 2024-06-08 | 65% | Initial setup |
-
 ## Related Documentation
 
-- `pytest.ini` - Coverage configuration
-- `pyproject.toml` - Tool configuration
+- `pyproject.toml` - Coverage configuration (`--cov-fail-under=70`)
 - `docs/FIXTURE_SELECTION.md` - Fixture strategies
-- `tests/README.md` - Testing guidelines
+- `docs/TESTING.md` - Testing guidelines
