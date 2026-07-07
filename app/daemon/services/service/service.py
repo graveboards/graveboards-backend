@@ -15,11 +15,11 @@ from .task import (
     TaskFinishHook
 )
 from app.metrics.daemon_metrics import (
-    daemon_runs_total,
-    daemon_run_duration_seconds,
-    daemon_last_run_timestamp,
-    daemon_total_failures,
-    daemon_critical_failures,
+    daemon_service_running,
+    daemon_jobs_total,
+    daemon_job_duration_seconds,
+    daemon_last_job_timestamp,
+    daemon_active_jobs,
 )
 
 
@@ -131,6 +131,7 @@ class Service:
             self._stop_event.clear()
             self._stopped_event.clear()
             self._start_event.set()
+            daemon_service_running.labels(service=self._service_name).set(1)
 
         await self._on_start()
 
@@ -178,6 +179,7 @@ class Service:
 
                 self._running = False
                 self._stopped_event.set()
+                daemon_service_running.labels(service=self._service_name).set(0)
 
             await self._on_stopped()
 
@@ -258,21 +260,8 @@ class Service:
         await self._stop_event.wait()
 
     def _wrap_factory(self, factory: TaskFactory, task_name: str):
-        service_name = self._service_name
-
         async def wrapped() -> None:
-            start = time.perf_counter()
-            try:
-                await factory()
-                duration = time.perf_counter() - start
-                daemon_runs_total.labels(service=service_name, status="success").inc()
-                daemon_run_duration_seconds.labels(service=service_name).observe(duration)
-                daemon_last_run_timestamp.labels(service=service_name).set(time.time())
-            except Exception:
-                duration = time.perf_counter() - start
-                daemon_runs_total.labels(service=service_name, status="failure").inc()
-                daemon_run_duration_seconds.labels(service=service_name).observe(duration)
-                raise
+            await factory()
 
         return wrapped
 

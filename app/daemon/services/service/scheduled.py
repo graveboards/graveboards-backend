@@ -1,5 +1,6 @@
 import asyncio
 import heapq
+import time
 from datetime import datetime, timedelta, timezone
 from typing import ClassVar
 from abc import ABC, abstractmethod
@@ -8,6 +9,7 @@ from app.database import PostgresqlDB
 from app.logging import Logger
 from app.redis import RedisClient
 from app.utils import aware_utcnow
+from app.metrics.daemon_metrics import daemon_active_jobs, daemon_jobs_total, daemon_job_duration_seconds, daemon_last_job_timestamp
 from .service import Service
 from .job import JobLoadInstruction
 
@@ -231,17 +233,30 @@ class ScheduledService(Service, ABC):
         if delay > 0:
             await asyncio.sleep(delay)
 
+        service_name = self.__class__.__name__
+        start = time.perf_counter()
+        daemon_active_jobs.labels(service=service_name).inc()
+
         try:
             async with self._job_semaphore:
                 await self._execute_job(job_id)
         except Exception as exc:
+            duration = time.perf_counter() - start
             self.logger.exception(
                 f"{self.__class__.__name__}.{self._execute_job.__name__} "
                 f"failed for {job_id=}"
             )
+            daemon_jobs_total.labels(service=service_name, status="failure").inc()
+            daemon_job_duration_seconds.labels(service=service_name).observe(duration)
             await self._safe_hook(self._on_job_error, job_id, exc)
         else:
+            duration = time.perf_counter() - start
+            daemon_jobs_total.labels(service=service_name, status="success").inc()
+            daemon_job_duration_seconds.labels(service=service_name).observe(duration)
+            daemon_last_job_timestamp.labels(service=service_name).set(time.time())
             await self._safe_hook(self._on_job_success, job_id)
+        finally:
+            daemon_active_jobs.labels(service=service_name).dec()
 
         next_execution_time = aware_utcnow() + timedelta(hours=self._job_interval_hours)
 
