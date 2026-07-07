@@ -27,6 +27,8 @@ markdown-it-py==4.0.0
 MarkupSafe==3.0.3
 mdurl==0.1.2
 numpy==2.4.2
+prometheus-client==0.23.1
+psutil==7.1.0
 pycparser==3.0
 pydantic==2.12.5
 pydantic-core==2.41.5
