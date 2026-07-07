@@ -9,9 +9,43 @@ from app.redis import RedisClient, Namespace
 from app.redis.models import OsuClientOAuthToken
 from app.exceptions import RedisLockTimeoutError
 from app.logging import get_logger
+from app.metrics.osu_metrics import (
+    osu_api_requests_total,
+    osu_api_request_duration_seconds,
+    osu_api_errors_total,
+)
 
 MAX_TOKEN_FETCH_RETRIES = 3
 logger = get_logger(__name__)
+
+
+class _OsuAPIMetricsTransport(httpx.AsyncBaseTransport):
+    def __init__(self, transport: httpx.AsyncBaseTransport) -> None:
+        self._transport = transport
+
+    async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+        endpoint = request.url.path
+        start = time.perf_counter()
+
+        try:
+            response = await self._transport.handle_async_request(request)
+            duration = time.perf_counter() - start
+
+            osu_api_requests_total.labels(
+                endpoint=endpoint,
+                status_code=str(response.status_code),
+            ).inc()
+
+            osu_api_request_duration_seconds.labels(endpoint=endpoint).observe(duration)
+
+            return response
+        except Exception as exc:
+            duration = time.perf_counter() - start
+            osu_api_errors_total.labels(
+                endpoint=endpoint,
+                error_type=type(exc).__name__,
+            ).inc()
+            raise
 
 
 class OsuAPIClientBase:
@@ -19,7 +53,11 @@ class OsuAPIClientBase:
         self.rc = rc
         self._oauth = OAuth()
         self._token: OsuClientOAuthToken | None = None
-        self._http_client = httpx.AsyncClient(timeout=httpx.Timeout(10.0, connect=5.0))
+        transport = httpx.AsyncHTTPTransport()
+        self._http_client = httpx.AsyncClient(
+            transport=_OsuAPIMetricsTransport(transport),
+            timeout=httpx.Timeout(10.0, connect=5.0)
+        )
 
     async def get_token(self) -> str:
         async def get_valid_token_from_redis() -> OsuClientOAuthToken | None:
