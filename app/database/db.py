@@ -62,7 +62,7 @@ class PostgresqlDB(CRUD):
             db_pool_checked_in.inc()
 
         @event.listens_for(self.engine.sync_engine.pool, "checkout")
-        def on_checkout(dbapi_connection, connection_record):
+        def on_checkout(dbapi_connection, pid, connection_proxy):
             db_pool_checked_out.inc()
             db_pool_checked_in.dec()
 
