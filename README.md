@@ -148,6 +148,30 @@ python manage.py
 
 ---
 
+## Monitoring
+
+The backend exposes Prometheus-compatible metrics at `/api/v1/metrics`. Enable the full monitoring stack (Prometheus, Grafana, Alertmanager, Loki, Promtail) via the deploy script:
+
+```bash
+# Dev or prod (monitoring enabled by default)
+./deploy.sh up dev
+./deploy.sh up prod
+
+# Disable monitoring if needed
+./deploy.sh up dev disable-monitoring
+```
+
+**Access:**
+- Grafana: http://localhost:3001
+- Prometheus: http://localhost:9090
+- Loki: http://localhost:3100
+
+**Available metrics:** `http_requests_total`, `http_request_duration_seconds`, `db_pool_*`, `db_query_duration_seconds`, `redis_commands_*`, `osu_api_*`, `rate_limit_*`, `daemon_*`, `process_*`, `errors_total`
+
+Every request includes a `request_id` (UUID) injected into all log lines for correlation between metrics and logs.
+
+---
+
 ## Documentation
 
 - [Frontend README](../graveboards-frontend/README.md)
