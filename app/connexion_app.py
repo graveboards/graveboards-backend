@@ -6,7 +6,6 @@ from connexion.resolver import RestyResolver
 from connexion.middleware import MiddlewarePosition
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
-from starlette.routing import Route
 
 from .lifespan import lifespan
 from .patches import OpenAPIURIParserPatched, ParameterValidatorPatched
@@ -66,8 +65,6 @@ def create_connexion_app() -> AsyncApp:
     connexion_app.add_error_handler(Unauthorized, unauthorized)
     connexion_app.add_error_handler(InternalServerError, internal_error)
 
-    connexion_app.router.routes.append(
-        Route("/api/v1/metrics", metrics_endpoint, methods=["GET"])
-    )
+    connexion_app.add_url_rule("/api/v1/metrics", "metrics", metrics_endpoint, methods=["GET"])
 
     return connexion_app
