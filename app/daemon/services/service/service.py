@@ -316,7 +316,7 @@ class Service:
             spec:
                 Object containing task factory, critical flag, and ``RetryPolicy``.
         """
-        daemon_total_failures.labels(service=self._service_name).inc()
+        daemon_jobs_total.labels(service=self._service_name, status="failure").inc()
 
     async def _on_critical_failure(
         self,
@@ -339,7 +339,7 @@ class Service:
             spec:
                 Object containing task factory, critical flag, and ``RetryPolicy``.
         """
-        daemon_critical_failures.labels(service=self._service_name).inc()
+        daemon_jobs_total.labels(service=self._service_name, status="critical").inc()
 
     def _start_task(
         self,
