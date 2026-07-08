@@ -1,6 +1,5 @@
 import json
 import logging
-import time
 
 from app.metrics.request_id import get_request_id
 from .utils import get_alias
@@ -10,8 +9,11 @@ class JSONLogFormatter(logging.Formatter):
     """JSON log formatter for structured logging compatible with Loki/Promtail.
 
     Outputs logs as JSON objects with consistent fields for log aggregation.
-    Each log entry includes: timestamp, level, logger, message, request_id,
-    and any extra fields passed via logger.info(..., extra={...}).
+    Each log entry includes: timestamp, level, logger (short alias), message,
+    request_id, and any extra fields passed via logger.info(..., extra={...}).
+
+    The logger field uses get_alias() to produce short names (e.g. "daemon",
+    "database") consistent with the colored dev output.
 
     Designed for use with Loki/Promtail log aggregation.
     """
@@ -29,7 +31,7 @@ class JSONLogFormatter(logging.Formatter):
         log_data = {
             "timestamp": self.formatTime(record, self.datefmt),
             "level": record.levelname,
-            "logger": record.name,
+            "logger": get_alias(record.name),
             "message": record.getMessage(),
             "request_id": get_request_id() or "",
         }
@@ -40,15 +42,19 @@ class JSONLogFormatter(logging.Formatter):
 
         # Add extra fields (passed via logger.info(..., extra={...}))
         for key, value in record.__dict__.items():
-            if key not in ("asctime", "created", "elapsed", "exc_info", "exc_text",
-                          "filename", "funcName", "levelname", "levelno", "lineno",
-                          "message", "module", "msecs", "msg", "name", "pathname",
-                          "process", "processName", "relativeCreated", "stack_info",
-                          "thread", "threadName", "taskName", "alias", "request_id",
-                          "prefix"):
+            if key not in _RESERVED_KEYS:
                 try:
                     log_data[key] = value
                 except TypeError:
                     log_data[key] = str(value)
 
         return json.dumps(log_data, default=str, ensure_ascii=False)
+
+
+_RESERVED_KEYS = {
+    "asctime", "created", "elapsed", "exc_info", "exc_text",
+    "filename", "funcName", "levelname", "levelno", "lineno",
+    "message", "module", "msecs", "msg", "name", "pathname",
+    "process", "processName", "relativeCreated", "stack_info",
+    "thread", "threadName", "taskName", "alias", "request_id", "prefix",
+}
