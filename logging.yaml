@@ -14,6 +14,11 @@ formatters:
         format: "{asctime} | {levelname:<8} | {alias:<8} | {prefix}{message}"
         datefmt: "%Y-%m-%d %H:%M:%S"
         colored: True
+    json:
+        (): app.logging.JSONLogFormatter
+        style: "{"
+        format: "{asctime} | {levelname:<8} | {alias:<8} | {prefix}{message}"
+        datefmt: "%Y-%m-%d %H:%M:%S"
 
 handlers:
     console:
@@ -52,6 +57,20 @@ handlers:
         class: logging.handlers.RotatingFileHandler
         formatter: standard
         filename: "instance/logs/maintenance.log"
+        maxBytes: 10_000_000
+        backupCount: 3
+        encoding: utf8
+    access_file:
+        class: logging.handlers.RotatingFileHandler
+        formatter: standard
+        filename: "instance/logs/uvicorn.access.log"
+        maxBytes: 10_000_000
+        backupCount: 3
+        encoding: utf8
+    uvicorn_file:
+        class: logging.handlers.RotatingFileHandler
+        formatter: standard
+        filename: "instance/logs/uvicorn.log"
         maxBytes: 10_000_000
         backupCount: 3
         encoding: utf8
@@ -112,6 +131,18 @@ loggers:
     migrate:
         level: INFO
         handlers: [ console, maintenance_file ]
+        propagate: False
+    uvicorn:
+        level: INFO
+        handlers: [console, uvicorn_file]
+        propagate: False
+    uvicorn.error:
+        level: INFO
+        handlers: [console, uvicorn_file]
+        propagate: False
+    uvicorn.access:
+        level: INFO
+        handlers: [console, access_file]
         propagate: False
     root:
         level: WARNING

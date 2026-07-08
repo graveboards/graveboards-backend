@@ -45,7 +45,7 @@ loggers:
         handlers: [console, uvicorn_file]
         propagate: False
     uvicorn.access:
-        level: INFO
+        level: CRITICAL
         handlers: [console, access_file]
         propagate: False
     root:
