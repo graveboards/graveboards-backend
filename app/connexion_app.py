@@ -15,6 +15,8 @@ from .config import SPEC_DIR, DEFAULT_MODULE_NAME, INSTANCE_DIR, LOGS_DIR, ENV, 
 from .enums import Env
 from .metrics.middleware import MetricsMiddleware
 from .metrics.endpoint import metrics_endpoint
+from .middleware.access_log import AccessLogMiddleware
+from .middleware.request_id import RequestIDMiddleware
 
 
 def create_connexion_app() -> AsyncApp:
@@ -37,6 +39,8 @@ def create_connexion_app() -> AsyncApp:
         }
     )
 
+    connexion_app.add_middleware(RequestIDMiddleware, position=MiddlewarePosition.BEFORE_ROUTING)
+    connexion_app.add_middleware(AccessLogMiddleware, position=MiddlewarePosition.BEFORE_ROUTING)
     connexion_app.add_middleware(
         MetricsMiddleware,
         position=MiddlewarePosition.BEFORE_EXCEPTION,
