@@ -1,8 +1,8 @@
-from prometheus_client import Gauge, Histogram
+from prometheus_client import Counter, Gauge, Histogram
 from .registry import REGISTRY
 
 
-http_requests_total = Gauge(
+http_requests_total = Counter(
     "http_requests_total",
     "Total number of HTTP requests.",
     ["method", "endpoint", "status_code"],
