@@ -8,20 +8,18 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 
 from .lifespan import lifespan
+from .metrics.endpoint import metrics_endpoint
+from .metrics.middleware import MetricsMiddleware
+from .observability.context import RequestContextMiddleware
 from .patches import OpenAPIURIParserPatched, ParameterValidatorPatched
 from .spec import load_spec
 from .error_handlers import forbidden, bad_request, unauthorized, internal_error
-from .config import SPEC_DIR, DEFAULT_MODULE_NAME, INSTANCE_DIR, LOGS_DIR, ENV, DISABLE_SECURITY
+from .config import SPEC_DIR, DEFAULT_MODULE_NAME, INSTANCE_DIR, ENV, DISABLE_SECURITY
 from .enums import Env
-from .metrics.middleware import MetricsMiddleware
-from .metrics.endpoint import metrics_endpoint
-from .middleware.access_log import AccessLogMiddleware
-from .middleware.request_id import RequestIDMiddleware
 
 
 def create_connexion_app() -> AsyncApp:
     os.makedirs(INSTANCE_DIR, exist_ok=True)
-    os.makedirs(LOGS_DIR, exist_ok=True)
 
     if DISABLE_SECURITY and ENV is not Env.DEV:
         raise RuntimeError(
@@ -39,8 +37,7 @@ def create_connexion_app() -> AsyncApp:
         }
     )
 
-    connexion_app.add_middleware(RequestIDMiddleware, position=MiddlewarePosition.BEFORE_ROUTING)
-    connexion_app.add_middleware(AccessLogMiddleware, position=MiddlewarePosition.BEFORE_ROUTING)
+    connexion_app.add_middleware(RequestContextMiddleware, position=MiddlewarePosition.BEFORE_ROUTING)
     connexion_app.add_middleware(
         MetricsMiddleware,
         position=MiddlewarePosition.BEFORE_EXCEPTION,

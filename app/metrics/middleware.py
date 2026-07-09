@@ -1,11 +1,14 @@
 import time
 
+import structlog
 from starlette.requests import Request
 from starlette.types import ASGIApp, Scope, Receive, Send
 
-from .http_metrics import http_requests_total, http_request_duration_seconds, http_requests_in_flight
-from .request_id import generate_request_id, set_request_id
 from .error_metrics import errors_total
+from .http_metrics import http_requests_total, http_request_duration_seconds, http_requests_in_flight
+
+
+logger = structlog.get_logger("app.access")
 
 
 def _get_endpoint(scope: Scope) -> str:
@@ -13,11 +16,6 @@ def _get_endpoint(scope: Scope) -> str:
     if route is not None:
         return getattr(route, "path", scope.get("path", "/"))
     return scope.get("path", "/")
-
-
-def clear_request_id() -> None:
-    from .request_id import request_id_var
-    request_id_var.set(None)
 
 
 class MetricsMiddleware:
@@ -28,9 +26,6 @@ class MetricsMiddleware:
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
-
-        request_id = generate_request_id()
-        set_request_id(request_id)
 
         request = Request(scope, receive)
         method = request.method
@@ -66,10 +61,7 @@ class MetricsMiddleware:
                 status_code=str(status_code),
             ).inc()
 
-            clear_request_id()
             raise
-
-        clear_request_id()
 
         status_code = status_code_ref["value"]
         if status_code is None:
@@ -90,3 +82,16 @@ class MetricsMiddleware:
         ).observe(duration)
 
         http_requests_in_flight.labels(method=method, endpoint=endpoint).dec()
+
+        client_host = request.client.host if request.client else "-"
+        client_port = request.client.port if request.client else "-"
+
+        logger.info(
+            "%s %s %s:%s %d %.3fs",
+            method,
+            request.url.path,
+            client_host,
+            client_port,
+            status_code,
+            duration,
+        )
