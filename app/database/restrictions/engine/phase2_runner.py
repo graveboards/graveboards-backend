@@ -26,6 +26,9 @@ class Phase2Runner:
             if not restriction.is_active:
                 continue
 
+            if not self._check_version(restriction):
+                continue
+
             tier = self._get_tier(restriction.restriction_type)
             if tier != 3:
                 continue
@@ -68,6 +71,14 @@ class Phase2Runner:
         from app.database.restrictions.registry import get_validator_tier
 
         return get_validator_tier(restriction_type) or 3
+
+    def _check_version(self, restriction: QueueRestriction) -> bool:
+        from app.database.restrictions.registry import get_validator
+
+        validator_cls = get_validator(restriction.restriction_type)
+        if validator_cls is None:
+            return True
+        return restriction.version in validator_cls.supported_versions
 
     def _build_node(self, restriction: QueueRestriction) -> RuleNode:
         rule_data = {
