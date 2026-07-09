@@ -1,12 +1,31 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
+from connexion.exceptions import Forbidden
+
 from app.database.restrictions.validators.rate_limit import (
     RateLimitRestriction,
     _truncate_to_period,
     _period_duration_seconds,
 )
-from app.database.restrictions.registry import get_validator, RESTRICTION_REGISTRY
+from app.database.restrictions.registry import (
+    get_validator,
+    get_validator_tier,
+    get_supported_versions,
+    RESTRICTION_REGISTRY,
+    RESTRICTION_TIERS,
+)
+from app.database.restrictions.context import ExecutionContext
+
+
+def _make_context(queue_id: int = 1, user_id: int = 12345678, config: dict | None = None):
+    return ExecutionContext(
+        queue_id=queue_id,
+        user_id=user_id,
+        db=AsyncMock(),
+        redis=AsyncMock(),
+        config=config or {},
+    )
 
 
 class TestTruncateToPeriod:
@@ -90,8 +109,6 @@ class TestRateLimitRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
     async def test_passes_under_limit(self):
-        from datetime import datetime, timezone
-
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
         mock_redis.incr = AsyncMock(return_value=1)
@@ -99,8 +116,7 @@ class TestRateLimitRestriction:
 
         validator = RateLimitRestriction()
         config = {"max_requests": 2, "period": "week", "scope": "user"}
-
-        await validator.check(
+        context = ExecutionContext(
             queue_id=1,
             user_id=12345678,
             db=mock_db,
@@ -108,29 +124,30 @@ class TestRateLimitRestriction:
             config=config,
         )
 
+        await validator.check(context)
+
         mock_redis.incr.assert_called_once()
         mock_redis.expire.assert_called_once()
 
     @pytest.mark.unit
     @pytest.mark.asyncio
     async def test_raises_when_over_limit(self):
-        from datetime import datetime, timezone
-
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
         mock_redis.incr = AsyncMock(return_value=3)
 
         validator = RateLimitRestriction()
         config = {"max_requests": 2, "period": "week", "scope": "user"}
+        context = ExecutionContext(
+            queue_id=1,
+            user_id=12345678,
+            db=mock_db,
+            redis=mock_redis,
+            config=config,
+        )
 
         with pytest.raises(Exception) as exc_info:
-            await validator.check(
-                queue_id=1,
-                user_id=12345678,
-                db=mock_db,
-                redis=mock_redis,
-                config=config,
-            )
+            await validator.check(context)
 
         assert "rate limit" in str(exc_info.value.detail).lower()
 
@@ -147,14 +164,15 @@ class TestRateLimitRestriction:
             "scope": "user",
             "target": [99999999],
         }
-
-        await validator.check(
+        context = ExecutionContext(
             queue_id=1,
             user_id=12345678,
             db=mock_db,
             redis=mock_redis,
             config=config,
         )
+
+        await validator.check(context)
 
         mock_redis.incr.assert_not_called()
 
@@ -166,8 +184,7 @@ class TestRateLimitRestriction:
 
         validator = RateLimitRestriction()
         config = {"max_requests": 1, "period": "week", "scope": "beatmapset_type"}
-
-        await validator.check(
+        context = ExecutionContext(
             queue_id=1,
             user_id=12345678,
             db=mock_db,
@@ -175,7 +192,40 @@ class TestRateLimitRestriction:
             config=config,
         )
 
+        await validator.check(context)
+
         mock_redis.incr.assert_not_called()
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_raises_forbidden_on_violation(self):
+        mock_db = AsyncMock()
+        mock_redis = AsyncMock()
+        mock_redis.incr = AsyncMock(return_value=3)
+
+        validator = RateLimitRestriction()
+        config = {"max_requests": 2, "period": "week", "scope": "user"}
+        context = ExecutionContext(
+            queue_id=1,
+            user_id=12345678,
+            db=mock_db,
+            redis=mock_redis,
+            config=config,
+        )
+
+        with pytest.raises(Forbidden):
+            await validator.check(context)
+
+    @pytest.mark.unit
+    def test_config_schema_is_set(self):
+        from app.database.schemas.restriction import RateLimitConfig
+
+        assert RateLimitRestriction.config_schema is RateLimitConfig
+
+    @pytest.mark.unit
+    def test_supported_versions(self):
+        assert RateLimitRestriction.restriction_type == "rate_limit"
+        assert "1.0" in RateLimitRestriction.supported_versions
 
 
 class TestRegistry:
@@ -210,3 +260,35 @@ class TestRegistry:
         assert "rate_limit" in RESTRICTION_REGISTRY
         assert "cooldown" in RESTRICTION_REGISTRY
         assert "blacklist" in RESTRICTION_REGISTRY
+
+    @pytest.mark.unit
+    def test_tier_assignment(self):
+        assert RESTRICTION_TIERS.get("rate_limit") == 1
+        assert RESTRICTION_TIERS.get("cooldown") == 1
+        assert RESTRICTION_TIERS.get("blacklist") == 1
+
+    @pytest.mark.unit
+    def test_get_validators_for_tier(self):
+        from app.database.restrictions.registry import get_validators_for_tier
+
+        tier1 = get_validators_for_tier(1)
+        assert "rate_limit" in tier1
+        assert "cooldown" in tier1
+        assert "blacklist" in tier1
+
+    @pytest.mark.unit
+    def test_get_validator_tier(self):
+        assert get_validator_tier("rate_limit") == 1
+        assert get_validator_tier("cooldown") == 1
+        assert get_validator_tier("blacklist") == 1
+        assert get_validator_tier("nonexistent") is None
+
+    @pytest.mark.unit
+    def test_get_supported_versions(self):
+        versions = get_supported_versions("rate_limit")
+        assert versions is not None
+        assert "1.0" in versions
+
+    @pytest.mark.unit
+    def test_get_supported_versions_unknown_type(self):
+        assert get_supported_versions("nonexistent") is None
