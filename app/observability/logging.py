@@ -90,7 +90,6 @@ def _configure_stdlib_bridge(json_format: bool) -> None:
         foreign_pre_chain=[
             structlog.stdlib.ExtraAdder(),
         ],
-        allow_exc_info=True,
     )
 
     handler = logging.StreamHandler(sys.stdout)
