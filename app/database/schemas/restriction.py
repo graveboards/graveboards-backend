@@ -245,6 +245,7 @@ class RestrictionSchema(BaseModel, BaseModelExtra):
     restriction_type: RestrictionType
     config: dict[str, Any] = {}
     is_active: Optional[bool] = None
+    version: str = "1.0"
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime]
 
@@ -252,6 +253,7 @@ class RestrictionSchema(BaseModel, BaseModelExtra):
 class RestrictionCreateSchema(BaseModel):
     restriction_type: RestrictionType
     config: dict[str, Any]
+    version: str = "1.0"
 
     @field_validator("config")
     @classmethod
@@ -298,3 +300,4 @@ class RestrictionUpdateSchema(BaseModel):
     id: Optional[int] = None
     is_active: Optional[bool] = None
     config: Optional[dict[str, Any]] = None
+    version: Optional[str] = None
