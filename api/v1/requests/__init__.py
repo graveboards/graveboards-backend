@@ -12,11 +12,26 @@ from app.security import role_authorization, ownership_authorization
 from app.security.overrides import queue_owner_override
 from app.database.enums import RoleName
 from app.redis import Namespace, ChannelName, RedisClient
-from app.redis.models import QueueRequestHandlerTask
+from app.redis.models import QueueRequestHandlerTask, QueueRequestValidationTask
 from app.spec import get_include_schema
-from app.database.restrictions.registry import get_validator
-from app.database.crud.restrictions import RestrictionCRUD
+from app.database.restrictions.context import ExecutionContext
+from app.database.restrictions.engine.phase1_runner import Phase1Runner
+from app.database.restrictions.exceptions import RestrictionViolationError
+from app.database.restrictions.validators.metadata import (
+    SongIdentityProvider,
+    BeatmapStatsProvider,
+    CreatorIdentityProvider,
+    DurationProvider,
+)
 from . import tasks
+
+
+_METADATA_PROVIDERS = {
+    "song_identity": SongIdentityProvider,
+    "beatmap_stats": BeatmapStatsProvider,
+    "creator_identity": CreatorIdentityProvider,
+    "duration": DurationProvider,
+}
 
 
 @ownership_authorization()
@@ -89,13 +104,19 @@ async def post(body: dict, **kwargs):
     if await db.get(Request, beatmapset_id=beatmapset_id, queue_id=queue_id):
         raise Conflict(f"The request with beatmapset ID '{beatmapset_id}' already exists in queue '{queue.name}'")
 
-    await _check_queue_restrictions(queue_id, user_id, db, rc)
-
     async with OsuAPIClient(rc) as oac:
         beatmapset_dict = await oac.get_beatmapset(beatmapset_id)
 
     if (status := beatmapset_dict["status"]) in {"ranked", "approved", "qualified", "loved"}:
         raise BadRequest(f"The beatmapset is already {status} on osu!")
+
+    await _check_queue_restrictions_phase1(
+        queue_id=queue_id,
+        user_id=user_id,
+        beatmapset=beatmapset_dict,
+        db=db,
+        rc=rc,
+    )
 
     task = QueueRequestHandlerTask(**body)
     task_hash_name = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(task.hashed_id)
@@ -115,27 +136,30 @@ async def post(body: dict, **kwargs):
     return {"message": "Request submitted and queued for processing!", "task_id": task.hashed_id}, 202, {"Content-Type": "application/json"}
 
 
-async def _check_queue_restrictions(
-    queue_id: int, user_id: int, db: PostgresqlDB, rc: RedisClient
+async def _check_queue_restrictions_phase1(
+    queue_id: int,
+    user_id: int,
+    beatmapset: dict,
+    db: PostgresqlDB,
+    rc: RedisClient,
 ) -> None:
+    from app.database.crud.restrictions import RestrictionCRUD
+
     restriction_crud = RestrictionCRUD()
     async with db.session() as session:
         restrictions = await restriction_crud.get_restrictions(queue_id, only_active=True, session=session)
 
-    for restriction in restrictions:
-        validator_cls = get_validator(restriction.restriction_type)
+    context = ExecutionContext(
+        queue_id=queue_id,
+        user_id=user_id,
+        beatmapset=beatmapset,
+        db=db,
+        redis=rc,
+        metadata_providers=_METADATA_PROVIDERS,
+    )
 
-        if validator_cls is None:
-            continue
-
-        validator = validator_cls()
-        await validator.check(
-            queue_id=queue_id,
-            user_id=user_id,
-            db=db,
-            redis=rc,
-            config=restriction.config,
-        )
+    runner = Phase1Runner()
+    await runner.run(restrictions, context)
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override, override_kwargs={"from_request": True})
