@@ -86,11 +86,5 @@ class MetricsMiddleware:
         client_port = request.client.port if request.client else "-"
 
         logger.info(
-            "%s %s %s:%s %d %.3fs",
-            method,
-            request.url.path,
-            client_host,
-            client_port,
-            status_code,
-            duration,
+            f"{method} {request.url.path} {client_host}:{client_port} {status_code} {duration:.3f}s"
         )
