@@ -23,6 +23,8 @@ from app.database.restrictions.validators.beatmap.video import VideoRestriction
 from app.database.restrictions.validators.beatmap.tags import TagsRestriction
 from app.database.restrictions.validators.beatmap.length import LengthRestriction
 from app.database.restrictions.validators.beatmap.combinations import CombinationRestriction
+from app.database.restrictions.validators.database.never_ranked import NeverRankedRestriction
+from app.database.restrictions.validators.database.unique_artist_title import UniqueArtistTitleRestriction
 
 
 TIER_1_VALIDATORS: dict[str, type[RestrictionBase]] = {
@@ -53,9 +55,16 @@ TIER_2_VALIDATORS: dict[str, type[RestrictionBase]] = {
 }
 
 
+TIER_3_VALIDATORS: dict[str, type[RestrictionBase]] = {
+    NeverRankedRestriction.restriction_type: NeverRankedRestriction,
+    UniqueArtistTitleRestriction.restriction_type: UniqueArtistTitleRestriction,
+}
+
+
 RESTRICTION_REGISTRY: dict[str, type[RestrictionBase]] = {
     **TIER_1_VALIDATORS,
     **TIER_2_VALIDATORS,
+    **TIER_3_VALIDATORS,
 }
 
 
@@ -80,6 +89,8 @@ RESTRICTION_TIERS: dict[str, int] = {
     "beatmap_tags": 2,
     "beatmap_length": 2,
     "beatmap_combination": 2,
+    "never_ranked": 3,
+    "unique_artist_title": 3,
 }
 
 

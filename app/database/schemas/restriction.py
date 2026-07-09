@@ -16,6 +16,7 @@ RestrictionType = Literal[
     "beatmap_language", "beatmap_mode", "beatmap_difficulty_count",
     "beatmap_storyboard", "beatmap_video", "beatmap_tags",
     "beatmap_length", "composite",
+    "never_ranked", "unique_artist_title",
 ]
 RestrictionScope = Literal[
     "user",
@@ -207,6 +208,16 @@ class CompositeConfig(BaseModel):
         return v
 
 
+class NeverRankedConfig(BaseModel):
+    ruleset: Literal["osu", "taiko", "fruits", "mania"] = "osu"
+    normalize_versions: bool = True
+
+
+class UniqueArtistTitleConfig(BaseModel):
+    ruleset: Literal["osu", "taiko", "fruits", "mania"] = "osu"
+    normalize_versions: bool = True
+
+
 # ── Union types ─────────────────────────────────────────────────
 
 
@@ -218,8 +229,9 @@ Tier2Config = (
     | StoryboardConfig | VideoConfig | TagsConfig | LengthConfig
     | CompositeConfig
 )
+Tier3Config = NeverRankedConfig | UniqueArtistTitleConfig
 
-RestrictionConfig = Tier1Config | Tier2Config
+RestrictionConfig = Tier1Config | Tier2Config | Tier3Config
 
 
 # ── ORM / API schemas ───────────────────────────────────────────
@@ -271,6 +283,8 @@ class RestrictionCreateSchema(BaseModel):
             "beatmap_tags": TagsConfig,
             "beatmap_length": LengthConfig,
             "composite": CompositeConfig,
+            "never_ranked": NeverRankedConfig,
+            "unique_artist_title": UniqueArtistTitleConfig,
         }
 
         schema_cls = _schema_map.get(restriction_type)
