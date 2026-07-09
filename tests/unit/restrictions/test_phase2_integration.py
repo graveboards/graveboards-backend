@@ -11,6 +11,7 @@ def _make_mock_restriction(restriction_type, config, is_active=True):
     r.restriction_type = restriction_type
     r.config = config
     r.is_active = is_active
+    r.version = "1.0"
     return r
 
 

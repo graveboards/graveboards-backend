@@ -12,6 +12,7 @@ def _make_mock_restriction(restriction_type, config, is_active=True):
     r.restriction_type = restriction_type
     r.config = config
     r.is_active = is_active
+    r.version = "1.0"
     return r
 
 
@@ -69,6 +70,54 @@ class TestPhase1Runner:
 
         with pytest.raises(RestrictionViolationError):
             await runner.run(restrictions, context)
+
+
+class TestVersionChecking:
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_skips_unsupported_version(self):
+        runner = Phase1Runner()
+        restriction = _make_mock_restriction(
+            "beatmap_duration",
+            {"max_seconds": 100, "logic": "max"},
+            is_active=True,
+        )
+        restriction.version = "99.0"
+
+        context = ExecutionContext(
+            queue_id=1,
+            user_id=12345678,
+            beatmapset=MagicMock(),
+            beatmaps=[MagicMock(total_length=150, version="Normal")],
+            config={},
+            db=AsyncMock(),
+            redis=AsyncMock(),
+        )
+
+        await runner.run([restriction], context)
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_runs_supported_version(self):
+        runner = Phase1Runner()
+        restriction = _make_mock_restriction(
+            "beatmap_duration",
+            {"max_seconds": 200, "logic": "max"},
+            is_active=True,
+        )
+        restriction.version = "1.0"
+
+        context = ExecutionContext(
+            queue_id=1,
+            user_id=12345678,
+            beatmapset=MagicMock(),
+            beatmaps=[MagicMock(total_length=150, version="Normal")],
+            config={},
+            db=AsyncMock(),
+            redis=AsyncMock(),
+        )
+
+        await runner.run([restriction], context)
 
 
 class TestEndToEndComposite:
