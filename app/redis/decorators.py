@@ -9,7 +9,7 @@ from app.logging import get_logger
 from app.utils import aware_utcnow
 from .rc import RedisClient
 from .enums import Namespace
-from app.metrics.rate_limit_metrics import (
+from app.observability.metrics.rate_limit import (
     rate_limit_attempts_total,
     rate_limit_retries_total,
 )

@@ -11,7 +11,7 @@ from app.config import REDIS_CONFIGURATION
 from app.exceptions import RedisLockTimeoutError
 from app.logging import get_logger
 from .constants import LOCK_EXPIRY, LOCK_ACQUISITION_RETRY_INTERVAL, LOCK_ACQUISITION_TIMEOUT
-from app.metrics.redis_metrics import (
+from app.observability.metrics.redis import (
     redis_commands_total,
     redis_commands_duration_seconds,
     redis_cache_hits_total,

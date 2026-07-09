@@ -2,7 +2,7 @@ from connexion.problem import problem
 from connexion.exceptions import Forbidden, BadRequestProblem, Unauthorized, InternalServerError
 from connexion.lifecycle import ConnexionRequest, ConnexionResponse
 
-from app.metrics.error_metrics import errors_total
+from app.observability.metrics.error import errors_total
 
 
 def _track_error(request: ConnexionRequest, status_code: int, error_type: str) -> None:
@@ -14,7 +14,6 @@ def _track_error(request: ConnexionRequest, status_code: int, error_type: str) -
     errors_total.labels(
         error_type=error_type,
         endpoint=endpoint,
-        status_code=str(status_code),
     ).inc()
 
 

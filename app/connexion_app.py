@@ -8,8 +8,8 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 
 from .lifespan import lifespan
-from .metrics.endpoint import metrics_endpoint
-from .metrics.middleware import MetricsMiddleware
+from .observability.metrics.endpoint import metrics_endpoint
+from .observability.metrics.middleware import MetricsMiddleware
 from .observability.context import RequestContextMiddleware
 from .patches import OpenAPIURIParserPatched, ParameterValidatorPatched
 from .spec import load_spec
@@ -66,6 +66,6 @@ def create_connexion_app() -> AsyncApp:
     connexion_app.add_error_handler(Unauthorized, unauthorized)
     connexion_app.add_error_handler(InternalServerError, internal_error)
 
-    connexion_app.add_url_rule("/api/v1/metrics", "metrics", metrics_endpoint, methods=["GET"])
+    connexion_app.add_url_rule("/metrics", "metrics", metrics_endpoint, methods=["GET"])
 
     return connexion_app

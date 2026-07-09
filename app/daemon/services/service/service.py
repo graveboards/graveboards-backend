@@ -14,7 +14,7 @@ from .task import (
     TaskErrorHook,
     TaskFinishHook
 )
-from app.metrics.daemon_metrics import (
+from app.observability.metrics.daemon import (
     daemon_service_running,
     daemon_jobs_total,
     daemon_job_duration_seconds,

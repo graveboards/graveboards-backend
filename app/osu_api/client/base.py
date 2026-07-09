@@ -9,7 +9,7 @@ from app.redis import RedisClient, Namespace
 from app.redis.models import OsuClientOAuthToken
 from app.exceptions import RedisLockTimeoutError
 from app.logging import get_logger
-from app.metrics.osu_metrics import (
+from app.observability.metrics.osu import (
     osu_api_requests_total,
     osu_api_request_duration_seconds,
     osu_api_errors_total,

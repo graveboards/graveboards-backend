@@ -9,7 +9,7 @@ from app.database import PostgresqlDB
 from app.logging import Logger
 from app.redis import RedisClient
 from app.utils import aware_utcnow
-from app.metrics.daemon_metrics import daemon_active_jobs, daemon_jobs_total, daemon_job_duration_seconds, daemon_last_job_timestamp
+from app.observability.metrics.daemon import daemon_active_jobs, daemon_jobs_total, daemon_job_duration_seconds, daemon_last_job_timestamp
 from .service import Service
 from .job import JobLoadInstruction
 

@@ -12,7 +12,7 @@ from app.config import POSTGRESQL_CONFIGURATION
 from app.logging import get_logger
 from .crud import CRUD
 from . import events
-from app.metrics.db_metrics import (
+from app.observability.metrics.db import (
     db_pool_size,
     db_pool_checked_out,
     db_pool_checked_in,
@@ -69,6 +69,7 @@ class PostgresqlDB(CRUD):
         @event.listens_for(self.engine.sync_engine.pool, "connect")
         def on_connect_pool(dbapi_connection, connection_record):
             db_pool_size.set(self.engine.pool.size())
+            db_pool_overflow.set(max(0, self.engine.sync_engine.pool.overflow()))
 
         db_pool_size.set(self.engine.pool.size())
 
