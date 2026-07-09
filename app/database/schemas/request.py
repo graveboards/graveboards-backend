@@ -26,6 +26,7 @@ class RequestSchema(BaseModel, BaseModelExtra):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     status: Optional[RequestStatusIntLiteral] = None
+    rejection_reason: Optional[str] = None
 
     beatmapset_snapshot: Optional["BeatmapsetSnapshotSchema"] = None
     user_profile: Optional["ProfileSchema"] = None

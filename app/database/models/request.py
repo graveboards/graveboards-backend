@@ -27,6 +27,7 @@ class Request(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=aware_utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=aware_utcnow, onupdate=aware_utcnow)
     status: Mapped[int] = mapped_column(Integer, default=0)
+    rejection_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Relationships
     beatmapset_snapshot: Mapped["BeatmapsetSnapshot"] = relationship(
