@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 from datetime import datetime, timezone
 
 from connexion.exceptions import Forbidden
 
-from app.database import PostgresqlDB
 from app.database.models import Queue
-from app.redis import RedisClient, Namespace
+from app.redis import Namespace
 from app.database.restrictions.base import RestrictionBase
+from app.database.restrictions.context import ExecutionContext
+from app.database.schemas.restriction import CooldownConfig
 
 
 def _is_target_match(config: dict, user_id: int) -> bool:
@@ -17,29 +20,24 @@ def _is_target_match(config: dict, user_id: int) -> bool:
 
 class CooldownRestriction(RestrictionBase):
     restriction_type = "cooldown"
+    config_schema = CooldownConfig
 
-    async def check(
-        self,
-        queue_id: int,
-        user_id: int,
-        db: PostgresqlDB,
-        redis: RedisClient,
-        config: dict,
-    ) -> None:
+    async def _check(self, context: ExecutionContext) -> None:
+        config = context.config
         cooldown_seconds = config.get("cooldown_seconds")
         scope = config.get("scope", "user")
 
-        if not _is_target_match(config, user_id):
+        if not _is_target_match(config, context.user_id):
             return
 
         if scope != "user":
             return
 
         redis_key = Namespace.QUEUE_RESTRICTION_COOLDOWN.hash_name(
-            f"{queue_id}:{user_id}"
+            f"{context.queue_id}:{context.user_id}"
         )
 
-        last_request_ts = await redis.get(redis_key)
+        last_request_ts = await context.redis.get(redis_key)
 
         if last_request_ts is not None:
             last_request_time = datetime.fromtimestamp(
@@ -52,8 +50,8 @@ class CooldownRestriction(RestrictionBase):
                 remaining_hours = int(remaining // 3600)
                 remaining_minutes = int((remaining % 3600) // 60)
 
-                queue = await db.get(Queue, id=queue_id)
-                queue_name = queue.name if queue else f"Queue {queue_id}"
+                queue = await context.db.get(Queue, id=context.queue_id)
+                queue_name = queue.name if queue else f"Queue {context.queue_id}"
 
                 time_parts = []
                 if remaining_hours > 0:
@@ -64,10 +62,10 @@ class CooldownRestriction(RestrictionBase):
                 raise Forbidden(
                     detail=(
                         f"You must wait before submitting another request to "
-                        f"'{queue_name}' (queue {queue_id}): "
+                        f"'{queue_name}' (queue {context.queue_id}): "
                         f"{remaining:.0f}s remaining ({', '.join(time_parts)})."
                     )
                 )
 
-        await redis.set(redis_key, int(datetime.now(timezone.utc).timestamp()))
-        await redis.expire(redis_key, cooldown_seconds)
+        await context.redis.set(redis_key, int(datetime.now(timezone.utc).timestamp()))
+        await context.redis.expire(redis_key, cooldown_seconds)
