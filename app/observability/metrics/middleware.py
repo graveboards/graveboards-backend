@@ -4,11 +4,11 @@ import structlog
 from starlette.requests import Request
 from starlette.types import ASGIApp, Scope, Receive, Send
 
+from app.observability.logging import get_logger
 from .error import errors_total
 from .http import http_requests_total, http_request_duration_seconds, http_requests_in_flight
 
-
-logger = structlog.get_logger("app.access")
+logger = get_logger("app.access")
 
 
 def _get_endpoint(scope: Scope) -> str:
