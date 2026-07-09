@@ -81,7 +81,6 @@ def _build_final_renderer(json_format: bool):
 
     return ConsoleRenderer(
         colors=True,
-        exception_formatter=structlog.dev.TracebackRenderer(),
     )
 
 
