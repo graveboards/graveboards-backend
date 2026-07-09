@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import inspect
-from functools import wraps
-from typing import Callable, Awaitable, Any, AsyncIterator, ParamSpec, TypeVar, AsyncContextManager, Protocol
 from contextvars import ContextVar
+from functools import wraps
+from typing import Any, AsyncContextManager, AsyncIterator, Awaitable, Callable, ParamSpec, Protocol, TypeVar
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
