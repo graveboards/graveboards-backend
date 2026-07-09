@@ -8,7 +8,6 @@ import structlog
 from structlog.contextvars import bind_contextvars, clear_contextvars
 from structlog.dev import ConsoleRenderer
 from structlog.processors import (
-    add_exc_info,
     add_log_level,
     StackInfoRenderer,
     TimeStamper,
@@ -53,7 +52,6 @@ def setup_logging(
             structlog.contextvars.merge_contextvars,
             structlog.stdlib.add_logger_name,
             add_log_level,
-            add_exc_info,
             StackInfoRenderer(),
             TimeStamper(fmt="iso", utc=False),
             structlog.processors.UnicodeDecoder(),
