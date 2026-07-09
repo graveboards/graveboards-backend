@@ -11,6 +11,7 @@ class ChannelName(StrEnum):
     SCORE_FETCHER_TASKS = "score_fetcher_tasks"
     PROFILE_FETCHER_TASKS = "profile_fetcher_tasks"
     QUEUE_REQUEST_HANDLER_TASKS = "queue_request_handler_tasks"
+    QUEUE_REQUEST_VALIDATION_TASKS = "queue_request_validation_tasks"
 
 
 class Namespace(StrEnum):
