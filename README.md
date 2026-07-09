@@ -150,7 +150,7 @@ python manage.py
 
 ## Monitoring
 
-The backend exposes Prometheus-compatible metrics at `/api/v1/metrics`. Enable the full monitoring stack (Prometheus, Grafana, Alertmanager, Loki, Promtail) via the deploy script:
+The backend exposes Prometheus-compatible metrics at `/metrics` (internal only). Enable the full monitoring stack (Prometheus, Grafana, Alertmanager, Loki, Promtail) via the deploy script:
 
 ```bash
 # Dev or prod (monitoring enabled by default)
@@ -158,17 +158,35 @@ The backend exposes Prometheus-compatible metrics at `/api/v1/metrics`. Enable t
 ./deploy.sh up prod
 
 # Disable monitoring if needed
-./deploy.sh up dev disable-monitoring
+./deploy.sh up dev --no-monitoring
 ```
 
-**Access:**
+**Access (dev):**
+
+Publish monitoring ports to the host:
+
+```bash
+./deploy.sh up dev --monitoring-ports
+```
+
 - Grafana: http://localhost:3001
 - Prometheus: http://localhost:9090
 - Loki: http://localhost:3100
 
+**Access (prod):**
+
+Only Grafana is publicly reachable via Traefik:
+
+```bash
+./deploy.sh up prod --traefik
+```
+
+- Grafana: https://grafana.graveboards.net (Grafana login required)
+- Prometheus, Loki, Alertmanager: internal-only (no host ports)
+
 **Available metrics:** `http_requests_total`, `http_request_duration_seconds`, `db_pool_*`, `db_query_duration_seconds`, `redis_commands_*`, `osu_api_*`, `rate_limit_*`, `daemon_*`, `process_*`, `errors_total`
 
-Every request includes a `request_id` (UUID) injected into all log lines for correlation between metrics and logs.
+Every request includes a `request_id` (UUID) injected into all log lines via `structlog.contextvars` for correlation with Loki logs.
 
 ---
 
