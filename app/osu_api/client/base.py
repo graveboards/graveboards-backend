@@ -19,12 +19,17 @@ MAX_TOKEN_FETCH_RETRIES = 3
 logger = get_logger(__name__)
 
 
+def _get_osu_endpoint(path: str) -> str:
+    parts = path.strip("/").split("/")
+    return "/".join("{id}" if p.isdigit() else p for p in parts)
+
+
 class _OsuAPIMetricsTransport(httpx.AsyncBaseTransport):
     def __init__(self, transport: httpx.AsyncBaseTransport) -> None:
         self._transport = transport
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
-        endpoint = request.url.path
+        endpoint = _get_osu_endpoint(request.url.path)
         start = time.perf_counter()
 
         try:
