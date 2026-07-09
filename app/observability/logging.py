@@ -36,6 +36,30 @@ def _get_level_overrides() -> dict[str, int]:
     return overrides
 
 
+def _drop_color_message(logger, method_name, event_dict):
+    """Discard uvicorn's ``color_message`` extra so it never leaks into output."""
+    event_dict.pop("color_message", None)
+    return event_dict
+
+
+def _build_shared_processors() -> list:
+    """Processors applied to *both* native structlog and foreign stdlib records.
+
+    Foreign records (uvicorn, sqlalchemy) run these via the ProcessorFormatter's
+    ``foreign_pre_chain``; native records run them in ``structlog.configure``.
+    Keeping a single list is what makes every log line render identically.
+    """
+    return [
+        structlog.contextvars.merge_contextvars,
+        structlog.stdlib.add_logger_name,
+        add_log_level,
+        _drop_color_message,
+        StackInfoRenderer(),
+        TimeStamper(fmt="iso", utc=False),
+        structlog.processors.UnicodeDecoder(),
+    ]
+
+
 def setup_logging(
     enabled_loggers=None,
     disabled_loggers=None,
@@ -46,16 +70,14 @@ def setup_logging(
     level = logging.DEBUG if DEBUG else logging.INFO
     json_format = _is_json_format()
     level_overrides = {**_get_level_overrides(), **(level_overrides or {})}
+    shared_processors = _build_shared_processors()
 
     structlog.configure(
         processors=[
-            structlog.contextvars.merge_contextvars,
-            structlog.stdlib.add_logger_name,
-            add_log_level,
-            StackInfoRenderer(),
-            TimeStamper(fmt="iso", utc=False),
-            structlog.processors.UnicodeDecoder(),
-            _build_final_renderer(json_format),
+            *shared_processors,
+            # Hand the event dict off to the stdlib ProcessorFormatter instead of
+            # rendering here, so native and foreign records share one renderer.
+            ProcessorFormatter.wrap_for_formatter,
         ],
         context_class=dict,
         logger_factory=structlog.stdlib.LoggerFactory(),
@@ -69,7 +91,7 @@ def setup_logging(
     logging.getLogger("app").setLevel(level)
     logging.getLogger("root").setLevel(logging.WARNING)
 
-    _configure_stdlib_bridge(json_format)
+    _configure_stdlib_bridge(json_format, shared_processors)
 
 
 def _build_final_renderer(json_format: bool):
@@ -84,12 +106,17 @@ def _build_final_renderer(json_format: bool):
     )
 
 
-def _configure_stdlib_bridge(json_format: bool) -> None:
+def _configure_stdlib_bridge(json_format: bool, shared_processors: list) -> None:
     formatter = ProcessorFormatter(
-        processor=_build_final_renderer(json_format),
-        foreign_pre_chain=[
-            structlog.stdlib.ExtraAdder(),
+        # Runs on every record after the pre-chain; strips ProcessorFormatter's
+        # internal keys, then renders.
+        processors=[
+            ProcessorFormatter.remove_processors_meta,
+            _build_final_renderer(json_format),
         ],
+        # Runs only on foreign (non-structlog) records to give them the same
+        # timestamp/level/logger-name keys native records already carry.
+        foreign_pre_chain=shared_processors,
     )
 
     handler = logging.StreamHandler(sys.stdout)

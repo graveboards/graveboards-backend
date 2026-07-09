@@ -6,14 +6,15 @@ from connexion.middleware import ConnexionMiddleware
 from .redis import RedisClient
 from .database import PostgresqlDB
 from .config import CONFIG, get_security_enabled
-from .logging import setup_logging, get_logger
+from .logging import get_logger
 from .daemon import Daemon
 from .bootstrap import SetupRunner
 
 
 @asynccontextmanager
 async def lifespan(app: ConnexionMiddleware):
-    setup_logging()
+    # setup_logging() runs earlier, in the app factory (create_connexion_app),
+    # so logging is configured before uvicorn emits its first startup lines.
     logger = get_logger(__name__)
     logger.info("Start of app lifespan")
 

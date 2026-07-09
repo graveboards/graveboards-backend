@@ -8,6 +8,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 
 from .lifespan import lifespan
+from .logging import setup_logging
 from .observability.metrics.endpoint import metrics_endpoint
 from .observability.metrics.middleware import MetricsMiddleware
 from .observability.context import RequestContextMiddleware
@@ -19,6 +20,11 @@ from .enums import Env
 
 
 def create_connexion_app() -> AsyncApp:
+    # Configure logging here, before uvicorn's config.load() returns and it emits
+    # its first startup lines ("Started server process", etc.), so those render
+    # through our handlers too rather than uvicorn's stock format.
+    setup_logging()
+
     os.makedirs(INSTANCE_DIR, exist_ok=True)
 
     if DISABLE_SECURITY and ENV is not Env.DEV:
