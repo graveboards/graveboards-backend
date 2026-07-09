@@ -4,7 +4,7 @@ from app.redis import RedisClient
 from app.database import PostgresqlDB
 from app.logging import get_logger, Logger
 from .supervisor import ServiceSupervisor
-from .services import ProfileFetcher, QueueRequestHandler, ScoreFetcher
+from .services import ProfileFetcher, QueueRequestHandler, ScoreFetcher, RuleValidationService
 
 
 class Daemon(ServiceSupervisor):
@@ -14,6 +14,7 @@ class Daemon(ServiceSupervisor):
         - ``ProfileFetcher``
         - ``QueueRequestHandler``
         - ``ScoreFetcher``
+        - ``RuleValidationService``
     """
 
     LOGGER: ClassVar[Logger] = get_logger(__name__)
@@ -37,6 +38,7 @@ class Daemon(ServiceSupervisor):
         await self.register_service("profile_fetcher", lambda: ProfileFetcher(self._rc, self._db))
         await self.register_service("queue_request_handler", lambda: QueueRequestHandler(self._rc, self._db))
         await self.register_service("score_fetcher", lambda: ScoreFetcher(self._rc, self._db))
+        await self.register_service("rule_validation", lambda: RuleValidationService(self._rc, self._db))
         self.logger.info(f"Starting up daemon: loading registered services ({len(self._services)})")
 
     async def _on_started(self) -> None:

@@ -6,7 +6,7 @@ from app.beatmaps import BeatmapManager
 from app.database.models import Request
 from app.database.schemas import RequestSchema
 from app.redis import ChannelName, Namespace
-from app.redis.models import QueueRequestHandlerTask
+from app.redis.models import QueueRequestHandlerTask, QueueRequestValidationTask
 from app.utils import aware_utcnow
 from app.logging import get_logger, Logger
 from .decorators import auto_retry
@@ -67,7 +67,19 @@ class QueueRequestHandler(ScheduledService):
             request = await self._db.add(Request, **request_dict)
             logger.debug(f"Added request id={request.id} for beatmapset {request.beatmapset_id} to queue id={request.queue_id}")
 
+            await self._dispatch_validation_task(request.id, record.queue_id, record.beatmapset_id)
+
             await self._rc.hset(hash_name, "completed_at", aware_utcnow().isoformat())
         except Exception:
             await self._rc.hset(hash_name, "failed_at", aware_utcnow().isoformat())
             raise
+
+    async def _dispatch_validation_task(self, request_id: int, queue_id: int, beatmapset_id: int) -> None:
+        task = QueueRequestValidationTask(
+            request_id=request_id,
+            queue_id=queue_id,
+            beatmapset_id=beatmapset_id,
+        )
+        task_hash_name = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(task.hashed_id)
+        await self._rc.hset(task_hash_name, mapping=task.serialize())
+        await self._rc.publish(ChannelName.QUEUE_REQUEST_VALIDATION_TASKS.value, task.hashed_id)
