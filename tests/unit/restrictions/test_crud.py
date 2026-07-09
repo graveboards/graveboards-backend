@@ -56,10 +56,12 @@ class TestUpsertRestrictionsDuplicateDetection:
             {
                 "restriction_type": "blacklist",
                 "config": {"scope": "user", "target": [12345]},
+                "version": "1.0",
             },
             {
                 "restriction_type": "blacklist",
                 "config": {"scope": "user", "target": [12345]},
+                "version": "1.0",
             },
         ]
 
@@ -84,10 +86,12 @@ class TestUpsertRestrictionsDuplicateDetection:
             {
                 "restriction_type": "rate_limit",
                 "config": {"max_requests": 5, "period": "week", "scope": "user"},
+                "version": "1.0",
             },
             {
                 "restriction_type": "rate_limit",
                 "config": {"period": "week", "max_requests": 5, "scope": "user"},
+                "version": "1.0",
             },
         ]
 
@@ -113,10 +117,12 @@ class TestUpsertRestrictionsDuplicateDetection:
             {
                 "restriction_type": "rate_limit",
                 "config": {"max_requests": 5, "period": "week", "scope": "user"},
+                "version": "1.0",
             },
             {
                 "restriction_type": "rate_limit",
                 "config": {"max_requests": 10, "period": "week", "scope": "user"},
+                "version": "1.0",
             },
         ]
 
@@ -143,10 +149,12 @@ class TestUpsertRestrictionsDuplicateDetection:
             {
                 "restriction_type": "blacklist",
                 "config": {"scope": "user", "target": [111]},
+                "version": "1.0",
             },
             {
                 "restriction_type": "blacklist",
                 "config": {"scope": "user", "target": [222]},
+                "version": "1.0",
             },
         ]
 
@@ -173,10 +181,12 @@ class TestUpsertRestrictionsDuplicateDetection:
             {
                 "restriction_type": "rate_limit",
                 "config": {"max_requests": 5, "period": "week"},
+                "version": "1.0",
             },
             {
                 "restriction_type": "cooldown",
                 "config": {"cooldown_seconds": 300},
+                "version": "1.0",
             },
         ]
 
@@ -187,3 +197,67 @@ class TestUpsertRestrictionsDuplicateDetection:
         )
 
         assert len(result) == 2
+
+
+class TestVersionDuplicateDetection:
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_allows_same_type_config_different_version(self):
+        crud = RestrictionCRUD()
+        mock_session = AsyncMock()
+        mock_session.execute = AsyncMock(return_value=MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[])))))
+        mock_session.delete = AsyncMock()
+        mock_session.flush = AsyncMock()
+        mock_session.refresh = AsyncMock()
+        mock_session.add = AsyncMock()
+
+        restrictions_data = [
+            {
+                "restriction_type": "rate_limit",
+                "config": {"max_requests": 5, "period": "week", "scope": "user"},
+                "version": "1.0",
+            },
+            {
+                "restriction_type": "rate_limit",
+                "config": {"max_requests": 5, "period": "week", "scope": "user"},
+                "version": "1.1",
+            },
+        ]
+
+        result = await crud.upsert_restrictions(
+            queue_id=1,
+            restrictions_data=restrictions_data,
+            session=mock_session,
+        )
+
+        assert len(result) == 2
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_raises_on_same_type_config_same_version(self):
+        crud = RestrictionCRUD()
+        mock_session = AsyncMock()
+        mock_session.execute = AsyncMock()
+        mock_session.delete = AsyncMock()
+        mock_session.flush = AsyncMock()
+        mock_session.refresh = AsyncMock()
+
+        restrictions_data = [
+            {
+                "restriction_type": "rate_limit",
+                "config": {"max_requests": 5, "period": "week", "scope": "user"},
+                "version": "1.0",
+            },
+            {
+                "restriction_type": "rate_limit",
+                "config": {"max_requests": 5, "period": "week", "scope": "user"},
+                "version": "1.0",
+            },
+        ]
+
+        with pytest.raises(Conflict):
+            await crud.upsert_restrictions(
+                queue_id=1,
+                restrictions_data=restrictions_data,
+                session=mock_session,
+            )

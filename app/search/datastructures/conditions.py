@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import struct
 import re
 from datetime import datetime

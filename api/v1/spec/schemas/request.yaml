@@ -25,6 +25,10 @@ Request:
             format: date-time
         status:
             $ref: "./sub_schemas/request_status.yaml#/RequestStatus"
+        rejection_reason:
+            type: string
+            nullable: true
+            description: Reason provided by async validators if request was rejected
         beatmapset_snapshot:
             $ref: "./beatmapset_snapshot.yaml#/BeatmapsetSnapshot"
         user_profile:

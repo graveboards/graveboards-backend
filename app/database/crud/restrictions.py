@@ -67,10 +67,11 @@ class RestrictionCRUD:
         seen = set()
         for data in restrictions_data:
             config = data.get("config", {})
-            key = (data["restriction_type"], _normalize_config(config))
+            version = data.get("version", "1.0")
+            key = (data["restriction_type"], version, _normalize_config(config))
             if key in seen:
                 raise Conflict(
-                    f"Duplicate restriction rule: {data['restriction_type']} with the "
+                    f"Duplicate restriction rule: {data['restriction_type']} v{version} with the "
                     f"same configuration has already been added."
                 )
             seen.add(key)
@@ -89,6 +90,7 @@ class RestrictionCRUD:
                 restriction_type=data["restriction_type"],
                 config=data.get("config", {}),
                 is_active=data.get("is_active", True),
+                version=data.get("version", "1.0"),
             )
             session.add(restriction)
             created.append(restriction)

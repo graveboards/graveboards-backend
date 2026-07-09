@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 from datetime import datetime, timedelta, timezone
 
 from connexion.exceptions import Forbidden
 
-from app.database import PostgresqlDB
 from app.database.models import Queue
-from app.redis import RedisClient, Namespace
+from app.redis import Namespace
 from app.database.restrictions.base import RestrictionBase
+from app.database.restrictions.context import ExecutionContext
+from app.database.schemas.restriction import RateLimitConfig
 
 
 def _truncate_to_period(now: datetime, period: str) -> int:
@@ -57,20 +60,15 @@ def _is_target_match(config: dict, user_id: int) -> bool:
 
 class RateLimitRestriction(RestrictionBase):
     restriction_type = "rate_limit"
+    config_schema = RateLimitConfig
 
-    async def check(
-        self,
-        queue_id: int,
-        user_id: int,
-        db: PostgresqlDB,
-        redis: RedisClient,
-        config: dict,
-    ) -> None:
+    async def _check(self, context: ExecutionContext) -> None:
+        config = context.config
         max_requests = config.get("max_requests")
         period = config.get("period", "week")
         scope = config.get("scope", "user")
 
-        if not _is_target_match(config, user_id):
+        if not _is_target_match(config, context.user_id):
             return
 
         if scope != "user":
@@ -78,22 +76,22 @@ class RateLimitRestriction(RestrictionBase):
 
         period_bucket = _truncate_to_period(datetime.now(timezone.utc), period)
         redis_key = Namespace.QUEUE_RESTRICTION_RATE_LIMIT.hash_name(
-            f"{queue_id}:{user_id}:{period_bucket}"
+            f"{context.queue_id}:{context.user_id}:{period_bucket}"
         )
 
-        current_count = await redis.incr(redis_key)
+        current_count = await context.redis.incr(redis_key)
         if current_count == 1:
             duration = _period_duration_seconds(period)
-            await redis.expire(redis_key, duration)
+            await context.redis.expire(redis_key, duration)
 
         if current_count > max_requests:
-            queue = await db.get(Queue, id=queue_id)
-            queue_name = queue.name if queue else f"Queue {queue_id}"
+            queue = await context.db.get(Queue, id=context.queue_id)
+            queue_name = queue.name if queue else f"Queue {context.queue_id}"
 
             raise Forbidden(
                 detail=(
                     f"You have exceeded the rate limit for "
-                    f"'{queue_name}' (queue {queue_id}): max "
+                    f"'{queue_name}' (queue {context.queue_id}): max "
                     f"{max_requests} request{'s' if max_requests != 1 else ''} "
                     f"per {period}. Please try again in the next period."
                 )

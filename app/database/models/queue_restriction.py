@@ -24,6 +24,7 @@ class QueueRestriction(Base):
     )
     config: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    version: Mapped[str] = mapped_column(String(10), default="1.0")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=aware_utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=aware_utcnow, onupdate=aware_utcnow

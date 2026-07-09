@@ -1,37 +1,63 @@
-from abc import ABC, abstractmethod
-from typing import Any
+from __future__ import annotations
 
-from app.database import PostgresqlDB
-from app.redis import RedisClient
+from abc import ABC, abstractmethod
+from typing import Any, TYPE_CHECKING
+
+from pydantic import BaseModel
+
+from app.database.restrictions.exceptions import RestrictionViolationError
+
+if TYPE_CHECKING:
+    from app.database.restrictions.context import ExecutionContext
 
 
 class RestrictionBase(ABC):
     restriction_type: str = ""
+    config_schema: type[BaseModel] | None = None
+    supported_versions: set[str] = {"1.0"}
+
+    async def validate_config(self, config: dict[str, Any]) -> dict[str, Any]:
+        if self.config_schema:
+            validated = self.config_schema(**config)
+            return validated.model_dump(exclude_none=True)
+        return config
+
+    async def check(self, context: ExecutionContext) -> None:
+        if not context.config:
+            raise RestrictionViolationError(
+                self.restriction_type,
+                f"Missing configuration for restriction type '{self.restriction_type}'",
+            )
+        await self._check(context)
 
     @abstractmethod
-    async def check(
-        self,
-        queue_id: int,
-        user_id: int,
-        db: PostgresqlDB,
-        redis: RedisClient,
-        config: dict[str, Any],
-    ) -> None:
-        """Validate that the restriction is not violated.
+    async def _check(self, context: ExecutionContext) -> None:
+        ...
 
-        Args:
-            queue_id:
-                The queue the restriction applies to.
-            user_id:
-                The user submitting the request.
-            db:
-                Active database interface.
-            redis:
-                Active Redis client.
-            config:
-                The restriction configuration dict.
 
-        Raises:
-            Forbidden:
-                If the restriction is violated.
-        """
+class BeatmapRestrictionBase(RestrictionBase):
+    async def _check(self, context: ExecutionContext) -> None:
+        if not context.beatmapset:
+            raise RestrictionViolationError(
+                self.restriction_type,
+                "Beatmapset metadata not available",
+            )
+        await self.check_beatmap(context)
+
+    @abstractmethod
+    async def check_beatmap(self, context: ExecutionContext) -> None:
+        ...
+
+
+class DatabaseRestrictionBase(RestrictionBase):
+    async def _check(self, context: ExecutionContext) -> None:
+        if not context.osu_client:
+            raise RestrictionViolationError(
+                self.restriction_type,
+                "This restriction requires osu! API access (Phase 2 only)",
+            )
+        await self.check_database(context)
+
+    @abstractmethod
+    async def check_database(self, context: ExecutionContext) -> None:
+        ...

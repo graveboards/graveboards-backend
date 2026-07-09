@@ -6,6 +6,18 @@ from connexion.exceptions import Forbidden
 from app.database.restrictions.validators.cooldown import (
     CooldownRestriction,
 )
+from app.database.restrictions.context import ExecutionContext
+from app.database.restrictions.exceptions import RestrictionViolationError
+
+
+def _make_context(queue_id: int = 1, user_id: int = 12345678, config: dict | None = None):
+    return ExecutionContext(
+        queue_id=queue_id,
+        user_id=user_id,
+        db=AsyncMock(),
+        redis=AsyncMock(),
+        config=config or {},
+    )
 
 
 class TestCooldownRestriction:
@@ -20,14 +32,15 @@ class TestCooldownRestriction:
 
         validator = CooldownRestriction()
         config = {"cooldown_seconds": 3600, "scope": "user"}
-
-        await validator.check(
+        context = ExecutionContext(
             queue_id=1,
             user_id=12345678,
             db=mock_db,
             redis=mock_redis,
             config=config,
         )
+
+        await validator.check(context)
 
         mock_redis.get.assert_called_once()
         mock_redis.set.assert_called_once()
@@ -47,15 +60,16 @@ class TestCooldownRestriction:
 
         validator = CooldownRestriction()
         config = {"cooldown_seconds": 3600, "scope": "user"}
+        context = ExecutionContext(
+            queue_id=1,
+            user_id=12345678,
+            db=mock_db,
+            redis=mock_redis,
+            config=config,
+        )
 
         with pytest.raises(Forbidden) as exc_info:
-            await validator.check(
-                queue_id=1,
-                user_id=12345678,
-                db=mock_db,
-                redis=mock_redis,
-                config=config,
-            )
+            await validator.check(context)
 
         detail = str(exc_info.value.detail).lower()
         assert "wait" in detail or "remaining" in detail
@@ -76,14 +90,15 @@ class TestCooldownRestriction:
 
         validator = CooldownRestriction()
         config = {"cooldown_seconds": 3600, "scope": "user"}
-
-        await validator.check(
+        context = ExecutionContext(
             queue_id=1,
             user_id=12345678,
             db=mock_db,
             redis=mock_redis,
             config=config,
         )
+
+        await validator.check(context)
 
         mock_redis.set.assert_called_once()
 
@@ -99,14 +114,15 @@ class TestCooldownRestriction:
             "scope": "user",
             "target": [99999999],
         }
-
-        await validator.check(
+        context = ExecutionContext(
             queue_id=1,
             user_id=12345678,
             db=mock_db,
             redis=mock_redis,
             config=config,
         )
+
+        await validator.check(context)
 
         mock_redis.get.assert_not_called()
         mock_redis.set.assert_not_called()
@@ -119,8 +135,7 @@ class TestCooldownRestriction:
 
         validator = CooldownRestriction()
         config = {"cooldown_seconds": 3600, "scope": "beatmapset_type"}
-
-        await validator.check(
+        context = ExecutionContext(
             queue_id=1,
             user_id=12345678,
             db=mock_db,
@@ -128,4 +143,43 @@ class TestCooldownRestriction:
             config=config,
         )
 
+        await validator.check(context)
+
         mock_redis.get.assert_not_called()
+
+    @pytest.mark.unit
+    def test_config_schema_is_set(self):
+        from app.database.schemas.restriction import CooldownConfig
+
+        assert CooldownRestriction.config_schema is CooldownConfig
+
+
+class TestCooldownRestrictionDetailMessage:
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_includes_remaining_time_in_hours_and_minutes(self):
+        from datetime import datetime, timezone, timedelta
+
+        mock_db = AsyncMock()
+        mock_redis = AsyncMock()
+
+        now = datetime.now(timezone.utc)
+        thirty_minutes_ago = int((now - timedelta(minutes=30)).timestamp())
+        mock_redis.get = AsyncMock(return_value=str(thirty_minutes_ago))
+
+        validator = CooldownRestriction()
+        config = {"cooldown_seconds": 7200, "scope": "user"}
+        context = ExecutionContext(
+            queue_id=42,
+            user_id=12345678,
+            db=mock_db,
+            redis=mock_redis,
+            config=config,
+        )
+
+        with pytest.raises(Forbidden) as exc_info:
+            await validator.check(context)
+
+        detail = str(exc_info.value.detail)
+        assert "1h" in detail
+        assert "queue 42" in detail

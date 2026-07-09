@@ -1,7 +1,21 @@
 import pytest
 from unittest.mock import AsyncMock
 
+from connexion.exceptions import Forbidden
+
 from app.database.restrictions.validators.blacklist import BlacklistRestriction
+from app.database.restrictions.context import ExecutionContext
+from app.database.restrictions.exceptions import RestrictionViolationError
+
+
+def _make_context(queue_id: int = 1, user_id: int = 12345678, config: dict | None = None):
+    return ExecutionContext(
+        queue_id=queue_id,
+        user_id=user_id,
+        db=AsyncMock(),
+        redis=AsyncMock(),
+        config=config or {},
+    )
 
 
 class TestBlacklistRestriction:
@@ -13,14 +27,15 @@ class TestBlacklistRestriction:
 
         validator = BlacklistRestriction()
         config = {"scope": "user", "target": [99999999]}
-
-        await validator.check(
+        context = ExecutionContext(
             queue_id=1,
             user_id=12345678,
             db=mock_db,
             redis=mock_redis,
             config=config,
         )
+
+        await validator.check(context)
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -30,15 +45,16 @@ class TestBlacklistRestriction:
 
         validator = BlacklistRestriction()
         config = {"scope": "user", "target": [12345678]}
+        context = ExecutionContext(
+            queue_id=1,
+            user_id=12345678,
+            db=mock_db,
+            redis=mock_redis,
+            config=config,
+        )
 
-        with pytest.raises(Exception) as exc_info:
-            await validator.check(
-                queue_id=1,
-                user_id=12345678,
-                db=mock_db,
-                redis=mock_redis,
-                config=config,
-            )
+        with pytest.raises(Forbidden) as exc_info:
+            await validator.check(context)
 
         assert "not allowed" in str(exc_info.value.detail).lower()
 
@@ -50,14 +66,15 @@ class TestBlacklistRestriction:
 
         validator = BlacklistRestriction()
         config = {"scope": "user", "target": []}
-
-        await validator.check(
+        context = ExecutionContext(
             queue_id=1,
             user_id=12345678,
             db=mock_db,
             redis=mock_redis,
             config=config,
         )
+
+        await validator.check(context)
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -67,11 +84,59 @@ class TestBlacklistRestriction:
 
         validator = BlacklistRestriction()
         config = {"scope": "user"}
-
-        await validator.check(
+        context = ExecutionContext(
             queue_id=1,
             user_id=12345678,
             db=mock_db,
             redis=mock_redis,
             config=config,
         )
+
+        await validator.check(context)
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_raises_forbidden_on_violation(self):
+        mock_db = AsyncMock()
+        mock_redis = AsyncMock()
+
+        validator = BlacklistRestriction()
+        config = {"scope": "user", "target": [12345678]}
+        context = ExecutionContext(
+            queue_id=1,
+            user_id=12345678,
+            db=mock_db,
+            redis=mock_redis,
+            config=config,
+        )
+
+        with pytest.raises(Forbidden):
+            await validator.check(context)
+
+    @pytest.mark.unit
+    def test_config_schema_is_set(self):
+        from app.database.schemas.restriction import BlacklistConfig
+
+        assert BlacklistRestriction.config_schema is BlacklistConfig
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_includes_queue_id_in_error_message(self):
+        mock_db = AsyncMock()
+        mock_redis = AsyncMock()
+
+        validator = BlacklistRestriction()
+        config = {"scope": "user", "target": [12345678]}
+        context = ExecutionContext(
+            queue_id=42,
+            user_id=12345678,
+            db=mock_db,
+            redis=mock_redis,
+            config=config,
+        )
+
+        with pytest.raises(Forbidden) as exc_info:
+            await validator.check(context)
+
+        detail = str(exc_info.value.detail)
+        assert "queue 42" in detail

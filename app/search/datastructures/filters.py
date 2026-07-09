@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import struct
 from typing import Iterator, Any, Optional, Union
 from collections.abc import ItemsView
