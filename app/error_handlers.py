@@ -5,11 +5,18 @@ from connexion.lifecycle import ConnexionRequest, ConnexionResponse
 from app.observability.metrics.error import errors_total
 
 
+def _get_endpoint(request: ConnexionRequest) -> str:
+    scope = request.scope
+    route = scope.get("route")
+    if route is not None:
+        path = getattr(route, "path", None)
+        if path is not None:
+            return path
+    return "<unmatched>"
+
+
 def _track_error(request: ConnexionRequest, status_code: int, error_type: str) -> None:
-    try:
-        endpoint = request.url.path
-    except Exception:
-        endpoint = "unknown"
+    endpoint = _get_endpoint(request)
 
     errors_total.labels(
         error_type=error_type,
