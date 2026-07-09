@@ -1,5 +1,6 @@
 import asyncio
 import secrets
+import time
 from contextlib import contextmanager, asynccontextmanager
 from typing import AsyncIterator, Generator, Any
 
@@ -10,6 +11,12 @@ from app.config import REDIS_CONFIGURATION
 from app.exceptions import RedisLockTimeoutError
 from app.logging import get_logger
 from .constants import LOCK_EXPIRY, LOCK_ACQUISITION_RETRY_INTERVAL, LOCK_ACQUISITION_TIMEOUT
+from app.observability.metrics.redis import (
+    redis_commands_total,
+    redis_commands_duration_seconds,
+    redis_cache_hits_total,
+    redis_cache_misses_total,
+)
 
 __all__ = [
     "RedisClient",
@@ -30,6 +37,27 @@ class RedisClient(AsyncRedis):
         """Initialize the Redis client using configured connection settings."""
         super().__init__(**REDIS_CONFIGURATION)
         logger.debug(f"Redis client initialized at '{REDIS_BASE_URL}'")
+
+    async def execute_command(self, *args, **kwargs):
+        command_name = args[0].upper() if args else "UNKNOWN"
+        start = time.perf_counter()
+
+        try:
+            result = await super().execute_command(*args, **kwargs)
+            redis_commands_total.labels(command=command_name, status="success").inc()
+
+            if command_name == "GET" and result is not None:
+                redis_cache_hits_total.inc()
+            elif command_name == "GET" and result is None:
+                redis_cache_misses_total.inc()
+
+            return result
+        except Exception:
+            redis_commands_total.labels(command=command_name, status="error").inc()
+            raise
+        finally:
+            duration = time.perf_counter() - start
+            redis_commands_duration_seconds.labels(command=command_name).observe(duration)
 
     async def paginate_scan(
         self,

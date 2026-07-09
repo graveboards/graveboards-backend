@@ -12,6 +12,14 @@ from app.config import POSTGRESQL_CONFIGURATION
 from app.logging import get_logger
 from .crud import CRUD
 from . import events
+from app.observability.metrics.db import (
+    db_pool_size,
+    db_pool_checked_out,
+    db_pool_checked_in,
+    db_pool_overflow,
+    db_query_duration_seconds,
+    classify_query,
+)
 
 DATABASE_URI = URL.create(**POSTGRESQL_CONFIGURATION)
 logger = get_logger(__name__)
@@ -40,9 +48,45 @@ class PostgresqlDB(CRUD):
             pool_pre_ping=True
         )
 
+        self._setup_pool_metrics()
+        self._setup_query_metrics()
+
         @event.listens_for(self.engine.sync_engine, "first_connect")
         def on_connect(dbapi_connection: Connection, connection_record: ConnectionPoolEntry):
             logger.debug(f"Connected to PostgreSQL at '{DATABASE_URI}'")
+
+    def _setup_pool_metrics(self):
+        @event.listens_for(self.engine.sync_engine.pool, "checkin")
+        def on_checkin(dbapi_connection, connection_record):
+            db_pool_checked_out.dec()
+            db_pool_checked_in.inc()
+
+        @event.listens_for(self.engine.sync_engine.pool, "checkout")
+        def on_checkout(dbapi_connection, pid, connection_proxy):
+            db_pool_checked_out.inc()
+            db_pool_checked_in.dec()
+
+        @event.listens_for(self.engine.sync_engine.pool, "connect")
+        def on_connect_pool(dbapi_connection, connection_record):
+            db_pool_size.set(self.engine.pool.size())
+            db_pool_overflow.set(max(0, self.engine.sync_engine.pool.overflow()))
+
+        db_pool_size.set(self.engine.pool.size())
+
+    def _setup_query_metrics(self):
+        import time as _time
+
+        @event.listens_for(self.engine.sync_engine, "before_cursor_execute")
+        def on_before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+            context._query_start_time = _time.perf_counter()
+
+        @event.listens_for(self.engine.sync_engine, "after_cursor_execute")
+        def on_after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+            start = getattr(context, "_query_start_time", None)
+            if start is not None:
+                duration = _time.perf_counter() - start
+                query_type = classify_query(statement)
+                db_query_duration_seconds.labels(query_type=query_type).observe(duration)
 
     def async_session_generator(self) -> async_sessionmaker[AsyncSession]:
         """Return a configured async session factory.

@@ -1,4 +1,5 @@
 import asyncio
+import time
 from typing import Awaitable, Any, ClassVar, Callable
 
 from app.logging import Logger
@@ -12,6 +13,13 @@ from .task import (
     TaskSuccessHook,
     TaskErrorHook,
     TaskFinishHook
+)
+from app.observability.metrics.daemon import (
+    daemon_service_running,
+    daemon_jobs_total,
+    daemon_job_duration_seconds,
+    daemon_last_job_timestamp,
+    daemon_active_jobs,
 )
 
 
@@ -55,6 +63,7 @@ class Service:
         self._ephemeral_tg: asyncio.TaskGroup | None = None
         self._ephemeral_tasks: set[asyncio.Task] = set()
         self._lock = asyncio.Lock()
+        self._service_name = self.__class__.__name__
 
     async def register_task(
         self,
@@ -97,8 +106,9 @@ class Service:
             if name in self._task_specs:
                 raise ValueError(f"Task '{name}' already registered")
 
+            wrapped_factory = self._wrap_factory(factory, name)
             retry_policy = TaskRetryPolicy(backoff, max_retries, on_failure, on_max_retries_exceeded)
-            spec = TaskSpec(factory, critical, retry_policy)
+            spec = TaskSpec(wrapped_factory, critical, retry_policy)
             self._task_specs[name] = spec
 
             if self._running and self._tg:
@@ -121,6 +131,7 @@ class Service:
             self._stop_event.clear()
             self._stopped_event.clear()
             self._start_event.set()
+            daemon_service_running.labels(service=self._service_name).set(1)
 
         await self._on_start()
 
@@ -168,6 +179,7 @@ class Service:
 
                 self._running = False
                 self._stopped_event.set()
+                daemon_service_running.labels(service=self._service_name).set(0)
 
             await self._on_stopped()
 
@@ -247,6 +259,12 @@ class Service:
         """
         await self._stop_event.wait()
 
+    def _wrap_factory(self, factory: TaskFactory, task_name: str):
+        async def wrapped() -> None:
+            await factory()
+
+        return wrapped
+
     async def _on_start(self) -> None:
         """Execute before the ``TaskGroup`` is started.
 
@@ -298,7 +316,7 @@ class Service:
             spec:
                 Object containing task factory, critical flag, and ``RetryPolicy``.
         """
-        pass
+        daemon_jobs_total.labels(service=self._service_name, status="failure").inc()
 
     async def _on_critical_failure(
         self,
@@ -321,7 +339,7 @@ class Service:
             spec:
                 Object containing task factory, critical flag, and ``RetryPolicy``.
         """
-        pass
+        daemon_jobs_total.labels(service=self._service_name, status="critical").inc()
 
     def _start_task(
         self,

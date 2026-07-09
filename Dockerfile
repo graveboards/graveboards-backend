@@ -35,8 +35,7 @@ COPY . .
 COPY entrypoint.sh /app
 COPY wait-for-it.sh /app
 
-RUN mkdir -p /app/instance/logs && \
-    sed -i 's/\r$//' /app/entrypoint.sh /app/wait-for-it.sh && \
+RUN sed -i 's/\r$//' /app/entrypoint.sh /app/wait-for-it.sh && \
     chmod +x /app/entrypoint.sh /app/wait-for-it.sh
 
 EXPOSE 8000
@@ -48,8 +47,7 @@ CMD [ \
     "app.connexion_app:create_connexion_app", \
     "--factory", \
     "--host", "0.0.0.0", \
-    "--port", "8000", \
-    "--log-config", "logging.uvicorn.yaml" \
+    "--port", "8000" \
 ]
 
 FROM python:3.14-slim AS test-runner
@@ -67,8 +65,7 @@ COPY --from=test-builder /usr/local /usr/local
 
 COPY --chmod=755 . .
 
-RUN mkdir -p /app/instance/logs && \
-    sed -i 's/\r$//' /app/entrypoint.sh /app/wait-for-it.sh
+RUN sed -i 's/\r$//' /app/entrypoint.sh /app/wait-for-it.sh
 
 EXPOSE 8000
 

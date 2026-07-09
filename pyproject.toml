@@ -20,7 +20,8 @@ dependencies = [
     "passlib[bcrypt]>=1.7.4",
     "httpx>=0.24.0",
     "rich>=13.0.0",
-    "psutil>=5.9.0",
+    "structlog>=24.1.0",
+    "prometheus_client>=0.20.0",
 ]
 
 [project.optional-dependencies]
