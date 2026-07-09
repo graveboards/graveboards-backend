@@ -1,6 +1,5 @@
-from .registry import REGISTRY, get_registry
+from .registry import REGISTRY
 
 __all__ = [
     "REGISTRY",
-    "get_registry",
 ]

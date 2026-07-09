@@ -1,15 +1,3 @@
-from prometheus_client import (
-    CollectorRegistry,
-    PlatformCollector,
-    ProcessCollector,
-)
+from prometheus_client import REGISTRY
 
-
-REGISTRY = CollectorRegistry()
-
-ProcessCollector(registry=REGISTRY)
-PlatformCollector(registry=REGISTRY)
-
-
-def get_registry() -> CollectorRegistry:
-    return REGISTRY
+__all__ = ["REGISTRY"]
