@@ -19,22 +19,12 @@ from app.config import CONFIG
 from app.logging import setup_logging, get_logger
 
 
-MIGRATION_SQL = """
--- Rename column first (safer than renaming table with dependent objects)
-ALTER TABLE queue_restrictions RENAME COLUMN restriction_type TO type;
-
--- Rename table
-ALTER TABLE queue_restrictions RENAME TO queue_rules;
-"""
+RENAME_COLUMN_SQL = "ALTER TABLE queue_restrictions RENAME COLUMN restriction_type TO type;"
+RENAME_TABLE_SQL = "ALTER TABLE queue_restrictions RENAME TO queue_rules;"
 
 
-REVERSAL_SQL = """
--- Reverse: rename table first
-ALTER TABLE queue_rules RENAME TO queue_restrictions;
-
--- Reverse: rename column
-ALTER TABLE queue_restrictions RENAME COLUMN type TO restriction_type;
-"""
+REVERSAL_RENAME_TABLE_SQL = "ALTER TABLE queue_rules RENAME TO queue_restrictions;"
+REVERSAL_RENAME_COLUMN_SQL = "ALTER TABLE queue_restrictions RENAME COLUMN type TO restriction_type;"
 
 
 async def migrate():
@@ -57,7 +47,8 @@ async def migrate():
 
         # Execute migration
         async with db.engine.connect() as conn:
-            await conn.execute(text(MIGRATION_SQL))
+            await conn.execute(text(RENAME_COLUMN_SQL))
+            await conn.execute(text(RENAME_TABLE_SQL))
             await conn.commit()
 
         logger.info("Migration completed successfully!")
@@ -92,7 +83,8 @@ async def rollback():
 
         # Execute rollback
         async with db.engine.connect() as conn:
-            await conn.execute(text(REVERSAL_SQL))
+            await conn.execute(text(REVERSAL_RENAME_TABLE_SQL))
+            await conn.execute(text(REVERSAL_RENAME_COLUMN_SQL))
             await conn.commit()
 
         logger.info("Rollback completed successfully!")
