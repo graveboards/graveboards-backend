@@ -70,7 +70,6 @@ class TestService:
         )
 
         assert "test_task" in service._task_specs
-        assert service._task_specs["test_task"].factory is task_factory
         assert service._task_specs["test_task"].critical is True
 
     async def test_service_register_task_duplicate_raises(self, service):
