@@ -15,6 +15,7 @@ class TestQueueRequestHandler:
         rc = MagicMock()
         rc.hgetall = AsyncMock()
         rc.hset = AsyncMock()
+        rc.publish = AsyncMock()
         db = MagicMock()
         db.add = AsyncMock()
         return QueueRequestHandler(rc, db)
@@ -82,7 +83,10 @@ class TestQueueRequestHandler:
             await service._execute_job(123)
 
         assert service._rc.hset.call_count >= 1
-        completed_calls = [c for c in service._rc.hset.call_args_list if c[0][1] == "completed_at"]
+        completed_calls = [
+            c for c in service._rc.hset.call_args_list
+            if len(c[0]) > 1 and c[0][1] == "completed_at"
+        ]
         assert len(completed_calls) >= 1
 
     async def test_execute_job_sets_failed_at_on_exception(self, service):
