@@ -27,10 +27,10 @@ Queue:
             type: array
             items:
                 $ref: "./profile.yaml#/Profile"
-        restrictions:
+        rules:
             type: array
             items:
-                $ref: "./restriction.yaml#/QueueRestriction"
+                $ref: "./rule.yaml#/QueueRule"
 
 QueueCreate:
     description: An object containing the data of the queue to create
@@ -62,9 +62,9 @@ QueuePatch:
             type: boolean
         visibility:
             $ref: "./sub_schemas/visibility.yaml#/Visibility"
-        restrictions:
+        rules:
             type: array
             items:
-                $ref: "./restriction.yaml#/RestrictionCreate"
+                $ref: "./rule.yaml#/RuleCreate"
             description:
-                $ref: "./restriction.yaml#/QueueRestrictionDescription"
+                $ref: "./rule.yaml#/QueueRuleDescription"

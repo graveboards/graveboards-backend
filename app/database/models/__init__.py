@@ -27,7 +27,7 @@ from .queue import Queue
 from .request import Request
 from .beatmapset_tag import BeatmapsetTag
 from .beatmap_tag import BeatmapTag
-from .queue_restriction import QueueRestriction
+from .queue_rule import QueueRule
 
 __all__ = [
     "Base",
@@ -58,5 +58,5 @@ __all__ = [
     "Request",
     "BeatmapsetTag",
     "BeatmapTag",
-    "QueueRestriction"
+    "QueueRule"
 ]

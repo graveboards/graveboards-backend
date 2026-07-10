@@ -24,8 +24,8 @@ class Namespace(StrEnum):
     QUEUE_REQUEST_HANDLER_TASK = "queue_request_handler_task"
     CACHED_BEATMAP = "cached_beatmap"
     CACHED_BEATMAPSET = "cached_beatmapset"
-    QUEUE_RESTRICTION_RATE_LIMIT = "queue_restriction_rate_limit"
-    QUEUE_RESTRICTION_COOLDOWN = "queue_restriction_cooldown"
+    QUEUE_RULE_RATE_LIMIT = "queue_rule_rate_limit"
+    QUEUE_RULE_COOLDOWN = "queue_rule_cooldown"
     RATE_LIMIT_LAST_CALL = "rate_limit_last_call"
 
     def hash_name(self, suffix: int | str) -> str:

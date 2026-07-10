@@ -43,6 +43,6 @@ QueueInclude:
                 - $ref: "./profile.yaml#/ProfileInclude"
                 - type: boolean
                   default: false
-        restrictions:
+        rules:
             type: boolean
             default: false

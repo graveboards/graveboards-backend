@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from .request import Request
     from .user import User
     from .profile import Profile
-    from .queue_restriction import QueueRestriction
+    from .queue_rule import QueueRule
 
 
 class Queue(Base):
@@ -58,8 +58,8 @@ class Queue(Base):
         viewonly=True,
         lazy=True
     )
-    restrictions: Mapped[list["QueueRestriction"]] = relationship(
-        "QueueRestriction",
+    rules: Mapped[list["QueueRule"]] = relationship(
+        "QueueRule",
         back_populates="queue",
         cascade="all, delete-orphan",
         passive_deletes=True,

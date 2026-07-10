@@ -7,11 +7,11 @@ from httpx import ConnectTimeout
 
 from app.database.enums import RequestStatus
 from app.database.models import Request
-from app.database.restrictions.context import ExecutionContext
-from app.database.restrictions.engine.phase2_runner import Phase2Runner
-from app.database.restrictions.exceptions import RestrictionViolationError
-from app.database.restrictions.registry import get_validator, get_validator_tier
-from app.database.restrictions.validators.metadata import (
+from app.database.rules.context import ExecutionContext
+from app.database.rules.engine.phase2_runner import Phase2Runner
+from app.database.rules.exceptions import RuleViolationError
+from app.database.rules.registry import get_validator, get_validator_tier
+from app.database.rules.validators.metadata import (
     SongIdentityProvider,
     BeatmapStatsProvider,
     CreatorIdentityProvider,
@@ -91,7 +91,7 @@ class RuleValidationService(ScheduledService):
                 logger.warning(f"Request {request_id} not found for validation")
                 return
 
-            restrictions = await self._get_active_restrictions(queue_id, session)
+            rules = await self._get_active_rules(queue_id, session)
 
         try:
             beatmapset_dict = await osu_client.get_beatmapset(beatmapset_id)
@@ -101,12 +101,12 @@ class RuleValidationService(ScheduledService):
             )
             return
 
-        phase2_restrictions = [
-            r for r in restrictions
-            if get_validator_tier(r.restriction_type) == 3
+        phase2_rules = [
+            r for r in rules
+            if get_validator_tier(r.type) == 3
         ]
 
-        if not phase2_restrictions:
+        if not phase2_rules:
             return
 
         context = ExecutionContext(
@@ -121,7 +121,7 @@ class RuleValidationService(ScheduledService):
         )
 
         runner = Phase2Runner()
-        rejected = await runner.run(phase2_restrictions, context)
+        rejected = await runner.run(phase2_rules, context)
 
         if rejected:
             rejection_reason = f"Rejected by rule engine: {', '.join(rejected)}"
@@ -135,8 +135,8 @@ class RuleValidationService(ScheduledService):
                 f"Request {request_id} rejected by Phase 2 validators: {rejected}"
             )
 
-    async def _get_active_restrictions(self, queue_id: int, session) -> list:
-        from app.database.crud.restrictions import RestrictionCRUD
+    async def _get_active_rules(self, queue_id: int, session) -> list:
+        from app.database.crud.rules import RuleCRUD
 
-        crud = RestrictionCRUD()
-        return await crud.get_restrictions(queue_id, only_active=True, session=session)
+        crud = RuleCRUD()
+        return await crud.get_rules(queue_id, only_active=True, session=session)

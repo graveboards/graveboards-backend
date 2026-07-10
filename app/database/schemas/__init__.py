@@ -15,10 +15,10 @@ from .beatmapset_listing import BeatmapsetListingSchema, BeatmapsetListingCreate
 from .leaderboard import LeaderboardSchema, LeaderboardCreateSchema, LeaderboardUpdateSchema
 from .score import ScoreSchema, ScoreCreateSchema, ScoreUpdateSchema
 from .queue import QueueSchema, QueueCreateSchema, QueueUpdateSchema
-from .restriction import (
-    RestrictionSchema,
-    RestrictionCreateSchema,
-    RestrictionUpdateSchema,
+from .rule import (
+    RuleSchema,
+    RuleCreateSchema,
+    RuleUpdateSchema,
     RateLimitConfig,
     CooldownConfig,
     BlacklistConfig,
@@ -27,7 +27,7 @@ from .request import RequestSchema, RequestCreateSchema, RequestUpdateSchema
 from .beatmapset_tag import BeatmapsetTagSchema, BeatmapsetTagCreateSchema, BeatmapsetTagUpdateSchema
 from .beatmap_tag import BeatmapTagSchema, BeatmapTagCreateSchema, BeatmapTagUpdateSchema
 from .sub_schemas import *
-from . import restriction
+from . import rule
 
 UserSchema.model_rebuild()
 UserCreateSchema.model_rebuild()
@@ -86,6 +86,6 @@ BeatmapsetTagUpdateSchema.model_rebuild()
 BeatmapTagSchema.model_rebuild()
 BeatmapTagCreateSchema.model_rebuild()
 BeatmapTagUpdateSchema.model_rebuild()
-RestrictionSchema.model_rebuild()
-RestrictionCreateSchema.model_rebuild()
-RestrictionUpdateSchema.model_rebuild()
+RuleSchema.model_rebuild()
+RuleCreateSchema.model_rebuild()
+RuleUpdateSchema.model_rebuild()

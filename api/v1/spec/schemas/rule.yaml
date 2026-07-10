@@ -1,0 +1,801 @@
+QueueRule:
+    title: QueueRule
+    description:
+        $ref: "#/QueueRuleDescription"
+    type: object
+    properties:
+        id:
+            type: integer
+            description: Auto-generated rule ID
+        queue_id:
+            type: integer
+            description: The queue this rule applies to
+        type:
+            type: string
+            enum:
+                - rate_limit
+                - cooldown
+                - blacklist
+                - beatmap_duration
+                - beatmap_star_rating
+                - beatmap_ar_range
+                - beatmap_od_range
+                - beatmap_hp_range
+                - beatmap_cs_range
+                - beatmap_drain_range
+                - beatmap_bpm
+                - beatmap_genre
+                - beatmap_language
+                - beatmap_mode
+                - beatmap_difficulty_count
+                - beatmap_storyboard
+                - beatmap_video
+                - beatmap_tags
+                - beatmap_length
+                - composite
+                - never_ranked
+                - unique_artist_title
+            description: The type of rule
+        config:
+            type: object
+            description: Restriction-specific configuration (see individual type schemas)
+            oneOf:
+                - $ref: "#/RateLimitConfig"
+                - $ref: "#/CooldownConfig"
+                - $ref: "#/BlacklistConfig"
+                - $ref: "#/DurationConfig"
+                - $ref: "#/StarRatingConfig"
+                - $ref: "#/ARRangeConfig"
+                - $ref: "#/ODRangeConfig"
+                - $ref: "#/HPRangeConfig"
+                - $ref: "#/CSRangeConfig"
+                - $ref: "#/DrainRangeConfig"
+                - $ref: "#/BPMConfig"
+                - $ref: "#/GenreConfig"
+                - $ref: "#/LanguageConfig"
+                - $ref: "#/ModeConfig"
+                - $ref: "#/DifficultyCountConfig"
+                - $ref: "#/StoryboardConfig"
+                - $ref: "#/VideoConfig"
+                - $ref: "#/TagsConfig"
+                - $ref: "#/LengthConfig"
+                - $ref: "#/CompositeConfig"
+                - $ref: "#/NeverRankedConfig"
+                - $ref: "#/UniqueArtistTitleConfig"
+        is_active:
+            type: boolean
+            default: true
+            description: When false, the rule is disabled but preserved
+        version:
+            type: string
+            default: "1.0"
+            description: Rule version for forward/backward compatibility
+        created_at:
+            type: string
+            format: date-time
+        updated_at:
+            type: string
+            format: date-time
+
+RateLimitConfig:
+    title: RateLimitConfig
+    description: |
+        Limits the number of requests a user can submit within a time period.
+        
+        Uses Redis for tracking. Counter resets when the period expires.
+    type: object
+    required:
+        - max_requests
+        - period
+        - scope
+    properties:
+        max_requests:
+            type: integer
+            minimum: 1
+            description: Maximum number of requests allowed per period
+        period:
+            type: string
+            enum: [day, week, month, year]
+            description: Time period for the rate limit
+        scope:
+            type: string
+            enum: [user, beatmapset_type, artist, creator, custom]
+            default: user
+            description: Who this rule applies to
+        target:
+            type: array
+            items:
+                type: integer
+            nullable: true
+            description: Optional list of user IDs to apply this rule to. Empty/null means all users.
+
+CooldownConfig:
+    title: CooldownConfig
+    description: |
+        Prevents users from submitting requests for a specified duration after their last submission.
+        
+        Useful for preventing spam or giving time between submissions.
+    type: object
+    required:
+        - cooldown_seconds
+        - scope
+    properties:
+        cooldown_seconds:
+            type: integer
+            minimum: 1
+            description: Duration in seconds before the user can submit again
+        scope:
+            type: string
+            enum: [user, beatmapset_type, artist, creator, custom]
+            default: user
+            description: Who this rule applies to
+        target:
+            type: array
+            items:
+                type: integer
+            nullable: true
+            description: Optional list of user IDs to apply this rule to. Empty/null means all users.
+
+BlacklistConfig:
+    title: BlacklistConfig
+    description: |
+        Blocks specific users from submitting requests to the queue.
+        
+        The target array specifies which user IDs are blocked.
+    type: object
+    required:
+        - scope
+        - target
+    properties:
+        scope:
+            type: string
+            enum: [user, beatmapset_type, artist, creator, custom]
+            default: user
+            description: Who this rule applies to
+        target:
+            type: array
+            items:
+                type: integer
+            description: List of user IDs to blacklist
+
+DurationConfig:
+    title: DurationConfig
+    description: |
+        Filters beatmaps by their total length (hit length).
+        
+        Applies to all beatmaps in the beatmapset or just the longest/shortest one.
+    type: object
+    properties:
+        min_seconds:
+            type: integer
+            minimum: 0
+            description: Minimum total length in seconds
+        max_seconds:
+            type: integer
+            minimum: 0
+            description: Maximum total length in seconds
+        logic:
+            type: string
+            enum: [max, min, all]
+            default: max
+            description: |
+                max: check only the longest beatmap
+                min: check only the shortest beatmap
+                all: all beatmaps must satisfy the constraints
+
+StarRatingConfig:
+    title: StarRatingConfig
+    description: |
+        Filters beatmaps by their star rating (difficulty).
+        
+        Applies to all beatmaps in the beatmapset or just the highest/lowest one.
+    type: object
+    properties:
+        min:
+            type: number
+            format: float
+            minimum: 0
+            description: Minimum star rating
+        max:
+            type: number
+            format: float
+            minimum: 0
+            description: Maximum star rating
+        logic:
+            type: string
+            enum: [max, min, all, any]
+            default: any
+            description: |
+                max: check only the highest star rating
+                min: check only the lowest star rating
+                all: all beatmaps must satisfy the constraints
+                any: at least one beatmap must satisfy the constraints
+
+ARRangeConfig:
+    title: ARRangeConfig
+    description: |
+        Filters beatmaps by their Approach Rate (AR).
+    type: object
+    properties:
+        min:
+            type: number
+            format: float
+            minimum: 0
+            description: Minimum AR value
+        max:
+            type: number
+            format: float
+            maximum: 10.5
+            description: Maximum AR value
+        logic:
+            type: string
+            enum: [any, all]
+            default: any
+            description: |
+                any: at least one beatmap must satisfy the constraints
+                all: all beatmaps must satisfy the constraints
+
+ODRangeConfig:
+    title: ODRangeConfig
+    description: |
+        Filters beatmaps by their Overall Difficulty (OD).
+    type: object
+    properties:
+        min:
+            type: number
+            format: float
+            minimum: 0
+            description: Minimum OD value
+        max:
+            type: number
+            format: float
+            maximum: 10
+            description: Maximum OD value
+        logic:
+            type: string
+            enum: [any, all]
+            default: any
+            description: |
+                any: at least one beatmap must satisfy the constraints
+                all: all beatmaps must satisfy the constraints
+
+HPRangeConfig:
+    title: HPRangeConfig
+    description: |
+        Filters beatmaps by their HP Drain (HP Drain Rate).
+    type: object
+    properties:
+        min:
+            type: number
+            format: float
+            minimum: 0
+            description: Minimum HP drain value
+        max:
+            type: number
+            format: float
+            maximum: 10
+            description: Maximum HP drain value
+        logic:
+            type: string
+            enum: [any, all]
+            default: any
+            description: |
+                any: at least one beatmap must satisfy the constraints
+                all: all beatmaps must satisfy the constraints
+
+CSRangeConfig:
+    title: CSRangeConfig
+    description: |
+        Filters beatmaps by their Circle Size (CS).
+    type: object
+    properties:
+        min:
+            type: number
+            format: float
+            minimum: 0
+            description: Minimum CS value
+        max:
+            type: number
+            format: float
+            maximum: 10
+            description: Maximum CS value
+        logic:
+            type: string
+            enum: [any, all]
+            default: any
+            description: |
+                any: at least one beatmap must satisfy the constraints
+                all: all beatmaps must satisfy the constraints
+
+DrainRangeConfig:
+    title: DrainRangeConfig
+    description: |
+        Filters beatmaps by their drain rate (time to full life bar).
+    type: object
+    properties:
+        min:
+            type: number
+            format: float
+            minimum: 0
+            description: Minimum drain rate in seconds
+        max:
+            type: number
+            format: float
+            description: Maximum drain rate in seconds
+        logic:
+            type: string
+            enum: [any, all]
+            default: any
+            description: |
+                any: at least one beatmap must satisfy the constraints
+                all: all beatmaps must satisfy the constraints
+
+BPMConfig:
+    title: BPMConfig
+    description: |
+        Filters beatmaps by their BPM (beats per minute).
+    type: object
+    properties:
+        min_bpm:
+            type: number
+            format: float
+            minimum: 0
+            description: Minimum BPM
+        max_bpm:
+            type: number
+            format: float
+            minimum: 0
+            description: Maximum BPM
+        logic:
+            type: string
+            enum: [any, all, avg]
+            default: any
+            description: |
+                any: at least one beatmap must satisfy the constraints
+                all: all beatmaps must satisfy the constraints
+                avg: the average BPM across all beatmaps must satisfy the constraints
+
+GenreConfig:
+    title: GenreConfig
+    description: |
+        Filters beatmaps by their genre.
+    type: object
+    required:
+        - genre_ids
+    properties:
+        genre_ids:
+            type: array
+            items:
+                type: integer
+            description: List of genre IDs to match against
+        logic:
+            type: string
+            enum: [any, all]
+            default: any
+            description: |
+                any: at least one beatmap genre must match
+                all: all beatmap genres must be in the list
+
+LanguageConfig:
+    title: LanguageConfig
+    description: |
+        Filters beatmaps by their language.
+    type: object
+    required:
+        - language_ids
+    properties:
+        language_ids:
+            type: array
+            items:
+                type: integer
+            description: List of language IDs to match against
+        logic:
+            type: string
+            enum: [any, all]
+            default: any
+            description: |
+                any: at least one beatmap language must match
+                all: all beatmap languages must be in the list
+
+ModeConfig:
+    title: ModeConfig
+    description: |
+        Filters beatmaps by game mode (osu, taiko, fruits, mania).
+    type: object
+    required:
+        - allowed_modes
+    properties:
+        allowed_modes:
+            type: array
+            items:
+                type: string
+                enum: [osu, taiko, fruits, mania]
+            description: List of allowed game modes
+            minItems: 1
+
+DifficultyCountConfig:
+    title: DifficultyCountConfig
+    description: |
+        Filters beatmapsets by the number of beatmaps (difficulties) they contain.
+    type: object
+    properties:
+        min:
+            type: integer
+            minimum: 1
+            description: Minimum number of beatmaps
+        max:
+            type: integer
+            minimum: 1
+            description: Maximum number of beatmaps
+
+StoryboardConfig:
+    title: StoryboardConfig
+    description: |
+        Filters beatmapsets by whether they contain a storyboard.
+    type: object
+    required:
+        - allowed
+    properties:
+        allowed:
+            type: boolean
+            description: Whether beatmaps with storyboards are allowed (true) or not allowed (false)
+
+VideoConfig:
+    title: VideoConfig
+    description: |
+        Filters beatmapsets by whether they contain a video background.
+    type: object
+    required:
+        - allowed
+    properties:
+        allowed:
+            type: boolean
+            description: Whether beatmaps with videos are allowed (true) or not allowed (false)
+
+TagsConfig:
+    title: TagsConfig
+    description: |
+        Filters beatmapsets by their tags.
+    type: object
+    required:
+        - tag_ids
+    properties:
+        tag_ids:
+            type: array
+            items:
+                type: integer
+            description: List of tag IDs to match against
+        logic:
+            type: string
+            enum: [any, all]
+            default: any
+            description: |
+                any: at least one tag must match
+                all: all tags must match
+
+LengthConfig:
+    title: LengthConfig
+    description: |
+        Filters beatmaps by hit length and total length.
+    type: object
+    properties:
+        min_hit_length:
+            type: integer
+            minimum: 0
+            description: Minimum hit length in seconds
+        max_hit_length:
+            type: integer
+            minimum: 0
+            description: Maximum hit length in seconds
+        min_total_length:
+            type: integer
+            minimum: 0
+            description: Minimum total length in seconds
+        max_total_length:
+            type: integer
+            minimum: 0
+            description: Maximum total length in seconds
+        logic:
+            type: string
+            enum: [any, all]
+            default: any
+            description: |
+                any: at least one beatmap must satisfy the constraints
+                all: all beatmaps must satisfy the constraints
+
+CompositeConfig:
+    title: CompositeConfig
+    description: |
+        Combines multiple rules using AND, OR, or NOT logic.
+        
+        Supports nesting up to 10 levels deep.
+    type: object
+    required:
+        - operator
+        - rules
+    properties:
+        operator:
+            type: string
+            enum: [and, or, not]
+            description: The logical operator for combining sub-rules
+        rules:
+            type: array
+            items:
+                type: object
+                description: Sub-rule definitions (each with a 'type' and 'config')
+            minItems: 1
+            description: List of sub-rules to combine
+
+NeverRankedConfig:
+    title: NeverRankedConfig
+    description: |
+        Rejects beatmapsets whose song has never been ranked on osu!.
+        
+        Uses the osu! API as the source of truth for ranked status.
+    type: object
+    properties:
+        ruleset:
+            type: string
+            enum: [osu, taiko, fruits, mania]
+            default: osu
+            description: The game mode to check against on osu!
+        normalize_versions:
+            type: boolean
+            default: true
+            description: Whether to normalize song identity (strip version markers) before checking
+
+UniqueArtistTitleConfig:
+    title: UniqueArtistTitleConfig
+    description: |
+        Ensures a song (artist + title) has only been ranked once in a given game mode.
+        
+        Uses the osu! API as the source of truth. Rejects if the same song is already ranked.
+    type: object
+    properties:
+        ruleset:
+            type: string
+            enum: [osu, taiko, fruits, mania]
+            default: osu
+            description: The game mode to check against on osu!
+        normalize_versions:
+            type: boolean
+            default: true
+            description: Whether to normalize song identity (strip version markers) before checking
+
+RuleCreate:
+    title: RuleCreate
+    description: |
+        A new rule to add to a queue. 
+        
+        The config object must match the structure for the specified type.
+    type: object
+    required:
+        - type
+        - config
+    properties:
+        type:
+            type: string
+            enum:
+                - rate_limit
+                - cooldown
+                - blacklist
+                - beatmap_duration
+                - beatmap_star_rating
+                - beatmap_ar_range
+                - beatmap_od_range
+                - beatmap_hp_range
+                - beatmap_cs_range
+                - beatmap_drain_range
+                - beatmap_bpm
+                - beatmap_genre
+                - beatmap_language
+                - beatmap_mode
+                - beatmap_difficulty_count
+                - beatmap_storyboard
+                - beatmap_video
+                - beatmap_tags
+                - beatmap_length
+                - composite
+                - never_ranked
+                - unique_artist_title
+            description: The type of rule
+        config:
+            type: object
+            description: Restriction-specific configuration (see individual type schemas)
+            oneOf:
+                - $ref: "#/RateLimitConfig"
+                - $ref: "#/CooldownConfig"
+                - $ref: "#/BlacklistConfig"
+                - $ref: "#/DurationConfig"
+                - $ref: "#/StarRatingConfig"
+                - $ref: "#/ARRangeConfig"
+                - $ref: "#/ODRangeConfig"
+                - $ref: "#/HPRangeConfig"
+                - $ref: "#/CSRangeConfig"
+                - $ref: "#/DrainRangeConfig"
+                - $ref: "#/BPMConfig"
+                - $ref: "#/GenreConfig"
+                - $ref: "#/LanguageConfig"
+                - $ref: "#/ModeConfig"
+                - $ref: "#/DifficultyCountConfig"
+                - $ref: "#/StoryboardConfig"
+                - $ref: "#/VideoConfig"
+                - $ref: "#/TagsConfig"
+                - $ref: "#/LengthConfig"
+                - $ref: "#/CompositeConfig"
+                - $ref: "#/NeverRankedConfig"
+                - $ref: "#/UniqueArtistTitleConfig"
+        version:
+            type: string
+            default: "1.0"
+            description: Rule version (defaults to "1.0" if not specified)
+
+RuleUpdate:
+    title: RuleUpdate
+    description: Update an existing rule
+    type: object
+    properties:
+        id:
+            type: integer
+            description: The rule ID to update
+        is_active:
+            type: boolean
+            description: Enable or disable the rule
+        config:
+            type: object
+            description: Restriction-specific configuration (see individual type schemas)
+            oneOf:
+                - $ref: "#/RateLimitConfig"
+                - $ref: "#/CooldownConfig"
+                - $ref: "#/BlacklistConfig"
+                - $ref: "#/DurationConfig"
+                - $ref: "#/StarRatingConfig"
+                - $ref: "#/ARRangeConfig"
+                - $ref: "#/ODRangeConfig"
+                - $ref: "#/HPRangeConfig"
+                - $ref: "#/CSRangeConfig"
+                - $ref: "#/DrainRangeConfig"
+                - $ref: "#/BPMConfig"
+                - $ref: "#/GenreConfig"
+                - $ref: "#/LanguageConfig"
+                - $ref: "#/ModeConfig"
+                - $ref: "#/DifficultyCountConfig"
+                - $ref: "#/StoryboardConfig"
+                - $ref: "#/VideoConfig"
+                - $ref: "#/TagsConfig"
+                - $ref: "#/LengthConfig"
+                - $ref: "#/CompositeConfig"
+                - $ref: "#/NeverRankedConfig"
+                - $ref: "#/UniqueArtistTitleConfig"
+        version:
+            type: string
+            description: Rule version (only update if migrating to a new version)
+
+QueueRuleDescription: |
+    A queue rule rule applied when users submit requests.
+    
+    Multiple rules of the same type can be added (e.g., multiple blacklist rules for different users).
+    Duplicate rules (same type + same version + same config) are rejected with 409 Conflict.
+    
+    Restrictions are evaluated in two phases:
+    
+    Phase 1 (synchronous, blocks HTTP response):
+    - Tier 1: User-only validators (rate_limit, cooldown, blacklist) — Redis-backed, <1ms each
+    - Tier 2: Beatmap metadata validators (duration, star rating, AR, BPM, genre, etc.) — in-memory, <5ms each
+    
+    Phase 2 (asynchronous, non-blocking):
+    - Tier 3: osu! API validators (never_ranked, unique_artist_title) — seconds per rule
+    
+    Examples of valid rule configurations for each type:
+
+    Rate Limit (limit all users to 1 request per day):
+    ```
+    {
+        "type": "rate_limit",
+        "config": {
+            "max_requests": 1,
+            "period": "day",
+            "scope": "user"
+        }
+    }
+    ```
+
+    Cooldown (30 second cooldown for all users):
+    ```
+    {
+        "type": "cooldown",
+        "config": {
+            "cooldown_seconds": 30,
+            "scope": "user"
+        }
+    }
+    ```
+
+    Blacklist specific users:
+    ```
+    {
+        "type": "blacklist",
+        "config": {
+            "scope": "user",
+            "target": [123, 456, 789]
+        }
+    }
+    ```
+
+    Duration limit (max 180 seconds, check longest beatmap):
+    ```
+    {
+        "type": "beatmap_duration",
+        "config": {
+            "max_seconds": 180,
+            "logic": "max"
+        }
+    }
+    ```
+
+    Star rating range (any difficulty between 5.8 and 6.8):
+    ```
+    {
+        "type": "beatmap_star_rating",
+        "config": {
+            "min": 5.8,
+            "max": 6.8,
+            "logic": "any"
+        }
+    }
+    ```
+
+    Genre filter (any beatmap must be Electronic or Hip-Hop):
+    ```
+    {
+        "type": "beatmap_genre",
+        "config": {
+            "genre_ids": [4, 5],
+            "logic": "any"
+        }
+    }
+    ```
+
+    Composite rule (AND of star rating AND duration):
+    ```
+    {
+        "type": "composite",
+        "config": {
+            "operator": "and",
+            "rules": [
+                {
+                    "type": "beatmap_star_rating",
+                    "config": { "min": 5.8, "max": 6.8 }
+                },
+                {
+                    "type": "beatmap_duration",
+                    "config": { "max_seconds": 180 }
+                }
+            ]
+        }
+    }
+    ```
+
+    Never ranked (reject songs never ranked on osu! standard):
+    ```
+    {
+        "type": "never_ranked",
+        "config": {
+            "ruleset": "osu",
+            "normalize_versions": true
+        }
+    }
+    ```
+
+    Rate limit for specific users:
+    ```
+    {
+        "type": "rate_limit",
+        "config": {
+            "max_requests": 5,
+            "period": "week",
+            "scope": "user",
+            "target": [123, 456, 789]
+        }
+    }
+    ```

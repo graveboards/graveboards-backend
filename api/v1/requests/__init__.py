@@ -14,10 +14,10 @@ from app.database.enums import RoleName
 from app.redis import Namespace, ChannelName, RedisClient
 from app.redis.models import QueueRequestHandlerTask, QueueRequestValidationTask
 from app.spec import get_include_schema
-from app.database.restrictions.context import ExecutionContext
-from app.database.restrictions.engine.phase1_runner import Phase1Runner
-from app.database.restrictions.exceptions import RestrictionViolationError
-from app.database.restrictions.validators.metadata import (
+from app.database.rules.context import ExecutionContext
+from app.database.rules.engine.phase1_runner import Phase1Runner
+from app.database.rules.exceptions import RuleViolationError
+from app.database.rules.validators.metadata import (
     SongIdentityProvider,
     BeatmapStatsProvider,
     CreatorIdentityProvider,
@@ -110,7 +110,7 @@ async def post(body: dict, **kwargs):
     if (status := beatmapset_dict["status"]) in {"ranked", "approved", "qualified", "loved"}:
         raise BadRequest(f"The beatmapset is already {status} on osu!")
 
-    await _check_queue_restrictions_phase1(
+    await _check_queue_rules_phase1(
         queue_id=queue_id,
         user_id=user_id,
         beatmapset=beatmapset_dict,
@@ -136,18 +136,18 @@ async def post(body: dict, **kwargs):
     return {"message": "Request submitted and queued for processing!", "task_id": task.hashed_id}, 202, {"Content-Type": "application/json"}
 
 
-async def _check_queue_restrictions_phase1(
+async def _check_queue_rules_phase1(
     queue_id: int,
     user_id: int,
     beatmapset: dict,
     db: PostgresqlDB,
     rc: RedisClient,
 ) -> None:
-    from app.database.crud.restrictions import RestrictionCRUD
+    from app.database.crud.rules import RuleCRUD
 
-    restriction_crud = RestrictionCRUD()
+    rule_crud = RuleCRUD()
     async with db.session() as session:
-        restrictions = await restriction_crud.get_restrictions(queue_id, only_active=True, session=session)
+        rules = await rule_crud.get_rules(queue_id, only_active=True, session=session)
 
     context = ExecutionContext(
         queue_id=queue_id,
@@ -159,7 +159,7 @@ async def _check_queue_restrictions_phase1(
     )
 
     runner = Phase1Runner()
-    await runner.run(restrictions, context)
+    await runner.run(rules, context)
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override, override_kwargs={"from_request": True})

@@ -26,7 +26,7 @@ from .queue import Queue
 from .request import Request
 from .beatmapset_tag import BeatmapsetTag
 from .beatmap_tag import BeatmapTag
-from .queue_restriction import QueueRestriction
+from .queue_rule import QueueRule
 
 
 class ModelClass(Enum):
@@ -49,7 +49,7 @@ class ModelClass(Enum):
     REQUEST = Request
     BEATMAPSET_TAG = BeatmapsetTag
     BEATMAP_TAG = BeatmapTag
-    QUEUE_RESTRICTION = QueueRestriction
+    QUEUE_RULE = QueueRule
 
     @property
     def value(self) -> type[BaseType]:
