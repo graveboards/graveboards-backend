@@ -11,6 +11,8 @@ Run with:
 import asyncio
 import sys
 
+from sqlalchemy.text import text
+
 from app.database import PostgresqlDB
 from app.bootstrap import SetupRunner
 from app.config import CONFIG
@@ -45,7 +47,7 @@ async def migrate():
         # Verify table exists
         async with db.session() as session:
             result = await session.execute(
-                "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'queue_restrictions')"
+                text("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'queue_restrictions')")
             )
             table_exists = result.scalar()
 
@@ -55,7 +57,7 @@ async def migrate():
 
         # Execute migration
         async with db.engine.connect() as conn:
-            await conn.execute(MIGRATION_SQL)
+            await conn.execute(text(MIGRATION_SQL))
             await conn.commit()
 
         logger.info("Migration completed successfully!")
@@ -80,7 +82,7 @@ async def rollback():
         # Verify table exists
         async with db.session() as session:
             result = await session.execute(
-                "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'queue_rules')"
+                text("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'queue_rules')")
             )
             table_exists = result.scalar()
 
@@ -90,7 +92,7 @@ async def rollback():
 
         # Execute rollback
         async with db.engine.connect() as conn:
-            await conn.execute(REVERSAL_SQL)
+            await conn.execute(text(REVERSAL_SQL))
             await conn.commit()
 
         logger.info("Rollback completed successfully!")
