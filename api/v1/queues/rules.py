@@ -11,7 +11,7 @@ from app.database.crud.rules import RuleCRUD
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def get_rules(queue_id: int, **kwargs):
+async def search(queue_id: int, **kwargs):
     """GET /queues/{queue_id}/rules — list all rules for a queue."""
     db: PostgresqlDB = request.state.db
 
@@ -27,7 +27,7 @@ async def get_rules(queue_id: int, **kwargs):
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def get_rule(queue_id: int, rule_id: int, **kwargs):
+async def get(queue_id: int, rule_id: int, **kwargs):
     """GET /queues/{queue_id}/rules/{rule_id} — get a single rule."""
     db: PostgresqlDB = request.state.db
 
@@ -46,7 +46,7 @@ async def get_rule(queue_id: int, rule_id: int, **kwargs):
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def create_rule(queue_id: int, body: dict, **kwargs):
+async def post(queue_id: int, body: dict, **kwargs):
     """POST /queues/{queue_id}/rules — add a single rule to a queue."""
     db: PostgresqlDB = request.state.db
 
@@ -67,7 +67,7 @@ async def create_rule(queue_id: int, body: dict, **kwargs):
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def update_rule(queue_id: int, rule_id: int, body: dict, **kwargs):
+async def patch(queue_id: int, rule_id: int, body: dict, **kwargs):
     """PATCH /queues/{queue_id}/rules/{rule_id} — update a single rule."""
     db: PostgresqlDB = request.state.db
 
@@ -86,7 +86,7 @@ async def update_rule(queue_id: int, rule_id: int, body: dict, **kwargs):
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def delete_rule(queue_id: int, rule_id: int, **kwargs):
+async def delete(queue_id: int, rule_id: int, **kwargs):
     """DELETE /queues/{queue_id}/rules/{rule_id} — remove a single rule."""
     db: PostgresqlDB = request.state.db
 
@@ -105,7 +105,7 @@ async def delete_rule(queue_id: int, rule_id: int, **kwargs):
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def replace_all_rules(queue_id: int, body: dict, **kwargs):
+async def put(queue_id: int, body: dict, **kwargs):
     """PUT /queues/{queue_id}/rules — replace all rules for a queue."""
     db: PostgresqlDB = request.state.db
 
