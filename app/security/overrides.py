@@ -57,6 +57,12 @@ async def queue_owner_override(
     if not from_request:
         queue = await db.get(Queue, id=kwargs["queue_id"])
     else:
-        queue = (await db.get(Request, id=kwargs["request_id"], _include={"queue": True})).queue
+        request = await db.get(Request, id=kwargs["request_id"], _include={"queue": True})
+        if request is None:
+            return False
+        queue = request.queue
+
+    if queue is None:
+        return False
 
     return authenticated_user_id == queue.user_id
