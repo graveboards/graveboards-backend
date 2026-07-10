@@ -3,6 +3,8 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from connexion.exceptions import Forbidden
+
 from app.database.models import QueueRestriction
 from app.database.restrictions.engine.evaluator import build_rule_node, RuleNode
 from app.database.restrictions.exceptions import RestrictionViolationError
@@ -36,6 +38,8 @@ class Phase1Runner:
                         f"Rule '{restriction.restriction_type}' rejected the request",
                     )
             except RestrictionViolationError:
+                raise
+            except Forbidden:
                 raise
             except Exception as e:
                 logger.warning(

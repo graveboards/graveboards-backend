@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from connexion.exceptions import Forbidden
+
 from app.database.restrictions.context import ExecutionContext
 from app.database.restrictions.exceptions import RestrictionViolationError
 from app.database.restrictions.registry import get_validator, get_validator_tier
@@ -41,6 +43,8 @@ class AtomicRuleNode(RuleNode):
             return True
         except RestrictionViolationError:
             return False
+        except Forbidden:
+            raise
         except Exception:
             return False
         finally:
