@@ -49,4 +49,3 @@ class QueueUpdateSchema(BaseModel, BaseModelExtra):
     description: Optional[str] = None
     is_open: Optional[bool] = None
     visibility: Optional[int] = None
-    rules: Optional[list[RuleSchema]] = None

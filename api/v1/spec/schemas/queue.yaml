@@ -62,9 +62,3 @@ QueuePatch:
             type: boolean
         visibility:
             $ref: "./sub_schemas/visibility.yaml#/Visibility"
-        rules:
-            type: array
-            items:
-                $ref: "./rule.yaml#/RuleCreate"
-            description:
-                $ref: "./rule.yaml#/QueueRuleDescription"
