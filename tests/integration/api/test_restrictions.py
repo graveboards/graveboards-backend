@@ -105,6 +105,7 @@ class TestRestrictionsOnRequestSubmission:
         mock_restriction.id = 1
         mock_restriction.queue_id = self.TEST_QUEUE_ID
         mock_restriction.restriction_type = "rate_limit"
+        mock_restriction.version = "1.0"
         mock_restriction.config = {
             "max_requests": 1,
             "period": "week",
@@ -183,6 +184,7 @@ class TestRestrictionsOnRequestSubmission:
         mock_restriction.id = 1
         mock_restriction.queue_id = self.TEST_QUEUE_ID
         mock_restriction.restriction_type = "cooldown"
+        mock_restriction.version = "1.0"
         mock_restriction.config = {
             "cooldown_seconds": 3600,
             "scope": "user",
@@ -263,6 +265,7 @@ class TestRestrictionsOnRequestSubmission:
         mock_restriction.id = 1
         mock_restriction.queue_id = self.TEST_QUEUE_ID
         mock_restriction.restriction_type = "blacklist"
+        mock_restriction.version = "1.0"
         mock_restriction.config = {
             "scope": "user",
             "target": [self.TEST_USER_ID],
