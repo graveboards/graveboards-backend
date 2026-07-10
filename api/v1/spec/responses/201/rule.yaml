@@ -1,0 +1,6 @@
+RuleCreated:
+    description: Rule created
+    content:
+        application/json:
+            schema:
+                $ref: "../../schemas/rule.yaml#/QueueRule"

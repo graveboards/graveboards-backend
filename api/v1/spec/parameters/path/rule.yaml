@@ -1,0 +1,7 @@
+RuleId:
+    name: rule_id
+    in: path
+    required: true
+    schema:
+        type: integer
+    description: The rule ID

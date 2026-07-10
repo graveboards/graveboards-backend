@@ -147,3 +147,16 @@ HealthResponse:
 
 HealthErrorResponse:
     $ref: "./health.yaml#/HealthErrorResponse"
+
+# Rules
+Rule:
+    $ref: "./rule.yaml#/QueueRule"
+
+RuleCreate:
+    $ref: "./rule.yaml#/RuleCreate"
+
+RuleUpdate:
+    $ref: "./rule.yaml#/RuleUpdate"
+
+RulesReplace:
+    $ref: "./rule.yaml#/RulesReplace"

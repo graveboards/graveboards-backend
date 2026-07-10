@@ -1,0 +1,23 @@
+RuleCreateBody:
+    description: A JSON payload containing the rule to create
+    required: true
+    content:
+        application/json:
+            schema:
+                $ref: "../schemas/rule.yaml#/RuleCreate"
+
+RuleUpdateBody:
+    description: A JSON payload containing the fields to update
+    required: true
+    content:
+        application/json:
+            schema:
+                $ref: "../schemas/rule.yaml#/RuleUpdate"
+
+RulesReplaceBody:
+    description: A JSON payload containing the full list of rules to replace existing ones
+    required: true
+    content:
+        application/json:
+            schema:
+                $ref: "../schemas/rule.yaml#/RulesReplace"

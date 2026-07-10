@@ -93,6 +93,12 @@
 /queues/{queue_id}:
     $ref: "./queues.yaml#/QueueById"
 
+/queues/{queue_id}/rules:
+    $ref: "./queues.yaml#/QueueRules"
+
+/queues/{queue_id}/rules/{rule_id}:
+    $ref: "./queues.yaml#/QueueRuleById"
+
 # Requests
 /requests:
     $ref: "./requests.yaml#/Requests"

@@ -130,6 +130,81 @@ class RuleCRUD:
 
         return rule
 
+    @session_manager()
+    async def get_rule(
+        self,
+        queue_id: int,
+        rule_id: int,
+        session: AsyncSession = None,
+    ) -> QueueRule | None:
+        """Fetch a single rule by ID, scoped to a queue."""
+        stmt = select(QueueRule).where(
+            QueueRule.id == rule_id,
+            QueueRule.queue_id == queue_id,
+        )
+        result = await session.execute(stmt)
+        return result.scalars().first()
+
+    @session_manager()
+    async def create_rule(
+        self,
+        queue_id: int,
+        rule_data: dict,
+        session: AsyncSession = None,
+    ) -> QueueRule:
+        """Create a single rule and append it to the queue's existing rules."""
+        existing = await self.get_rules(queue_id, session=session)
+        new_key = (
+            rule_data["type"],
+            rule_data.get("version", "1.0"),
+            _normalize_config(rule_data.get("config", {})),
+        )
+        for existing_rule in existing:
+            existing_key = (
+                existing_rule.type,
+                existing_rule.version,
+                _normalize_config(existing_rule.config),
+            )
+            if existing_key == new_key:
+                raise Conflict(
+                    f"Duplicate rule: {rule_data['type']} v{rule_data.get('version', '1.0')} with the "
+                    f"same configuration has already been added."
+                )
+
+        rule = QueueRule(
+            queue_id=queue_id,
+            type=rule_data["type"],
+            config=rule_data.get("config", {}),
+            is_active=rule_data.get("is_active", True),
+            version=rule_data.get("version", "1.0"),
+        )
+        session.add(rule)
+        await session.flush()
+        await session.refresh(rule)
+        return rule
+
+    @session_manager()
+    async def delete_rule(
+        self,
+        rule_id: int,
+        queue_id: int,
+        session: AsyncSession = None,
+    ) -> QueueRule | None:
+        """Delete a single rule by ID, scoped to a queue."""
+        stmt = select(QueueRule).where(
+            QueueRule.id == rule_id,
+            QueueRule.queue_id == queue_id,
+        )
+        result = await session.execute(stmt)
+        rule = result.scalars().first()
+
+        if not rule:
+            return None
+
+        await session.delete(rule)
+        await session.flush()
+        return rule
+
     async def _delete_all_for_rule(
         self,
         queue_id: int,

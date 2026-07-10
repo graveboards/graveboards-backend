@@ -799,3 +799,16 @@ QueueRuleDescription: |
         }
     }
     ```
+
+RulesReplace:
+    title: RulesReplace
+    description: Replace all rules for a queue
+    type: object
+    properties:
+        rules:
+            type: array
+            items:
+                $ref: "#/RuleCreate"
+            description: List of rules to replace the existing set
+    required:
+        - rules

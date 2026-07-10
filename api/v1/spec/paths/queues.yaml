@@ -94,3 +94,138 @@ QueueById:
                 $ref: "../responses/403/generic.yaml#/Forbidden"
             404:
                 $ref: "../responses/404/generic.yaml#/NotFound"
+
+QueueRules:
+    get:
+        summary: Returns all rules for a queue
+        tags:
+            - Rules
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        parameters:
+            - $ref: "../parameters/path/queue.yaml#/QueueId"
+        responses:
+            200:
+                $ref: "../responses/200/rule.yaml#/RuleResults"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"
+
+    post:
+        summary: Adds a rule to a queue
+        tags:
+            - Rules
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        parameters:
+            - $ref: "../parameters/path/queue.yaml#/QueueId"
+        requestBody:
+            $ref: "../request_bodies/rule.yaml#/RuleCreateBody"
+        responses:
+            201:
+                $ref: "../responses/201/rule.yaml#/RuleCreated"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"
+            409:
+                $ref: "../responses/409/generic.yaml#/Conflict"
+
+    put:
+        summary: Replaces all rules for a queue
+        tags:
+            - Rules
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        parameters:
+            - $ref: "../parameters/path/queue.yaml#/QueueId"
+        requestBody:
+            $ref: "../request_bodies/rule.yaml#/RulesReplaceBody"
+        responses:
+            200:
+                $ref: "../responses/200/rule.yaml#/RuleResults"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"
+            409:
+                $ref: "../responses/409/generic.yaml#/Conflict"
+
+QueueRuleById:
+    get:
+        summary: Returns the specified rule
+        tags:
+            - Rules
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        parameters:
+            - $ref: "../parameters/path/queue.yaml#/QueueId"
+            - $ref: "../parameters/path/rule.yaml#/RuleId"
+        responses:
+            200:
+                $ref: "../responses/200/rule.yaml#/RuleResult"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"
+
+    patch:
+        summary: Updates a rule
+        tags:
+            - Rules
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        parameters:
+            - $ref: "../parameters/path/queue.yaml#/QueueId"
+            - $ref: "../parameters/path/rule.yaml#/RuleId"
+        requestBody:
+            $ref: "../request_bodies/rule.yaml#/RuleUpdateBody"
+        responses:
+            200:
+                $ref: "../responses/200/rule.yaml#/RulePatched"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"
+
+    delete:
+        summary: Deletes a rule
+        tags:
+            - Rules
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        parameters:
+            - $ref: "../parameters/path/queue.yaml#/QueueId"
+            - $ref: "../parameters/path/rule.yaml#/RuleId"
+        responses:
+            200:
+                $ref: "../responses/200/rule.yaml#/RuleDeleted"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"

@@ -1,0 +1,35 @@
+RuleResults:
+    description: List of rules
+    content:
+        application/json:
+            schema:
+                type: array
+                items:
+                    $ref: "../../schemas/rule.yaml#/QueueRule"
+
+RuleResult:
+    description: Rule
+    content:
+        application/json:
+            schema:
+                $ref: "../../schemas/rule.yaml#/QueueRule"
+
+RulePatched:
+    description: Rule patch info
+    content:
+        application/json:
+            schema:
+                type: object
+                properties:
+                    message:
+                        type: string
+
+RuleDeleted:
+    description: Rule deleted info
+    content:
+        application/json:
+            schema:
+                type: object
+                properties:
+                    message:
+                        type: string
