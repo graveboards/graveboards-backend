@@ -11,7 +11,7 @@ Run with:
 import asyncio
 import sys
 
-from sqlalchemy.text import text
+from sqlalchemy import text
 
 from app.database import PostgresqlDB
 from app.bootstrap import SetupRunner
