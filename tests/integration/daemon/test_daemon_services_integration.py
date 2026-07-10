@@ -43,7 +43,7 @@ class TestDaemonLifecycle:
         assert "profile_fetcher" in daemon._services
         assert "queue_request_handler" in daemon._services
         assert "score_fetcher" in daemon._services
-        assert len(daemon._services) == 3
+        assert len(daemon._services) == 4
 
     @pytest.mark.asyncio
     async def test_daemon_service_factories_are_lazy(self, mock_rc, mock_db):
