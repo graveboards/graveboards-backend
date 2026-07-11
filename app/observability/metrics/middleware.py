@@ -14,6 +14,10 @@ logger = get_logger("app.access")
 # Regex to match path parameters like {user_id}, {beatmap_id}, etc.
 _PATH_PARAM_PATTERN = re.compile(r"\{[^}]+\}")
 
+# Scraped/polled on a tight interval and never interesting on their own;
+# still recorded as metrics below, just not logged as access-log noise.
+_NOISY_ACCESS_LOG_PATHS = frozenset({"/metrics", "/api/v1/health"})
+
 
 def _get_endpoint(scope: Scope) -> str:
     route = scope.get("route")
@@ -88,9 +92,10 @@ class MetricsMiddleware:
 
         http_requests_in_flight.labels(method=method, endpoint=endpoint).dec()
 
-        client_host = request.client.host if request.client else "-"
-        client_port = request.client.port if request.client else "-"
+        if request.url.path not in _NOISY_ACCESS_LOG_PATHS:
+            client_host = request.client.host if request.client else "-"
+            client_port = request.client.port if request.client else "-"
 
-        logger.info(
-            f"{method} {request.url.path} {client_host}:{client_port} {status_code} {duration:.3f}s"
-        )
+            logger.info(
+                f"{method} {request.url.path} {client_host}:{client_port} {status_code} {duration:.3f}s"
+            )
