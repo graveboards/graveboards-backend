@@ -1,5 +1,5 @@
 import logging
-import os
+import logging.handlers
 import sys
 from inspect import FrameInfo
 from pathlib import Path
@@ -15,14 +15,15 @@ from structlog.processors import (
 )
 from structlog.stdlib import ProcessorFormatter
 
-from app.config import DEBUG, PROJECT_ROOT
+from app.config import DEBUG, LOGS_DIR, PROJECT_ROOT
 
 
 SERVICE_NAME = "backend"
 
-
-def _is_json_format() -> bool:
-    return os.getenv("LOG_FORMAT", "text").lower() == "json"
+# Structured JSON sink for the monitoring stack (promtail tails this file).
+# Kept separate from stdout so stdout can stay human-readable in every
+# environment — no LOG_FORMAT env var needed, both sinks are always on.
+JSON_LOG_FILE = Path(LOGS_DIR) / "app.jsonl"
 
 
 def _get_level_overrides() -> dict[str, int]:
@@ -73,7 +74,6 @@ def setup_logging(
     global_level=None,
 ) -> None:
     level = logging.DEBUG if DEBUG else logging.INFO
-    json_format = _is_json_format()
     level_overrides = {**_get_level_overrides(), **(level_overrides or {})}
     shared_processors = _build_shared_processors()
 
@@ -96,45 +96,61 @@ def setup_logging(
     logging.getLogger("app").setLevel(level)
     logging.getLogger("root").setLevel(logging.WARNING)
 
-    _configure_stdlib_bridge(json_format, shared_processors)
+    _configure_stdlib_bridge(shared_processors)
 
 
-def _build_final_renderer(json_format: bool):
-    if json_format:
-        return structlog.processors.JSONRenderer(
-            sort_keys=True,
-            ensure_ascii=False,
-        )
+def _build_handlers(shared_processors: list) -> list[logging.Handler]:
+    """Two independent sinks fed by the same log records.
 
-    return ConsoleRenderer(
-        colors=True,
-    )
+    Console: human-readable, always on, whatever runs `docker compose logs`
+    or a bare terminal sees the same clean output in dev and prod.
 
-
-def _configure_stdlib_bridge(json_format: bool, shared_processors: list) -> None:
-    formatter = ProcessorFormatter(
-        # Runs on every record after the pre-chain; strips ProcessorFormatter's
-        # internal keys, then renders.
+    JSON file: structured, always on, what promtail tails and ships to Loki.
+    Splitting these out means neither audience has to compromise, and no
+    LOG_FORMAT env var is needed to pick one over the other.
+    """
+    console_formatter = ProcessorFormatter(
         processors=[
             ProcessorFormatter.remove_processors_meta,
-            _build_final_renderer(json_format),
+            ConsoleRenderer(colors=True),
         ],
-        # Runs only on foreign (non-structlog) records to give them the same
-        # timestamp/level/logger-name keys native records already carry.
         foreign_pre_chain=shared_processors,
     )
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(console_formatter)
 
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(formatter)
+    JSON_LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+    json_formatter = ProcessorFormatter(
+        processors=[
+            ProcessorFormatter.remove_processors_meta,
+            structlog.processors.JSONRenderer(sort_keys=True, ensure_ascii=False),
+        ],
+        foreign_pre_chain=shared_processors,
+    )
+    json_handler = logging.handlers.RotatingFileHandler(
+        JSON_LOG_FILE,
+        maxBytes=50 * 1024 * 1024,
+        backupCount=5,
+    )
+    json_handler.setFormatter(json_formatter)
+
+    return [console_handler, json_handler]
+
+
+def _configure_stdlib_bridge(shared_processors: list) -> None:
+    handlers = _build_handlers(shared_processors)
 
     root = logging.getLogger()
     root.handlers.clear()
-    root.addHandler(handler)
+    for handler in handlers:
+        root.addHandler(handler)
 
     for logger_name in ("uvicorn", "uvicorn.error", "uvicorn.access", "sqlalchemy"):
         logger = logging.getLogger(logger_name)
         logger.handlers.clear()
-        logger.addHandler(handler)
+        for handler in handlers:
+            logger.addHandler(handler)
         logger.propagate = False
 
 
