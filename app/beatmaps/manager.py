@@ -34,6 +34,7 @@ from sqlalchemy.ext.asyncio.session import AsyncSession
 
 from app.logging import get_logger
 from app.osu_api import OsuAPIClient
+from app.osu_api.client.base import OsuAPIMetricsTransport
 from app.database import PostgresqlDB
 from app.database.models import (
     Profile,
@@ -549,7 +550,11 @@ class BeatmapManager:
         if not beatmap_ids:
             return
 
-        async with httpx.AsyncClient() as client:
+        # Same instrumented transport as OsuAPIClient, so these .osu file downloads
+        # (a separate osu.ppy.sh host path, outside the API client entirely) show up
+        # in osu_api_* metrics instead of being invisible to observability.
+        transport = OsuAPIMetricsTransport(httpx.AsyncHTTPTransport())
+        async with httpx.AsyncClient(transport=transport) as client:
             for beatmap_id in beatmap_ids:
                 url = f"{BEATMAP_DOWNLOAD_BASEURL}{beatmap_id}"
                 output_directory = os.path.join(BEATMAPS_PATH, str(beatmap_id))

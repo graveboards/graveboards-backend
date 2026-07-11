@@ -1,7 +1,6 @@
-import re
 import time
 
-import structlog
+from connexion.middleware.abstract import ROUTING_CONTEXT
 from starlette.requests import Request
 from starlette.types import ASGIApp, Scope, Receive, Send
 
@@ -11,23 +10,27 @@ from .http import http_requests_total, http_request_duration_seconds, http_reque
 
 logger = get_logger("app.access")
 
-# Regex to match path parameters like {user_id}, {beatmap_id}, etc.
-_PATH_PARAM_PATTERN = re.compile(r"\{[^}]+\}")
-
 # Scraped/polled on a tight interval and never interesting on their own;
 # still recorded as metrics below, just not logged as access-log noise.
 _NOISY_ACCESS_LOG_PATHS = frozenset({"/metrics", "/api/v1/health"})
 
+# Routes registered directly via add_url_rule(), outside the OpenAPI spec, so they
+# never get an operation_id from Connexion's routing and would otherwise be
+# indistinguishable from genuinely unmatched (404) requests in the endpoint label.
+_STATIC_ROUTE_ENDPOINTS = {"/metrics": "metrics"}
+
 
 def _get_endpoint(scope: Scope) -> str:
-    route = scope.get("route")
-    if route is not None:
-        path = getattr(route, "path", None)
-        if path is not None:
-            # Normalize path parameters to reduce cardinality
-            # e.g., /users/12345 → /users/{param}
-            return _PATH_PARAM_PATTERN.sub("{param}", path)
-    return "<unmatched>"
+    # Connexion resolves routing via its own contextvar/scope-copy mechanism instead
+    # of Starlette's usual scope["route"], and stores the match under
+    # extensions[ROUTING_CONTEXT]["operation_id"] - the OpenAPI operationId (e.g.
+    # "api.v1.beatmaps.get_beatmap"), already parameter-free and low-cardinality by
+    # construction, so no path-template regex is needed here.
+    operation_id = scope.get("extensions", {}).get(ROUTING_CONTEXT, {}).get("operation_id")
+    if operation_id:
+        return operation_id
+
+    return _STATIC_ROUTE_ENDPOINTS.get(scope.get("path"), "<unmatched>")
 
 
 class MetricsMiddleware:

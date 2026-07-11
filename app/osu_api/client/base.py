@@ -24,7 +24,7 @@ def _get_osu_endpoint(path: str) -> str:
     return "/".join("{id}" if p.isdigit() else p for p in parts)
 
 
-class _OsuAPIMetricsTransport(httpx.AsyncBaseTransport):
+class OsuAPIMetricsTransport(httpx.AsyncBaseTransport):
     def __init__(self, transport: httpx.AsyncBaseTransport) -> None:
         self._transport = transport
 
@@ -43,6 +43,16 @@ class _OsuAPIMetricsTransport(httpx.AsyncBaseTransport):
 
             osu_api_request_duration_seconds.labels(endpoint=endpoint).observe(duration)
 
+            if response.is_error:
+                # Callers raise_for_status() well after the transport returns, so a
+                # 4xx/5xx from osu! itself never reaches the `except` clause below.
+                # Record it here, using the same error_type that raise_for_status()
+                # would itself raise, so this lines up with the transport-exception case.
+                osu_api_errors_total.labels(
+                    endpoint=endpoint,
+                    error_type="HTTPStatusError",
+                ).inc()
+
             return response
         except Exception as exc:
             duration = time.perf_counter() - start
@@ -56,11 +66,13 @@ class _OsuAPIMetricsTransport(httpx.AsyncBaseTransport):
 class OsuAPIClientBase:
     def __init__(self, rc: RedisClient):
         self.rc = rc
-        self._oauth = OAuth()
+        # Separate transport/connection pool from _http_client, but instrumented the
+        # same way, so oauth/token requests show up in osu_api_* metrics too - a stalled
+        # or failing token refresh takes down every other osu! API call with it.
+        self._oauth = OAuth(transport=OsuAPIMetricsTransport(httpx.AsyncHTTPTransport()))
         self._token: OsuClientOAuthToken | None = None
-        transport = httpx.AsyncHTTPTransport()
         self._http_client = httpx.AsyncClient(
-            transport=_OsuAPIMetricsTransport(transport),
+            transport=OsuAPIMetricsTransport(httpx.AsyncHTTPTransport()),
             timeout=httpx.Timeout(10.0, connect=5.0)
         )
 

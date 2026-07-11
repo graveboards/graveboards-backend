@@ -43,14 +43,19 @@ def create_connexion_app() -> AsyncApp:
         }
     )
 
-    # Must be BEFORE_EXCEPTION (not BEFORE_ROUTING) so it wraps MetricsMiddleware:
-    # BEFORE_EXCEPTION sits earlier/outer in Connexion's middleware stack than
-    # BEFORE_ROUTING, so registering this any later meant request_id was already
-    # cleared by the time the access log line was emitted.
+    # BEFORE_EXCEPTION sits outer to everything below, so request_id stays bound
+    # in structlog contextvars for the whole request, including the access log
+    # line MetricsMiddleware emits after the handler returns.
     connexion_app.add_middleware(RequestContextMiddleware, position=MiddlewarePosition.BEFORE_EXCEPTION)
+
+    # Must be BEFORE_SECURITY (i.e. after RoutingMiddleware), not BEFORE_EXCEPTION:
+    # scope["route"] is only populated once RoutingMiddleware has resolved the
+    # request, so reading it any earlier makes the `endpoint` label permanently
+    # "<unmatched>". BEFORE_SECURITY still wraps security/validation/the handler,
+    # so status codes and exceptions from those stages are captured correctly.
     connexion_app.add_middleware(
         MetricsMiddleware,
-        position=MiddlewarePosition.BEFORE_EXCEPTION,
+        position=MiddlewarePosition.BEFORE_SECURITY,
     )
 
     # TODO: Restrict CORS to known frontend domains before production deployment
