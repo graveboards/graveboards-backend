@@ -43,7 +43,11 @@ def create_connexion_app() -> AsyncApp:
         }
     )
 
-    connexion_app.add_middleware(RequestContextMiddleware, position=MiddlewarePosition.BEFORE_ROUTING)
+    # Must be BEFORE_EXCEPTION (not BEFORE_ROUTING) so it wraps MetricsMiddleware:
+    # BEFORE_EXCEPTION sits earlier/outer in Connexion's middleware stack than
+    # BEFORE_ROUTING, so registering this any later meant request_id was already
+    # cleared by the time the access log line was emitted.
+    connexion_app.add_middleware(RequestContextMiddleware, position=MiddlewarePosition.BEFORE_EXCEPTION)
     connexion_app.add_middleware(
         MetricsMiddleware,
         position=MiddlewarePosition.BEFORE_EXCEPTION,
