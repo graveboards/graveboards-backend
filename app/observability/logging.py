@@ -57,7 +57,10 @@ def _build_shared_processors() -> list:
         _drop_color_message,
         StackInfoRenderer(),
         format_exc_info,
-        TimeStamper(fmt="iso", utc=False),
+        # utc=True so the ISO timestamp ends in "Z" (or a numeric offset for
+        # non-UTC fmts) — promtail's timestamp stage requires an explicit
+        # offset marker and otherwise falls back to ingest time.
+        TimeStamper(fmt="iso", utc=True),
         structlog.processors.UnicodeDecoder(),
     ]
 
