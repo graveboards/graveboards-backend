@@ -1,4 +1,35 @@
+import os
+import subprocess
 from prometheus_client import Counter, Histogram, Gauge
+
+
+def _get_commit_hash() -> str:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            cwd=os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout.strip()
+    except Exception:
+        pass
+    return "unknown"
+
+
+graveboards_build_info = Gauge(
+    "graveboards_build_info",
+    "Build information for the Graveboards backend. Always 1; labels identify the version.",
+    ["version", "commit"],
+)
+
+
+def set_build_info():
+    from app.version import __version__
+    commit = _get_commit_hash()
+    graveboards_build_info.labels(version=__version__, commit=commit).set(1)
 
 
 daemon_service_running = Gauge(

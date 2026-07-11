@@ -18,6 +18,10 @@ async def lifespan(app: ConnexionMiddleware):
     logger = get_logger(__name__)
     logger.info("Start of app lifespan")
 
+    from app.observability.metrics.daemon import set_build_info
+    set_build_info()
+    logger.info("Build info metric set")
+
     runner = SetupRunner(CONFIG.bootstrap)
     await runner.run()
 
