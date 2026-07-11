@@ -9,6 +9,7 @@ from structlog.contextvars import bind_contextvars, clear_contextvars
 from structlog.dev import ConsoleRenderer
 from structlog.processors import (
     add_log_level,
+    format_exc_info,
     StackInfoRenderer,
     TimeStamper,
 )
@@ -55,6 +56,7 @@ def _build_shared_processors() -> list:
         add_log_level,
         _drop_color_message,
         StackInfoRenderer(),
+        format_exc_info,
         TimeStamper(fmt="iso", utc=False),
         structlog.processors.UnicodeDecoder(),
     ]

@@ -1,3 +1,4 @@
+import re
 import time
 
 import structlog
@@ -10,13 +11,18 @@ from .http import http_requests_total, http_request_duration_seconds, http_reque
 
 logger = get_logger("app.access")
 
+# Regex to match path parameters like {user_id}, {beatmap_id}, etc.
+_PATH_PARAM_PATTERN = re.compile(r"\{[^}]+\}")
+
 
 def _get_endpoint(scope: Scope) -> str:
     route = scope.get("route")
     if route is not None:
         path = getattr(route, "path", None)
         if path is not None:
-            return path
+            # Normalize path parameters to reduce cardinality
+            # e.g., /users/12345 → /users/{param}
+            return _PATH_PARAM_PATTERN.sub("{param}", path)
     return "<unmatched>"
 
 
