@@ -301,23 +301,28 @@ class BeatmapManager:
         """Ensure ``Beatmapset`` and related ``Beatmap`` records exist.
 
         Populates users, profile, the beatmapset, and child beatmaps.
+
+        Uses a Redis lock to prevent concurrent archive calls for the same
+        beatmapset from racing on the beatmapset/beatmap inserts.
         """
         beatmapset_id = beatmapset_dict["id"]
         user_id = beatmapset_dict["user_id"]
+        lock_hash_name = Namespace.LOCK.hash_name(Namespace.CACHED_BEATMAPSET.hash_name(beatmapset_id))
 
-        try:
-            await self._populate_user(user_id)
-        except RestrictedUserError:
-            user_dict = beatmapset_dict["user"]
-            await self._populate_profile(user_id, restricted_user_dict=user_dict, is_restricted=True)
+        async with self.rc.lock_ctx(lock_hash_name):
+            try:
+                await self._populate_user(user_id)
+            except RestrictedUserError:
+                user_dict = beatmapset_dict["user"]
+                await self._populate_profile(user_id, restricted_user_dict=user_dict, is_restricted=True)
 
-        if not await self.db.get(Beatmapset, id=beatmapset_id, session=self._session):
-            await self.db.add(Beatmapset, id=beatmapset_id, user_id=user_id, session=self._session)
-            info = {"id": beatmapset_id, "user_id": user_id}
-            logger.debug(f"Added beatmapset: {info}")
+            if not await self.db.get(Beatmapset, id=beatmapset_id, session=self._session):
+                await self.db.add(Beatmapset, id=beatmapset_id, user_id=user_id, session=self._session)
+                info = {"id": beatmapset_id, "user_id": user_id}
+                logger.debug(f"Added beatmapset: {info}")
 
-        for beatmap_dict in beatmapset_dict["beatmaps"]:
-            await self._populate_beatmap(beatmap_dict)
+            for beatmap_dict in beatmapset_dict["beatmaps"]:
+                await self._populate_beatmap(beatmap_dict)
 
     async def _populate_beatmap(
         self,
