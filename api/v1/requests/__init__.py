@@ -25,7 +25,6 @@ from app.database.rules.validators.metadata import (
 )
 from . import tasks
 
-
 _METADATA_PROVIDERS = {
     "song_identity": SongIdentityProvider,
     "beatmap_stats": BeatmapStatsProvider,
@@ -39,10 +38,7 @@ _METADATA_PROVIDERS = {
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
 
-    requests = await db.get_many(
-        Request,
-        **kwargs
-    )
+    requests = await db.get_many(Request, **kwargs)
 
     if not requests:
         return [], 200, {"Content-Type": "application/json"}
@@ -50,12 +46,11 @@ async def search(**kwargs):
     include = build_pydantic_include(
         obj=requests[0],
         include_schema=get_include_schema(ModelClass.REQUEST),
-        request_include=kwargs.get("_include")
+        request_include=kwargs.get("_include"),
     )
 
     requests_data = [
-        RequestSchema.model_validate(request_).model_dump(include=include)
-        for request_ in requests
+        RequestSchema.model_validate(request_).model_dump(include=include) for request_ in requests
     ]
 
     return requests_data, 200, {"Content-Type": "application/json"}
@@ -66,11 +61,7 @@ async def search(**kwargs):
 async def get(request_id: int, **kwargs):
     db: PostgresqlDB = request.state.db
 
-    request_ = await db.get(
-        Request,
-        id=request_id,
-        **kwargs
-    )
+    request_ = await db.get(Request, id=request_id, **kwargs)
 
     if not request_:
         raise NotFound(f"Request with ID '{request_id}' not found")
@@ -78,7 +69,7 @@ async def get(request_id: int, **kwargs):
     include = build_pydantic_include(
         obj=request,
         include_schema=get_include_schema(ModelClass.REQUEST),
-        request_include=kwargs.get("_include")
+        request_include=kwargs.get("_include"),
     )
 
     request_data = RequestSchema.model_validate(request_).model_dump(include=include)
@@ -102,7 +93,9 @@ async def post(body: dict, **kwargs):
         raise Forbidden(f"The queue '{queue.name}' is closed")
 
     if await db.get(Request, beatmapset_id=beatmapset_id, queue_id=queue_id):
-        raise Conflict(f"The request with beatmapset ID '{beatmapset_id}' already exists in queue '{queue.name}'")
+        raise Conflict(
+            f"The request with beatmapset ID '{beatmapset_id}' already exists in queue '{queue.name}'"
+        )
 
     async with OsuAPIClient(rc) as oac:
         beatmapset_dict = await oac.get_beatmapset(beatmapset_id)
@@ -128,12 +121,18 @@ async def post(body: dict, **kwargs):
         if existing_task.failed_at:
             await rc.delete(task_hash_name)
         else:
-            raise Conflict(f"The request with beatmapset ID '{beatmapset_id}' in queue '{queue.name}' is currently being processed")
+            raise Conflict(
+                f"The request with beatmapset ID '{beatmapset_id}' in queue '{queue.name}' is currently being processed"
+            )
 
     await rc.hset(task_hash_name, mapping=task.serialize())
     await rc.publish(ChannelName.QUEUE_REQUEST_HANDLER_TASKS.value, task.hashed_id)
 
-    return {"message": "Request submitted and queued for processing!", "task_id": task.hashed_id}, 202, {"Content-Type": "application/json"}
+    return (
+        {"message": "Request submitted and queued for processing!", "task_id": task.hashed_id},
+        202,
+        {"Content-Type": "application/json"},
+    )
 
 
 async def _check_queue_rules_phase1(
@@ -162,14 +161,13 @@ async def _check_queue_rules_phase1(
     await runner.run(rules, context)
 
 
-@role_authorization(RoleName.ADMIN, override=queue_owner_override, override_kwargs={"from_request": True})
+@role_authorization(
+    RoleName.ADMIN, override=queue_owner_override, override_kwargs={"from_request": True}
+)
 async def patch(request_id: int, body: dict, **kwargs):
     db: PostgresqlDB = request.state.db
 
-    body = bleach_body(
-        body,
-        whitelisted_keys={"status"}
-    )
+    body = bleach_body(body, whitelisted_keys={"status"})
 
     request_ = await db.get(Request, id=request_id)
 
@@ -185,3 +183,28 @@ async def patch(request_id: int, body: dict, **kwargs):
     await db.update(Request, request_id, **delta)
 
     return {"message": "Request updated successfully!"}, 200, {"Content-Type": "application/json"}
+
+
+@role_authorization(
+    RoleName.ADMIN, override=queue_owner_override, override_kwargs={"from_request": True}
+)
+async def delete(request_id: int, **kwargs):
+    db: PostgresqlDB = request.state.db
+    rc: RedisClient = request.state.rc
+
+    request_ = await db.get(Request, id=request_id)
+
+    if not request_:
+        raise NotFound(f"Request with ID '{request_id}' not found")
+
+    handler_task_hash = hash((request_.queue_id, request_.beatmapset_id)) & 0x7FFFFFFFFFFFFFFF
+    handler_task_key = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(handler_task_hash)
+    await rc.delete(handler_task_key)
+
+    validation_task_hash = hash(("validation", request_.id)) & 0x7FFFFFFFFFFFFFFF
+    validation_task_key = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(validation_task_hash)
+    await rc.delete(validation_task_key)
+
+    await db.delete(Request, id=request_id)
+
+    return {"message": "Request deleted successfully!"}, 200, {"Content-Type": "application/json"}

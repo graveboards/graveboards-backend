@@ -71,6 +71,25 @@ RequestById:
             404:
                 $ref: "../responses/404/generic.yaml#/NotFound"
 
+    delete:
+        summary: Deletes the specified beatmapset request
+        tags:
+            - Requests
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        parameters:
+            - $ref: "../parameters/path/request.yaml#/RequestId"
+        responses:
+            200:
+                $ref: "../responses/200/request.yaml#/RequestDeleted"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"
+
     patch:
         summary: Updates a beatmapset request
         tags:

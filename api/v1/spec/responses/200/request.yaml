@@ -24,6 +24,16 @@ RequestPatched:
                     message:
                         type: string
 
+RequestDeleted:
+    description: Request deleted info
+    content:
+        application/json:
+            schema:
+                type: object
+                properties:
+                    message:
+                        type: string
+
 RequestTaskResults:
     description: List of request tasks
     content:
