@@ -317,9 +317,12 @@ class BeatmapManager:
                 await self._populate_profile(user_id, restricted_user_dict=user_dict, is_restricted=True)
 
             if not await self.db.get(Beatmapset, id=beatmapset_id, session=self._session):
-                await self.db.add(Beatmapset, id=beatmapset_id, user_id=user_id, session=self._session)
-                info = {"id": beatmapset_id, "user_id": user_id}
-                logger.debug(f"Added beatmapset: {info}")
+                try:
+                    await self.db.add(Beatmapset, id=beatmapset_id, user_id=user_id, session=self._session)
+                    info = {"id": beatmapset_id, "user_id": user_id}
+                    logger.debug(f"Added beatmapset: {info}")
+                except IntegrityError:
+                    logger.warning(f"Beatmapset {beatmapset_id} already exists after lock acquisition, skipping insert")
 
             for beatmap_dict in beatmapset_dict["beatmaps"]:
                 await self._populate_beatmap(beatmap_dict)
@@ -339,9 +342,12 @@ class BeatmapManager:
             await self._populate_profile(user_id, is_restricted=True)
 
         if not await self.db.get(Beatmap, id=beatmap_id, session=self._session):
-            await self.db.add(Beatmap, id=beatmap_id, beatmapset_id=beatmapset_id, session=self._session)
-            info = {"id": beatmap_id, "beatmapset_id": beatmapset_id}
-            logger.debug(f"Added beatmap: {info}")
+            try:
+                await self.db.add(Beatmap, id=beatmap_id, beatmapset_id=beatmapset_id, session=self._session)
+                info = {"id": beatmap_id, "beatmapset_id": beatmapset_id}
+                logger.debug(f"Added beatmap: {info}")
+            except IntegrityError:
+                logger.warning(f"Beatmap {beatmap_id} already exists, skipping insert")
 
     async def _populate_user(
         self,
