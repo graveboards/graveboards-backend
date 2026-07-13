@@ -31,6 +31,8 @@ class BeatmapSeeder(Seeder):
         with open(os.path.join(FIXTURES_PATH, "beatmap_tags.json")) as f:
             beatmap_tag_data = json.load(f)
 
+        beatmap_tag_data = Seeder._normalize_datetimes(beatmap_tag_data)
+
         for beatmap_tag_entry in beatmap_tag_data:
             if not await self.db.get(BeatmapTag, id=beatmap_tag_entry["id"], session=self.session):
                 await self.db.add(BeatmapTag, **beatmap_tag_entry, session=self.session)
