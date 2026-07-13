@@ -27,13 +27,14 @@ class ScheduledService(Service, ABC):
         - Automatic rescheduling
         - Concurrency limiting
 
-    Subclasses must define the ``LOGGER``, ``CHANNEL``, and optionally ``JOB_NAME``
-    class variables.
+    Subclasses must define the ``LOGGER``, ``CHANNEL``, and optionally, ``JOB_NAME``
+    and ``_should_reschedule`` class variables.
     """
 
     LOGGER: ClassVar[Logger | None] = None
     CHANNEL: ClassVar[str | None] = None
     JOB_NAME: ClassVar[str] = "job"
+    _should_reschedule: ClassVar[bool] = True
 
     def __init__(
         self,
@@ -258,13 +259,14 @@ class ScheduledService(Service, ABC):
         finally:
             daemon_active_jobs.labels(service=service_name).dec()
 
-        next_execution_time = aware_utcnow() + timedelta(hours=self._job_interval_hours)
+        if self._should_reschedule:
+            next_execution_time = aware_utcnow() + timedelta(hours=self._job_interval_hours)
 
-        async with self._job_condition:
-            heapq.heappush(self._job_heap, (next_execution_time, job_id))
-            self._active_job_ids.discard(job_id)
-            await self._safe_hook(self._on_job_finish, job_id)
-            self._job_condition.notify()
+            async with self._job_condition:
+                heapq.heappush(self._job_heap, (next_execution_time, job_id))
+                self._active_job_ids.discard(job_id)
+                await self._safe_hook(self._on_job_finish, job_id)
+                self._job_condition.notify()
 
     async def _on_job_success(self, job_id: int) -> None:
         """Execute after a job has completed successfully.

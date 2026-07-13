@@ -30,6 +30,7 @@ class QueueRequestHandler(ScheduledService):
     LOGGER: ClassVar[Logger] = get_logger(__name__, prefix="QueueRequestHandler")
     CHANNEL: ClassVar[str] = ChannelName.QUEUE_REQUEST_HANDLER_TASKS
     JOB_NAME: ClassVar[str] = "queue-request-handle"
+    _should_reschedule: ClassVar[bool] = False
 
     async def _resolve_job_instruction(self, record_id: int) -> JobLoadInstruction | None:
         return JobLoadInstruction(execution_time=aware_utcnow())

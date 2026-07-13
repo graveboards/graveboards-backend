@@ -48,6 +48,7 @@ class RuleValidationService(ScheduledService):
     LOGGER: ClassVar[Logger] = get_logger(__name__, prefix="RuleValidationService")
     CHANNEL: ClassVar[str] = ChannelName.QUEUE_REQUEST_VALIDATION_TASKS
     JOB_NAME: ClassVar[str] = "rule-validation"
+    _should_reschedule: ClassVar[bool] = False
 
     async def _resolve_job_instruction(self, record_id: int) -> JobLoadInstruction | None:
         return JobLoadInstruction(execution_time=aware_utcnow())
