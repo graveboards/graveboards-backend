@@ -4,6 +4,7 @@ import logging
 from typing import ClassVar
 
 from httpx import ConnectTimeout
+from structlog.contextvars import bind_contextvars, clear_contextvars
 
 from app.database.enums import RequestStatus
 from app.database.models import Request
@@ -71,23 +72,31 @@ class RuleValidationService(ScheduledService):
                 f"Found serialized validation record for {record_id}: keys={list(serialized_record.keys())}"
             )
             record = QueueRequestValidationTask.deserialize(serialized_record)
+
+            if record.http_request_id:
+                bind_contextvars(request_id=record.http_request_id)
+
             self.logger.debug(
                 f"Deserialized validation record: request_id={record.request_id}, "
                 f"queue_id={record.queue_id}, beatmapset_id={record.beatmapset_id}"
             )
 
-            async with OsuAPIClient(self._rc) as osu_client:
-                self.logger.debug(f"Running validation for request {record.request_id}")
-                await self._run_validation(
-                    request_id=record.request_id,
-                    queue_id=record.queue_id,
-                    beatmapset_id=record.beatmapset_id,
-                    osu_client=osu_client,
-                )
-                self.logger.debug(f"Validation complete for request {record.request_id}")
+            try:
+                async with OsuAPIClient(self._rc) as osu_client:
+                    self.logger.debug(f"Running validation for request {record.request_id}")
+                    await self._run_validation(
+                        request_id=record.request_id,
+                        queue_id=record.queue_id,
+                        beatmapset_id=record.beatmapset_id,
+                        osu_client=osu_client,
+                    )
+                    self.logger.debug(f"Validation complete for request {record.request_id}")
 
-            await self._rc.hset(hash_name, "completed_at", aware_utcnow().isoformat())
-            self.logger.debug(f"Marked {hash_name} as completed_at")
+                await self._rc.hset(hash_name, "completed_at", aware_utcnow().isoformat())
+                self.logger.debug(f"Marked {hash_name} as completed_at")
+            finally:
+                if record.http_request_id:
+                    clear_contextvars()
         except Exception:
             self.logger.exception(f"Failed to execute RuleValidation job {record_id}")
             await self._rc.hset(hash_name, "failed_at", aware_utcnow().isoformat())

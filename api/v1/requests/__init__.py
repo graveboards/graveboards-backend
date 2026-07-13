@@ -1,5 +1,6 @@
 from connexion import request
 from connexion.exceptions import Forbidden
+from structlog.contextvars import get_contextvars
 
 from app.logging import get_logger
 from api.decorators import api_query
@@ -114,7 +115,8 @@ async def post(body: dict, **kwargs):
         rc=rc,
     )
 
-    task = QueueRequestHandlerTask(**body)
+    ctx = get_contextvars()
+    task = QueueRequestHandlerTask(**body, http_request_id=ctx.get("request_id", ""))
     task_hash_name = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(task.hashed_id)
 
     logger.debug(

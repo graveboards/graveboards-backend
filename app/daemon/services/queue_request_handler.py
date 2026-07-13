@@ -1,6 +1,7 @@
 from typing import ClassVar
 
 from httpx import ConnectTimeout
+from structlog.contextvars import bind_contextvars, clear_contextvars
 
 from app.beatmaps import BeatmapManager
 from app.database.models import Request
@@ -65,37 +66,46 @@ class QueueRequestHandler(ScheduledService):
                 f"Found serialized record for {record_id}: keys={list(serialized_record.keys())}"
             )
             record = QueueRequestHandlerTask.deserialize(serialized_record)
+
+            if record.http_request_id:
+                bind_contextvars(request_id=record.http_request_id)
+
             self.logger.debug(
                 f"Deserialized record: queue_id={record.queue_id}, beatmapset_id={record.beatmapset_id}, "
                 f"user_id={record.user_id}"
             )
 
-            bm = BeatmapManager(self._rc, self._db)
-            self.logger.debug(f"Starting archive for beatmapset {record.beatmapset_id}")
-            await bm.archive(record.beatmapset_id)
-            self.logger.debug(f"Archive complete for beatmapset {record.beatmapset_id}")
+            try:
+                bm = BeatmapManager(self._rc, self._db)
+                self.logger.debug(f"Starting archive for beatmapset {record.beatmapset_id}")
+                await bm.archive(record.beatmapset_id)
+                self.logger.debug(f"Archive complete for beatmapset {record.beatmapset_id}")
 
-            request_dict = RequestSchema.model_validate(record).model_dump(
-                exclude={"user_profile", "queue", "beatmapset_snapshot"}
-            )
-            self.logger.debug(f"Creating Request in DB with: {request_dict}")
-            request = await self._db.add(Request, **request_dict)
-            self.logger.debug(f"Added request id={request.id} for beatmapset {request.beatmapset_id} to queue id={request.queue_id}")
+                request_dict = RequestSchema.model_validate(record).model_dump(
+                    exclude={"user_profile", "queue", "beatmapset_snapshot"}
+                )
+                self.logger.debug(f"Creating Request in DB with: {request_dict}")
+                request = await self._db.add(Request, **request_dict)
+                self.logger.debug(f"Added request id={request.id} for beatmapset {request.beatmapset_id} to queue id={request.queue_id}")
 
-            await self._dispatch_validation_task(request.id, record.queue_id, record.beatmapset_id)
+                await self._dispatch_validation_task(request.id, record.queue_id, record.beatmapset_id, record.http_request_id)
 
-            await self._rc.hset(hash_name, "completed_at", aware_utcnow().isoformat())
-            self.logger.debug(f"Marked {hash_name} as completed_at")
+                await self._rc.hset(hash_name, "completed_at", aware_utcnow().isoformat())
+                self.logger.debug(f"Marked {hash_name} as completed_at")
+            finally:
+                if record.http_request_id:
+                    clear_contextvars()
         except Exception:
             self.logger.exception(f"Failed to execute QueueRequestHandler job {record_id}")
             await self._rc.hset(hash_name, "failed_at", aware_utcnow().isoformat())
             raise
 
-    async def _dispatch_validation_task(self, request_id: int, queue_id: int, beatmapset_id: int) -> None:
+    async def _dispatch_validation_task(self, request_id: int, queue_id: int, beatmapset_id: int, http_request_id: str = "") -> None:
         task = QueueRequestValidationTask(
             request_id=request_id,
             queue_id=queue_id,
             beatmapset_id=beatmapset_id,
+            http_request_id=http_request_id,
         )
         task_hash_name = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(task.hashed_id)
         await self._rc.hset(task_hash_name, mapping=task.serialize())
