@@ -1,4 +1,5 @@
 import json
+import re
 import time
 from urllib.parse import parse_qsl
 
@@ -72,8 +73,50 @@ def _get_query_params(request: Request) -> dict:
     for key in request.query_params.keys():
         values = request.query_params.getlist(key)
         params[key] = values[0] if len(values) == 1 else values
+    params = _reconstruct_nested_params(params)
     params = _try_parse_sorting(params)
     return _redact(params)
+
+
+def _reconstruct_nested_params(params: dict) -> dict:
+    """Rebuild flat bracket-notation query params (e.g. ``filters[comment][neq]``)
+    into nested dicts so access logs show clean structure instead of a wall of
+    dotted field names.
+
+    Keys that don't match the bracket pattern are left untouched. Duplicate
+    paths are merged (e.g. ``include[queue][id]`` + ``include[queue][name]``
+    become one ``include.queue`` object).
+    """
+    bracket_re = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_]*)((?:\[[^\]]+\])+)$")
+    nested = {}
+    flat_keys = []
+
+    for key, value in params.items():
+        match = bracket_re.match(key)
+        if not match:
+            flat_keys.append(key)
+            continue
+
+        root = match.group(1)
+        raw_segments = match.group(2).replace("[", ".").replace("]", "").split(".")
+        segments = [s for s in raw_segments if s]
+
+        if root not in nested:
+            nested[root] = {}
+
+        target = nested[root]
+        for i, segment in enumerate(segments):
+            if i == len(segments) - 1:
+                target[segment] = value
+            else:
+                if segment not in target or not isinstance(target[segment], dict):
+                    target[segment] = {}
+                target = target[segment]
+
+    for key in flat_keys:
+        nested[key] = params[key]
+
+    return nested
 
 
 def _try_parse_sorting(params: dict) -> dict:
