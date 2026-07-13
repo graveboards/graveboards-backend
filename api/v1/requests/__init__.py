@@ -1,6 +1,7 @@
 from connexion import request
 from connexion.exceptions import Forbidden
 
+from app.logging import get_logger
 from api.decorators import api_query
 from api.utils import bleach_body, build_pydantic_include
 from app.exceptions import NotFound, Conflict, BadRequest
@@ -31,6 +32,8 @@ _METADATA_PROVIDERS = {
     "creator_identity": CreatorIdentityProvider,
     "duration": DurationProvider,
 }
+
+logger = get_logger(__name__)
 
 
 @ownership_authorization()
@@ -114,11 +117,22 @@ async def post(body: dict, **kwargs):
     task = QueueRequestHandlerTask(**body)
     task_hash_name = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(task.hashed_id)
 
+    logger.debug(
+        f"POST /requests: creating handler task hashed_id={task.hashed_id}, "
+        f"hash_name={task_hash_name}, queue_id={queue_id}, beatmapset_id={beatmapset_id}"
+    )
+
     if await rc.exists(task_hash_name):
         serialized_existing_task = await rc.hgetall(task_hash_name)
         existing_task = QueueRequestHandlerTask.deserialize(serialized_existing_task)
+        logger.debug(
+            f"POST /requests: task already exists at {task_hash_name}, "
+            f"keys={list(serialized_existing_task.keys())}, "
+            f"failed_at={existing_task.failed_at}"
+        )
 
         if existing_task.failed_at:
+            logger.debug(f"POST /requests: deleting existing failed task at {task_hash_name}")
             await rc.delete(task_hash_name)
         else:
             raise Conflict(
@@ -126,7 +140,9 @@ async def post(body: dict, **kwargs):
             )
 
     await rc.hset(task_hash_name, mapping=task.serialize())
+    logger.debug(f"POST /requests: stored task at {task_hash_name}, publishing to {ChannelName.QUEUE_REQUEST_HANDLER_TASKS.value}")
     await rc.publish(ChannelName.QUEUE_REQUEST_HANDLER_TASKS.value, task.hashed_id)
+    logger.debug(f"POST /requests: published job_id={task.hashed_id}")
 
     return (
         {"message": "Request submitted and queued for processing!", "task_id": task.hashed_id},
@@ -199,6 +215,10 @@ async def delete(request_id: int, **kwargs):
 
     handler_task_hash = hash((request_.queue_id, request_.beatmapset_id)) & 0x7FFFFFFFFFFFFFFF
     handler_task_key = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(handler_task_hash)
+    logger.debug(
+        f"DELETE /requests/{request_id}: cleaning up handler_task_hash={handler_task_hash}, "
+        f"handler_task_key={handler_task_key}, validation_task_hash={hash(('validation', request_.id)) & 0x7FFFFFFFFFFFFFFF}"
+    )
     await rc.delete(handler_task_key)
 
     validation_task_hash = hash(("validation", request_.id)) & 0x7FFFFFFFFFFFFFFF
@@ -206,5 +226,6 @@ async def delete(request_id: int, **kwargs):
     await rc.delete(validation_task_key)
 
     await db.delete(Request, id=request_id)
+    logger.debug(f"DELETE /requests/{request_id}: request deleted from DB")
 
     return {"message": "Request deleted successfully!"}, 200, {"Content-Type": "application/json"}

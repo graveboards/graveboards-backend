@@ -56,25 +56,40 @@ class RuleValidationService(ScheduledService):
     @auto_retry(retry_exceptions=(ConnectTimeout,))
     async def _execute_job(self, record_id: int):
         hash_name = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(record_id)
+        self.logger.debug(f"Executing RuleValidation job {record_id}, looking up hash={hash_name}")
 
         try:
             serialized_record = await self._rc.hgetall(hash_name)
 
             if not serialized_record:
+                self.logger.error(
+                    f"QueueRequestValidationTask with hashed ID '{record_id}' not found at {hash_name}"
+                )
                 raise ValueError(f"QueueRequestValidationTask with hashed ID '{record_id}' not found")
 
+            self.logger.debug(
+                f"Found serialized validation record for {record_id}: keys={list(serialized_record.keys())}"
+            )
             record = QueueRequestValidationTask.deserialize(serialized_record)
+            self.logger.debug(
+                f"Deserialized validation record: request_id={record.request_id}, "
+                f"queue_id={record.queue_id}, beatmapset_id={record.beatmapset_id}"
+            )
 
             async with OsuAPIClient(self._rc) as osu_client:
+                self.logger.debug(f"Running validation for request {record.request_id}")
                 await self._run_validation(
                     request_id=record.request_id,
                     queue_id=record.queue_id,
                     beatmapset_id=record.beatmapset_id,
                     osu_client=osu_client,
                 )
+                self.logger.debug(f"Validation complete for request {record.request_id}")
 
             await self._rc.hset(hash_name, "completed_at", aware_utcnow().isoformat())
+            self.logger.debug(f"Marked {hash_name} as completed_at")
         except Exception:
+            self.logger.exception(f"Failed to execute RuleValidation job {record_id}")
             await self._rc.hset(hash_name, "failed_at", aware_utcnow().isoformat())
             raise
 

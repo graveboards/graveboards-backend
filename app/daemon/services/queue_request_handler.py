@@ -50,28 +50,44 @@ class QueueRequestHandler(ScheduledService):
             ValueError: If the record does not exist.
         """
         hash_name = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(record_id)
+        self.logger.debug(f"Executing QueueRequestHandler job {record_id}, looking up hash={hash_name}")
 
         try:
             serialized_record = await self._rc.hgetall(hash_name)
 
             if not serialized_record:
+                self.logger.error(
+                    f"QueueRequestHandlerTask with hashed ID '{record_id}' not found at {hash_name}"
+                )
                 raise ValueError(f"QueueRequestHandlerTask with hashed ID '{record_id}' not found")
 
+            self.logger.debug(
+                f"Found serialized record for {record_id}: keys={list(serialized_record.keys())}"
+            )
             record = QueueRequestHandlerTask.deserialize(serialized_record)
+            self.logger.debug(
+                f"Deserialized record: queue_id={record.queue_id}, beatmapset_id={record.beatmapset_id}, "
+                f"user_id={record.user_id}"
+            )
 
             bm = BeatmapManager(self._rc, self._db)
+            self.logger.debug(f"Starting archive for beatmapset {record.beatmapset_id}")
             await bm.archive(record.beatmapset_id)
+            self.logger.debug(f"Archive complete for beatmapset {record.beatmapset_id}")
 
             request_dict = RequestSchema.model_validate(record).model_dump(
                 exclude={"user_profile", "queue", "beatmapset_snapshot"}
             )
+            self.logger.debug(f"Creating Request in DB with: {request_dict}")
             request = await self._db.add(Request, **request_dict)
-            logger.debug(f"Added request id={request.id} for beatmapset {request.beatmapset_id} to queue id={request.queue_id}")
+            self.logger.debug(f"Added request id={request.id} for beatmapset {request.beatmapset_id} to queue id={request.queue_id}")
 
             await self._dispatch_validation_task(request.id, record.queue_id, record.beatmapset_id)
 
             await self._rc.hset(hash_name, "completed_at", aware_utcnow().isoformat())
+            self.logger.debug(f"Marked {hash_name} as completed_at")
         except Exception:
+            self.logger.exception(f"Failed to execute QueueRequestHandler job {record_id}")
             await self._rc.hset(hash_name, "failed_at", aware_utcnow().isoformat())
             raise
 

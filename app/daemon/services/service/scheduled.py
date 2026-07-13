@@ -115,10 +115,19 @@ class ScheduledService(Service, ABC):
 
                 execution_time, job_id = heapq.heappop(self._job_heap)
 
+            self.logger.debug(
+                f"Scheduled job popped: {job_id=}, execution_time={execution_time}, "
+                f"active_count={len(self._active_job_ids)}, heap_size={len(self._job_heap)}"
+            )
+
             if job_id in self._active_job_ids:
+                self.logger.debug(
+                    f"Skipping job {job_id}: already in _active_job_ids"
+                )
                 continue
 
             self._active_job_ids.add(job_id)
+            self.logger.debug(f"Spawning job handler for {job_id}")
             self.create_ephemeral_task(
                 self._handle_job(job_id, execution_time),
                 name=f"{self.JOB_NAME}-{job_id}"
@@ -144,9 +153,16 @@ class ScheduledService(Service, ABC):
                 )
                 continue
 
+            self.logger.debug(
+                f"Received pub/sub message on {self.CHANNEL}: job_id={job_id}, "
+                f"instruction={instruction}, heap_size_before={len(self._job_heap)}"
+            )
             async with self._job_condition:
                 await self._load_job(job_id, instruction=instruction)
-                self.logger.debug(f"Loaded job: {job_id}")
+                self.logger.debug(
+                    f"Loaded job: {job_id}, heap_size_after={len(self._job_heap)}, "
+                    f"active_count={len(self._active_job_ids)}"
+                )
                 self._job_condition.notify()
 
     async def _resolve_job_instruction(self, job_id: int) -> JobLoadInstruction | None:
@@ -231,7 +247,13 @@ class ScheduledService(Service, ABC):
         """
         delay = (execution_time - aware_utcnow()).total_seconds()
 
+        self.logger.debug(
+            f"Starting job handler for {job_id}: execution_time={execution_time}, "
+            f"delay={delay:.3f}s, should_reschedule={self._should_reschedule}"
+        )
+
         if delay > 0:
+            self.logger.debug(f"Sleeping {delay:.3f}s for job {job_id}")
             await asyncio.sleep(delay)
 
         service_name = self.__class__.__name__
@@ -239,6 +261,7 @@ class ScheduledService(Service, ABC):
         daemon_active_jobs.labels(service=service_name).inc()
 
         try:
+            self.logger.debug(f"Executing job {job_id}")
             async with self._job_semaphore:
                 await self._execute_job(job_id)
         except Exception as exc:
@@ -252,6 +275,7 @@ class ScheduledService(Service, ABC):
             await self._safe_hook(self._on_job_error, job_id, exc)
         else:
             duration = time.perf_counter() - start
+            self.logger.debug(f"Job {job_id} completed successfully in {duration:.3f}s")
             daemon_jobs_total.labels(service=service_name, status="success").inc()
             daemon_job_duration_seconds.labels(service=service_name).observe(duration)
             daemon_last_job_timestamp.labels(service=service_name).set(time.time())
@@ -259,14 +283,29 @@ class ScheduledService(Service, ABC):
         finally:
             daemon_active_jobs.labels(service=service_name).dec()
 
+        self.logger.debug(
+            f"Job {job_id} finished: should_reschedule={self._should_reschedule}, "
+            f"active_before={len(self._active_job_ids)}"
+        )
+
         if self._should_reschedule:
             next_execution_time = aware_utcnow() + timedelta(hours=self._job_interval_hours)
 
             async with self._job_condition:
                 heapq.heappush(self._job_heap, (next_execution_time, job_id))
                 self._active_job_ids.discard(job_id)
+                self.logger.debug(
+                    f"Rescheduled job {job_id} for {next_execution_time}, "
+                    f"active_after={len(self._active_job_ids)}"
+                )
                 await self._safe_hook(self._on_job_finish, job_id)
                 self._job_condition.notify()
+        else:
+            self._active_job_ids.discard(job_id)
+            self.logger.debug(
+                f"Did not reschedule job {job_id} (one-off), discarded from active, "
+                f"active_after={len(self._active_job_ids)}"
+            )
 
     async def _on_job_success(self, job_id: int) -> None:
         """Execute after a job has completed successfully.
