@@ -72,7 +72,41 @@ def _get_query_params(request: Request) -> dict:
     for key in request.query_params.keys():
         values = request.query_params.getlist(key)
         params[key] = values[0] if len(values) == 1 else values
+    params = _try_parse_sorting(params)
     return _redact(params)
+
+
+def _try_parse_sorting(params: dict) -> dict:
+    """The frontend serializes each sort item as JSON.stringify(obj) and sends them
+    as repeated query params, so the backend sees strings like
+    '{\"field\":\"Request.id\",\"order\":\"asc\"}'. Parse them back into proper
+    objects so access logs stay readable instead of showing nested quoted JSON.
+
+    If parsing fails for any reason the original string is kept as fallback.
+    """
+    if "sorting" not in params:
+        return params
+
+    raw = params["sorting"]
+
+    if isinstance(raw, str):
+        try:
+            params["sorting"] = json.loads(raw)
+        except (json.JSONDecodeError, TypeError):
+            pass
+    elif isinstance(raw, list):
+        parsed = []
+        for item in raw:
+            if isinstance(item, str):
+                try:
+                    parsed.append(json.loads(item))
+                    continue
+                except (json.JSONDecodeError, TypeError):
+                    pass
+            parsed.append(item)
+        params["sorting"] = parsed
+
+    return params
 
 
 def _parse_body(raw: bytes, content_type: str):
