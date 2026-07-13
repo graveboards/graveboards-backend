@@ -1,4 +1,6 @@
+import json
 import time
+from urllib.parse import parse_qsl
 
 from connexion.middleware.abstract import ROUTING_CONTEXT
 from starlette.requests import Request
@@ -19,6 +21,30 @@ _NOISY_ACCESS_LOG_PATHS = frozenset({"/metrics", "/api/v1/health"})
 # indistinguishable from genuinely unmatched (404) requests in the endpoint label.
 _STATIC_ROUTE_ENDPOINTS = {"/metrics": "metrics"}
 
+# Field names (checked case-insensitively, dot/underscore/hyphen-agnostic via a
+# plain lowercase match on the key as-is) that never get logged verbatim, in
+# either query params or request bodies - auth material and credentials.
+_SENSITIVE_KEYS = frozenset({
+    "password", "passwd", "pwd",
+    "token", "access_token", "refresh_token", "id_token",
+    "secret", "client_secret",
+    "api_key", "apikey", "x-api-key",
+    "authorization",
+    "code",  # OAuth authorization code - single-use bearer credential
+    "csrf", "csrf_token",
+})
+_REDACTED = "***REDACTED***"
+
+# Only buffer+replay bodies for methods that carry one, small enough to be an
+# API payload rather than an upload, and shaped like something we can parse.
+# Anything outside this (multipart uploads, missing/streamed Content-Length,
+# oversized payloads, unrecognized content types) is deliberately left
+# untouched - the raw ASGI stream is never buffered, so large/streamed
+# uploads are unaffected.
+_BODY_LOGGABLE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+_BODY_LOGGABLE_CONTENT_TYPES = frozenset({"application/json", "application/x-www-form-urlencoded"})
+_MAX_LOGGED_BODY_BYTES = 8192
+
 
 def _get_endpoint(scope: Scope) -> str:
     # Connexion resolves routing via its own contextvar/scope-copy mechanism instead
@@ -31,6 +57,79 @@ def _get_endpoint(scope: Scope) -> str:
         return operation_id
 
     return _STATIC_ROUTE_ENDPOINTS.get(scope.get("path"), "<unmatched>")
+
+
+def _redact(value):
+    if isinstance(value, dict):
+        return {k: (_REDACTED if k.lower() in _SENSITIVE_KEYS else _redact(v)) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_redact(v) for v in value]
+    return value
+
+
+def _get_query_params(request: Request) -> dict:
+    params = {}
+    for key in request.query_params.keys():
+        values = request.query_params.getlist(key)
+        params[key] = values[0] if len(values) == 1 else values
+    return _redact(params)
+
+
+def _parse_body(raw: bytes, content_type: str):
+    if not raw:
+        return None
+    try:
+        if content_type == "application/json":
+            return _redact(json.loads(raw))
+        if content_type == "application/x-www-form-urlencoded":
+            return _redact(dict(parse_qsl(raw.decode())))
+    except Exception:
+        return "<unparseable>"
+    return None
+
+
+async def _capture_body(receive: Receive) -> tuple[bytes, Receive]:
+    """Drain the ASGI body stream into memory, returning the bytes plus a
+    replacement `receive` that replays the exact same messages so downstream
+    body parsing (Connexion's request validation/handler) is unaffected."""
+    messages = []
+    chunks = []
+    more_body = True
+
+    while more_body:
+        message = await receive()
+        messages.append(message)
+        if message["type"] != "http.request":
+            break
+        chunks.append(message.get("body", b""))
+        more_body = message.get("more_body", False)
+
+    async def replay_receive():
+        if messages:
+            return messages.pop(0)
+        return await receive()
+
+    return b"".join(chunks), replay_receive
+
+
+def _get_auth_info(scope: Scope, request: Request) -> tuple[int | None, str]:
+    if request.headers.get("authorization", "").lower().startswith("bearer "):
+        auth_scheme = "bearer"
+    elif request.headers.get("x-api-key"):
+        auth_scheme = "api_key"
+    else:
+        auth_scheme = "none"
+
+    # Connexion's SecurityMiddleware writes {"user": <sub>, "token_info": {...}}
+    # into scope["extensions"]["connexion_context"] once security passes (see
+    # connexion.security.SecurityHandlerFactory.verify_security). That dict is
+    # mutated in place on the same `scope` object this middleware already holds,
+    # so it's readable here with no extra JWT decode or DB lookup - it's simply
+    # absent (None) if auth failed or the route has no security requirement.
+    connexion_context = scope.get("extensions", {}).get("connexion_context", {})
+    user_id = connexion_context.get("user")
+
+    return user_id, auth_scheme
 
 
 class MetricsMiddleware:
@@ -56,8 +155,29 @@ class MetricsMiddleware:
                 status_code_ref["value"] = message["status"]
             await send(message)
 
+        body_bytes = None
+        body_captured = False
+        effective_receive = receive
+
+        if method in _BODY_LOGGABLE_METHODS:
+            content_length = request.headers.get("content-length")
+            content_type = request.headers.get("content-type", "").split(";")[0].strip().lower()
+
+            if (
+                content_type in _BODY_LOGGABLE_CONTENT_TYPES
+                and content_length is not None
+                and content_length.isdigit()
+                and int(content_length) <= _MAX_LOGGED_BODY_BYTES
+            ):
+                body_bytes, effective_receive = await _capture_body(receive)
+                body_captured = True
+                # `request` was constructed with the original `receive`; rebind it
+                # to the replay wrapper so downstream (and this middleware, if it
+                # ever reads the body itself) sees the same bytes back.
+                request = Request(scope, effective_receive)
+
         try:
-            await self.app(scope, receive, wrapped_send)
+            await self.app(scope, effective_receive, wrapped_send)
         except Exception as exc:
             duration = time.perf_counter() - start_time
             status_code = 500
@@ -98,7 +218,23 @@ class MetricsMiddleware:
         if request.url.path not in _NOISY_ACCESS_LOG_PATHS:
             client_host = request.client.host if request.client else "-"
             client_port = request.client.port if request.client else "-"
+            user_id, auth_scheme = _get_auth_info(scope, request)
+
+            extra_fields: dict = {"user_id": user_id, "auth_scheme": auth_scheme}
+
+            query_params = _get_query_params(request)
+            if query_params:
+                extra_fields["query_params"] = query_params
+
+            if body_captured:
+                content_type = request.headers.get("content-type", "").split(";")[0].strip().lower()
+                parsed_body = _parse_body(body_bytes, content_type)
+                if parsed_body is not None:
+                    extra_fields["body"] = parsed_body
+            elif method in _BODY_LOGGABLE_METHODS and request.headers.get("content-length") not in (None, "0"):
+                extra_fields["body"] = "<not captured: too large or unsupported content-type>"
 
             logger.info(
-                f"{method} {request.url.path} {client_host}:{client_port} {status_code} {duration:.3f}s"
+                f"{method} {request.url.path} {client_host}:{client_port} {status_code} {duration:.3f}s",
+                **extra_fields,
             )
