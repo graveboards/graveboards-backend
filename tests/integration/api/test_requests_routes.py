@@ -117,6 +117,7 @@ class TestRequestsPostIntegration:
             queue_id=self.TEST_QUEUE_ID,
             comment=valid_request_body["comment"],
             mv_checked=valid_request_body["mv_checked"],
+            http_request_id="",
         )
         assert int(data["task_id"]) == expected_task.hashed_id
 
@@ -242,6 +243,7 @@ class TestRequestsPostIntegration:
             queue_id=self.TEST_QUEUE_ID,
             comment=valid_request_body["comment"],
             mv_checked=valid_request_body["mv_checked"],
+            http_request_id="",
         )
 
         mock_osu_client.rc = mock_rc
@@ -858,6 +860,7 @@ class TestRequestsTasksIntegration:
             queue_id=self.TEST_QUEUE_ID,
             comment="Please rank this beatmapset!",
             mv_checked=False,
+            http_request_id="",
         )
 
         mock_rc = AsyncMock()

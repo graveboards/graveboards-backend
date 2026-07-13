@@ -147,7 +147,7 @@ class TestRedisCacheIntegration:
         try:
             task = QueueRequestHandlerTask(
                 user_id=12345678, beatmapset_id=35965, queue_id=1,
-                comment="Test comment", mv_checked=False,
+                comment="Test comment", mv_checked=False, http_request_id="",
             )
             serialized = task.serialize()
             key = f"test:task:{task.hashed_id}"

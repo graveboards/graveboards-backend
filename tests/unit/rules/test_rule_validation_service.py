@@ -12,12 +12,14 @@ class TestQueueRequestValidationTask:
             request_id=42,
             queue_id=1,
             beatmapset_id=12345,
+            http_request_id="abc123def456",
         )
         serialized = task.serialize()
 
         assert serialized["request_id"] == "42"
         assert serialized["queue_id"] == "1"
         assert serialized["beatmapset_id"] == "12345"
+        assert serialized["http_request_id"] == "abc123def456"
 
     @pytest.mark.unit
     def test_deserialization(self):
@@ -25,6 +27,7 @@ class TestQueueRequestValidationTask:
             "request_id": "42",
             "queue_id": "1",
             "beatmapset_id": "12345",
+            "http_request_id": "abc123def456",
             "completed_at": "",
             "failed_at": "",
         }
@@ -33,6 +36,7 @@ class TestQueueRequestValidationTask:
         assert task.request_id == 42
         assert task.queue_id == 1
         assert task.beatmapset_id == 12345
+        assert task.http_request_id == "abc123def456"
         assert task.completed_at is None
         assert task.failed_at is None
 
@@ -57,6 +61,7 @@ class TestQueueRequestValidationTask:
             request_id=42,
             queue_id=1,
             beatmapset_id=12345,
+            http_request_id="abc123def456",
         )
         serialized = task.serialize()
         deserialized = QueueRequestValidationTask.deserialize(serialized)
@@ -64,6 +69,7 @@ class TestQueueRequestValidationTask:
         assert deserialized.request_id == task.request_id
         assert deserialized.queue_id == task.queue_id
         assert deserialized.beatmapset_id == task.beatmapset_id
+        assert deserialized.http_request_id == task.http_request_id
 
 
 class TestValidationChannel:

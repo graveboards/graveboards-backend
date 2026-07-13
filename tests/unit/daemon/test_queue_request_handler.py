@@ -139,6 +139,7 @@ class TestQueueRequestHandler:
                 queue_id=789,
                 comment="test",
                 mv_checked=False,
+                http_request_id="test-request-id",
             )
             await service._execute_job(123)
 
