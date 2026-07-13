@@ -13,6 +13,7 @@ class QueueRequestHandlerTask(BaseModel):
     queue_id: int
     comment: str
     mv_checked: bool
+    http_request_id: str = ""
     completed_at: Optional[datetime] = None
     failed_at: Optional[datetime] = None
 
