@@ -263,6 +263,8 @@ class _R:
         if _filters is not None:
             select_stmt = _R._apply_filters(select_stmt, model_class, _filters)
 
+        select_stmt = select_stmt.filter_by(**kwargs)
+
         if _search:
             select_stmt = _R._apply_search(
                 select_stmt,
@@ -277,8 +279,6 @@ class _R:
 
         if not _select:
             select_stmt = _R._apply_exclude_lazy(select_stmt, model_class, _include)
-
-        select_stmt = select_stmt.filter_by(**kwargs)
 
         return select_stmt
 
