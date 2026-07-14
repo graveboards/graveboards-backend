@@ -97,6 +97,24 @@ python manage.py <command> [options]
   - `reconcile` - Reconcile fixture metadata with disk state
   - `generate` - Generate diverse queue/request fixtures
 
+### Seeding the Database
+
+Seeding populates the database with fixture data from `instance/fixtures/`.
+
+**Quick start:**
+
+```bash
+# One-command seed with auto-fetch (recommended)
+make seed
+
+# Or manual mode (seed only what exists)
+python manage.py seed all
+```
+
+**Profiles:** Configure fixture counts in `app/database/seeding/profiles.py`. Built-in: `default` (30 beatmapsets, 10 queues, 100 requests), `minimal`, `comprehensive`.
+
+See [docs/SEEDING.md](./docs/SEEDING.md) for the full seeding guide.
+
 ---
 
 ## Configuration

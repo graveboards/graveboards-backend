@@ -48,7 +48,9 @@ reset:
 	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml exec backend python -m manage reset
 
 seed:
-	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml exec backend python -m manage seed all
+	@echo "=== Seeding database (with auto-fetch/generate) ==="
+	@$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml exec backend \
+		python -m manage seed all --ensure-fixtures --profile default
 
 fresh:
 	@printf "This operation will reset the database. Continue? [y/N] "
@@ -74,7 +76,7 @@ clean:
 		echo "Aborted."; \
 		exit 1; \
 	fi
-	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml down -v --remove-orphans
+	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml --profile frontend down -v --remove-orphans
 	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml rm -f
 	$(COMPOSE) -f ../graveboards-deploy/docker-compose.test.yml down -v --remove-orphans
 	$(COMPOSE) -f ../graveboards-deploy/docker-compose.test.yml rm -f
