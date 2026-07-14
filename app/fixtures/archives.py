@@ -338,11 +338,18 @@ def parse_performance_sql(sql_path: Path) -> dict[str, list[dict]]:
                 if insert_match:
                     table_name = insert_match.group(1)
                     values = insert_match.group(2)
-                    row = parse_sql_values(values)
                     
-                    if table_name not in tables:
-                        tables[table_name] = []
-                    tables[table_name].append(row)
+                    tuple_strs = values.split("),(")
+                    for i, tuple_str in enumerate(tuple_strs):
+                        if i == 0:
+                            tuple_str = tuple_str.lstrip("(")
+                        if i == len(tuple_strs) - 1:
+                            tuple_str = tuple_str.rstrip(")")
+                        row = parse_sql_values(tuple_str)
+                        
+                        if table_name not in tables:
+                            tables[table_name] = []
+                        tables[table_name].append(row)
         
         if current_table and current_rows:
             tables[current_table] = current_rows
@@ -400,16 +407,16 @@ async def get_user_ids_from_archive(archive_info: ArchiveInfo, min_playcount: in
     
     user_ids = set()
     
-    for sql_file in extraction_dir.glob("osu_user_stats_*.sql"):
+    for sql_file in extraction_dir.glob("osu_user_stats*.sql"):
         try:
             data = parse_performance_sql(sql_file)
             
             for table_name, rows in data.items():
                 if "user_stats" in table_name.lower():
                     for row in rows:
-                        if len(row) >= 2:
+                        if len(row) >= 9:
                             user_id = row[0]
-                            playcount = row[1] if len(row) > 1 else 0
+                            playcount = row[8]
                             
                             if user_id and playcount and playcount >= min_playcount:
                                 user_ids.add(user_id)

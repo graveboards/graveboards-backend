@@ -15,6 +15,7 @@ from app.fixtures.fetcher import FixtureDataFetcher
 from app.fixtures.targeted_fetcher import TargetedFixtureFetcher
 from app.fixtures.search_test_fetcher import SearchTestFixtureFetcher
 from app.fixtures.id_source import IDSource, create_id_source
+from app.fixtures.failed_id_store import FailedIdStore
 from app.logging import get_logger
 
 logger = get_logger(__name__)
@@ -36,11 +37,13 @@ class FixtureOrchestrator:
     async def execute(self) -> FetchReport:
         """Run the full fetch pipeline."""
         report = FetchReport(criteria=self.criteria.criteria)
+        self.failed_id_store = FailedIdStore(self.rc)
 
         try:
             self.id_source = create_id_source(
                 self.criteria.source,
                 rc=self.rc if self.criteria.source == Source.AUTO else None,
+                failed_id_store=self.failed_id_store,
             )
             has_ids = await self.id_source.resolve()
             if not has_ids:
@@ -70,11 +73,13 @@ class FixtureOrchestrator:
 
         if self.criteria.is_search_test:
             fetcher = SearchTestFixtureFetcher(
-                self.rc, fixtures_dir=fixtures_dir, exclude_ids=self.criteria.exclude_ids
+                self.rc, fixtures_dir=fixtures_dir, exclude_ids=self.criteria.exclude_ids,
+                failed_id_store=self.failed_id_store,
             )
         elif self.criteria.is_targeted:
             fetcher = TargetedFixtureFetcher(
-                self.rc, fixtures_dir=fixtures_dir, exclude_ids=self.criteria.exclude_ids
+                self.rc, fixtures_dir=fixtures_dir, exclude_ids=self.criteria.exclude_ids,
+                failed_id_store=self.failed_id_store,
             )
         else:
             fetcher = FixtureDataFetcher(
@@ -82,6 +87,7 @@ class FixtureOrchestrator:
                 force_fetch=self.criteria.force_fetch,
                 fixtures_dir=fixtures_dir,
                 exclude_ids=self.criteria.exclude_ids,
+                failed_id_store=self.failed_id_store,
             )
 
         fetcher.logger = get_logger(__name__)
@@ -186,7 +192,7 @@ class FixtureOrchestrator:
 
     async def _execute_search_test(self) -> FetchReport:
         """Execute search-test fetch: coverage-gated rounds."""
-        from app.manage.fixtures.fetch import _print_coverage_gaps
+        from app.fixtures.display import print_coverage_gaps
 
         st = self.criteria.search_test
         if st.quick:
@@ -219,3 +225,50 @@ class FixtureOrchestrator:
             )
 
         return FetchReport(criteria=self.criteria.criteria, coverage=coverage)
+
+    async def fetch_users_by_ids(
+        self,
+        user_ids: list[int],
+        ruleset: str = "osu",
+    ) -> FetchReport:
+        """Fetch specific users by their IDs (e.g., beatmapset owners)."""
+        from app.fixtures.progress import ProgressBar
+        
+        report = FetchReport(criteria="users-by-ids")
+        self.failed_id_store = FailedIdStore(self.rc)
+        
+        try:
+            self.id_source = create_id_source(
+                self.criteria.source,
+                rc=self.rc if self.criteria.source == Source.AUTO else None,
+                failed_id_store=self.failed_id_store,
+            )
+            await self.id_source.resolve()
+            
+            self.fetcher = FixtureDataFetcher(
+                self.rc,
+                force_fetch=self.criteria.force_fetch,
+                fixtures_dir=self.criteria.fixtures_dir,
+                exclude_ids=self.criteria.exclude_ids,
+                failed_id_store=self.failed_id_store,
+            )
+            self.fetcher.logger = get_logger(__name__)
+            
+            if self.id_source:
+                self.fetcher.id_source = self.id_source
+            
+            progress = ProgressBar(no_progress=self.criteria.no_progress)
+            progress.start()
+            
+            try:
+                async for event in self.fetcher.fetch_users_by_ids(user_ids, ruleset):
+                    progress.update(event.category, event.current, event.total)
+            finally:
+                progress.stop()
+            
+            results = self.fetcher.last_fetch_results
+            return FetchReport(criteria=report.criteria, results=results)
+        except Exception as e:
+            logger.error(f"Fetch users by IDs error: {e}")
+            report.errors.append(str(e))
+            return report
