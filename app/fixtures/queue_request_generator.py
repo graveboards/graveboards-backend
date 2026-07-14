@@ -199,8 +199,12 @@ class QueueRequestFixtureGenerator:
 
         for queue in queues:
             filepath = QUEUE_FIXTURES_PATH / f"queue_{queue['id']}.json"
+            serializable_queue = {
+                k: v.isoformat() if isinstance(v, datetime) else v
+                for k, v in queue.items()
+            }
             with open(filepath, "w") as f:
-                json.dump(queue, f, indent=2)
+                json.dump(serializable_queue, f, indent=2)
 
         metadata = load_metadata()
         metadata["samples"]["queues"]["count"] = len(queues)
@@ -215,8 +219,12 @@ class QueueRequestFixtureGenerator:
 
         for request in requests:
             filepath = REQUEST_FIXTURES_PATH / f"request_{request['id']}.json"
+            serializable_request = {
+                k: v.isoformat() if isinstance(v, datetime) else v
+                for k, v in request.items()
+            }
             with open(filepath, "w") as f:
-                json.dump(request, f, indent=2)
+                json.dump(serializable_request, f, indent=2)
 
         metadata = load_metadata()
         metadata["samples"]["requests"]["count"] = len(requests)
