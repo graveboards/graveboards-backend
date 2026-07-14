@@ -216,11 +216,6 @@ def save_metadata(metadata: dict, fixtures_dir: Path | None = None) -> None:
         "queues": {"count": 0, "last_promoted": None},
         "requests": {"count": 0, "last_promoted": None},
     })
-    metadata.setdefault("failed_ids", {
-        "beatmaps": [],
-        "beatmapsets": [],
-        "users": {r: [] for r in RULESETS},
-    })
     metadata.setdefault("fetched_ids", {
         "beatmaps": [],
         "beatmapsets": [],
@@ -303,31 +298,7 @@ def create_empty_promoted_fixtures() -> dict:
     }
 
 
-def save_metadata(metadata: dict) -> None:
-    metadata["last_updated"] = datetime.now(timezone.utc).isoformat()
-    metadata.setdefault("promoted_fixtures", {
-        "beatmaps": {"count": 0, "last_promoted": None},
-        "beatmapsets": {"count": 0, "last_promoted": None},
-        "users": {"count": 0, "per_ruleset": {r: 0 for r in RULESETS}, "last_promoted": None},
-        "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_promoted": None},
-        "beatmap_scores": {"count": 0, "last_promoted": None},
-        "beatmap_attributes": {"count": 0, "last_promoted": None},
-        "queues": {"count": 0, "last_promoted": None},
-        "requests": {"count": 0, "last_promoted": None},
-    })
-    metadata.setdefault("failed_ids", {
-        "beatmaps": [],
-        "beatmapsets": [],
-        "users": {r: [] for r in RULESETS},
-    })
-    metadata.setdefault("top_player_ids", {r: [] for r in RULESETS})
-    metadata.setdefault("id_ranges", {
-        "beatmaps": {"min": 1, "max": 1000000},
-        "beatmapsets": {"min": 1, "max": 100000},
-        "users": {"min": 1, "max": 10000000},
-    })
-    with open(METADATA_FILE, "w") as f:
-        json.dump(metadata, f, indent=2)
+
 
 
 def get_fixture_count(category: str, subcategory: str | None = None, fixtures_dir: Path | None = None) -> int:

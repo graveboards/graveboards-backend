@@ -296,12 +296,12 @@ class SearchTestFetchAction:
         """Fetch one random beatmap."""
         from app.fixtures.utils import get_fixture_path
 
-        beatmap_id = self.fetcher._get_random_id("beatmaps", avoid_failed=True)
+        beatmap_id = await self.fetcher._get_random_id("beatmaps", avoid_failed=True)
 
         try:
             beatmap_data = await self.fetcher.oac.get_beatmap(beatmap_id)
         except Exception:
-            self.fetcher._add_failed_id("beatmaps", beatmap_id)
+            await self.fetcher._add_failed_id("beatmaps", beatmap_id)
             return {}
 
         filepath = get_fixture_path("beatmaps") / f"beatmap_{beatmap_id}.json"
@@ -349,7 +349,7 @@ class SearchTestFetchAction:
         try:
             user_data = await self.fetcher.oac.get_user(user_id, "osu")
         except Exception:
-            self.fetcher._add_failed_id("users.osu", user_id)
+            await self.fetcher._add_failed_id("users.osu", user_id)
             return {}
 
         ruleset_path = get_fixture_path("users") / "osu"
@@ -396,7 +396,7 @@ class SearchTestFetchAction:
             try:
                 bs_full = await self.fetcher.oac.get_beatmapset(bs_id)
             except Exception:
-                self.fetcher._add_failed_id("beatmapsets", bs_id)
+                await self.fetcher._add_failed_id("beatmapsets", bs_id)
                 continue
 
             filepath = get_fixture_path("beatmapsets") / f"beatmapset_{bs_id}.json"

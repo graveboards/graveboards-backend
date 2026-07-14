@@ -73,7 +73,10 @@ def setup_logging(
     no_debug=False,
     global_level=None,
 ) -> None:
-    level = logging.DEBUG if DEBUG else logging.INFO
+    if no_debug:
+        level = logging.INFO
+    else:
+        level = logging.DEBUG if DEBUG else logging.INFO
     level_overrides = {**_get_level_overrides(), **(level_overrides or {})}
     shared_processors = _build_shared_processors()
 

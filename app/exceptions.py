@@ -27,7 +27,8 @@ __all__ = [
     "NotFound",
     "Conflict",
     "OsuOAuthError",
-    "bad_request_factory"
+    "bad_request_factory",
+    "clean_error_msg",
 ]
 
 
@@ -242,3 +243,11 @@ def bad_request_factory(e: Exception) -> BadRequest:
     message = getattr(e, "message", str(e))
     path = getattr(e, "path", None)
     return BadRequest(message, path=path)
+
+
+def clean_error_msg(e: Exception) -> str:
+    """Strip noisy MDN reference links from HTTP error messages."""
+    msg = str(e)
+    if "For more information check:" in msg:
+        msg = msg.split("For more information check:")[0].rstrip()
+    return msg

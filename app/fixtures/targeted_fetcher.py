@@ -22,6 +22,7 @@ from .utils import (
     create_targeted_metadata,
 )
 from .fetcher import FixtureDataFetcher, FetchEvent
+from app.exceptions import clean_error_msg
 from .id_source import IDSource
 
 
@@ -29,8 +30,10 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
     """Enhanced fetcher with targeted coverage strategies."""
     
     def __init__(self, rc: RedisClient, id_ranges: dict | None = None,
-                 id_source: IDSource | None = None, fixtures_dir: Path | None = None):
-        super().__init__(rc, id_ranges, id_source=id_source, fixtures_dir=fixtures_dir)
+                 id_source: IDSource | None = None, fixtures_dir: Path | None = None,
+                 failed_id_store: FailedIdStore | None = None):
+        super().__init__(rc, id_ranges, id_source=id_source, fixtures_dir=fixtures_dir,
+                         failed_id_store=failed_id_store)
         self.difficulty_ranges = {
             "easy": (0, 2.0),
             "medium": (2.0, 5.0),
@@ -98,9 +101,9 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
                     
                     except Exception as e:
                         self.logger.debug(
-                            f"Failed to fetch beatmapset {beatmapset_id}: {e}"
+                            f"Failed to fetch beatmapset {beatmapset_id}: {clean_error_msg(e)}"
                         )
-                        self._add_failed_id("beatmapsets", beatmapset_id)
+                        await self._add_failed_id("beatmapsets", beatmapset_id)
                 
                 page += 1
                 
@@ -147,7 +150,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         while fetched < count and attempts < max_attempts:
             attempts += 1
             use_top_players = attempts % 3 != 0
-            user_id = self._get_random_id("users", use_top_players=use_top_players, avoid_failed=True)
+            user_id = await self._get_random_id("users", use_top_players=use_top_players, avoid_failed=True)
             mode = getattr(Ruleset, ruleset.upper()).value
             
             try:
@@ -188,8 +191,8 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
                             break
                         
                     except Exception as e:
-                        self.logger.debug(f"Failed to fetch beatmap {beatmap_id}: {e}")
-                        self._add_failed_id("beatmaps", beatmap_id)
+                        self.logger.debug(f"Failed to fetch beatmap {beatmap_id}: {clean_error_msg(e)}")
+                        await self._add_failed_id("beatmaps", beatmap_id)
                 
                 if fetched >= count:
                     break
@@ -256,8 +259,8 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
                 self._update_user_metadata(user_data, ruleset, activity_level)
                 
             except Exception as e:
-                self.logger.debug(f"Failed to fetch user {user_id}: {e}")
-                self._add_failed_id(f"users.{ruleset}", user_id)
+                self.logger.debug(f"Failed to fetch user {user_id}: {clean_error_msg(e)}")
+                await self._add_failed_id(f"users.{ruleset}", user_id)
         
         if fetched < count:
             self.logger.warning(f"Only fetched {fetched}/{count} users for {ruleset} {activity_level}")
@@ -293,7 +296,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         
         while fetched < count and attempts < max_attempts:
             attempts += 1
-            beatmap_id = self._get_random_id("beatmaps", avoid_failed=True)
+            beatmap_id = await self._get_random_id("beatmaps", avoid_failed=True)
             
             if skip_existing and beatmap_id in self._seen_ids:
                 continue
@@ -323,7 +326,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
                 
             except Exception as e:
                 self.logger.debug(f"Failed to fetch beatmap {beatmap_id}: {e}")
-                self._add_failed_id("beatmaps", beatmap_id)
+                await self._add_failed_id("beatmaps", beatmap_id)
         
         if fetched < count:
             self.logger.warning(f"Only fetched {fetched}/{count} beatmaps for playcount {playcount_range}")

@@ -29,6 +29,8 @@ from .utils import (
     save_top_player_ids,
 )
 from .fetcher import FixtureDataFetcher, FetchEvent
+from .failed_id_store import FailedIdStore
+from app.exceptions import clean_error_msg
 from .id_source import IDSource
 from .search_test_constants import (
     GENRE_IDS,
@@ -127,8 +129,9 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
     """
 
     def __init__(self, rc: RedisClient, id_ranges: dict | None = None,
-                 id_source: IDSource | None = None):
-        super().__init__(rc, id_ranges, id_source=id_source)
+                 id_source: IDSource | None = None,
+                 failed_id_store: FailedIdStore | None = None):
+        super().__init__(rc, id_ranges, id_source=id_source, failed_id_store=failed_id_store)
         
         # Set default logger if not provided
         if self.logger is None:
@@ -491,7 +494,7 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
 
         while total_calls < max_calls:
             total_calls += 1
-            beatmap_id = self._get_random_id("beatmaps", avoid_failed=True)
+            beatmap_id = await self._get_random_id("beatmaps", avoid_failed=True)
             if beatmap_id in seen_ids:
                 continue
             seen_ids.add(beatmap_id)
@@ -499,8 +502,8 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
             try:
                 beatmap_data = await self.oac.get_beatmap(beatmap_id)
             except Exception as e:
-                self.logger.debug(f"Failed to fetch beatmap {beatmap_id}: {e}")
-                self._add_failed_id("beatmaps", beatmap_id)
+                self.logger.debug(f"Failed to fetch beatmap {beatmap_id}: {clean_error_msg(e)}")
+                await self._add_failed_id("beatmaps", beatmap_id)
                 continue
 
             # Save the JSON fixture file
@@ -597,8 +600,8 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
                     bs_full = await self.oac.get_beatmapset(bs_id)
                     total_calls += 1  # Count the get_beatmapset call
                 except Exception as e:
-                    self.logger.debug(f"Failed to fetch beatmapset {bs_id}: {e}")
-                    self._add_failed_id("beatmapsets", bs_id)
+                    self.logger.debug(f"Failed to fetch beatmapset {bs_id}: {clean_error_msg(e)}")
+                    await self._add_failed_id("beatmapsets", bs_id)
                     continue
 
                 # Save the JSON fixture file
@@ -736,8 +739,8 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
                 try:
                     user_data = await self.oac.get_user(user_id, ruleset)
                 except Exception as e:
-                    self.logger.debug(f"Failed to fetch user {user_id}: {e}")
-                    self._add_failed_id(f"users.{ruleset_name}", user_id)
+                    self.logger.debug(f"Failed to fetch user {user_id}: {clean_error_msg(e)}")
+                    await self._add_failed_id(f"users.{ruleset_name}", user_id)
                     continue
 
                 # Save the JSON fixture file
@@ -819,7 +822,7 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
                 total_calls += 1
             except Exception as e:
                 self.logger.debug(f"Failed to fetch beatmapset {bs_id}: {e}")
-                self._add_failed_id("beatmapsets", bs_id)
+                await self._add_failed_id("beatmapsets", bs_id)
                 continue
 
             # Save the JSON fixture file
