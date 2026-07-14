@@ -1,4 +1,3 @@
-import os
 import asyncio
 
 from sqlalchemy.ext.asyncio.session import AsyncSession
@@ -7,7 +6,7 @@ from app.database.models import Queue
 from app.database.crud import session_manager, db_session_resolver
 from app.database.seeding import SeederTarget
 from app.database.seeding.event import SeedEvent
-from .base import Seeder, FIXTURES_PATH
+from .base import Seeder
 
 
 class QueueSeeder(Seeder):
@@ -29,7 +28,3 @@ class QueueSeeder(Seeder):
             session=self.session
         ):
             await self.db.add(Queue, **queue_entry, session=self.session)
-
-    @property
-    def fixture_path(self) -> str:
-        return os.path.join(FIXTURES_PATH, "queues.json")
