@@ -7,6 +7,7 @@ def build_fixtures_parser(subparsers):
     fixtures_subparsers = fixtures_parser.add_subparsers(dest="fixture_command", required=True)
 
     _build_fetch_parser(fixtures_subparsers)
+    _build_fetch_users_from_beatmapsets_parser(fixtures_subparsers)
     _build_promote_parser(fixtures_subparsers)
     _build_demote_parser(fixtures_subparsers)
     _build_refresh_top_players_parser(fixtures_subparsers)
@@ -156,6 +157,18 @@ def _build_fetch_parser(fixtures_subparsers):
     )
 
 
+def _build_fetch_users_from_beatmapsets_parser(fixtures_subparsers):
+    """Build the parser for 'fixtures fetch-users-from-beatmapsets'."""
+    fixtures_subparsers.add_parser(
+        "fetch-users-from-beatmapsets",
+        help="Extract user IDs from beatmapset fixtures and fetch those users",
+        description=(
+            "Reads beatmapset fixtures to extract unique owner user IDs,\n"
+            "then fetches those users from the osu! API."
+        ),
+    )
+
+
 def _build_promote_parser(fixtures_subparsers):
     """Build the parser for 'fixtures promote'."""
     p = fixtures_subparsers.add_parser("promote", help="Promote fixtures from instance to tests")
@@ -253,8 +266,8 @@ def _build_generate_parser(fixtures_subparsers):
     p.add_argument(
         "--queue-count",
         type=int,
-        default=50,
-        help="Number of queues to generate (default: 50)",
+        default=10,
+        help="Number of queues to generate (default: 10)",
     )
     p.add_argument(
         "--request-count",

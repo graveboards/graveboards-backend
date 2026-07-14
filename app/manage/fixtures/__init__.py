@@ -9,6 +9,7 @@ from .helpers import get_categories_to_process
 from .reconcile import cmd_reconcile
 from .refresh_archives import cmd_refresh_archives
 from .generate import cmd_generate
+from .fetch_users_from_beatmapsets import cmd_fetch_users_from_beatmapsets
 
 __all__ = [
     "cmd_refresh_top_players",
@@ -20,5 +21,6 @@ __all__ = [
     "cmd_reconcile",
     "cmd_refresh_archives",
     "cmd_generate",
+    "cmd_fetch_users_from_beatmapsets",
     "get_categories_to_process",
 ]

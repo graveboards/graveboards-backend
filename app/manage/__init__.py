@@ -17,6 +17,7 @@ from .fixtures import (
     cmd_refresh_archives,
     cmd_reconcile,
     cmd_generate,
+    cmd_fetch_users_from_beatmapsets,
 )
 from .parsers import (
     build_status_parser,
@@ -52,7 +53,11 @@ async def main():
             case "reset":
                 await cmd_reset(args.seed_target, force=getattr(args, 'force', False))
             case "seed":
-                await cmd_seed(args.target)
+                await cmd_seed(
+                    args.target,
+                    ensure_fixtures=getattr(args, 'ensure_fixtures', False),
+                    profile_name=getattr(args, 'profile', 'default'),
+                )
             case "fixtures":
                 match args.fixture_command:
                     case "fetch":
@@ -142,6 +147,8 @@ async def main():
                             queue_count=args.queue_count,
                             request_count=args.request_count,
                         )
+                    case "fetch-users-from-beatmapsets":
+                        await cmd_fetch_users_from_beatmapsets()
     except Exception as e:
         import traceback
         from rich.console import Console

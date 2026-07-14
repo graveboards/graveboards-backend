@@ -7,6 +7,8 @@ from shutil import rmtree
 from rich.console import Console
 
 from app.fixtures.utils import FIXTURES_DIR, load_metadata, save_metadata, RULESETS, create_empty_samples, create_empty_promoted_fixtures
+from app.fixtures.failed_id_store import FailedIdStore
+from app.redis import RedisClient
 
 console = Console()
 
@@ -52,11 +54,11 @@ async def cmd_wipe_fixtures(
     metadata.pop("search_test_coverage", None)
     metadata.pop("targeted", None)
     if clear_failed_ids:
-        metadata["failed_ids"] = {
-            "beatmaps": [],
-            "beatmapsets": [],
-            "users": {r: [] for r in RULESETS},
-        }
+        rc = RedisClient()
+        store = FailedIdStore(rc)
+        await store.clear_all()
+        await rc.aclose()
+        console.print("[green]✅ Failed IDs cleared from Redis[/green]")
     if clear_top_player_ids:
         metadata["top_player_ids"] = {r: [] for r in RULESETS}
     if clear_promoted:
