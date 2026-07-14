@@ -263,6 +263,8 @@ class ArchiveIDSource(IDSource):
         """Resolve lazy loading for the requested category."""
         if category == "beatmaps":
             await self._ensure_beatmap_ids_loaded()
+        elif category == "beatmapsets":
+            return
         else:
             ruleset = subcategory or "osu"
             await self._ensure_player_ids_loaded(ruleset)

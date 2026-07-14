@@ -127,8 +127,8 @@ class QueueRequestFixtureGenerator:
                 "description": random.choice(QUEUE_DESCRIPTIONS),
                 "is_open": is_open,
                 "visibility": visibility,
-                "created_at": (datetime.now(timezone.utc) - timedelta(days=random.randint(1, 365))).isoformat(),
-                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "created_at": datetime.now(timezone.utc) - timedelta(days=random.randint(1, 365)),
+                "updated_at": datetime.now(timezone.utc),
             }
             queues.append(queue)
 
@@ -186,8 +186,8 @@ class QueueRequestFixtureGenerator:
                 "comment": comment,
                 "mv_checked": mv_checked,
                 "status": status,
-                "created_at": (datetime.now(timezone.utc) - timedelta(days=random.randint(1, 180))).isoformat(),
-                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "created_at": datetime.now(timezone.utc) - timedelta(days=random.randint(1, 180)),
+                "updated_at": datetime.now(timezone.utc),
             }
             requests.append(request)
 
