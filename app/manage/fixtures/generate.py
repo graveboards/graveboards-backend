@@ -9,12 +9,14 @@ Usage:
 
 Examples:
     manage fixtures generate
-    manage fixtures generate --queue-count 100 --request-count 200
+    manage fixtures generate --queue-count 10 --request-count 100
 """
 import random
+from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 
+from app.config import PROJECT_ROOT
 from app.fixtures.queue_request_generator import QueueRequestFixtureGenerator
 from app.logging import get_logger
 
@@ -23,10 +25,33 @@ logger = get_logger(__name__)
 
 
 async def cmd_generate(
-    queue_count: int = 50,
+    queue_count: int = 10,
     request_count: int = 100,
 ):
     """Generate diverse queue and request fixtures for search testing."""
+    users_path = PROJECT_ROOT / "instance" / "fixtures" / "users"
+    beatmapsets_path = PROJECT_ROOT / "instance" / "fixtures" / "beatmapsets"
+
+    has_users = users_path.exists() and any(users_path.rglob("user_*.json"))
+    has_beatmapsets = beatmapsets_path.exists() and any(beatmapsets_path.glob("beatmapset_*.json"))
+
+    if not has_users or not has_beatmapsets:
+        console.print("[red]Error: Missing required fixtures for generation.[/red]")
+        console.print()
+        if not has_users:
+            console.print("  - No user fixtures found in instance/fixtures/users/")
+        if not has_beatmapsets:
+            console.print("  - No beatmapset fixtures found in instance/fixtures/beatmapsets/")
+        console.print()
+        console.print("Run the following command to fetch required fixtures:")
+        console.print()
+        console.print("  python manage.py fixtures fetch --criteria minimal --users-osu 10 --beatmapsets 30")
+        console.print()
+        console.print("Then run generation again:")
+        console.print()
+        console.print("  python manage.py fixtures generate --queue-count 10 --request-count 100")
+        return
+
     console.print("[bold]Generating queue and request fixtures...[/bold]")
     console.print(f"  Queues: {queue_count}, Requests: {request_count}")
     console.print()
