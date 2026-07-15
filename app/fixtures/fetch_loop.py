@@ -5,10 +5,11 @@ parameterized FetchLoop that takes API call, ID generator, path builder, and
 success/failure handlers as configuration.
 """
 
+import asyncio
 import json
 import os
 from pathlib import Path
-from typing import AsyncIterator, Callable, Coroutine
+from typing import AsyncIterator, Callable, Coroutine, Any
 from dataclasses import dataclass, field
 
 import httpx
@@ -30,8 +31,8 @@ class FetchConfig:
     id_generator: Callable[[], Coroutine[int]]
     path_builder: Callable[[int], Path]
     data_type: str
-    success_handler: Callable[[int, dict], None]
-    failure_handler: Callable[[int, Exception], None]
+    success_handler: Callable[..., Any]
+    failure_handler: Callable[..., Any]
     skip_checker: Callable[[int], bool]
     max_retries: int = 10
     max_attempts: int = 100
@@ -50,6 +51,12 @@ class FetchLoop:
 
     def __init__(self, config: FetchConfig):
         self.config = config
+
+    async def _call_handler(self, handler: Callable[..., Any], *args: Any) -> None:
+        """Call a handler, awaiting it if it's a coroutine function."""
+        result = handler(*args)
+        if asyncio.iscoroutine(result):
+            await result
 
     async def run(self, target_count: int, skip_existing: bool = True) -> AsyncIterator[FetchEvent]:
         """Run the fetch loop until target_count items are fetched.
@@ -92,7 +99,7 @@ class FetchLoop:
                     filepath = self.config.path_builder(beatmap_id)
                     self._atomic_write(filepath, data, self.config.data_type)
 
-                    self.config.success_handler(beatmap_id, data)
+                    await self._call_handler(self.config.success_handler, beatmap_id, data)
                     fetched += 1
                     self._record_success()
 
@@ -105,10 +112,10 @@ class FetchLoop:
                             self.config.on_error(e)
 
                     if isinstance(e, httpx.HTTPStatusError) and e.response.status_code == 404:
-                        self.config.failure_handler(beatmap_id, e)
+                        await self._call_handler(self.config.failure_handler, beatmap_id, e)
                         break
 
-                    self.config.failure_handler(beatmap_id, e)
+                    await self._call_handler(self.config.failure_handler, beatmap_id, e)
                     retries += 1
                     if retries < self.config.max_retries:
                         beatmap_id = await self.config.id_generator()

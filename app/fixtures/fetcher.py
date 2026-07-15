@@ -156,8 +156,8 @@ class FixtureDataFetcher:
             self._record_success()
             self.logger.debug(f"Fetched {data_type} {beatmap_id}")
 
-        def failure_handler(beatmap_id: int, error: Exception):
-            self._add_failed_id(category, beatmap_id)
+        async def failure_handler(beatmap_id: int, error: Exception):
+            await self._add_failed_id(category, beatmap_id)
 
         def skip_checker(id_: int) -> bool:
             return self._should_skip_id(id_)
@@ -275,8 +275,8 @@ class FixtureDataFetcher:
                 self._record_success()
                 self.logger.debug(f"Fetched user {beatmap_id} ({ruleset})")
 
-            def failure_handler(beatmap_id: int, error: Exception):
-                self._add_failed_id(category, beatmap_id)
+            async def failure_handler(beatmap_id: int, error: Exception):
+                await self._add_failed_id(category, beatmap_id)
 
             config = FetchConfig(
                 api_call=api_call_factory,
@@ -416,8 +416,8 @@ class FixtureDataFetcher:
                 self._record_success()
                 self.logger.debug(f"Fetched scores for user {beatmap_id} ({score_type})")
 
-            def failure_handler(beatmap_id: int, error: Exception):
-                self._add_failed_id("users", beatmap_id)
+            async def failure_handler(beatmap_id: int, error: Exception):
+                await self._add_failed_id("users", beatmap_id)
 
             def data_validator(data):
                 return isinstance(data, list) and bool(data)
