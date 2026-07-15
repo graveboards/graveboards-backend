@@ -101,6 +101,10 @@ async def cmd_generate(
         console.print(f"  {status_name} ({status_id}): {count}")
 
     console.print()
-    console.print(f"[bold]Seed data updated:[/bold]")
-    console.print(f"  Queues: {queues_path / 'queues.json'} ({len(queues)} entries)")
-    console.print(f"  Requests: {requests_path / 'requests.json'} ({len(requests)} entries)")
+    console.print(f"[bold]Generated files:[/bold]")
+    for q in queues:
+        console.print(f"  queues/queue_{q['id']}.json")
+    for r in requests:
+        console.print(f"  requests/request_{r['id']}.json")
+    console.print()
+    console.print(f"[bold]Total:{/bold] {len(queues)} queues, {len(requests)} requests")
