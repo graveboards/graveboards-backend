@@ -1,6 +1,7 @@
 """Shared helpers for fixture promotion and demotion."""
 
 from datetime import datetime, timezone
+from pathlib import Path
 from shutil import copy2, rmtree
 
 from rich.console import Console
@@ -30,8 +31,7 @@ def _move_fixture_files(
     src_base: str,
     dst_base: str,
     metadata: dict,
-    action: str = "promote",
-) -> int:
+) -> tuple[int, int]:
     """Move fixture files between directories with proper metadata tracking.
 
     Args:
@@ -39,20 +39,20 @@ def _move_fixture_files(
         src_base: Source base path
         dst_base: Destination base path
         metadata: Metadata dict to update
-        action: "promote" or "demote"
 
     Returns:
-        Number of files moved
+        Tuple of (files_copied, files_missing)
     """
     current_time = datetime.now(timezone.utc).isoformat()
     copied = 0
+    missing = 0
     deleted = 0
 
     src_path_base = FIXTURES_DIR if src_base == "instance" else TEST_FIXTURES_DIR
     dst_path_base = TEST_FIXTURES_DIR if dst_base == "tests" else FIXTURES_DIR
 
     # Phase 1: Collect all copy operations
-    copy_operations = []
+    copy_operations: list[tuple[Path, Path, str, str | None]] = []
 
     for category in categories:
         src_path = src_path_base / category
@@ -88,8 +88,11 @@ def _move_fixture_files(
                                 (filepath, sub_dst / filepath.name, category, sub.name)
                             )
 
-    # Phase 2: Execute all copy operations
+    # Phase 2: Execute all copy operations, tracking missing files
     for src, dst, _, _ in copy_operations:
+        if not src.exists():
+            missing += 1
+            continue
         copy2(src, dst)
         copied += 1
 
@@ -163,4 +166,4 @@ def _move_fixture_files(
                 )
                 metadata["promoted_fixtures"][category]["last_promoted"] = current_time
 
-    return copied
+    return copied, missing

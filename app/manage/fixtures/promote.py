@@ -47,17 +47,18 @@ async def cmd_promote_fixtures(
         requests=requests,
     )
 
-    copied = _move_fixture_files(
+    copied, missing = _move_fixture_files(
         categories=categories_to_promote,
         src_base="instance",
         dst_base="tests",
         metadata=metadata,
-        action="promote",
     )
 
     metadata["samples"] = create_empty_samples()
     metadata["last_updated"] = current_time
     save_metadata(metadata)
 
+    if missing > 0:
+        console.print(f"  [yellow]⚠️ {missing} file(s) already missing, skipped[/yellow]")
     console.print(f"[green]✅ Promoted {copied} fixture files to tests/fixtures/[/green]")
     console.print("   [dim]Instance fixtures cleaned up[/dim]\n")

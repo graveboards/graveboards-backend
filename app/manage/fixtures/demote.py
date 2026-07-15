@@ -1,5 +1,3 @@
-from datetime import datetime, timezone
-
 from rich.console import Console
 from rich.prompt import Confirm
 
@@ -30,7 +28,6 @@ async def cmd_demote_fixtures(
             return
 
     metadata = load_metadata()
-    current_time = datetime.now(timezone.utc).isoformat()
 
     console.print("\n[bold]=== Demoting Fixtures ===[/bold]\n")
 
@@ -45,49 +42,12 @@ async def cmd_demote_fixtures(
         requests=requests,
     )
 
-    copied = _move_fixture_files(
+    copied, missing = _move_fixture_files(
         categories=categories_to_demote,
         src_base="tests",
         dst_base="instance",
         metadata=metadata,
-        action="demote",
     )
-
-    # Calculate missing files (files that don't exist in source)
-    from app.fixtures.paths import (
-        TEST_FIXTURES_DIR,
-        QUEUE_TEST_FIXTURES_DIR,
-        REQUEST_TEST_FIXTURES_DIR,
-    )
-
-    missing = 0
-    for category in categories_to_demote:
-        if category == "queues":
-            src_path = QUEUE_TEST_FIXTURES_DIR
-        elif category == "requests":
-            src_path = REQUEST_TEST_FIXTURES_DIR
-        else:
-            src_path = TEST_FIXTURES_DIR / category
-
-        if category in [
-            "beatmaps",
-            "beatmapsets",
-            "beatmap_scores",
-            "beatmap_attributes",
-            "queues",
-            "requests",
-        ]:
-            if src_path.exists():
-                for f in src_path.glob("*.json"):
-                    if not f.exists():
-                        missing += 1
-        elif category in ["users", "scores"]:
-            if src_path.exists():
-                for sub in src_path.iterdir():
-                    if sub.is_dir():
-                        for f in sub.glob("*.json"):
-                            if not f.exists():
-                                missing += 1
 
     save_metadata(metadata)
 
