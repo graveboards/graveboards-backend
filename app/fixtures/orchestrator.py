@@ -191,7 +191,17 @@ class FixtureOrchestrator:
         return FetchReport(criteria=self.criteria.criteria, results=results)
 
     async def _execute_search_test(self) -> FetchReport:
-        """Execute search-test fetch: coverage-gated rounds."""
+        """Execute search-test fetch: coverage-gated rounds.
+
+        Modes:
+            --gaps       Show coverage gaps and exit (no fetching)
+            --full       Re-fetch all buckets from scratch (skip_covered=False)
+            default      Incremental: skip already-covered buckets (skip_covered=True)
+            --quick      Same as default but with min_per_category=1, max_total=20
+
+        The adaptive fetch loop prioritizes rare buckets (NSFW, restricted users)
+        over common ones, and actions that fill multiple buckets at once.
+        """
         from app.fixtures.display import print_coverage_gaps
 
         st = self.criteria.search_test

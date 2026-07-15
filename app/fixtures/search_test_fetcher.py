@@ -43,6 +43,10 @@ from .search_test_known_ids import (
     NSFW_BEATMAPSET_IDS,
 )
 
+# Range dictionaries for categorization (duplicated from categorization.py Categorizer instances)
+# TODO: Migrate _classify_* methods to use Categorizer instances from categorization.py
+# to eliminate this duplication.
+
 # BPM ranges for categorization
 BPM_RANGES = {
     "low": (0, 90),

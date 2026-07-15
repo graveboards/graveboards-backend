@@ -513,6 +513,29 @@ async def adaptive_fetch_loop(
     After each fetch, re-evaluates which action has the highest expected
     information gain and picks that next. Stops when all buckets are
     satisfied or max_total API calls exhausted.
+
+    Priority Formula:
+        priority = (total_urgency + rare_bonus) / cost
+
+        Where:
+        - total_urgency = sum of bucket_urgency for each affected bucket
+        - bucket_urgency = rarity_weight * 2.0 if count == 0
+                         = rarity_weight * 1.0 if 0 < count < min_coverage
+                         = 0.0 if covered
+        - rare_bonus = sum of (rarity_weight * 10.0) for uncovered buckets with rarity >= 2.0
+        - cost = API call cost of the action (1 or 2)
+
+    Example:
+        If action "beatmapsets" (cost=2) affects 3 uncovered buckets:
+        - bucket A: rarity=1.0, count=0 -> urgency=2.0
+        - bucket B: rarity=1.0, count=0 -> urgency=2.0
+        - bucket C: rarity=3.0, count=0 -> urgency=6.0, rare_bonus=30.0
+        - total_urgency = 10.0, rare_bonus = 30.0
+        - priority = (10.0 + 30.0) / 2 = 20.0
+
+    This ensures rare buckets (NSFW, restricted users) get prioritized
+    over common ones, and actions that fill multiple buckets at once
+    are preferred over single-bucket actions.
     """
     tracker = CoverageTracker(fetcher, min_per_category=min_per_category)
     actions = build_actions(fetcher)
