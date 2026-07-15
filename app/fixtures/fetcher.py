@@ -17,14 +17,11 @@ from .paths import get_fixture_path
 from .constants import RULESETS, SCORE_TYPES, ID_RANGES
 from .id_source import IDSource
 from .validation import validate_data
-from .progress import ProgressBar
+from .constants import MAX_RETRIES, MAX_RETRIES_SCORES, RANKING_PAGE_SIZE
 from .failed_id_store import FailedIdStore
 from .fetch_loop import FetchConfig, FetchLoop, FetchEvent
+from .progress import ProgressBar
 from app.exceptions import clean_error_msg
-
-MAX_RETRIES = 10
-MAX_RETRIES_SCORES = 50
-RANKING_PAGE_SIZE = 50
 
 
 class FixtureDataFetcher:

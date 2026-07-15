@@ -79,8 +79,8 @@ async def cmd_seed(db: PostgresqlDB, target: SeedTarget, ensure_fixtures: bool =
             
             # Clean up existing queue/request fixtures to avoid stale/corrupted data
             from pathlib import Path
-            queues_path = Path("instance/fixtures/queues")
-            requests_path = Path("instance/fixtures/requests")
+            queues_path = PROJECT_ROOT / "instance" / "fixtures" / "queues"
+            requests_path = PROJECT_ROOT / "instance" / "fixtures" / "requests"
             if queues_path.exists():
                 for f in queues_path.glob("queue_*.json"):
                     f.unlink()

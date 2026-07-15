@@ -7,10 +7,8 @@ def get_categories_to_process(
     beatmap_attributes: bool,
     queues: bool = False,
     requests: bool = False,
-    all_categories: bool | None = None,
 ) -> list[str]:
-    if all_categories is None:
-        all_categories = not any([beatmaps, beatmapsets, users, scores, beatmap_scores, beatmap_attributes, queues, requests])
+    all_categories = not any([beatmaps, beatmapsets, users, scores, beatmap_scores, beatmap_attributes, queues, requests])
 
     categories_to_process = []
     if all_categories or beatmaps:

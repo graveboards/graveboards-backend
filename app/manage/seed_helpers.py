@@ -4,7 +4,12 @@ from pathlib import Path
 
 from app.config import PROJECT_ROOT
 from app.database.seeding.profiles import SeedProfile
+from app.fixtures.constants import RULESETS
+from app.fixtures.paths import get_fixture_path
+from app.fixtures.orchestrator import FixtureOrchestrator
+from app.fixtures.criteria import FetchCriteria
 from app.logging import get_logger
+from app.redis import RedisClient
 
 
 async def ensure_fixtures_async(logger, profile: SeedProfile) -> bool:
@@ -31,10 +36,6 @@ async def ensure_fixtures_async(logger, profile: SeedProfile) -> bool:
     if not has_beatmapsets:
         logger.info(f"Fetching {profile.beatmapsets_count} beatmapsets from osu! API...")
         try:
-            from app.redis import RedisClient
-            from app.fixtures.orchestrator import FixtureOrchestrator
-            from app.fixtures.criteria import FetchCriteria
-            
             rc = RedisClient()
             try:
                 criteria = FetchCriteria(beatmapsets=profile.beatmapsets_count)
@@ -57,10 +58,6 @@ async def ensure_fixtures_async(logger, profile: SeedProfile) -> bool:
     if not has_users:
         logger.info("Fetching beatmapset owner users...")
         try:
-            from app.redis import RedisClient
-            from app.fixtures.orchestrator import FixtureOrchestrator
-            from app.fixtures.criteria import FetchCriteria
-            
             # Extract owner user IDs from beatmapset fixtures
             owner_ids: set[int] = set()
             owner_data: dict[int, dict] = {}
@@ -94,11 +91,6 @@ async def ensure_fixtures_async(logger, profile: SeedProfile) -> bool:
                 # Create minimal user fixtures for failed fetches (restricted/deleted users)
                 if failed_ids:
                     logger.info(f"Creating minimal fixtures for {len(failed_ids)} restricted/deleted user(s)...")
-                    from app.fixtures.paths import get_fixture_path
-                    from app.fixtures.constants import RULESETS
-                    from pathlib import Path
-                    import json as json_mod
-                    
                     users_path = get_fixture_path("users", fixtures_dir=PROJECT_ROOT / "instance" / "fixtures")
                     ruleset_path = users_path / "osu"
                     ruleset_path.mkdir(parents=True, exist_ok=True)
@@ -112,7 +104,7 @@ async def ensure_fixtures_async(logger, profile: SeedProfile) -> bool:
                             "is_restricted": True,
                         }
                         with open(filepath, "w") as fh:
-                            json_mod.dump(minimal_user, fh)
+                            json.dump(minimal_user, fh)
                     logger.info(f"Created minimal fixtures for {len(failed_ids)} user(s).")
             finally:
                 await rc.aclose()

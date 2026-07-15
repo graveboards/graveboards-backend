@@ -11,7 +11,6 @@ Examples:
     manage fixtures generate
     manage fixtures generate --queue-count 10 --request-count 100
 """
-import random
 from pathlib import Path
 from rich.console import Console
 from rich.table import Table
@@ -102,9 +101,15 @@ async def cmd_generate(
 
     console.print()
     console.print(f"[bold]Generated files:[/bold]")
-    for q in queues:
-        console.print(f"  queues/queue_{q['id']}.json")
-    for r in requests:
-        console.print(f"  requests/request_{r['id']}.json")
+    if len(queues) <= 15:
+        for q in queues:
+            console.print(f"  queues/queue_{q['id']}.json")
+    else:
+        console.print(f"  queues/queue_1.json ... queues/queue_{len(queues)}.json")
+    if len(requests) <= 15:
+        for r in requests:
+            console.print(f"  requests/request_{r['id']}.json")
+    else:
+        console.print(f"  requests/request_1.json ... requests/request_{len(requests)}.json")
     console.print()
     console.print(f"[bold]Total:[/bold] {len(queues)} queues, {len(requests)} requests")

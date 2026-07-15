@@ -1,11 +1,11 @@
 from datetime import datetime, timezone
-from shutil import copy2, rmtree
 
 from rich.console import Console
+from rich.prompt import Prompt
 
-from app.fixtures.paths import FIXTURES_DIR, TEST_FIXTURES_DIR, QUEUE_TEST_FIXTURES_DIR, REQUEST_TEST_FIXTURES_DIR
-from app.fixtures.metadata_io import load_metadata, save_metadata, create_empty_samples
+from app.fixtures.metadata_io import create_empty_samples, load_metadata, save_metadata
 from .helpers import get_categories_to_process
+from .move_helpers import _get_dst_path, _move_fixture_files
 
 console = Console()
 
@@ -22,14 +22,12 @@ async def cmd_promote_fixtures(
     force: bool = False,
 ):
     if not force:
-        from rich.prompt import Prompt
         response = Prompt.ask("This will move fixture files and delete the originals. Continue?", choices=["y", "n"], default="n")
         if response != "y":
             console.print("[dim]Aborted.[/dim]")
             return
 
     metadata = load_metadata()
-    copied = 0
     current_time = datetime.now(timezone.utc).isoformat()
 
     console.print("\n[bold]=== Promoting Fixtures ===[/bold]\n")
@@ -45,81 +43,16 @@ async def cmd_promote_fixtures(
         requests=requests,
     )
 
-    # Phase 1: Copy all files first (before deleting anything)
-    copies = []  # list of (src_path, dst_path)
+    copied = _move_fixture_files(
+        categories=categories_to_promote,
+        src_base="instance",
+        dst_base="tests",
+        metadata=metadata,
+        action="promote",
+    )
 
-    for category in categories_to_promote:
-        src_path = FIXTURES_DIR / category
-        
-        if category in ["queues"]:
-            dst_path = QUEUE_TEST_FIXTURES_DIR
-        elif category in ["requests"]:
-            dst_path = REQUEST_TEST_FIXTURES_DIR
-        else:
-            dst_path = TEST_FIXTURES_DIR / category
-
-        if category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"]:
-            dst_path.mkdir(parents=True, exist_ok=True)
-            if src_path.exists():
-                for filepath in src_path.glob("*.json"):
-                    copies.append((filepath, dst_path / filepath.name))
-        elif category in ["users", "scores"]:
-            dst_path.mkdir(parents=True, exist_ok=True)
-            if src_path.exists():
-                for sub in src_path.iterdir():
-                    if sub.is_dir():
-                        sub_dst = dst_path / sub.name
-                        sub_dst.mkdir(parents=True, exist_ok=True)
-                        for filepath in sub.glob("*.json"):
-                            copies.append((filepath, sub_dst / filepath.name))
-
-    # Phase 2: Perform all copies
-    for src, dst in copies:
-        copy2(src, dst)
-        copied += 1
-
-    # Phase 3: Delete source directories only after all copies succeeded
-    for category in categories_to_promote:
-        src_path = FIXTURES_DIR / category
-        
-        if category in ["queues"]:
-            dst_path = QUEUE_TEST_FIXTURES_DIR
-        elif category in ["requests"]:
-            dst_path = REQUEST_TEST_FIXTURES_DIR
-        else:
-            dst_path = TEST_FIXTURES_DIR / category
-
-        if category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"]:
-            count = 0
-            if src_path.exists():
-                count = len(list(src_path.glob("*.json")))
-                rmtree(src_path)
-            if category not in metadata["promoted_fixtures"]:
-                metadata["promoted_fixtures"][category] = {"count": 0, "last_promoted": None}
-            metadata["promoted_fixtures"][category]["count"] = metadata["promoted_fixtures"][category].get("count", 0) + count
-            metadata["promoted_fixtures"][category]["last_promoted"] = current_time
-        elif category in ["users", "scores"]:
-            total_count = 0
-            if src_path.exists():
-                for sub in src_path.iterdir():
-                    if sub.is_dir():
-                        count = len(list(sub.glob("*.json")))
-                        total_count += count
-                        rmtree(sub)
-                        if category == "users":
-                            metadata["promoted_fixtures"][category] = metadata["promoted_fixtures"].setdefault(category, {"count": 0, "per_ruleset": {}})
-                            metadata["promoted_fixtures"][category]["per_ruleset"] = metadata["promoted_fixtures"][category].setdefault("per_ruleset", {})
-                            metadata["promoted_fixtures"][category]["per_ruleset"][sub.name] = metadata["promoted_fixtures"][category]["per_ruleset"].get(sub.name, 0) + count
-                        else:
-                            metadata["promoted_fixtures"][category] = metadata["promoted_fixtures"].setdefault(category, {"count": 0, "per_type": {}})
-                            metadata["promoted_fixtures"][category]["per_type"] = metadata["promoted_fixtures"][category].setdefault("per_type", {})
-                            metadata["promoted_fixtures"][category]["per_type"][sub.name] = metadata["promoted_fixtures"][category]["per_type"].get(sub.name, 0) + count
-                src_path.rmdir()
-                metadata["promoted_fixtures"][category]["count"] = metadata["promoted_fixtures"][category].get("count", 0) + total_count
-                metadata["promoted_fixtures"][category]["last_promoted"] = current_time
-
-    metadata["last_updated"] = None
     metadata["samples"] = create_empty_samples()
+    metadata["last_updated"] = current_time
     save_metadata(metadata)
 
     console.print(f"[green]✅ Promoted {copied} fixture files to tests/fixtures/[/green]")

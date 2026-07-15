@@ -16,12 +16,8 @@ Flags:
     --gaps        Show missing fixture gaps
 """
 
-import argparse
-import asyncio
-import json
-from pathlib import Path
-from typing import Optional
 from datetime import datetime
+from pathlib import Path
 from rich.console import Console
 from rich.columns import Columns
 from rich.console import Group
@@ -35,6 +31,39 @@ from app.fixtures.constants import RULESETS, SCORE_TYPES
 from app.fixtures.health import check_category_health
 
 console = Console()
+
+
+def _print_file_listing(path_base, categories, users_path):
+    """Print detailed file listing for a fixture directory.
+    
+    Args:
+        path_base: Base Path object for fixtures
+        categories: List of non-ruleset categories
+        users_path: Path to users directory
+    """
+    for category in categories:
+        path = path_base / category
+        if path.exists():
+            files = sorted([f.name for f in path.glob("*.json")])
+            if files:
+                console.print(f"\n  [cyan]{category}[/cyan]")
+                for f in files[:10]:
+                    console.print(f"    {f}")
+                if len(files) > 10:
+                    console.print(f"    ... and {len(files) - 10} more")
+            else:
+                console.print(f"\n  [red]{category}: (empty)[/red]")
+    
+    if users_path.exists():
+        console.print("\n  [cyan]users[/cyan]")
+        for ruleset in RULESETS:
+            rule_path = users_path / ruleset
+            if rule_path.exists():
+                files = sorted([f.name for f in rule_path.glob("*.json")])
+                if files:
+                    console.print(f"    [yellow]{ruleset}:[/yellow] {len(files)} files")
+                else:
+                    console.print(f"    [red]{ruleset}: (empty)[/red]")
 
 
 def count_files(path):
@@ -93,8 +122,12 @@ def get_promoted_counts():
     return counts
 
 
-def format_status_icon(count: int, meta_count: int, is_empty_ok: bool = True) -> str:
-    """Format sync status with icon."""
+def format_status_icon(count: int, meta_count: int, is_empty_ok: bool = False) -> str:
+    """Format sync status with icon.
+    
+    Args:
+        is_empty_ok: If True, return green check even when count == 0
+    """
     if count == 0 and is_empty_ok:
         return "[green]✓[/green]"
     return "[green]✓[/green]" if meta_count == count else "[red]✗[/red]"
@@ -373,56 +406,10 @@ async def cmd_fixture_status(
         
         if detailed:
             console.print("\n[bold]Instance Files:[/bold]")
-            for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"]:
-                path = FIXTURES_DIR / category
-                if path.exists():
-                    files = sorted([f.name for f in path.glob("*.json")])
-                    if files:
-                        console.print(f"\n  [cyan]{category}[/cyan]")
-                        for f in files[:10]:
-                            console.print(f"    {f}")
-                        if len(files) > 10:
-                            console.print(f"    ... and {len(files) - 10} more")
-                    else:
-                        console.print(f"\n  [red]{category}: (empty)[/red]")
-            
-            users_path = FIXTURES_DIR / "users"
-            if users_path.exists():
-                console.print("\n  [cyan]users[/cyan]")
-                for ruleset in RULESETS:
-                    rule_path = users_path / ruleset
-                    if rule_path.exists():
-                        files = sorted([f.name for f in rule_path.glob("*.json")])
-                        if files:
-                            console.print(f"    [yellow]{ruleset}:[/yellow] {len(files)} files")
-                        else:
-                            console.print(f"    [red]{ruleset}: (empty)[/red]")
+            _print_file_listing(FIXTURES_DIR, ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"], FIXTURES_DIR / "users")
             
             console.print("\n[bold]Promoted Files:[/bold]")
-            for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"]:
-                path = TEST_FIXTURES_DIR / category
-                if path.exists():
-                    files = sorted([f.name for f in path.glob("*.json")])
-                    if files:
-                        console.print(f"\n  [cyan]{category}[/cyan]")
-                        for f in files[:10]:
-                            console.print(f"    {f}")
-                        if len(files) > 10:
-                            console.print(f"    ... and {len(files) - 10} more")
-                    else:
-                        console.print(f"\n  [red]{category}: (empty)[/red]")
-            
-            users_path = TEST_FIXTURES_DIR / "users"
-            if users_path.exists():
-                console.print("\n  [cyan]users[/cyan]")
-                for ruleset in RULESETS:
-                    rule_path = users_path / ruleset
-                    if rule_path.exists():
-                        files = sorted([f.name for f in rule_path.glob("*.json")])
-                        if files:
-                            console.print(f"    [yellow]{ruleset}:[/yellow] {len(files)} files")
-                        else:
-                            console.print(f"    [red]{ruleset}: (empty)[/red]")
+            _print_file_listing(TEST_FIXTURES_DIR, ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"], TEST_FIXTURES_DIR / "users")
         
         if gaps:
             show_gaps(promoted_counts)
@@ -441,30 +428,7 @@ async def cmd_fixture_status(
             
             if detailed:
                 console.print("\n[bold]Instance Files:[/bold]")
-                for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"]:
-                    path = FIXTURES_DIR / category
-                    if path.exists():
-                        files = sorted([f.name for f in path.glob("*.json")])
-                        if files:
-                            console.print(f"\n  [cyan]{category}[/cyan]")
-                            for f in files[:10]:
-                                console.print(f"    {f}")
-                            if len(files) > 10:
-                                console.print(f"    ... and {len(files) - 10} more")
-                        else:
-                            console.print(f"\n  [red]{category}: (empty)[/red]")
-                
-                users_path = FIXTURES_DIR / "users"
-                if users_path.exists():
-                    console.print("\n  [cyan]users[/cyan]")
-                    for ruleset in RULESETS:
-                        rule_path = users_path / ruleset
-                        if rule_path.exists():
-                            files = sorted([f.name for f in rule_path.glob("*.json")])
-                            if files:
-                                console.print(f"    [yellow]{ruleset}:[/yellow] {len(files)} files")
-                            else:
-                                console.print(f"    [red]{ruleset}: (empty)[/red]")
+                _print_file_listing(FIXTURES_DIR, ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"], FIXTURES_DIR / "users")
         
         if show_promoted:
             console.print("\n") if show_instance else None
@@ -479,69 +443,7 @@ async def cmd_fixture_status(
             
             if detailed:
                 console.print("\n[bold]Promoted Files:[/bold]")
-                for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"]:
-                    path = TEST_FIXTURES_DIR / category
-                    if path.exists():
-                        files = sorted([f.name for f in path.glob("*.json")])
-                        if files:
-                            console.print(f"\n  [cyan]{category}[/cyan]")
-                            for f in files[:10]:
-                                console.print(f"    {f}")
-                            if len(files) > 10:
-                                console.print(f"    ... and {len(files) - 10} more")
-                        else:
-                            console.print(f"\n  [red]{category}: (empty)[/red]")
-                
-                users_path = TEST_FIXTURES_DIR / "users"
-                if users_path.exists():
-                    console.print("\n  [cyan]users[/cyan]")
-                    for ruleset in RULESETS:
-                        rule_path = users_path / ruleset
-                        if rule_path.exists():
-                            files = sorted([f.name for f in rule_path.glob("*.json")])
-                            if files:
-                                console.print(f"    [yellow]{ruleset}:[/yellow] {len(files)} files")
-                            else:
-                                console.print(f"    [red]{ruleset}: (empty)[/red]")
+                _print_file_listing(TEST_FIXTURES_DIR, ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"], TEST_FIXTURES_DIR / "users")
         
         if gaps and show_promoted:
             show_gaps(promoted_counts)
-
-
-def main():
-    """CLI entry point."""
-    parser = argparse.ArgumentParser(
-        description="Show fixture status for instance and promoted fixtures"
-    )
-    parser.add_argument(
-        "--instance", "-i",
-        action="store_true",
-        help="Show only instance/ fixtures"
-    )
-    parser.add_argument(
-        "--promoted", "-p",
-        action="store_true",
-        help="Show only tests/fixtures/ promoted fixtures"
-    )
-    parser.add_argument(
-        "--detailed", "-d",
-        action="store_true",
-        help="Include detailed file lists"
-    )
-    parser.add_argument(
-        "--gaps", "-g",
-        action="store_true",
-        help="Show missing fixture gaps (only for promoted)"
-    )
-    
-    args = parser.parse_args()
-    asyncio.run(cmd_fixture_status(
-        instance=args.instance,
-        promoted=args.promoted,
-        detailed=args.detailed,
-        gaps=args.gaps
-    ))
-
-
-if __name__ == "__main__":
-    main()
