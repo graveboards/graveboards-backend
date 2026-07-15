@@ -12,6 +12,7 @@ from rich.progress import (
     TimeElapsedColumn,
 )
 
+from app.config import PROJECT_ROOT
 from app.database import PostgresqlDB, db_lifespan
 from app.database.seeding import (
     CLI_TO_SEEDER,
@@ -92,7 +93,6 @@ async def cmd_seed(
             )
 
             # Clean up existing queue/request fixtures to avoid stale/corrupted data
-            from pathlib import Path
 
             queues_path = PROJECT_ROOT / "instance" / "fixtures" / "queues"
             requests_path = PROJECT_ROOT / "instance" / "fixtures" / "requests"
