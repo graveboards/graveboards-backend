@@ -12,7 +12,7 @@ from .fixtures import (
     cmd_fixture_status,
     cmd_promote_fixtures,
     cmd_demote_fixtures,
-    cmd_wipe_fixtures,
+    cmd_clean_fixtures,
     cmd_refresh_top_players,
     cmd_refresh_archives,
     cmd_reconcile,
@@ -128,8 +128,8 @@ async def main():
                             requests=getattr(args, 'requests', False),
                             force=getattr(args, 'force', False),
                         )
-                    case "wipe":
-                        await cmd_wipe_fixtures(
+                    case "clean":
+                        await cmd_clean_fixtures(
                             clear_failed_ids=args.clear_failed_ids,
                             clear_top_player_ids=args.clear_top_player_ids,
                             clear_promoted=args.clear_promoted,

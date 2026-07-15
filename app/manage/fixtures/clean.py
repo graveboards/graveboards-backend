@@ -27,7 +27,7 @@ def _atomic_save_metadata(metadata: dict, metadata_path: Path) -> None:
         raise
 
 
-async def cmd_wipe_fixtures(
+async def cmd_clean_fixtures(
     clear_failed_ids: bool = False,
     clear_top_player_ids: bool = False,
     clear_promoted: bool = False,
@@ -40,7 +40,7 @@ async def cmd_wipe_fixtures(
             console.print("[dim]Aborted.[/dim]")
             return
 
-    console.print("\n[bold blue]Wiping fixtures...[/bold blue]\n")
+    console.print("\n[bold blue]Cleaning fixtures...[/bold blue]\n")
 
     metadata = load_metadata()
 
@@ -75,4 +75,4 @@ async def cmd_wipe_fixtures(
     else:
         save_metadata(metadata)
 
-    console.print("[green]✅ Fixtures wiped![/green]\n")
+    console.print("[green]✅ Fixtures cleaned![/green]\n")

@@ -168,8 +168,8 @@ python manage.py fixtures generate --queue-count 10 --request-count 100
 # Check fixture status
 python manage.py fixtures status
 
-# Wipe all fixtures
-python manage.py fixtures wipe --force
+# Clean all fixtures
+python manage.py fixtures clean --force
 ```
 
 ## Fixture Locations
@@ -243,7 +243,7 @@ Or use `--ensure-fixtures` to handle dependencies automatically.
 Re-run the full pipeline:
 
 ```bash
-python manage.py fixtures wipe --force
+python manage.py fixtures clean --force
 make seed
 ```
 

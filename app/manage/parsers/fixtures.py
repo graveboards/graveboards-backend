@@ -12,7 +12,7 @@ def build_fixtures_parser(subparsers):
     _build_demote_parser(fixtures_subparsers)
     _build_refresh_top_players_parser(fixtures_subparsers)
     _build_fixture_status_parser(fixtures_subparsers)
-    _build_wipe_parser(fixtures_subparsers)
+    _build_clean_parser(fixtures_subparsers)
     _build_refresh_archives_parser(fixtures_subparsers)
     _build_reconcile_parser(fixtures_subparsers)
     _build_generate_parser(fixtures_subparsers)
@@ -224,9 +224,9 @@ def _build_fixture_status_parser(fixtures_subparsers):
     p.add_argument("--gaps", "-g", action="store_true", help="Show missing fixture gaps (only for promoted)")
 
 
-def _build_wipe_parser(fixtures_subparsers):
-    """Build the parser for 'fixtures wipe'."""
-    p = fixtures_subparsers.add_parser("wipe", help="Delete all fixtures")
+def _build_clean_parser(fixtures_subparsers):
+    """Build the parser for 'fixtures clean'."""
+    p = fixtures_subparsers.add_parser("clean", help="Delete all fixtures")
     p.add_argument("--force", "-f", action="store_true", help="Skip confirmation prompt")
     p.add_argument("--clear-failed-ids", action="store_true", help="Also clear failed IDs from metadata")
     p.add_argument("--clear-top-player-ids", action="store_true", help="Also clear top player IDs from metadata")

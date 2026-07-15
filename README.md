@@ -91,7 +91,7 @@ python manage.py <command> [options]
   - `promote` - Promote fixtures from instance to tests
   - `demote` - Demote fixtures from tests to instance
   - `status` - Show fixture status
-  - `wipe` - Delete all fixtures
+  - `clean` - Delete all fixtures
   - `refresh-top-players` - Fetch top players from osu! API
   - `refresh-archives` - Refresh archive index from osu.sh
   - `reconcile` - Reconcile fixture metadata with disk state

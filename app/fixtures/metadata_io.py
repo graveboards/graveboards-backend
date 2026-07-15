@@ -168,8 +168,8 @@ def save_top_player_ids(top_player_ids: dict[str, list[int]], fixtures_dir: Path
     save_metadata(metadata, fixtures_dir=fixtures_dir)
 
 
-def wipe_all_fixtures(clear_failed_ids: bool = False, clear_top_player_ids: bool = False, fixtures_dir: Path | None = None) -> None:
-    """Wipe all fixture files and reset metadata.
+def clean_all_fixtures(clear_failed_ids: bool = False, clear_top_player_ids: bool = False, fixtures_dir: Path | None = None) -> None:
+    """Clean all fixture files and reset metadata.
 
     Args:
         clear_failed_ids: If True, also clear failed IDs
@@ -191,7 +191,7 @@ def wipe_all_fixtures(clear_failed_ids: bool = False, clear_top_player_ids: bool
         metadata["top_player_ids"] = existing_metadata.get("top_player_ids", metadata["top_player_ids"])
 
     save_metadata(metadata, fixtures_dir=fixtures_dir)
-    logger.info("All fixtures wiped")
+    logger.info("All fixtures cleaned")
 
 
 def get_fixture_count(category: str, subcategory: str | None = None, fixtures_dir: Path | None = None) -> int:
