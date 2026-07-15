@@ -63,6 +63,7 @@ async def ensure_fixtures_async(logger, profile: SeedProfile) -> bool:
             
             # Extract owner user IDs from beatmapset fixtures
             owner_ids: set[int] = set()
+            owner_data: dict[int, dict] = {}
             for f in sorted(bms_path.glob("beatmapset_*.json")):
                 try:
                     with open(f) as fh:
@@ -70,6 +71,7 @@ async def ensure_fixtures_async(logger, profile: SeedProfile) -> bool:
                     user_id = data.get("user_id")
                     if user_id:
                         owner_ids.add(user_id)
+                        owner_data[user_id] = data.get("user", {})
                 except (json.JSONDecodeError, KeyError):
                     continue
             
@@ -86,7 +88,31 @@ async def ensure_fixtures_async(logger, profile: SeedProfile) -> bool:
                 orchestrator = FixtureOrchestrator(criteria, rc)
                 report = await orchestrator.fetch_users_by_ids(user_ids, ruleset="osu")
                 fetched_count = report.results.get("users", {}).get("osu", 0)
+                failed_ids = report.results.get("failed_user_ids", [])
                 logger.info(f"Fetched {fetched_count} user(s).")
+                
+                # Create minimal user fixtures for failed fetches (restricted/deleted users)
+                if failed_ids:
+                    logger.info(f"Creating minimal fixtures for {len(failed_ids)} restricted/deleted user(s)...")
+                    from app.fixtures.utils import get_fixture_path, RULESETS
+                    from pathlib import Path
+                    import json as json_mod
+                    
+                    users_path = get_fixture_path("users", fixtures_dir=PROJECT_ROOT / "instance" / "fixtures")
+                    ruleset_path = users_path / "osu"
+                    ruleset_path.mkdir(parents=True, exist_ok=True)
+                    
+                    for user_id in failed_ids:
+                        filepath = ruleset_path / f"user_{user_id}_osu.json"
+                        minimal_user = {
+                            "id": user_id,
+                            "username": owner_data.get(user_id, {}).get("username", f"DeletedUser_{user_id}"),
+                            "avatar_url": owner_data.get(user_id, {}).get("avatar_url"),
+                            "is_restricted": True,
+                        }
+                        with open(filepath, "w") as fh:
+                            json_mod.dump(minimal_user, fh)
+                    logger.info(f"Created minimal fixtures for {len(failed_ids)} user(s).")
             finally:
                 await rc.aclose()
         except Exception as e:
