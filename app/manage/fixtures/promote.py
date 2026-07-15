@@ -5,7 +5,7 @@ from rich.prompt import Prompt
 
 from app.fixtures.metadata_io import create_empty_samples, load_metadata, save_metadata
 from .helpers import get_categories_to_process
-from .move_helpers import _get_dst_path, _move_fixture_files
+from .move_helpers import _move_fixture_files
 
 console = Console()
 

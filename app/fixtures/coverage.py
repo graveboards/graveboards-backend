@@ -12,6 +12,7 @@ from enum import Enum
 
 class BucketType(Enum):
     """Type of coverage bucket data structure."""
+
     SET = "set"
     DICT = "dict"
     BOOL = "bool"
@@ -28,6 +29,7 @@ class Bucket:
         rarity_weight: How hard this bucket is to fill (higher = rarer)
         min_coverage: Minimum items required to consider covered
     """
+
     name: str
     bucket_type: BucketType
     categorize: Callable | None = None
@@ -66,10 +68,16 @@ class CoverageRegistry:
         self.register(Bucket("fetched_beatmapset_sources", BucketType.SET, rarity_weight=1.0))
         self.register(Bucket("fetched_beatmapset_tags", BucketType.SET, rarity_weight=1.0))
         self.register(Bucket("fetched_beatmapset_ratings", BucketType.DICT, rarity_weight=1.0))
-        self.register(Bucket("fetched_beatmapset_favourite_counts", BucketType.DICT, rarity_weight=1.0))
+        self.register(
+            Bucket("fetched_beatmapset_favourite_counts", BucketType.DICT, rarity_weight=1.0)
+        )
         self.register(Bucket("fetched_beatmapset_play_counts", BucketType.DICT, rarity_weight=1.0))
-        self.register(Bucket("fetched_beatmapset_has_description", BucketType.BOOL, rarity_weight=1.0))
-        self.register(Bucket("fetched_beatmapset_has_pack_tags", BucketType.BOOL, rarity_weight=1.0))
+        self.register(
+            Bucket("fetched_beatmapset_has_description", BucketType.BOOL, rarity_weight=1.0)
+        )
+        self.register(
+            Bucket("fetched_beatmapset_has_pack_tags", BucketType.BOOL, rarity_weight=1.0)
+        )
         self.register(Bucket("fetched_beatmapset_videos", BucketType.BOOL, rarity_weight=1.0))
         self.register(Bucket("fetched_beatmapset_storyboards", BucketType.BOOL, rarity_weight=1.0))
         self.register(Bucket("fetched_beatmapset_discussions", BucketType.BOOL, rarity_weight=1.0))
@@ -143,7 +151,9 @@ class CoverageRegistry:
 
         return newly_filled
 
-    def _classify_beatmap(self, data: dict, item_id: int, newly_filled: dict[str, set[int]]) -> None:
+    def _classify_beatmap(
+        self, data: dict, item_id: int, newly_filled: dict[str, set[int]]
+    ) -> None:
         """Classify beatmap data into buckets."""
         # mode
         mode_int = data.get("mode_int")
@@ -153,12 +163,15 @@ class CoverageRegistry:
         # status
         bm_status = data.get("status")
         if bm_status is not None:
-            self._add_to_dict_bucket("fetched_beatmap_statuses", str(bm_status), item_id, newly_filled)
+            self._add_to_dict_bucket(
+                "fetched_beatmap_statuses", str(bm_status), item_id, newly_filled
+            )
 
         # difficulty_rating
         diff = data.get("difficulty_rating")
         if diff is not None:
             from .categorization import DIFFICULTY_CATEGORIZER
+
             cat = DIFFICULTY_CATEGORIZER.categorize(diff)
             if cat:
                 self._add_to_dict_bucket("fetched_beatmap_difficulties", cat, item_id, newly_filled)
@@ -167,6 +180,7 @@ class CoverageRegistry:
         pc = data.get("playcount")
         if pc is not None:
             from .categorization import PLAYCOUNT_CATEGORIZER
+
             cat = PLAYCOUNT_CATEGORIZER.categorize(pc)
             if cat:
                 self._add_to_dict_bucket("fetched_beatmap_playcounts", cat, item_id, newly_filled)
@@ -175,6 +189,7 @@ class CoverageRegistry:
         bpm = data.get("bpm")
         if bpm is not None:
             from .categorization import BPM_CATEGORIZER
+
             cat = BPM_CATEGORIZER.categorize(bpm)
             if cat:
                 self._add_to_dict_bucket("fetched_beatmap_bpm", cat, item_id, newly_filled)
@@ -183,6 +198,7 @@ class CoverageRegistry:
         acc = data.get("accuracy")
         if acc is not None:
             from .categorization import ACCURACY_CATEGORIZER
+
             cat = ACCURACY_CATEGORIZER.categorize(acc)
             if cat:
                 self._add_to_dict_bucket("fetched_beatmap_accuracy", cat, item_id, newly_filled)
@@ -191,6 +207,7 @@ class CoverageRegistry:
         hl = data.get("hit_length")
         if hl is not None:
             from .categorization import HIT_LENGTH_CATEGORIZER
+
             cat = HIT_LENGTH_CATEGORIZER.categorize(hl)
             if cat:
                 self._add_to_dict_bucket("fetched_beatmap_hit_lengths", cat, item_id, newly_filled)
@@ -199,6 +216,7 @@ class CoverageRegistry:
         mc = data.get("max_combo")
         if mc is not None:
             from .categorization import MAX_COMBO_CATEGORIZER
+
             cat = MAX_COMBO_CATEGORIZER.categorize(mc)
             if cat:
                 self._add_to_dict_bucket("fetched_beatmap_max_combos", cat, item_id, newly_filled)
@@ -207,6 +225,7 @@ class CoverageRegistry:
         drain = data.get("drain")
         if drain is not None:
             from .categorization import DRAIN_CATEGORIZER
+
             cat = DRAIN_CATEGORIZER.categorize(drain)
             if cat:
                 self._add_to_dict_bucket("fetched_beatmap_drain", cat, item_id, newly_filled)
@@ -215,6 +234,7 @@ class CoverageRegistry:
         ar = data.get("ar")
         if ar is not None:
             from .categorization import AR_CATEGORIZER
+
             cat = AR_CATEGORIZER.categorize(ar)
             if cat:
                 self._add_to_dict_bucket("fetched_beatmap_ar", cat, item_id, newly_filled)
@@ -223,6 +243,7 @@ class CoverageRegistry:
         cs = data.get("cs")
         if cs is not None:
             from .categorization import CS_CATEGORIZER
+
             cat = CS_CATEGORIZER.categorize(cs)
             if cat:
                 self._add_to_dict_bucket("fetched_beatmap_cs", cat, item_id, newly_filled)
@@ -232,21 +253,27 @@ class CoverageRegistry:
         if version:
             self._add_to_set_bucket("fetched_beatmap_versions", version, item_id, newly_filled)
 
-    def _classify_beatmapset(self, data: dict, item_id: int, newly_filled: dict[str, set[int]]) -> None:
+    def _classify_beatmapset(
+        self, data: dict, item_id: int, newly_filled: dict[str, set[int]]
+    ) -> None:
         """Classify beatmapset data into buckets."""
         # genre
         genre = data.get("genre")
         if genre and isinstance(genre, dict):
             genre_id = genre.get("id")
             if genre_id is not None:
-                self._add_to_dict_bucket("fetched_beatmapset_genres", genre_id, item_id, newly_filled)
+                self._add_to_dict_bucket(
+                    "fetched_beatmapset_genres", genre_id, item_id, newly_filled
+                )
 
         # language
         lang = data.get("language")
         if lang and isinstance(lang, dict):
             lang_id = lang.get("id")
             if lang_id is not None:
-                self._add_to_dict_bucket("fetched_beatmapset_languages", lang_id, item_id, newly_filled)
+                self._add_to_dict_bucket(
+                    "fetched_beatmapset_languages", lang_id, item_id, newly_filled
+                )
 
         # nsfw
         nsfw = data.get("nsfw", False)
@@ -255,7 +282,9 @@ class CoverageRegistry:
         # status
         bs_status = data.get("status")
         if bs_status:
-            self._add_to_set_bucket("fetched_beatmapset_statuses", str(bs_status), item_id, newly_filled)
+            self._add_to_set_bucket(
+                "fetched_beatmapset_statuses", str(bs_status), item_id, newly_filled
+            )
 
         # title
         title = data.get("title") or data.get("title_unicode") or ""
@@ -265,7 +294,9 @@ class CoverageRegistry:
         # artist
         artist = data.get("artist") or data.get("artist_unicode") or ""
         if artist:
-            self._add_to_set_bucket("fetched_beatmapset_artists", artist[:30], item_id, newly_filled)
+            self._add_to_set_bucket(
+                "fetched_beatmapset_artists", artist[:30], item_id, newly_filled
+            )
 
         # creator
         creator = data.get("creator") or ""
@@ -287,6 +318,7 @@ class CoverageRegistry:
         rating = data.get("rating")
         if rating is not None:
             from .categorization import RATING_CATEGORIZER
+
             cat = RATING_CATEGORIZER.categorize(rating)
             if cat:
                 self._add_to_dict_bucket("fetched_beatmapset_ratings", cat, item_id, newly_filled)
@@ -295,17 +327,23 @@ class CoverageRegistry:
         fav = data.get("favourite_count")
         if fav is not None:
             from .categorization import FAVOURITE_COUNT_CATEGORIZER
+
             cat = FAVOURITE_COUNT_CATEGORIZER.categorize(fav)
             if cat:
-                self._add_to_dict_bucket("fetched_beatmapset_favourite_counts", cat, item_id, newly_filled)
+                self._add_to_dict_bucket(
+                    "fetched_beatmapset_favourite_counts", cat, item_id, newly_filled
+                )
 
         # play_count
         pc = data.get("play_count")
         if pc is not None:
             from .categorization import PLAY_COUNT_CATEGORIZER
+
             cat = PLAY_COUNT_CATEGORIZER.categorize(pc)
             if cat:
-                self._add_to_dict_bucket("fetched_beatmapset_play_counts", cat, item_id, newly_filled)
+                self._add_to_dict_bucket(
+                    "fetched_beatmapset_play_counts", cat, item_id, newly_filled
+                )
 
         # description
         desc = data.get("description")
@@ -363,9 +401,13 @@ class CoverageRegistry:
 
         # is_restricted
         restricted = data.get("is_restricted", False)
-        self._add_to_dict_bucket("fetched_restricted_users", bool(restricted), item_id, newly_filled)
+        self._add_to_dict_bucket(
+            "fetched_restricted_users", bool(restricted), item_id, newly_filled
+        )
 
-    def _add_to_dict_bucket(self, bucket_name: str, key: Any, item_id: int, newly_filled: dict[str, set[int]]) -> None:
+    def _add_to_dict_bucket(
+        self, bucket_name: str, key: Any, item_id: int, newly_filled: dict[str, set[int]]
+    ) -> None:
         """Add an item to a dict-type bucket."""
         if bucket_name not in self._data:
             self._data[bucket_name] = {}
@@ -375,7 +417,9 @@ class CoverageRegistry:
         if len(self._data[bucket_name][key]) == 1:
             newly_filled.setdefault(bucket_name, set()).add(item_id)
 
-    def _add_to_set_bucket(self, bucket_name: str, key: Any, item_id: int, newly_filled: dict[str, set[int]]) -> None:
+    def _add_to_set_bucket(
+        self, bucket_name: str, key: Any, item_id: int, newly_filled: dict[str, set[int]]
+    ) -> None:
         """Add an item to a set-type bucket."""
         if bucket_name not in self._data:
             self._data[bucket_name] = set()
@@ -383,7 +427,9 @@ class CoverageRegistry:
         if len(self._data[bucket_name]) == 1:
             newly_filled.setdefault(bucket_name, set()).add(item_id)
 
-    def _set_bool_bucket(self, bucket_name: str, value: bool, newly_filled: dict[str, set[int]]) -> None:
+    def _set_bool_bucket(
+        self, bucket_name: str, value: bool, newly_filled: dict[str, set[int]]
+    ) -> None:
         """Set a bool-type bucket."""
         if bucket_name not in self._data:
             self._data[bucket_name] = False
@@ -516,8 +562,7 @@ class CoverageRegistry:
                 status[bucket_name] = {str(k): True for k in data}
             elif bucket.bucket_type == BucketType.DICT:
                 status[bucket_name] = {
-                    str(k): len(v) >= bucket.min_coverage
-                    for k, v in data.items()
+                    str(k): len(v) >= bucket.min_coverage for k, v in data.items()
                 }
             elif bucket.bucket_type == BucketType.BOOL:
                 status[bucket_name] = {"covered": bool(data)}
@@ -542,28 +587,43 @@ class CoverageRegistry:
             elif bucket.bucket_type == BucketType.DICT:
                 if "genre" in bucket_name:
                     report[bucket_name] = {
-                        gid: {"name": GENRE_NAMES.get(gid, "Unknown"), "count": len(ids), "ids": sorted(ids)}
+                        gid: {
+                            "name": GENRE_NAMES.get(gid, "Unknown"),
+                            "count": len(ids),
+                            "ids": sorted(ids),
+                        }
                         for gid, ids in data.items()
                     }
                 elif "language" in bucket_name:
                     report[bucket_name] = {
-                        lid: {"name": LANGUAGE_NAMES.get(lid, "Unknown"), "count": len(ids), "ids": sorted(ids)}
+                        lid: {
+                            "name": LANGUAGE_NAMES.get(lid, "Unknown"),
+                            "count": len(ids),
+                            "ids": sorted(ids),
+                        }
                         for lid, ids in data.items()
                     }
                 elif "mode" in bucket_name:
                     report[bucket_name] = {
-                        m: {"name": BEATMAP_MODE_NAMES.get(m, "Unknown"), "count": len(ids), "ids": sorted(ids)}
+                        m: {
+                            "name": BEATMAP_MODE_NAMES.get(m, "Unknown"),
+                            "count": len(ids),
+                            "ids": sorted(ids),
+                        }
                         for m, ids in data.items()
                     }
                 elif "status" in bucket_name and "beatmap" in bucket_name:
                     report[bucket_name] = {
-                        s: {"name": BEATMAP_STATUS_NAMES.get(int(s), s), "count": len(ids), "ids": sorted(ids)}
+                        s: {
+                            "name": BEATMAP_STATUS_NAMES.get(int(s), s),
+                            "count": len(ids),
+                            "ids": sorted(ids),
+                        }
                         for s, ids in data.items()
                     }
                 else:
                     report[bucket_name] = {
-                        cat: {"count": len(ids), "ids": sorted(ids)}
-                        for cat, ids in data.items()
+                        cat: {"count": len(ids), "ids": sorted(ids)} for cat, ids in data.items()
                     }
             elif bucket.bucket_type == BucketType.BOOL:
                 report[bucket_name] = bool(data)

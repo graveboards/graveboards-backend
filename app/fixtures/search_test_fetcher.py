@@ -6,6 +6,7 @@ fill 10+ coverage buckets simultaneously.
 
 Uses CoverageRegistry for data-driven bucket tracking instead of 50+ instance attributes.
 """
+
 import json
 import random
 from datetime import datetime, timezone
@@ -50,19 +51,24 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
     One get_user() call fills country/restricted coverage at once.
     """
 
-    def __init__(self, rc: RedisClient, id_ranges: dict | None = None,
-                 id_source: IDSource | None = None,
-                 failed_id_store: FailedIdStore | None = None):
+    def __init__(
+        self,
+        rc: RedisClient,
+        id_ranges: dict | None = None,
+        id_source: IDSource | None = None,
+        failed_id_store: FailedIdStore | None = None,
+    ):
         super().__init__(rc, id_ranges, id_source=id_source, failed_id_store=failed_id_store)
-        
+
         # Set default logger if not provided
         if self.logger is None:
             from app.logging import get_logger
+
             self.logger = get_logger(__name__)
 
         # Initialize CoverageRegistry for data-driven bucket tracking
         self.coverage = CoverageRegistry()
-        
+
         # Load coverage state from metadata
         self._load_coverage_from_metadata()
 
@@ -109,42 +115,84 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
         """Persist current coverage state to metadata.json."""
         MAX_COVERAGE_LIST_SIZE = 200
         coverage_report = self.coverage.get_coverage_report()
-        
+
         # Convert registry state to metadata format
         self.metadata["search_test_coverage"] = {
-            "beatmapset_genres": sorted([k for k in self.coverage._data.get("fetched_beatmapset_genres", {}).keys()])[:MAX_COVERAGE_LIST_SIZE],
-            "beatmapset_languages": sorted([k for k in self.coverage._data.get("fetched_beatmapset_languages", {}).keys()])[:MAX_COVERAGE_LIST_SIZE],
-            "beatmapset_nsfw_true_ids": sorted([i for ids in self.coverage._data.get("fetched_beatmapset_nsfw", {}).get(True, set())])[:MAX_COVERAGE_LIST_SIZE],
-            "beatmapset_nsfw_false_ids": sorted([i for ids in self.coverage._data.get("fetched_beatmapset_nsfw", {}).get(False, set())])[:MAX_COVERAGE_LIST_SIZE],
-            "beatmapset_statuses": sorted(self.coverage._data.get("fetched_beatmapset_statuses", set()))[:MAX_COVERAGE_LIST_SIZE],
-            "beatmapset_titles": sorted(list(self.coverage._data.get("fetched_beatmapset_titles", set())))[:MAX_COVERAGE_LIST_SIZE],
-            "beatmapset_artists": sorted(list(self.coverage._data.get("fetched_beatmapset_artists", set())))[:MAX_COVERAGE_LIST_SIZE],
-            "beatmapset_creators": sorted(list(self.coverage._data.get("fetched_beatmapset_creators", set())))[:MAX_COVERAGE_LIST_SIZE],
-            "beatmapset_sources": sorted(list(self.coverage._data.get("fetched_beatmapset_sources", set())))[:MAX_COVERAGE_LIST_SIZE],
-            "beatmapset_tags": sorted(list(self.coverage._data.get("fetched_beatmapset_tags", set())))[:MAX_COVERAGE_LIST_SIZE],
-            "beatmap_modes": sorted([k for k in self.coverage._data.get("fetched_beatmap_modes", {}).keys()])[:MAX_COVERAGE_LIST_SIZE],
-            "beatmap_statuses": sorted([k for k in self.coverage._data.get("fetched_beatmap_statuses", {}).keys()])[:MAX_COVERAGE_LIST_SIZE],
+            "beatmapset_genres": sorted(
+                [k for k in self.coverage._data.get("fetched_beatmapset_genres", {}).keys()]
+            )[:MAX_COVERAGE_LIST_SIZE],
+            "beatmapset_languages": sorted(
+                [k for k in self.coverage._data.get("fetched_beatmapset_languages", {}).keys()]
+            )[:MAX_COVERAGE_LIST_SIZE],
+            "beatmapset_nsfw_true_ids": sorted(
+                [
+                    i
+                    for ids in self.coverage._data.get("fetched_beatmapset_nsfw", {}).get(
+                        True, set()
+                    )
+                ]
+            )[:MAX_COVERAGE_LIST_SIZE],
+            "beatmapset_nsfw_false_ids": sorted(
+                [
+                    i
+                    for ids in self.coverage._data.get("fetched_beatmapset_nsfw", {}).get(
+                        False, set()
+                    )
+                ]
+            )[:MAX_COVERAGE_LIST_SIZE],
+            "beatmapset_statuses": sorted(
+                self.coverage._data.get("fetched_beatmapset_statuses", set())
+            )[:MAX_COVERAGE_LIST_SIZE],
+            "beatmapset_titles": sorted(
+                list(self.coverage._data.get("fetched_beatmapset_titles", set()))
+            )[:MAX_COVERAGE_LIST_SIZE],
+            "beatmapset_artists": sorted(
+                list(self.coverage._data.get("fetched_beatmapset_artists", set()))
+            )[:MAX_COVERAGE_LIST_SIZE],
+            "beatmapset_creators": sorted(
+                list(self.coverage._data.get("fetched_beatmapset_creators", set()))
+            )[:MAX_COVERAGE_LIST_SIZE],
+            "beatmapset_sources": sorted(
+                list(self.coverage._data.get("fetched_beatmapset_sources", set()))
+            )[:MAX_COVERAGE_LIST_SIZE],
+            "beatmapset_tags": sorted(
+                list(self.coverage._data.get("fetched_beatmapset_tags", set()))
+            )[:MAX_COVERAGE_LIST_SIZE],
+            "beatmap_modes": sorted(
+                [k for k in self.coverage._data.get("fetched_beatmap_modes", {}).keys()]
+            )[:MAX_COVERAGE_LIST_SIZE],
+            "beatmap_statuses": sorted(
+                [k for k in self.coverage._data.get("fetched_beatmap_statuses", {}).keys()]
+            )[:MAX_COVERAGE_LIST_SIZE],
             "beatmap_difficulties": {
-                k: sorted(v) for k, v in self.coverage._data.get("fetched_beatmap_difficulties", {}).items()
+                k: sorted(v)
+                for k, v in self.coverage._data.get("fetched_beatmap_difficulties", {}).items()
             }[:MAX_COVERAGE_LIST_SIZE],
             "beatmap_playcounts": {
-                k: sorted(v) for k, v in self.coverage._data.get("fetched_beatmap_playcounts", {}).items()
+                k: sorted(v)
+                for k, v in self.coverage._data.get("fetched_beatmap_playcounts", {}).items()
             }[:MAX_COVERAGE_LIST_SIZE],
-            "beatmap_versions": sorted(list(self.coverage._data.get("fetched_beatmap_versions", set())))[:MAX_COVERAGE_LIST_SIZE],
+            "beatmap_versions": sorted(
+                list(self.coverage._data.get("fetched_beatmap_versions", set()))
+            )[:MAX_COVERAGE_LIST_SIZE],
             "beatmap_bpm": {
                 k: sorted(v) for k, v in self.coverage._data.get("fetched_beatmap_bpm", {}).items()
             }[:MAX_COVERAGE_LIST_SIZE],
             "beatmap_accuracy": {
-                k: sorted(v) for k, v in self.coverage._data.get("fetched_beatmap_accuracy", {}).items()
+                k: sorted(v)
+                for k, v in self.coverage._data.get("fetched_beatmap_accuracy", {}).items()
             }[:MAX_COVERAGE_LIST_SIZE],
             "beatmap_hit_lengths": {
-                k: sorted(v) for k, v in self.coverage._data.get("fetched_beatmap_hit_lengths", {}).items()
+                k: sorted(v)
+                for k, v in self.coverage._data.get("fetched_beatmap_hit_lengths", {}).items()
             }[:MAX_COVERAGE_LIST_SIZE],
             "beatmap_max_combos": {
-                k: sorted(v) for k, v in self.coverage._data.get("fetched_beatmap_max_combos", {}).items()
+                k: sorted(v)
+                for k, v in self.coverage._data.get("fetched_beatmap_max_combos", {}).items()
             }[:MAX_COVERAGE_LIST_SIZE],
             "beatmap_drain": {
-                k: sorted(v) for k, v in self.coverage._data.get("fetched_beatmap_drain", {}).items()
+                k: sorted(v)
+                for k, v in self.coverage._data.get("fetched_beatmap_drain", {}).items()
             }[:MAX_COVERAGE_LIST_SIZE],
             "beatmap_ar": {
                 k: sorted(v) for k, v in self.coverage._data.get("fetched_beatmap_ar", {}).items()
@@ -152,10 +200,26 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
             "beatmap_cs": {
                 k: sorted(v) for k, v in self.coverage._data.get("fetched_beatmap_cs", {}).items()
             }[:MAX_COVERAGE_LIST_SIZE],
-            "country_codes": sorted([k for k in self.coverage._data.get("fetched_country_codes", {}).keys()])[:MAX_COVERAGE_LIST_SIZE],
+            "country_codes": sorted(
+                [k for k in self.coverage._data.get("fetched_country_codes", {}).keys()]
+            )[:MAX_COVERAGE_LIST_SIZE],
             "restricted_users": {
-                "true_ids": sorted([i for ids in self.coverage._data.get("fetched_restricted_users", {}).get(True, set())]),
-                "false_ids": sorted([i for ids in self.coverage._data.get("fetched_restricted_users", {}).get(False, set())]),
+                "true_ids": sorted(
+                    [
+                        i
+                        for ids in self.coverage._data.get("fetched_restricted_users", {}).get(
+                            True, set()
+                        )
+                    ]
+                ),
+                "false_ids": sorted(
+                    [
+                        i
+                        for ids in self.coverage._data.get("fetched_restricted_users", {}).get(
+                            False, set()
+                        )
+                    ]
+                ),
             },
             "last_updated": datetime.now(timezone.utc).isoformat(),
         }
@@ -176,6 +240,7 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
             return self.get_coverage_report()
 
         from .search_coverage import adaptive_fetch_loop
+
         return await adaptive_fetch_loop(
             self,
             min_per_category=min_per_category,
@@ -243,7 +308,9 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
                 f"diff={beatmap_data.get('difficulty_rating')})"
             )
 
-        self.metadata["samples"]["beatmaps"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
+        self.metadata["samples"]["beatmaps"]["last_fetched"] = datetime.now(
+            timezone.utc
+        ).isoformat()
         self._save_search_test_coverage_metadata()
         return newly_filled
 
@@ -311,7 +378,9 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
                     self.metadata["samples"]["beatmapsets"].get("count", 0) + 1
                 )
 
-            self.metadata["samples"]["beatmapsets"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
+            self.metadata["samples"]["beatmapsets"]["last_fetched"] = datetime.now(
+                timezone.utc
+            ).isoformat()
             self._save_search_test_coverage_metadata()
 
         return newly_filled

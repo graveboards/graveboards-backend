@@ -5,7 +5,6 @@ from shutil import copy2, rmtree
 
 from rich.console import Console
 
-from app.fixtures.metadata_io import create_empty_samples
 from app.fixtures.paths import (
     FIXTURES_DIR,
     QUEUE_TEST_FIXTURES_DIR,

@@ -7,6 +7,7 @@ which action has the highest expected information gain and picks that next.
 This replaces the old fixed 4-round approach (30/30/20/30) with an
 adaptive loop that stops as soon as all buckets are satisfied.
 """
+
 import heapq
 from dataclasses import dataclass, field
 from typing import Any, Callable, Coroutine
@@ -31,10 +32,8 @@ BUCKET_RARITY: dict[str, float] = {
     "fetched_beatmapset_nominations": 1.0,
     "fetched_beatmapset_sr_gaps": 1.0,
     "fetched_beatmapset_hit_lengths": 1.0,
-
     # Beatmapset buckets - rare
     "fetched_beatmapset_nsfw": 2.5,
-
     # Beatmap buckets
     "fetched_beatmap_modes": 1.0,
     "fetched_beatmap_statuses": 1.0,
@@ -48,7 +47,6 @@ BUCKET_RARITY: dict[str, float] = {
     "fetched_beatmap_ar": 1.0,
     "fetched_beatmap_cs": 1.0,
     "fetched_beatmap_versions": 1.0,
-
     # User buckets
     "fetched_country_codes": 1.0,
     "fetched_restricted_users": 3.0,
@@ -93,6 +91,7 @@ RARE_BUCKET_THRESHOLD = 2.0
 @dataclass(frozen=True)
 class FetchAction:
     """A fetch action that can fill certain coverage buckets."""
+
     name: str
     affected_buckets: tuple[str, ...]
     cost: int
@@ -106,6 +105,7 @@ class FetchAction:
 @dataclass
 class HeapEntry:
     """Entry in the priority queue. Lower priority_value = higher priority."""
+
     priority_value: float
     sequence: int
     action: Any
@@ -274,6 +274,7 @@ class SearchTestFetchAction:
 
         filepath = get_fixture_path("beatmapsets") / f"beatmapset_{bs_id}.json"
         import json
+
         with open(filepath, "w") as f:
             json.dump(bs_full, f, indent=2)
 
@@ -306,6 +307,7 @@ class SearchTestFetchAction:
 
         filepath = get_fixture_path("beatmaps") / f"beatmap_{beatmap_id}.json"
         import json
+
         with open(filepath, "w") as f:
             json.dump(beatmap_data, f, indent=2)
 
@@ -356,6 +358,7 @@ class SearchTestFetchAction:
         ruleset_path.mkdir(parents=True, exist_ok=True)
         filepath = ruleset_path / f"user_{user_id}_osu.json"
         import json
+
         with open(filepath, "w") as f:
             json.dump(user_data, f, indent=2)
 
@@ -384,10 +387,7 @@ class SearchTestFetchAction:
             NSFW_BEATMAPSET_IDS,
         )
 
-        candidate_ids = (
-            list(RESTRICTED_BEATMAPSET_IDS)
-            + list(NSFW_BEATMAPSET_IDS)
-        )
+        candidate_ids = list(RESTRICTED_BEATMAPSET_IDS) + list(NSFW_BEATMAPSET_IDS)
         while len(candidate_ids) < 50:
             candidate_ids.append(random.randint(1, 20000000))
         random.shuffle(candidate_ids)
@@ -401,6 +401,7 @@ class SearchTestFetchAction:
 
             filepath = get_fixture_path("beatmapsets") / f"beatmapset_{bs_id}.json"
             import json
+
             with open(filepath, "w") as f:
                 json.dump(bs_full, f, indent=2)
 
@@ -430,71 +431,105 @@ def build_actions(fetcher: Any) -> list[FetchAction]:
     """Build the list of fetch actions with their bucket mappings."""
     actions = []
 
-    actions.append(_make_action(
-        fetcher,
-        name="beatmapsets",
-        execute=fetcher._adaptive_fetch_beatmapsets,
-        affected_buckets=[
-            "fetched_beatmapset_genres", "fetched_beatmapset_languages",
-            "fetched_beatmapset_nsfw", "fetched_beatmapset_statuses",
-            "fetched_beatmapset_ratings", "fetched_beatmapset_favourite_counts",
-            "fetched_beatmapset_play_counts", "fetched_beatmapset_has_description",
-            "fetched_beatmapset_has_pack_tags", "fetched_beatmapset_videos",
-            "fetched_beatmapset_storyboards", "fetched_beatmapset_discussions",
-            "fetched_beatmapset_hype", "fetched_beatmapset_nominations",
-            "fetched_beatmapset_sr_gaps", "fetched_beatmapset_hit_lengths",
-            "fetched_beatmap_modes", "fetched_beatmap_statuses",
-            "fetched_beatmap_difficulties", "fetched_beatmap_playcounts",
-        ],
-        cost=2,
-    ))
+    actions.append(
+        _make_action(
+            fetcher,
+            name="beatmapsets",
+            execute=fetcher._adaptive_fetch_beatmapsets,
+            affected_buckets=[
+                "fetched_beatmapset_genres",
+                "fetched_beatmapset_languages",
+                "fetched_beatmapset_nsfw",
+                "fetched_beatmapset_statuses",
+                "fetched_beatmapset_ratings",
+                "fetched_beatmapset_favourite_counts",
+                "fetched_beatmapset_play_counts",
+                "fetched_beatmapset_has_description",
+                "fetched_beatmapset_has_pack_tags",
+                "fetched_beatmapset_videos",
+                "fetched_beatmapset_storyboards",
+                "fetched_beatmapset_discussions",
+                "fetched_beatmapset_hype",
+                "fetched_beatmapset_nominations",
+                "fetched_beatmapset_sr_gaps",
+                "fetched_beatmapset_hit_lengths",
+                "fetched_beatmap_modes",
+                "fetched_beatmap_statuses",
+                "fetched_beatmap_difficulties",
+                "fetched_beatmap_playcounts",
+            ],
+            cost=2,
+        )
+    )
 
-    actions.append(_make_action(
-        fetcher,
-        name="beatmaps",
-        execute=fetcher._adaptive_fetch_beatmaps,
-        affected_buckets=[
-            "fetched_beatmap_modes", "fetched_beatmap_statuses",
-            "fetched_beatmap_difficulties", "fetched_beatmap_playcounts",
-            "fetched_beatmap_bpm", "fetched_beatmap_accuracy",
-            "fetched_beatmap_hit_lengths", "fetched_beatmap_max_combos",
-            "fetched_beatmap_drain", "fetched_beatmap_ar", "fetched_beatmap_cs",
-            "fetched_beatmap_versions",
-        ],
-        cost=1,
-    ))
+    actions.append(
+        _make_action(
+            fetcher,
+            name="beatmaps",
+            execute=fetcher._adaptive_fetch_beatmaps,
+            affected_buckets=[
+                "fetched_beatmap_modes",
+                "fetched_beatmap_statuses",
+                "fetched_beatmap_difficulties",
+                "fetched_beatmap_playcounts",
+                "fetched_beatmap_bpm",
+                "fetched_beatmap_accuracy",
+                "fetched_beatmap_hit_lengths",
+                "fetched_beatmap_max_combos",
+                "fetched_beatmap_drain",
+                "fetched_beatmap_ar",
+                "fetched_beatmap_cs",
+                "fetched_beatmap_versions",
+            ],
+            cost=1,
+        )
+    )
 
-    actions.append(_make_action(
-        fetcher,
-        name="users",
-        execute=fetcher._adaptive_fetch_users,
-        affected_buckets=[
-            "fetched_country_codes", "fetched_restricted_users",
-        ],
-        cost=1,
-    ))
+    actions.append(
+        _make_action(
+            fetcher,
+            name="users",
+            execute=fetcher._adaptive_fetch_users,
+            affected_buckets=[
+                "fetched_country_codes",
+                "fetched_restricted_users",
+            ],
+            cost=1,
+        )
+    )
 
-    actions.append(_make_action(
-        fetcher,
-        name="special",
-        execute=fetcher._adaptive_fetch_special,
-        affected_buckets=[
-            "fetched_beatmapset_nsfw", "fetched_beatmapset_statuses",
-            "fetched_beatmapset_ratings", "fetched_beatmapset_favourite_counts",
-            "fetched_beatmapset_play_counts", "fetched_beatmapset_has_description",
-            "fetched_beatmapset_videos", "fetched_beatmapset_storyboards",
-            "fetched_beatmap_modes", "fetched_beatmap_difficulties",
-        ],
-        cost=1,
-    ))
+    actions.append(
+        _make_action(
+            fetcher,
+            name="special",
+            execute=fetcher._adaptive_fetch_special,
+            affected_buckets=[
+                "fetched_beatmapset_nsfw",
+                "fetched_beatmapset_statuses",
+                "fetched_beatmapset_ratings",
+                "fetched_beatmapset_favourite_counts",
+                "fetched_beatmapset_play_counts",
+                "fetched_beatmapset_has_description",
+                "fetched_beatmapset_videos",
+                "fetched_beatmapset_storyboards",
+                "fetched_beatmap_modes",
+                "fetched_beatmap_difficulties",
+            ],
+            cost=1,
+        )
+    )
 
     return actions
 
 
-def _make_action(fetcher: Any, name: str, execute, affected_buckets: list[str], cost: int) -> FetchAction:
+def _make_action(
+    fetcher: Any, name: str, execute, affected_buckets: list[str], cost: int
+) -> FetchAction:
     """Create a fetch action with the required interface."""
+
     async def executor():
         return await execute()
+
     return FetchAction(
         name=name,
         affected_buckets=tuple(affected_buckets),
@@ -607,9 +642,7 @@ async def adaptive_fetch_loop(
 
         if result:
             fill_str = ", ".join(SHORT_NAMES.get(k, k) for k in result.keys())
-            fetcher.logger.debug(
-                f"  -> filled: {fill_str} ({len(result)} buckets)"
-            )
+            fetcher.logger.debug(f"  -> filled: {fill_str} ({len(result)} buckets)")
         else:
             fetcher.logger.debug(f"  -> no new buckets filled")
             wasted_calls += 1
@@ -630,22 +663,16 @@ async def adaptive_fetch_loop(
     # Rare-bucket enforcement: if rare buckets remain, force users action
     uncovered_count, rare_count = tracker.total_uncovered()
     if rare_count > 0 and total_calls < max_total:
-        fetcher.logger.info(
-            f"Rare buckets still uncovered ({rare_count}), forcing users action..."
-        )
+        fetcher.logger.info(f"Rare buckets still uncovered ({rare_count}), forcing users action...")
         users_action = next((a for a in actions if a.name == "users"), None)
         if users_action:
             while rare_count > 0 and total_calls < max_total:
-                fetcher.logger.debug(
-                    f"Forced fetch via users (calls={total_calls}/{max_total})"
-                )
+                fetcher.logger.debug(f"Forced fetch via users (calls={total_calls}/{max_total})")
                 result = await users_action.execute()
                 total_calls += 1
                 if result:
                     fill_str = ", ".join(SHORT_NAMES.get(k, k) for k in result.keys())
-                    fetcher.logger.debug(
-                        f"  -> filled: {fill_str} ({len(result)} buckets)"
-                    )
+                    fetcher.logger.debug(f"  -> filled: {fill_str} ({len(result)} buckets)")
                 else:
                     wasted_calls += 1
                     fetcher.logger.debug(f"  -> no new buckets filled")
@@ -663,8 +690,7 @@ async def adaptive_fetch_loop(
         )
     else:
         fetcher.logger.info(
-            f"Adaptive fetch complete: {total_calls} API calls, "
-            f"{wasted_calls} wasted calls"
+            f"Adaptive fetch complete: {total_calls} API calls, " f"{wasted_calls} wasted calls"
         )
 
     if newly_filled:

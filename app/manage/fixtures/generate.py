@@ -12,7 +12,6 @@ Examples:
     manage fixtures generate --queue-count 10 --request-count 100
 """
 
-from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 
@@ -103,7 +102,7 @@ async def cmd_generate(
         console.print(f"  {status_name} ({status_id}): {count}")
 
     console.print()
-    console.print(f"[bold]Generated files:[/bold]")
+    console.print("[bold]Generated files:[/bold]")
     if len(queues) <= 15:
         for q in queues:
             console.print(f"  queues/queue_{q['id']}.json")

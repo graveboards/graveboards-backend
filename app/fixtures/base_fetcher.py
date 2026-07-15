@@ -97,6 +97,7 @@ class BaseFetcher:
     def _check_connection_stability(self, error: Exception | None = None) -> None:
         """Fail fast when consecutive connection errors indicate a systemic issue."""
         import httpx
+
         if error is not None and isinstance(error, httpx.HTTPStatusError):
             return
         self._consecutive_errors += 1
@@ -143,12 +144,16 @@ class BaseFetcher:
                 if top_ids:
                     if avoid_failed:
                         for candidate in top_ids:
-                            if not await self.failed_id_store.is_failed("users", candidate, ruleset):
+                            if not await self.failed_id_store.is_failed(
+                                "users", candidate, ruleset
+                            ):
                                 return candidate
                     else:
                         return random.choice(top_ids)
 
-        range_config = self.id_ranges.get(category, self.id_ranges.get(category.split(".")[0], {"min": 1, "max": 1000000}))
+        range_config = self.id_ranges.get(
+            category, self.id_ranges.get(category.split(".")[0], {"min": 1, "max": 1000000})
+        )
         min_id = range_config.get("min", 1)
         max_id = range_config.get("max", 1000000)
 
@@ -176,11 +181,14 @@ class BaseFetcher:
     def _add_fetched_id(self, category: str, id_: int) -> None:
         """Track a successfully fetched ID in metadata."""
         metadata = load_metadata(fixtures_dir=self.fixtures_dir)
-        fetched_ids = metadata.setdefault("fetched_ids", {
-            "beatmaps": [],
-            "beatmapsets": [],
-            "users": {r: [] for r in RULESETS},
-        })
+        fetched_ids = metadata.setdefault(
+            "fetched_ids",
+            {
+                "beatmaps": [],
+                "beatmapsets": [],
+                "users": {r: [] for r in RULESETS},
+            },
+        )
 
         if category not in fetched_ids:
             fetched_ids[category] = []
@@ -229,7 +237,7 @@ class BaseFetcher:
                         ruleset=getattr(RulesetEnum, ruleset_name.upper()),
                         mode="performance",
                         cursor_page=page,
-                        limit=limit
+                        limit=limit,
                     )
 
                     players = data.get("ranking", [])
@@ -250,11 +258,15 @@ class BaseFetcher:
                     error_detail = f"{type(e).__name__}: {e}"
                     if hasattr(e, "response") and e.response is not None:
                         try:
-                            error_detail += f" (status={e.response.status_code}, body={e.response.text[:200]})"
+                            error_detail += (
+                                f" (status={e.response.status_code}, body={e.response.text[:200]})"
+                            )
                         except Exception:
                             pass
                     if self.logger:
-                        self.logger.error(f"Error fetching ranking for {ruleset_name}: {error_detail}")
+                        self.logger.error(
+                            f"Error fetching ranking for {ruleset_name}: {error_detail}"
+                        )
                     break
 
             fetched[ruleset_name] = player_ids[:count_per_ruleset]

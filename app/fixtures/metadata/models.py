@@ -8,6 +8,7 @@ from typing import Optional
 @dataclass
 class SampleCount:
     """Sample count tracking for a single category."""
+
     count: int = 0
     last_fetched: Optional[str] = None
 
@@ -15,14 +16,18 @@ class SampleCount:
 @dataclass
 class UsersSample:
     """Sample counts for users, broken down by ruleset."""
+
     count: int = 0
-    per_ruleset: dict[str, int] = field(default_factory=lambda: {"osu": 0, "taiko": 0, "fruits": 0, "mania": 0})
+    per_ruleset: dict[str, int] = field(
+        default_factory=lambda: {"osu": 0, "taiko": 0, "fruits": 0, "mania": 0}
+    )
     last_fetched: Optional[str] = None
 
 
 @dataclass
 class ScoresSample:
     """Sample counts for scores, broken down by type."""
+
     count: int = 0
     per_type: dict[str, int] = field(default_factory=lambda: {"best": 0, "firsts": 0, "recent": 0})
     last_fetched: Optional[str] = None
@@ -31,6 +36,7 @@ class ScoresSample:
 @dataclass
 class Samples:
     """All sample count tracking."""
+
     beatmaps: SampleCount = field(default_factory=SampleCount)
     beatmapsets: SampleCount = field(default_factory=SampleCount)
     users: UsersSample = field(default_factory=UsersSample)
@@ -44,7 +50,10 @@ class Samples:
         """Convert to dictionary format for JSON serialization."""
         return {
             "beatmaps": {"count": self.beatmaps.count, "last_fetched": self.beatmaps.last_fetched},
-            "beatmapsets": {"count": self.beatmapsets.count, "last_fetched": self.beatmapsets.last_fetched},
+            "beatmapsets": {
+                "count": self.beatmapsets.count,
+                "last_fetched": self.beatmapsets.last_fetched,
+            },
             "users": {
                 "count": self.users.count,
                 "per_ruleset": self.users.per_ruleset,
@@ -55,8 +64,14 @@ class Samples:
                 "per_type": self.scores.per_type,
                 "last_fetched": self.scores.last_fetched,
             },
-            "beatmap_scores": {"count": self.beatmap_scores.count, "last_fetched": self.beatmap_scores.last_fetched},
-            "beatmap_attributes": {"count": self.beatmap_attributes.count, "last_fetched": self.beatmap_attributes.last_fetched},
+            "beatmap_scores": {
+                "count": self.beatmap_scores.count,
+                "last_fetched": self.beatmap_scores.last_fetched,
+            },
+            "beatmap_attributes": {
+                "count": self.beatmap_attributes.count,
+                "last_fetched": self.beatmap_attributes.last_fetched,
+            },
             "queues": {"count": self.queues.count, "last_fetched": self.queues.last_fetched},
             "requests": {"count": self.requests.count, "last_fetched": self.requests.last_fetched},
         }
@@ -81,6 +96,7 @@ class Samples:
 @dataclass
 class PromotedFixture:
     """Promotion tracking for a single category."""
+
     count: int = 0
     last_promoted: Optional[str] = None
 
@@ -88,14 +104,18 @@ class PromotedFixture:
 @dataclass
 class PromotedUsers:
     """Promotion tracking for users."""
+
     count: int = 0
-    per_ruleset: dict[str, int] = field(default_factory=lambda: {"osu": 0, "taiko": 0, "fruits": 0, "mania": 0})
+    per_ruleset: dict[str, int] = field(
+        default_factory=lambda: {"osu": 0, "taiko": 0, "fruits": 0, "mania": 0}
+    )
     last_promoted: Optional[str] = None
 
 
 @dataclass
 class PromotedScores:
     """Promotion tracking for scores."""
+
     count: int = 0
     per_type: dict[str, int] = field(default_factory=lambda: {"best": 0, "firsts": 0, "recent": 0})
     last_promoted: Optional[str] = None
@@ -104,6 +124,7 @@ class PromotedScores:
 @dataclass
 class PromotedFixtures:
     """All promotion tracking."""
+
     beatmaps: PromotedFixture = field(default_factory=PromotedFixture)
     beatmapsets: PromotedFixture = field(default_factory=PromotedFixture)
     users: PromotedUsers = field(default_factory=PromotedUsers)
@@ -116,8 +137,14 @@ class PromotedFixtures:
     def to_dict(self) -> dict:
         """Convert to dictionary format for JSON serialization."""
         return {
-            "beatmaps": {"count": self.beatmaps.count, "last_promoted": self.beatmaps.last_promoted},
-            "beatmapsets": {"count": self.beatmapsets.count, "last_promoted": self.beatmapsets.last_promoted},
+            "beatmaps": {
+                "count": self.beatmaps.count,
+                "last_promoted": self.beatmaps.last_promoted,
+            },
+            "beatmapsets": {
+                "count": self.beatmapsets.count,
+                "last_promoted": self.beatmapsets.last_promoted,
+            },
             "users": {
                 "count": self.users.count,
                 "per_ruleset": self.users.per_ruleset,
@@ -128,10 +155,19 @@ class PromotedFixtures:
                 "per_type": self.scores.per_type,
                 "last_promoted": self.scores.last_promoted,
             },
-            "beatmap_scores": {"count": self.beatmap_scores.count, "last_promoted": self.beatmap_scores.last_promoted},
-            "beatmap_attributes": {"count": self.beatmap_attributes.count, "last_promoted": self.beatmap_attributes.last_promoted},
+            "beatmap_scores": {
+                "count": self.beatmap_scores.count,
+                "last_promoted": self.beatmap_scores.last_promoted,
+            },
+            "beatmap_attributes": {
+                "count": self.beatmap_attributes.count,
+                "last_promoted": self.beatmap_attributes.last_promoted,
+            },
             "queues": {"count": self.queues.count, "last_promoted": self.queues.last_promoted},
-            "requests": {"count": self.requests.count, "last_promoted": self.requests.last_promoted},
+            "requests": {
+                "count": self.requests.count,
+                "last_promoted": self.requests.last_promoted,
+            },
         }
 
     @classmethod
@@ -154,6 +190,7 @@ class PromotedFixtures:
 @dataclass
 class TargetedFileMetadata:
     """Metadata for a single targeted fixture file."""
+
     filepath: str = ""
     fetched_at: Optional[str] = None
     # Optional fields depending on type
@@ -172,12 +209,29 @@ class TargetedFileMetadata:
 @dataclass
 class TargetedMetadata:
     """Targeted fixture metadata with coverage tracking."""
-    beatmaps: dict = field(default_factory=lambda: {"by_status": {}, "by_ruleset": {}, "by_difficulty": {}, "by_playcount": {}, "file_metadata": {}})
+
+    beatmaps: dict = field(
+        default_factory=lambda: {
+            "by_status": {},
+            "by_ruleset": {},
+            "by_difficulty": {},
+            "by_playcount": {},
+            "file_metadata": {},
+        }
+    )
     beatmapsets: dict = field(default_factory=lambda: {"by_status": {}, "file_metadata": {}})
-    users: dict = field(default_factory=lambda: {"by_activity": {}, "per_ruleset": {}, "file_metadata": {}})
-    scores: dict = field(default_factory=lambda: {"by_rank": {}, "by_mods": {}, "file_metadata": {}})
-    queues: dict = field(default_factory=lambda: {"by_visibility": {}, "by_is_open": {}, "file_metadata": {}})
-    requests: dict = field(default_factory=lambda: {"by_status": {}, "by_mv_checked": {}, "file_metadata": {}})
+    users: dict = field(
+        default_factory=lambda: {"by_activity": {}, "per_ruleset": {}, "file_metadata": {}}
+    )
+    scores: dict = field(
+        default_factory=lambda: {"by_rank": {}, "by_mods": {}, "file_metadata": {}}
+    )
+    queues: dict = field(
+        default_factory=lambda: {"by_visibility": {}, "by_is_open": {}, "file_metadata": {}}
+    )
+    requests: dict = field(
+        default_factory=lambda: {"by_status": {}, "by_mv_checked": {}, "file_metadata": {}}
+    )
 
     def to_dict(self) -> dict:
         """Convert to dictionary format."""
@@ -208,6 +262,7 @@ class TargetedMetadata:
 @dataclass
 class SearchTestCoverage:
     """Search test coverage tracking."""
+
     beatmapset_genres: list[int] = field(default_factory=list)
     beatmapset_languages: list[int] = field(default_factory=list)
     beatmapset_nsfw_true_ids: list[int] = field(default_factory=list)
@@ -231,7 +286,9 @@ class SearchTestCoverage:
     beatmap_ar: dict[str, list[int]] = field(default_factory=dict)
     beatmap_cs: dict[str, list[int]] = field(default_factory=dict)
     country_codes: list[str] = field(default_factory=list)
-    restricted_users: dict[str, list[int]] = field(default_factory=lambda: {"true_ids": [], "false_ids": []})
+    restricted_users: dict[str, list[int]] = field(
+        default_factory=lambda: {"true_ids": [], "false_ids": []}
+    )
     last_updated: Optional[str] = None
 
     def to_dict(self) -> dict:
@@ -301,14 +358,29 @@ class SearchTestCoverage:
 @dataclass
 class Metadata:
     """Top-level metadata container with all sections."""
+
     last_updated: Optional[str] = None
     samples: Samples = field(default_factory=Samples)
     promoted_fixtures: PromotedFixtures = field(default_factory=PromotedFixtures)
     targeted: TargetedMetadata = field(default_factory=TargetedMetadata)
     search_test_coverage: SearchTestCoverage = field(default_factory=SearchTestCoverage)
-    failed_ids: dict = field(default_factory=lambda: {"beatmaps": [], "beatmapsets": [], "users": {"osu": [], "taiko": [], "fruits": [], "mania": []}})
-    top_player_ids: dict[str, list[int]] = field(default_factory=lambda: {"osu": [], "taiko": [], "fruits": [], "mania": []})
-    id_ranges: dict = field(default_factory=lambda: {"beatmaps": {"min": 1, "max": 5800000}, "beatmapsets": {"min": 1, "max": 2600000}, "users": {"min": 1, "max": 40000000}})
+    failed_ids: dict = field(
+        default_factory=lambda: {
+            "beatmaps": [],
+            "beatmapsets": [],
+            "users": {"osu": [], "taiko": [], "fruits": [], "mania": []},
+        }
+    )
+    top_player_ids: dict[str, list[int]] = field(
+        default_factory=lambda: {"osu": [], "taiko": [], "fruits": [], "mania": []}
+    )
+    id_ranges: dict = field(
+        default_factory=lambda: {
+            "beatmaps": {"min": 1, "max": 5800000},
+            "beatmapsets": {"min": 1, "max": 2600000},
+            "users": {"min": 1, "max": 40000000},
+        }
+    )
     rulesets: list[str] = field(default_factory=lambda: ["osu", "taiko", "fruits", "mania"])
     source: str = "osu.ppy.sh/api/v2"
 

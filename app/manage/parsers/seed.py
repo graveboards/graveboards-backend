@@ -21,7 +21,7 @@ def build_seed_parser(subparsers):
         type=SeedTarget,
         choices=list(SeedTarget),
         default=SeedTarget.ALL,
-        help=f"What to seed in the database ({', '.join(SeedTarget)})"
+        help=f"What to seed in the database ({', '.join(SeedTarget)})",
     )
     seed_parser.add_argument(
         "--ensure-fixtures",

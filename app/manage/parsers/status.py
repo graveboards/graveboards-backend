@@ -12,6 +12,6 @@ def build_status_parser(subparsers):
         nargs="?",
         default="summary",
         choices=STATUS_TARGETS,
-        help=f"What to show status for ({', '.join(STATUS_TARGETS)})"
+        help=f"What to show status for ({', '.join(STATUS_TARGETS)})",
     )
     return status_parser

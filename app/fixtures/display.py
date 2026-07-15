@@ -1,4 +1,5 @@
 """Display utilities for fixture operations."""
+
 from rich.console import Console
 from rich.table import Table
 
@@ -24,7 +25,7 @@ def print_coverage_gaps(fetcher) -> None:
 
     genres = search_cov.get("beatmapset_genres", [])
     if genres:
-        sample = ', '.join(str(g) for g in genres[:5])
+        sample = ", ".join(str(g) for g in genres[:5])
         full_items.append(f"genres ({len(genres)} total)")
         if len(genres) > 5:
             full_items.append(f"    samples: {sample}, ...")
@@ -35,7 +36,7 @@ def print_coverage_gaps(fetcher) -> None:
 
     langs = search_cov.get("beatmapset_languages", [])
     if langs:
-        sample = ', '.join(str(l) for l in langs[:5])
+        sample = ", ".join(str(l) for l in langs[:5])
         full_items.append(f"languages ({len(langs)} total)")
         if len(langs) > 5:
             full_items.append(f"    samples: {sample}, ...")
@@ -115,59 +116,269 @@ def print_coverage_report(coverage: dict) -> None:
     table.add_column("Status")
     table.add_column("Details")
 
-    _add_row(table, "Beatmapset Genres", "OK" if coverage.get("beatmapset_genres") else "MISSING",
-             str(len(coverage.get("beatmapset_genres", {}))))
-    _add_row(table, "Beatmapset Languages", "OK" if coverage.get("beatmapset_languages") else "MISSING",
-             str(len(coverage.get("beatmapset_languages", {}))))
+    _add_row(
+        table,
+        "Beatmapset Genres",
+        "OK" if coverage.get("beatmapset_genres") else "MISSING",
+        str(len(coverage.get("beatmapset_genres", {}))),
+    )
+    _add_row(
+        table,
+        "Beatmapset Languages",
+        "OK" if coverage.get("beatmapset_languages") else "MISSING",
+        str(len(coverage.get("beatmapset_languages", {}))),
+    )
     nsfw = coverage.get("beatmapset_nsfw", {})
-    _add_row(table, "Beatmapset NSFW", "OK" if nsfw.get("true", {}).get("count", 0) > 0 and nsfw.get("false", {}).get("count", 0) > 0 else "PARTIAL",
-             f"true:{nsfw.get('true', {}).get('count', 0)}, false:{nsfw.get('false', {}).get('count', 0)}")
-    _add_row(table, "Beatmapset Statuses", "OK" if coverage.get("beatmapset_statuses") else "MISSING",
-             str(len(coverage.get("beatmapset_statuses", []))))
-    _add_row(table, "Beatmapset Ratings", "OK" if any(coverage.get("beatmapset_ratings", {}).get(c, {}).get("count", 0) > 0 for c in ("low", "medium", "high")) else "MISSING",
-             ", ".join(f"{c}:{coverage.get('beatmapset_ratings', {}).get(c, {}).get('count', 0)}" for c in ("low", "medium", "high")))
-    _add_row(table, "Beatmapset Favourites", "OK" if any(coverage.get("beatmapset_favourite_counts", {}).get(c, {}).get("count", 0) > 0 for c in ("low", "medium", "high")) else "MISSING",
-             ", ".join(f"{c}:{coverage.get('beatmapset_favourite_counts', {}).get(c, {}).get('count', 0)}" for c in ("low", "medium", "high")))
-    _add_row(table, "Beatmapset Play Counts", "OK" if any(coverage.get("beatmapset_play_counts", {}).get(c, {}).get("count", 0) > 0 for c in ("low", "medium", "high")) else "MISSING",
-             ", ".join(f"{c}:{coverage.get('beatmapset_play_counts', {}).get(c, {}).get('count', 0)}" for c in ("low", "medium", "high")))
-    _add_row(table, "Beatmapset Has Description", "OK" if coverage.get("beatmapset_has_description") else "MISSING", "")
-    _add_row(table, "Beatmapset Has Pack Tags", "OK" if coverage.get("beatmapset_has_pack_tags") else "MISSING", "")
-    _add_row(table, "Beatmapset Video", "OK" if coverage.get("beatmapset_videos") else "MISSING", "")
-    _add_row(table, "Beatmapset Storyboard", "OK" if coverage.get("beatmapset_storyboards") else "MISSING", "")
+    _add_row(
+        table,
+        "Beatmapset NSFW",
+        (
+            "OK"
+            if nsfw.get("true", {}).get("count", 0) > 0
+            and nsfw.get("false", {}).get("count", 0) > 0
+            else "PARTIAL"
+        ),
+        f"true:{nsfw.get('true', {}).get('count', 0)}, false:{nsfw.get('false', {}).get('count', 0)}",
+    )
+    _add_row(
+        table,
+        "Beatmapset Statuses",
+        "OK" if coverage.get("beatmapset_statuses") else "MISSING",
+        str(len(coverage.get("beatmapset_statuses", []))),
+    )
+    _add_row(
+        table,
+        "Beatmapset Ratings",
+        (
+            "OK"
+            if any(
+                coverage.get("beatmapset_ratings", {}).get(c, {}).get("count", 0) > 0
+                for c in ("low", "medium", "high")
+            )
+            else "MISSING"
+        ),
+        ", ".join(
+            f"{c}:{coverage.get('beatmapset_ratings', {}).get(c, {}).get('count', 0)}"
+            for c in ("low", "medium", "high")
+        ),
+    )
+    _add_row(
+        table,
+        "Beatmapset Favourites",
+        (
+            "OK"
+            if any(
+                coverage.get("beatmapset_favourite_counts", {}).get(c, {}).get("count", 0) > 0
+                for c in ("low", "medium", "high")
+            )
+            else "MISSING"
+        ),
+        ", ".join(
+            f"{c}:{coverage.get('beatmapset_favourite_counts', {}).get(c, {}).get('count', 0)}"
+            for c in ("low", "medium", "high")
+        ),
+    )
+    _add_row(
+        table,
+        "Beatmapset Play Counts",
+        (
+            "OK"
+            if any(
+                coverage.get("beatmapset_play_counts", {}).get(c, {}).get("count", 0) > 0
+                for c in ("low", "medium", "high")
+            )
+            else "MISSING"
+        ),
+        ", ".join(
+            f"{c}:{coverage.get('beatmapset_play_counts', {}).get(c, {}).get('count', 0)}"
+            for c in ("low", "medium", "high")
+        ),
+    )
+    _add_row(
+        table,
+        "Beatmapset Has Description",
+        "OK" if coverage.get("beatmapset_has_description") else "MISSING",
+        "",
+    )
+    _add_row(
+        table,
+        "Beatmapset Has Pack Tags",
+        "OK" if coverage.get("beatmapset_has_pack_tags") else "MISSING",
+        "",
+    )
+    _add_row(
+        table, "Beatmapset Video", "OK" if coverage.get("beatmapset_videos") else "MISSING", ""
+    )
+    _add_row(
+        table,
+        "Beatmapset Storyboard",
+        "OK" if coverage.get("beatmapset_storyboards") else "MISSING",
+        "",
+    )
     _add_row(table, "Beatmapset Hype", "OK" if coverage.get("beatmapset_hype") else "MISSING", "")
-    _add_row(table, "Beatmapset Nominations", "OK" if coverage.get("beatmapset_nominations") else "MISSING", "")
-    _add_row(table, "Beatmapset SR Gaps", "OK" if coverage.get("beatmapset_sr_gaps") else "MISSING", "")
-    _add_row(table, "Beatmapset Hit Lengths", "OK" if coverage.get("beatmapset_hit_lengths") else "MISSING", "")
+    _add_row(
+        table,
+        "Beatmapset Nominations",
+        "OK" if coverage.get("beatmapset_nominations") else "MISSING",
+        "",
+    )
+    _add_row(
+        table, "Beatmapset SR Gaps", "OK" if coverage.get("beatmapset_sr_gaps") else "MISSING", ""
+    )
+    _add_row(
+        table,
+        "Beatmapset Hit Lengths",
+        "OK" if coverage.get("beatmapset_hit_lengths") else "MISSING",
+        "",
+    )
 
     bm_modes = coverage.get("beatmap_modes", {})
-    _add_row(table, "Beatmap Modes", "OK" if bm_modes else "MISSING",
-             str(len(bm_modes)))
+    _add_row(table, "Beatmap Modes", "OK" if bm_modes else "MISSING", str(len(bm_modes)))
     bm_diffs = coverage.get("beatmap_difficulties", {})
-    _add_row(table, "Beatmap Difficulties", "OK" if any(bm_diffs.get(c, {}).get("count", 0) > 0 for c in ("easy", "medium", "hard", "expert")) else "MISSING",
-             ", ".join(f"{c}:{bm_diffs.get(c, {}).get('count', 0)}" for c in ("easy", "medium", "hard", "expert")))
+    _add_row(
+        table,
+        "Beatmap Difficulties",
+        (
+            "OK"
+            if any(
+                bm_diffs.get(c, {}).get("count", 0) > 0
+                for c in ("easy", "medium", "hard", "expert")
+            )
+            else "MISSING"
+        ),
+        ", ".join(
+            f"{c}:{bm_diffs.get(c, {}).get('count', 0)}"
+            for c in ("easy", "medium", "hard", "expert")
+        ),
+    )
     bm_pc = coverage.get("beatmap_playcounts", {})
-    _add_row(table, "Beatmap Playcounts", "OK" if any(bm_pc.get(c, {}).get("count", 0) > 0 for c in ("low", "medium", "high")) else "MISSING",
-             ", ".join(f"{c}:{bm_pc.get(c, {}).get('count', 0)}" for c in ("low", "medium", "high")))
-    _add_row(table, "Beatmap BPM", "OK" if any(coverage.get("beatmap_bpm", {}).get(c, {}).get("count", 0) > 0 for c in ("low", "medium", "high")) else "MISSING",
-             ", ".join(f"{c}:{coverage.get('beatmap_bpm', {}).get(c, {}).get('count', 0)}" for c in ("low", "medium", "high")))
-    _add_row(table, "Beatmap Accuracy", "OK" if any(coverage.get("beatmap_accuracy", {}).get(c, {}).get("count", 0) > 0 for c in ("low", "medium", "high")) else "MISSING",
-             ", ".join(f"{c}:{coverage.get('beatmap_accuracy', {}).get(c, {}).get('count', 0)}" for c in ("low", "medium", "high")))
-    _add_row(table, "Beatmap Versions", "OK" if coverage.get("beatmap_versions") else "MISSING",
-             str(len(coverage.get("beatmap_versions", []))))
-    _add_row(table, "Beatmap Max Combos", "OK" if any(coverage.get("beatmap_max_combos", {}).get(c, {}).get("count", 0) > 0 for c in ("low", "medium", "high")) else "MISSING",
-             ", ".join(f"{c}:{coverage.get('beatmap_max_combos', {}).get(c, {}).get('count', 0)}" for c in ("low", "medium", "high")))
-    _add_row(table, "Beatmap Drain", "OK" if any(coverage.get("beatmap_drain", {}).get(c, {}).get("count", 0) > 0 for c in ("low", "medium", "high")) else "MISSING",
-             ", ".join(f"{c}:{coverage.get('beatmap_drain', {}).get(c, {}).get('count', 0)}" for c in ("low", "medium", "high")))
-    _add_row(table, "Beatmap AR", "OK" if any(coverage.get("beatmap_ar", {}).get(c, {}).get("count", 0) > 0 for c in ("low", "medium", "high")) else "MISSING",
-             ", ".join(f"{c}:{coverage.get('beatmap_ar', {}).get(c, {}).get('count', 0)}" for c in ("low", "medium", "high")))
-    _add_row(table, "Beatmap CS", "OK" if any(coverage.get("beatmap_cs", {}).get(c, {}).get("count", 0) > 0 for c in ("low", "medium", "high")) else "MISSING",
-             ", ".join(f"{c}:{coverage.get('beatmap_cs', {}).get(c, {}).get('count', 0)}" for c in ("low", "medium", "high")))
+    _add_row(
+        table,
+        "Beatmap Playcounts",
+        (
+            "OK"
+            if any(bm_pc.get(c, {}).get("count", 0) > 0 for c in ("low", "medium", "high"))
+            else "MISSING"
+        ),
+        ", ".join(f"{c}:{bm_pc.get(c, {}).get('count', 0)}" for c in ("low", "medium", "high")),
+    )
+    _add_row(
+        table,
+        "Beatmap BPM",
+        (
+            "OK"
+            if any(
+                coverage.get("beatmap_bpm", {}).get(c, {}).get("count", 0) > 0
+                for c in ("low", "medium", "high")
+            )
+            else "MISSING"
+        ),
+        ", ".join(
+            f"{c}:{coverage.get('beatmap_bpm', {}).get(c, {}).get('count', 0)}"
+            for c in ("low", "medium", "high")
+        ),
+    )
+    _add_row(
+        table,
+        "Beatmap Accuracy",
+        (
+            "OK"
+            if any(
+                coverage.get("beatmap_accuracy", {}).get(c, {}).get("count", 0) > 0
+                for c in ("low", "medium", "high")
+            )
+            else "MISSING"
+        ),
+        ", ".join(
+            f"{c}:{coverage.get('beatmap_accuracy', {}).get(c, {}).get('count', 0)}"
+            for c in ("low", "medium", "high")
+        ),
+    )
+    _add_row(
+        table,
+        "Beatmap Versions",
+        "OK" if coverage.get("beatmap_versions") else "MISSING",
+        str(len(coverage.get("beatmap_versions", []))),
+    )
+    _add_row(
+        table,
+        "Beatmap Max Combos",
+        (
+            "OK"
+            if any(
+                coverage.get("beatmap_max_combos", {}).get(c, {}).get("count", 0) > 0
+                for c in ("low", "medium", "high")
+            )
+            else "MISSING"
+        ),
+        ", ".join(
+            f"{c}:{coverage.get('beatmap_max_combos', {}).get(c, {}).get('count', 0)}"
+            for c in ("low", "medium", "high")
+        ),
+    )
+    _add_row(
+        table,
+        "Beatmap Drain",
+        (
+            "OK"
+            if any(
+                coverage.get("beatmap_drain", {}).get(c, {}).get("count", 0) > 0
+                for c in ("low", "medium", "high")
+            )
+            else "MISSING"
+        ),
+        ", ".join(
+            f"{c}:{coverage.get('beatmap_drain', {}).get(c, {}).get('count', 0)}"
+            for c in ("low", "medium", "high")
+        ),
+    )
+    _add_row(
+        table,
+        "Beatmap AR",
+        (
+            "OK"
+            if any(
+                coverage.get("beatmap_ar", {}).get(c, {}).get("count", 0) > 0
+                for c in ("low", "medium", "high")
+            )
+            else "MISSING"
+        ),
+        ", ".join(
+            f"{c}:{coverage.get('beatmap_ar', {}).get(c, {}).get('count', 0)}"
+            for c in ("low", "medium", "high")
+        ),
+    )
+    _add_row(
+        table,
+        "Beatmap CS",
+        (
+            "OK"
+            if any(
+                coverage.get("beatmap_cs", {}).get(c, {}).get("count", 0) > 0
+                for c in ("low", "medium", "high")
+            )
+            else "MISSING"
+        ),
+        ", ".join(
+            f"{c}:{coverage.get('beatmap_cs', {}).get(c, {}).get('count', 0)}"
+            for c in ("low", "medium", "high")
+        ),
+    )
 
     cc = coverage.get("country_codes", {})
     _add_row(table, "Country Codes", "OK" if cc else "MISSING", str(len(cc)))
     restr = coverage.get("restricted_users", {})
-    _add_row(table, "Restricted Users", "OK" if restr.get("true", {}).get("count", 0) > 0 and restr.get("false", {}).get("count", 0) > 0 else "PARTIAL",
-             f"true:{restr.get('true', {}).get('count', 0)}, false:{restr.get('false', {}).get('count', 0)}")
+    _add_row(
+        table,
+        "Restricted Users",
+        (
+            "OK"
+            if restr.get("true", {}).get("count", 0) > 0
+            and restr.get("false", {}).get("count", 0) > 0
+            else "PARTIAL"
+        ),
+        f"true:{restr.get('true', {}).get('count', 0)}, false:{restr.get('false', {}).get('count', 0)}",
+    )
 
 
 def _add_row(table, category: str, status: str, details: str) -> None:

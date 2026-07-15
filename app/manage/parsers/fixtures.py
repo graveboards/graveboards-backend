@@ -43,33 +43,15 @@ def _build_fetch_parser(fixtures_subparsers):
         default="auto",
         help="ID source priority (default: auto)",
     )
-    fetch_parser.add_argument(
-        "--beatmaps", type=int, help="Number of beatmaps to fetch"
-    )
-    fetch_parser.add_argument(
-        "--beatmapsets", type=int, help="Number of beatmapsets to fetch"
-    )
-    fetch_parser.add_argument(
-        "--users-osu", type=int, help="Number of osu! users to fetch"
-    )
-    fetch_parser.add_argument(
-        "--users-taiko", type=int, help="Number of taiko users to fetch"
-    )
-    fetch_parser.add_argument(
-        "--users-fruits", type=int, help="Number of fruits users to fetch"
-    )
-    fetch_parser.add_argument(
-        "--users-mania", type=int, help="Number of mania users to fetch"
-    )
-    fetch_parser.add_argument(
-        "--scores-best", type=int, help="Number of best scores to fetch"
-    )
-    fetch_parser.add_argument(
-        "--scores-firsts", type=int, help="Number of firsts scores to fetch"
-    )
-    fetch_parser.add_argument(
-        "--scores-recent", type=int, help="Number of recent scores to fetch"
-    )
+    fetch_parser.add_argument("--beatmaps", type=int, help="Number of beatmaps to fetch")
+    fetch_parser.add_argument("--beatmapsets", type=int, help="Number of beatmapsets to fetch")
+    fetch_parser.add_argument("--users-osu", type=int, help="Number of osu! users to fetch")
+    fetch_parser.add_argument("--users-taiko", type=int, help="Number of taiko users to fetch")
+    fetch_parser.add_argument("--users-fruits", type=int, help="Number of fruits users to fetch")
+    fetch_parser.add_argument("--users-mania", type=int, help="Number of mania users to fetch")
+    fetch_parser.add_argument("--scores-best", type=int, help="Number of best scores to fetch")
+    fetch_parser.add_argument("--scores-firsts", type=int, help="Number of firsts scores to fetch")
+    fetch_parser.add_argument("--scores-recent", type=int, help="Number of recent scores to fetch")
     fetch_parser.add_argument(
         "--beatmap-scores", type=int, help="Number of beatmap scores to fetch"
     )
@@ -173,42 +155,74 @@ def _build_promote_parser(fixtures_subparsers):
     """Build the parser for 'fixtures promote'."""
     p = fixtures_subparsers.add_parser("promote", help="Promote fixtures from instance to tests")
     p.add_argument("--force", "-f", action="store_true", help="Skip confirmation prompt")
-    p.add_argument("--beatmaps", action="store_true", help="Promote beatmaps (all if none specified)")
-    p.add_argument("--beatmapsets", action="store_true", help="Promote beatmapsets (all if none specified)")
+    p.add_argument(
+        "--beatmaps", action="store_true", help="Promote beatmaps (all if none specified)"
+    )
+    p.add_argument(
+        "--beatmapsets", action="store_true", help="Promote beatmapsets (all if none specified)"
+    )
     p.add_argument("--users", action="store_true", help="Promote users (all if none specified)")
     p.add_argument("--scores", action="store_true", help="Promote scores (all if none specified)")
-    p.add_argument("--beatmap-scores", action="store_true", help="Promote beatmap scores (all if none specified)")
-    p.add_argument("--beatmap-attributes", action="store_true", help="Promote beatmap attributes (all if none specified)")
+    p.add_argument(
+        "--beatmap-scores",
+        action="store_true",
+        help="Promote beatmap scores (all if none specified)",
+    )
+    p.add_argument(
+        "--beatmap-attributes",
+        action="store_true",
+        help="Promote beatmap attributes (all if none specified)",
+    )
     p.add_argument("--queues", action="store_true", help="Promote queues (all if none specified)")
-    p.add_argument("--requests", action="store_true", help="Promote requests (all if none specified)")
+    p.add_argument(
+        "--requests", action="store_true", help="Promote requests (all if none specified)"
+    )
 
 
 def _build_demote_parser(fixtures_subparsers):
     """Build the parser for 'fixtures demote'."""
     p = fixtures_subparsers.add_parser("demote", help="Demote fixtures from tests to instance")
     p.add_argument("--force", "-f", action="store_true", help="Skip confirmation prompt")
-    p.add_argument("--beatmaps", action="store_true", help="Demote beatmaps (all if none specified)")
-    p.add_argument("--beatmapsets", action="store_true", help="Demote beatmapsets (all if none specified)")
+    p.add_argument(
+        "--beatmaps", action="store_true", help="Demote beatmaps (all if none specified)"
+    )
+    p.add_argument(
+        "--beatmapsets", action="store_true", help="Demote beatmapsets (all if none specified)"
+    )
     p.add_argument("--users", action="store_true", help="Demote users (all if none specified)")
     p.add_argument("--scores", action="store_true", help="Demote scores (all if none specified)")
-    p.add_argument("--beatmap-scores", action="store_true", help="Demote beatmap scores (all if none specified)")
-    p.add_argument("--beatmap-attributes", action="store_true", help="Demote beatmap attributes (all if none specified)")
+    p.add_argument(
+        "--beatmap-scores",
+        action="store_true",
+        help="Demote beatmap scores (all if none specified)",
+    )
+    p.add_argument(
+        "--beatmap-attributes",
+        action="store_true",
+        help="Demote beatmap attributes (all if none specified)",
+    )
     p.add_argument("--queues", action="store_true", help="Demote queues (all if none specified)")
-    p.add_argument("--requests", action="store_true", help="Demote requests (all if none specified)")
+    p.add_argument(
+        "--requests", action="store_true", help="Demote requests (all if none specified)"
+    )
 
 
 def _build_refresh_top_players_parser(fixtures_subparsers):
     """Build the parser for 'fixtures refresh-top-players'."""
-    p = fixtures_subparsers.add_parser("refresh-top-players", help="Fetch top players from osu! API")
+    p = fixtures_subparsers.add_parser(
+        "refresh-top-players", help="Fetch top players from osu! API"
+    )
     p.add_argument(
-        "--ruleset", "-r",
+        "--ruleset",
+        "-r",
         dest="rulesets",
         action="append",
         choices=["osu", "taiko", "fruits", "mania"],
         help="Ruleset to refresh (can be specified multiple times). If not provided, refreshes all rulesets.",
     )
     p.add_argument(
-        "--count", "-c",
+        "--count",
+        "-c",
         type=int,
         default=1000,
         help="Number of player IDs to collect per ruleset (default: 1000)",
@@ -219,17 +233,27 @@ def _build_fixture_status_parser(fixtures_subparsers):
     """Build the parser for 'fixtures status'."""
     p = fixtures_subparsers.add_parser("status", help="Show fixture status")
     p.add_argument("--instance", "-i", action="store_true", help="Show only instance/ fixtures")
-    p.add_argument("--promoted", "-p", action="store_true", help="Show only tests/fixtures/ promoted fixtures")
+    p.add_argument(
+        "--promoted", "-p", action="store_true", help="Show only tests/fixtures/ promoted fixtures"
+    )
     p.add_argument("--detailed", "-d", action="store_true", help="Include detailed file lists")
-    p.add_argument("--gaps", "-g", action="store_true", help="Show missing fixture gaps (only for promoted)")
+    p.add_argument(
+        "--gaps", "-g", action="store_true", help="Show missing fixture gaps (only for promoted)"
+    )
 
 
 def _build_clean_parser(fixtures_subparsers):
     """Build the parser for 'fixtures clean'."""
     p = fixtures_subparsers.add_parser("clean", help="Delete all fixtures")
     p.add_argument("--force", "-f", action="store_true", help="Skip confirmation prompt")
-    p.add_argument("--clear-failed-ids", action="store_true", help="Also clear failed IDs from metadata")
-    p.add_argument("--clear-top-player-ids", action="store_true", help="Also clear top player IDs from metadata")
+    p.add_argument(
+        "--clear-failed-ids", action="store_true", help="Also clear failed IDs from metadata"
+    )
+    p.add_argument(
+        "--clear-top-player-ids",
+        action="store_true",
+        help="Also clear top player IDs from metadata",
+    )
     p.add_argument(
         "--clear-promoted",
         action="store_true",
@@ -240,19 +264,28 @@ def _build_clean_parser(fixtures_subparsers):
 def _build_refresh_archives_parser(fixtures_subparsers):
     """Build the parser for 'fixtures refresh-archives'."""
     p = fixtures_subparsers.add_parser("refresh-archives", help="Refresh archive index from osu.sh")
-    p.add_argument("--force", "-f", action="store_true", help="Force refresh even if recently updated")
+    p.add_argument(
+        "--force", "-f", action="store_true", help="Force refresh even if recently updated"
+    )
 
 
 def _build_reconcile_parser(fixtures_subparsers):
     """Build the parser for 'fixtures reconcile'."""
     p = fixtures_subparsers.add_parser(
-        "reconcile",
-        help="Reconcile fixture metadata counts with actual disk state"
+        "reconcile", help="Reconcile fixture metadata counts with actual disk state"
     )
     p.add_argument(
-        "--category", "-c",
-        choices=["beatmaps", "beatmapsets", "users", "scores", "beatmap_scores", "beatmap_attributes"],
-        help="Specific category to reconcile"
+        "--category",
+        "-c",
+        choices=[
+            "beatmaps",
+            "beatmapsets",
+            "users",
+            "scores",
+            "beatmap_scores",
+            "beatmap_attributes",
+        ],
+        help="Specific category to reconcile",
     )
     p.add_argument("--dry-run", action="store_true", help="Show changes without applying them")
 
@@ -260,8 +293,7 @@ def _build_reconcile_parser(fixtures_subparsers):
 def _build_generate_parser(fixtures_subparsers):
     """Build the parser for 'fixtures generate'."""
     p = fixtures_subparsers.add_parser(
-        "generate",
-        help="Generate diverse queue and request fixtures for testing"
+        "generate", help="Generate diverse queue and request fixtures for testing"
     )
     p.add_argument(
         "--queue-count",

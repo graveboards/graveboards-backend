@@ -6,6 +6,7 @@ from typing import Any
 
 class Criteria:
     """Coverage/variety profile for fixture fetching."""
+
     MINIMAL = "minimal"
     STANDARD = "standard"
     TARGETED = "targeted"
@@ -16,6 +17,7 @@ class Criteria:
 
 class Source:
     """ID source priority for fixture fetching."""
+
     AUTO = "auto"
     ARCHIVE = "archive"
     TOP_PLAYERS = "top-players"
@@ -26,6 +28,7 @@ class Source:
 @dataclass
 class TargetedOverrides:
     """Overrides for the targeted criteria."""
+
     statuses: list[str] | None = None
     difficulty_range: str | None = None
     playcount_range: str | None = None
@@ -36,6 +39,7 @@ class TargetedOverrides:
 @dataclass
 class SearchTestOverrides:
     """Overrides for the search-test criteria."""
+
     quick: bool = False
     min_per_category: int = 1
     max_total: int = 500
@@ -65,7 +69,9 @@ class FetchCriteria:
     # Data type counts (used by standard criteria, can override minimal)
     beatmaps: int = 0
     beatmapsets: int = 0
-    users: dict[str, int] = field(default_factory=lambda: {"osu": 0, "taiko": 0, "fruits": 0, "mania": 0})
+    users: dict[str, int] = field(
+        default_factory=lambda: {"osu": 0, "taiko": 0, "fruits": 0, "mania": 0}
+    )
     scores: dict[str, int] = field(default_factory=lambda: {"best": 0, "firsts": 0, "recent": 0})
     beatmap_scores: int = 0
     beatmap_attributes: int = 0
@@ -103,6 +109,7 @@ class FetchCriteria:
         # Minimal: 1 of each type (unless explicitly overridden)
         if self.is_minimal:
             from .sample_counts import calculate_sample_counts
+
             return calculate_sample_counts(
                 scale=1.0,
                 beatmaps=self.beatmaps or 1,
@@ -120,6 +127,7 @@ class FetchCriteria:
             )
 
         from .sample_counts import calculate_sample_counts
+
         return calculate_sample_counts(
             scale=1.0,
             beatmaps=self.beatmaps,
@@ -140,6 +148,7 @@ class FetchCriteria:
 @dataclass
 class FetchReport:
     """Results from a fetch operation."""
+
     criteria: str
     results: dict[str, Any] = field(default_factory=dict)
     coverage: dict[str, Any] | None = None

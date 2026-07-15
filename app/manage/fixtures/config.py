@@ -1,6 +1,6 @@
 """CLI configuration dataclasses for fixture commands."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from app.fixtures.criteria import (
     Criteria,
     Source,

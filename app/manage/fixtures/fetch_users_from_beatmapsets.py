@@ -9,9 +9,7 @@ Usage:
 """
 
 import json
-from pathlib import Path
 from rich.console import Console
-from rich.table import Table
 
 from app.config import PROJECT_ROOT
 from app.redis import RedisClient

@@ -10,7 +10,6 @@ Examples:
 
 import argparse
 import asyncio
-from typing import Optional
 
 from rich.console import Console
 from rich.panel import Panel
@@ -36,7 +35,7 @@ async def cmd_refresh_archives(force: bool = False) -> None:
         index = load_archive_index()
 
         if not force and index.last_updated:
-            from datetime import datetime, timedelta
+            from datetime import datetime
 
             time_since_update = (datetime.now() - index.last_updated).total_seconds()
 

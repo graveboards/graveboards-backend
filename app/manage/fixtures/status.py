@@ -16,8 +16,6 @@ Flags:
     --gaps        Show missing fixture gaps
 """
 
-from datetime import datetime
-from pathlib import Path
 from rich.console import Console
 from rich.columns import Columns
 from rich.console import Group
@@ -87,13 +85,13 @@ def get_instance_counts():
     if users_path.exists():
         counts["users"] = {r: count_files(users_path / r) for r in RULESETS}
     else:
-        counts["users"] = {r: 0 for r in RULESETS}
+        counts["users"] = dict.fromkeys(RULESETS, 0)
 
     scores_path = FIXTURES_DIR / "scores"
     if scores_path.exists():
         counts["scores"] = {t: count_files(scores_path / t) for t in SCORE_TYPES}
     else:
-        counts["scores"] = {t: 0 for t in SCORE_TYPES}
+        counts["scores"] = dict.fromkeys(SCORE_TYPES, 0)
 
     for category in ["queues", "requests"]:
         path = FIXTURES_DIR / category
@@ -113,13 +111,13 @@ def get_promoted_counts():
     if users_path.exists():
         counts["users"] = {r: count_files(users_path / r) for r in RULESETS}
     else:
-        counts["users"] = {r: 0 for r in RULESETS}
+        counts["users"] = dict.fromkeys(RULESETS, 0)
 
     scores_path = TEST_FIXTURES_DIR / "scores"
     if scores_path.exists():
         counts["scores"] = {t: count_files(scores_path / t) for t in SCORE_TYPES}
     else:
-        counts["scores"] = {t: 0 for t in SCORE_TYPES}
+        counts["scores"] = dict.fromkeys(SCORE_TYPES, 0)
 
     counts["queues"] = count_files(QUEUE_TEST_FIXTURES_DIR)
     counts["requests"] = count_files(REQUEST_TEST_FIXTURES_DIR)
@@ -287,7 +285,6 @@ def get_category_gaps():
 
 def show_gaps(promoted_counts):
     """Show missing fixture gaps."""
-    from app.fixtures.paths import get_test_fixture_path
 
     gaps = get_category_gaps()
 
@@ -334,7 +331,7 @@ async def cmd_fixture_status(
         gaps: Show missing fixture gaps (only for promoted)
     """
     from app.fixtures.reader import FixtureReader
-    from app.fixtures.paths import FIXTURES_DIR, get_fixture_path
+    from app.fixtures.paths import FIXTURES_DIR
 
     metadata = load_metadata()
 

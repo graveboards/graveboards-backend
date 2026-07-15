@@ -3,6 +3,7 @@
 Persists failed IDs uncapped in Redis sets for O(1) lookup.
 Provides a simple API for checking and adding failed IDs across categories.
 """
+
 from typing import Iterable
 
 from app.redis import RedisClient, Namespace
@@ -36,7 +37,9 @@ class FailedIdStore:
         key = self._key(category, subcategory)
         await self.rc.sadd(key, id_)
 
-    async def add_many(self, category: str, ids: Iterable[int], subcategory: str | None = None) -> None:
+    async def add_many(
+        self, category: str, ids: Iterable[int], subcategory: str | None = None
+    ) -> None:
         """Add multiple IDs to the failed set."""
         key = self._key(category, subcategory)
         if ids:

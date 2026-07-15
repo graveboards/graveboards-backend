@@ -14,7 +14,7 @@ Update this file when discovering new IDs.
 # Example: beatmapset 117 (Billy Joel - Uptown Girl) has deleted user
 RESTRICTED_BEATMAPSET_IDS = [
     744593,  # SOOOO - Happppy song (restricted user)
-    117,     # Billy Joel - Uptown Girl (deleted user)
+    117,  # Billy Joel - Uptown Girl (deleted user)
 ]
 
 # NSFW beatmapset IDs

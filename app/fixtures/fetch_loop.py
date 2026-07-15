@@ -27,6 +27,7 @@ class FetchEvent:
 @dataclass
 class FetchConfig:
     """Configuration for a single fetch operation."""
+
     api_call: Callable[[int], Coroutine]
     id_generator: Callable[[], Coroutine[int]]
     path_builder: Callable[[int], Path]
@@ -71,7 +72,7 @@ class FetchLoop:
         fetched = 0
         attempts = 0
         consecutive_empty = 0
-        max_consecutive_empty = self.config.on_empty_data_limit or float('inf')
+        max_consecutive_empty = self.config.on_empty_data_limit or float("inf")
 
         while fetched < target_count and attempts < self.config.max_attempts:
             attempts += 1

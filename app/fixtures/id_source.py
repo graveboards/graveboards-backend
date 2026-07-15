@@ -9,6 +9,7 @@ Usage:
     await source.resolve()
     id_ = source.get_id("beatmaps")
 """
+
 import asyncio
 import random
 from abc import ABC, abstractmethod
@@ -117,7 +118,9 @@ class TopPlayerIDSource(IDSource):
         self._indices = {r: 0 for r in self.player_ids}
         self._loaded = total > 0
         if self._loaded:
-            logger.info(f"TopPlayerIDSource: loaded {total} player IDs across {len(self.player_ids)} rulesets")
+            logger.info(
+                f"TopPlayerIDSource: loaded {total} player IDs across {len(self.player_ids)} rulesets"
+            )
         return self._loaded
 
     async def get_id(self, category: str, subcategory: str | None = None) -> int | None:
@@ -198,11 +201,15 @@ class ArchiveIDSource(IDSource):
 
         logger.debug(f"ArchiveIDSource: lazily loading player IDs for {ruleset}...")
         top_archive = self._archive_index.get_latest_archive(
-            archive_type="performance", ruleset=ruleset, selection="top",
+            archive_type="performance",
+            ruleset=ruleset,
+            selection="top",
         )
         if top_archive:
             ids = await get_user_ids_from_archive(
-                top_archive, min_playcount=50, allow_download=self.allow_download,
+                top_archive,
+                min_playcount=50,
+                allow_download=self.allow_download,
             )
             if ids:
                 self.player_ids[ruleset] = ids[:TOP_PLAYERS_PER_RULESET]
@@ -221,7 +228,8 @@ class ArchiveIDSource(IDSource):
         osu_files_archive = self._archive_index.get_latest_archive(archive_type="osu_files")
         if osu_files_archive:
             self.beatmap_ids = await get_beatmap_ids_from_archive(
-                osu_files_archive, allow_download=self.allow_download,
+                osu_files_archive,
+                allow_download=self.allow_download,
             )
             self._beatmap_ids_loaded = True
             logger.debug(f"ArchiveIDSource: loaded {len(self.beatmap_ids)} beatmap IDs")
@@ -284,8 +292,12 @@ class AutoIDSource(IDSource):
 
     name = "auto"
 
-    def __init__(self, rc: RedisClient | None = None, id_ranges: dict | None = None,
-                 failed_id_store: FailedIdStore | None = None):
+    def __init__(
+        self,
+        rc: RedisClient | None = None,
+        id_ranges: dict | None = None,
+        failed_id_store: FailedIdStore | None = None,
+    ):
         self.sources: list[IDSource] = []
         self._current: IDSource | None = None
         self._resolved = False
@@ -338,9 +350,12 @@ class AutoIDSource(IDSource):
                     source.add_failed(category, id_, subcategory)
 
 
-def create_id_source(source_type: str, rc: RedisClient | None = None,
-                     id_ranges: dict | None = None,
-                     failed_id_store: FailedIdStore | None = None) -> IDSource:
+def create_id_source(
+    source_type: str,
+    rc: RedisClient | None = None,
+    id_ranges: dict | None = None,
+    failed_id_store: FailedIdStore | None = None,
+) -> IDSource:
     """Factory function to create an ID source by name."""
     if source_type == "archive":
         return ArchiveIDSource(pre_load=True)

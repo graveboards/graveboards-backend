@@ -38,19 +38,21 @@ def calculate_sample_counts(
     Returns:
         Dictionary with calculated counts for each category
     """
-    has_explicit_categories = any([
-        beatmaps is not None,
-        beatmapsets is not None,
-        users_osu is not None,
-        users_taiko is not None,
-        users_fruits is not None,
-        users_mania is not None,
-        scores_best is not None,
-        scores_firsts is not None,
-        scores_recent is not None,
-        beatmap_scores is not None,
-        beatmap_attributes is not None,
-    ])
+    has_explicit_categories = any(
+        [
+            beatmaps is not None,
+            beatmapsets is not None,
+            users_osu is not None,
+            users_taiko is not None,
+            users_fruits is not None,
+            users_mania is not None,
+            scores_best is not None,
+            scores_firsts is not None,
+            scores_recent is not None,
+            beatmap_scores is not None,
+            beatmap_attributes is not None,
+        ]
+    )
 
     if use_minimal:
         base = MINIMAL_PROFILE.copy()

@@ -124,6 +124,7 @@ class FixtureMetadataManager:
     def init_metadata(self):
         """Initialize metadata structure for targeted fixtures."""
         from ..metadata_io import create_targeted_metadata
+
         if "targeted" not in self.metadata:
             self.metadata["targeted"] = create_targeted_metadata()
 
@@ -132,11 +133,7 @@ class FixtureMetadataManager:
         """Get current UTC timestamp in ISO format."""
         return datetime.now(timezone.utc).isoformat()
 
-    async def refresh_category_metadata(
-        self,
-        category: str,
-        dry_run: bool = False
-    ) -> list[dict]:
+    async def refresh_category_metadata(self, category: str, dry_run: bool = False) -> list[dict]:
         """Refresh metadata for a category to match disk state."""
         changes = []
         metadata = self.metadata.get("promoted_fixtures", {})
@@ -175,22 +172,27 @@ class FixtureMetadataManager:
         if old_meta_count != disk_count:
             change = {
                 "category": category,
-                "action": "sync" if disk_count > 0 else "remove" if old_meta_count > 0 and disk_count == 0 else "add",
+                "action": (
+                    "sync"
+                    if disk_count > 0
+                    else "remove" if old_meta_count > 0 and disk_count == 0 else "add"
+                ),
                 "fixture_id": category,
                 "disk_count": disk_count,
-                "old_meta_count": old_meta_count
+                "old_meta_count": old_meta_count,
             }
 
             if not dry_run:
                 if disk_count > 0:
                     metadata[category] = {
                         "count": disk_count,
-                        "last_refreshed": self._get_current_timestamp()
+                        "last_refreshed": self._get_current_timestamp(),
                     }
                 elif old_meta_count > 0:
                     del metadata[category]
                 self.metadata["promoted_fixtures"] = metadata
                 from ..metadata_io import save_metadata
+
                 save_metadata(self.metadata)
 
             changes.append(change)

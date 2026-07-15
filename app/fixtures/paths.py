@@ -37,9 +37,11 @@ def get_test_fixture_path(category: str, subcategory: str | None = None) -> Path
     return path
 
 
-def get_fixture_path(category: str, subcategory: str | None = None, fixtures_dir: Path | None = None) -> Path:
+def get_fixture_path(
+    category: str, subcategory: str | None = None, fixtures_dir: Path | None = None
+) -> Path:
     """Get path to fixture directory.
-    
+
     Args:
         category: Fixture category (e.g., "beatmaps", "users")
         subcategory: Optional subcategory (e.g., "osu" for users, "best" for scores)

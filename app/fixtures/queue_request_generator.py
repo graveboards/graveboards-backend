@@ -13,6 +13,7 @@ Request generation uses a pair-shuffling algorithm to ensure no duplicate
 constraint on those columns. Each request's user_id is set to the owner
 of the requested beatmapset.
 """
+
 import json
 import random
 from datetime import datetime, timezone, timedelta
@@ -200,8 +201,7 @@ class QueueRequestFixtureGenerator:
         for queue in queues:
             filepath = QUEUE_FIXTURES_PATH / f"queue_{queue['id']}.json"
             serializable_queue = {
-                k: v.isoformat() if isinstance(v, datetime) else v
-                for k, v in queue.items()
+                k: v.isoformat() if isinstance(v, datetime) else v for k, v in queue.items()
             }
             with open(filepath, "w") as f:
                 json.dump(serializable_queue, f, indent=2)
@@ -220,8 +220,7 @@ class QueueRequestFixtureGenerator:
         for request in requests:
             filepath = REQUEST_FIXTURES_PATH / f"request_{request['id']}.json"
             serializable_request = {
-                k: v.isoformat() if isinstance(v, datetime) else v
-                for k, v in request.items()
+                k: v.isoformat() if isinstance(v, datetime) else v for k, v in request.items()
             }
             with open(filepath, "w") as f:
                 json.dump(serializable_request, f, indent=2)

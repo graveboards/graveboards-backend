@@ -17,8 +17,7 @@ from rich.table import Table
 
 from app.redis import RedisClient
 from app.logging import get_logger
-from app.fixtures.criteria import Criteria, FetchCriteria, FetchReport, Source
-from app.fixtures.criteria import SearchTestOverrides, TargetedOverrides
+from app.fixtures.criteria import Criteria, FetchCriteria, FetchReport
 from app.fixtures.orchestrator import FixtureOrchestrator
 from .config import FetchConfig
 
@@ -51,7 +50,7 @@ def _print_dry_run(criteria: FetchCriteria) -> None:
     console.print(f"  Source: {criteria.source}")
 
     if criteria.is_standard or criteria.is_minimal:
-        console.print(f"  Would fetch:")
+        console.print("  Would fetch:")
         if criteria.beatmaps:
             console.print(f"    - {criteria.beatmaps} beatmaps (via random IDs)")
         if criteria.beatmapsets:
@@ -102,13 +101,13 @@ def _print_dry_run(criteria: FetchCriteria) -> None:
 
     elif criteria.is_search_test:
         st = criteria.search_test
-        console.print(f"  Would fetch search-test coverage:")
+        console.print("  Would fetch search-test coverage:")
         console.print(f"    - Max total API calls: {st.max_total}")
         console.print(f"    - Min per category: {st.min_per_category}")
         if st.full:
-            console.print(f"    - Mode: full (skip_covered=False)")
+            console.print("    - Mode: full (skip_covered=False)")
         else:
-            console.print(f"    - Mode: incremental (skip_covered=True)")
+            console.print("    - Mode: incremental (skip_covered=True)")
 
 
 def _print_report(report: FetchReport) -> None:

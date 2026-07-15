@@ -44,21 +44,27 @@ def save_metadata(metadata: dict, fixtures_dir: Path | None = None) -> None:
         fixtures_dir: Override base directory (defaults to FIXTURES_DIR)
     """
     metadata["last_updated"] = datetime.now(timezone.utc).isoformat()
-    metadata.setdefault("promoted_fixtures", {
-        "beatmaps": {"count": 0, "last_promoted": None},
-        "beatmapsets": {"count": 0, "last_promoted": None},
-        "users": {"count": 0, "per_ruleset": {r: 0 for r in RULESETS}, "last_promoted": None},
-        "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_promoted": None},
-        "beatmap_scores": {"count": 0, "last_promoted": None},
-        "beatmap_attributes": {"count": 0, "last_promoted": None},
-        "queues": {"count": 0, "last_promoted": None},
-        "requests": {"count": 0, "last_promoted": None},
-    })
-    metadata.setdefault("fetched_ids", {
-        "beatmaps": [],
-        "beatmapsets": [],
-        "users": {r: [] for r in RULESETS},
-    })
+    metadata.setdefault(
+        "promoted_fixtures",
+        {
+            "beatmaps": {"count": 0, "last_promoted": None},
+            "beatmapsets": {"count": 0, "last_promoted": None},
+            "users": {"count": 0, "per_ruleset": {r: 0 for r in RULESETS}, "last_promoted": None},
+            "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_promoted": None},
+            "beatmap_scores": {"count": 0, "last_promoted": None},
+            "beatmap_attributes": {"count": 0, "last_promoted": None},
+            "queues": {"count": 0, "last_promoted": None},
+            "requests": {"count": 0, "last_promoted": None},
+        },
+    )
+    metadata.setdefault(
+        "fetched_ids",
+        {
+            "beatmaps": [],
+            "beatmapsets": [],
+            "users": {r: [] for r in RULESETS},
+        },
+    )
     metadata.setdefault("top_player_ids", {r: [] for r in RULESETS})
     metadata.setdefault("id_ranges", ID_RANGES.copy())
     metadata_file = _metadata_path(fixtures_dir)
@@ -156,7 +162,9 @@ def load_top_player_ids(fixtures_dir: Path | None = None) -> dict[str, list[int]
     return metadata.get("top_player_ids", {r: [] for r in RULESETS})
 
 
-def save_top_player_ids(top_player_ids: dict[str, list[int]], fixtures_dir: Path | None = None) -> None:
+def save_top_player_ids(
+    top_player_ids: dict[str, list[int]], fixtures_dir: Path | None = None
+) -> None:
     """Save top player IDs to metadata.
 
     Args:
@@ -168,7 +176,11 @@ def save_top_player_ids(top_player_ids: dict[str, list[int]], fixtures_dir: Path
     save_metadata(metadata, fixtures_dir=fixtures_dir)
 
 
-def clean_all_fixtures(clear_failed_ids: bool = False, clear_top_player_ids: bool = False, fixtures_dir: Path | None = None) -> None:
+def clean_all_fixtures(
+    clear_failed_ids: bool = False,
+    clear_top_player_ids: bool = False,
+    fixtures_dir: Path | None = None,
+) -> None:
     """Clean all fixture files and reset metadata.
 
     Args:
@@ -188,13 +200,17 @@ def clean_all_fixtures(clear_failed_ids: bool = False, clear_top_player_ids: boo
         metadata["failed_ids"] = existing_metadata.get("failed_ids", metadata["failed_ids"])
     if not clear_top_player_ids and metadata_file.exists():
         existing_metadata = load_metadata(fixtures_dir=fixtures_dir)
-        metadata["top_player_ids"] = existing_metadata.get("top_player_ids", metadata["top_player_ids"])
+        metadata["top_player_ids"] = existing_metadata.get(
+            "top_player_ids", metadata["top_player_ids"]
+        )
 
     save_metadata(metadata, fixtures_dir=fixtures_dir)
     logger.info("All fixtures cleaned")
 
 
-def get_fixture_count(category: str, subcategory: str | None = None, fixtures_dir: Path | None = None) -> int:
+def get_fixture_count(
+    category: str, subcategory: str | None = None, fixtures_dir: Path | None = None
+) -> int:
     """Get count of fixture files in a category.
 
     Args:
@@ -206,6 +222,7 @@ def get_fixture_count(category: str, subcategory: str | None = None, fixtures_di
         Number of JSON files in the category directory
     """
     from .paths import get_fixture_path
+
     path = get_fixture_path(category, subcategory, fixtures_dir=fixtures_dir)
     if not path.exists():
         return 0
@@ -222,9 +239,17 @@ def get_all_fixture_files(fixtures_dir: Path | None = None) -> dict[str, list[Pa
         Dictionary mapping category names to lists of file paths
     """
     from .paths import FIXTURES_DIR
+
     base = fixtures_dir or FIXTURES_DIR
     fixtures = {}
-    for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"]:
+    for category in [
+        "beatmaps",
+        "beatmapsets",
+        "beatmap_scores",
+        "beatmap_attributes",
+        "queues",
+        "requests",
+    ]:
         path = base / category
         if path.exists():
             fixtures[category] = list(path.glob("*.json"))

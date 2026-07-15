@@ -5,7 +5,7 @@ from rich.prompt import Confirm
 
 from app.fixtures.metadata_io import load_metadata, save_metadata
 from .helpers import get_categories_to_process
-from .move_helpers import _get_dst_path, _move_fixture_files
+from .move_helpers import _move_fixture_files
 
 console = Console()
 
@@ -58,7 +58,6 @@ async def cmd_demote_fixtures(
         TEST_FIXTURES_DIR,
         QUEUE_TEST_FIXTURES_DIR,
         REQUEST_TEST_FIXTURES_DIR,
-        FIXTURES_DIR,
     )
 
     missing = 0
