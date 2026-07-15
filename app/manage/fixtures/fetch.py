@@ -16,94 +16,24 @@ from rich.table import Table
 
 from app.redis import RedisClient
 from app.logging import get_logger
-from app.fixtures.search_test_fetcher import SearchTestFixtureFetcher
-from app.fixtures.orchestrator import (
-    Criteria,
-    FetchCriteria,
-    FetchReport,
-    FixtureOrchestrator,
-    Source,
-    SearchTestOverrides,
-    TargetedOverrides,
-)
+from app.fixtures.criteria import Criteria, FetchCriteria, FetchReport, Source
+from app.fixtures.criteria import SearchTestOverrides, TargetedOverrides
+from app.fixtures.orchestrator import FixtureOrchestrator
+from .config import FetchConfig
 
 console = Console()
 logger = get_logger(__name__)
 
 
-async def cmd_fetch_fixtures(
-    criteria: str = Criteria.STANDARD,
-    source: str = Source.AUTO,
-    beatmaps: int | None = None,
-    beatmapsets: int | None = None,
-    users_osu: int | None = None,
-    users_taiko: int | None = None,
-    users_fruits: int | None = None,
-    users_mania: int | None = None,
-    scores_best: int | None = None,
-    scores_firsts: int | None = None,
-    scores_recent: int | None = None,
-    beatmap_scores: int | None = None,
-    beatmap_attributes: int | None = None,
-    status: list[str] | None = None,
-    difficulty_range: str | None = None,
-    playcount_range: str | None = None,
-    activity_tier: str | None = None,
-    rulesets: list[str] | None = None,
-    force_fetch: bool = False,
-    no_progress: bool = False,
-    verbose: bool = False,
-    min_per_category: int = 1,
-    max_total: int = 500,
-    gaps: bool = False,
-    full: bool = False,
-    quick: bool = False,
-    fixtures_dir: str | None = None,
-    dry_run: bool = False,
-    concurrent: bool = False,
-    concurrency: int = 3,
-    exclude_ids: str | None = None,
-):
+async def cmd_fetch_fixtures(config: FetchConfig):
     """Fetch fixture data using the orchestrator with composable criteria."""
     rc = RedisClient()
     try:
-        fetch_criteria = _build_criteria(
-            criteria=criteria,
-            source=source,
-            beatmaps=beatmaps,
-            beatmapsets=beatmapsets,
-            users_osu=users_osu,
-            users_taiko=users_taiko,
-            users_fruits=users_fruits,
-            users_mania=users_mania,
-            scores_best=scores_best,
-            scores_firsts=scores_firsts,
-            scores_recent=scores_recent,
-            beatmap_scores=beatmap_scores,
-            beatmap_attributes=beatmap_attributes,
-            status=status,
-            difficulty_range=difficulty_range,
-            playcount_range=playcount_range,
-            activity_tier=activity_tier,
-            rulesets=rulesets,
-            force_fetch=force_fetch,
-            no_progress=no_progress,
-            verbose=verbose,
-            min_per_category=min_per_category,
-            max_total=max_total,
-            gaps=gaps,
-            full=full,
-            quick=quick,
-            fixtures_dir=fixtures_dir,
-            dry_run=dry_run,
-            concurrent=concurrent,
-            concurrency=concurrency,
-            exclude_ids=exclude_ids,
-        )
+        fetch_criteria = config.to_fetch_criteria()
 
         orchestrator = FixtureOrchestrator(fetch_criteria, rc)
         
-        if dry_run:
+        if config.dry_run:
             _print_dry_run(fetch_criteria)
             return
         
@@ -111,97 +41,6 @@ async def cmd_fetch_fixtures(
         _print_report(report)
     finally:
         await rc.aclose()
-
-
-def _build_criteria(
-    criteria: str,
-    source: str,
-    force_fetch: bool = False,
-    no_progress: bool = False,
-    verbose: bool = False,
-    beatmaps: int | None = None,
-    beatmapsets: int | None = None,
-    users_osu: int | None = None,
-    users_taiko: int | None = None,
-    users_fruits: int | None = None,
-    users_mania: int | None = None,
-    scores_best: int | None = None,
-    scores_firsts: int | None = None,
-    scores_recent: int | None = None,
-    beatmap_scores: int | None = None,
-    beatmap_attributes: int | None = None,
-    status: list[str] | None = None,
-    difficulty_range: str | None = None,
-    playcount_range: str | None = None,
-    activity_tier: str | None = None,
-    rulesets: list[str] | None = None,
-    min_per_category: int = 1,
-    max_total: int = 500,
-    gaps: bool = False,
-    full: bool = False,
-    quick: bool = False,
-    fixtures_dir: str | None = None,
-    dry_run: bool = False,
-    concurrent: bool = False,
-    concurrency: int = 3,
-    exclude_ids: str | None = None,
-) -> FetchCriteria:
-    """Build FetchCriteria from CLI arguments."""
-    # Build targeted overrides
-    targeted_overrides = None
-    if criteria == Criteria.TARGETED:
-        targeted_overrides = TargetedOverrides(
-            statuses=status,
-            difficulty_range=difficulty_range,
-            playcount_range=playcount_range,
-            activity_tier=activity_tier,
-            rulesets=rulesets,
-        )
-
-    # Build search-test overrides
-    search_test_overrides = None
-    if criteria == Criteria.SEARCH_TEST:
-        search_test_overrides = SearchTestOverrides(
-            quick=quick,
-            min_per_category=min_per_category,
-            max_total=max_total,
-            gaps=gaps,
-            full=full,
-        )
-
-    exclude_ids_list = []
-    if exclude_ids:
-        exclude_ids_list = [int(x.strip()) for x in exclude_ids.split(",") if x.strip().isdigit()]
-
-    return FetchCriteria(
-        criteria=criteria,
-        source=source,
-        targeted=targeted_overrides,
-        search_test=search_test_overrides,
-        beatmaps=beatmaps or 0,
-        beatmapsets=beatmapsets or 0,
-        users={
-            "osu": users_osu or 0,
-            "taiko": users_taiko or 0,
-            "fruits": users_fruits or 0,
-            "mania": users_mania or 0,
-        },
-        scores={
-            "best": scores_best or 0,
-            "firsts": scores_firsts or 0,
-            "recent": scores_recent or 0,
-        },
-        beatmap_scores=beatmap_scores or 0,
-        beatmap_attributes=beatmap_attributes or 0,
-        force_fetch=force_fetch,
-        no_progress=no_progress,
-        verbose=verbose,
-        fixtures_dir=fixtures_dir,
-        dry_run=dry_run,
-        concurrent=concurrent,
-        concurrency=concurrency,
-        exclude_ids=exclude_ids_list,
-    )
 
 
 def _print_dry_run(criteria: FetchCriteria) -> None:
