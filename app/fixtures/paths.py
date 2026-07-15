@@ -1,4 +1,13 @@
-"""Path constants and utilities for fixture file locations."""
+"""Path constants and utilities for fixture file locations.
+
+File naming convention:
+    beatmaps:        beatmap_{id}.json
+    beatmapsets:     beatmapset_{id}.json
+    users:           user_{id}_{ruleset}.json (in users/{ruleset}/)
+    scores:          scores_{id}_{type}.json (in scores/{type}/)
+    beatmap_scores:  beatmap_scores_{id}.json
+    beatmap_attributes: beatmap_attrs_{id}_mods{mods}.json
+"""
 
 from pathlib import Path
 from app.config import PROJECT_ROOT
