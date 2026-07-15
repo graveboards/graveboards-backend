@@ -9,7 +9,7 @@ adaptive loop that stops as soon as all buckets are satisfied.
 """
 import heapq
 from dataclasses import dataclass, field
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Callable, Coroutine
 
 # Rarity weights: how hard each bucket is to fill via random fetching.
 # Higher = rarer = should be prioritized when uncovered.
@@ -90,17 +90,17 @@ SHORT_NAMES: dict[str, str] = {
 RARE_BUCKET_THRESHOLD = 2.0
 
 
-@runtime_checkable
-class FetchAction(Protocol):
+@dataclass(frozen=True)
+class FetchAction:
     """A fetch action that can fill certain coverage buckets."""
-
     name: str
-    affected_buckets: list[str]
+    affected_buckets: tuple[str, ...]
     cost: int
-    rarity_weight: float
+    _executor: Callable[[], Coroutine[None, None, dict[str, set[int]]]]
 
     async def execute(self) -> dict[str, set[int]]:
         """Execute the fetch and return {bucket_key: set_of_new_ids}."""
+        return await self._executor()
 
 
 @dataclass
@@ -493,13 +493,14 @@ def build_actions(fetcher: Any) -> list[FetchAction]:
 
 def _make_action(fetcher: Any, name: str, execute, affected_buckets: list[str], cost: int) -> FetchAction:
     """Create a fetch action with the required interface."""
-    from types import SimpleNamespace
-    action = SimpleNamespace()
-    action.name = name
-    action.affected_buckets = affected_buckets
-    action.cost = cost
-    action.execute = execute
-    return action
+    async def executor():
+        return await execute()
+    return FetchAction(
+        name=name,
+        affected_buckets=tuple(affected_buckets),
+        cost=cost,
+        _executor=executor,
+    )
 
 
 async def adaptive_fetch_loop(
