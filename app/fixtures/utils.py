@@ -41,10 +41,12 @@ BASE_SAMPLE_COUNTS = {
     "requests": 100,
 }
 
+ID_RANGE_MIN = 1
+
 ID_RANGES = {
-    "beatmaps": {"min": 1, "max": 1000000},
-    "beatmapsets": {"min": 1, "max": 100000},
-    "users": {"min": 1, "max": 10000000},
+    "beatmaps": {"min": ID_RANGE_MIN, "max": 5_800_000},
+    "beatmapsets": {"min": ID_RANGE_MIN, "max": 2_600_000},
+    "users": {"min": ID_RANGE_MIN, "max": 40_000_000},
 }
 
 MINIMAL_PROFILE = {
@@ -222,11 +224,7 @@ def save_metadata(metadata: dict, fixtures_dir: Path | None = None) -> None:
         "users": {r: [] for r in RULESETS},
     })
     metadata.setdefault("top_player_ids", {r: [] for r in RULESETS})
-    metadata.setdefault("id_ranges", {
-        "beatmaps": {"min": 1, "max": 1000000},
-        "beatmapsets": {"min": 1, "max": 100000},
-        "users": {"min": 1, "max": 10000000},
-    })
+    metadata.setdefault("id_ranges", ID_RANGES.copy())
     metadata_file = _metadata_path(fixtures_dir)
     metadata_file.parent.mkdir(parents=True, exist_ok=True)
     with open(metadata_file, "w") as f:
@@ -262,11 +260,7 @@ def create_empty_metadata() -> dict:
             "users": {r: [] for r in RULESETS},
         },
         "top_player_ids": {r: [] for r in RULESETS},
-        "id_ranges": {
-            "beatmaps": {"min": 1, "max": 1000000},
-            "beatmapsets": {"min": 1, "max": 100000},
-            "users": {"min": 1, "max": 10000000},
-        },
+        "id_ranges": ID_RANGES,
         "rulesets": RULESETS,
         "source": "osu.ppy.sh/api/v2",
     }
