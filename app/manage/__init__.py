@@ -61,20 +61,21 @@ async def main():
             case "fixtures":
                 match args.fixture_command:
                     case "fetch":
-                        await cmd_fetch_fixtures(
+                        from .fixtures.config import FetchConfig
+                        fetch_config = FetchConfig(
                             criteria=args.criteria,
                             source=args.source,
-                            beatmaps=args.beatmaps,
-                            beatmapsets=args.beatmapsets,
-                            users_osu=args.users_osu,
-                            users_taiko=args.users_taiko,
-                            users_fruits=args.users_fruits,
-                            users_mania=args.users_mania,
-                            scores_best=args.scores_best,
-                            scores_firsts=args.scores_firsts,
-                            scores_recent=args.scores_recent,
-                            beatmap_scores=args.beatmap_scores,
-                            beatmap_attributes=args.beatmap_attributes,
+                            beatmaps=args.beatmaps or 0,
+                            beatmapsets=args.beatmapsets or 0,
+                            users_osu=args.users_osu or 0,
+                            users_taiko=args.users_taiko or 0,
+                            users_fruits=args.users_fruits or 0,
+                            users_mania=args.users_mania or 0,
+                            scores_best=args.scores_best or 0,
+                            scores_firsts=args.scores_firsts or 0,
+                            scores_recent=args.scores_recent or 0,
+                            beatmap_scores=args.beatmap_scores or 0,
+                            beatmap_attributes=args.beatmap_attributes or 0,
                             status=args.status,
                             difficulty_range=args.difficulty_range,
                             playcount_range=args.playcount_range,
@@ -89,6 +90,7 @@ async def main():
                             full=args.full,
                             quick=args.quick,
                         )
+                        await cmd_fetch_fixtures(fetch_config)
                     case "refresh-top-players":
                         await cmd_refresh_top_players(
                             rulesets=args.rulesets,
