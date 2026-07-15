@@ -132,11 +132,8 @@ def _load_users() -> list[dict]:
         if not ruleset_dir.is_dir():
             continue
         for f in sorted(ruleset_dir.glob("user_*.json")):
-            try:
-                with open(f) as fh:
-                    api_data = json.load(fh)
-            except json.JSONDecodeError:
-                continue
+            with open(f) as fh:
+                api_data = json.load(fh)
 
             user_id = api_data.get("id")
             if user_id is None:
@@ -171,11 +168,8 @@ def _load_beatmaps() -> list[dict]:
 
     beatmapsets: list[dict] = []
     for f in sorted(bms_path.glob("beatmapset_*.json")):
-        try:
-            with open(f) as fh:
-                api_data = json.load(fh)
-        except json.JSONDecodeError:
-            continue
+        with open(f) as fh:
+            api_data = json.load(fh)
 
         # The osu! API returns "maps" but the seeder expects "beatmaps"
         if "maps" in api_data and "beatmaps" not in api_data:
@@ -197,11 +191,18 @@ def _load_queues() -> list[dict]:
 
     queues: list[dict] = []
     for f in sorted(queues_path.glob("queue_*.json")):
-        try:
-            with open(f) as fh:
-                queues.append(json.load(fh))
-        except json.JSONDecodeError:
-            continue
+        with open(f) as fh:
+            queue_data = json.load(fh)
+
+        # Convert ISO string timestamps back to datetime objects
+        for col in ("created_at", "updated_at"):
+            if col in queue_data and isinstance(queue_data[col], str):
+                try:
+                    queue_data[col] = datetime.fromisoformat(queue_data[col])
+                except ValueError:
+                    pass
+
+        queues.append(queue_data)
 
     return queues
 
@@ -214,10 +215,17 @@ def _load_requests() -> list[dict]:
 
     requests: list[dict] = []
     for f in sorted(requests_path.glob("request_*.json")):
-        try:
-            with open(f) as fh:
-                requests.append(json.load(fh))
-        except json.JSONDecodeError:
-            continue
+        with open(f) as fh:
+            request_data = json.load(fh)
+
+        # Convert ISO string timestamps back to datetime objects
+        for col in ("created_at", "updated_at"):
+            if col in request_data and isinstance(request_data[col], str):
+                try:
+                    request_data[col] = datetime.fromisoformat(request_data[col])
+                except ValueError:
+                    pass
+
+        requests.append(request_data)
 
     return requests
