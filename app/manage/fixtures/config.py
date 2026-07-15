@@ -1,7 +1,13 @@
 """CLI configuration dataclasses for fixture commands."""
 
 from dataclasses import dataclass, field
-from app.fixtures.criteria import Criteria, Source, FetchCriteria, SearchTestOverrides, TargetedOverrides
+from app.fixtures.criteria import (
+    Criteria,
+    Source,
+    FetchCriteria,
+    SearchTestOverrides,
+    TargetedOverrides,
+)
 
 
 @dataclass
@@ -11,6 +17,7 @@ class FetchConfig:
     Aggregates all CLI arguments into a single config object,
     then converts to FetchCriteria for the orchestrator.
     """
+
     criteria: str = Criteria.STANDARD
     source: str = Source.AUTO
     beatmaps: int = 0
@@ -70,7 +77,9 @@ class FetchConfig:
         # Parse exclude IDs
         exclude_ids_list = []
         if self.exclude_ids:
-            exclude_ids_list = [int(x.strip()) for x in self.exclude_ids.split(",") if x.strip().isdigit()]
+            exclude_ids_list = [
+                int(x.strip()) for x in self.exclude_ids.split(",") if x.strip().isdigit()
+            ]
 
         return FetchCriteria(
             criteria=self.criteria,

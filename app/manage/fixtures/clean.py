@@ -7,7 +7,12 @@ from shutil import rmtree
 from rich.console import Console
 
 from app.fixtures.paths import FIXTURES_DIR
-from app.fixtures.metadata_io import load_metadata, save_metadata, create_empty_samples, create_empty_promoted_fixtures
+from app.fixtures.metadata_io import (
+    load_metadata,
+    save_metadata,
+    create_empty_samples,
+    create_empty_promoted_fixtures,
+)
 from app.fixtures.constants import RULESETS
 from app.fixtures.failed_id_store import FailedIdStore
 from app.redis import RedisClient
@@ -35,7 +40,12 @@ async def cmd_clean_fixtures(
 ):
     if not force:
         from rich.prompt import Prompt
-        response = Prompt.ask("This will delete all fixture files and reset metadata. Continue?", choices=["y", "n"], default="n")
+
+        response = Prompt.ask(
+            "This will delete all fixture files and reset metadata. Continue?",
+            choices=["y", "n"],
+            default="n",
+        )
         if response != "y":
             console.print("[dim]Aborted.[/dim]")
             return
@@ -66,8 +76,11 @@ async def cmd_clean_fixtures(
     if clear_promoted:
         if metadata.get("promoted_fixtures", {}).get("beatmaps", {}).get("count", 0) > 0:
             console.print(
-                "[yellow]⚠️  WARNING: Removing promoted fixture metadata while fixture files still exist on disk![/yellow]")
-            console.print("   This will cause metadata to be out of sync with actual fixture state.")
+                "[yellow]⚠️  WARNING: Removing promoted fixture metadata while fixture files still exist on disk![/yellow]"
+            )
+            console.print(
+                "   This will cause metadata to be out of sync with actual fixture state."
+            )
         metadata["promoted_fixtures"] = create_empty_promoted_fixtures()
 
     if deleted_count > 0:

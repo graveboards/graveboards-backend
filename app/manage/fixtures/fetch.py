@@ -11,6 +11,7 @@ Usage:
     manage fixtures fetch --criteria search-test
     manage fixtures fetch --criteria search-test --archive --quick
 """
+
 from rich.console import Console
 from rich.table import Table
 
@@ -32,11 +33,11 @@ async def cmd_fetch_fixtures(config: FetchConfig):
         fetch_criteria = config.to_fetch_criteria()
 
         orchestrator = FixtureOrchestrator(fetch_criteria, rc)
-        
+
         if config.dry_run:
             _print_dry_run(fetch_criteria)
             return
-        
+
         report = await orchestrator.execute()
         _print_report(report)
     finally:
@@ -48,7 +49,7 @@ def _print_dry_run(criteria: FetchCriteria) -> None:
     console.print("[bold]Dry Run — What would be fetched:[/bold]\n")
     console.print(f"  Criteria: {criteria.criteria}")
     console.print(f"  Source: {criteria.source}")
-    
+
     if criteria.is_standard or criteria.is_minimal:
         console.print(f"  Would fetch:")
         if criteria.beatmaps:
@@ -75,17 +76,17 @@ def _print_dry_run(criteria: FetchCriteria) -> None:
             console.print(f"    - {criteria.beatmap_scores} beatmap scores")
         if criteria.beatmap_attributes:
             console.print(f"    - {criteria.beatmap_attributes} beatmap attributes")
-        
+
         total = (
-            (criteria.beatmaps or 0) +
-            (criteria.beatmapsets or 0) +
-            sum(criteria.users.values()) +
-            sum(criteria.scores.values()) +
-            (criteria.beatmap_scores or 0) +
-            (criteria.beatmap_attributes or 0)
+            (criteria.beatmaps or 0)
+            + (criteria.beatmapsets or 0)
+            + sum(criteria.users.values())
+            + sum(criteria.scores.values())
+            + (criteria.beatmap_scores or 0)
+            + (criteria.beatmap_attributes or 0)
         )
         console.print(f"\n  Estimated API calls: ~{total}")
-    
+
     elif criteria.is_targeted:
         console.print("  Would fetch targeted fixtures based on:")
         if criteria.targeted.statuses:
@@ -98,7 +99,7 @@ def _print_dry_run(criteria: FetchCriteria) -> None:
             console.print(f"    - Activity: {criteria.targeted.activity_tier}")
         if criteria.targeted.rulesets:
             console.print(f"    - Rulesets: {', '.join(criteria.targeted.rulesets)}")
-    
+
     elif criteria.is_search_test:
         st = criteria.search_test
         console.print(f"  Would fetch search-test coverage:")
@@ -142,10 +143,12 @@ def _print_report(report: FetchReport) -> None:
 def _print_coverage_gaps(fetcher) -> None:
     """Print coverage gaps from metadata.json (delegated to display module)."""
     from app.fixtures.display import print_coverage_gaps
+
     print_coverage_gaps(fetcher)
 
 
 def _print_coverage_report(coverage: dict) -> None:
     """Print the full coverage report as a table (delegated to display module)."""
     from app.fixtures.display import print_coverage_report
+
     print_coverage_report(coverage)

@@ -22,7 +22,9 @@ async def cmd_demote_fixtures(
     force: bool = False,
 ):
     if not force:
-        response = Confirm.ask("This will move fixture files back to instance fixtures. Continue?", default=False)
+        response = Confirm.ask(
+            "This will move fixture files back to instance fixtures. Continue?", default=False
+        )
         if not response:
             console.print("[dim]Aborted.[/dim]")
             return
@@ -52,7 +54,13 @@ async def cmd_demote_fixtures(
     )
 
     # Calculate missing files (files that don't exist in source)
-    from app.fixtures.paths import TEST_FIXTURES_DIR, QUEUE_TEST_FIXTURES_DIR, REQUEST_TEST_FIXTURES_DIR, FIXTURES_DIR
+    from app.fixtures.paths import (
+        TEST_FIXTURES_DIR,
+        QUEUE_TEST_FIXTURES_DIR,
+        REQUEST_TEST_FIXTURES_DIR,
+        FIXTURES_DIR,
+    )
+
     missing = 0
     for category in categories_to_demote:
         if category == "queues":
@@ -61,8 +69,15 @@ async def cmd_demote_fixtures(
             src_path = REQUEST_TEST_FIXTURES_DIR
         else:
             src_path = TEST_FIXTURES_DIR / category
-        
-        if category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"]:
+
+        if category in [
+            "beatmaps",
+            "beatmapsets",
+            "beatmap_scores",
+            "beatmap_attributes",
+            "queues",
+            "requests",
+        ]:
             if src_path.exists():
                 for f in src_path.glob("*.json"):
                     if not f.exists():

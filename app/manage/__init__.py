@@ -57,6 +57,7 @@ def build_fixtures_parser(subparsers):
     return subparsers.add_parser("fixtures", help="Manage test fixtures")
 
 
+# ruff: noqa: C901 PLC0415 F401
 async def main():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -183,6 +184,9 @@ async def main():
                     case "fetch-users-from-beatmapsets":
                         await cmd_fetch_users_from_beatmapsets()
     except Exception as e:
+        from rich.console import Console
+
+        console = Console()
         console.print(f"\n[red]❌ Error:[/red] {e}")
         console.print(f"[dim]{traceback.format_exc()}[/dim]")
         raise SystemExit(1) from None

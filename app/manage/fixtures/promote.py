@@ -22,7 +22,11 @@ async def cmd_promote_fixtures(
     force: bool = False,
 ):
     if not force:
-        response = Prompt.ask("This will move fixture files and delete the originals. Continue?", choices=["y", "n"], default="n")
+        response = Prompt.ask(
+            "This will move fixture files and delete the originals. Continue?",
+            choices=["y", "n"],
+            default="n",
+        )
         if response != "y":
             console.print("[dim]Aborted.[/dim]")
             return

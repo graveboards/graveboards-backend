@@ -1,4 +1,5 @@
 """Shared helpers for fixture promotion and demotion."""
+
 from datetime import datetime, timezone
 from shutil import copy2, rmtree
 
@@ -33,14 +34,14 @@ def _move_fixture_files(
     action: str = "promote",
 ) -> int:
     """Move fixture files between directories with proper metadata tracking.
-    
+
     Args:
         categories: List of category names to move
         src_base: Source base path
         dst_base: Destination base path
         metadata: Metadata dict to update
         action: "promote" or "demote"
-        
+
     Returns:
         Number of files moved
     """
@@ -56,7 +57,7 @@ def _move_fixture_files(
 
     for category in categories:
         src_path = src_path_base / category
-        
+
         if category == "queues":
             dst_path = QUEUE_TEST_FIXTURES_DIR
         elif category == "requests":
@@ -66,7 +67,14 @@ def _move_fixture_files(
 
         dst_path.mkdir(parents=True, exist_ok=True)
 
-        if category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"]:
+        if category in [
+            "beatmaps",
+            "beatmapsets",
+            "beatmap_scores",
+            "beatmap_attributes",
+            "queues",
+            "requests",
+        ]:
             if src_path.exists():
                 for filepath in src_path.glob("*.json"):
                     copy_operations.append((filepath, dst_path / filepath.name, category, None))
@@ -77,7 +85,9 @@ def _move_fixture_files(
                         sub_dst = dst_path / sub.name
                         sub_dst.mkdir(parents=True, exist_ok=True)
                         for filepath in sub.glob("*.json"):
-                            copy_operations.append((filepath, sub_dst / filepath.name, category, sub.name))
+                            copy_operations.append(
+                                (filepath, sub_dst / filepath.name, category, sub.name)
+                            )
 
     # Phase 2: Execute all copy operations
     for src, dst, _, _ in copy_operations:
@@ -87,7 +97,7 @@ def _move_fixture_files(
     # Phase 3: Update metadata and delete sources
     for category in categories:
         src_path = src_path_base / category
-        
+
         if category == "queues":
             dst_path = QUEUE_TEST_FIXTURES_DIR
         elif category == "requests":
@@ -95,15 +105,27 @@ def _move_fixture_files(
         else:
             dst_path = dst_path_base / category
 
-        if category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"]:
+        if category in [
+            "beatmaps",
+            "beatmapsets",
+            "beatmap_scores",
+            "beatmap_attributes",
+            "queues",
+            "requests",
+        ]:
             count = 0
             if src_path.exists():
                 count = len(list(src_path.glob("*.json")))
                 rmtree(src_path)
                 deleted += count
             if category not in metadata.get("promoted_fixtures", {}):
-                metadata.setdefault("promoted_fixtures", {})[category] = {"count": 0, "last_promoted": None}
-            metadata["promoted_fixtures"][category]["count"] = metadata["promoted_fixtures"][category].get("count", 0) + count
+                metadata.setdefault("promoted_fixtures", {})[category] = {
+                    "count": 0,
+                    "last_promoted": None,
+                }
+            metadata["promoted_fixtures"][category]["count"] = (
+                metadata["promoted_fixtures"][category].get("count", 0) + count
+            )
             metadata["promoted_fixtures"][category]["last_promoted"] = current_time
         elif category in ["users", "scores"]:
             total_count = 0
@@ -115,17 +137,31 @@ def _move_fixture_files(
                         rmtree(sub)
                         deleted += count
                         if category == "users":
-                            metadata.setdefault("promoted_fixtures", {}).setdefault(category, {"count": 0, "per_ruleset": {}})
+                            metadata.setdefault("promoted_fixtures", {}).setdefault(
+                                category, {"count": 0, "per_ruleset": {}}
+                            )
                             metadata["promoted_fixtures"][category].setdefault("per_ruleset", {})
-                            metadata["promoted_fixtures"][category]["per_ruleset"][sub.name] = metadata["promoted_fixtures"][category]["per_ruleset"].get(sub.name, 0) + count
+                            metadata["promoted_fixtures"][category]["per_ruleset"][sub.name] = (
+                                metadata["promoted_fixtures"][category]["per_ruleset"].get(
+                                    sub.name, 0
+                                )
+                                + count
+                            )
                         else:
-                            metadata.setdefault("promoted_fixtures", {}).setdefault(category, {"count": 0, "per_type": {}})
+                            metadata.setdefault("promoted_fixtures", {}).setdefault(
+                                category, {"count": 0, "per_type": {}}
+                            )
                             metadata["promoted_fixtures"][category].setdefault("per_type", {})
-                            metadata["promoted_fixtures"][category]["per_type"][sub.name] = metadata["promoted_fixtures"][category]["per_type"].get(sub.name, 0) + count
+                            metadata["promoted_fixtures"][category]["per_type"][sub.name] = (
+                                metadata["promoted_fixtures"][category]["per_type"].get(sub.name, 0)
+                                + count
+                            )
                 if src_path.exists():
                     src_path.rmdir()
                 metadata.setdefault("promoted_fixtures", {}).setdefault(category, {"count": 0})
-                metadata["promoted_fixtures"][category]["count"] = metadata["promoted_fixtures"][category].get("count", 0) + total_count
+                metadata["promoted_fixtures"][category]["count"] = (
+                    metadata["promoted_fixtures"][category].get("count", 0) + total_count
+                )
                 metadata["promoted_fixtures"][category]["last_promoted"] = current_time
 
     return copied

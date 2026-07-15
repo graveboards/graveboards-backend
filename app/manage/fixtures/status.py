@@ -11,7 +11,7 @@ Examples:
 
 Flags:
     --instance    Show only instance/ fixtures status
-    --promoted    Show only tests/fixtures/ promoted status  
+    --promoted    Show only tests/fixtures/ promoted status
     --detailed    Include detailed file lists
     --gaps        Show missing fixture gaps
 """
@@ -25,7 +25,12 @@ from rich.panel import Panel
 from rich.table import Table
 from rich import box
 
-from app.fixtures.paths import TEST_FIXTURES_DIR, QUEUE_TEST_FIXTURES_DIR, REQUEST_TEST_FIXTURES_DIR, FIXTURES_DIR
+from app.fixtures.paths import (
+    TEST_FIXTURES_DIR,
+    QUEUE_TEST_FIXTURES_DIR,
+    REQUEST_TEST_FIXTURES_DIR,
+    FIXTURES_DIR,
+)
 from app.fixtures.metadata_io import load_metadata, save_metadata
 from app.fixtures.constants import RULESETS, SCORE_TYPES
 from app.fixtures.health import check_category_health
@@ -35,7 +40,7 @@ console = Console()
 
 def _print_file_listing(path_base, categories, users_path):
     """Print detailed file listing for a fixture directory.
-    
+
     Args:
         path_base: Base Path object for fixtures
         categories: List of non-ruleset categories
@@ -53,7 +58,7 @@ def _print_file_listing(path_base, categories, users_path):
                     console.print(f"    ... and {len(files) - 10} more")
             else:
                 console.print(f"\n  [red]{category}: (empty)[/red]")
-    
+
     if users_path.exists():
         console.print("\n  [cyan]users[/cyan]")
         for ruleset in RULESETS:
@@ -124,7 +129,7 @@ def get_promoted_counts():
 
 def format_status_icon(count: int, meta_count: int, is_empty_ok: bool = False) -> str:
     """Format sync status with icon.
-    
+
     Args:
         is_empty_ok: If True, return green check even when count == 0
     """
@@ -228,7 +233,9 @@ def create_promoted_table(promoted_counts, metadata):
     scores_disk = sum(promoted_counts.get("scores", {}).values())
     scores_status = format_status_icon(scores_disk, scores_meta, is_empty_ok=True)
     scores_coverage = format_coverage(scores_disk, scores_meta)
-    table.add_row("[b]scores[/b]", str(scores_meta), str(scores_disk), scores_status, scores_coverage)
+    table.add_row(
+        "[b]scores[/b]", str(scores_meta), str(scores_disk), scores_status, scores_coverage
+    )
 
     for score_type in SCORE_TYPES:
         type_meta = promoted_metadata.get("scores", {}).get("per_type", {}).get(score_type, 0)
@@ -250,52 +257,58 @@ def create_promoted_table(promoted_counts, metadata):
 def get_category_gaps():
     """Get detailed gap information for each category."""
     categories = [
-        "beatmaps", "beatmapsets", "users", "scores",
-        "beatmap_scores", "beatmap_attributes"
+        "beatmaps",
+        "beatmapsets",
+        "users",
+        "scores",
+        "beatmap_scores",
+        "beatmap_attributes",
     ]
     gaps = []
-    
+
     for category in categories:
         health = check_category_health(category)
         if health.expected_count > 0 and health.actual_count < health.expected_count:
             expected_list = sorted([f.name for f in get_test_fixture_path(category).glob("*.json")])
-            
-            gaps.append({
-                "category": category,
-                "expected_count": health.expected_count,
-                "actual_count": health.actual_count,
-                "missing_count": health.expected_count - health.actual_count,
-                "coverage_percentage": health.coverage_percentage,
-                "expected_files": expected_list
-            })
-    
+
+            gaps.append(
+                {
+                    "category": category,
+                    "expected_count": health.expected_count,
+                    "actual_count": health.actual_count,
+                    "missing_count": health.expected_count - health.actual_count,
+                    "coverage_percentage": health.coverage_percentage,
+                    "expected_files": expected_list,
+                }
+            )
+
     return gaps
 
 
 def show_gaps(promoted_counts):
     """Show missing fixture gaps."""
     from app.fixtures.paths import get_test_fixture_path
-    
+
     gaps = get_category_gaps()
-    
+
     if not gaps:
         console.print("[green]✅ All promoted fixtures are complete![/green]")
         return
-    
+
     table = Table(title="[bold yellow]Missing Fixtures[/bold yellow]", box=box.SIMPLE_HEAD)
     table.add_column("Category", style="cyan")
     table.add_column("Missing", style="red")
     table.add_column("Coverage", style="white")
     table.add_column("Files", style="white")
-    
+
     for gap in gaps:
         table.add_row(
             gap["category"],
             str(gap["missing_count"]),
             format_coverage(gap["actual_count"], gap["expected_count"]),
-            f"{gap['actual_count']}/{gap['expected_count']}"
+            f"{gap['actual_count']}/{gap['expected_count']}",
         )
-    
+
     console.print(table)
 
 
@@ -310,13 +323,10 @@ def format_percentage(value: float) -> str:
 
 
 async def cmd_fixture_status(
-    instance: bool = False,
-    promoted: bool = False,
-    detailed: bool = False,
-    gaps: bool = False
+    instance: bool = False, promoted: bool = False, detailed: bool = False, gaps: bool = False
 ) -> None:
     """Show fixture status for instance and promoted fixtures.
-    
+
     Args:
         instance: Show only instance/ fixtures
         promoted: Show only tests/fixtures/ promoted fixtures
@@ -329,7 +339,14 @@ async def cmd_fixture_status(
     metadata = load_metadata()
 
     manager = FixtureReader()
-    for cat in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "users", "scores"]:
+    for cat in [
+        "beatmaps",
+        "beatmapsets",
+        "beatmap_scores",
+        "beatmap_attributes",
+        "users",
+        "scores",
+    ]:
         await manager.refresh_category_metadata(cat)
 
     samples = metadata.get("samples", {})
@@ -368,11 +385,11 @@ async def cmd_fixture_status(
 
     instance_counts = get_instance_counts()
     promoted_counts = get_promoted_counts()
-    
+
     # Determine what to show
     show_instance = not promoted  # Show instance unless --promoted is specified
     show_promoted = not instance  # Show promoted unless --instance is specified
-    
+
     # Header
     header_table = Table(show_header=False, box=None, padding=(0, 1))
     header_table.add_column(justify="center")
@@ -382,68 +399,112 @@ async def cmd_fixture_status(
     header_table.add_row(f"Source: {metadata.get('source', 'N/A')}")
     header_table.add_row("")
     header_panel = Panel(header_table, box=box.ROUNDED, padding=(0, 2), expand=False)
-    
+
     if show_instance and show_promoted:
         # Horizontal layout - both panels side by side
         instance_table = create_instance_table(instance_counts, metadata)
         instance_panel = Panel(
-            instance_table, 
-            title="[bold cyan]Transient (instance/)[/bold cyan]", 
-            box=box.ROUNDED, 
-            padding=(0, 0)
+            instance_table,
+            title="[bold cyan]Transient (instance/)[/bold cyan]",
+            box=box.ROUNDED,
+            padding=(0, 0),
         )
-        
+
         promoted_table = create_promoted_table(promoted_counts, metadata)
         promoted_panel = Panel(
-            promoted_table, 
-            title="[bold cyan]Promoted (tests/)[/bold cyan]", 
-            box=box.ROUNDED, 
-            padding=(0, 0)
+            promoted_table,
+            title="[bold cyan]Promoted (tests/)[/bold cyan]",
+            box=box.ROUNDED,
+            padding=(0, 0),
         )
-        
+
         side_by_side = Columns([instance_panel, promoted_panel], equal=True, padding=(0, 1))
         console.print(Group(header_panel, side_by_side))
-        
+
         if detailed:
             console.print("\n[bold]Instance Files:[/bold]")
-            _print_file_listing(FIXTURES_DIR, ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"], FIXTURES_DIR / "users")
-            
+            _print_file_listing(
+                FIXTURES_DIR,
+                [
+                    "beatmaps",
+                    "beatmapsets",
+                    "beatmap_scores",
+                    "beatmap_attributes",
+                    "queues",
+                    "requests",
+                ],
+                FIXTURES_DIR / "users",
+            )
+
             console.print("\n[bold]Promoted Files:[/bold]")
-            _print_file_listing(TEST_FIXTURES_DIR, ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"], TEST_FIXTURES_DIR / "users")
-        
+            _print_file_listing(
+                TEST_FIXTURES_DIR,
+                [
+                    "beatmaps",
+                    "beatmapsets",
+                    "beatmap_scores",
+                    "beatmap_attributes",
+                    "queues",
+                    "requests",
+                ],
+                TEST_FIXTURES_DIR / "users",
+            )
+
         if gaps:
             show_gaps(promoted_counts)
-    
+
     else:
         # Vertical layout - one at a time
         if show_instance:
             instance_table = create_instance_table(instance_counts, metadata)
             instance_panel = Panel(
-                instance_table, 
-                title="[bold cyan]Transient (instance/)[/bold cyan]", 
-                box=box.ROUNDED, 
-                padding=(0, 0)
+                instance_table,
+                title="[bold cyan]Transient (instance/)[/bold cyan]",
+                box=box.ROUNDED,
+                padding=(0, 0),
             )
             console.print(instance_panel)
-            
+
             if detailed:
                 console.print("\n[bold]Instance Files:[/bold]")
-                _print_file_listing(FIXTURES_DIR, ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"], FIXTURES_DIR / "users")
-        
+                _print_file_listing(
+                    FIXTURES_DIR,
+                    [
+                        "beatmaps",
+                        "beatmapsets",
+                        "beatmap_scores",
+                        "beatmap_attributes",
+                        "queues",
+                        "requests",
+                    ],
+                    FIXTURES_DIR / "users",
+                )
+
         if show_promoted:
             console.print("\n") if show_instance else None
             promoted_table = create_promoted_table(promoted_counts, metadata)
             promoted_panel = Panel(
-                promoted_table, 
-                title="[bold cyan]Promoted (tests/)[/bold cyan]", 
-                box=box.ROUNDED, 
-                padding=(0, 0)
+                promoted_table,
+                title="[bold cyan]Promoted (tests/)[/bold cyan]",
+                box=box.ROUNDED,
+                padding=(0, 0),
             )
             console.print(promoted_panel)
-            
+
             if detailed:
                 console.print("\n[bold]Promoted Files:[/bold]")
-                _print_file_listing(TEST_FIXTURES_DIR, ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "queues", "requests"], TEST_FIXTURES_DIR / "users")
-        
+                _print_file_listing(
+                    TEST_FIXTURES_DIR,
+                    [
+                        "beatmaps",
+                        "beatmapsets",
+                        "beatmap_scores",
+                        "beatmap_attributes",
+                        "queues",
+                        "requests",
+                    ],
+                    TEST_FIXTURES_DIR / "users",
+                )
+
         if gaps and show_promoted:
             show_gaps(promoted_counts)

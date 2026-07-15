@@ -11,6 +11,7 @@ Examples:
     manage fixtures generate
     manage fixtures generate --queue-count 10 --request-count 100
 """
+
 from pathlib import Path
 from rich.console import Console
 from rich.table import Table
@@ -44,7 +45,9 @@ async def cmd_generate(
         console.print()
         console.print("Run the following command to fetch required fixtures:")
         console.print()
-        console.print("  python manage.py fixtures fetch --criteria minimal --users-osu 10 --beatmapsets 30")
+        console.print(
+            "  python manage.py fixtures fetch --criteria minimal --users-osu 10 --beatmapsets 30"
+        )
         console.print()
         console.print("Then run generation again:")
         console.print()
