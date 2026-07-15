@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio.session import AsyncSession
 
 from app.database import PostgresqlDB
 from app.database.seeding.event import SeedEvent
+from app.logging import get_logger
 
 
 class Seeder(ABC):
@@ -17,6 +18,7 @@ class Seeder(ABC):
         self.total: int = 0
         self.queue: asyncio.Queue | None = None
         self.session: AsyncSession | None = None
+        self.logger = get_logger(self.__class__.__name__)
 
     def set_data(self, data: list[dict]) -> None:
         """Inject fixture data loaded by the fixture loader."""
