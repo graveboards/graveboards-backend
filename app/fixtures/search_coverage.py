@@ -294,7 +294,7 @@ class SearchTestFetchAction:
 
     async def fetch_beatmap(self) -> dict[str, set[int]]:
         """Fetch one random beatmap."""
-        from app.fixtures.utils import get_fixture_path
+        from app.fixtures.paths import get_fixture_path
 
         beatmap_id = await self.fetcher._get_random_id("beatmaps", avoid_failed=True)
 
@@ -326,7 +326,7 @@ class SearchTestFetchAction:
 
     async def fetch_user(self) -> dict[str, set[int]]:
         """Fetch one random user from rankings."""
-        from app.fixtures.utils import get_fixture_path
+        from app.fixtures.paths import get_fixture_path
 
         try:
             data = await self.fetcher.oac.get_rankings(
