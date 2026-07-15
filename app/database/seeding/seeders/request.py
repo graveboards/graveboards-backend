@@ -1,4 +1,3 @@
-import os
 import asyncio
 
 from sqlalchemy.ext.asyncio.session import AsyncSession
@@ -7,7 +6,7 @@ from app.database.models import Request, BeatmapsetSnapshot
 from app.database.crud import session_manager, db_session_resolver
 from app.database.seeding import SeederTarget
 from app.database.seeding.event import SeedEvent
-from .base import Seeder, FIXTURES_PATH
+from .base import Seeder
 
 
 class RequestSeeder(Seeder):
@@ -36,9 +35,11 @@ class RequestSeeder(Seeder):
                 _sorting=[{"field": "BeatmapsetSnapshot.id", "order": "desc"}],
                 session=self.session
             )
+            if beatmapset_snapshot is None:
+                self.logger.warning(
+                    f"Skipping request {request_entry['id']}: "
+                    f"no BeatmapsetSnapshot for beatmapset {beatmapset_id}"
+                )
+                return
             request_entry["beatmapset_snapshot_id"] = beatmapset_snapshot.id
             await self.db.add(Request, **request_entry, session=self.session)
-
-    @property
-    def fixture_path(self) -> str:
-        return os.path.join(FIXTURES_PATH, "requests.json")

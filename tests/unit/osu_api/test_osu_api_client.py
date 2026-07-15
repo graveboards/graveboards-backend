@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 import time
 
-from app.fixtures.manager import FixtureManager
+from app.fixtures.reader import FixtureReader
 from tests.unit.osu_api.test_helpers import _get_beatmap_with_fallback, _get_beatmapset_with_fallback
 from tests.unit.osu_api.conftest import MockResponse
 from app.osu_api.enums import ScoreType, Ruleset
@@ -18,7 +18,7 @@ def mock_rate_limit_decorator():
 @pytest.mark.asyncio
 async def test_get_beatmap_from_redis_cache(api_client):
     api_client_obj, mock_redis = api_client
-    fixture_manager = FixtureManager()
+    fixture_manager = FixtureReader()
     mock_data = _get_beatmap_with_fallback(fixture_manager)
     
     from app.redis.models import Beatmap
@@ -42,7 +42,7 @@ async def test_get_beatmap_from_redis_cache(api_client):
 @pytest.mark.asyncio
 async def test_get_beatmap_from_api(api_client):
     api_client_obj, mock_redis = api_client
-    fixture_manager = FixtureManager()
+    fixture_manager = FixtureReader()
     mock_data = _get_beatmap_with_fallback(fixture_manager)
     
     mock_redis.hgetall.return_value = None
@@ -64,7 +64,7 @@ async def test_get_beatmap_from_api(api_client):
 @pytest.mark.asyncio
 async def test_get_beatmap_caches_response(api_client):
     api_client_obj, mock_redis = api_client
-    fixture_manager = FixtureManager()
+    fixture_manager = FixtureReader()
     mock_data = _get_beatmap_with_fallback(fixture_manager)
     
     mock_redis.hgetall.return_value = None
@@ -129,7 +129,7 @@ async def test_get_beatmap_attributes(api_client):
 @pytest.mark.asyncio
 async def test_get_beatmapset_from_redis_cache(api_client):
     api_client_obj, mock_redis = api_client
-    fixture_manager = FixtureManager()
+    fixture_manager = FixtureReader()
     mock_data = _get_beatmapset_with_fallback(fixture_manager)
     
     from app.redis.models import Beatmapset
@@ -156,7 +156,7 @@ async def test_get_beatmapset_from_redis_cache(api_client):
 @pytest.mark.asyncio
 async def test_get_beatmapset_from_api(api_client):
     api_client_obj, mock_redis = api_client
-    fixture_manager = FixtureManager()
+    fixture_manager = FixtureReader()
     mock_data = _get_beatmapset_with_fallback(fixture_manager)
     
     mock_redis.hgetall.return_value = None

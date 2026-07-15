@@ -6,7 +6,16 @@ from shutil import rmtree
 
 from rich.console import Console
 
-from app.fixtures.utils import FIXTURES_DIR, load_metadata, save_metadata, RULESETS, create_empty_samples, create_empty_promoted_fixtures
+from app.fixtures.paths import FIXTURES_DIR
+from app.fixtures.metadata_io import (
+    load_metadata,
+    save_metadata,
+    create_empty_samples,
+    create_empty_promoted_fixtures,
+)
+from app.fixtures.constants import RULESETS
+from app.fixtures.failed_id_store import FailedIdStore
+from app.redis import RedisClient
 
 console = Console()
 
@@ -23,7 +32,7 @@ def _atomic_save_metadata(metadata: dict, metadata_path: Path) -> None:
         raise
 
 
-async def cmd_wipe_fixtures(
+async def cmd_clean_fixtures(
     clear_failed_ids: bool = False,
     clear_top_player_ids: bool = False,
     clear_promoted: bool = False,
@@ -31,12 +40,17 @@ async def cmd_wipe_fixtures(
 ):
     if not force:
         from rich.prompt import Prompt
-        response = Prompt.ask("This will delete all fixture files and reset metadata. Continue?", choices=["y", "n"], default="n")
+
+        response = Prompt.ask(
+            "This will delete all fixture files and reset metadata. Continue?",
+            choices=["y", "n"],
+            default="n",
+        )
         if response != "y":
             console.print("[dim]Aborted.[/dim]")
             return
 
-    console.print("\n[bold blue]Wiping fixtures...[/bold blue]\n")
+    console.print("\n[bold blue]Cleaning fixtures...[/bold blue]\n")
 
     metadata = load_metadata()
 
@@ -52,18 +66,21 @@ async def cmd_wipe_fixtures(
     metadata.pop("search_test_coverage", None)
     metadata.pop("targeted", None)
     if clear_failed_ids:
-        metadata["failed_ids"] = {
-            "beatmaps": [],
-            "beatmapsets": [],
-            "users": {r: [] for r in RULESETS},
-        }
+        rc = RedisClient()
+        store = FailedIdStore(rc)
+        await store.clear_all()
+        await rc.aclose()
+        console.print("[green]✅ Failed IDs cleared from Redis[/green]")
     if clear_top_player_ids:
         metadata["top_player_ids"] = {r: [] for r in RULESETS}
     if clear_promoted:
         if metadata.get("promoted_fixtures", {}).get("beatmaps", {}).get("count", 0) > 0:
             console.print(
-                "[yellow]⚠️  WARNING: Removing promoted fixture metadata while fixture files still exist on disk![/yellow]")
-            console.print("   This will cause metadata to be out of sync with actual fixture state.")
+                "[yellow]⚠️  WARNING: Removing promoted fixture metadata while fixture files still exist on disk![/yellow]"
+            )
+            console.print(
+                "   This will cause metadata to be out of sync with actual fixture state."
+            )
         metadata["promoted_fixtures"] = create_empty_promoted_fixtures()
 
     if deleted_count > 0:
@@ -71,4 +88,4 @@ async def cmd_wipe_fixtures(
     else:
         save_metadata(metadata)
 
-    console.print("[green]✅ Fixtures wiped![/green]\n")
+    console.print("[green]✅ Fixtures cleaned![/green]\n")

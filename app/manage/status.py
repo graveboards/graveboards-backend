@@ -34,7 +34,7 @@ def print_status(status: dict):
             for sub_k, sub_v in v.items():
                 sub_line = f"  {sub_k}: {_format_value(sub_v, row_width, prefix='')}"
                 if len(sub_line) > row_width:
-                    sub_line = sub_line[:row_width - 1] + "…"
+                    sub_line = sub_line[: row_width - 1] + "…"
                 print(sub_line)
         elif isinstance(v, Iterable) and not isinstance(v, (str, bytes)):
             print(justify(k, f"[{len(v)} items]", width=row_width))

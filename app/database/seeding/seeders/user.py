@@ -1,4 +1,3 @@
-import os
 import asyncio
 
 from sqlalchemy.ext.asyncio.session import AsyncSession
@@ -7,7 +6,7 @@ from app.database.models import User
 from app.database.crud import session_manager, db_session_resolver
 from app.database.seeding import SeederTarget
 from app.database.seeding.event import SeedEvent
-from .base import Seeder, FIXTURES_PATH
+from .base import Seeder
 
 
 class UserSeeder(Seeder):
@@ -24,7 +23,3 @@ class UserSeeder(Seeder):
     async def _seed_user(self, user_entry: dict):
         if not await self.db.get(User, id=user_entry["id"], session=self.session):
             await self.db.add(User, **user_entry, session=self.session)
-
-    @property
-    def fixture_path(self) -> str:
-        return os.path.join(FIXTURES_PATH, "users.json")

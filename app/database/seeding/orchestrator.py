@@ -59,6 +59,12 @@ class SeederOrchestrator:
             for layer in self.execution_order
             for target in layer
         }
+        self.totals: dict[SeederTarget, int] = {}
+        self.total: int = 0
+        self._refresh_totals()
+
+    def _refresh_totals(self) -> None:
+        """Recalculate totals from seeders (call after set_data())."""
         self.totals = {
             target: seeder.total
             for target, seeder in self.seeders.items()

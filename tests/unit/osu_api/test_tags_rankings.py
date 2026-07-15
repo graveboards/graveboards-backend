@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 
-from app.fixtures.manager import FixtureManager
+from app.fixtures.reader import FixtureReader
 from tests.unit.osu_api.test_utils import _create_mock_tags, _create_mock_rankings_user
 from tests.unit.osu_api.test_helpers import _get_user_with_fallback
 from tests.unit.osu_api.conftest import MockResponse
@@ -75,7 +75,7 @@ async def test_get_rankings_includes_limit_and_offset(api_client):
     from app.osu_api.enums import Ruleset
 
     api_client_obj, mock_redis = api_client
-    fixture_manager = FixtureManager()
+    fixture_manager = FixtureReader()
     mock_data = _get_user_with_fallback(fixture_manager, ruleset="osu")
 
     mock_redis.hgetall.return_value = None

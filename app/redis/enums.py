@@ -27,6 +27,7 @@ class Namespace(StrEnum):
     QUEUE_RULE_RATE_LIMIT = "queue_rule_rate_limit"
     QUEUE_RULE_COOLDOWN = "queue_rule_cooldown"
     RATE_LIMIT_LAST_CALL = "rate_limit_last_call"
+    FAILED_IDS = "failed_ids"
 
     def hash_name(self, suffix: int | str) -> str:
         """Build a namespaced Redis key.

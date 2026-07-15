@@ -7,22 +7,27 @@ testing of the search engine's QUEUES and REQUESTS scopes, including:
 - Requests with varied statuses, comments, mv_checked states
 - Cross-entity relationships (queues -> requests -> beatmapsets -> beatmaps)
 - Profile associations (queue user_id -> profile filtering)
+
+Request generation uses a pair-shuffling algorithm to ensure no duplicate
+(queue_id, beatmapset_id) combinations, respecting the database's unique
+constraint on those columns. Each request's user_id is set to the owner
+of the requested beatmapset.
 """
+
 import json
 import random
 from datetime import datetime, timezone, timedelta
+from itertools import product
 from pathlib import Path
 from typing import Optional
 
 from app.config import PROJECT_ROOT
 from app.fixtures.bn_queue_comments import BN_QUEUE_COMMENTS as REQUEST_COMMENTS
 from app.fixtures.queue_metadata import QUEUE_NAMES, QUEUE_DESCRIPTIONS
-from app.fixtures.utils import load_metadata, save_metadata
+from app.fixtures.metadata_io import load_metadata, save_metadata
 
 QUEUE_FIXTURES_PATH = PROJECT_ROOT / "instance" / "fixtures" / "queues"
 REQUEST_FIXTURES_PATH = PROJECT_ROOT / "instance" / "fixtures" / "requests"
-SEEDING_QUEUES_PATH = PROJECT_ROOT / "app" / "database" / "seeding" / "fixtures" / "queues.json"
-SEEDING_REQUESTS_PATH = PROJECT_ROOT / "app" / "database" / "seeding" / "fixtures" / "requests.json"
 
 BLANK_COMMENT_CHANCE = 0.25
 
@@ -43,6 +48,7 @@ class QueueRequestFixtureGenerator:
         self.beatmapset_ids = beatmapset_ids or self._load_existing_beatmapset_ids()
         self.queue_ids = queue_ids or self._load_existing_queue_ids()
         self._next_queue_id = max(self.queue_ids) + 1 if self.queue_ids else 1
+        self._beatmapset_owners: dict[int, int] = self._load_beatmapset_owners()
 
     def _load_existing_user_ids(self) -> list[int]:
         users_path = PROJECT_ROOT / "instance" / "fixtures" / "users"
@@ -56,8 +62,6 @@ class QueueRequestFixtureGenerator:
                             user_ids.append(uid)
                         except (IndexError, ValueError):
                             pass
-        if not user_ids:
-            user_ids = [4098393, 5099768, 6064571, 7716455, 11422420, 16219092]
         return user_ids
 
     def _load_existing_beatmapset_ids(self) -> list[int]:
@@ -70,8 +74,6 @@ class QueueRequestFixtureGenerator:
                     bms_ids.append(bid)
                 except (IndexError, ValueError):
                     pass
-        if not bms_ids:
-            bms_ids = [2387557, 623475, 1034724, 1895918, 2362400, 2344790]
         return bms_ids
 
     def _load_existing_queue_ids(self) -> list[int]:
@@ -84,11 +86,28 @@ class QueueRequestFixtureGenerator:
                     q_ids.append(qid)
                 except (IndexError, ValueError):
                     pass
-        if not q_ids:
-            q_ids = [1, 2]
         return q_ids
 
-    def generate_queues(self, count: int = 50) -> list[dict]:
+    def _load_beatmapset_owners(self) -> dict[int, int]:
+        """Load beatmapset data to build a mapping of beatmapset_id -> owner_user_id."""
+        bms_path = PROJECT_ROOT / "instance" / "fixtures" / "beatmapsets"
+        owners: dict[int, int] = {}
+        if not bms_path.exists():
+            return owners
+
+        for f in bms_path.glob("beatmapset_*.json"):
+            try:
+                bid = int(f.stem.split("_")[1])
+                with open(f) as fh:
+                    data = json.load(fh)
+                if "user_id" in data:
+                    owners[bid] = data["user_id"]
+            except (IndexError, ValueError, json.JSONDecodeError, KeyError):
+                continue
+
+        return owners
+
+    def generate_queues(self, count: int = 10) -> list[dict]:
         """Generate diverse queue fixtures."""
         queues = []
         used_names = set()
@@ -98,7 +117,7 @@ class QueueRequestFixtureGenerator:
             name = self._choose_name(used_names)
             used_names.add(name)
 
-            user_id = random.choice(self.user_ids)
+            user_id = random.choice(self.user_ids) if self.user_ids else 0
             is_open = random.choice([True, True, True, False])
             visibility = random.choice([0, 1, 2])
 
@@ -109,8 +128,8 @@ class QueueRequestFixtureGenerator:
                 "description": random.choice(QUEUE_DESCRIPTIONS),
                 "is_open": is_open,
                 "visibility": visibility,
-                "created_at": (datetime.now(timezone.utc) - timedelta(days=random.randint(1, 365))).isoformat(),
-                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "created_at": datetime.now(timezone.utc) - timedelta(days=random.randint(1, 365)),
+                "updated_at": datetime.now(timezone.utc),
             }
             queues.append(queue)
 
@@ -121,23 +140,37 @@ class QueueRequestFixtureGenerator:
         queues: list[dict],
         count: int = 100,
     ) -> list[dict]:
-        """Generate diverse request fixtures linked to queues and beatmapsets."""
+        """Generate diverse request fixtures linked to queues and beatmapsets.
+
+        Uses a pair-shuffling algorithm to ensure no duplicate (queue_id,
+        beatmapset_id) combinations. Each request's user_id is set to the
+        owner of the requested beatmapset.
+
+        Raises:
+            ValueError: If count exceeds the number of available (queue, beatmapset) pairs.
+        """
+        if not queues:
+            return []
+
+        if not self.beatmapset_ids:
+            return []
+
+        max_pairs = len(queues) * len(self.beatmapset_ids)
+        if count > max_pairs:
+            raise ValueError(
+                f"Cannot generate {count} requests: only {max_pairs} unique "
+                f"(queue, beatmapset) pairs available ({len(queues)} queues x "
+                f"{len(self.beatmapset_ids)} beatmapsets). "
+                f"Reduce request count or increase queue/beatmapset fixtures."
+            )
+
+        pairs = list(product(queues, self.beatmapset_ids))
+        random.shuffle(pairs)
+        selected_pairs = pairs[:count]
+
         requests = []
-        used_combinations = set()
-
-        for i in range(count):
-            queue = random.choice(queues)
-            queue_id = queue["id"]
-
-            if not self.beatmapset_ids:
-                continue
-
-            beatmapset_id = random.choice(self.beatmapset_ids)
-            combination = (beatmapset_id, queue_id)
-
-            if combination in used_combinations:
-                continue
-            used_combinations.add(combination)
+        for i, (queue, beatmapset_id) in enumerate(selected_pairs, start=1):
+            owner_id = self._beatmapset_owners.get(beatmapset_id, queue["user_id"])
 
             status = random.choice(REQUEST_STATUSES)
             mv_checked = random.choice([True, False])
@@ -147,32 +180,31 @@ class QueueRequestFixtureGenerator:
                 comment = random.choice(REQUEST_COMMENTS)
 
             request = {
-                "id": i + 1,
-                "user_id": queue["user_id"],
+                "id": i,
+                "user_id": owner_id,
                 "beatmapset_id": beatmapset_id,
-                "queue_id": queue_id,
+                "queue_id": queue["id"],
                 "comment": comment,
                 "mv_checked": mv_checked,
                 "status": status,
-                "created_at": (datetime.now(timezone.utc) - timedelta(days=random.randint(1, 180))).isoformat(),
-                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "created_at": datetime.now(timezone.utc) - timedelta(days=random.randint(1, 180)),
+                "updated_at": datetime.now(timezone.utc),
             }
             requests.append(request)
 
         return requests
 
     def save_queues(self, queues: list[dict]) -> Path:
-        """Save queue fixtures to instance fixtures and seeding fixtures."""
+        """Save queue fixtures to instance fixtures."""
         QUEUE_FIXTURES_PATH.mkdir(parents=True, exist_ok=True)
 
         for queue in queues:
             filepath = QUEUE_FIXTURES_PATH / f"queue_{queue['id']}.json"
+            serializable_queue = {
+                k: v.isoformat() if isinstance(v, datetime) else v for k, v in queue.items()
+            }
             with open(filepath, "w") as f:
-                json.dump(queue, f, indent=2)
-
-        combined = queues
-        with open(SEEDING_QUEUES_PATH, "w") as f:
-            json.dump(combined, f, indent=2)
+                json.dump(serializable_queue, f, indent=2)
 
         metadata = load_metadata()
         metadata["samples"]["queues"]["count"] = len(queues)
@@ -182,17 +214,16 @@ class QueueRequestFixtureGenerator:
         return QUEUE_FIXTURES_PATH
 
     def save_requests(self, requests: list[dict]) -> Path:
-        """Save request fixtures to instance fixtures and seeding fixtures."""
+        """Save request fixtures to instance fixtures."""
         REQUEST_FIXTURES_PATH.mkdir(parents=True, exist_ok=True)
 
         for request in requests:
             filepath = REQUEST_FIXTURES_PATH / f"request_{request['id']}.json"
+            serializable_request = {
+                k: v.isoformat() if isinstance(v, datetime) else v for k, v in request.items()
+            }
             with open(filepath, "w") as f:
-                json.dump(request, f, indent=2)
-
-        combined = requests
-        with open(SEEDING_REQUESTS_PATH, "w") as f:
-            json.dump(combined, f, indent=2)
+                json.dump(serializable_request, f, indent=2)
 
         metadata = load_metadata()
         metadata["samples"]["requests"]["count"] = len(requests)
@@ -210,27 +241,10 @@ class QueueRequestFixtureGenerator:
 
     def generate_comprehensive(
         self,
-        queue_count: int = 50,
+        queue_count: int = 10,
         request_count: int = 100,
     ) -> tuple[list[dict], list[dict]]:
         """Generate both queues and requests with cross-entity relationships."""
         queues = self.generate_queues(queue_count)
         requests = self.generate_requests(queues, request_count)
         return queues, requests
-
-
-def generate_and_save(
-    queue_count: int = 50,
-    request_count: int = 100,
-    user_ids: list[int] = None,
-    beatmapset_ids: list[int] = None,
-) -> tuple[list[dict], list[dict]]:
-    """Generate and save queue/request fixtures."""
-    generator = QueueRequestFixtureGenerator(
-        user_ids=user_ids,
-        beatmapset_ids=beatmapset_ids,
-    )
-    queues, requests = generator.generate_comprehensive(queue_count, request_count)
-    generator.save_queues(queues)
-    generator.save_requests(requests)
-    return queues, requests

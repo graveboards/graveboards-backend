@@ -10,16 +10,13 @@ Examples:
 """
 
 import argparse
-import json
-from pathlib import Path
 from typing import Optional
 import asyncio
 
-from app.fixtures.manager import FixtureManager
+from app.fixtures.reader import FixtureReader
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
-from rich.text import Text
 from rich.box import SIMPLE_HEAD
 
 console = Console()
@@ -32,14 +29,18 @@ async def cmd_reconcile(category: Optional[str] = None, dry_run: bool = False) -
         category: Specific category to reconcile (None for all)
         dry_run: Show changes without applying them
     """
-    manager = FixtureManager()
+    manager = FixtureReader()
 
     if category:
         categories = [category]
     else:
         categories = [
-            "beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes",
-            "users", "scores"
+            "beatmaps",
+            "beatmapsets",
+            "beatmap_scores",
+            "beatmap_attributes",
+            "users",
+            "scores",
         ]
 
     changes = []
@@ -53,13 +54,9 @@ async def cmd_reconcile(category: Optional[str] = None, dry_run: bool = False) -
         return
 
     if dry_run:
-        console.print(Panel(
-            f"[yellow]Dry run: {len(changes)} change(s) would be made[/yellow]"
-        ))
+        console.print(Panel(f"[yellow]Dry run: {len(changes)} change(s) would be made[/yellow]"))
     else:
-        console.print(Panel(
-            f"[green]Reconciled {len(changes)} fixture(s) from disk[/green]"
-        ))
+        console.print(Panel(f"[green]Reconciled {len(changes)} fixture(s) from disk[/green]"))
 
     table = Table(box=SIMPLE_HEAD)
     table.add_column("Category", style="cyan")
@@ -72,9 +69,13 @@ async def cmd_reconcile(category: Optional[str] = None, dry_run: bool = False) -
         table.add_row(
             change["category"],
             change["action"],
-            change["fixture_id"][:8] + "..." if len(change["fixture_id"]) > 8 else change["fixture_id"],
+            (
+                change["fixture_id"][:8] + "..."
+                if len(change["fixture_id"]) > 8
+                else change["fixture_id"]
+            ),
             str(change["disk_count"]),
-            str(change.get("old_meta_count", "N/A"))
+            str(change.get("old_meta_count", "N/A")),
         )
 
     if len(changes) > 20:
@@ -85,25 +86,24 @@ async def cmd_reconcile(category: Optional[str] = None, dry_run: bool = False) -
 
 def main():
     """CLI entry point."""
-    parser = argparse.ArgumentParser(
-        description="Reconcile fixture metadata with disk state"
-    )
+    parser = argparse.ArgumentParser(description="Reconcile fixture metadata with disk state")
     parser.add_argument(
-        "--category", "-c",
-        choices=["beatmaps", "beatmapsets", "users", "scores", "beatmap_scores", "beatmap_attributes"],
-        help="Specific category to reconcile"
+        "--category",
+        "-c",
+        choices=[
+            "beatmaps",
+            "beatmapsets",
+            "users",
+            "scores",
+            "beatmap_scores",
+            "beatmap_attributes",
+        ],
+        help="Specific category to reconcile",
     )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Show changes without applying them"
-    )
+    parser.add_argument("--dry-run", action="store_true", help="Show changes without applying them")
 
     args = parser.parse_args()
-    asyncio.run(cmd_reconcile(
-        category=args.category,
-        dry_run=args.dry_run
-    ))
+    asyncio.run(cmd_reconcile(category=args.category, dry_run=args.dry_run))
 
 
 if __name__ == "__main__":

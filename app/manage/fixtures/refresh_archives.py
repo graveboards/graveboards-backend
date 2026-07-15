@@ -7,9 +7,9 @@ Examples:
     manage fixtures refresh-archives
     manage fixtures refresh-archives --force
 """
+
 import argparse
 import asyncio
-from typing import Optional
 
 from rich.console import Console
 from rich.panel import Panel
@@ -35,11 +35,14 @@ async def cmd_refresh_archives(force: bool = False) -> None:
         index = load_archive_index()
 
         if not force and index.last_updated:
-            from datetime import datetime, timedelta
+            from datetime import datetime
+
             time_since_update = (datetime.now() - index.last_updated).total_seconds()
 
             if time_since_update < 3600:  # 1 hour cooldown
-                console.print(f"[yellow]Archives were updated {time_since_update:.0f}s ago. Skipping refresh. Use --force to force update.[/yellow]")
+                console.print(
+                    f"[yellow]Archives were updated {time_since_update:.0f}s ago. Skipping refresh. Use --force to force update.[/yellow]"
+                )
                 return
 
         with Progress(
@@ -53,14 +56,16 @@ async def cmd_refresh_archives(force: bool = False) -> None:
 
             progress.update(task, description=f"Indexed {len(archive_index.archives)} archives")
 
-        console.print(Panel(
-            f"[green]Archive index refreshed![/green]\n"
-            f"Total archives: {len(archive_index.archives)}\n"
-            f"Last updated: {archive_index.last_updated.strftime('%Y-%m-%d %H:%M:%S') if archive_index.last_updated else 'N/A'}\n"
-            f"Ruleset coverage: {', '.join(archive_index.ruleset_archives.keys())}",
-            title="Archive Refresh",
-            border_style="green",
-        ))
+        console.print(
+            Panel(
+                f"[green]Archive index refreshed![/green]\n"
+                f"Total archives: {len(archive_index.archives)}\n"
+                f"Last updated: {archive_index.last_updated.strftime('%Y-%m-%d %H:%M:%S') if archive_index.last_updated else 'N/A'}\n"
+                f"Ruleset coverage: {', '.join(archive_index.ruleset_archives.keys())}",
+                title="Archive Refresh",
+                border_style="green",
+            )
+        )
 
         console.print("\n[bold blue]Extracting player IDs from latest archives...[/bold blue]")
 
@@ -88,17 +93,13 @@ async def cmd_refresh_archives(force: bool = False) -> None:
 
 def main():
     """CLI entry point."""
-    parser = argparse.ArgumentParser(
-        description="Refresh fixture archive index from osu.sh"
-    )
+    parser = argparse.ArgumentParser(description="Refresh fixture archive index from osu.sh")
     parser.add_argument(
-        "--force", "-f",
-        action="store_true",
-        help="Force refresh even if recently updated"
+        "--force", "-f", action="store_true", help="Force refresh even if recently updated"
     )
 
     args = parser.parse_args()
-    asyncio.run(cmd_refresh_archives(force=getattr(args, 'force', False)))
+    asyncio.run(cmd_refresh_archives(force=getattr(args, "force", False)))
 
 
 if __name__ == "__main__":

@@ -1,5 +1,4 @@
 import asyncio
-import os
 import json
 from abc import ABC, abstractmethod
 from datetime import datetime
@@ -8,30 +7,34 @@ from sqlalchemy.ext.asyncio.session import AsyncSession
 
 from app.database import PostgresqlDB
 from app.database.seeding.event import SeedEvent
-
-FIXTURES_PATH = os.path.abspath("app/database/seeding/fixtures")
+from app.logging import get_logger
 
 
 class Seeder(ABC):
     def __init__(self, db: PostgresqlDB):
         self.db = db
-        self.data = self._load()
+        self.data: list[dict] = []
         self.progress: int = 0
-        self.total = len(self.data)
+        self.total: int = 0
         self.queue: asyncio.Queue | None = None
         self.session: AsyncSession | None = None
+        self.logger = get_logger(self.__class__.__name__)
+
+    def set_data(self, data: list[dict]) -> None:
+        """Inject fixture data loaded by the fixture loader."""
+        self.data = data
+        self.total = len(self.data)
 
     @abstractmethod
     async def seed(self, queue: asyncio.Queue[SeedEvent | None], session: AsyncSession = None):
         ...
 
-    def _load(self) -> list[dict]:
-        with open(self.fixture_path) as f:
-            data = json.load(f)
-        return self._normalize_datetimes(data)
-
     @staticmethod
     def _normalize_datetimes(obj):
+        """Recursively convert ISO datetime strings to datetime objects.
+
+        Safety net for any fixture data that still contains string dates.
+        """
         if isinstance(obj, dict):
             return {k: Seeder._normalize_datetimes(v) for k, v in obj.items()}
         elif isinstance(obj, list):
@@ -42,8 +45,3 @@ class Seeder(ABC):
             except ValueError:
                 return obj
         return obj
-
-    @property
-    @abstractmethod
-    def fixture_path(self) -> str:
-        ...

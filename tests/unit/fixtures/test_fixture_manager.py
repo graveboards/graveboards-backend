@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 
 
-from app.fixtures.manager import FixtureManager
+from app.fixtures.reader import FixtureReader
 
 
 @pytest.fixture
@@ -149,7 +149,7 @@ def fixture_manager(temp_fixture_dir, mock_beatmap_file, mock_user_file):
         }
     }
 
-    return FixtureManager(temp_fixture_dir, metadata)
+    return FixtureReader(temp_fixture_dir, metadata)
 
 
 class TestFixtureManager:
@@ -157,7 +157,7 @@ class TestFixtureManager:
 
     def test_init(self, temp_fixture_dir):
         """Test FixtureManager initialization."""
-        manager = FixtureManager(temp_fixture_dir)
+        manager = FixtureReader(temp_fixture_dir)
         assert manager.fixture_dir == temp_fixture_dir
         assert "targeted" in manager.metadata
 
@@ -226,7 +226,7 @@ class TestFixtureManager:
             }
         }
 
-        manager = FixtureManager(temp_fixture_dir, metadata)
+        manager = FixtureReader(temp_fixture_dir, metadata)
         users = manager.get_users(
             ruleset="osu",
             count=1,
@@ -251,7 +251,7 @@ class TestFixtureManager:
             }
         }
 
-        manager = FixtureManager(temp_fixture_dir, metadata)
+        manager = FixtureReader(temp_fixture_dir, metadata)
         beatmapsets = manager.get_beatmapsets(
             count=1,
             by_status=["ranked"]
@@ -299,7 +299,7 @@ class TestFixtureManager:
             }
         }
 
-        manager = FixtureManager(temp_fixture_dir, metadata)
+        manager = FixtureReader(temp_fixture_dir, metadata)
         scores = manager.get_scores(
             score_type="best",
             count=1,
@@ -334,14 +334,14 @@ class TestFixtureManager:
 
     def test_get_fixtures_empty_category(self, temp_fixture_dir):
         """Test getting fixtures from empty category."""
-        manager = FixtureManager(temp_fixture_dir)
+        manager = FixtureReader(temp_fixture_dir)
         beatmaps = manager.get_beatmaps(count=5)
 
         assert len(beatmaps) == 0
 
     def test_resolve_preference_empty_metadata(self, temp_fixture_dir):
         """Test resolving preferences when no metadata exists."""
-        manager = FixtureManager(temp_fixture_dir)
+        manager = FixtureReader(temp_fixture_dir)
 
         beatmaps = manager.get_beatmaps(
             count=1,

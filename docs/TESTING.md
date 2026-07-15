@@ -137,8 +137,8 @@ python manage.py fixtures fetch --criteria standard --users-osu 50
 # Refresh archives
 python manage.py fixtures refresh-archives
 
-# Wipe all fixtures
-python manage.py fixtures wipe
+# Clean all fixtures
+python manage.py fixtures clean
 ```
 
 See [Fixture Selection Strategy Guide](./FIXTURE_SELECTION.md) for guidance on which fixture loading method to use.
