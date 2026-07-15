@@ -4,7 +4,7 @@ import os
 import random
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import AsyncIterator, Optional
+from typing import AsyncIterator, Callable, Optional
 
 import httpx
 
