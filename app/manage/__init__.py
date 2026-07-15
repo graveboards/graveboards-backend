@@ -1,30 +1,60 @@
 import argparse
-import asyncio
 import logging
 import sys
+import traceback
 
 from app.logging import setup_logging
+from rich.console import Console
 from .status import cmd_status
 from .reset import cmd_reset
 from .seed import cmd_seed
 from .fixtures import (
-    cmd_fetch_fixtures,
-    cmd_fixture_status,
-    cmd_promote_fixtures,
-    cmd_demote_fixtures,
     cmd_clean_fixtures,
-    cmd_refresh_top_players,
-    cmd_refresh_archives,
-    cmd_reconcile,
-    cmd_generate,
+    cmd_demote_fixtures,
+    cmd_fetch_fixtures,
     cmd_fetch_users_from_beatmapsets,
+    cmd_fixture_status,
+    cmd_generate,
+    cmd_promote_fixtures,
+    cmd_reconcile,
+    cmd_refresh_archives,
+    cmd_refresh_top_players,
 )
-from .parsers import (
-    build_status_parser,
-    build_reset_parser,
-    build_seed_parser,
-    build_fixtures_parser,
-)
+
+# Command registry: maps command names to handler functions
+COMMANDS = {
+    "status": cmd_status,
+    "reset": cmd_reset,
+    "seed": cmd_seed,
+    "fixtures": {
+        "clean": cmd_clean_fixtures,
+        "demote": cmd_demote_fixtures,
+        "fetch": cmd_fetch_fixtures,
+        "fetch-users-from-beatmapsets": cmd_fetch_users_from_beatmapsets,
+        "generate": cmd_generate,
+        "promote": cmd_promote_fixtures,
+        "reconcile": cmd_reconcile,
+        "refresh-archives": cmd_refresh_archives,
+        "refresh-top-players": cmd_refresh_top_players,
+        "status": cmd_fixture_status,
+    },
+}
+
+
+def build_status_parser(subparsers):
+    return subparsers.add_parser("status", help="View database status")
+
+
+def build_reset_parser(subparsers):
+    return subparsers.add_parser("reset", help="Reset database")
+
+
+def build_seed_parser(subparsers):
+    return subparsers.add_parser("seed", help="Seed database")
+
+
+def build_fixtures_parser(subparsers):
+    return subparsers.add_parser("fixtures", help="Manage test fixtures")
 
 
 async def main():
@@ -38,12 +68,12 @@ async def main():
 
     args = parser.parse_args()
 
-    verbose = getattr(args, 'verbose', False)
-    no_debug = not verbose
+    verbose = getattr(args, "verbose", False)
+    debug = verbose
     setup_logging(
         enabled_loggers=["manage", "database", "fixtures"],
         level_overrides={"database": logging.WARNING},
-        no_debug=no_debug
+        debug=debug,
     )
 
     try:
@@ -51,17 +81,19 @@ async def main():
             case "status":
                 await cmd_status(args.target)
             case "reset":
-                await cmd_reset(args.seed_target, force=getattr(args, 'force', False))
+                await cmd_reset(args.seed_target, force=getattr(args, "force", False))
             case "seed":
                 await cmd_seed(
                     args.target,
-                    ensure_fixtures=getattr(args, 'ensure_fixtures', False),
-                    profile_name=getattr(args, 'profile', 'default'),
+                    ensure_fixtures=getattr(args, "ensure_fixtures", False),
+                    profile_name=getattr(args, "profile", "default"),
                 )
             case "fixtures":
-                match args.fixture_command:
+                fixture_cmd = args.fixture_command
+                match fixture_cmd:
                     case "fetch":
                         from .fixtures.config import FetchConfig
+
                         fetch_config = FetchConfig(
                             criteria=args.criteria,
                             source=args.source,
@@ -98,12 +130,11 @@ async def main():
                         )
                     case "status":
                         await cmd_fixture_status(
-                            instance=getattr(args, 'instance', False),
-                            promoted=getattr(args, 'promoted', False),
-                            detailed=getattr(args, 'detailed', False),
-                            gaps=getattr(args, 'gaps', False),
+                            instance=getattr(args, "instance", False),
+                            promoted=getattr(args, "promoted", False),
+                            detailed=getattr(args, "detailed", False),
+                            gaps=getattr(args, "gaps", False),
                         )
-
                     case "promote":
                         await cmd_promote_fixtures(
                             beatmaps=args.beatmaps,
@@ -112,9 +143,9 @@ async def main():
                             scores=args.scores,
                             beatmap_scores=args.beatmap_scores,
                             beatmap_attributes=args.beatmap_attributes,
-                            queues=getattr(args, 'queues', False),
-                            requests=getattr(args, 'requests', False),
-                            force=getattr(args, 'force', False),
+                            queues=getattr(args, "queues", False),
+                            requests=getattr(args, "requests", False),
+                            force=getattr(args, "force", False),
                         )
                     case "demote":
                         await cmd_demote_fixtures(
@@ -124,20 +155,20 @@ async def main():
                             scores=args.scores,
                             beatmap_scores=args.beatmap_scores,
                             beatmap_attributes=args.beatmap_attributes,
-                            queues=getattr(args, 'queues', False),
-                            requests=getattr(args, 'requests', False),
-                            force=getattr(args, 'force', False),
+                            queues=getattr(args, "queues", False),
+                            requests=getattr(args, "requests", False),
+                            force=getattr(args, "force", False),
                         )
                     case "clean":
                         await cmd_clean_fixtures(
                             clear_failed_ids=args.clear_failed_ids,
                             clear_top_player_ids=args.clear_top_player_ids,
                             clear_promoted=args.clear_promoted,
-                            force=getattr(args, 'force', False),
+                            force=getattr(args, "force", False),
                         )
                     case "refresh-archives":
                         await cmd_refresh_archives(
-                            force=getattr(args, 'force', False),
+                            force=getattr(args, "force", False),
                         )
                     case "reconcile":
                         await cmd_reconcile(
@@ -152,9 +183,6 @@ async def main():
                     case "fetch-users-from-beatmapsets":
                         await cmd_fetch_users_from_beatmapsets()
     except Exception as e:
-        import traceback
-        from rich.console import Console
-        console = Console()
         console.print(f"\n[red]❌ Error:[/red] {e}")
-        console.print("[dim]" + traceback.format_exc() + "[/dim]")
-        raise SystemExit(1)
+        console.print(f"[dim]{traceback.format_exc()}[/dim]")
+        raise SystemExit(1) from None
