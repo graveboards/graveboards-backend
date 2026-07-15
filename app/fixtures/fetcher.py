@@ -19,6 +19,7 @@ from .id_source import IDSource
 from .validation import validate_data
 from .progress import ProgressBar
 from .failed_id_store import FailedIdStore
+from .fetch_loop import FetchConfig, FetchLoop, FetchEvent
 from app.exceptions import clean_error_msg
 
 MAX_RETRIES = 10
@@ -26,23 +27,12 @@ MAX_RETRIES_SCORES = 50
 RANKING_PAGE_SIZE = 50
 
 
-class FetchEvent:
-    def __init__(self, category: str, current: int, total: int):
-        self.category = category
-        self.current = current
-        self.total = total
-
-
 class FixtureDataFetcher:
     """Fetches fixtures from osu! API with retry logic, validation, and metadata tracking.
 
-    Current state:
-    - Has 6 near-duplicate fetch methods (fetch_beatmaps, fetch_beatmapsets, etc.)
-    - Each method follows the same pattern: ID generation -> API call -> validation -> write -> metadata update
-    - FetchLoop infrastructure exists in fetch_loop.py for future refactoring
-
-    TODO: Migrate fetch methods to use FetchLoop for elimination of duplication.
-    See: app/fixtures/fetch_loop.py
+    Uses FetchLoop for the common fetch pattern (ID generation -> API call ->
+    validation -> write -> metadata update). Category-specific wrapper logic
+    handles multi-ruleset/multi-type iteration and special ID sources.
     """
 
     def __init__(self, rc: RedisClient, id_ranges: dict | None = None, force_fetch: bool = False,
@@ -150,46 +140,64 @@ class FixtureDataFetcher:
             json.dump(data, f, indent=2)
         os.replace(tmp_path, filepath)
 
+    def _make_fetch_config(self, category: str, api_call_factory: Callable, path_builder: Callable,
+                           data_type: str, max_retries: int | None = None,
+                           max_attempts: int | None = None,
+                           data_validator: Callable | None = None,
+                           on_empty_data_limit: int | None = None) -> FetchConfig:
+        """Create a FetchConfig for the given category."""
+        def id_generator():
+            return self._get_random_id(category, avoid_failed=True)
+
+        def success_handler(beatmap_id: int, data: dict):
+            self._valid_beatmap_ids.append(beatmap_id)
+            self._seen_ids.add(beatmap_id)
+            self._add_fetched_id(category, beatmap_id)
+            self._record_success()
+            self.logger.debug(f"Fetched {data_type} {beatmap_id}")
+
+        def failure_handler(beatmap_id: int, error: Exception):
+            self._add_failed_id(category, beatmap_id)
+
+        def skip_checker(id_: int) -> bool:
+            return self._should_skip_id(id_)
+
+        def on_error(error: Exception):
+            self._check_connection_stability(error)
+
+        retries = max_retries if max_retries is not None else (MAX_RETRIES_SCORES if self.force_fetch else MAX_RETRIES)
+        if max_attempts is None:
+            raise ValueError("max_attempts is required")
+
+        return FetchConfig(
+            api_call=api_call_factory,
+            id_generator=id_generator,
+            path_builder=path_builder,
+            data_type=data_type,
+            success_handler=success_handler,
+            failure_handler=failure_handler,
+            skip_checker=skip_checker,
+            max_retries=retries,
+            max_attempts=max_attempts,
+            on_error=on_error,
+            data_validator=data_validator,
+            on_empty_data_limit=on_empty_data_limit,
+        )
+
     async def fetch_beatmaps(self, count: int, skip_existing: bool = True) -> AsyncIterator[FetchEvent]:
         path = get_fixture_path("beatmaps", fixtures_dir=self.fixtures_dir)
+        config = self._make_fetch_config(
+            category="beatmaps",
+            api_call_factory=lambda id: self.oac.get_beatmap(id),
+            path_builder=lambda id: path / f"beatmap_{id}.json",
+            data_type="beatmap",
+            max_attempts=count * 50 if self.force_fetch else count * 10,
+        )
+        loop = FetchLoop(config)
         fetched = 0
-        attempts = 0
-        max_attempts = count * 10 if not self.force_fetch else count * 50
-
-        while fetched < count and attempts < max_attempts:
-            attempts += 1
-            beatmap_id = await self._get_random_id("beatmaps", avoid_failed=False)
-
-            if skip_existing and self._should_skip_id(beatmap_id):
-                continue
-
-            retries = 0
-            inner_retries = MAX_RETRIES if not self.force_fetch else MAX_RETRIES_SCORES
-            while retries < inner_retries:
-                try:
-                    data = await self.oac.get_beatmap(beatmap_id)
-                    filepath = path / f"beatmap_{beatmap_id}.json"
-                    self._atomic_write(filepath, data, "beatmap")
-                    fetched += 1
-                    self._valid_beatmap_ids.append(beatmap_id)
-                    self._seen_ids.add(beatmap_id)
-                    self._add_fetched_id("beatmaps", beatmap_id)
-                    self._record_success()
-                    self.logger.debug(f"Fetched beatmap {beatmap_id} ({fetched}/{count})")
-                    break
-                except Exception as e:
-                    self._check_connection_stability(e)
-                    if isinstance(e, httpx.HTTPStatusError) and e.response.status_code == 404:
-                        self.logger.debug(f"Beatmap {beatmap_id} not found, skipping")
-                        await self._add_failed_id("beatmaps", beatmap_id)
-                        break
-                    self.logger.debug(f"Failed to fetch beatmap {beatmap_id} (retry {retries + 1}/{inner_retries}): {clean_error_msg(e)}")
-                    await self._add_failed_id("beatmaps", beatmap_id)
-                    retries += 1
-                    if retries < inner_retries:
-                        beatmap_id = await self._get_random_id("beatmaps", avoid_failed=True)
-            
-            yield FetchEvent("beatmaps", fetched, count)
+        async for event in loop.run(count, skip_existing=skip_existing):
+            fetched = event.current
+            yield event
 
         if fetched < count:
             self.logger.warning(f"Only fetched {fetched}/{count} beatmaps")
@@ -202,43 +210,18 @@ class FixtureDataFetcher:
 
     async def fetch_beatmapsets(self, count: int, skip_existing: bool = True) -> AsyncIterator[FetchEvent]:
         path = get_fixture_path("beatmapsets", fixtures_dir=self.fixtures_dir)
+        config = self._make_fetch_config(
+            category="beatmapsets",
+            api_call_factory=lambda id: self.oac.get_beatmapset(id),
+            path_builder=lambda id: path / f"beatmapset_{id}.json",
+            data_type="beatmapset",
+            max_attempts=count * 50 if self.force_fetch else count * 10,
+        )
+        loop = FetchLoop(config)
         fetched = 0
-        attempts = 0
-        max_attempts = count * 10 if not self.force_fetch else count * 50
-
-        while fetched < count and attempts < max_attempts:
-            attempts += 1
-            beatmapset_id = await self._get_random_id("beatmapsets", avoid_failed=False)
-
-            if skip_existing and self._should_skip_id(beatmapset_id):
-                continue
-
-            retries = 0
-            inner_retries = MAX_RETRIES if not self.force_fetch else MAX_RETRIES_SCORES
-            while retries < inner_retries:
-                try:
-                    data = await self.oac.get_beatmapset(beatmapset_id)
-                    filepath = path / f"beatmapset_{beatmapset_id}.json"
-                    self._atomic_write(filepath, data, "beatmapset")
-                    fetched += 1
-                    self._seen_ids.add(beatmapset_id)
-                    self._add_fetched_id("beatmapsets", beatmapset_id)
-                    self._record_success()
-                    self.logger.debug(f"Fetched beatmapset {beatmapset_id} ({fetched}/{count})")
-                    break
-                except Exception as e:
-                    self._check_connection_stability(e)
-                    if isinstance(e, httpx.HTTPStatusError) and e.response.status_code == 404:
-                        self.logger.debug(f"Beatmapset {beatmapset_id} not found, skipping")
-                        await self._add_failed_id("beatmapsets", beatmapset_id)
-                        break
-                    self.logger.debug(f"Failed to fetch beatmapset {beatmapset_id} (retry {retries + 1}/{inner_retries}): {clean_error_msg(e)}")
-                    await self._add_failed_id("beatmapsets", beatmapset_id)
-                    retries += 1
-                    if retries < inner_retries:
-                        beatmapset_id = await self._get_random_id("beatmapsets", avoid_failed=True)
-            
-            yield FetchEvent("beatmapsets", fetched, count)
+        async for event in loop.run(count, skip_existing=skip_existing):
+            fetched = event.current
+            yield event
 
         if fetched < count:
             self.logger.warning(f"Only fetched {fetched}/{count} beatmapsets")
@@ -274,40 +257,42 @@ class FixtureDataFetcher:
             ruleset_path = path / ruleset
             ruleset_path.mkdir(parents=True, exist_ok=True)
             count = ruleset_counts[ruleset]
-            attempts = 0
-            max_attempts = count * 10 if not self.force_fetch else count * 50
+            if count == 0:
+                continue
 
-            while fetched[ruleset] < count and attempts < max_attempts:
-                attempts += 1
-                user_id = await self._get_random_id(f"users.{ruleset}")
+            category = f"users.{ruleset}"
 
-                if skip_existing and self._should_skip_id(user_id):
-                    continue
+            def api_call_factory(id, r=ruleset):
+                mode = getattr(Ruleset, r.upper()).value
+                return self.oac.get_user(id, Ruleset(mode))
 
-                mode = getattr(Ruleset, ruleset.upper()).value
-                retries = 0
-                while retries < MAX_RETRIES:
-                    try:
-                        data = await self.oac.get_user(user_id, Ruleset(mode))
-                        filepath = ruleset_path / f"user_{user_id}_{ruleset}.json"
-                        self._atomic_write(filepath, data, "user")
-                        fetched[ruleset] += 1
-                        self._seen_ids.add(user_id)
-                        self._add_fetched_id(f"users.{ruleset}", user_id)
-                        self._record_success()
-                        self.logger.debug(f"Fetched user {user_id} ({ruleset}) ({fetched[ruleset]}/{count})")
-                        break
-                    except Exception as e:
-                        self._check_connection_stability(e)
-                        if isinstance(e, httpx.HTTPStatusError) and e.response.status_code == 404:
-                            self.logger.debug(f"User {user_id} ({ruleset}) not found, skipping")
-                            await self._add_failed_id(f"users.{ruleset}", user_id)
-                            break
-                        self.logger.debug(f"Failed to fetch user {user_id} ({ruleset}) (retry {retries + 1}/{MAX_RETRIES}): {clean_error_msg(e)}")
-                        await self._add_failed_id(f"users.{ruleset}", user_id)
-                        retries += 1
-                        user_id = await self._get_random_id(f"users.{ruleset}")
+            def path_builder(id, r=ruleset):
+                return ruleset_path / f"user_{id}_{r}.json"
 
+            def success_handler(beatmap_id: int, data: dict):
+                self._seen_ids.add(beatmap_id)
+                self._add_fetched_id(category, beatmap_id)
+                self._record_success()
+                self.logger.debug(f"Fetched user {beatmap_id} ({ruleset})")
+
+            def failure_handler(beatmap_id: int, error: Exception):
+                self._add_failed_id(category, beatmap_id)
+
+            config = FetchConfig(
+                api_call=api_call_factory,
+                id_generator=lambda: self._get_random_id(category),
+                path_builder=path_builder,
+                data_type="user",
+                success_handler=success_handler,
+                failure_handler=failure_handler,
+                skip_checker=self._should_skip_id,
+                max_retries=MAX_RETRIES,
+                max_attempts=count * 50 if self.force_fetch else count * 10,
+                on_error=self._check_connection_stability,
+            )
+            loop = FetchLoop(config)
+            async for event in loop.run(count, skip_existing=skip_existing):
+                fetched[ruleset] = event.current
                 cumulative_count += 1
                 yield FetchEvent("users", cumulative_count, total_count)
 
@@ -410,53 +395,53 @@ class FixtureDataFetcher:
             type_path = path / score_type
             type_path.mkdir(parents=True, exist_ok=True)
             count = type_counts[score_type]
-            attempts = 0
-            max_attempts = count * 10 if not self.force_fetch else count * 50
+            if count == 0:
+                continue
 
-            while fetched[score_type] < count and attempts < max_attempts:
-                attempts += 1
-                use_top_players = score_type in ["firsts", "recent"]
-                user_id = await self._get_random_id("users", use_top_players=use_top_players)
+            use_top_players = score_type in ["firsts", "recent"]
+            score_type_enum = getattr(ScoreType, score_type.upper())
 
-                if skip_existing and self._should_skip_id(user_id):
-                    continue
+            def api_call_factory(id, st=score_type_enum, m=Ruleset.OSU):
+                return self.oac.get_user_scores(id, st, mode=m)
 
-                mode = Ruleset.OSU
-                score_type_enum = getattr(ScoreType, score_type.upper())
-                retries = 0
-                while retries < MAX_RETRIES:
-                    try:
-                        data = await self.oac.get_user_scores(user_id, score_type_enum, mode=mode)
-                        if not isinstance(data, list) or not data:
-                            self.logger.debug(f"Empty scores for user {user_id} ({score_type}) (retry {retries + 1}/{MAX_RETRIES})")
-                            retries += 1
-                            if retries >= MAX_RETRIES and score_type == "best":
-                                user_id = await self._get_random_id("users", use_top_players=True)
-                            else:
-                                user_id = await self._get_random_id("users", use_top_players=use_top_players)
-                            continue
-                        filepath = type_path / f"scores_{user_id}_{score_type}.json"
-                        self._atomic_write(filepath, data, "scores")
-                        fetched[score_type] += 1
-                        self._seen_ids.add(user_id)
-                        self._add_fetched_id("users", user_id)
-                        self._record_success()
-                        self.logger.debug(f"Fetched scores for user {user_id} ({score_type}) ({fetched[score_type]}/{count})")
-                        break
-                    except Exception as e:
-                        self._check_connection_stability(e)
-                        if isinstance(e, httpx.HTTPStatusError) and e.response.status_code == 404:
-                            self.logger.debug(f"User {user_id} not found for {score_type} scores, skipping")
-                            await self._add_failed_id("users", user_id)
-                            break
-                        self.logger.debug(f"Failed to fetch scores for user {user_id} ({score_type}) (retry {retries + 1}/{MAX_RETRIES}): {clean_error_msg(e)}")
-                        await self._add_failed_id("users", user_id)
-                        retries += 1
-                        if retries >= MAX_RETRIES and score_type == "best":
-                            user_id = await self._get_random_id("users", use_top_players=True)
-                        else:
-                            user_id = await self._get_random_id("users", use_top_players=use_top_players)
-                
+            def path_builder(id, st=score_type):
+                return type_path / f"scores_{id}_{st}.json"
+
+            def id_generator():
+                return self._get_random_id("users", use_top_players=use_top_players)
+
+            def success_handler(beatmap_id: int, data: dict):
+                self._seen_ids.add(beatmap_id)
+                self._add_fetched_id("users", beatmap_id)
+                self._record_success()
+                self.logger.debug(f"Fetched scores for user {beatmap_id} ({score_type})")
+
+            def failure_handler(beatmap_id: int, error: Exception):
+                self._add_failed_id("users", beatmap_id)
+
+            def data_validator(data):
+                return isinstance(data, list) and bool(data)
+
+            def on_empty_data(beatmap_id):
+                pass
+
+            config = FetchConfig(
+                api_call=api_call_factory,
+                id_generator=id_generator,
+                path_builder=path_builder,
+                data_type="scores",
+                success_handler=success_handler,
+                failure_handler=failure_handler,
+                skip_checker=self._should_skip_id,
+                max_retries=MAX_RETRIES,
+                max_attempts=count * 50 if self.force_fetch else count * 10,
+                on_error=self._check_connection_stability,
+                data_validator=data_validator,
+                on_empty_data=on_empty_data,
+            )
+            loop = FetchLoop(config)
+            async for event in loop.run(count, skip_existing=skip_existing):
+                fetched[score_type] = event.current
                 cumulative_count += 1
                 yield FetchEvent("scores", cumulative_count, total_count)
 

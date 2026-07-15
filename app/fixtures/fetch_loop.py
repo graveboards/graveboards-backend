@@ -5,25 +5,40 @@ parameterized FetchLoop that takes API call, ID generator, path builder, and
 success/failure handlers as configuration.
 """
 
-from typing import AsyncIterator, Callable, Coroutine
+import json
+import os
 from pathlib import Path
-from dataclasses import dataclass
+from typing import AsyncIterator, Callable, Coroutine
+from dataclasses import dataclass, field
 
-from .fetcher import FetchEvent
+import httpx
+
+from app.exceptions import clean_error_msg
+
+
+class FetchEvent:
+    def __init__(self, category: str, current: int, total: int):
+        self.category = category
+        self.current = current
+        self.total = total
 
 
 @dataclass
 class FetchConfig:
     """Configuration for a single fetch operation."""
-    api_call: Callable[..., Coroutine]
-    id_generator: Callable[..., Coroutine]
+    api_call: Callable[[int], Coroutine]
+    id_generator: Callable[[], Coroutine[int]]
     path_builder: Callable[[int], Path]
     data_type: str
     success_handler: Callable[[int, dict], None]
     failure_handler: Callable[[int, Exception], None]
+    skip_checker: Callable[[int], bool]
     max_retries: int = 10
     max_attempts: int = 100
-    skip_existing: bool = True
+    on_error: Callable[[Exception], None] | None = None
+    data_validator: Callable[[dict], bool] | None = None
+    on_empty_data: Callable[[int], None] | None = None
+    on_empty_data_limit: int | None = None
 
 
 class FetchLoop:
@@ -31,18 +46,6 @@ class FetchLoop:
 
     Configures the fetch loop with API call, ID generator, path builder,
     and success/failure handlers. Yields FetchEvent progress updates.
-
-    Example:
-        loop = FetchLoop(
-            api_call=lambda: oac.get_beatmap(beatmap_id),
-            id_generator=lambda: get_random_id("beatmaps"),
-            path_builder=lambda id: get_fixture_path("beatmaps") / f"beatmap_{id}.json",
-            data_type="beatmap",
-            success_handler=lambda id, data: save_fixture(id, data),
-            failure_handler=lambda id, err: log_failure(id, err),
-        )
-        async for event in loop.run(target_count=50):
-            update_progress(event)
     """
 
     def __init__(self, config: FetchConfig):
@@ -60,28 +63,35 @@ class FetchLoop:
         """
         fetched = 0
         attempts = 0
+        consecutive_empty = 0
+        max_consecutive_empty = self.config.on_empty_data_limit or float('inf')
 
         while fetched < target_count and attempts < self.config.max_attempts:
             attempts += 1
 
-            # Get next ID to try
             beatmap_id = await self.config.id_generator()
 
-            # Skip if already seen
-            if skip_existing and beatmap_id in self._seen_ids:
+            if skip_existing and self.config.skip_checker(beatmap_id):
                 continue
 
-            # Try to fetch with retries
             retries = 0
             while retries < self.config.max_retries:
                 try:
-                    data = await self.config.api_call()
+                    data = await self.config.api_call(beatmap_id)
 
-                    # Save the fixture
+                    if self.config.data_validator and not self.config.data_validator(data):
+                        consecutive_empty += 1
+                        if self.config.on_empty_data:
+                            self.config.on_empty_data(beatmap_id)
+                        if consecutive_empty >= max_consecutive_empty:
+                            break
+                        retries += 1
+                        continue
+                    consecutive_empty = 0
+
                     filepath = self.config.path_builder(beatmap_id)
                     self._atomic_write(filepath, data, self.config.data_type)
 
-                    # Handle success
                     self.config.success_handler(beatmap_id, data)
                     fetched += 1
                     self._record_success()
@@ -90,51 +100,36 @@ class FetchLoop:
                     break
 
                 except Exception as e:
-                    self._check_connection_stability(e)
+                    if not isinstance(e, httpx.HTTPStatusError):
+                        if self.config.on_error:
+                            self.config.on_error(e)
 
-                    # Handle 404 as skip
-                    import httpx
                     if isinstance(e, httpx.HTTPStatusError) and e.response.status_code == 404:
-                        self._add_failed_id(beatmap_id)
-                        break
-
-                    # Log and retry
-                    retries += 1
-                    if retries < self.config.max_retries:
-                        beatmap_id = await self.config.id_generator()
-                    else:
                         self.config.failure_handler(beatmap_id, e)
                         break
 
+                    self.config.failure_handler(beatmap_id, e)
+                    retries += 1
+                    if retries < self.config.max_retries:
+                        beatmap_id = await self.config.id_generator()
+
         if fetched < target_count:
-            # Log warning if not all fetched
             pass
 
     def _atomic_write(self, filepath: Path, data: dict, data_type: str) -> None:
         """Write data to filepath atomically."""
-        import json
-        import os
+        from .validation import validate_data
+
+        if data_type:
+            is_valid, error_msg = validate_data(data, data_type)
+            if not is_valid:
+                pass
+
         tmp_path = filepath.with_suffix(filepath.suffix + ".tmp")
         with open(tmp_path, "w") as f:
             json.dump(data, f, indent=2)
         os.replace(tmp_path, filepath)
 
-    def _check_connection_stability(self, error: Exception | None = None) -> None:
-        """Track consecutive errors and fail fast on systemic issues."""
-        import httpx
-        if error is not None and isinstance(error, httpx.HTTPStatusError):
-            return
-        self._consecutive_errors = getattr(self, '_consecutive_errors', 0) + 1
-        if self._consecutive_errors >= 5:
-            raise ConnectionError(
-                f"Consecutive connection errors ({self._consecutive_errors}) — "
-                f"service appears unreachable. Aborting fetch."
-            )
-
     def _record_success(self) -> None:
-        """Reset consecutive error counter."""
-        self._consecutive_errors = 0
-
-    def _add_failed_id(self, id_: int) -> None:
-        """Add ID to failed set (placeholder - subclasses should override)."""
+        """Reset consecutive error counter (no-op, handled by callbacks)."""
         pass
