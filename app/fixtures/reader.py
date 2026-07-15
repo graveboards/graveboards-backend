@@ -12,7 +12,7 @@ from .metadata import FixtureMetadataManager
 logger = get_logger(__name__)
 
 
-class FixtureManager:
+class FixtureReader:
     """Fixture abstraction layer that decouples tests from raw fixture files."""
     
     def __init__(self, fixture_dir: Path = None, metadata: dict = None):

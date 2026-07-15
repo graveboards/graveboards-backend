@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 
-from app.fixtures.manager import FixtureManager
+from app.fixtures.reader import FixtureReader
 from tests.unit.osu_api.test_helpers import _get_beatmap_scores_with_fallback
 from tests.unit.osu_api.conftest import MockResponse
 
@@ -10,7 +10,7 @@ from tests.unit.osu_api.conftest import MockResponse
 @pytest.mark.asyncio
 async def test_get_beatmap_scores(api_client):
     api_client_obj, mock_redis = api_client
-    fixture_manager = FixtureManager()
+    fixture_manager = FixtureReader()
     mock_data = _get_beatmap_scores_with_fallback(fixture_manager)
 
     mock_redis.hgetall.return_value = None
@@ -29,7 +29,7 @@ async def test_get_beatmap_scores(api_client):
 @pytest.mark.asyncio
 async def test_get_beatmap_scores_with_offset(api_client):
     api_client_obj, mock_redis = api_client
-    fixture_manager = FixtureManager()
+    fixture_manager = FixtureReader()
     mock_data = _get_beatmap_scores_with_fallback(fixture_manager)
 
     mock_redis.hgetall.return_value = None

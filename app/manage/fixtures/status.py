@@ -290,12 +290,12 @@ async def cmd_fixture_status(
         detailed: Include detailed file lists
         gaps: Show missing fixture gaps (only for promoted)
     """
-    from app.fixtures.manager import FixtureManager
+    from app.fixtures.reader import FixtureReader
     from app.fixtures.paths import FIXTURES_DIR, get_fixture_path
 
     metadata = load_metadata()
 
-    manager = FixtureManager()
+    manager = FixtureReader()
     for cat in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes", "users", "scores"]:
         await manager.refresh_category_metadata(cat)
 

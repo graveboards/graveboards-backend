@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Union
 
 from app.fixtures.paths import get_test_fixture_path
-from app.fixtures.manager import FixtureManager
+from app.fixtures.reader import FixtureReader
 
 
 def load_beatmap(filename: str) -> dict:

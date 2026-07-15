@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Optional
 import asyncio
 
-from app.fixtures.manager import FixtureManager
+from app.fixtures.reader import FixtureReader
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
@@ -32,7 +32,7 @@ async def cmd_reconcile(category: Optional[str] = None, dry_run: bool = False) -
         category: Specific category to reconcile (None for all)
         dry_run: Show changes without applying them
     """
-    manager = FixtureManager()
+    manager = FixtureReader()
 
     if category:
         categories = [category]
