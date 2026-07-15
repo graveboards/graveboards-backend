@@ -14,7 +14,7 @@ from .models import (
     TargetedFileMetadata,
     SearchTestCoverage,
 )
-from .store import MetadataStore
+from .store import MetadataStore, FixtureMetadataManager
 
 __all__ = [
     "Metadata",
@@ -30,4 +30,5 @@ __all__ = [
     "TargetedFileMetadata",
     "SearchTestCoverage",
     "MetadataStore",
+    "FixtureMetadataManager",
 ]

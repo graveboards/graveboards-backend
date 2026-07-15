@@ -107,4 +107,4 @@ async def cmd_generate(
     for r in requests:
         console.print(f"  requests/request_{r['id']}.json")
     console.print()
-    console.print(f"[bold]Total:{/bold] {len(queues)} queues, {len(requests)} requests")
+    console.print(f"[bold]Total:[/bold] {len(queues)} queues, {len(requests)} requests")
