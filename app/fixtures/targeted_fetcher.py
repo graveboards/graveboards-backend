@@ -17,24 +17,23 @@ from .id_source import IDSource
 
 
 class TargetedFixtureFetcher(FixtureDataFetcher):
-    """Enhanced fetcher with targeted coverage strategies."""
-    
+    """Enhanced fetcher with targeted coverage strategies.
+
+    Provides fetch methods for specific criteria:
+    - fetch_beatmapsets_by_status: Fetch by discussion status
+    - fetch_beatmaps_by_difficulty: Fetch by difficulty range
+    - fetch_beatmaps_by_playcount: Fetch by playcount range
+    - fetch_users_by_activity: Fetch by activity level
+
+    Each method has its own fetch loop with retry logic and metadata tracking.
+    """
+
     def __init__(self, rc: RedisClient, id_ranges: dict | None = None,
                  id_source: IDSource | None = None, fixtures_dir: Path | None = None,
                  failed_id_store: FailedIdStore | None = None):
         super().__init__(rc, id_ranges, id_source=id_source, fixtures_dir=fixtures_dir,
                          failed_id_store=failed_id_store)
-        self.difficulty_ranges = {
-            "easy": (0, 2.0),
-            "medium": (2.0, 5.0),
-            "hard": (5.0, 7.0),
-            "expert": (7.0, 999.0),
-        }
-        self.playcount_ranges = {
-            "low": (0, 100),
-            "medium": (100, 1000),
-            "high": (1000, 999999999),
-        }
+        # Difficulty and playcount categorization uses Categorizer instances from categorization.py
         self.activity_levels = ["active", "moderate", "inactive"]
     
     async def fetch_beatmapsets_by_status(
@@ -555,27 +554,13 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
     
     def _categorize_difficulty(self, difficulty: float) -> str:
         """Categorize difficulty rating using half-open intervals."""
-        items = list(self.difficulty_ranges.items())
-        for i, (category, (min_val, max_val)) in enumerate(items):
-            if i == len(items) - 1:
-                if min_val <= difficulty <= max_val:
-                    return category
-            else:
-                if min_val <= difficulty < max_val:
-                    return category
-        return "expert"
+        from .categorization import DIFFICULTY_CATEGORIZER
+        return DIFFICULTY_CATEGORIZER.categorize(difficulty) or "expert"
     
     def _categorize_playcount(self, playcount: int) -> str:
         """Categorize playcount using half-open intervals."""
-        items = list(self.playcount_ranges.items())
-        for i, (category, (min_val, max_val)) in enumerate(items):
-            if i == len(items) - 1:
-                if min_val <= playcount <= max_val:
-                    return category
-            else:
-                if min_val <= playcount < max_val:
-                    return category
-        return "high"
+        from .categorization import PLAYCOUNT_CATEGORIZER
+        return PLAYCOUNT_CATEGORIZER.categorize(playcount) or "high"
     
     def _init_metadata(self):
         """Initialize targeted metadata structure."""

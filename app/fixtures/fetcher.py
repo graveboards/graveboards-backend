@@ -34,6 +34,17 @@ class FetchEvent:
 
 
 class FixtureDataFetcher:
+    """Fetches fixtures from osu! API with retry logic, validation, and metadata tracking.
+
+    Current state:
+    - Has 6 near-duplicate fetch methods (fetch_beatmaps, fetch_beatmapsets, etc.)
+    - Each method follows the same pattern: ID generation -> API call -> validation -> write -> metadata update
+    - FetchLoop infrastructure exists in fetch_loop.py for future refactoring
+
+    TODO: Migrate fetch methods to use FetchLoop for elimination of duplication.
+    See: app/fixtures/fetch_loop.py
+    """
+
     def __init__(self, rc: RedisClient, id_ranges: dict | None = None, force_fetch: bool = False,
                  id_source: IDSource | None = None, fixtures_dir: Path | None = None,
                  exclude_ids: list[int] | None = None, failed_id_store: FailedIdStore | None = None):
