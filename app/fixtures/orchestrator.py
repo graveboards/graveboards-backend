@@ -267,6 +267,7 @@ class FixtureOrchestrator:
                 progress.stop()
             
             results = self.fetcher.last_fetch_results
+            results["failed_user_ids"] = self.fetcher._failed_user_ids
             return FetchReport(criteria=report.criteria, results=results)
         except Exception as e:
             logger.error(f"Fetch users by IDs error: {e}")

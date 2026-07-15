@@ -60,6 +60,7 @@ class FixtureDataFetcher:
         self._valid_beatmap_ids: list[int] = []
         self._seen_ids: set[int] = set()
         self._consecutive_errors = 0
+        self._failed_user_ids: list[int] = []
         self._scan_existing_fixtures()
         self._metadata_dirty = False
 
@@ -328,6 +329,7 @@ class FixtureDataFetcher:
         mode = getattr(Ruleset, ruleset.upper()).value
         fetched = 0
         total = len(user_ids)
+        failed_ids: list[int] = []
 
         for user_id in user_ids:
             if self._should_skip_id(user_id):
@@ -348,14 +350,17 @@ class FixtureDataFetcher:
                 except Exception as e:
                     self._check_connection_stability(e)
                     if isinstance(e, httpx.HTTPStatusError) and e.response.status_code == 404:
-                        self.logger.debug(f"User {user_id} ({ruleset}) not found, skipping")
+                        self.logger.warning(f"User {user_id} ({ruleset}) not found (404)")
                         await self._add_failed_id(f"users.{ruleset}", user_id)
+                        failed_ids.append(user_id)
                         break
                     self.logger.debug(f"Failed to fetch user {user_id} ({ruleset}) (retry {retries + 1}/{MAX_RETRIES}): {clean_error_msg(e)}")
                     await self._add_failed_id(f"users.{ruleset}", user_id)
                     retries += 1
 
             yield FetchEvent("users", fetched, total)
+        
+        self._failed_user_ids = failed_ids
 
         self.metadata["samples"]["users"]["count"] += fetched
         self.metadata["samples"]["users"]["per_ruleset"] = {
