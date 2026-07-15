@@ -248,11 +248,10 @@ async def main():
     args = parser.parse_args()
 
     verbose = getattr(args, "verbose", False)
-    debug = verbose
     setup_logging(
         enabled_loggers=["manage", "database", "fixtures"],
         level_overrides={"database": logging.WARNING},
-        debug=debug,
+        no_debug=not verbose,
     )
 
     try:
