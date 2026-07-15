@@ -6,7 +6,9 @@ import random
 from app.logging import get_logger
 from app.config import PROJECT_ROOT
 
-from .utils import load_metadata, save_metadata, get_fixture_path, RULESETS, SCORE_TYPES, create_targeted_metadata
+from .metadata_io import load_metadata, save_metadata, create_targeted_metadata
+from .paths import get_fixture_path
+from .constants import RULESETS, SCORE_TYPES
 from .metadata import FixtureMetadataManager
 
 logger = get_logger(__name__)
