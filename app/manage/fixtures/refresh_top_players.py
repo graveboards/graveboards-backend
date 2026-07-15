@@ -3,7 +3,7 @@ from typing import Optional
 from rich.console import Console
 from rich.table import Table
 
-from app.fixtures.utils import RULESETS
+from app.fixtures.constants import RULESETS
 from app.fixtures.fetcher import FixtureDataFetcher
 from app.redis import RedisClient
 from app.logging import get_logger

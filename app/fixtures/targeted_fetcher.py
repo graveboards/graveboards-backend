@@ -8,19 +8,9 @@ from app.redis import RedisClient
 from app.osu_api.client.osu_api_client import OsuAPIClient
 from app.osu_api.enums import ScoreType, Ruleset
 
-from .utils import (
-    load_metadata,
-    save_metadata,
-    get_fixture_path,
-    RULESETS,
-    SCORE_TYPES,
-    ID_RANGES,
-    DISCUSSION_STATUSES,
-    load_top_player_ids,
-    save_top_player_ids,
-    get_fixture_count,
-    create_targeted_metadata,
-)
+from .metadata_io import load_metadata, save_metadata, load_top_player_ids, save_top_player_ids, create_targeted_metadata, get_fixture_count
+from .paths import get_fixture_path
+from .constants import RULESETS, SCORE_TYPES, ID_RANGES, DISCUSSION_STATUSES
 from .fetcher import FixtureDataFetcher, FetchEvent
 from app.exceptions import clean_error_msg
 from .id_source import IDSource

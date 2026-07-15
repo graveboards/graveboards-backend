@@ -29,7 +29,9 @@ from rich.panel import Panel
 from rich.table import Table
 from rich import box
 
-from app.fixtures.utils import TEST_FIXTURES_DIR, QUEUE_TEST_FIXTURES_DIR, REQUEST_TEST_FIXTURES_DIR, load_metadata, save_metadata, FIXTURES_DIR, RULESETS, SCORE_TYPES
+from app.fixtures.paths import TEST_FIXTURES_DIR, QUEUE_TEST_FIXTURES_DIR, REQUEST_TEST_FIXTURES_DIR, FIXTURES_DIR
+from app.fixtures.metadata_io import load_metadata, save_metadata
+from app.fixtures.constants import RULESETS, SCORE_TYPES
 from app.fixtures.health import check_category_health
 
 console = Console()
@@ -239,7 +241,7 @@ def get_category_gaps():
 
 def show_gaps(promoted_counts):
     """Show missing fixture gaps."""
-    from app.fixtures.utils import get_test_fixture_path
+    from app.fixtures.paths import get_test_fixture_path
     
     gaps = get_category_gaps()
     
@@ -289,7 +291,7 @@ async def cmd_fixture_status(
         gaps: Show missing fixture gaps (only for promoted)
     """
     from app.fixtures.manager import FixtureManager
-    from app.fixtures.utils import FIXTURES_DIR, get_fixture_path
+    from app.fixtures.paths import FIXTURES_DIR, get_fixture_path
 
     metadata = load_metadata()
 

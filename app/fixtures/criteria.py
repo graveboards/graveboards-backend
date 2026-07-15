@@ -102,7 +102,7 @@ class FetchCriteria:
         """Convert criteria into the sample_counts format expected by fetchers."""
         # Minimal: 1 of each type (unless explicitly overridden)
         if self.is_minimal:
-            from app.fixtures.utils import calculate_sample_counts
+            from .sample_counts import calculate_sample_counts
             return calculate_sample_counts(
                 scale=1.0,
                 beatmaps=self.beatmaps or 1,
@@ -119,7 +119,7 @@ class FetchCriteria:
                 use_minimal=False,
             )
 
-        from app.fixtures.utils import calculate_sample_counts
+        from .sample_counts import calculate_sample_counts
         return calculate_sample_counts(
             scale=1.0,
             beatmaps=self.beatmaps,

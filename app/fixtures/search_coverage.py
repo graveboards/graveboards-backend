@@ -247,7 +247,7 @@ class SearchTestFetchAction:
     async def fetch_beatmapsets(self) -> dict[str, set[int]]:
         """Fetch one random beatmapset via search."""
         import random
-        from app.fixtures.utils import get_fixture_path
+        from app.fixtures.paths import get_fixture_path
 
         search_statuses = [1, 4, 0, -1]
         status = search_statuses[random.randint(0, len(search_statuses) - 1)]
@@ -378,7 +378,7 @@ class SearchTestFetchAction:
     async def fetch_special_beatmapset(self) -> dict[str, set[int]]:
         """Fetch one special beatmapset (NSFW, graveyard, restricted)."""
         import random
-        from app.fixtures.utils import get_fixture_path
+        from app.fixtures.paths import get_fixture_path
         from app.fixtures.search_test_known_ids import (
             RESTRICTED_BEATMAPSET_IDS,
             NSFW_BEATMAPSET_IDS,

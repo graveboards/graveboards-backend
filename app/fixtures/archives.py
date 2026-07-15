@@ -14,7 +14,7 @@ import httpx
 
 from app.config import PROJECT_ROOT
 from app.logging import get_logger
-from app.fixtures.utils import RULESETS
+from app.fixtures.constants import RULESETS
 
 logger = get_logger(__name__)
 

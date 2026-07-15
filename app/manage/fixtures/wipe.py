@@ -6,7 +6,9 @@ from shutil import rmtree
 
 from rich.console import Console
 
-from app.fixtures.utils import FIXTURES_DIR, load_metadata, save_metadata, RULESETS, create_empty_samples, create_empty_promoted_fixtures
+from app.fixtures.paths import FIXTURES_DIR
+from app.fixtures.metadata_io import load_metadata, save_metadata, create_empty_samples, create_empty_promoted_fixtures
+from app.fixtures.constants import RULESETS
 from app.fixtures.failed_id_store import FailedIdStore
 from app.redis import RedisClient
 

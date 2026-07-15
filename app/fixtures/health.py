@@ -10,7 +10,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 import json
 
-from app.fixtures.utils import get_test_fixture_path, RULESETS, SCORE_TYPES
+from app.fixtures.paths import get_test_fixture_path
+from app.fixtures.constants import RULESETS, SCORE_TYPES
 
 
 @dataclass

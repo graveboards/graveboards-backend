@@ -14,7 +14,7 @@ import pytest
 from pathlib import Path
 from datetime import datetime, timezone
 
-from app.fixtures.utils import FIXTURES_DIR
+from app.fixtures.paths import FIXTURES_DIR
 from app.search.engine import SearchEngine
 from app.search.datastructures import SearchTermsSchema, FiltersSchema
 from app.search.enums import Scope, ModelField, SortingOrder

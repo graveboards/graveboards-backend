@@ -21,13 +21,8 @@ from app.redis import RedisClient
 from app.osu_api.client.osu_api_client import OsuAPIClient
 from app.osu_api.enums import Ruleset
 
-from .utils import (
-    load_metadata,
-    save_metadata,
-    get_fixture_path,
-    load_top_player_ids,
-    save_top_player_ids,
-)
+from .metadata_io import load_metadata, save_metadata, load_top_player_ids, save_top_player_ids
+from .paths import get_fixture_path
 from .fetcher import FixtureDataFetcher, FetchEvent
 from .failed_id_store import FailedIdStore
 from app.exceptions import clean_error_msg

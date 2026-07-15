@@ -3,7 +3,8 @@ from shutil import copy2, rmtree
 
 from rich.console import Console
 
-from app.fixtures.utils import FIXTURES_DIR, TEST_FIXTURES_DIR, QUEUE_TEST_FIXTURES_DIR, REQUEST_TEST_FIXTURES_DIR, load_metadata, save_metadata, create_empty_samples
+from app.fixtures.paths import FIXTURES_DIR, TEST_FIXTURES_DIR, QUEUE_TEST_FIXTURES_DIR, REQUEST_TEST_FIXTURES_DIR
+from app.fixtures.metadata_io import load_metadata, save_metadata, create_empty_samples
 from .helpers import get_categories_to_process
 
 console = Console()

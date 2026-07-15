@@ -15,12 +15,8 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 from app.redis import RedisClient
-from app.fixtures.utils import (
-    load_metadata,
-    load_top_player_ids,
-    ID_RANGES,
-    TOP_PLAYERS_PER_RULESET,
-)
+from app.fixtures.metadata_io import load_metadata, load_top_player_ids
+from app.fixtures.constants import ID_RANGES, TOP_PLAYERS_PER_RULESET
 from app.fixtures.archives import (
     refresh_archive_index,
     load_archive_index,

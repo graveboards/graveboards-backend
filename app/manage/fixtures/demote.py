@@ -4,7 +4,8 @@ from shutil import copy2
 from rich.console import Console
 from rich.prompt import Confirm
 
-from app.fixtures.utils import TEST_FIXTURES_DIR, QUEUE_TEST_FIXTURES_DIR, REQUEST_TEST_FIXTURES_DIR, FIXTURES_DIR, load_metadata, save_metadata
+from app.fixtures.paths import TEST_FIXTURES_DIR, QUEUE_TEST_FIXTURES_DIR, REQUEST_TEST_FIXTURES_DIR, FIXTURES_DIR
+from app.fixtures.metadata_io import load_metadata, save_metadata
 from .helpers import get_categories_to_process
 
 console = Console()

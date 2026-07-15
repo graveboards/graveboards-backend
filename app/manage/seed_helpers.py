@@ -94,7 +94,8 @@ async def ensure_fixtures_async(logger, profile: SeedProfile) -> bool:
                 # Create minimal user fixtures for failed fetches (restricted/deleted users)
                 if failed_ids:
                     logger.info(f"Creating minimal fixtures for {len(failed_ids)} restricted/deleted user(s)...")
-                    from app.fixtures.utils import get_fixture_path, RULESETS
+                    from app.fixtures.paths import get_fixture_path
+                    from app.fixtures.constants import RULESETS
                     from pathlib import Path
                     import json as json_mod
                     

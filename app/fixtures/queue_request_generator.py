@@ -23,7 +23,7 @@ from typing import Optional
 from app.config import PROJECT_ROOT
 from app.fixtures.bn_queue_comments import BN_QUEUE_COMMENTS as REQUEST_COMMENTS
 from app.fixtures.queue_metadata import QUEUE_NAMES, QUEUE_DESCRIPTIONS
-from app.fixtures.utils import load_metadata, save_metadata
+from app.fixtures.metadata_io import load_metadata, save_metadata
 
 QUEUE_FIXTURES_PATH = PROJECT_ROOT / "instance" / "fixtures" / "queues"
 REQUEST_FIXTURES_PATH = PROJECT_ROOT / "instance" / "fixtures" / "requests"
