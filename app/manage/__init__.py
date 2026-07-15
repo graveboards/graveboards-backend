@@ -21,40 +21,218 @@ from .fixtures import (
     cmd_refresh_top_players,
 )
 
-# Command registry: maps command names to handler functions
-COMMANDS = {
-    "status": cmd_status,
-    "reset": cmd_reset,
-    "seed": cmd_seed,
-    "fixtures": {
-        "clean": cmd_clean_fixtures,
-        "demote": cmd_demote_fixtures,
-        "fetch": cmd_fetch_fixtures,
-        "fetch-users-from-beatmapsets": cmd_fetch_users_from_beatmapsets,
-        "generate": cmd_generate,
-        "promote": cmd_promote_fixtures,
-        "reconcile": cmd_reconcile,
-        "refresh-archives": cmd_refresh_archives,
-        "refresh-top-players": cmd_refresh_top_players,
-        "status": cmd_fixture_status,
-    },
-}
-
-
 def build_status_parser(subparsers):
-    return subparsers.add_parser("status", help="View database status")
+    p = subparsers.add_parser("status", help="View database status")
+    p.add_argument(
+        "target",
+        nargs="?",
+        default="summary",
+        choices=["summary", "users", "beatmaps", "beatmapsets", "queues", "requests"],
+        help="Status target (default: summary)",
+    )
+    return p
 
 
 def build_reset_parser(subparsers):
-    return subparsers.add_parser("reset", help="Reset database")
+    p = subparsers.add_parser("reset", help="Reset database")
+    p.add_argument(
+        "seed_target",
+        nargs="?",
+        default=None,
+        help="Optional seed target after reset (all, users, beatmaps, queues, requests)",
+    )
+    p.add_argument("--force", "-f", action="store_true", help="Skip confirmation prompt")
+    return p
 
 
 def build_seed_parser(subparsers):
-    return subparsers.add_parser("seed", help="Seed database")
+    p = subparsers.add_parser("seed", help="Seed database")
+    p.add_argument("target", help="Seed target (all, users, beatmaps, queues, requests)")
+    p.add_argument(
+        "--ensure-fixtures", action="store_true", help="Auto-fetch/generate missing fixtures"
+    )
+    p.add_argument("--profile", default="default", help="Profile name for fixture counts")
+    return p
 
 
 def build_fixtures_parser(subparsers):
-    return subparsers.add_parser("fixtures", help="Manage test fixtures")
+    p = subparsers.add_parser("fixtures", help="Manage test fixtures")
+    fixture_subparsers = p.add_subparsers(dest="fixture_command", required=True)
+
+    # fixtures clean
+    clean_p = fixture_subparsers.add_parser(
+        "clean", help="Delete all fixture files and reset metadata"
+    )
+    clean_p.add_argument(
+        "--clear-failed-ids", action="store_true", help="Clear failed IDs from Redis"
+    )
+    clean_p.add_argument(
+        "--clear-top-player-ids", action="store_true", help="Clear top player IDs from metadata"
+    )
+    clean_p.add_argument(
+        "--clear-promoted", action="store_true", help="Clear promoted fixture metadata"
+    )
+    clean_p.add_argument("--force", "-f", action="store_true", help="Skip confirmation prompt")
+
+    # fixtures demote
+    demote_p = fixture_subparsers.add_parser(
+        "demote", help="Move promoted fixtures back to instance"
+    )
+    demote_p.add_argument("--beatmaps", action="store_true", help="Demote beatmaps")
+    demote_p.add_argument("--beatmapsets", action="store_true", help="Demote beatmapsets")
+    demote_p.add_argument("--users", action="store_true", help="Demote users")
+    demote_p.add_argument("--scores", action="store_true", help="Demote scores")
+    demote_p.add_argument("--beatmap-scores", action="store_true", help="Demote beatmap scores")
+    demote_p.add_argument(
+        "--beatmap-attributes", action="store_true", help="Demote beatmap attributes"
+    )
+    demote_p.add_argument("--queues", action="store_true", help="Demote queues")
+    demote_p.add_argument("--requests", action="store_true", help="Demote requests")
+    demote_p.add_argument("--force", "-f", action="store_true", help="Skip confirmation prompt")
+
+    # fixtures fetch
+    fetch_p = fixture_subparsers.add_parser("fetch", help="Fetch fixture data from the osu! API")
+    fetch_p.add_argument(
+        "--criteria",
+        default="standard",
+        choices=["minimal", "standard", "targeted", "search-test"],
+        help="Fetch criteria (default: standard)",
+    )
+    fetch_p.add_argument(
+        "--source",
+        default="auto",
+        choices=["auto", "archive", "top-players"],
+        help="ID source (default: auto)",
+    )
+    fetch_p.add_argument("--beatmaps", type=int, default=0, help="Number of beatmaps to fetch")
+    fetch_p.add_argument(
+        "--beatmapsets", type=int, default=0, help="Number of beatmapsets to fetch"
+    )
+    fetch_p.add_argument("--users-osu", type=int, default=0, help="Number of osu! users to fetch")
+    fetch_p.add_argument(
+        "--users-taiko", type=int, default=0, help="Number of taiko users to fetch"
+    )
+    fetch_p.add_argument(
+        "--users-fruits", type=int, default=0, help="Number of fruits users to fetch"
+    )
+    fetch_p.add_argument(
+        "--users-mania", type=int, default=0, help="Number of mania users to fetch"
+    )
+    fetch_p.add_argument(
+        "--scores-best", type=int, default=0, help="Number of best scores to fetch"
+    )
+    fetch_p.add_argument(
+        "--scores-firsts", type=int, default=0, help="Number of first place scores to fetch"
+    )
+    fetch_p.add_argument(
+        "--scores-recent", type=int, default=0, help="Number of recent scores to fetch"
+    )
+    fetch_p.add_argument(
+        "--beatmap-scores", type=int, default=0, help="Number of beatmap scores to fetch"
+    )
+    fetch_p.add_argument(
+        "--beatmap-attributes", type=int, default=0, help="Number of beatmap attributes to fetch"
+    )
+    fetch_p.add_argument("--status", nargs="+", help="Filter by status (for targeted criteria)")
+    fetch_p.add_argument("--difficulty-range", help="Filter by difficulty (for targeted criteria)")
+    fetch_p.add_argument("--playcount-range", help="Filter by playcount (for targeted criteria)")
+    fetch_p.add_argument("--activity-tier", help="Filter by activity tier (for targeted criteria)")
+    fetch_p.add_argument("--ruleset", nargs="+", help="Filter by ruleset (for targeted criteria)")
+    fetch_p.add_argument(
+        "--force-fetch", action="store_true", help="Force fetch even if recently fetched"
+    )
+    fetch_p.add_argument("--no-progress", action="store_true", help="Hide progress bar")
+    fetch_p.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
+    fetch_p.add_argument(
+        "--min-per-category", type=int, default=1, help="Min fixtures per category (search-test)"
+    )
+    fetch_p.add_argument(
+        "--max-total", type=int, default=500, help="Max total API calls (search-test)"
+    )
+    fetch_p.add_argument("--gaps", action="store_true", help="Show coverage gaps (search-test)")
+    fetch_p.add_argument("--full", action="store_true", help="Full coverage mode (search-test)")
+    fetch_p.add_argument("--quick", action="store_true", help="Quick mode (search-test)")
+
+    # fixtures fetch-users-from-beatmapsets
+    fixture_subparsers.add_parser(
+        "fetch-users-from-beatmapsets",
+        help="Extract user IDs from beatmapset fixtures and fetch them",
+    )
+
+    # fixtures generate
+    gen_p = fixture_subparsers.add_parser("generate", help="Generate queue and request fixtures")
+    gen_p.add_argument(
+        "--queue-count", type=int, default=10, help="Number of queues to generate (default: 10)"
+    )
+    gen_p.add_argument(
+        "--request-count",
+        type=int,
+        default=100,
+        help="Number of requests to generate (default: 100)",
+    )
+
+    # fixtures promote
+    promote_p = fixture_subparsers.add_parser(
+        "promote", help="Move instance fixtures to tests/fixtures/"
+    )
+    promote_p.add_argument("--beatmaps", action="store_true", help="Promote beatmaps")
+    promote_p.add_argument("--beatmapsets", action="store_true", help="Promote beatmapsets")
+    promote_p.add_argument("--users", action="store_true", help="Promote users")
+    promote_p.add_argument("--scores", action="store_true", help="Promote scores")
+    promote_p.add_argument("--beatmap-scores", action="store_true", help="Promote beatmap scores")
+    promote_p.add_argument(
+        "--beatmap-attributes", action="store_true", help="Promote beatmap attributes"
+    )
+    promote_p.add_argument("--queues", action="store_true", help="Promote queues")
+    promote_p.add_argument("--requests", action="store_true", help="Promote requests")
+    promote_p.add_argument("--force", "-f", action="store_true", help="Skip confirmation prompt")
+
+    # fixtures reconcile
+    reconcile_p = fixture_subparsers.add_parser(
+        "reconcile", help="Reconcile fixture metadata with disk state"
+    )
+    reconcile_p.add_argument(
+        "--category",
+        "-c",
+        choices=[
+            "beatmaps",
+            "beatmapsets",
+            "users",
+            "scores",
+            "beatmap_scores",
+            "beatmap_attributes",
+        ],
+        help="Specific category to reconcile",
+    )
+    reconcile_p.add_argument(
+        "--dry-run", action="store_true", help="Show changes without applying them"
+    )
+
+    # fixtures refresh-archives
+    refresh_archives_p = fixture_subparsers.add_parser(
+        "refresh-archives", help="Refresh archive index from osu.sh"
+    )
+    refresh_archives_p.add_argument(
+        "--force", "-f", action="store_true", help="Force refresh even if recently updated"
+    )
+
+    # fixtures refresh-top-players
+    refresh_top_p = fixture_subparsers.add_parser(
+        "refresh-top-players", help="Refresh top player IDs from osu! API"
+    )
+    refresh_top_p.add_argument("--rulesets", nargs="+", help="Rulesets to refresh (default: all)")
+    refresh_top_p.add_argument(
+        "--count", type=int, default=1000, help="Count per ruleset (default: 1000)"
+    )
+
+    # fixtures status
+    status_p = fixture_subparsers.add_parser("status", help="Show fixture status")
+    status_p.add_argument("--instance", action="store_true", help="Show only instance/ fixtures")
+    status_p.add_argument("--promoted", action="store_true", help="Show only promoted fixtures")
+    status_p.add_argument("--detailed", action="store_true", help="Include detailed file lists")
+    status_p.add_argument("--gaps", action="store_true", help="Show missing fixture gaps")
+
+    return p
 
 
 # ruff: noqa: C901 PLC0415 F401
