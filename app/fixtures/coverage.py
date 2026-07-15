@@ -530,7 +530,7 @@ class CoverageRegistry:
         Returns:
             Coverage report dictionary
         """
-        from .search_test_constants import GENRE_NAMES, LANGUAGE_NAMES, BEATMAP_MODE_NAMES, BEATMAP_STATUS_NAMES
+        from .constants import GENRE_NAMES, LANGUAGE_NAMES, BEATMAP_MODE_NAMES, BEATMAP_STATUS_NAMES
 
         report = {}
 

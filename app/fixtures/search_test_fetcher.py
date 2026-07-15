@@ -27,7 +27,7 @@ from .fetcher import FixtureDataFetcher, FetchEvent
 from .failed_id_store import FailedIdStore
 from app.exceptions import clean_error_msg
 from .id_source import IDSource
-from .search_test_constants import (
+from .constants import (
     GENRE_IDS,
     GENRE_NAMES,
     LANGUAGE_IDS,
