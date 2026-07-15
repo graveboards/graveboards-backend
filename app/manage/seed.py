@@ -70,6 +70,18 @@ async def cmd_seed(db: PostgresqlDB, target: SeedTarget, ensure_fixtures: bool =
         
         if needs_generation:
             logger.info(f"Generating queue and request fixtures ({queue_count} queues, {request_count} requests)...")
+            
+            # Clean up existing queue/request fixtures to avoid stale/corrupted data
+            from pathlib import Path
+            queues_path = Path("instance/fixtures/queues")
+            requests_path = Path("instance/fixtures/requests")
+            if queues_path.exists():
+                for f in queues_path.glob("queue_*.json"):
+                    f.unlink()
+            if requests_path.exists():
+                for f in requests_path.glob("request_*.json"):
+                    f.unlink()
+            
             generator = QueueRequestFixtureGenerator()
             queues = generator.generate_queues(count=queue_count)
             requests = generator.generate_requests(queues=queues, count=request_count)
@@ -98,6 +110,9 @@ async def cmd_seed(db: PostgresqlDB, target: SeedTarget, ensure_fixtures: bool =
             # BeatmapSeeder needs beatmap tags separately
             if seed_target == SeederTarget.BEATMAP and "beatmap_tags" in seeding_data:
                 seeder.set_beatmap_tags(seeding_data["beatmap_tags"])
+    
+    # Recalculate totals after data is set
+    orchestrator._refresh_totals()
 
     progress = Progress(
         TextColumn("[bold blue]{task.description}"),
