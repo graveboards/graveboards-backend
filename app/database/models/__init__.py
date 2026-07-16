@@ -28,6 +28,7 @@ from .request import Request
 from .beatmapset_tag import BeatmapsetTag
 from .beatmap_tag import BeatmapTag
 from .queue_rule import QueueRule
+from .audit_log import AuditLog
 
 __all__ = [
     "Base",
@@ -58,5 +59,6 @@ __all__ = [
     "Request",
     "BeatmapsetTag",
     "BeatmapTag",
-    "QueueRule"
+    "QueueRule",
+    "AuditLog"
 ]
