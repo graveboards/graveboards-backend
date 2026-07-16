@@ -10,6 +10,7 @@ from app.exceptions import NotFound, Conflict
 from app.security import role_authorization
 from app.security.overrides import matching_user_id_override
 from app.spec import get_include_schema
+from . import api_key
 
 
 @role_authorization(RoleName.ADMIN)

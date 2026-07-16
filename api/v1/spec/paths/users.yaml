@@ -69,3 +69,46 @@ UserById:
                 $ref: "../responses/403/generic.yaml#/Forbidden"
             404:
                 $ref: "../responses/404/generic.yaml#/NotFound"
+
+UserApikey:
+    get:
+        summary: Returns the API key status for a user
+        tags:
+            - Users
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        parameters:
+            - $ref: "../parameters/path/user.yaml#/UserId"
+        responses:
+            200:
+                $ref: "../responses/200/user.yaml#/UserResult"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"
+
+    post:
+        summary: Rotates the API key for a user
+        tags:
+            - Users
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
+        parameters:
+            - $ref: "../parameters/path/user.yaml#/UserId"
+        responses:
+            200:
+                $ref: "../responses/200/user.yaml#/UserResult"
+            400:
+                $ref: "../responses/400/generic.yaml#/BadRequest"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
+            404:
+                $ref: "../responses/404/generic.yaml#/NotFound"

@@ -16,6 +16,9 @@
 /users/{user_id}:
     $ref: "./users.yaml#/UserById"
 
+/users/{user_id}/api-key:
+    $ref: "./users.yaml#/UserApikey"
+
 # Profiles
 /profiles:
     $ref: "./profiles.yaml#/Profiles"
