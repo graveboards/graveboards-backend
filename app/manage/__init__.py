@@ -69,6 +69,31 @@ def build_generate_api_key_parser(subparsers):
     return p
 
 
+def build_migrate_parser(subparsers):
+    p = subparsers.add_parser("migrate", help="Database migration commands")
+    migrate_subparsers = p.add_subparsers(dest="migrate_command", required=True)
+
+    # migrate run
+    run_p = migrate_subparsers.add_parser("run", help="Run all pending migrations")
+    run_p.add_argument("--dry-run", action="store_true", help="Show what would be run")
+
+    # migrate downgrade
+    down_p = migrate_subparsers.add_parser("downgrade", help="Rollback migrations")
+    down_p.add_argument("revision", nargs="?", default="-1", help="Target revision (default: -1)")
+
+    # migrate history
+    migrate_subparsers.add_parser("history", help="Show migration history")
+
+    # migrate current
+    migrate_subparsers.add_parser("current", help="Show current revision")
+
+    # migrate stamp
+    stamp_p = migrate_subparsers.add_parser("stamp", help="Mark DB as current without running")
+    stamp_p.add_argument("revision", help="Revision to stamp to")
+
+    return p
+
+
 def build_fixtures_parser(subparsers):
     p = subparsers.add_parser("fixtures", help="Manage test fixtures")
     fixture_subparsers = p.add_subparsers(dest="fixture_command", required=True)
@@ -258,6 +283,7 @@ async def main():
     build_reset_parser(subparsers)
     build_seed_parser(subparsers)
     build_generate_api_key_parser(subparsers)
+    build_migrate_parser(subparsers)
     build_fixtures_parser(subparsers)
 
     args = parser.parse_args()
@@ -286,6 +312,27 @@ async def main():
                     user_id=args.user_id,
                     expires_days=args.expires_days,
                 )
+            case "migrate":
+                from app.database.migrations import run_migrations, downgrade, history, current, stamp
+
+                match args.migrate_command:
+                    case "run":
+                        if args.dry_run:
+                            print("Dry run — no changes made")
+                        else:
+                            run_migrations()
+                            print("Migrations completed successfully")
+                    case "downgrade":
+                        downgrade(args.revision)
+                        print(f"Downgraded to {args.revision}")
+                    case "history":
+                        for line in history():
+                            print(line)
+                    case "current":
+                        print(current())
+                    case "stamp":
+                        stamp(args.revision)
+                        print(f"Stamped to {args.revision}")
             case "fixtures":
                 fixture_cmd = args.fixture_command
                 match fixture_cmd:
