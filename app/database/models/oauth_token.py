@@ -3,12 +3,12 @@ from typing import Optional
 
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import Integer, String, DateTime, Boolean, LargeBinary
-from sqlalchemy.orm import mapped_column, hybrid_property
+from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm.base import Mapped
 from sqlalchemy.sql import literal
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from app.utils import aware_utcnow
-from app.security.oauth_encryption import encrypt_token, decrypt_token
 from .base import Base
 
 
@@ -28,6 +28,7 @@ class OAuthToken(Base):
 
     @hybrid_property
     def access_token(self) -> str:
+        from app.security.oauth_encryption import decrypt_token
         return decrypt_token(self.access_token_enc)
 
     @access_token.expression
@@ -38,10 +39,13 @@ class OAuthToken(Base):
     def refresh_token(self) -> Optional[str]:
         if self.refresh_token_enc is None:
             return None
+        from app.security.oauth_encryption import decrypt_token
         return decrypt_token(self.refresh_token_enc)
 
     def set_access_token(self, token: str) -> None:
+        from app.security.oauth_encryption import encrypt_token
         self.access_token_enc = encrypt_token(token)
 
     def set_refresh_token(self, token: str) -> None:
+        from app.security.oauth_encryption import encrypt_token
         self.refresh_token_enc = encrypt_token(token)

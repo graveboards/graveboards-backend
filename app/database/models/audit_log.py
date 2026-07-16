@@ -1,7 +1,8 @@
 from datetime import datetime
 from typing import Optional, TYPE_CHECKING
 
-from sqlalchemy.sql.schema import Integer, String, Text, DateTime, JSON, Index
+from sqlalchemy.sql.schema import Index
+from sqlalchemy.sql.sqltypes import Integer, String, Text, DateTime, JSON
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm.base import Mapped
 
