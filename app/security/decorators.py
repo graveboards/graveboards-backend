@@ -148,42 +148,59 @@ def role_authorization(
 def ownership_authorization(
     authorized_user_id_lookup: str = "user",
     resource_user_id_lookup: str = "user_id",
-    check_before_handler: bool = True,
+    resource_id_lookup: str = None,
+    resource_model: type = None,
 ) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Decorator enforcing resource ownership access control.
 
-    Ensures the authenticated user matches the owner of the returned resource(s), unless
-    the user has an administrative role.
+    Validates that the authenticated user owns the targeted resource BEFORE
+    the handler executes. This prevents unauthorized side effects from
+    POST/PATCH/DELETE operations.
 
     The decorated function must:
         - Be async
         - Accept ``**kwargs``
-        - Return a tuple of ``(data, status_code)`` or ``(data, status_code, headers)``
-        - Return data as a dict or sequence of dicts
+
+    For single-resource endpoints, the decorator resolves the resource owner
+    by first checking kwargs (using ``resource_user_id_lookup``), then falling
+    back to fetching the resource from the database (using ``resource_id_lookup``
+    to find the resource ID in kwargs and ``resource_model`` to specify the
+    SQLAlchemy model).
 
     Args:
         authorized_user_id_lookup:
             Key/path used to locate the authenticated user ID.
         resource_user_id_lookup:
-            Key/path used to locate the resource owner ID.
-        check_before_handler:
-            If ``True`` (default), validate ownership before calling the handler.
-            Set to ``False`` for write endpoints where the handler must execute
-            first (POST/PATCH/DELETE).
+            Key/path used to locate the resource owner ID. Checked in kwargs
+            first, then in the fetched resource.
+        resource_id_lookup:
+            Optional key in kwargs that contains the resource ID. Required for
+            endpoints where the resource owner cannot be resolved from kwargs
+            directly (e.g., ``requests/get`` where ``request_id`` is the path
+            param but the owner is ``user_id`` on the request record).
+        resource_model:
+            The SQLAlchemy model class for the resource. Required when
+            ``resource_id_lookup`` is set.
 
     Raises:
         ValueError:
-            If decorator contract is violated.
+            If decorator contract is violated or ownership cannot be resolved.
         Forbidden:
-            If ownership validation fails.
+            If the user does not own the resource.
     """
     def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
         if not inspect.iscoroutinefunction(func):
-            raise ValueError(f"Function '{func.__name__}' must be async to use @check_ownership")
+            raise ValueError(f"Function '{func.__name__}' must be async to use @ownership_authorization")
 
         sig = inspect.signature(func)
         if not any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()):
             raise ValueError(f"Decorated function '{func.__module__}.{func.__name__}' must accept **kwargs to use @ownership_authorization")
+
+        if resource_id_lookup and resource_model is None:
+            raise ValueError(
+                f"resource_model is required when resource_id_lookup is set "
+                f"for function '{func.__name__}'"
+            )
 
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
@@ -198,100 +215,205 @@ def ownership_authorization(
                 func_path = ".".join((func.__module__, func.__name__))
                 raise ValueError(f"Decorated function '{func_path}' must accept **kwargs to use @ownership_authorization")
 
-            _strip_auth_info(kwargs)
-
             user = await db.get(User, id=authorized_user_id, _include={"roles": True})
             user_roles = {RoleName(role.name) for role in user.roles}
 
-            if not check_before_handler or method_is_write():
-                result = await func(*args, **kwargs)
+            if RoleName.ADMIN in user_roles:
+                _strip_auth_info(kwargs)
+                return await func(*args, **kwargs)
 
-                if (
-                    not isinstance(result, tuple)
-                    or len(result) < 2
-                    or not isinstance(result[0], (dict, Sequence))
-                    or not isinstance(result[1], int)
-                ):
-                    raise ValueError(f"Unexpected result received from function '{func.__name__}', unable to evaluate authorization eligibility")
+            resource_user_id = await _resolve_resource_owner(
+                db, kwargs, resource_user_id_lookup, resource_id_lookup, resource_model
+            )
 
-                data, status = result[0], result[1]
-                has_headers = len(result) >= 3
+            if resource_user_id != authorized_user_id:
+                raise Forbidden(detail="You are not authorized to access this resource")
 
-                if status >= 400:
-                    return result
-
-                if RoleName.ADMIN in user_roles:
-                    if has_headers:
-                        return (data, status) + (result[2],)
-                    return (data, status)
-
-                def check_item_ownership(item_: dict) -> bool:
-                    try:
-                        resource_user_id = get_nested_value(item_, resource_user_id_lookup)
-                        return resource_user_id == authorized_user_id
-                    except KeyError:
-                        raise ValueError(f"Invalid data path '{resource_user_id_lookup}'")
-
-                if isinstance(data, dict):
-                    if not check_item_ownership(data):
-                        raise Forbidden(detail="You are not authorized to access this resource")
-                else:
-                    for item in data:
-                        if not isinstance(item, dict):
-                            raise ValueError(f"Invalid result received from function '{func.__name__}', all items in response must be dicts to evaluate ownership")
-
-                        if not check_item_ownership(item):
-                            raise Forbidden(detail="You are not authorized to access this resource")
-
-                if has_headers:
-                    return (data, status) + (result[2],)
-                return (data, status)
-            else:
-                if RoleName.ADMIN in user_roles:
-                    return await func(*args, **kwargs)
-
-                result = await func(*args, **kwargs)
-
-                if (
-                    not isinstance(result, tuple)
-                    or len(result) < 2
-                    or not isinstance(result[0], (dict, Sequence))
-                    or not isinstance(result[1], int)
-                ):
-                    raise ValueError(f"Unexpected result received from function '{func.__name__}', unable to evaluate authorization eligibility")
-
-                data, status = result[0], result[1]
-                has_headers = len(result) >= 3
-
-                if status >= 400:
-                    return result
-
-                def check_item_ownership(item_: dict) -> bool:
-                    try:
-                        resource_user_id = get_nested_value(item_, resource_user_id_lookup)
-                        return resource_user_id == authorized_user_id
-                    except KeyError:
-                        raise ValueError(f"Invalid data path '{resource_user_id_lookup}'")
-
-                if isinstance(data, dict):
-                    if not check_item_ownership(data):
-                        raise Forbidden(detail="You are not authorized to access this resource")
-                else:
-                    for item in data:
-                        if not isinstance(item, dict):
-                            raise ValueError(f"Invalid result received from function '{func.__name__}', all items in response must be dicts to evaluate ownership")
-
-                        if not check_item_ownership(item):
-                            raise Forbidden(detail="You are not authorized to access this resource")
-
-                if has_headers:
-                    return (data, status) + (result[2],)
-                return (data, status)
-
-        def method_is_write() -> bool:
-            return request.method in {"POST", "PATCH", "DELETE"}
+            _strip_auth_info(kwargs)
+            return await func(*args, **kwargs)
 
         wrapper.__security_authorization__ = True
         return wrapper
 
     return decorator
+
+
+def ownership_filter(
+    resource_user_id_lookup: str = "user_id",
+) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
+    """Filter handler results to only include items owned by the authenticated user.
+
+    This is a data filtering concern, not a security check. The handler always
+    executes regardless of ownership. Use this for list/search endpoints where
+    you want users to only see their own results.
+
+    For security enforcement (preventing unauthorized access), use
+    ``ownership_authorization`` instead.
+
+    The decorated function must:
+        - Be async
+        - Accept ``**kwargs``
+        - Return a tuple of ``(data, status_code)`` or ``(data, status_code, headers)``
+        - Return data as a dict or sequence of dicts
+
+    Args:
+        resource_user_id_lookup:
+            Key/path used to locate the owner ID on each result item.
+
+    Raises:
+        ValueError:
+            If decorator contract is violated.
+    """
+    def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
+        if not inspect.iscoroutinefunction(func):
+            raise ValueError(f"Function '{func.__name__}' must be async to use @ownership_filter")
+
+        sig = inspect.signature(func)
+        if not any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()):
+            raise ValueError(f"Decorated function '{func.__module__}.{func.__name__}' must accept **kwargs to use @ownership_filter")
+
+        @wraps(func)
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+            if not get_security_enabled():
+                return await func(*args, **kwargs)
+
+            try:
+                user_id = _get_authenticated_user_id(kwargs)
+            except KeyError:
+                func_path = ".".join((func.__module__, func.__name__))
+                raise ValueError(f"Decorated function '{func_path}' must accept **kwargs to use @ownership_filter")
+
+            _strip_auth_info(kwargs)
+            result = await func(*args, **kwargs)
+
+            if (
+                not isinstance(result, tuple)
+                or len(result) < 2
+                or not isinstance(result[0], (dict, Sequence))
+                or not isinstance(result[1], int)
+            ):
+                raise ValueError(f"Unexpected result received from function '{func.__name__}', unable to apply ownership filter")
+
+            data, status = result[0], result[1]
+            has_headers = len(result) >= 3
+
+            if isinstance(data, dict):
+                if _get_value(data, resource_user_id_lookup) == user_id:
+                    filtered_data = data
+                else:
+                    filtered_data = {} if isinstance(data, dict) else []
+            else:
+                filtered_data = [
+                    item for item in data
+                    if _get_value(item, resource_user_id_lookup) == user_id
+                ]
+
+            if has_headers:
+                return (filtered_data, status) + (result[2],)
+            return (filtered_data, status)
+
+        return wrapper
+
+    return decorator
+
+
+async def _resolve_resource_owner(
+    db: "PostgresqlDB",
+    kwargs: dict[str, Any],
+    resource_user_id_lookup: str,
+    resource_id_lookup: str = None,
+    resource_model: type = None,
+) -> int:
+    """Resolve the resource owner ID for ownership verification.
+
+    Tries to resolve from kwargs first, then falls back to fetching the
+    resource from the database.
+
+    Args:
+        db:
+            Database instance.
+        kwargs:
+            Request kwargs (path params, query params, etc.).
+        resource_user_id_lookup:
+            Key/path to locate the owner ID.
+        resource_id_lookup:
+            Optional key in kwargs that contains the resource ID for fetching.
+        resource_model:
+            The SQLAlchemy model class for the resource. Required when
+            resource_id_lookup is set.
+
+    Returns:
+        The owner user ID.
+
+    Raises:
+        ValueError:
+            If the owner ID cannot be resolved.
+    """
+    # Try to resolve from kwargs first
+    try:
+        return _get_value(kwargs, resource_user_id_lookup)
+    except KeyError:
+        pass
+
+    # Fall back to fetching the resource
+    if resource_id_lookup and resource_model is not None:
+        try:
+            resource_id = kwargs[resource_id_lookup]
+        except KeyError:
+            raise ValueError(
+                f"Cannot resolve resource owner: '{resource_user_id_lookup}' not in "
+                f"kwargs and '{resource_id_lookup}' not in kwargs for resource fetching"
+            )
+
+        resource = await db.get(resource_model, id=resource_id)
+        if resource is None:
+            raise ValueError(f"Resource with ID '{resource_id}' not found")
+
+        try:
+            return _get_value(resource, resource_user_id_lookup)
+        except KeyError:
+            raise ValueError(
+                f"Resource owner ID '{resource_user_id_lookup}' not found on fetched resource"
+            )
+
+    raise ValueError(
+        f"Cannot resolve resource owner: '{resource_user_id_lookup}' not in kwargs. "
+        f"Provide resource_id_lookup and resource_model to fetch the resource."
+    )
+
+
+def _get_value(obj: Any, path: str) -> Any:
+    """Get a value from an object or dict using a dot-separated path.
+
+    Works with both dicts and objects with attributes (SQLAlchemy models,
+    Pydantic models, etc.).
+
+    Args:
+        obj:
+            The object or dict to traverse.
+        path:
+            Dot-separated path to the value (e.g., "user_id" or "a.b.c").
+
+    Returns:
+        The value at the given path.
+
+    Raises:
+        KeyError:
+            If the path does not exist.
+    """
+    keys = path.split(".")
+    current = obj
+
+    for key in keys:
+        if isinstance(current, dict):
+            if key in current:
+                current = current[key]
+            else:
+                raise KeyError(f"Key '{key}' not found in {current}")
+        else:
+            if hasattr(current, key):
+                current = getattr(current, key)
+            else:
+                raise KeyError(f"Attribute '{key}' not found on {type(current).__name__}")
+
+    return current
