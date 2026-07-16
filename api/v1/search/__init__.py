@@ -18,6 +18,12 @@ from app.exceptions import (
 )
 from app.search import compress_query, decompress_query, SearchSchema, SearchEngine, SCOPE_MODEL_MAPPING
 from app.search.cache import SearchCache
+from app.observability.metrics.search import (
+    search_requests_total,
+    search_duration_seconds,
+    search_cache_hits_total,
+    search_cache_misses_total,
+)
 from app.spec import get_include_schema
 
 EXCEPTIONS = (
@@ -38,6 +44,9 @@ async def search(**kwargs):
 
     pop_auth_info(kwargs)
 
+    start_time = time.perf_counter()
+    cached = False
+
     try:
         compressed = kwargs.pop("compressed", False)
         include = kwargs.pop("include", None)
@@ -56,7 +65,7 @@ async def search(**kwargs):
         sorting_str = json.dumps(sq.sorting) if sq.sorting else ""
         filters_str = json.dumps(sq.filters) if sq.filters else ""
 
-        cached = await cache.get(
+        cached_result = await cache.get(
             scope=sq.scope,
             search_terms=sq.search_terms.terms if sq.search_terms else "",
             sorting=sorting_str,
@@ -65,8 +74,10 @@ async def search(**kwargs):
             offset=kwargs.get("offset", 0),
         )
 
-        if cached:
-            page_data = cached
+        if cached_result:
+            cached = True
+            page_data = cached_result
+            search_cache_hits_total.labels(scope=sq.scope.value).inc()
         else:
             se = SearchEngine(sq.scope, search_terms=sq.search_terms, sorting=sq.sorting, filters=sq.filters)
 
@@ -86,8 +97,21 @@ async def search(**kwargs):
                 offset=kwargs.get("offset", 0),
                 page_data=page_data,
             )
+            search_cache_misses_total.labels(scope=sq.scope.value).inc()
     except EXCEPTIONS as e:
         raise bad_request_factory(e)
+
+    duration = time.perf_counter() - start_time
+    search_duration_seconds.labels(
+        scope=sq.scope.value,
+        mode="query",
+        cached="true" if cached else "false",
+    ).observe(duration)
+    search_requests_total.labels(
+        scope=sq.scope.value,
+        mode="query",
+        cached="true" if cached else "false",
+    ).inc()
 
     return page_data, 200, {"Content-Type": "application/json"}
 
