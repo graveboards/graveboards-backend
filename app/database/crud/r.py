@@ -128,8 +128,9 @@ class _R:
         _limit: int = QUERY_DEFAULT_LIMIT,
         _offset: int = 0,
         _reversed: bool = False,
+        _count: bool = False,
         **kwargs
-    ) -> list[BaseType]:
+    ) -> list[BaseType] | tuple[list[BaseType], int | None]:
         """Fetch multiple instances using a dynamically constructed query.
 
         Applies limit and offset constraints with bounds clamping, executes the query,
@@ -165,12 +166,17 @@ class _R:
                 Number of rows to skip before returning results.
             _reversed:
                 If True, reverses the result list after retrieval.
+            _count:
+                If True, also returns the total count of matching rows (without limit/offset).
             **kwargs:
                 Additional equality filters applied via `filter_by()`.
 
         Returns:
             A list of matching model instances or projected scalar values.
+            If _count is True, returns a tuple of (results, total_count).
         """
+        from sqlalchemy import func
+
         select_stmt = _R._construct_stmt(
             model_class,
             _select,
@@ -184,14 +190,20 @@ class _R:
             _include,
             **kwargs
         )
-        select_stmt = select_stmt.limit(clamp(_limit, QUERY_MIN_LIMIT, QUERY_MAX_LIMIT)).offset(_offset)
 
-        results = list((await session.scalars(select_stmt)).all())
+        if _count:
+            count_stmt = select(func.count()).select_from(select_stmt.subquery())
+            total = await session.scalar(count_stmt)
+            results = list((await session.scalars(select_stmt)).all())
+            return results, total
+        else:
+            select_stmt = select_stmt.limit(clamp(_limit, QUERY_MIN_LIMIT, QUERY_MAX_LIMIT)).offset(_offset)
+            results = list((await session.scalars(select_stmt)).all())
 
-        if _reversed:
-            results.reverse()
+            if _reversed:
+                results.reverse()
 
-        return results
+            return results
 
     @staticmethod
     def _construct_stmt(
@@ -932,8 +944,9 @@ class R(_R):
         _limit: int = QUERY_DEFAULT_LIMIT,
         _offset: int = 0,
         _reversed: bool = False,
+        _count: bool = False,
         **kwargs
-    ) -> list[BaseType]:
+    ) -> list[BaseType] | tuple[list[BaseType], int | None]:
         """Public API for fetching multiple model instances.
 
         Wraps ``_get_instances`` and manages session lifecycle via the
@@ -970,11 +983,14 @@ class R(_R):
                 Number of rows to skip before returning results.
             _reversed:
                 If True, reverses the result list after retrieval.
+            _count:
+                If True, also returns the total count of matching rows (without limit/offset).
             **kwargs:
                 Additional equality filters applied via `filter_by()`.
 
         Returns:
             A list of matching model instances or projected scalar values.
+            If _count is True, returns a tuple of (results, total_count).
         """
         model_class = ModelClass(model)
 
@@ -993,5 +1009,6 @@ class R(_R):
             _limit=_limit,
             _offset=_offset,
             _reversed=_reversed,
+            _count=_count,
             **kwargs
         )
