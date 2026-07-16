@@ -9,6 +9,8 @@ from app.oauth import OAuth
 from app.osu_api import OsuAPIClient
 from app.redis import RedisClient, Namespace
 from app.security import create_token_payload, encode_token, validate_token
+from app.security.oauth_encryption import encrypt_token
+from app.utils import aware_utcnow
 
 
 async def search(token: str):
@@ -78,9 +80,9 @@ async def post(
     await db.add(
         OAuthToken,
         user_id=user_id,
-        access_token=access_token,
-        refresh_token=refresh_token,
-        expires_at=expires_at
+        access_token_enc=encrypt_token(access_token),
+        refresh_token_enc=encrypt_token(refresh_token),
+        expires_at=aware_utcnow()
     )
 
     payload = create_token_payload(user_id)

@@ -13,7 +13,7 @@ class OAuthTokenSchema(BaseModel, BaseModelExtra):
     id: Optional[int] = None
     user_id: int
     access_token: str
-    expires_at: int
+    expires_at: datetime
     is_revoked: bool = False
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
@@ -24,12 +24,12 @@ class OAuthTokenCreateSchema(BaseModel, BaseModelExtra):
 
     user_id: int
     access_token: str
-    expires_at: int
+    expires_at: datetime
 
 
 class OAuthTokenUpdateSchema(BaseModel, BaseModelExtra):
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     access_token: Optional[str] = None
-    expires_at: Optional[int] = None
+    expires_at: Optional[datetime] = None
     is_revoked: Optional[bool] = None
