@@ -38,7 +38,7 @@ class TestRoleAuthorizationWithOneOf:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=12345678):
+        with patch('app.security.decorators.utils.get_authenticated_user_id', return_value=12345678):
             response = test_client.patch(
                 "/api/v1/requests/1",
                 json={"status": 1},
@@ -62,7 +62,7 @@ class TestRoleAuthorizationWithOneOf:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=12345678):
+        with patch('app.security.decorators.utils.get_authenticated_user_id', return_value=12345678):
             response = test_client.patch(
                 "/api/v1/requests/1",
                 json={"status": 1},
@@ -106,7 +106,7 @@ class TestRoleAuthorizationWithCustomOverride:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=99999999):
+        with patch('app.security.decorators.utils.get_authenticated_user_id', return_value=99999999):
             response = test_client.patch(
                 "/api/v1/queues/1",
                 json={"name": "Updated"},
@@ -145,7 +145,7 @@ class TestRoleAuthorizationWithCustomOverride:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=99999999):
+        with patch('app.security.decorators.utils.get_authenticated_user_id', return_value=99999999):
             response = test_client.patch(
                 "/api/v1/queues/1",
                 json={"name": "Hacked"},
@@ -185,7 +185,7 @@ class TestOwnershipAuthorizationSuccess:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=12345678), \
+        with patch('app.security.decorators.utils.get_authenticated_user_id', return_value=12345678), \
              patch('app.security.decorators.ownership_authorization', lambda *args, **kwargs: lambda f: f):
             response = test_client.get(
                 "/api/v1/requests",
@@ -228,7 +228,7 @@ class TestOwnershipAuthorizationSuccess:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=12345678), \
+        with patch('app.security.decorators.utils.get_authenticated_user_id', return_value=12345678), \
              patch('app.security.decorators.ownership_authorization', lambda *args, **kwargs: lambda f: f):
             response = test_client.get(
                 "/api/v1/requests/1",
@@ -268,7 +268,7 @@ class TestOwnershipAuthorizationFailure:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=12345678):
+        with patch('app.security.decorators.utils.get_authenticated_user_id', return_value=12345678):
             response = test_client.get(
                 "/api/v1/requests",
                 headers={"Authorization": f"Bearer {generate_token(12345678)}"}
@@ -310,7 +310,7 @@ class TestOwnershipAuthorizationFailure:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=12345678):
+        with patch('app.security.decorators.utils.get_authenticated_user_id', return_value=12345678):
             response = test_client.get(
                 "/api/v1/requests/1",
                 headers={"Authorization": f"Bearer {generate_token(12345678)}"}
@@ -362,7 +362,7 @@ class TestOwnershipAuthorizationAdminOverride:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=11111111):
+        with patch('app.security.decorators.utils.get_authenticated_user_id', return_value=11111111):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.get("/api/v1/requests", headers=headers)
 
@@ -405,7 +405,7 @@ class TestOwnershipAuthorizationAdminOverride:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=11111111), \
+        with patch('app.security.decorators.utils.get_authenticated_user_id', return_value=11111111), \
              patch('app.security.decorators.ownership_authorization', lambda *args, **kwargs: lambda f: f):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.get("/api/v1/requests/1", headers=headers)
