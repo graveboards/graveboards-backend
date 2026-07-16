@@ -1,5 +1,6 @@
 from authlib.integrations.base_client.errors import OAuthError
 from connexion import request
+from connexion.exceptions import TooManyRequests
 from jwt.exceptions import InvalidIssuerError, ExpiredSignatureError, InvalidTokenError
 
 from app.database import PostgresqlDB
@@ -9,15 +10,28 @@ from app.oauth import OAuth
 from app.osu_api import OsuAPIClient
 from app.redis import RedisClient, Namespace
 from app.security import create_token_payload, encode_token, validate_token
+from app.security.auth_rate_limit import AuthRateLimiter
 from app.security.oauth_encryption import encrypt_token
 from app.utils import aware_utcnow
 
 
-async def search(token: str):
+async def search(token: str, rc: RedisClient = None):
+    if rc is None:
+        rc = request.state.rc
+
+    client_ip = request.client.host if hasattr(request, 'client') else "unknown"
+    limiter = AuthRateLimiter(rc)
+    allowed, retry_after = await limiter.check(client_ip)
+    if not allowed:
+        raise TooManyRequests(f"Too many requests. Try again in {retry_after}s")
+
     try:
         jwt_claims = validate_token(token)
     except (InvalidTokenError, ExpiredSignatureError, InvalidIssuerError):
+        await limiter.record_failure(client_ip)
         raise BadRequest("Invalid or expired JWT")
+
+    await limiter.record_success(client_ip)
 
     return jwt_claims, 200, {"Content-Type": "application/json"}
 
@@ -34,13 +48,21 @@ async def post(
     if db is None:
         db = request.state.db
 
+    client_ip = request.client.host if hasattr(request, 'client') else "unknown"
+    limiter = AuthRateLimiter(rc)
+    allowed, retry_after = await limiter.check(client_ip)
+    if not allowed:
+        raise TooManyRequests(f"Too many requests. Try again in {retry_after}s")
+
     code = body.get("code")
     state = body.get("state")
 
     if not code:
+        await limiter.record_failure(client_ip)
         raise BadRequest("Missing code in body")
 
     if not state:
+        await limiter.record_failure(client_ip)
         raise BadRequest("Missing state in body")
 
     state_hash_name = Namespace.CSRF_STATE.hash_name(state)
@@ -87,5 +109,7 @@ async def post(
 
     payload = create_token_payload(user_id)
     jwt_ = encode_token(payload)
+
+    await limiter.record_success(client_ip)
 
     return {"token": jwt_}, 201, {"Content-Type": "application/json"}
