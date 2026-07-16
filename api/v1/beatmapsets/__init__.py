@@ -55,7 +55,7 @@ async def get(beatmapset_id: int, **kwargs):
 
     include = build_pydantic_include(
         obj=beatmapset,
-        include_schema=get_include_schema(ModelClass.BEATMAP),
+        include_schema=get_include_schema(ModelClass.BEATMAPSET),
         request_include=kwargs.get("_include")
     )
 
