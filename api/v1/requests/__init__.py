@@ -71,7 +71,7 @@ async def get(request_id: int, **kwargs):
         raise NotFound(f"Request with ID '{request_id}' not found")
 
     include = build_pydantic_include(
-        obj=request,
+        obj=request_,
         include_schema=get_include_schema(ModelClass.REQUEST),
         request_include=kwargs.get("_include"),
     )
