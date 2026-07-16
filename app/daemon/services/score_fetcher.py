@@ -2,9 +2,12 @@ from typing import ClassVar
 
 from httpx import ConnectTimeout
 
-from app.database.models import ScoreFetcherTask, Leaderboard
+from app.database.models import ScoreFetcherTask, Leaderboard, BeatmapSnapshot, Score
+from app.database.schemas import ScoreSchema
+from app.osu_api.enums import ScoreType
 from app.redis import ChannelName
 from app.logging import get_logger, Logger
+from app.utils import parse_iso8601
 from .decorators import auto_retry
 from .service import ScheduledFetcherService
 from .service.job import JobLoadInstruction
@@ -47,9 +50,8 @@ class ScoreFetcher(ScheduledFetcherService):
     async def _execute_job(self, record_id: int) -> None:
         """Fetch and synchronize a user's recent osu! scores.
 
-        Retrieves score data from the osu! API, checks each score and whether the
-        beatmaps the scores were performed on have active leaderboards, then creates and
-        posts new Score records accordingly.
+        Retrieves score data from the osu! API, checks each score against
+        eligible leaderboards, and creates Score records directly in the database.
 
         Args:
             record_id:
@@ -58,22 +60,48 @@ class ScoreFetcher(ScheduledFetcherService):
         Raises:
             ValueError: If the record does not exist.
         """
-        pass  # TODO: Work on scores
-        # if not (task := await self._db.get(ScoreFetcherTask, id=task_id)):
-        #     raise ValueError(f"Task with ID '{task_id}' not found")
-        #
-        # user_id = task.user_id
-        # await self._respect_rate_limit()
-        # scores = await self._oac.get_user_scores(user_id, ScoreType.RECENT)
-        #
-        # for score in scores:
-        #     if not await self._score_is_submittable(score):
-        #         continue
-        #
-        #     _, status_code = await api.scores.post(score, user=PRIMARY_ADMIN_USER_ID)
-        #
-        #     if status_code == 201:
-        #         logger.debug(f"Added score {score["id"]} for user {user_id}")
+        if not (record := await self._db.get(ScoreFetcherTask, id=record_id)):
+            raise ValueError(f"ScoreFetcherTask with ID '{record_id}' not found")
 
-    async def _score_is_submittable(self, score: dict) -> bool:
-        return bool(await self._db.get(Leaderboard, beatmap_id=score["beatmap"]["id"]))
+        user_id = record.user_id
+        await self._respect_rate_limit()
+        scores = await self._oac.get_user_scores(user_id, ScoreType.RECENT)
+
+        leaderboards = await self._db.get_many(
+            Leaderboard, _select="beatmap_id"
+        )
+        eligible_beatmap_ids = {lb.beatmap_id for lb in leaderboards}
+
+        for score in scores:
+            try:
+                validated_score = ScoreSchema.model_validate(score)
+            except Exception:
+                continue
+
+            beatmap_id = validated_score.beatmap_id
+            if beatmap_id not in eligible_beatmap_ids:
+                continue
+
+            leaderboard_id = await self._resolve_leaderboard(beatmap_id)
+            if leaderboard_id is None:
+                continue
+
+            score_data = validated_score.model_dump()
+            score_data["user_id"] = user_id
+            score_data["leaderboard_id"] = leaderboard_id
+
+            await self._db.add(Score, **score_data)
+
+    async def _resolve_leaderboard(self, beatmap_id: int) -> int | None:
+        """Get the current leaderboard ID for a beatmap."""
+        snapshot = await self._db.get(
+            BeatmapSnapshot,
+            beatmap_id=beatmap_id,
+            _sorting=[{"field": "BeatmapSnapshot.id", "order": "desc"}]
+        )
+        if not snapshot:
+            return None
+        leaderboard = await self._db.get(
+            Leaderboard, beatmap_id=beatmap_id, beatmap_snapshot_id=snapshot.id
+        )
+        return leaderboard.id if leaderboard else None
