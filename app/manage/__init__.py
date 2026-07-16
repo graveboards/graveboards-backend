@@ -8,6 +8,7 @@ from rich.console import Console
 from .status import cmd_status
 from .reset import cmd_reset
 from .seed import cmd_seed
+from .api_keys import cmd_generate_api_key
 from .fixtures import (
     cmd_clean_fixtures,
     cmd_demote_fixtures,
@@ -52,6 +53,19 @@ def build_seed_parser(subparsers):
         "--ensure-fixtures", action="store_true", help="Auto-fetch/generate missing fixtures"
     )
     p.add_argument("--profile", default="default", help="Profile name for fixture counts")
+    return p
+
+
+def build_generate_api_key_parser(subparsers):
+    p = subparsers.add_parser(
+        "generate-api-key",
+        help="Generate a new API key for a user"
+    )
+    p.add_argument("user_id", type=int, help="osu! user ID")
+    p.add_argument(
+        "--expires-days", type=int, default=90,
+        help="Days until key expires (default: 90)"
+    )
     return p
 
 
@@ -243,6 +257,7 @@ async def main():
     build_status_parser(subparsers)
     build_reset_parser(subparsers)
     build_seed_parser(subparsers)
+    build_generate_api_key_parser(subparsers)
     build_fixtures_parser(subparsers)
 
     args = parser.parse_args()
@@ -265,6 +280,11 @@ async def main():
                     args.target,
                     ensure_fixtures=getattr(args, "ensure_fixtures", False),
                     profile_name=getattr(args, "profile", "default"),
+                )
+            case "generate-api-key":
+                await cmd_generate_api_key(
+                    user_id=args.user_id,
+                    expires_days=args.expires_days,
                 )
             case "fixtures":
                 fixture_cmd = args.fixture_command
