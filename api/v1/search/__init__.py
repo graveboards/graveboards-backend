@@ -1,4 +1,5 @@
 import json
+import time
 
 from connexion import request
 
@@ -16,6 +17,7 @@ from app.exceptions import (
     bad_request_factory
 )
 from app.search import compress_query, decompress_query, SearchSchema, SearchEngine, SCOPE_MODEL_MAPPING
+from app.search.cache import SearchCache
 from app.spec import get_include_schema
 
 EXCEPTIONS = (
@@ -50,17 +52,42 @@ async def search(**kwargs):
 
         validate_include(include, get_include_schema(SCOPE_MODEL_MAPPING[sq.scope]))
 
-        se = SearchEngine(sq.scope, search_terms=sq.search_terms, sorting=sq.sorting, filters=sq.filters)
+        cache = SearchCache(rc)
+        sorting_str = json.dumps(sq.sorting) if sq.sorting else ""
+        filters_str = json.dumps(sq.filters) if sq.filters else ""
 
-        async with db.session() as session:
-            page = await se.search(session, **kwargs)
+        cached = await cache.get(
+            scope=sq.scope,
+            search_terms=sq.search_terms.terms if sq.search_terms else "",
+            sorting=sorting_str,
+            filters=filters_str,
+            limit=kwargs.get("limit", 50),
+            offset=kwargs.get("offset", 0),
+        )
+
+        if cached:
+            page_data = cached
+        else:
+            se = SearchEngine(sq.scope, search_terms=sq.search_terms, sorting=sq.sorting, filters=sq.filters)
+
+            async with db.session() as session:
+                page = await se.search(session, **kwargs)
+            page_data = se.dump(page, include=include)
+
+            if reversed_:
+                page_data.reverse()
+
+            await cache.set(
+                scope=sq.scope,
+                search_terms=sq.search_terms.terms if sq.search_terms else "",
+                sorting=sorting_str,
+                filters=filters_str,
+                limit=kwargs.get("limit", 50),
+                offset=kwargs.get("offset", 0),
+                page_data=page_data,
+            )
     except EXCEPTIONS as e:
         raise bad_request_factory(e)
-
-    page_data = se.dump(page, include=include)
-
-    if reversed_:
-        page_data.reverse()
 
     return page_data, 200, {"Content-Type": "application/json"}
 
