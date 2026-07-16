@@ -147,7 +147,8 @@ def role_authorization(
 
 def ownership_authorization(
     authorized_user_id_lookup: str = "user",
-    resource_user_id_lookup: str = "user_id"
+    resource_user_id_lookup: str = "user_id",
+    check_before_handler: bool = True,
 ) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Decorator enforcing resource ownership access control.
 
@@ -165,6 +166,10 @@ def ownership_authorization(
             Key/path used to locate the authenticated user ID.
         resource_user_id_lookup:
             Key/path used to locate the resource owner ID.
+        check_before_handler:
+            If ``True`` (default), validate ownership before calling the handler.
+            Set to ``False`` for write endpoints where the handler must execute
+            first (POST/PATCH/DELETE).
 
     Raises:
         ValueError:
@@ -194,49 +199,97 @@ def ownership_authorization(
                 raise ValueError(f"Decorated function '{func_path}' must accept **kwargs to use @ownership_authorization")
 
             _strip_auth_info(kwargs)
-            result = await func(*args, **kwargs)
-
-            if (
-                not isinstance(result, tuple)
-                or len(result) < 2
-                or not isinstance(result[0], (dict, Sequence))
-                or not isinstance(result[1], int)
-            ):
-                raise ValueError(f"Unexpected result received from function '{func.__name__}', unable to evaluate authorization eligibility")
-
-            data, status = result[0], result[1]
-            has_headers = len(result) >= 3
-
-            if status >= 400:
-                return result
 
             user = await db.get(User, id=authorized_user_id, _include={"roles": True})
             user_roles = {RoleName(role.name) for role in user.roles}
 
-            if RoleName.ADMIN in user_roles:
-                return result
+            if not check_before_handler or method_is_write():
+                result = await func(*args, **kwargs)
 
-            def check_item_ownership(item_: dict) -> bool:
-                try:
-                    resource_user_id = get_nested_value(item_, resource_user_id_lookup)
-                    return resource_user_id == authorized_user_id
-                except KeyError:
-                    raise ValueError(f"Invalid data path '{resource_user_id_lookup}'")
+                if (
+                    not isinstance(result, tuple)
+                    or len(result) < 2
+                    or not isinstance(result[0], (dict, Sequence))
+                    or not isinstance(result[1], int)
+                ):
+                    raise ValueError(f"Unexpected result received from function '{func.__name__}', unable to evaluate authorization eligibility")
 
-            if isinstance(data, dict):
-                if not check_item_ownership(data):
-                    raise Forbidden(detail="You are not authorized to access this resource")
-            else:
-                for item in data:
-                    if not isinstance(item, dict):
-                        raise ValueError(f"Invalid result received from function '{func.__name__}', all items in response must be dicts to evaluate ownership")
+                data, status = result[0], result[1]
+                has_headers = len(result) >= 3
 
-                    if not check_item_ownership(item):
+                if status >= 400:
+                    return result
+
+                if RoleName.ADMIN in user_roles:
+                    if has_headers:
+                        return (data, status) + (result[2],)
+                    return (data, status)
+
+                def check_item_ownership(item_: dict) -> bool:
+                    try:
+                        resource_user_id = get_nested_value(item_, resource_user_id_lookup)
+                        return resource_user_id == authorized_user_id
+                    except KeyError:
+                        raise ValueError(f"Invalid data path '{resource_user_id_lookup}'")
+
+                if isinstance(data, dict):
+                    if not check_item_ownership(data):
                         raise Forbidden(detail="You are not authorized to access this resource")
+                else:
+                    for item in data:
+                        if not isinstance(item, dict):
+                            raise ValueError(f"Invalid result received from function '{func.__name__}', all items in response must be dicts to evaluate ownership")
 
-            if has_headers:
-                return (data, status) + (result[2],)
-            return (data, status)
+                        if not check_item_ownership(item):
+                            raise Forbidden(detail="You are not authorized to access this resource")
+
+                if has_headers:
+                    return (data, status) + (result[2],)
+                return (data, status)
+            else:
+                if RoleName.ADMIN in user_roles:
+                    return await func(*args, **kwargs)
+
+                result = await func(*args, **kwargs)
+
+                if (
+                    not isinstance(result, tuple)
+                    or len(result) < 2
+                    or not isinstance(result[0], (dict, Sequence))
+                    or not isinstance(result[1], int)
+                ):
+                    raise ValueError(f"Unexpected result received from function '{func.__name__}', unable to evaluate authorization eligibility")
+
+                data, status = result[0], result[1]
+                has_headers = len(result) >= 3
+
+                if status >= 400:
+                    return result
+
+                def check_item_ownership(item_: dict) -> bool:
+                    try:
+                        resource_user_id = get_nested_value(item_, resource_user_id_lookup)
+                        return resource_user_id == authorized_user_id
+                    except KeyError:
+                        raise ValueError(f"Invalid data path '{resource_user_id_lookup}'")
+
+                if isinstance(data, dict):
+                    if not check_item_ownership(data):
+                        raise Forbidden(detail="You are not authorized to access this resource")
+                else:
+                    for item in data:
+                        if not isinstance(item, dict):
+                            raise ValueError(f"Invalid result received from function '{func.__name__}', all items in response must be dicts to evaluate ownership")
+
+                        if not check_item_ownership(item):
+                            raise Forbidden(detail="You are not authorized to access this resource")
+
+                if has_headers:
+                    return (data, status) + (result[2],)
+                return (data, status)
+
+        def method_is_write() -> bool:
+            return request.method in {"POST", "PATCH", "DELETE"}
 
         wrapper.__security_authorization__ = True
         return wrapper
