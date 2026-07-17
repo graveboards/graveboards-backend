@@ -1,6 +1,13 @@
 Search:
     get:
         summary: Executes a search
+        description: |
+            No blanket auth requirement - most scopes (beatmaps, beatmapsets, scores,
+            profiles) are public. Scopes backed by auth-required resources (queues,
+            requests) are gated by a manual token check in the handler instead of an
+            OpenAPI `security` requirement, since that requirement can't be
+            conditioned on the `scope` field inside the `q` payload. Those scopes
+            return 401 without a valid Bearer token or API key.
         tags:
             - Search
         parameters:
@@ -15,6 +22,8 @@ Search:
                 $ref: "../responses/200/search.yaml#/SearchResults"
             400:
                 $ref: "../responses/400/generic.yaml#/BadRequest"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
     post:
         summary: Creates a search resource
         tags:

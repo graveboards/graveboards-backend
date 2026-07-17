@@ -4,11 +4,14 @@ import time
 from sqlalchemy import func, select as sa_select
 
 from connexion import request
+from connexion.exceptions import Unauthorized
 
+from api.auth import bearer_info, api_key_info
 from api.pagination import build_pagination_response
 from api.utils import pop_auth_info
 from app.patches.validators import validate_include
 from app.database import PostgresqlDB
+from app.database.queue_access import queue_visibility_where
 from app.redis import RedisClient
 from app.exceptions import (
     FieldValidationError,
@@ -19,7 +22,7 @@ from app.exceptions import (
     DeepObjectValidationError,
     bad_request_factory
 )
-from app.search import compress_query, decompress_query, SearchSchema, SearchEngine, SCOPE_MODEL_MAPPING
+from app.search import compress_query, decompress_query, SearchSchema, SearchEngine, Scope, SCOPE_MODEL_MAPPING
 from app.search.cache import SearchCache
 from app.observability.metrics.search import (
     search_requests_total,
@@ -41,6 +44,40 @@ EXCEPTIONS = (
     AllValuesNullError,
     DeepObjectValidationError
 )
+
+# Scopes whose dedicated endpoints (GET /queues, GET /requests) require auth. This
+# route has no OpenAPI `security` block - beatmaps/beatmapsets/scores/profiles are
+# meant to stay publicly searchable - so connexion never validates a token for it.
+# Scopes backed by auth-required resources need a manual check here instead, or
+# they'd be reachable anonymously through search even though their direct endpoints
+# require a token.
+SCOPES_REQUIRING_AUTH = frozenset({Scope.QUEUES, Scope.REQUESTS})
+
+
+async def _authenticate_for_scope(scope: Scope) -> int | None:
+    """Manually validate the caller's token for scopes that require auth.
+
+    Returns the authenticated user ID, or ``None`` if the scope doesn't require
+    auth. Raises ``Unauthorized`` if the scope requires auth and no valid
+    Bearer token or API key is present.
+    """
+    if scope not in SCOPES_REQUIRING_AUTH:
+        return None
+
+    auth_header = request.headers.get("authorization", "")
+    api_key_header = request.headers.get("x-api-key")
+
+    token_info = None
+
+    if auth_header.lower().startswith("bearer "):
+        token_info = await bearer_info(auth_header[len("bearer "):].strip(), request)
+    elif api_key_header:
+        token_info = await api_key_info(api_key_header, request)
+
+    if token_info is None:
+        raise Unauthorized(f"Authentication is required to search scope '{scope.value}'")
+
+    return int(token_info["sub"])
 
 
 async def search(**kwargs):
@@ -64,6 +101,8 @@ async def search(**kwargs):
             q = json.loads(kwargs.pop("q"))
             sq = SearchSchema.model_validate(q)
 
+        caller_user_id = await _authenticate_for_scope(sq.scope)
+
         validate_include(include, get_include_schema(SCOPE_MODEL_MAPPING[sq.scope]))
 
         limit = kwargs.get("limit", 50)
@@ -73,6 +112,8 @@ async def search(**kwargs):
         sorting_str = json.dumps(sq.sorting) if sq.sorting else ""
         filters_str = json.dumps(sq.filters) if sq.filters else ""
 
+        # Skip the cache for queues, since results depend on the caller's identity
+        # (owner/manager visibility) and not just the query parameters.
         cached_result = await cache.get(
             scope=sq.scope,
             search_terms=sq.search_terms.terms if sq.search_terms else "",
@@ -80,7 +121,7 @@ async def search(**kwargs):
             filters=filters_str,
             limit=limit,
             offset=offset,
-        )
+        ) if sq.scope is not Scope.QUEUES else None
 
         if cached_result:
             cached = True
@@ -89,6 +130,9 @@ async def search(**kwargs):
             search_cache_hits_total.labels(scope=sq.scope.value).inc()
         else:
             se = SearchEngine(sq.scope, search_terms=sq.search_terms, sorting=sq.sorting, filters=sq.filters)
+
+            if sq.scope is Scope.QUEUES:
+                se.query = se.query.where(queue_visibility_where(caller_user_id))
 
             async with db.session() as session:
                 page = await se.search(session, limit=limit, offset=offset)
@@ -100,16 +144,18 @@ async def search(**kwargs):
             if reversed_:
                 page_data.reverse()
 
-            cache_entry = {"data": page_data, "total": total}
-            await cache.set(
-                scope=sq.scope,
-                search_terms=sq.search_terms.terms if sq.search_terms else "",
-                sorting=sorting_str,
-                filters=filters_str,
-                limit=limit,
-                offset=offset,
-                page_data=cache_entry,
-            )
+            if sq.scope is not Scope.QUEUES:
+                cache_entry = {"data": page_data, "total": total}
+                await cache.set(
+                    scope=sq.scope,
+                    search_terms=sq.search_terms.terms if sq.search_terms else "",
+                    sorting=sorting_str,
+                    filters=filters_str,
+                    limit=limit,
+                    offset=offset,
+                    page_data=cache_entry,
+                )
+
             search_cache_misses_total.labels(scope=sq.scope.value).inc()
     except EXCEPTIONS as e:
         raise bad_request_factory(e)
