@@ -45,7 +45,7 @@ def upgrade() -> None:
                 SELECT 1 FROM information_schema.columns
                 WHERE table_name = 'oauth_tokens' AND column_name = 'access_token_enc'
             ) THEN
-                ALTER TABLE oauth_tokens ADD COLUMN access_token_enc BYTEA NOT NULL;
+                ALTER TABLE oauth_tokens ADD COLUMN access_token_enc BYTEA NOT NULL DEFAULT ''::bytea;
             END IF;
         END $$;
     """)
@@ -118,7 +118,7 @@ def downgrade() -> None:
                 SELECT 1 FROM information_schema.columns
                 WHERE table_name = 'oauth_tokens' AND column_name = 'access_token'
             ) THEN
-                ALTER TABLE oauth_tokens ADD COLUMN access_token VARCHAR NOT NULL;
+                ALTER TABLE oauth_tokens ADD COLUMN access_token VARCHAR NOT NULL DEFAULT '';
             END IF;
         END $$;
     """)
@@ -129,7 +129,7 @@ def downgrade() -> None:
                 SELECT 1 FROM information_schema.columns
                 WHERE table_name = 'oauth_tokens' AND column_name = 'refresh_token'
             ) THEN
-                ALTER TABLE oauth_tokens ADD COLUMN refresh_token VARCHAR NOT NULL;
+                ALTER TABLE oauth_tokens ADD COLUMN refresh_token VARCHAR NOT NULL DEFAULT '';
             END IF;
         END $$;
     """)
