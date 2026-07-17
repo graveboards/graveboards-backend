@@ -7,7 +7,6 @@ from app.database.schemas import ScoreSchema
 from app.osu_api.enums import ScoreType
 from app.redis import ChannelName
 from app.logging import get_logger, Logger
-from app.utils import parse_iso8601
 from .decorators import auto_retry
 from .service import ScheduledFetcherService
 from .service.job import JobLoadInstruction
