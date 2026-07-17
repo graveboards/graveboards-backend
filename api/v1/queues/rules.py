@@ -14,16 +14,7 @@ __all__ = ["search", "get", "post", "patch", "delete", "put"]
 
 
 async def _can_view_private_rules(db: PostgresqlDB, queue_id: int, caller_user_id: int | None) -> bool:
-    if caller_user_id is None:
-        return False
-
-    if await is_queue_owner_or_manager(db, queue_id, caller_user_id):
-        return True
-
-    from app.database.models import User
-
-    user = await db.get(User, id=caller_user_id, _include={"roles": True})
-    return user is not None and any(RoleName(role.name) == RoleName.ADMIN for role in user.roles)
+    return await is_queue_owner_or_manager(db, queue_id, caller_user_id)
 
 
 @with_authenticated_user_id()

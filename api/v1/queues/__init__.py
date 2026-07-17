@@ -23,7 +23,7 @@ async def search(_caller_user_id: int = None, **kwargs):
 
     queues = await db.get_many(
         Queue,
-        _where=queue_visibility_where(_caller_user_id),
+        _where=await queue_visibility_where(db, _caller_user_id),
         **kwargs
     )
 

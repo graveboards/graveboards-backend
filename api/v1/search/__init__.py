@@ -132,7 +132,7 @@ async def search(**kwargs):
             se = SearchEngine(sq.scope, search_terms=sq.search_terms, sorting=sq.sorting, filters=sq.filters)
 
             if sq.scope is Scope.QUEUES:
-                se.query = se.query.where(queue_visibility_where(caller_user_id))
+                se.query = se.query.where(await queue_visibility_where(db, caller_user_id))
 
             async with db.session() as session:
                 page = await se.search(session, limit=limit, offset=offset)
