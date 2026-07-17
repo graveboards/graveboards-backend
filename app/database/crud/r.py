@@ -262,7 +262,7 @@ class _R:
         if _join is not None:
             select_stmt, joined_models = _R._apply_join(select_stmt, _join)
 
-        if _where:
+        if _where is not None:
             select_stmt = _R._apply_where(select_stmt, _where)
 
         if _sorting is not None:
