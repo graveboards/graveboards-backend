@@ -1,25 +1,4 @@
-import os
 from prometheus_client import Counter, Histogram, Gauge
-
-
-def _get_commit_hash() -> str:
-    # Baked in at image-build time via the GIT_COMMIT build arg (see Dockerfile);
-    # the running container has no .git directory and no git binary to introspect.
-    return os.environ.get("GIT_COMMIT", "unknown")
-
-
-graveboards_build_info = Gauge(
-    "graveboards_build_info",
-    "Build information for the Graveboards backend. Always 1; labels identify the version.",
-    ["version", "commit"],
-)
-
-
-def set_build_info():
-    from app.version import __version__
-    commit = _get_commit_hash()
-    graveboards_build_info.labels(version=__version__, commit=commit).set(1)
-
 
 daemon_service_running = Gauge(
     "daemon_service_running",
