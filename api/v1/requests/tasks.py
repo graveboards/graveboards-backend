@@ -1,8 +1,11 @@
 from connexion import request
+from connexion.exceptions import Forbidden
 
 from api.utils import build_pydantic_include
+from app.database import PostgresqlDB
+from app.database.models import User
 from app.exceptions import NotFound
-from app.security import role_authorization
+from app.security import role_authorization, with_authenticated_user_id
 from app.database.enums import RoleName
 from app.redis import Namespace
 from app.redis.models import QueueRequestHandlerTask
@@ -37,7 +40,8 @@ async def search(**kwargs):
     return tasks, 200, {"Content-Type": "application/json"}
 
 
-async def get(hashed_id: int, **kwargs):
+@with_authenticated_user_id()
+async def get(hashed_id: int, _caller_user_id: int = None, **kwargs):
     rc = request.state.rc
 
     task_hash_name = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(hashed_id)
@@ -47,6 +51,14 @@ async def get(hashed_id: int, **kwargs):
         raise NotFound(f"Request task with hashed ID '{hashed_id}' not found")
 
     deserialized_task = QueueRequestHandlerTask.deserialize(serialized_task)
+
+    if deserialized_task.user_id != _caller_user_id:
+        db: PostgresqlDB = request.state.db
+        user = await db.get(User, id=_caller_user_id, _include={"roles": True}) if _caller_user_id is not None else None
+        is_admin = user is not None and any(RoleName(role.name) == RoleName.ADMIN for role in user.roles)
+
+        if not is_admin:
+            raise Forbidden("You are not authorized to view this request task")
 
     include = build_pydantic_include(
         obj=deserialized_task,

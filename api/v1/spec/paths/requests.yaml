@@ -141,6 +141,9 @@ RequestTaskById:
         summary: Returns the specified beatmapset request task
         tags:
             - Requests
+        security:
+            - BearerAuth: []
+            - ApiKeyAuth: []
         parameters:
             - $ref: "../parameters/path/request.yaml#/RequestTaskHashedId"
             - $ref: "../parameters/query/include/request.yaml#/RequestTaskInclude"
@@ -149,5 +152,9 @@ RequestTaskById:
                 $ref: "../responses/200/request.yaml#/RequestTaskResult"
             400:
                 $ref: "../responses/400/generic.yaml#/BadRequest"
+            401:
+                $ref: "../responses/401/generic.yaml#/Unauthorized"
+            403:
+                $ref: "../responses/403/generic.yaml#/Forbidden"
             404:
                 $ref: "../responses/404/generic.yaml#/NotFound"
