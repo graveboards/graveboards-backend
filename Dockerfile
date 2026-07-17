@@ -5,6 +5,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /build
 
 COPY requirements.txt .
+
+# Remove once psycopg2 publishes a 3.14 wheel
+RUN apt-get update && apt-get install -y --no-install-recommends libpq-dev build-essential && rm -rf /var/lib/apt/lists/*
+
 RUN pip install --no-cache-dir --prefix=/usr/local --root-user-action=ignore -r requirements.txt
 
 FROM python:3.14-slim AS test-builder
@@ -15,6 +19,10 @@ WORKDIR /build
 
 COPY requirements.txt .
 COPY requirements-dev.txt .
+
+# Remove once psycopg2 publishes a 3.14 wheel
+RUN apt-get update && apt-get install -y --no-install-recommends libpq-dev build-essential && rm -rf /var/lib/apt/lists/*
+
 RUN pip install --no-cache-dir --prefix=/usr/local --root-user-action=ignore -r requirements.txt -r requirements-dev.txt
 
 FROM python:3.14-slim AS runner
@@ -25,6 +33,7 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
+    libpq5 \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
@@ -58,6 +67,7 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
+    libpq5 \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
