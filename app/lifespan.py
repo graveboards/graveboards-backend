@@ -39,7 +39,7 @@ async def lifespan(app: ConnexionMiddleware):
     daemon_task = asyncio.create_task(daemon_app.serve_forever(), name="Daemon Task")
 
     try:
-        yield {"rc": rc, "db": db}
+        yield {"rc": rc, "db": db, "daemon": daemon_app}
     finally:
         await daemon_app.stop()
         await daemon_app.wait_stopped()
