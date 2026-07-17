@@ -1,8 +1,11 @@
 import json
 import time
 
+from sqlalchemy import func, select as sa_select
+
 from connexion import request
 
+from api.pagination import build_pagination_response
 from api.utils import pop_auth_info
 from app.patches.validators import validate_include
 from app.database import PostgresqlDB
@@ -63,6 +66,9 @@ async def search(**kwargs):
 
         validate_include(include, get_include_schema(SCOPE_MODEL_MAPPING[sq.scope]))
 
+        limit = kwargs.get("limit", 50)
+        offset = kwargs.get("offset", 0)
+
         cache = SearchCache(rc)
         sorting_str = json.dumps(sq.sorting) if sq.sorting else ""
         filters_str = json.dumps(sq.filters) if sq.filters else ""
@@ -72,36 +78,50 @@ async def search(**kwargs):
             search_terms=sq.search_terms.terms if sq.search_terms else "",
             sorting=sorting_str,
             filters=filters_str,
-            limit=kwargs.get("limit", 50),
-            offset=kwargs.get("offset", 0),
+            limit=limit,
+            offset=offset,
         )
 
         if cached_result:
             cached = True
-            page_data = cached_result
+            page_data = cached_result["data"]
+            total = cached_result["total"]
             search_cache_hits_total.labels(scope=sq.scope.value).inc()
         else:
             se = SearchEngine(sq.scope, search_terms=sq.search_terms, sorting=sq.sorting, filters=sq.filters)
 
             async with db.session() as session:
-                page = await se.search(session, **kwargs)
+                page = await se.search(session, limit=limit, offset=offset)
+                count_query = sa_select(func.count()).select_from(se.query.subquery())
+                total = await session.scalar(count_query)
+
             page_data = se.dump(page, include=include)
 
             if reversed_:
                 page_data.reverse()
 
+            cache_entry = {"data": page_data, "total": total}
             await cache.set(
                 scope=sq.scope,
                 search_terms=sq.search_terms.terms if sq.search_terms else "",
                 sorting=sorting_str,
                 filters=filters_str,
-                limit=kwargs.get("limit", 50),
-                offset=kwargs.get("offset", 0),
-                page_data=page_data,
+                limit=limit,
+                offset=offset,
+                page_data=cache_entry,
             )
             search_cache_misses_total.labels(scope=sq.scope.value).inc()
     except EXCEPTIONS as e:
         raise bad_request_factory(e)
+
+    request_url = str(request.url)
+    page_data, status, headers = build_pagination_response(
+        data=page_data,
+        total=total,
+        limit=limit,
+        offset=offset,
+        request_url=request_url,
+    )
 
     duration = time.perf_counter() - start_time
     search_duration_seconds.labels(
@@ -115,7 +135,7 @@ async def search(**kwargs):
         cached="true" if cached else "false",
     ).inc()
 
-    return page_data, 200, {"Content-Type": "application/json"}
+    return page_data, status, headers
 
 
 async def post(body: dict):
