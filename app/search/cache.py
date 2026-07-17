@@ -34,7 +34,7 @@ class SearchCache:
                   filters: str, limit: int, offset: int) -> str:
         raw = f"{scope.value}:{search_terms}:{sorting}:{filters}:{limit}:{offset}"
         hash_key = hashlib.sha256(raw.encode()).hexdigest()[:16]
-        return f"{self.CACHE_PREFIX}:{hash_key}"
+        return f"{self.CACHE_PREFIX}:{scope.value}:{hash_key}"
 
     def _get_ttl(self, scope: Scope) -> int:
         return CacheTTLConfig[scope.name.upper()].value
@@ -59,6 +59,6 @@ class SearchCache:
 
     async def invalidate_scope(self, scope: Scope):
         """Invalidate all cached results for a scope (on data changes)."""
-        pattern = f"{self.CACHE_PREFIX}:*"
+        pattern = f"{self.CACHE_PREFIX}:{scope.value}:*"
         async for key in self.rc.scan(pattern):
             await self.rc.delete(key)
