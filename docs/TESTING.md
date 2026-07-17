@@ -94,32 +94,7 @@ make clean     # Remove Docker resources
 
 ## CI/CD Integration
 
-Tests run automatically on:
-
-- Push to any branch
-- Pull requests to main
-- Release branches
-
-```yaml
-# Example GitHub Actions workflow
-name: Tests
-
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.14'
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Run tests
-        run: pytest
-```
+Tests are run via `./deploy.sh test` which orchestrates an isolated test stack (Postgres + Redis + backend) and runs pytest inside the container. CI configuration is managed externally.
 
 ## Test Data Management
 
@@ -134,8 +109,22 @@ python manage.py fixtures status
 # Fetch fixtures from osu! API
 python manage.py fixtures fetch --criteria standard --users-osu 50
 
-# Refresh archives
+# Fetch users from beatmapset owners
+python manage.py fixtures fetch-users-from-beatmapsets
+
+# Generate queues and requests
+python manage.py fixtures generate --queue-count 10 --request-count 100
+
+# Promote/demote fixtures between instance/ and tests/
+python manage.py fixtures promote
+python manage.py fixtures demote
+
+# Refresh top player IDs and archive index
+python manage.py fixtures refresh-top-players
 python manage.py fixtures refresh-archives
+
+# Reconcile fixture metadata with disk state
+python manage.py fixtures reconcile
 
 # Clean all fixtures
 python manage.py fixtures clean

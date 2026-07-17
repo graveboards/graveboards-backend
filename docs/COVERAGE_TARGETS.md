@@ -10,13 +10,16 @@ The test suite enforces minimum coverage percentages to ensure test quality and 
 
 ### Overall Project Coverage
 
-- **Minimum (CI fail-under)**: 70%
-- Configured in `pyproject.toml` as `--cov-fail-under=70`
+- **Minimum (enforced)**: 70%
+- Configured in `pytest.ini` and `pyproject.toml` as `--cov-fail-under=70`
+- CI fails if overall coverage drops below this threshold
 
-### Module Coverage Targets
+### Module Coverage Goals
 
-| Module | Minimum Coverage | Notes |
-|--------|-----------------|-------|
+These are aspirational targets, not hard enforcement. Focus on writing meaningful tests rather than chasing percentages:
+
+| Module | Target | Notes |
+|--------|--------|-------|
 | `app/database/` | 70% | Core DB operations |
 | `app/osu_api/` | 65% | API client and parsing |
 | `app/fixtures/` | 75% | Fixture management |
@@ -30,7 +33,7 @@ The test suite enforces minimum coverage percentages to ensure test quality and 
 The following are excluded from coverage:
 
 - Test files (`tests/`)
-- Migration files (`migrations/`)
+- Migration files (`alembic/versions/`)
 - Static assets (`assets/`)
 - Documentation (`docs/`)
 

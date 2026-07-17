@@ -15,11 +15,10 @@ This implementation adds support for using osu.sh archives (`https://data.ppy.sh
    - `get_beatmap_ids_from_archive()` - Extracts beatmap IDs
    - `refresh_archive_index()` - Refreshes cached archive metadata
 
-2. **`app/fixtures/archive_fetcher.py`** - Archive-based fixture fetcher
-   - Extends `FixtureDataFetcher` to use osu.sh archives
-   - `refresh_archive_data()` - Refreshes player IDs from archives
-   - Overrides ID selection to prefer archived IDs over random guessing
-   - Falls back to osu! API if archives unavailable
+2. **`app/fixtures/orchestrator.py`** - Archive-aware fixture orchestration
+    - `FixtureOrchestrator` composes ID sources (including archives) with the fetch pipeline
+    - `Source.ARCHIVE` selects archived IDs over random guessing
+    - Falls back to osu! API if archives unavailable
 
 3. **`app/manage/fixtures/refresh_archives.py`** - CLI command
    - `manage fixtures refresh-archives [--force]` - Refresh archive index
@@ -178,11 +177,11 @@ manage fixtures fetch --archive --minimal --users-osu 10
 ## Files Modified/Created
 
 ### New Files
-- `app/fixtures/archives.py` - Archive system
-- `app/fixtures/archive_fetcher.py` - Archive-based fetcher
+- `app/fixtures/archives.py` - Archive discovery, indexing, and SQL extraction
 - `app/manage/fixtures/refresh_archives.py` - CLI command
 
 ### Modified Files
+- `app/fixtures/orchestrator.py` - Added `Source.ARCHIVE` to ID source selection
 - `app/manage/fixtures/fetch.py` - Added `--archive` flag
 - `app/manage/fixtures/__init__.py` - Added exports
 - `app/manage/__init__.py` - Added `refresh-archives` command
@@ -209,14 +208,14 @@ manage fixtures fetch --users-osu 100
 manage fixtures fetch --archive --users-osu 100
 ```
 
-Or programmatically:
+Or programmatically via the orchestrator:
 
 ```python
-from app.fixtures.archive_fetcher import ArchiveBasedFixtureFetcher
+from app.fixtures.criteria import FetchCriteria, Source
 
-fetcher = ArchiveBasedFixtureFetcher(rc, use_archives=True)
-await fetcher.refresh_archive_data()  # Load IDs from archives
-# Use fetcher normally...
+criteria = FetchCriteria(criteria="standard", source=Source.ARCHIVE)
+orchestrator = FixtureOrchestrator(criteria, rc)
+report = await orchestrator.execute()
 ```
 
 ## Support

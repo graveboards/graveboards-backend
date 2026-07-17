@@ -29,12 +29,17 @@ All services communicate via the `app` network (bridge driver).
 
 ## Modes
 
-| Mode | Compose File | Frontend Target | Database | Redis DB | Ports Exposed |
-|------|-------------|-----------------|----------|----------|---------------|
-| `dev` | `docker-compose.yml` | `development` (hot-reload) | `graveboards_dev` | 0 | 5432, 6379, 8000, 3000 |
-| `prod` | `docker-compose.prod.yml` | `production` (standalone) | `graveboards_prod` | 0 | None (behind reverse proxy) |
-| `prod-nas` | `prod.yml` + `prod-nas.yml` | `production` (standalone) | `graveboards_prod` | 0 | None (behind reverse proxy) |
+| Mode | Compose Files | Frontend Target | Database | Redis DB | Ports Exposed |
+|------|--------------|-----------------|----------|----------|---------------|
+| `dev` | `docker-compose.yml` (+ monitoring overrides) | `development` (hot-reload) | `graveboards_dev` | 0 | 5432, 6379, 8000, 3000 |
+| `prod` | `docker-compose.prod.yml` (+ optional NAS/Traefik/monitoring overrides) | `production` (standalone) | `graveboards_prod` | 0 | None (behind reverse proxy) |
 | `test` | `docker-compose.test.yml` | N/A | `graveboards_test` | 15 | 5432, 6379 |
+
+**Mode flags (passed to `./deploy.sh`):**
+- `--nas` - Include `docker-compose.prod.nas.yml` for NAS volume overrides (prod only)
+- `--traefik` - Include `docker-compose.prod.traefik.yml` for Traefik reverse proxy (prod only)
+- `--monitoring-ports` - Include `docker-compose.monitoring.ports.yml` to publish monitoring ports (dev only)
+- `--monitoring-traefik` - Include `docker-compose.monitoring.traefik.yml` for Traefik routes on Prometheus/Alertmanager (prod only)
 
 ## Volumes
 
@@ -56,7 +61,7 @@ All services communicate via the `app` network (bridge driver).
 | `instance-prod-data` | Backend instance | Named |
 | `../graveboards-backend/docker-init` | DB init scripts | Bind mount (read-only) |
 
-### NAS Override (prod-nas mode)
+### NAS Override (`--nas` flag)
 
 Overrides production volumes with external paths via environment variables:
 - `POSTGRESQL_DATA_PATH` → PostgreSQL data
@@ -89,7 +94,7 @@ cd graveboards-deploy
 
 ```bash
 cd graveboards-deploy
-./deploy.sh logs [dev|prod|prod-nas|test] [backend|frontend|postgres|redis|all]
+./deploy.sh logs [dev|prod|test] [--nas] [--traefik] [backend|frontend|postgres|redis|all]
 ```
 
 ## Backend Security Hardening
@@ -97,7 +102,6 @@ cd graveboards-deploy
 The backend container runs with:
 - `read_only: true` filesystem
 - `no-new-privileges: true`
-- tmpfs mounts for `/tmp` and `/app/instance/logs`
 
 ## Resource Limits
 

@@ -165,6 +165,21 @@ python manage.py fixtures fetch-users-from-beatmapsets
 # Generate queues and requests
 python manage.py fixtures generate --queue-count 10 --request-count 100
 
+# Promote fixtures from instance/ to tests/
+python manage.py fixtures promote
+
+# Demote fixtures from tests/ to instance/
+python manage.py fixtures demote
+
+# Refresh top player IDs from osu! API
+python manage.py fixtures refresh-top-players
+
+# Refresh archive index from osu.sh
+python manage.py fixtures refresh-archives
+
+# Reconcile fixture metadata with disk state
+python manage.py fixtures reconcile
+
 # Check fixture status
 python manage.py fixtures status
 
