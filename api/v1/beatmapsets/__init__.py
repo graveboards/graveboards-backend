@@ -1,5 +1,6 @@
 import httpx
 from connexion import request
+from connexion.problem import problem
 
 from api.decorators import api_query
 from api.utils import build_pydantic_include
@@ -81,7 +82,16 @@ async def post(body: dict, rc: RedisClient = None, db: PostgresqlDB = None, bm: 
             bm = BeatmapManager(rc, db)
         changelog = await bm.archive(beatmapset_id)
     except httpx.HTTPStatusError as e:
-        return e.response.json(), e.response.status_code, {"Content-Type": "application/problem+json"}  # Inconsistent with other error formats, fix later
+        return (
+            problem(
+                status=e.response.status_code,
+                title="osu! API Error",
+                detail=e.response.text[:500],
+                type="about:blank",
+            ),
+            e.response.status_code,
+            {"Content-Type": "application/problem+json"},
+        )
 
     if changelog.get("snapshotted_beatmapset") or changelog.get("snapshotted_beatmaps"):
         num_snapshotted_beatmaps = len(changelog.get("snapshotted_beatmaps", []))
