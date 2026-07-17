@@ -18,9 +18,10 @@ async def lifespan(app: ConnexionMiddleware):
     logger = get_logger(__name__)
     logger.info("Start of app lifespan")
 
-    from app.observability.metrics.daemon import set_build_info
+    from app.version import __version__
+    from app.observability.metrics.daemon import _get_commit_hash, set_build_info
     set_build_info()
-    logger.info("Build info metric set")
+    logger.info(f"Build info: version={__version__} commit={_get_commit_hash()}")
 
     from app.database.migrations import run_migrations
     run_migrations()

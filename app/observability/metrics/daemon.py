@@ -1,22 +1,11 @@
 import os
-import subprocess
 from prometheus_client import Counter, Histogram, Gauge
 
 
 def _get_commit_hash() -> str:
-    try:
-        result = subprocess.run(
-            ["git", "rev-parse", "--short", "HEAD"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-            cwd=os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
-        )
-        if result.returncode == 0 and result.stdout.strip():
-            return result.stdout.strip()
-    except Exception:
-        pass
-    return "unknown"
+    # Baked in at image-build time via the GIT_COMMIT build arg (see Dockerfile);
+    # the running container has no .git directory and no git binary to introspect.
+    return os.environ.get("GIT_COMMIT", "unknown")
 
 
 graveboards_build_info = Gauge(

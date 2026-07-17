@@ -29,6 +29,11 @@ FROM python:3.14-slim AS runner
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Set via --build-arg from the host's git checkout (see deploy.sh/deploy.ps1);
+# the container itself has no .git directory or git binary to introspect.
+ARG GIT_COMMIT=unknown
+ENV GIT_COMMIT=${GIT_COMMIT}
+
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
