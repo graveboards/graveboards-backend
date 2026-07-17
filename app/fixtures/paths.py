@@ -16,16 +16,16 @@ from app.config import PROJECT_ROOT
 FIXTURES_DIR = PROJECT_ROOT / "instance" / "fixtures"
 FIXTURES_DIR.mkdir(parents=True, exist_ok=True)
 
-# Test fixtures (used by pytest tests)
+# Test fixtures (used by pytest tests). Not created eagerly: the backend
+# runtime container's filesystem is read-only outside of instance/, and
+# nothing needs these to exist until fixtures are actually promoted/written
+# into them (see move_helpers.py), which creates them on demand.
 TEST_FIXTURES_DIR = PROJECT_ROOT / "tests" / "fixtures" / "osu"
-TEST_FIXTURES_DIR.mkdir(parents=True, exist_ok=True)
 
 # Queue and request test fixtures
 QUEUE_TEST_FIXTURES_DIR = PROJECT_ROOT / "tests" / "fixtures" / "queues"
-QUEUE_TEST_FIXTURES_DIR.mkdir(parents=True, exist_ok=True)
 
 REQUEST_TEST_FIXTURES_DIR = PROJECT_ROOT / "tests" / "fixtures" / "requests"
-REQUEST_TEST_FIXTURES_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def get_test_fixture_path(category: str, subcategory: str | None = None) -> Path:
