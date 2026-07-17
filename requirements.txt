@@ -15,7 +15,6 @@ alembic==1.18.0
 connexion==3.3.0
 cryptography==46.0.4
 psycopg2-binary==2.9.10
-python-dateutil==2.9.0.post0
 greenlet==3.3.1
 h11==0.16.0
 httpcore==1.0.9

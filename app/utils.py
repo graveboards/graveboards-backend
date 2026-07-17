@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from io import BytesIO
 from typing import Any
 
-from dateutil.parser import isoparse
+
 
 
 def generate_uuid() -> str:
@@ -27,7 +27,7 @@ def parse_iso8601(datetime_string: str) -> datetime:
     """
     if not datetime_string:
         return aware_utcnow()
-    return isoparse(datetime_string)
+    return datetime.fromisoformat(datetime_string)
 
 
 def combine_checksums(checksums: list[str]) -> str:
