@@ -48,7 +48,6 @@ class BootstrapConfig(BaseSettings):
     initial_users: list[UserConfig] = []
     initial_roles: list[str] = ["admin"]
     setup_steps: list[str] = [
-        "create_database",
         "seed_roles",
         "seed_users",
         "seed_api_keys",
