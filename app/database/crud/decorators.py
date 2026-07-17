@@ -15,6 +15,15 @@ P = ParamSpec("P")
 T = TypeVar("T")
 logger = get_logger(__name__)
 
+__all__ = [
+    "session_manager",
+    "session_manager_stream",
+    "ensure_required",
+    "SessionResolver",
+    "DbSessionResolver",
+    "db_session_resolver",
+]
+
 _active_session: ContextVar[AsyncSession | None] = ContextVar(
     "active_session",
     default=None,

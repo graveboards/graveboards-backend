@@ -11,6 +11,8 @@ from .r import R
 from .u import U
 from .d import D
 
+__all__ = ["CRUD"]
+
 logger = get_logger(__name__)
 
 

@@ -14,3 +14,5 @@ __all__ = [
     "QueueRequestHandler",
     "RuleValidationService",
 ]
+
+ServiceSupervisor = ServiceFactory  # Alias for clarity

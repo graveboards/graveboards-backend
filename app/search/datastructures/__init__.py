@@ -5,3 +5,17 @@ from .sorting import SortingSchema, SortingOption
 from .filters import FiltersSchema, FieldFilters
 from .field_weights import FieldWeights
 from .pattern_multipliers import PatternMultipliers
+
+__all__ = [
+    "SearchSchema",
+    "Conditions",
+    "ConditionField",
+    "ConditionValue",
+    "SearchTermsSchema",
+    "SortingSchema",
+    "SortingOption",
+    "FiltersSchema",
+    "FieldFilters",
+    "FieldWeights",
+    "PatternMultipliers",
+]
