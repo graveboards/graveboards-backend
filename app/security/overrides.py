@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from app.database.models import Queue, Request
+from app.database.queue_access import is_queue_owner_or_manager
 from app.utils import get_nested_value
 
 if TYPE_CHECKING:
@@ -66,3 +67,40 @@ async def queue_owner_override(
         return False
 
     return authenticated_user_id == queue.user_id
+
+
+async def queue_manager_override(
+    db: PostgresqlDB,
+    authenticated_user_id_lookup: str = "user",
+    from_request: bool = False, **kwargs
+) -> bool:
+    """Override authorization if the authenticated user owns or manages the queue.
+
+    Same resolution as ``queue_owner_override`` (direct ``queue_id`` or indirect via
+    ``request_id``), but also accepts queue managers, not just the single owner.
+
+    Args:
+        db:
+            Active database interface.
+        authenticated_user_id_lookup:
+            Key/path for authenticated user ID.
+        from_request:
+            Whether ownership should be resolved via Request -> Queue.
+
+    Returns:
+        ``True`` if the authenticated user owns or manages the queue; otherwise ``False``.
+    """
+    authenticated_user_id = get_nested_value(kwargs, authenticated_user_id_lookup)
+
+    if not from_request:
+        queue_id = kwargs["queue_id"]
+    else:
+        request = await db.get(Request, id=kwargs["request_id"], _include={"queue": True})
+        if request is None:
+            return False
+        queue_id = request.queue.id if request.queue else None
+
+    if queue_id is None:
+        return False
+
+    return await is_queue_owner_or_manager(db, queue_id, authenticated_user_id)

@@ -90,6 +90,7 @@ class RuleCRUD:
                 type=data["type"],
                 config=data.get("config", {}),
                 is_active=data.get("is_active", True),
+                is_public=data.get("is_public", True),
                 version=data.get("version", "1.0"),
             )
             session.add(rule)
@@ -176,6 +177,7 @@ class RuleCRUD:
             type=rule_data["type"],
             config=rule_data.get("config", {}),
             is_active=rule_data.get("is_active", True),
+            is_public=rule_data.get("is_public", True),
             version=rule_data.get("version", "1.0"),
         )
         session.add(rule)

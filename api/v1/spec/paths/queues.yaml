@@ -98,6 +98,10 @@ QueueById:
 QueueRules:
     get:
         summary: Returns all rules for a queue
+        description: |
+            Visible to any authenticated caller. Rules marked private (`is_public:
+            false`) are omitted from the list unless the caller owns/manages the
+            queue or is an admin.
         tags:
             - Rules
         security:
@@ -110,8 +114,6 @@ QueueRules:
                 $ref: "../responses/200/rule.yaml#/RuleResults"
             401:
                 $ref: "../responses/401/generic.yaml#/Unauthorized"
-            403:
-                $ref: "../responses/403/generic.yaml#/Forbidden"
             404:
                 $ref: "../responses/404/generic.yaml#/NotFound"
 
@@ -168,6 +170,11 @@ QueueRules:
 QueueRuleById:
     get:
         summary: Returns the specified rule
+        description: |
+            Visible to any authenticated caller, unless the rule is marked private
+            (`is_public: false`) and the caller doesn't own/manage the queue or isn't
+            an admin - in which case it 404s rather than 403s, to match the list
+            endpoint's behavior of simply omitting private rules.
         tags:
             - Rules
         security:
@@ -181,8 +188,6 @@ QueueRuleById:
                 $ref: "../responses/200/rule.yaml#/RuleResult"
             401:
                 $ref: "../responses/401/generic.yaml#/Unauthorized"
-            403:
-                $ref: "../responses/403/generic.yaml#/Forbidden"
             404:
                 $ref: "../responses/404/generic.yaml#/NotFound"
 

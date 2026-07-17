@@ -245,6 +245,7 @@ class RuleSchema(BaseModel, BaseModelExtra):
     type: RuleType
     config: dict[str, Any] = {}
     is_active: Optional[bool] = None
+    is_public: Optional[bool] = None
     version: str = "1.0"
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime]
@@ -253,6 +254,7 @@ class RuleSchema(BaseModel, BaseModelExtra):
 class RuleCreateSchema(BaseModel):
     type: RuleType
     config: dict[str, Any]
+    is_public: bool = True
     version: str = "1.0"
 
     @field_validator("config")

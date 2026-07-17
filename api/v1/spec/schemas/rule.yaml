@@ -66,6 +66,13 @@ QueueRule:
             type: boolean
             default: true
             description: When false, the rule is disabled but preserved
+        is_public:
+            type: boolean
+            default: true
+            description: |
+                When false, only the queue's owner/managers (or an admin) can see this
+                rule - it's hidden from GET /queues/{queue_id}/rules and
+                GET /queues/{queue_id}/rules/{rule_id} for everyone else.
         version:
             type: string
             default: "1.0"
@@ -625,6 +632,10 @@ RuleCreate:
                 - $ref: "#/CompositeConfig"
                 - $ref: "#/NeverRankedConfig"
                 - $ref: "#/UniqueArtistTitleConfig"
+        is_public:
+            type: boolean
+            default: true
+            description: Whether this rule is visible to non-owner/manager viewers
         version:
             type: string
             default: "1.0"
@@ -641,6 +652,9 @@ RuleUpdate:
         is_active:
             type: boolean
             description: Enable or disable the rule
+        is_public:
+            type: boolean
+            description: Show or hide this rule from non-owner/manager viewers
         config:
             type: object
             description: Restriction-specific configuration (see individual type schemas)
