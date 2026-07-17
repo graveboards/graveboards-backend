@@ -22,6 +22,9 @@ async def lifespan(app: ConnexionMiddleware):
     set_build_info()
     logger.info("Build info metric set")
 
+    from app.database.migrations import run_migrations
+    run_migrations()
+
     runner = SetupRunner(CONFIG.bootstrap)
     await runner.run()
 
@@ -30,9 +33,6 @@ async def lifespan(app: ConnexionMiddleware):
 
     rc = RedisClient()
     db = PostgresqlDB()
-
-    from app.database.migrations import run_migrations
-    run_migrations()
 
     cleanup_runner = SetupRunner(CONFIG.bootstrap, rc=rc)
     await cleanup_runner.cleanup_stale_tasks()
