@@ -7,7 +7,7 @@ This document explains when to use each fixture loading method in the Graveboard
 The test suite provides multiple ways to load osu! API fixture data:
 
 1. **`load_*()` functions** - Simple JSON file loading
-2. **`FixtureManager`** - Programmatic fixture management
+2. **`FixtureReader`** - Programmatic fixture reading by directory/entity
 3. **Factory functions** - Programmatic test data generation
 
 ## When to Use Each Method
@@ -33,22 +33,22 @@ def test_beatmap_parsing(load_beatmap):
 
 ---
 
-### Use `FixtureManager` when:
+### Use `FixtureReader` when:
 
 - You need to work with **multiple related fixtures**
 - Testing **relationships between entities** (e.g., user + beatmap + score)
-- You need to **access fixtures by ID** dynamically
+- You need to **load fixtures by entity type** programmatically
 - Testing **batch operations** on multiple fixtures
 
 **Example:**
 ```python
-from app.fixtures.manager import FixtureManager
+from app.fixtures.reader import FixtureReader
 
-def test_user_score_relationship(fixture_manager):
-    manager = FixtureManager()
-    user_data = manager.get_user(12345)
-    beatmap_data = manager.get_beatmap(100)
-    score_data = manager.get_user_scores(12345, ScoreType.BEST, Ruleset.OSU)
+def test_user_score_relationship():
+    reader = FixtureReader()
+    user_data = reader.load("users", "osu/user_12345_osu")
+    beatmap_data = reader.load("beatmaps", "beatmap_100")
+    score_data = reader.load("scores", "best", "user_12345_best")
     
     # Test relationship between all three
     assert score_data[0]["user_id"] == user_data["id"]
@@ -56,8 +56,8 @@ def test_user_score_relationship(fixture_manager):
 ```
 
 **Files:**
-- `app/fixtures/manager.py` - Main FixtureManager class
-- `tests/fixtures/osu/__init__.py` - Test-specific FixtureManager
+- `app/fixtures/reader.py` - FixtureReader class
+- `tests/fixtures/osu/__init__.py` - Convenience `load_*()` helpers
 
 ---
 
@@ -90,7 +90,7 @@ def test_user_validation(user_factory):
 Need exact osu! API data?
   ├─ YES → load_*() functions
   └─ NO → Need related fixtures?
-      ├─ YES → FixtureManager
+      ├─ YES → FixtureReader
       └─ NO → Need programmatic generation?
           ├─ YES → Factory functions
           └─ NO → Use load_*() anyway
@@ -100,7 +100,7 @@ Need exact osu! API data?
 
 1. **Prefer factories for unit tests** - More flexible and faster
 2. **Use load_*() for integration tests** - Verify real API parsing
-3. **Use FixtureManager for complex relationships** - Tests with multiple entities
+3. **Use FixtureReader for complex relationships** - Tests with multiple entities
 4. **Document which method each test uses** in the docstring
 5. **Keep fixture JSON files minimal** - Only include essential edge cases
 
@@ -122,7 +122,7 @@ def test_user_profile(user_factory):
     profile = create_profile(user_data)
 ```
 
-### From load_*() to FixtureManager
+### From load_*() to FixtureReader
 
 **Before:**
 ```python
@@ -133,15 +133,17 @@ def test_user_beatmap_relationship(load_user, load_beatmap):
 
 **After:**
 ```python
-def test_user_beatmap_relationship(fixture_manager):
-    manager = FixtureManager()
-    user = manager.get_user(12345)
-    beatmap = manager.get_beatmap(100)
+from app.fixtures.reader import FixtureReader
+
+def test_user_beatmap_relationship():
+    reader = FixtureReader()
+    user = reader.load("users", "osu/user_12345_osu")
+    beatmap = reader.load("beatmaps", "beatmap_100")
 ```
 
 ## Related Documentation
 
 - `TESTING.md` - Overall testing guidelines
 - `tests/fixtures/osu/__init__.py` - load_*() function definitions
-- `app/fixtures/manager.py` - FixtureManager class
+- `app/fixtures/reader.py` - FixtureReader class
 - `tests/fixtures/factories.py` - Factory function definitions
