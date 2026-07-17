@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 from io import BytesIO
 from typing import Any
 
+from dateutil.parser import isoparse
+
 
 def generate_uuid() -> str:
     return uuid.uuid4().hex
@@ -14,13 +16,18 @@ def aware_utcnow() -> datetime:
     return datetime.now(tz=timezone.utc)
 
 
-def parse_iso8601(datetime_string) -> datetime:
-    if datetime_string.endswith("Z"):
-        return datetime.strptime(datetime_string, "%Y-%m-%dT%H:%M:%S%z")
-    elif "+" in datetime_string:
-        return datetime.strptime(datetime_string, "%Y-%m-%dT%H:%M:%S%z")
-    else:
-        return datetime.strptime(datetime_string, "%Y-%m-%dT%H:%M:%S")
+def parse_iso8601(datetime_string: str) -> datetime:
+    """Parse an ISO 8601 datetime string.
+
+    Handles all valid ISO 8601 formats including:
+    - '2024-01-15T12:00:00Z'
+    - '2024-01-15T12:00:00+00:00'
+    - '2024-01-15T12:00:00.123456'
+    - '2024-01-15T12:00:00.123456Z'
+    """
+    if not datetime_string:
+        return aware_utcnow()
+    return isoparse(datetime_string)
 
 
 def combine_checksums(checksums: list[str]) -> str:
