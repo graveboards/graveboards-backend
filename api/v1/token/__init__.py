@@ -14,6 +14,8 @@ from app.security.auth_rate_limit import AuthRateLimiter
 from app.security.oauth_encryption import encrypt_token
 from app.utils import aware_utcnow
 
+__all__ = ["search", "post"]
+
 
 async def search(token: str, rc: RedisClient = None):
     if rc is None:

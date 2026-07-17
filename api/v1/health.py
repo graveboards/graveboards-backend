@@ -7,6 +7,8 @@ from app.database import PostgresqlDB
 from app.redis import RedisClient
 from app.utils import aware_utcnow
 
+__all__ = ["health_check"]
+
 
 async def health_check() -> dict:
     """Health check endpoint for Graveboards services.

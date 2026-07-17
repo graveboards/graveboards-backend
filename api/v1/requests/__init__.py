@@ -27,6 +27,8 @@ from app.database.rules.validators.metadata import (
 )
 from . import tasks
 
+__all__ = ["search", "get", "post", "patch", "delete"]
+
 _METADATA_PROVIDERS = {
     "song_identity": SongIdentityProvider,
     "beatmap_stats": BeatmapStatsProvider,

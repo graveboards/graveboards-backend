@@ -14,6 +14,8 @@ from app.security import role_authorization
 from app.database.enums import RoleName
 from . import listings, snapshots, tags
 
+__all__ = ["search", "get", "post"]
+
 
 @api_query(ModelClass.BEATMAPSET, many=True)
 async def search(**kwargs):

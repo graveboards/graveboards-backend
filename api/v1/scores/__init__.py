@@ -11,6 +11,8 @@ from app.utils import parse_iso8601
 from app.security import role_authorization
 from app.database.enums import RoleName
 
+__all__ = ["search", "get", "post"]
+
 
 @api_query(ModelClass.SCORE, many=True)
 async def search(**kwargs):

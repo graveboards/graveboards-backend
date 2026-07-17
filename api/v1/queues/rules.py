@@ -9,6 +9,8 @@ from app.security.overrides import queue_owner_override
 from app.database.enums import RoleName
 from app.database.crud.rules import RuleCRUD
 
+__all__ = ["search", "get", "post", "patch", "delete", "put"]
+
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
 async def search(queue_id: int, **kwargs):

@@ -8,6 +8,8 @@ from app.redis import Namespace
 from app.redis.models import QueueRequestHandlerTask
 from app.spec import get_include_schema
 
+__all__ = ["search", "get"]
+
 
 @role_authorization(RoleName.ADMIN)
 async def search(**kwargs):

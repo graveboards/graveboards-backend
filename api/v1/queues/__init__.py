@@ -11,6 +11,8 @@ from app.security.overrides import queue_owner_override
 from app.database.enums import RoleName
 from app.spec import get_include_schema
 
+__all__ = ["search", "get", "post", "patch"]
+
 
 @api_query(ModelClass.QUEUE, many=True)
 async def search(**kwargs):

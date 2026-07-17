@@ -9,6 +9,8 @@ from app.security.auth_rate_limit import AuthRateLimiter
 
 from .dependencies import get_redis_client
 
+__all__ = ["search"]
+
 STATE_EXPIRES_IN = 300
 
 

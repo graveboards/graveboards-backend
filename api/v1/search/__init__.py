@@ -26,6 +26,8 @@ from app.observability.metrics.search import (
 )
 from app.spec import get_include_schema
 
+__all__ = ["search", "post"]
+
 EXCEPTIONS = (
     ValueError,
     TypeError,

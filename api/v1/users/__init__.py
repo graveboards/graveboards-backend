@@ -12,6 +12,8 @@ from app.security.overrides import matching_user_id_override
 from app.spec import get_include_schema
 from . import api_key
 
+__all__ = ["search", "get", "post"]
+
 
 @role_authorization(RoleName.ADMIN)
 @api_query(ModelClass.USER, many=True)
