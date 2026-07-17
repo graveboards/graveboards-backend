@@ -16,17 +16,6 @@ def get_authenticated_user_id(kwargs: dict[str, Any], user_lookup: str = "user")
     except KeyError:
         pass
 
-    # If we're in a Connexion request context, try to get user ID from request context
-    try:
-        from connexion import request
-        # Connexion stores user info in request_context after OAuth
-        if hasattr(request, "user") and request.user:
-            return request.user.get("sub") if isinstance(request.user, dict) else request.user
-        if hasattr(request, "token_info") and request.token_info:
-            return request.token_info.get("sub")
-    except (AttributeError, KeyError):
-        pass
-
     raise KeyError(user_lookup)
 
 
