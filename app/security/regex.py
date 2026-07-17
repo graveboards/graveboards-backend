@@ -3,15 +3,16 @@ import re
 from typing import Optional
 
 
-def safe_compile_regex(
+async def safe_compile_regex(
         pattern: str,
         timeout: float = 0.1,
         sample: str = "a" * 100,
 ) -> Optional[re.Pattern]:
     """Safely compile a regular expression with timeout protection.
 
-    Uses asyncio.wait_for to enforce a timeout on compilation and search.
-    Falls back to None if the pattern causes catastrophic backtracking.
+    Uses asyncio.to_thread to run blocking regex operations in a thread pool,
+    with asyncio.wait_for to enforce a timeout. Falls back to None if the
+    pattern causes catastrophic backtracking.
 
     Args:
         pattern:
@@ -26,18 +27,13 @@ def safe_compile_regex(
         occurs.
     """
     try:
-        loop = asyncio.get_running_loop()
-        compiled = loop.run_until_complete(
-            asyncio.wait_for(
-                asyncio.to_thread(re.compile, pattern),
-                timeout=timeout,
-            )
+        compiled = await asyncio.wait_for(
+            asyncio.to_thread(re.compile, pattern),
+            timeout=timeout,
         )
-        loop.run_until_complete(
-            asyncio.wait_for(
-                asyncio.to_thread(compiled.search, sample),
-                timeout=timeout,
-            )
+        await asyncio.wait_for(
+            asyncio.to_thread(compiled.search, sample),
+            timeout=timeout,
         )
         return compiled
     except (asyncio.TimeoutError, re.error, Exception):

@@ -232,7 +232,7 @@ class Conditions(BaseModel):
 
     @field_validator("regex", "not_regex", mode="after")
     @classmethod
-    def validate_regex(cls, value: str | None) -> str | None:
+    async def validate_regex(cls, value: str | None) -> str | None:
         """Validate regular expression patterns for safety and complexity.
 
         Enforces:
@@ -273,7 +273,7 @@ class Conditions(BaseModel):
             if re.search(pattern, value):
                 raise ValueError(f"Regex contains a pattern that may lead to catastrophic backtracking: {pattern}")
 
-        compiled = safe_compile_regex(value, timeout=REGEX_TIMEOUT)
+        compiled = await safe_compile_regex(value, timeout=REGEX_TIMEOUT)
 
         if compiled is None:
             # Bypassing compilation safety check (running on non-UNIX system)
