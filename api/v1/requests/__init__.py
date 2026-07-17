@@ -10,7 +10,7 @@ from app.osu_api import OsuAPIClient
 from app.database import PostgresqlDB
 from app.database.models import Request, Queue, ModelClass
 from app.database.schemas import RequestSchema
-from app.security import role_authorization, ownership_authorization, ownership_filter
+from app.security import role_authorization, ownership_authorization
 from app.security.overrides import queue_owner_override
 from app.database.enums import RoleName
 from app.redis import Namespace, ChannelName, RedisClient
@@ -39,7 +39,6 @@ _METADATA_PROVIDERS = {
 logger = get_logger(__name__)
 
 
-@ownership_filter()
 @api_query(ModelClass.REQUEST, many=True)
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db

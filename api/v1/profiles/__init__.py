@@ -7,14 +7,13 @@ from app.database.models import Profile, ModelClass, User
 from app.database.schemas import ProfileSchema
 from app.exceptions import NotFound
 from app.spec import get_include_schema
-from app.security import ownership_authorization, ownership_filter
+from app.security import ownership_authorization
 from app.security.overrides import matching_user_id_override
 
 __all__ = ["search", "get"]
 
 
 @api_query(ModelClass.PROFILE, many=True)
-@ownership_filter()
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
 

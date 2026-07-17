@@ -1,10 +1,17 @@
 import inspect
 from functools import wraps
-from typing import Callable, Awaitable, ParamSpec, TypeVar
+from typing import Callable, Any, Awaitable, ParamSpec, TypeVar, TYPE_CHECKING
 from collections.abc import Sequence
 
+from connexion import request
+
+from app.database.enums import RoleName
 from app.config import get_security_enabled
+from app.database.models import User
 from .utils import get_authenticated_user_id, strip_auth_info, get_value
+
+if TYPE_CHECKING:
+    from app.database import PostgresqlDB
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -12,6 +19,10 @@ T = TypeVar("T")
 
 def ownership_filter(
     resource_user_id_lookup: str = "user_id",
+    authorized_user_id_lookup: str = "user",
+    bypass_roles: frozenset[RoleName] = frozenset(),
+    override: Callable[..., Awaitable[bool]] = None,
+    override_kwargs: dict[str, Any] = None,
 ) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Filter handler results to only include items owned by the authenticated user.
 
@@ -22,6 +33,14 @@ def ownership_filter(
     For security enforcement (preventing unauthorized access), use
     ``ownership_authorization`` instead.
 
+    A caller whose role is in ``bypass_roles``, or for whom ``override`` (if
+    provided) resolves truthy, skips filtering entirely and receives the
+    handler's unfiltered result — mirroring ``ownership_authorization``'s
+    admin/override bypass. Do not reach for this on endpoints where filtering
+    is the wrong access model to begin with (e.g. a listing that should be
+    visible to any caller, filterable only by explicit query params) — leave
+    those undecorated instead of bypassing-for-everyone.
+
     The decorated function must:
         - Be async
         - Accept ``**kwargs``
@@ -31,6 +50,16 @@ def ownership_filter(
     Args:
         resource_user_id_lookup:
             Key/path used to locate the owner ID on each result item.
+        authorized_user_id_lookup:
+            Key/path used to locate the authenticated user ID.
+        bypass_roles:
+            Roles that skip filtering and receive the unfiltered result.
+        override:
+            Optional async callable resolving to ``True`` to bypass filtering,
+            e.g. ``queue_owner_override``. Called with ``db`` and ``**kwargs``
+            merged with ``override_kwargs``.
+        override_kwargs:
+            Extra static kwargs passed to ``override``.
 
     Raises:
         ValueError:
@@ -50,10 +79,28 @@ def ownership_filter(
                 return await func(*args, **kwargs)
 
             try:
-                user_id = get_authenticated_user_id(kwargs)
+                user_id = get_authenticated_user_id(kwargs, authorized_user_id_lookup)
             except KeyError:
                 func_path = ".".join((func.__module__, func.__name__))
                 raise ValueError(f"Decorated function '{func_path}' must accept **kwargs to use @ownership_filter")
+
+            if bypass_roles or override:
+                db: PostgresqlDB = request.state.db
+
+                if bypass_roles:
+                    user = await db.get(User, id=user_id, _include={"roles": True})
+                    user_roles = {RoleName(role.name) for role in user.roles} if user else set()
+
+                    if user_roles & bypass_roles:
+                        strip_auth_info(kwargs)
+                        return await func(*args, **kwargs)
+
+                if override:
+                    kwargs_for_override = {**kwargs, **(override_kwargs or {})}
+
+                    if await override(db=db, **kwargs_for_override):
+                        strip_auth_info(kwargs)
+                        return await func(*args, **kwargs)
 
             strip_auth_info(kwargs)
             result = await func(*args, **kwargs)

@@ -430,8 +430,16 @@ class TestRequestsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_user_gets_forbidden_on_other_users_requests(self, TestClientWithMocks):
-        """Test that user gets 403 Forbidden on other users' requests."""
+    async def test_user_can_see_other_users_requests_in_a_queue(self, TestClientWithMocks):
+        """Test that a non-owner authenticated user still sees all requests in a queue.
+
+        GET /api/v1/requests is the shared data source for both the public queue
+        page and the queue management page (queue-content.tsx / manage-queue-content.tsx
+        in the frontend) - it must return every matching request, not just the
+        caller's own submissions. Regression coverage for the 2026-07-16 incident
+        where @ownership_filter() silently emptied this listing for anyone who
+        wasn't the literal submitter.
+        """
         from app.security import generate_token
         from app.database.schemas import RequestSchema
 
@@ -458,9 +466,11 @@ class TestRequestsPostIntegration:
             headers = {"Authorization": f"Bearer {generate_token(12345678)}"}
             response = test_client.get("/api/v1/requests", headers=headers)
 
-        assert response.status_code == 403
+        assert response.status_code == 200
         data = response.json()
-        assert "forbidden" in data.get("detail", "").lower() or "not authorized" in data.get("detail", "").lower()
+        assert isinstance(data, list)
+        assert len(data) == 1
+        assert data[0]["user_id"] == 99999999
 
     @pytest.mark.integration
     @pytest.mark.asyncio

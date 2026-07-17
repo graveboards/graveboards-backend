@@ -245,11 +245,18 @@ class TestOwnershipAuthorizationFailure:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_user_cannot_get_other_users_requests(self, TestClientWithMocks):
-        """Test that user gets empty list when trying to access other users' requests (filtered)."""
+    async def test_user_can_see_other_users_requests(self, TestClientWithMocks):
+        """Test that a non-owner user still sees other users' requests in the list.
+
+        GET /api/v1/requests is not an ownership-scoped "my requests" listing - it
+        backs the public/management queue pages, which need to show every request
+        matching the query filters regardless of who submitted it. Regression
+        coverage for the 2026-07-16 incident where @ownership_filter() silently
+        emptied this listing for anyone who wasn't the literal submitter.
+        """
 
         mock_db = AsyncMock()
-        
+
         request_data = {
             "id": 1,
             "user_id": 99999999,
@@ -260,7 +267,7 @@ class TestOwnershipAuthorizationFailure:
         }
         mock_request = RequestSchema.model_validate(request_data)
         mock_db.get_many = AsyncMock(return_value=[mock_request])
-        
+
         mock_user = MagicMock()
         mock_user.id = 12345678
         mock_user.roles = []
@@ -277,7 +284,8 @@ class TestOwnershipAuthorizationFailure:
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)
-        assert len(data) == 0
+        assert len(data) == 1
+        assert data[0]["user_id"] == 99999999
 
     @pytest.mark.integration
     @pytest.mark.asyncio
@@ -326,11 +334,16 @@ class TestOwnershipAuthorizationAdminOverride:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_can_get_own_requests_despite_ownership_filter(self, TestClientWithMocks, admin_user_token):
-        """Test that admin gets only their own requests via ownership_filter (data filtering)."""
+    async def test_admin_can_get_all_requests_including_others(self, TestClientWithMocks, admin_user_token):
+        """Test that admin (like any authenticated caller) sees every matching request.
+
+        GET /api/v1/requests has no ownership scoping, so this is really just
+        confirming admins aren't a special case here - they see the same
+        unfiltered result set as anyone else querying the same filters.
+        """
 
         mock_db = AsyncMock()
-        
+
         request_data1 = {
             "id": 1,
             "user_id": 11111111,
@@ -340,7 +353,7 @@ class TestOwnershipAuthorizationAdminOverride:
             "mv_checked": False,
         }
         mock_request1 = RequestSchema.model_validate(request_data1)
-        
+
         request_data2 = {
             "id": 2,
             "user_id": 99999999,
@@ -350,9 +363,9 @@ class TestOwnershipAuthorizationAdminOverride:
             "mv_checked": False,
         }
         mock_request2 = RequestSchema.model_validate(request_data2)
-        
+
         mock_db.get_many = AsyncMock(return_value=[mock_request1, mock_request2])
-        
+
         mock_admin_user = MagicMock()
         mock_admin_user.id = 11111111
         admin_role = MagicMock()
@@ -369,8 +382,8 @@ class TestOwnershipAuthorizationAdminOverride:
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)
-        assert len(data) == 1
-        assert data[0]["id"] == 1
+        assert len(data) == 2
+        assert {item["id"] for item in data} == {1, 2}
 
     @pytest.mark.integration
     @pytest.mark.asyncio

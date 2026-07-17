@@ -18,8 +18,6 @@ Profiles:
                 $ref: "../responses/200/profile.yaml#/ProfileResults"
             400:
                 $ref: "../responses/400/generic.yaml#/BadRequest"
-            401:
-                $ref: "../responses/401/generic.yaml#/Unauthorized"
 
 ProfileByUserId:
     get:
