@@ -1,11 +1,10 @@
 from authlib.integrations.base_client.errors import OAuthError
 from connexion import request
-from connexion.exceptions import TooManyRequests
-from jwt.exceptions import InvalidIssuerError, ExpiredSignatureError, InvalidTokenError
+from jwt.exceptions import ExpiredSignatureError, InvalidIssuerError, InvalidTokenError
 
 from app.database import PostgresqlDB
 from app.database.models import User, ScoreFetcherTask, OAuthToken
-from app.exceptions import BadRequest, OsuOAuthError
+from app.exceptions import BadRequest, OsuOAuthError, TooManyRequests
 from app.oauth import OAuth
 from app.osu_api import OsuAPIClient
 from app.redis import RedisClient, Namespace

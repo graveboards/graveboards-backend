@@ -1,13 +1,11 @@
 from typing import Optional
 
 from connexion import request
-from connexion.exceptions import TooManyRequests
 
+from app.exceptions import TooManyRequests
 from app.oauth import OAuth
 from app.redis import Namespace, RedisClient
 from app.security.auth_rate_limit import AuthRateLimiter
-
-from .dependencies import get_redis_client
 
 __all__ = ["search"]
 
@@ -16,7 +14,7 @@ STATE_EXPIRES_IN = 300
 
 async def search(rc: Optional[RedisClient] = None):
     if rc is None:
-        rc = await get_redis_client()
+        rc = request.state.rc
 
     client_ip = request.client.host if hasattr(request, 'client') else "unknown"
     limiter = AuthRateLimiter(rc)

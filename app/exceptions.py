@@ -27,6 +27,7 @@ __all__ = [
     "NotFound",
     "Conflict",
     "OsuOAuthError",
+    "TooManyRequests",
     "bad_request_factory",
     "clean_error_msg",
 ]
@@ -237,6 +238,11 @@ class OsuOAuthError(BadRequest):
 
         if e.error == "invalid_request":
             self.ext["hint"] = "The authorization code may have already been used, expired, or the state parameter does not match"
+
+
+class TooManyRequests(ClientProblem):
+    def __init__(self, detail: str):
+        super().__init__(status=429, title="Too Many Requests", detail=detail)
 
 
 def bad_request_factory(e: Exception) -> BadRequest:
