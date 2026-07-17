@@ -10,7 +10,8 @@ __all__ = [
 ]
 
 
-class RoleName(StrEnum):  # TODO: Add base user class to distinguish between internal and external users
+class RoleName(StrEnum):
+    USER = "user"
     ADMIN = "admin"
 
 
