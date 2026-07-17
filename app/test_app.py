@@ -56,6 +56,7 @@ class MockRedisMiddleware:
             rc = self.mock_rc
         else:
             rc = AsyncMock(spec=RedisClient)
+            rc.ttl = AsyncMock(return_value=0)
             rc.incr = AsyncMock(return_value=1)
             rc.expire = AsyncMock(return_value=True)
             rc.set = AsyncMock(return_value=True)
@@ -63,6 +64,7 @@ class MockRedisMiddleware:
             rc.hgetall.return_value = None
             rc.hset = AsyncMock(return_value=True)
             rc.getdel = AsyncMock(return_value="valid")
+            rc.delete = AsyncMock(return_value=0)
             
             class MockLockCtx:
                 async def __aenter__(self):
