@@ -1,4 +1,5 @@
-import asyncio
+from __future__ import annotations
+
 from typing import Optional
 
 from app.logging import get_logger
@@ -9,6 +10,17 @@ logger = get_logger(__name__)
 _audit_buffer: list[dict] = []
 _BUFFER_SIZE = 50
 _FLUSH_INTERVAL = 5
+
+_db: PostgresqlDB | None = None
+
+
+async def _get_shared_db() -> PostgresqlDB:
+    """Lazily create and cache the shared DB instance for audit flushing."""
+    global _db
+    if _db is None:
+        from app.database import PostgresqlDB
+        _db = PostgresqlDB()
+    return _db
 
 
 async def audit_log(
@@ -59,10 +71,9 @@ async def _flush_buffer():
     _audit_buffer = []
 
     try:
-        from app.database import PostgresqlDB
         from app.database.models import AuditLog
 
-        db = PostgresqlDB()
+        db = await _get_shared_db()
         async with db.session() as session:
             for event in events:
                 record = AuditLog(**event)
@@ -71,5 +82,3 @@ async def _flush_buffer():
     except Exception as e:
         logger.warning(f"Failed to flush audit buffer: {e}")
         _audit_buffer = events + _audit_buffer
-    finally:
-        await db.close()
