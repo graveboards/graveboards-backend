@@ -5,9 +5,8 @@ from typing import Callable, Any, Awaitable, ParamSpec, TypeVar, TYPE_CHECKING
 from connexion import request
 from connexion.exceptions import Forbidden
 
-from app.database.enums import RoleName
 from app.config import get_security_enabled
-from app.database.models import User
+from app.database.roles import is_admin
 from .utils import get_authenticated_user_id, strip_auth_info, get_value
 
 if TYPE_CHECKING:
@@ -87,10 +86,7 @@ def ownership_authorization(
                 func_path = ".".join((func.__module__, func.__name__))
                 raise ValueError(f"Decorated function '{func_path}' must accept **kwargs to use @ownership_authorization")
 
-            user = await db.get(User, id=authorized_user_id, _include={"roles": True})
-            user_roles = {RoleName(role.name) for role in user.roles}
-
-            if RoleName.ADMIN in user_roles:
+            if await is_admin(db, authorized_user_id):
                 strip_auth_info(kwargs)
                 return await func(*args, **kwargs)
 

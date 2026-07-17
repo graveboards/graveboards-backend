@@ -7,7 +7,7 @@ from connexion import request
 
 from app.database.enums import RoleName
 from app.config import get_security_enabled
-from app.database.models import User
+from app.database.roles import get_user_roles
 from .utils import get_authenticated_user_id, strip_auth_info, get_value
 
 if TYPE_CHECKING:
@@ -88,8 +88,7 @@ def ownership_filter(
                 db: PostgresqlDB = request.state.db
 
                 if bypass_roles:
-                    user = await db.get(User, id=user_id, _include={"roles": True})
-                    user_roles = {RoleName(role.name) for role in user.roles} if user else set()
+                    user_roles = await get_user_roles(db, user_id)
 
                     if user_roles & bypass_roles:
                         strip_auth_info(kwargs)

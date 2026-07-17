@@ -7,7 +7,7 @@ from connexion.exceptions import Forbidden
 
 from app.database.enums import RoleName
 from app.config import get_security_enabled
-from app.database.models import User
+from app.database.roles import get_user_roles
 from .utils import get_authenticated_user_id, strip_auth_info
 
 if TYPE_CHECKING:
@@ -78,8 +78,7 @@ def role_authorization(
                 raise ValueError(f"Decorated function '{func_path}' must accept **kwargs to use @role_authorization")
 
             kwargs["user"] = user_id
-            user = await db.get(User, id=user_id, _include={"roles": True})
-            user_roles = {RoleName(role.name) for role in user.roles}
+            user_roles = await get_user_roles(db, user_id)
             user_meets_role_requirements = (
                 all(role in user_roles for role in required_roles)
                 if required_roles
