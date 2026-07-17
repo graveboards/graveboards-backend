@@ -32,70 +32,92 @@ cd graveboards-deploy
 
 ## Management
 
-### Orchestrator (Docker)
+### Orchestrator (deploy.sh)
 
 ```bash
 cd graveboards-deploy
-./deploy.sh up [mode]               # Start services
-./deploy.sh down [mode]             # Stop services
-./deploy.sh logs [mode] [service]   # View logs
-./deploy.sh test                    # Run tests
-./deploy.sh build [mode]            # Build images
-./deploy.sh status                  # Show status
-./deploy.sh clean                   # Remove volumes and images
+./deploy.sh up [mode] [--build] [--no-monitoring] [--nas] [--traefik] [--monitoring-ports] [--monitoring-traefik] [--no-frontend] [service...]  # Start services
+./deploy.sh down [mode] [--no-monitoring] [--nas] [--traefik] [--monitoring-traefik] [--no-frontend] [service...]              # Stop services
+./deploy.sh build [mode] [--no-monitoring] [--nas] [--traefik] [--no-frontend] [service...]             # Build images
+./deploy.sh deploy [mode] [--follow|-f] [--no-monitoring] [--nas] [--traefik] [--monitoring-traefik] [--no-frontend]  # Full pipeline: down + pull + build + up
+./deploy.sh pull [repo...]                        # Git pull repositories
+./deploy.sh force-pull [repo...]                  # Force reset repositories to origin
+./deploy.sh logs [mode] [--no-monitoring] [--nas] [--traefik] [--monitoring-traefik] [--no-frontend] [service]  # View logs
+./deploy.sh test [--log-file <path>] [--no-cleanup] [--no-log] [--quiet]  # Run tests
+./deploy.sh status                                  # Show status
+./deploy.sh clean                                   # Remove volumes and images
+./deploy.sh help                                    # Show help
 ```
 
 **Modes:**
-- `dev`      - Development (default)
-- `prod`     - Production (Docker volumes)
-- `prod-nas` - Production (NAS volumes)
-- `test`     - Testing (isolated DB/Redis, runs pytest)
+- `dev`      - Development (default, hot-reload, monitoring enabled)
+- `prod`     - Production (Docker named volumes, monitoring enabled)
+- `test`     - Testing (isolated DB/Redis, runs pytest, no monitoring)
 
-**Services:**
+**Flags:**
+- `--build` - Rebuild images before starting (up only)
+- `--no-monitoring` - Skip the monitoring stack
+- `--nas`           - Include NAS volume overrides (prod only)
+- `--traefik`       - Include Traefik overrides for frontend + Grafana (prod only, requires traefik-proxy network)
+- `--monitoring-ports` - Publish monitoring ports to host (dev only, for local access)
+- `--monitoring-traefik` - Include Traefik routes for monitoring services (prod only)
+- `--no-frontend` - Exclude frontend service
+
+**Services (for up/down/build/logs):**
 - `all` - All services (default)
 - `backend` - Backend service
 - `frontend` - Frontend service
-- `postgres` - PostgreSQL database
+- `postgres` / `postgresql` - PostgreSQL database
 - `redis` - Redis cache
 
-### Backend (Docker/Make)
+### Backend (Makefile)
+
+The Makefile wraps `docker compose` commands referencing the deploy repo's compose files.
 
 ```bash
 cd graveboards-backend
-make up        # Start all services
+make up        # Start all services (dev compose stack)
 make down      # Stop all services
-make build     # Rebuild project image
-make logs      # View backend logs
+make build     # Build all services in dev compose stack
+make logs      # Follow backend logs
 make shell     # Open backend shell
 make status    # View database status
 make reset     # Reset database (with confirmation)
-make seed      # Seed database
-make fresh     # Reset & seed database
-make test      # Run test suite
-make clean     # Remove Docker resources
+make seed      # Seed database (with auto-fetch/generate, default profile)
+make fresh     # Reset database and seed (with confirmation)
+make test      # Run tests in isolated test stack (Postgres + Redis + backend)
+make clean     # Tear down dev and test compose stacks
 ```
 
 ### Backend (manage.py)
 
 ```bash
 cd graveboards-backend
-python manage.py <command> [options]
+python -m manage <command> [options]
 ```
 
 **Available commands:**
-- `status [target]` - View database status (default: `summary`)
+- `status [target]` - View database status (`summary`, `users`, `beatmaps`, `beatmapsets`, `queues`, `requests`)
 - `reset [--force] [--seed <target>]` - Reset database (drop/recreate, optionally seed)
-- `seed <target>` - Seed database (e.g. `all`, `users`, `beatmaps`, `queues`, `requests`)
+- `seed <target> [--ensure-fixtures] [--profile NAME]` - Seed database (`all`, `users`, `beatmaps`, `queues`, `requests`)
+- `generate-api-key <user_id> [--expires-days N]` - Generate a new API key for a user
+- `migrate <subcommand>` - Database migration commands
+  - `run [--dry-run]` - Run all pending migrations
+  - `downgrade [revision]` - Rollback migrations
+  - `history` - Show migration history
+  - `current` - Show current revision
+  - `stamp <revision>` - Mark DB as current without running
 - `fixtures <subcommand>` - Manage test fixtures
   - `fetch` - Fetch fixture data from osu! API
+  - `fetch-users-from-beatmapsets` - Fetch users from beatmapset owners
   - `promote` - Promote fixtures from instance to tests
   - `demote` - Demote fixtures from tests to instance
   - `status` - Show fixture status
-  - `clean` - Delete all fixtures
+  - `clean [--force]` - Delete all fixtures
   - `refresh-top-players` - Fetch top players from osu! API
   - `refresh-archives` - Refresh archive index from osu.sh
   - `reconcile` - Reconcile fixture metadata with disk state
-  - `generate` - Generate diverse queue/request fixtures
+  - `generate --queue-count N --request-count N` - Generate diverse queue/request fixtures
 
 ### Seeding the Database
 
@@ -177,6 +199,9 @@ The backend exposes Prometheus-compatible metrics at `/metrics` (internal only).
 
 # Disable monitoring if needed
 ./deploy.sh up dev --no-monitoring
+
+# Expose Prometheus/Alertmanager via Traefik (prod only)
+./deploy.sh up prod --monitoring-traefik
 ```
 
 **Access (dev):**
