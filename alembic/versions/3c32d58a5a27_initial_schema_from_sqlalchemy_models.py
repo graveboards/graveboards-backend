@@ -39,6 +39,26 @@ def upgrade() -> None:
     op.execute("CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_logs (entity_type, entity_id)")
     op.execute("CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs (timestamp DESC)")
 
+    # oauth_tokens is normally created by Base.metadata.create_all (see
+    # app/lifespan.py) before this migration runs, in its final shape - this
+    # is a no-op then. It only actually fires if the table is somehow still
+    # missing at this point, in which case it creates it directly in the
+    # final shape so the legacy-column DO blocks below become no-ops too,
+    # instead of failing with "relation oauth_tokens does not exist".
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS oauth_tokens (
+            id SERIAL NOT NULL,
+            user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+            access_token_enc BYTEA NOT NULL,
+            refresh_token_enc BYTEA,
+            expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+            is_revoked BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP WITH TIME ZONE,
+            updated_at TIMESTAMP WITH TIME ZONE,
+            PRIMARY KEY (id)
+        )
+    """)
+
     op.execute("""
         DO $$ BEGIN
             IF NOT EXISTS (
@@ -65,7 +85,7 @@ def upgrade() -> None:
         DO $$ BEGIN
             IF EXISTS (
                 SELECT 1 FROM information_schema.columns
-                WHERE table_name = 'oauth_tokens' AND column_name = 'expires_at'
+                WHERE table_name = 'oauth_tokens' AND column_name = 'expires_at' AND data_type = 'integer'
             ) THEN
                 ALTER TABLE oauth_tokens ALTER COLUMN expires_at TYPE TIMESTAMP WITH TIME ZONE
                     USING to_timestamp(expires_at)::timestamptz;

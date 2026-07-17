@@ -19,7 +19,15 @@ depends_on: Union[str, Sequence[str], None] = ${repr(depends_on)}
 
 
 def upgrade() -> None:
-    """Upgrade schema."""
+    """Upgrade schema.
+
+    Base.metadata.create_all runs before migrations on every app startup (see
+    app/lifespan.py) and will have already created any table/column that's
+    also declared on a current SQLAlchemy model - including ones this
+    migration is meant to introduce. Write every CREATE/ADD here as
+    IF NOT EXISTS (and every DROP as IF EXISTS) so this migration is a no-op
+    in that case instead of failing with "already exists".
+    """
     ${upgrades if upgrades else "pass"}
 
 
