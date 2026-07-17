@@ -10,6 +10,8 @@ from app.exceptions import NotFound, Conflict
 from app.security import role_authorization
 from app.spec import get_include_schema
 
+__all__ = ["search", "post", "patch"]
+
 
 @api_query(ModelClass.LEADERBOARD)
 @coerce_arguments(snapshot_number={"latest": -1})

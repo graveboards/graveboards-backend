@@ -11,6 +11,8 @@ from app.database.models import BeatmapSnapshot
 from app.exceptions import NotFound
 from app.redis import RedisClient
 
+__all__ = ["search"]
+
 
 @coerce_arguments(snapshot_number={"latest": -1})
 async def search(beatmap_id: int, snapshot_number: int = -1):

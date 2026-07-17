@@ -11,6 +11,8 @@ from . import osu
 from . import leaderboard
 from . import scores
 
+__all__ = ["search", "get"]
+
 
 @api_query(ModelClass.BEATMAP_SNAPSHOT, many=True)
 async def search(beatmap_id: int, **kwargs):

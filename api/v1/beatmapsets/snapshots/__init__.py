@@ -9,6 +9,8 @@ from app.database.models import BeatmapsetSnapshot, ModelClass
 from app.database.schemas import BeatmapsetSnapshotSchema
 from . import zip
 
+__all__ = ["search", "get"]
+
 
 @api_query(ModelClass.BEATMAPSET_SNAPSHOT, many=True)
 async def search(beatmapset_id: int, **kwargs):

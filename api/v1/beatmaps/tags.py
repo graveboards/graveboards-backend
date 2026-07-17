@@ -8,6 +8,8 @@ from app.database.schemas import BeatmapTagSchema
 from app.exceptions import NotFound
 from app.spec import get_include_schema
 
+__all__ = ["search", "get"]
+
 
 @api_query(ModelClass.BEATMAP_TAG, many=True)
 async def search(**kwargs):

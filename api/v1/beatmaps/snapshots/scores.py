@@ -8,6 +8,8 @@ from app.database.schemas import ScoreSchema
 from app.exceptions import NotFound
 from app.spec import get_include_schema
 
+__all__ = ["search"]
+
 
 @api_query(ModelClass.SCORE, many=True)
 @coerce_arguments(snapshot_number={"latest": -1})

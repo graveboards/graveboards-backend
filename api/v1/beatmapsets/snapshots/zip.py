@@ -8,6 +8,8 @@ from app.exceptions import NotFound
 from app.redis import RedisClient
 from app.utils import stream_file
 
+__all__ = ["search"]
+
 
 @coerce_arguments(snapshot_number={"latest": -1})
 async def search(beatmapset_id: int, snapshot_number: int = -1):
