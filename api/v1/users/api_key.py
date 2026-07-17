@@ -11,7 +11,7 @@ from app.utils import aware_utcnow
 from datetime import timedelta
 from app.logging import get_logger
 
-__all__ = ["get", "post"]
+__all__ = ["search", "post"]
 
 logger = get_logger(__name__)
 
@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 @role_authorization(
     RoleName.ADMIN, override=matching_user_id_override
 )
-async def get(user_id: int, **kwargs):
+async def search(user_id: int, **kwargs):
     db: PostgresqlDB = request.state.db
 
     key = await db.get(ApiKey, user_id=user_id, is_revoked=False)
