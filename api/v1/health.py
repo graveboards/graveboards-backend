@@ -2,6 +2,8 @@ import os
 import time
 from datetime import datetime, timezone
 
+from connexion import request
+
 from app.version import __version__
 from app.database import PostgresqlDB
 from app.redis import RedisClient
@@ -81,6 +83,19 @@ async def health_check() -> dict:
     except ImportError:
         checks["osu_api"]["status"] = "ok"
         checks["osu_api"]["message"] = "Not available"
+    
+    # Check daemon services
+    checks["daemon"] = {"status": "ok", "services": {}}
+    try:
+        daemon = request.state.daemon
+        for name, service in daemon._services.items():
+            checks["daemon"]["services"][name] = {
+                "status": "running" if not service._stop_event.is_set() else "stopped",
+            }
+    except Exception as e:
+        checks["daemon"]["status"] = "error"
+        checks["daemon"]["message"] = str(e)
+        degraded = True
     
     # Determine overall status
     if has_error:
