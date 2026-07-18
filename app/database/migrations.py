@@ -101,10 +101,21 @@ def current() -> str:
     return result.stdout.strip()
 
 
-def stamp(revision: str) -> None:
-    """Mark DB as current without running migrations."""
+def stamp(revision: str, purge: bool = False) -> None:
+    """Mark DB as current without running migrations.
+
+    A plain stamp still resolves the DB's current stamped revision before
+    moving it, so it fails the same way `upgrade` does when that revision's
+    migration file no longer exists (e.g. deleted by a history squash). Pass
+    `purge=True` to clear the stored revision first instead of resolving it.
+    """
+    command = ["alembic", "stamp"]
+    if purge:
+        command.append("--purge")
+    command.append(revision)
+
     result = subprocess.run(
-        ["alembic", "stamp", revision],
+        command,
         cwd=str(PROJECT_ROOT),
         capture_output=True,
         text=True,

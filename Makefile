@@ -1,6 +1,6 @@
 COMPOSE=docker compose
 
-.PHONY: help up down build logs shell status reset seed fresh test clean migrate-upgrade migrate-downgrade migrate-history migrate-current migrate-stamp migrate-stamp-head
+.PHONY: help up down build logs shell status reset seed fresh test clean migrate-upgrade migrate-downgrade migrate-history migrate-current migrate-stamp migrate-stamp-head migrate-stamp-purge-head
 
 help:
 	@echo "Available commands:"
@@ -22,6 +22,9 @@ help:
 	@echo "  make migrate-current                - Show current revision"
 	@echo "  make migrate-stamp REVISION=...     - Mark DB as current without running"
 	@echo "  make migrate-stamp-head             - Stamp DB to latest revision (fix broken chains)"
+	@echo "  make migrate-stamp-purge-head       - Force-stamp to head, ignoring current DB revision"
+	@echo "                                         (use when alembic_version points at a revision"
+	@echo "                                         file that no longer exists, e.g. after a squash)"
 	@echo "  ------------Testing-------------"
 	@echo "  make test      - Run test suite"
 	@echo "  ------------Cleaning------------"
@@ -109,3 +112,14 @@ migrate-stamp:
 
 migrate-stamp-head:
 	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml exec backend $(MANAGE) stamp head
+
+# Use when alembic_version points at a revision whose migration file no
+# longer exists (e.g. deleted by a history squash) - a plain stamp still
+# resolves the DB's *current* stamped revision before moving it, so it fails
+# the same way `upgrade` does. `--purge` clears alembic_version first instead
+# of walking from it, so it works even then.
+# Uses `run --no-deps` instead of `exec`, since the backend container may be
+# crash-looping (failing migrations in its own startup lifespan) and
+# unavailable for `exec` when you need this.
+migrate-stamp-purge-head:
+	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml run --rm --no-deps -e QUIET=true backend $(MANAGE) stamp head --purge

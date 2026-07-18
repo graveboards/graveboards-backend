@@ -90,6 +90,12 @@ def build_migrate_parser(subparsers):
     # migrate stamp
     stamp_p = migrate_subparsers.add_parser("stamp", help="Mark DB as current without running")
     stamp_p.add_argument("revision", help="Revision to stamp to")
+    stamp_p.add_argument(
+        "--purge", action="store_true",
+        help="Clear the stored revision before stamping, instead of resolving it first. "
+             "Use when alembic_version points at a revision whose migration file no longer "
+             "exists (e.g. after a migration history squash)."
+    )
 
     return p
 
@@ -331,7 +337,7 @@ async def main():
                     case "current":
                         print(current())
                     case "stamp":
-                        stamp(args.revision)
+                        stamp(args.revision, purge=args.purge)
                         print(f"Stamped to {args.revision}")
             case "fixtures":
                 fixture_cmd = args.fixture_command
