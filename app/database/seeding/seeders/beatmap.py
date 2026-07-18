@@ -26,6 +26,7 @@ from app.database.schemas import (
 from app.database.crud import session_manager, db_session_resolver
 from app.database.seeding import SeederTarget
 from app.database.seeding.event import SeedEvent
+from app.beatmaps.manager import download_beatmap_files
 from .base import Seeder
 
 BEATMAP_TAGS_PATH = Path("instance/fixtures/beatmap_tags.json")
@@ -35,6 +36,7 @@ class BeatmapSeeder(Seeder):
     def __init__(self, db: PostgresqlDB):
         super().__init__(db)
         self._beatmap_tags: list[dict] = []
+        self._new_beatmap_ids: list[int] = []
 
     def set_data(self, data: list[dict]) -> None:
         """Inject fixture data loaded by the fixture loader."""
@@ -84,10 +86,12 @@ class BeatmapSeeder(Seeder):
         # 3. Seed beatmaps and collect their snapshots
         bms_bm_mapping: dict[int, list[dict]] = {}
         beatmaps = beatmapset_entry.get("beatmaps", [])
-        
+
         if not beatmaps:
             self.logger.debug(f"Skipping beatmapset {beatmapset_id}: no beatmaps in fixture data")
             return
+
+        self._new_beatmap_ids = []
 
         for beatmap_entry in beatmaps:
             added_bm_dict = await self._seed_beatmap(beatmap_entry)
@@ -96,6 +100,11 @@ class BeatmapSeeder(Seeder):
         # 4. Generate BeatmapsetSnapshot using schema validation
         if bms_bm_mapping.get(beatmapset_id):
             await self._generate_bms_snapshot(beatmapset_entry, bms_bm_mapping)
+
+        # 5. Download `.osu` files for newly seeded beatmaps (mirrors BeatmapManager._download,
+        # otherwise instance/beatmaps/ never gets created and no seeded beatmap has its file)
+        if self._new_beatmap_ids:
+            await self._download_beatmap_files(self._new_beatmap_ids)
 
     async def _ensure_user(self, user_id: int, user_dict: dict = None):
         """Ensure User and Profile exist, handling restricted users.
@@ -251,20 +260,34 @@ class BeatmapSeeder(Seeder):
         
         snapshot_dict["checksum"] = checksum
         snapshot_dict["snapshot_number"] = 1
-        
+
         # Insert snapshot
         beatmap_snapshot = await self.db.add(BeatmapSnapshot, **snapshot_dict, session=self.session)
+        self._new_beatmap_ids.append(beatmap_id)
         return {"id": beatmap_snapshot.id}
 
     async def _seed_beatmap_snapshot(self, beatmap_snapshot_entry: dict) -> dict:
         """Seed an existing beatmap snapshot from fixture data."""
         checksum = beatmap_snapshot_entry["checksum"]
-        
+
         beatmap_snapshot = await self.db.get(BeatmapSnapshot, checksum=checksum, session=self.session)
         if not beatmap_snapshot:
             beatmap_snapshot = await self.db.add(BeatmapSnapshot, **beatmap_snapshot_entry, session=self.session)
-        
+            self._new_beatmap_ids.append(beatmap_snapshot_entry["beatmap_id"])
+
         return {"id": beatmap_snapshot.id}
+
+    async def _download_beatmap_files(self, beatmap_ids: list[int]) -> None:
+        """Download `.osu` files for newly seeded beatmaps.
+
+        Best-effort: seeding should still populate the database even if
+        osu.ppy.sh is unreachable (e.g. offline dev environments), so
+        failures are logged rather than raised.
+        """
+        try:
+            await download_beatmap_files(self.db, self.session, beatmap_ids)
+        except Exception as e:
+            self.logger.warning(f"Failed to download .osu file(s) for beatmap(s) {beatmap_ids}: {e}")
 
     async def _seed_beatmapset_snapshot(self, beatmapset_snapshot_entry: dict, bm_bms_mapping: dict[int, list[dict]]):
         """Seed an existing beatmapset snapshot from fixture data."""

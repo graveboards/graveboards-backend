@@ -67,6 +67,55 @@ BEATMAP_SNAPSHOT_FILE_PATH = os.path.join(BEATMAPS_PATH, "{beatmap_id}/{snapshot
 logger = get_logger(__name__)
 
 
+async def download_beatmap_files(
+    db: PostgresqlDB,
+    session: AsyncSession | None,
+    beatmap_ids: list[int]
+) -> None:
+    """Download `.osu` files for the given beatmap IDs.
+
+    Files are stored under versioned snapshot directories. Existing files are
+    overwritten if out of sync.
+
+    Shared by ``BeatmapManager._download`` (manual archiving / queue daemon) and
+    ``BeatmapSeeder`` (``make seed``), so both paths populate ``instance/beatmaps/``
+    the same way instead of the seeder silently skipping it.
+    """
+    if not beatmap_ids:
+        return
+
+    # Same instrumented transport as OsuAPIClient, so these .osu file downloads
+    # (a separate osu.ppy.sh host path, outside the API client entirely) show up
+    # in osu_api_* metrics instead of being invisible to observability.
+    transport = OsuAPIMetricsTransport(httpx.AsyncHTTPTransport())
+    async with httpx.AsyncClient(transport=transport) as client:
+        for beatmap_id in beatmap_ids:
+            url = f"{BEATMAP_DOWNLOAD_BASEURL}{beatmap_id}"
+            output_directory = os.path.join(BEATMAPS_PATH, str(beatmap_id))
+            os.makedirs(output_directory, exist_ok=True)
+            beatmap_snapshot = (
+                await db.get(
+                    BeatmapSnapshot,
+                    beatmap_id=beatmap_id,
+                    _sorting=[{"field": "BeatmapSnapshot.id", "order": "desc"}],
+                    session=session
+                )
+            )
+            output_path = os.path.join(output_directory, f"{beatmap_snapshot.snapshot_number}.osu")
+            exists = os.path.exists(output_path)
+
+            async with client.stream("GET", url) as response:
+                response.raise_for_status()
+                async with aiofiles.open(output_path, "wb") as f:
+                    async for chunk in response.aiter_bytes():
+                        await f.write(chunk)
+
+            logger.debug(f"Downloaded .osu file to '{output_path}'")
+
+            if exists:
+                logger.warning(f"Overwrote .osu file at '{output_path}'")  # Caused by local instance files not being in sync with the database (e.g., leftover files)
+
+
 class BeatmapManager:
     """Manager for archiving and versioning beatmaps and beatmapsets.
 
@@ -558,39 +607,7 @@ class BeatmapManager:
         Files are stored under versioned snapshot directories. Existing files are
         overwritten if out of sync.
         """
-        if not beatmap_ids:
-            return
-
-        # Same instrumented transport as OsuAPIClient, so these .osu file downloads
-        # (a separate osu.ppy.sh host path, outside the API client entirely) show up
-        # in osu_api_* metrics instead of being invisible to observability.
-        transport = OsuAPIMetricsTransport(httpx.AsyncHTTPTransport())
-        async with httpx.AsyncClient(transport=transport) as client:
-            for beatmap_id in beatmap_ids:
-                url = f"{BEATMAP_DOWNLOAD_BASEURL}{beatmap_id}"
-                output_directory = os.path.join(BEATMAPS_PATH, str(beatmap_id))
-                os.makedirs(output_directory, exist_ok=True)
-                beatmap_snapshot = (
-                    await self.db.get(
-                        BeatmapSnapshot,
-                        beatmap_id=beatmap_id,
-                        _sorting=[{"field": "BeatmapSnapshot.id", "order": "desc"}],
-                        session=self._session
-                    )
-                )
-                output_path = os.path.join(output_directory, f"{beatmap_snapshot.snapshot_number}.osu")
-                exists = os.path.exists(output_path)
-
-                async with client.stream("GET", url) as response:
-                    response.raise_for_status()
-                    async with aiofiles.open(output_path, "wb") as f:
-                        async for chunk in response.aiter_bytes():
-                            await f.write(chunk)
-
-                logger.debug(f"Downloaded .osu file to '{output_path}'")
-
-                if exists:
-                    logger.warning(f"Overwrote .osu file at '{output_path}'")  # Caused by local instance files not being in sync with the database (e.g., leftover files)
+        await download_beatmap_files(self.db, self._session, beatmap_ids)
 
     @staticmethod
     async def get(
