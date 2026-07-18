@@ -24,15 +24,6 @@ async def lifespan(app: ConnexionMiddleware):
 
     runner = SetupRunner(CONFIG.bootstrap)
 
-    # create_database (Base.metadata.create_all) must run before migrations:
-    # most tables are only ever created here, not by Alembic, and several
-    # migrations ALTER/index tables that create_all owns. Migrations must in
-    # turn run before the rest of the bootstrap steps below, since seeding can
-    # touch columns a migration adds. Every migration is written to be
-    # idempotent (IF [NOT] EXISTS) precisely so this ordering can't regress
-    # into "already exists" conflicts if it's ever changed again.
-    await runner.create_database()
-
     from app.database.migrations import run_migrations
     run_migrations()
 
