@@ -1,6 +1,6 @@
 COMPOSE=docker compose
 
-.PHONY: help up down build logs shell status reset seed fresh test clean
+.PHONY: help up down build logs shell status reset seed fresh test clean migrate-upgrade migrate-downgrade migrate-history migrate-current migrate-stamp migrate-stamp-head
 
 help:
 	@echo "Available commands:"
@@ -15,6 +15,13 @@ help:
 	@echo "  make reset     - Reset database"
 	@echo "  make seed      - Seed database"
 	@echo "  make fresh     - Reset & seed database"
+	@echo "  ----------Migrations------------"
+	@echo "  make migrate-upgrade                - Run all pending migrations"
+	@echo "  make migrate-downgrade REVISION=-1  - Rollback migrations"
+	@echo "  make migrate-history                - Show migration history"
+	@echo "  make migrate-current                - Show current revision"
+	@echo "  make migrate-stamp REVISION=...     - Mark DB as current without running"
+	@echo "  make migrate-stamp-head             - Stamp DB to latest revision (fix broken chains)"
 	@echo "  ------------Testing-------------"
 	@echo "  make test      - Run test suite"
 	@echo "  ------------Cleaning------------"
@@ -80,3 +87,25 @@ clean:
 	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml rm -f
 	$(COMPOSE) -f ../graveboards-deploy/docker-compose.test.yml down -v --remove-orphans
 	$(COMPOSE) -f ../graveboards-deploy/docker-compose.test.yml rm -f
+
+# ---------- Migrations ----------
+
+MANAGE = python -m manage migrate
+
+migrate-upgrade:
+	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml exec backend $(MANAGE) run
+
+migrate-downgrade:
+	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml exec backend $(MANAGE) downgrade $(REVISION)
+
+migrate-history:
+	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml exec backend $(MANAGE) history
+
+migrate-current:
+	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml exec backend $(MANAGE) current
+
+migrate-stamp:
+	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml exec backend $(MANAGE) stamp $(REVISION)
+
+migrate-stamp-head:
+	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml exec backend $(MANAGE) stamp head
