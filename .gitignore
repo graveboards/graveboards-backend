@@ -21,6 +21,7 @@ venv/
 
 # Coverage
 .coverage
+htmlcov/
 
 # Specification cache
 api/v1/spec/.spec_cache.pkl
