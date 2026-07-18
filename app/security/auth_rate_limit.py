@@ -2,6 +2,10 @@ import time
 from typing import Optional, Tuple
 
 from app.redis import RedisClient
+from app.observability.metrics.auth import (
+    auth_rate_limit_checks_total,
+    auth_lockouts_total,
+)
 
 
 class AuthRateLimiter:
@@ -26,6 +30,7 @@ class AuthRateLimiter:
         lockout_key = f"auth_lockout:{ip}"
         lockout_remaining = await self.rc.ttl(lockout_key)
         if lockout_remaining > 0:
+            auth_rate_limit_checks_total.labels(result="locked_out").inc()
             return False, lockout_remaining
 
         window_key = f"auth_window:{ip}:{int(time.time() // self.WINDOW_SIZE)}"
@@ -34,8 +39,10 @@ class AuthRateLimiter:
             await self.rc.expire(window_key, self.WINDOW_SIZE)
 
         if current > self.MAX_REQUESTS:
+            auth_rate_limit_checks_total.labels(result="rate_limited").inc()
             return False, self.WINDOW_SIZE - (int(time.time()) % self.WINDOW_SIZE)
 
+        auth_rate_limit_checks_total.labels(result="allowed").inc()
         return True, None
 
     async def record_failure(self, ip: str):
@@ -48,6 +55,7 @@ class AuthRateLimiter:
         if failures >= self.MAX_FAILURES:
             lockout_key = f"auth_lockout:{ip}"
             await self.rc.set(lockout_key, "1", ex=self.FAILURE_LOCKOUT)
+            auth_lockouts_total.inc()
 
     async def record_success(self, ip: str):
         """Record a successful auth. Clears failure counter."""
