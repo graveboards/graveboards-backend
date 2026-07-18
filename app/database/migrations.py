@@ -6,11 +6,29 @@ from app.logging import get_logger
 
 
 def run_migrations() -> None:
-    """Run all pending Alembic migrations."""
+    """Run all pending Alembic migrations.
+
+    On a fresh database (no alembic_version table) `alembic current` fails
+    because there is nothing to report.  `alembic upgrade head` handles both
+    cases — it creates the schema from scratch on a fresh DB and applies only
+    pending migrations on an existing one — so we detect the fresh-DB case
+    from the failure of `current()` and log accordingly.
+    """
     logger = get_logger(__name__)
 
-    before = current()
-    logger.info(f"Running migrations (current revision: {before or 'none'})")
+    current_result = subprocess.run(
+        ["alembic", "current"],
+        cwd=str(PROJECT_ROOT),
+        capture_output=True,
+        text=True,
+    )
+
+    if current_result.returncode == 0 and current_result.stdout.strip():
+        before = current_result.stdout.strip()
+        logger.info(f"Running migrations (current revision: {before})")
+    else:
+        before = None
+        logger.info("No existing migration state detected — running initial migrations")
 
     result = subprocess.run(
         ["alembic", "upgrade", "head"],
@@ -33,11 +51,20 @@ def run_migrations() -> None:
     if output:
         logger.info(f"[alembic]\n{output}")
 
-    after = current()
-    if after == before:
-        logger.info(f"No pending migrations (current revision: {after or 'none'})")
+    after_result = subprocess.run(
+        ["alembic", "current"],
+        cwd=str(PROJECT_ROOT),
+        capture_output=True,
+        text=True,
+    )
+    after = after_result.stdout.strip() if after_result.returncode == 0 else "unknown"
+
+    if before is None:
+        logger.info(f"Initial migrations applied; now at revision: {after}")
+    elif after == before:
+        logger.info(f"No pending migrations (current revision: {after})")
     else:
-        logger.info(f"Migrations applied; now at revision: {after or 'none'}")
+        logger.info(f"Migrations applied; now at revision: {after}")
 
 
 def downgrade(revision: str = "-1") -> None:
