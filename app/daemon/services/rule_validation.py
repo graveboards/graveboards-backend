@@ -10,7 +10,7 @@ from app.database.enums import RequestStatus
 from app.database.models import Request
 from app.database.rules.context import ExecutionContext, parse_osu_beatmapset
 from app.database.rules.engine.phase2_runner import Phase2Runner
-from app.database.rules.exceptions import RuleViolationError
+from app.database.rules.exceptions import RuleViolationError, RetryableValidationError
 from app.database.rules.registry import get_validator, get_validator_tier
 from app.database.rules.validators.metadata import (
     SongIdentityProvider,
@@ -54,7 +54,7 @@ class RuleValidationService(ScheduledService):
     async def _resolve_job_instruction(self, record_id: int) -> JobLoadInstruction | None:
         return JobLoadInstruction(execution_time=aware_utcnow())
 
-    @auto_retry(retry_exceptions=(ConnectTimeout,))
+    @auto_retry(retry_exceptions=(ConnectTimeout, RetryableValidationError))
     async def _execute_job(self, record_id: int):
         hash_name = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(record_id)
         self.logger.debug(f"Executing RuleValidation job {record_id}, looking up hash={hash_name}")
@@ -117,14 +117,7 @@ class RuleValidationService(ScheduledService):
                 return
 
             rules = await self._get_active_rules(queue_id, session)
-
-        try:
-            beatmapset_dict = await osu_client.get_beatmapset(beatmapset_id)
-        except Exception:
-            logger.warning(
-                f"Failed to fetch beatmapset {beatmapset_id} for request {request_id} validation"
-            )
-            return
+            user_id = request.user_id
 
         phase2_rules = [
             r for r in rules
@@ -134,22 +127,25 @@ class RuleValidationService(ScheduledService):
         if not phase2_rules:
             return
 
+        beatmapset_dict = await osu_client.get_beatmapset(beatmapset_id)
+
         beatmapset_obj, beatmaps = parse_osu_beatmapset(beatmapset_dict)
 
         context = ExecutionContext(
-            queue_id=queue_id,
-            user_id=request.user_id,
-            beatmapset=beatmapset_obj,
-            beatmaps=beatmaps,
-            osu_client=osu_client,
-            db=self._db,
-            redis=self._rc,
-            session=session,
-            metadata_providers=_METADATA_PROVIDERS,
-        )
+                queue_id=queue_id,
+                user_id=user_id,
+                beatmapset=beatmapset_obj,
+                beatmaps=beatmaps,
+                osu_client=osu_client,
+                db=self._db,
+                redis=self._rc,
+                session=session,
+                metadata_providers=_METADATA_PROVIDERS,
+            )
 
-        runner = Phase2Runner()
-        rejected = await runner.run(phase2_rules, context)
+            runner = Phase2Runner()
+            # A RetryableValidationError propagates out (not marked completed).
+            rejected = await runner.run(phase2_rules, context)
 
         if rejected:
             rejection_reason = f"Rejected by rule engine: {', '.join(rejected)}"
