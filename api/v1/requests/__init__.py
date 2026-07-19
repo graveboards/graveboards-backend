@@ -10,7 +10,7 @@ from app.osu_api import OsuAPIClient
 from app.database import PostgresqlDB
 from app.database.models import Request, Queue, ModelClass
 from app.database.schemas import RequestSchema
-from app.security import role_authorization, ownership_authorization
+from app.security import role_authorization, ownership_authorization, with_authenticated_user_id
 from app.security.overrides import queue_owner_override
 from app.database.enums import RoleName
 from app.redis import Namespace, ChannelName, RedisClient
@@ -85,13 +85,24 @@ async def get(request_id: int, **kwargs):
     return request_data, 200, {"Content-Type": "application/json"}
 
 
-async def post(body: dict, **kwargs):
+@with_authenticated_user_id()
+async def post(body: dict, _caller_user_id: int = None, **kwargs):
     rc: RedisClient = request.state.rc
     db: PostgresqlDB = request.state.db
 
+    if _caller_user_id is None:
+        raise Forbidden("Authenticated user could not be determined")
+
+    submitted_user_id = body.get("user_id")
+
+    if submitted_user_id is not None and submitted_user_id != _caller_user_id:
+        raise Forbidden("You may not submit a request on behalf of another user")
+
+    user_id = _caller_user_id
+    body["user_id"] = user_id
+
     beatmapset_id = body["beatmapset_id"]
     queue_id = body["queue_id"]
-    user_id = body["user_id"]
     queue = await db.get(Queue, id=queue_id)
 
     if not queue:

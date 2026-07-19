@@ -43,6 +43,10 @@ RequestCreate:
     properties:
         user_id:
             type: integer
+            description: >-
+                Ignored for authorization purposes. The request owner is derived
+                exclusively from the authenticated principal (JWT/API key). If supplied,
+                it must match the authenticated user or the request is rejected (403).
         beatmapset_id:
             type: integer
         queue_id:
@@ -52,7 +56,6 @@ RequestCreate:
         mv_checked:
             type: boolean
     required:
-        - user_id
         - beatmapset_id
         - queue_id
 
