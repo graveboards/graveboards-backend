@@ -13,7 +13,7 @@ from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError
 
 
-def _make_context(beatmapset=None, osu_client=None):
+def _make_context(beatmapset=None, osu_client=None, session=None):
     return ExecutionContext(
         queue_id=1,
         user_id=12345678,
@@ -21,6 +21,7 @@ def _make_context(beatmapset=None, osu_client=None):
         osu_client=osu_client,
         db=AsyncMock(),
         redis=AsyncMock(),
+        session=session,
         metadata_providers={
             "song_identity": MagicMock(),
         },
@@ -33,6 +34,18 @@ def _make_mock_osu_client(search_results=None):
         return_value=search_results or {"beatmapsets": []}
     )
     return client
+
+
+def _make_session(rows):
+    """Mock an AsyncSession whose execute(...).all() yields the given rows.
+
+    Each row is (artist, title, artist_unicode, title_unicode, beatmapset_id).
+    """
+    session = AsyncMock()
+    result = MagicMock()
+    result.all = MagicMock(return_value=rows)
+    session.execute = AsyncMock(return_value=result)
+    return session
 
 
 class TestNeverRankedConfig:
@@ -197,7 +210,7 @@ class TestNeverRankedRestriction:
             await rule.check(context)
 
         _, kwargs = osu_client.search_beatmapsets.await_args
-        assert kwargs["mode"] == 3
+        assert kwargs["mode"] == 1
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -233,16 +246,32 @@ class TestNeverRankedRestriction:
 
 class TestUniqueArtistTitleConfig:
     @pytest.mark.unit
-    def test_default_ruleset(self):
+    def test_defaults(self):
         config = UniqueArtistTitleConfig()
-        assert config.ruleset == "osu"
         assert config.normalize_versions is True
 
-    @pytest.mark.unit
-    def test_valid_rulesets(self):
-        for ruleset in ["osu", "taiko", "fruits", "mania"]:
-            config = UniqueArtistTitleConfig(ruleset=ruleset)
-            assert config.ruleset == ruleset
+
+def _unique_context(session):
+    beatmapset = MagicMock()
+    beatmapset.id = 999
+    beatmapset.artist = "Test Artist"
+    beatmapset.artist_unicode = "Test Artist"
+    beatmapset.title = "Test Song"
+    beatmapset.title_unicode = "Test Song"
+    beatmapset.bpm = 150.0
+    context = _make_context(beatmapset=beatmapset, session=session)
+    context.config = {"normalize_versions": True}
+    return context
+
+
+_UNIQUE_IDENTITY = {
+    "artist": "Test Artist",
+    "title": "Test Song",
+    "artist_unicode": "Test Artist",
+    "title_unicode": "Test Song",
+    "normalized_artist": "test artist",
+    "normalized_title": "test song",
+}
 
 
 class TestUniqueArtistTitleRestriction:
@@ -250,31 +279,13 @@ class TestUniqueArtistTitleRestriction:
     @pytest.mark.asyncio
     async def test_passes_when_no_duplicate(self):
         rule = UniqueArtistTitleRestriction()
-        osu_client = _make_mock_osu_client({
-            "beatmapsets": [
-                {"artist": "Other Artist", "title": "Other Song"},
-            ]
-        })
-        beatmapset = MagicMock()
-        beatmapset.artist = "Test Artist"
-        beatmapset.artist_unicode = "Test Artist"
-        beatmapset.title = "Test Song"
-        beatmapset.title_unicode = "Test Song"
-        beatmapset.bpm = 150.0
-
-        context = _make_context(
-            beatmapset=beatmapset,
-            osu_client=osu_client,
-        )
-        context.config = {"ruleset": "osu", "normalize_versions": True}
+        session = _make_session([
+            ("Other Artist", "Other Song", "Other Artist", "Other Song", 111),
+        ])
+        context = _unique_context(session)
 
         mock_provider = AsyncMock()
-        mock_provider.resolve = AsyncMock(return_value={
-            "artist": "Test Artist",
-            "title": "Test Song",
-            "normalized_artist": "Test Artist",
-            "normalized_title": "Test Song",
-        })
+        mock_provider.resolve = AsyncMock(return_value=dict(_UNIQUE_IDENTITY))
         context.metadata_providers = {"song_identity": lambda: mock_provider}
 
         with patch.object(ExecutionContext, "get_metadata", new=mock_provider.resolve):
@@ -284,62 +295,45 @@ class TestUniqueArtistTitleRestriction:
     @pytest.mark.asyncio
     async def test_raises_when_duplicate_found(self):
         rule = UniqueArtistTitleRestriction()
-        osu_client = _make_mock_osu_client({
-            "beatmapsets": [
-                {"artist": "Test Artist", "title": "Test Song", "beatmapset_id": 12345},
-            ]
-        })
-        beatmapset = MagicMock()
-        beatmapset.artist = "Test Artist"
-        beatmapset.artist_unicode = "Test Artist"
-        beatmapset.title = "Test Song"
-        beatmapset.title_unicode = "Test Song"
-        beatmapset.bpm = 150.0
-
-        context = _make_context(
-            beatmapset=beatmapset,
-            osu_client=osu_client,
-        )
-        context.config = {"ruleset": "osu", "normalize_versions": True}
+        session = _make_session([
+            ("Test Artist", "Test Song", "Test Artist", "Test Song", 12345),
+        ])
+        context = _unique_context(session)
 
         mock_provider = AsyncMock()
-        mock_provider.resolve = AsyncMock(return_value={
-            "artist": "Test Artist",
-            "title": "Test Song",
-            "normalized_artist": "Test Artist",
-            "normalized_title": "Test Song",
-        })
+        mock_provider.resolve = AsyncMock(return_value=dict(_UNIQUE_IDENTITY))
         context.metadata_providers = {"song_identity": lambda: mock_provider}
 
-        with pytest.raises(RuleViolationError, match="already has a ranked request"):
+        with pytest.raises(RuleViolationError, match="already has a request in this queue"):
             with patch.object(ExecutionContext, "get_metadata", new=mock_provider.resolve):
                 await rule.check(context)
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_handles_empty_search_results(self):
+    async def test_excludes_current_beatmapset(self):
+        # A duplicate row that IS the submitted beatmapset must not trip the rule.
         rule = UniqueArtistTitleRestriction()
-        osu_client = _make_mock_osu_client({"beatmapsets": []})
-        beatmapset = MagicMock()
-        beatmapset.artist = "Test Artist"
-        beatmapset.artist_unicode = "Test Artist"
-        beatmapset.title = "Test Song"
-        beatmapset.title_unicode = "Test Song"
-        beatmapset.bpm = 150.0
-
-        context = _make_context(
-            beatmapset=beatmapset,
-            osu_client=osu_client,
-        )
-        context.config = {"ruleset": "osu", "normalize_versions": True}
+        session = _make_session([
+            ("Test Artist", "Test Song", "Test Artist", "Test Song", 999),
+        ])
+        context = _unique_context(session)
 
         mock_provider = AsyncMock()
-        mock_provider.resolve = AsyncMock(return_value={
-            "artist": "Test Artist",
-            "title": "Test Song",
-            "normalized_artist": "Test Artist",
-            "normalized_title": "Test Song",
-        })
+        mock_provider.resolve = AsyncMock(return_value=dict(_UNIQUE_IDENTITY))
+        context.metadata_providers = {"song_identity": lambda: mock_provider}
+
+        with patch.object(ExecutionContext, "get_metadata", new=mock_provider.resolve):
+            await rule.check(context)
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_handles_empty_queue(self):
+        rule = UniqueArtistTitleRestriction()
+        session = _make_session([])
+        context = _unique_context(session)
+
+        mock_provider = AsyncMock()
+        mock_provider.resolve = AsyncMock(return_value=dict(_UNIQUE_IDENTITY))
         context.metadata_providers = {"song_identity": lambda: mock_provider}
 
         with patch.object(ExecutionContext, "get_metadata", new=mock_provider.resolve):

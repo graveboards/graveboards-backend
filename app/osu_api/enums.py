@@ -63,6 +63,25 @@ class Ruleset(Enum):
     OSU = "osu"
     TAIKO = "taiko"
 
+    @property
+    def mode_int(self) -> int:
+        # Canonical osu! mode ordering: osu=0, taiko=1, fruits=2, mania=3.
+        return _RULESET_MODE_INT[self]
+
+    @classmethod
+    def to_mode_int(cls, ruleset: "str | Ruleset") -> int:
+        if isinstance(ruleset, str):
+            ruleset = cls(ruleset)
+        return ruleset.mode_int
+
+
+_RULESET_MODE_INT = {
+    Ruleset.OSU: 0,
+    Ruleset.TAIKO: 1,
+    Ruleset.FRUITS: 2,
+    Ruleset.MANIA: 3,
+}
+
 
 class ProfilePage(Enum):
     ME = "me"

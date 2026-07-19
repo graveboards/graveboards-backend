@@ -544,8 +544,9 @@ CompositeConfig:
 NeverRankedConfig:
     title: NeverRankedConfig
     description: |
-        Rejects beatmapsets whose song has never been ranked on osu!.
-        
+        Rejects a beatmapset whose song (artist + title) has ALREADY been ranked
+        on osu!, i.e. only songs that have never been ranked are allowed through.
+
         Uses the osu! API as the source of truth for ranked status.
     type: object
     additionalProperties: false
@@ -558,26 +559,22 @@ NeverRankedConfig:
         normalize_versions:
             type: boolean
             default: true
-            description: Whether to normalize song identity (strip version markers) before checking
+            description: Whether to strip version markers (e.g. "TV Size") from the song identity before comparing
 
 UniqueArtistTitleConfig:
     title: UniqueArtistTitleConfig
     description: |
-        Ensures a song (artist + title) has only been ranked once in a given game mode.
-        
-        Uses the osu! API as the source of truth. Rejects if the same song is already ranked.
+        Enforces queue-local uniqueness: rejects a beatmapset when another
+        beatmapset with the same song (artist + title) already has a request in
+        the same queue. Uses the queue's persisted requests as the source of
+        truth (distinct from never_ranked, which checks the global ranked catalog).
     type: object
     additionalProperties: false
     properties:
-        ruleset:
-            type: string
-            enum: [osu, taiko, fruits, mania]
-            default: osu
-            description: The game mode to check against on osu!
         normalize_versions:
             type: boolean
             default: true
-            description: Whether to normalize song identity (strip version markers) before checking
+            description: Whether to strip version markers (e.g. "TV Size") from the song identity before comparing
 
 RuleCreate:
     title: RuleCreate

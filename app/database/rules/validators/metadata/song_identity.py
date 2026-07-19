@@ -34,11 +34,39 @@ _PUNCTUATION_PATTERN = re.compile(r"[^\w\s-]")
 _WHITESPACE_PATTERN = re.compile(r"\s+")
 
 
-def _normalize_text(text: str) -> str:
-    text = _VERSION_MARKER_PATTERN.sub("", text)
+def _normalize_text(text: str, strip_version_markers: bool = True) -> str:
+    if strip_version_markers:
+        text = _VERSION_MARKER_PATTERN.sub("", text)
     text = _PUNCTUATION_PATTERN.sub("", text)
     text = _WHITESPACE_PATTERN.sub(" ", text).strip()
-    return text
+    return text.casefold()
+
+
+def normalized_identity_forms(
+    artist: str,
+    title: str,
+    artist_unicode: str = "",
+    title_unicode: str = "",
+    strip_version_markers: bool = True,
+) -> set[tuple[str, str]]:
+    """Return the set of normalized ``(artist, title)`` identities to match on.
+
+    Includes both the romanized (ASCII) identity and, when it differs, the Unicode
+    identity, so a duplicate is detected regardless of which script is being
+    compared. ``strip_version_markers`` threads through the rule's
+    ``normalize_versions`` flag. Empty components are dropped.
+    """
+    forms: set[tuple[str, str]] = set()
+
+    def add(a: str, t: str) -> None:
+        na = _normalize_text(a or "", strip_version_markers)
+        nt = _normalize_text(t or "", strip_version_markers)
+        if na and nt:
+            forms.add((na, nt))
+
+    add(artist, title)
+    add(artist_unicode or artist, title_unicode or title)
+    return forms
 
 
 class MetadataProvider(ABC):
