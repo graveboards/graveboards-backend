@@ -14,7 +14,8 @@ from .observability.metrics.middleware import MetricsMiddleware
 from .observability.context import RequestContextMiddleware
 from .patches import OpenAPIURIParserPatched, ParameterValidatorPatched
 from .spec import load_spec
-from .error_handlers import forbidden, bad_request, unauthorized, internal_error
+from .error_handlers import forbidden, bad_request, unauthorized, internal_error, rule_violation
+from .database.rules.exceptions import RuleViolationError
 from .config import SPEC_DIR, DEFAULT_MODULE_NAME, INSTANCE_DIR, ENV, DISABLE_SECURITY
 from .enums import Env
 
@@ -80,6 +81,7 @@ def create_connexion_app() -> AsyncApp:
     connexion_app.add_error_handler(BadRequestProblem, bad_request)
     connexion_app.add_error_handler(Unauthorized, unauthorized)
     connexion_app.add_error_handler(InternalServerError, internal_error)
+    connexion_app.add_error_handler(RuleViolationError, rule_violation)
 
     connexion_app.add_url_rule("/metrics", "metrics", metrics_endpoint, methods=["GET"])
 

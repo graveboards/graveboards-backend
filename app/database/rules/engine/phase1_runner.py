@@ -34,9 +34,13 @@ class Phase1Runner:
                 continue
 
             rule_node = self._build_node(rule)
+            context.last_violation = None
             try:
                 passed = await rule_node.evaluate(context)
                 if not passed:
+                    violation = context.last_violation
+                    if isinstance(violation, RuleViolationError):
+                        raise violation
                     raise RuleViolationError(
                         rule.type,
                         f"Rule '{rule.type}' rejected the request",

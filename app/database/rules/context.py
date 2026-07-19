@@ -29,6 +29,7 @@ class ExecutionContext:
     session: AsyncSession | None = None
     config: dict[str, Any] = field(default_factory=dict)
     metadata_providers: dict[str, type[MetadataProvider]] | None = None
+    last_violation: Any = None
     _provider_cache: dict[str, dict[str, Any]] = field(default_factory=dict)
 
     async def get_metadata(self, provider_name: str) -> dict[str, Any]:
