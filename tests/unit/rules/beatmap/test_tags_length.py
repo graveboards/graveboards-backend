@@ -63,17 +63,21 @@ class TestTagsRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_fallback_to_beatmapset_tags(self):
+    async def test_raises_when_tag_metadata_unavailable(self):
         validator = TagsRestriction()
         beatmaps = [_make_beatmap(top_tag_ids=[])]
         context = ExecutionContext(
             queue_id=1,
             user_id=12345678,
-            beatmapset=MagicMock(tags="1,2,3"),
+            beatmapset=MagicMock(tags="anime,rock,english"),
             beatmaps=beatmaps,
             config={"tag_ids": [2], "logic": "any"},
         )
-        await validator.check(context)
+
+        with pytest.raises(RuleViolationError) as exc_info:
+            await validator.check(context)
+
+        assert "unavailable" in str(exc_info.value.detail)
 
     @pytest.mark.unit
     @pytest.mark.asyncio
