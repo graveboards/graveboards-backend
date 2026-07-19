@@ -389,13 +389,6 @@ GenreConfig:
             items:
                 type: integer
             description: List of genre IDs to match against
-        logic:
-            type: string
-            enum: [any, all]
-            default: any
-            description: |
-                any: at least one beatmap genre must match
-                all: all beatmap genres must be in the list
 
 LanguageConfig:
     title: LanguageConfig
@@ -411,13 +404,6 @@ LanguageConfig:
             items:
                 type: integer
             description: List of language IDs to match against
-        logic:
-            type: string
-            enum: [any, all]
-            default: any
-            description: |
-                any: at least one beatmap language must match
-                all: all beatmap languages must be in the list
 
 ModeConfig:
     title: ModeConfig

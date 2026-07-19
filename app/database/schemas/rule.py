@@ -134,12 +134,10 @@ class BPMConfig(BaseModel):
 
 class GenreConfig(BaseModel):
     genre_ids: list[GenreIdLiteral]
-    logic: Literal["any", "all"] = "any"
 
 
 class LanguageConfig(BaseModel):
     language_ids: list[LanguageIdLiteral]
-    logic: Literal["any", "all"] = "any"
 
 
 class ModeConfig(BaseModel):
