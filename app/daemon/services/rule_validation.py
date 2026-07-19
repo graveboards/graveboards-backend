@@ -8,7 +8,7 @@ from structlog.contextvars import bind_contextvars, clear_contextvars
 
 from app.database.enums import RequestStatus
 from app.database.models import Request
-from app.database.rules.context import ExecutionContext
+from app.database.rules.context import ExecutionContext, parse_osu_beatmapset
 from app.database.rules.engine.phase2_runner import Phase2Runner
 from app.database.rules.exceptions import RuleViolationError
 from app.database.rules.registry import get_validator, get_validator_tier
@@ -134,10 +134,13 @@ class RuleValidationService(ScheduledService):
         if not phase2_rules:
             return
 
+        beatmapset_obj, beatmaps = parse_osu_beatmapset(beatmapset_dict)
+
         context = ExecutionContext(
             queue_id=queue_id,
             user_id=request.user_id,
-            beatmapset=beatmapset_dict,
+            beatmapset=beatmapset_obj,
+            beatmaps=beatmaps,
             osu_client=osu_client,
             db=self._db,
             redis=self._rc,

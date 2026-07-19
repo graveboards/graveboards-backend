@@ -34,7 +34,8 @@ class DurationProvider(MetadataProvider):
         beatmapset = context.beatmapset
         beatmaps = context.beatmaps or []
 
-        original_duration = beatmapset.bpm if beatmapset else 0
+        total_lengths = [b.total_length for b in beatmaps]
+        original_duration = max(total_lengths) if total_lengths else 0
 
         has_version_marker = False
         if beatmapset:
@@ -45,11 +46,7 @@ class DurationProvider(MetadataProvider):
                     has_version_marker = True
                     break
 
-        if beatmaps:
-            total_lengths = [b.total_length for b in beatmaps]
-            normalized_duration = max(total_lengths)
-        else:
-            normalized_duration = original_duration
+        normalized_duration = original_duration
 
         return {
             "original_duration": original_duration,

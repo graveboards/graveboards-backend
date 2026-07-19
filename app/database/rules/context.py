@@ -52,3 +52,31 @@ class ExecutionContext:
             self._provider_cache.clear()
         else:
             self._provider_cache.pop(provider_name, None)
+
+
+def parse_osu_beatmapset(
+    beatmapset_dict: dict[str, Any],
+) -> tuple[BeatmapsetOsuApiSchema, list[BeatmapOsuApiSchema]]:
+    """Convert a raw osu! API beatmapset dict into the typed objects validators expect.
+
+    Rule validators access beatmapset/beatmap fields as attributes on Pydantic objects
+    and iterate a populated beatmap list; passing them the raw dict (with
+    ``context.beatmaps`` left as ``None``) makes every Tier-2/Tier-3 beatmap rule fail.
+    This is the single typed context-construction helper used by both the synchronous
+    Phase-1 request path and the asynchronous Phase-2/Tier-3 daemon path, so both build
+    context identically.
+
+    Args:
+        beatmapset_dict:
+            Raw beatmapset mapping as returned by ``OsuAPIClient.get_beatmapset`` -
+            either a fresh osu! API response or a Redis-cached ``model_dump``. Both
+            shapes validate because the cache model subclasses ``BeatmapsetOsuApiSchema``.
+
+    Returns:
+        A tuple of the parsed ``BeatmapsetOsuApiSchema`` and its list of
+        ``BeatmapOsuApiSchema`` (an empty list when the set has no beatmaps).
+    """
+    from app.database.schemas.sub_schemas import BeatmapsetOsuApiSchema
+
+    beatmapset = BeatmapsetOsuApiSchema.model_validate(beatmapset_dict)
+    return beatmapset, list(beatmapset.beatmaps or [])

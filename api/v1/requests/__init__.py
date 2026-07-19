@@ -16,7 +16,7 @@ from app.database.enums import RoleName
 from app.redis import Namespace, ChannelName, RedisClient
 from app.redis.models import QueueRequestHandlerTask, QueueRequestValidationTask
 from app.spec import get_include_schema
-from app.database.rules.context import ExecutionContext
+from app.database.rules.context import ExecutionContext, parse_osu_beatmapset
 from app.database.rules.engine.phase1_runner import Phase1Runner
 from app.database.rules.exceptions import RuleViolationError
 from app.database.rules.validators.metadata import (
@@ -181,10 +181,13 @@ async def _check_queue_rules_phase1(
     async with db.session() as session:
         rules = await rule_crud.get_rules(queue_id, only_active=True, session=session)
 
+    beatmapset_obj, beatmaps = parse_osu_beatmapset(beatmapset)
+
     context = ExecutionContext(
         queue_id=queue_id,
         user_id=user_id,
-        beatmapset=beatmapset,
+        beatmapset=beatmapset_obj,
+        beatmaps=beatmaps,
         db=db,
         redis=rc,
         metadata_providers=_METADATA_PROVIDERS,

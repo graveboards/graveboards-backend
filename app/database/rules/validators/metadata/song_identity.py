@@ -85,7 +85,8 @@ class SongIdentityProvider(MetadataProvider):
             normalized_artist_unicode = normalized_artist
             normalized_title_unicode = normalized_title
 
-        duration = beatmapset.bpm if hasattr(beatmapset, "bpm") else 0
+        beatmaps = context.beatmaps or []
+        duration = max((b.total_length for b in beatmaps), default=0)
 
         return {
             "artist": artist,
