@@ -12,6 +12,7 @@ class QueueRequestValidationTask(BaseModel):
     queue_id: int
     beatmapset_id: int
     http_request_id: str = ""
+    rules_snapshot: str = ""
     completed_at: Optional[datetime] = None
     failed_at: Optional[datetime] = None
 

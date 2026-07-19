@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import logging
+from types import SimpleNamespace
 from typing import ClassVar
 
 from httpx import ConnectTimeout
@@ -89,6 +91,7 @@ class RuleValidationService(ScheduledService):
                         queue_id=record.queue_id,
                         beatmapset_id=record.beatmapset_id,
                         osu_client=osu_client,
+                        rules_snapshot=record.rules_snapshot,
                     )
                     self.logger.debug(f"Validation complete for request {record.request_id}")
 
@@ -108,7 +111,10 @@ class RuleValidationService(ScheduledService):
         queue_id: int,
         beatmapset_id: int,
         osu_client: OsuAPIClient,
+        rules_snapshot: str = "",
     ) -> None:
+        snapshot_rules = self._rules_from_snapshot(rules_snapshot)
+
         async with self._db.session() as session:
             request = await self._db.get(Request, id=request_id, session=session)
 
@@ -116,7 +122,10 @@ class RuleValidationService(ScheduledService):
                 logger.warning(f"Request {request_id} not found for validation")
                 return
 
-            rules = await self._get_active_rules(queue_id, session)
+            if snapshot_rules is not None:
+                rules = snapshot_rules
+            else:
+                rules = await self._get_active_rules(queue_id, session)
             user_id = request.user_id
 
         phase2_rules = [
@@ -164,3 +173,32 @@ class RuleValidationService(ScheduledService):
 
         crud = RuleCRUD()
         return await crud.get_rules(queue_id, only_active=True, session=session)
+
+    @staticmethod
+    def _rules_from_snapshot(rules_snapshot: str) -> list | None:
+        """Reconstruct rule objects from the submission-time snapshot.
+
+        Returns ``None`` when the task has no snapshot (legacy tasks), so the caller
+        falls back to execution-time rules. Reconstructed rules are lightweight
+        stand-ins exposing the attributes the runners read (type/version/config/
+        is_active/id).
+        """
+        if not rules_snapshot:
+            return None
+
+        try:
+            data = json.loads(rules_snapshot)
+        except (ValueError, TypeError):
+            logger.warning("Could not parse rules snapshot; falling back to live rules")
+            return None
+
+        return [
+            SimpleNamespace(
+                id=item.get("id"),
+                type=item["type"],
+                version=item.get("version", "1.0"),
+                config=item.get("config") or {},
+                is_active=item.get("is_active", True),
+            )
+            for item in data
+        ]
