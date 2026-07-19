@@ -27,6 +27,12 @@ class StarRatingRestriction(BeatmapRestrictionBase):
 
         if logic == "max":
             highest = max(star_ratings)
+            if min_sr is not None and highest < min_sr:
+                raise RuleViolationError(
+                    self.type,
+                    f"Highest star rating ({highest:.2f}) is below minimum "
+                    f"allowed star rating ({min_sr:.2f})",
+                )
             if max_sr is not None and highest > max_sr:
                 raise RuleViolationError(
                     self.type,
@@ -41,6 +47,12 @@ class StarRatingRestriction(BeatmapRestrictionBase):
                     self.type,
                     f"Lowest star rating ({lowest:.2f}) is below minimum "
                     f"allowed star rating ({min_sr:.2f})",
+                )
+            if max_sr is not None and lowest > max_sr:
+                raise RuleViolationError(
+                    self.type,
+                    f"Lowest star rating ({lowest:.2f}) exceeds maximum "
+                    f"allowed star rating ({max_sr:.2f})",
                 )
 
         elif logic == "all":
