@@ -3,7 +3,7 @@ from connexion import request
 from app.database import PostgresqlDB
 from app.database.models import Queue
 from app.database.queue_access import is_queue_owner_or_manager
-from app.database.schemas import RuleSchema, RuleCreateSchema
+from app.database.schemas import RuleSchema, RuleCreateSchema, RuleUpdateSchema
 from app.exceptions import NotFound, Conflict, BadRequest
 from app.security import role_authorization, with_authenticated_user_id
 from app.security.overrides import queue_manager_override
@@ -85,9 +85,14 @@ async def patch(queue_id: int, rule_id: int, body: dict, **kwargs):
     if not queue:
         raise NotFound(f"Queue with ID '{queue_id}' not found")
 
+    try:
+        updates = RuleUpdateSchema.model_validate(body).model_dump(exclude_unset=True)
+    except Exception as e:
+        raise BadRequest(f"Invalid rule update: {e}")
+
     crud = RuleCRUD()
     async with db.session() as session:
-        updated = await crud.update_rule(rule_id, queue_id, body, session=session)
+        updated = await crud.update_rule(rule_id, queue_id, updates, session=session)
 
     if not updated:
         raise NotFound(f"Rule with ID '{rule_id}' not found in queue '{queue_id}'")

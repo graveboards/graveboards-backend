@@ -645,10 +645,8 @@ RuleUpdate:
     title: RuleUpdate
     description: Update an existing rule
     type: object
+    additionalProperties: false
     properties:
-        id:
-            type: integer
-            description: The rule ID to update
         is_active:
             type: boolean
             description: Enable or disable the rule

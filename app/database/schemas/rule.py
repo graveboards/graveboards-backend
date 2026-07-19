@@ -251,6 +251,49 @@ class RuleSchema(BaseModel, BaseModelExtra):
     updated_at: Optional[datetime]
 
 
+RULE_CONFIG_SCHEMA_MAP: dict[str, type[BaseModel]] = {
+    "rate_limit": RateLimitConfig,
+    "cooldown": CooldownConfig,
+    "blacklist": BlacklistConfig,
+    "beatmap_duration": DurationConfig,
+    "beatmap_star_rating": StarRatingConfig,
+    "beatmap_ar_range": ARRangeConfig,
+    "beatmap_od_range": ODRangeConfig,
+    "beatmap_hp_range": HPRangeConfig,
+    "beatmap_cs_range": CSRangeConfig,
+    "beatmap_drain_range": DrainRangeConfig,
+    "beatmap_bpm": BPMConfig,
+    "beatmap_genre": GenreConfig,
+    "beatmap_language": LanguageConfig,
+    "beatmap_mode": ModeConfig,
+    "beatmap_difficulty_count": DifficultyCountConfig,
+    "beatmap_storyboard": StoryboardConfig,
+    "beatmap_video": VideoConfig,
+    "beatmap_tags": TagsConfig,
+    "beatmap_length": LengthConfig,
+    "composite": CompositeConfig,
+    "never_ranked": NeverRankedConfig,
+    "unique_artist_title": UniqueArtistTitleConfig,
+}
+
+
+def validate_rule_config(rule_type: str, config: dict[str, Any]) -> dict[str, Any]:
+    """Validate and normalize a rule config against its type-specific schema.
+
+    Shared by create and update paths so a config is validated against the same
+    schema regardless of how it enters the system. Rule types without a dedicated
+    config schema pass through unchanged.
+
+    Raises:
+        pydantic.ValidationError:
+            If the config does not satisfy the type's schema.
+    """
+    schema_cls = RULE_CONFIG_SCHEMA_MAP.get(rule_type)
+    if schema_cls:
+        return schema_cls(**config).model_dump(exclude_none=True)
+    return config
+
+
 class RuleCreateSchema(BaseModel):
     type: RuleType
     config: dict[str, Any]
@@ -266,40 +309,14 @@ class RuleCreateSchema(BaseModel):
         if not type:
             return v
 
-        _schema_map: dict[str, type[BaseModel]] = {
-            "rate_limit": RateLimitConfig,
-            "cooldown": CooldownConfig,
-            "blacklist": BlacklistConfig,
-            "beatmap_duration": DurationConfig,
-            "beatmap_star_rating": StarRatingConfig,
-            "beatmap_ar_range": ARRangeConfig,
-            "beatmap_od_range": ODRangeConfig,
-            "beatmap_hp_range": HPRangeConfig,
-            "beatmap_cs_range": CSRangeConfig,
-            "beatmap_drain_range": DrainRangeConfig,
-            "beatmap_bpm": BPMConfig,
-            "beatmap_genre": GenreConfig,
-            "beatmap_language": LanguageConfig,
-            "beatmap_mode": ModeConfig,
-            "beatmap_difficulty_count": DifficultyCountConfig,
-            "beatmap_storyboard": StoryboardConfig,
-            "beatmap_video": VideoConfig,
-            "beatmap_tags": TagsConfig,
-            "beatmap_length": LengthConfig,
-            "composite": CompositeConfig,
-            "never_ranked": NeverRankedConfig,
-            "unique_artist_title": UniqueArtistTitleConfig,
-        }
-
-        schema_cls = _schema_map.get(type)
-        if schema_cls:
-            validated = schema_cls(**v)
-            return validated.model_dump(exclude_none=True)
-        return v
+        return validate_rule_config(type, v)
 
 
 class RuleUpdateSchema(BaseModel):
-    id: Optional[int] = None
+    model_config = ConfigDict(extra="forbid")
+
     is_active: Optional[bool] = None
+    is_public: Optional[bool] = None
     config: Optional[dict[str, Any]] = None
+    version: Optional[str] = None
     version: Optional[str] = None
