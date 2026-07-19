@@ -76,7 +76,17 @@ class Phase1Runner:
         validator_cls = get_validator(rule.type)
         if validator_cls is None:
             return True
-        return rule.version in validator_cls.supported_versions
+        supported = rule.version in validator_cls.supported_versions
+        if not supported:
+            logger.error(
+                "Skipping active rule id=%s type=%s: unsupported version '%s' "
+                "(supported: %s)",
+                getattr(rule, "id", "?"),
+                rule.type,
+                rule.version,
+                sorted(validator_cls.supported_versions),
+            )
+        return supported
 
     def _build_node(self, rule: QueueRule) -> RuleNode:
         rule_data = {

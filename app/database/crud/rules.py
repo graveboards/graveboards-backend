@@ -10,6 +10,26 @@ from .decorators import session_manager
 RULE_UPDATABLE_FIELDS = frozenset({"is_active", "is_public", "config", "version"})
 
 
+def _validate_rule_version(rule_type: str, version: str) -> None:
+    """Reject an unsupported version for a rule type at write time.
+
+    An apparently active rule stored with an unsupported version is silently
+    skipped by both phase runners, so it must never be persisted in the first place.
+
+    Raises:
+        BadRequest:
+            If the version is not supported by the rule type's validator.
+    """
+    from app.database.rules.registry import get_supported_versions
+
+    supported = get_supported_versions(rule_type)
+    if supported is not None and version not in supported:
+        raise BadRequest(
+            f"Unsupported version '{version}' for rule type '{rule_type}'. "
+            f"Supported: {', '.join(sorted(supported))}"
+        )
+
+
 def _normalize_config(config: dict) -> str:
     """Normalize a config dict to a canonical string for comparison.
 
@@ -70,6 +90,7 @@ class RuleCRUD:
         for data in rules_data:
             config = data.get("config", {})
             version = data.get("version", "1.0")
+            _validate_rule_version(data["type"], version)
             key = (data["type"], version, _normalize_config(config))
             if key in seen:
                 raise Conflict(
@@ -210,6 +231,8 @@ class RuleCRUD:
         session: AsyncSession = None,
     ) -> QueueRule:
         """Create a single rule and append it to the queue's existing rules."""
+        _validate_rule_version(rule_data["type"], rule_data.get("version", "1.0"))
+
         existing = await self.get_rules(queue_id, session=session)
         new_key = (
             rule_data["type"],
