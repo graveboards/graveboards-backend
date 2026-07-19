@@ -11,7 +11,7 @@ from app.database import PostgresqlDB
 from app.database.models import Request, Queue, ModelClass
 from app.database.schemas import RequestSchema
 from app.security import role_authorization, ownership_authorization, with_authenticated_user_id
-from app.security.overrides import queue_owner_override
+from app.security.overrides import queue_owner_override, queue_manager_override
 from app.database.enums import RoleName
 from app.redis import Namespace, ChannelName, RedisClient
 from app.redis.models import QueueRequestHandlerTask, QueueRequestValidationTask
@@ -197,8 +197,11 @@ async def _check_queue_rules_phase1(
     await runner.run(rules, context)
 
 
+# Team policy: queue managers (and owners/admins) may change the status of requests
+# on queues they manage - the one queue action a manager is allowed. The body is
+# whitelisted to `status` only, so managers cannot mutate anything else.
 @role_authorization(
-    RoleName.ADMIN, override=queue_owner_override, override_kwargs={"from_request": True}
+    RoleName.ADMIN, override=queue_manager_override, override_kwargs={"from_request": True}
 )
 async def patch(request_id: int, body: dict, **kwargs):
     db: PostgresqlDB = request.state.db

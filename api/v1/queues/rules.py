@@ -6,7 +6,7 @@ from app.database.queue_access import is_queue_owner_or_manager
 from app.database.schemas import RuleSchema, RuleCreateSchema, RuleUpdateSchema
 from app.exceptions import NotFound, Conflict, BadRequest
 from app.security import role_authorization, with_authenticated_user_id
-from app.security.overrides import queue_manager_override
+from app.security.overrides import queue_owner_override
 from app.database.enums import RoleName
 from app.database.crud.rules import RuleCRUD
 
@@ -55,7 +55,7 @@ async def get(queue_id: int, rule_id: int, _caller_user_id: int = None, **kwargs
     return RuleSchema.model_validate(rule).model_dump(), 200, {"Content-Type": "application/json"}
 
 
-@role_authorization(RoleName.ADMIN, override=queue_manager_override)
+@role_authorization(RoleName.ADMIN, override=queue_owner_override)
 async def post(queue_id: int, body: dict, **kwargs):
     """POST /queues/{queue_id}/rules — add a single rule to a queue."""
     db: PostgresqlDB = request.state.db
@@ -76,7 +76,7 @@ async def post(queue_id: int, body: dict, **kwargs):
     return RuleSchema.model_validate(created).model_dump(), 201, {"Content-Type": "application/json"}
 
 
-@role_authorization(RoleName.ADMIN, override=queue_manager_override)
+@role_authorization(RoleName.ADMIN, override=queue_owner_override)
 async def patch(queue_id: int, rule_id: int, body: dict, **kwargs):
     """PATCH /queues/{queue_id}/rules/{rule_id} — update a single rule."""
     db: PostgresqlDB = request.state.db
@@ -100,7 +100,7 @@ async def patch(queue_id: int, rule_id: int, body: dict, **kwargs):
     return RuleSchema.model_validate(updated).model_dump(), 200, {"Content-Type": "application/json"}
 
 
-@role_authorization(RoleName.ADMIN, override=queue_manager_override)
+@role_authorization(RoleName.ADMIN, override=queue_owner_override)
 async def delete(queue_id: int, rule_id: int, **kwargs):
     """DELETE /queues/{queue_id}/rules/{rule_id} — remove a single rule."""
     db: PostgresqlDB = request.state.db
@@ -119,7 +119,7 @@ async def delete(queue_id: int, rule_id: int, **kwargs):
     return {"message": "Rule deleted successfully!"}, 200, {"Content-Type": "application/json"}
 
 
-@role_authorization(RoleName.ADMIN, override=queue_manager_override)
+@role_authorization(RoleName.ADMIN, override=queue_owner_override)
 async def put(queue_id: int, body: dict, **kwargs):
     """PUT /queues/{queue_id}/rules — replace all rules for a queue."""
     db: PostgresqlDB = request.state.db
