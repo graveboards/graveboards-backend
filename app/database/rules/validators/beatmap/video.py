@@ -23,11 +23,6 @@ class VideoRestriction(BeatmapRestrictionBase):
         has_video = beatmapset.video
         allowed = config.get("allowed", True)
 
-        if allowed and not has_video:
-            raise RuleViolationError(
-                self.type,
-                "Beatmapset does not have a video but one is required",
-            )
         if not allowed and has_video:
             raise RuleViolationError(
                 self.type,
