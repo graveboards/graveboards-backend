@@ -10,12 +10,13 @@ from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError
 
 
-def _make_beatmap(ar=5.0, accuracy=10.0, drain=5.0, cs=4.0, version="Normal"):
+def _make_beatmap(ar=5.0, accuracy=10.0, drain=5.0, cs=4.0, hit_length=180, version="Normal"):
     bm = MagicMock()
     bm.ar = ar
     bm.accuracy = accuracy
     bm.drain = drain
     bm.cs = cs
+    bm.hit_length = hit_length
     bm.version = version
     return bm
 
@@ -172,10 +173,10 @@ class TestDrainRangeRestriction:
     @pytest.mark.asyncio
     async def test_passes_when_in_range(self):
         validator = DrainRangeRestriction()
-        beatmaps = [_make_beatmap(drain=4.0)]
+        beatmaps = [_make_beatmap(hit_length=120)]
         context = _make_context(
             beatmaps=beatmaps,
-            config={"min": 3.0, "max": 5.0},
+            config={"min": 60.0, "max": 180.0},
             type="beatmap_drain_range",
         )
         await validator.check(context)
@@ -184,10 +185,10 @@ class TestDrainRangeRestriction:
     @pytest.mark.asyncio
     async def test_raises_when_below_min(self):
         validator = DrainRangeRestriction()
-        beatmaps = [_make_beatmap(drain=1.0)]
+        beatmaps = [_make_beatmap(hit_length=30)]
         context = _make_context(
             beatmaps=beatmaps,
-            config={"min": 3.0},
+            config={"min": 60.0},
             type="beatmap_drain_range",
         )
 

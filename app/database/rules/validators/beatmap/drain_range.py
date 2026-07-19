@@ -21,7 +21,7 @@ class DrainRangeRestriction(BeatmapRestrictionBase):
                 "No beatmaps available in beatmapset",
             )
 
-        drain_values = [b.drain for b in beatmaps]
+        drain_values = [b.hit_length for b in beatmaps]
         min_drain = config.get("min")
         max_drain = config.get("max")
 
@@ -30,14 +30,14 @@ class DrainRangeRestriction(BeatmapRestrictionBase):
                 if min_drain is not None and drain < min_drain:
                     raise RuleViolationError(
                         self.type,
-                        f"Beatmap '{beatmap.version}' drain rate ({drain:.2f}) "
-                        f"is below minimum allowed ({min_drain:.2f})",
+                        f"Beatmap '{beatmap.version}' drain time ({drain}s) "
+                        f"is below minimum allowed ({min_drain}s)",
                     )
                 if max_drain is not None and drain > max_drain:
                     raise RuleViolationError(
                         self.type,
-                        f"Beatmap '{beatmap.version}' drain rate ({drain:.2f}) "
-                        f"exceeds maximum allowed ({max_drain:.2f})",
+                        f"Beatmap '{beatmap.version}' drain time ({drain}s) "
+                        f"exceeds maximum allowed ({max_drain}s)",
                     )
         else:
             # logic == "any": at least one beatmap must fall within the range.
@@ -51,5 +51,5 @@ class DrainRangeRestriction(BeatmapRestrictionBase):
                     self.type,
                     f"No beatmap has drain time within the allowed range "
                     f"(min={min_drain}, max={max_drain}). "
-                    f"Values: {[round(v, 2) for v in drain_values]}",
+                    f"Values: {drain_values}",
                 )

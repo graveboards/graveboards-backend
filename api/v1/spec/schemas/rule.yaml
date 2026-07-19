@@ -326,7 +326,9 @@ CSRangeConfig:
 DrainRangeConfig:
     title: DrainRangeConfig
     description: |
-        Filters beatmaps by their drain rate (time to full life bar).
+        Filters beatmaps by their drain time in seconds (osu! hit_length: the
+        playable length excluding breaks). This is distinct from the HP drain
+        rate stat, which is covered by beatmap_hp_range.
     type: object
     additionalProperties: false
     properties:
@@ -334,11 +336,11 @@ DrainRangeConfig:
             type: number
             format: float
             minimum: 0
-            description: Minimum drain rate in seconds
+            description: Minimum drain time in seconds
         max:
             type: number
             format: float
-            description: Maximum drain rate in seconds
+            description: Maximum drain time in seconds
         logic:
             type: string
             enum: [any, all]
