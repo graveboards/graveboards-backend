@@ -7,6 +7,7 @@ from connexion.exceptions import Forbidden
 
 from app.database.models import QueueRule
 from app.database.rules.engine.evaluator import build_rule_node, RuleNode
+from app.database.rules.engine.stateful import STATEFUL_RULE_TYPES
 from app.database.rules.exceptions import RuleViolationError
 
 logger = logging.getLogger(__name__)
@@ -20,6 +21,9 @@ class Phase1Runner:
     ) -> None:
         for rule in rules:
             if not rule.is_active:
+                continue
+
+            if rule.type in STATEFUL_RULE_TYPES:
                 continue
 
             if not self._check_version(rule):
