@@ -91,6 +91,7 @@ RateLimitConfig:
         
         Uses Redis for tracking. Counter resets when the period expires.
     type: object
+    additionalProperties: false
     required:
         - max_requests
         - period
@@ -123,6 +124,7 @@ CooldownConfig:
         
         Useful for preventing spam or giving time between submissions.
     type: object
+    additionalProperties: false
     required:
         - cooldown_seconds
         - scope
@@ -150,6 +152,7 @@ BlacklistConfig:
         
         The target array specifies which user IDs are blocked.
     type: object
+    additionalProperties: false
     required:
         - scope
         - target
@@ -172,6 +175,7 @@ DurationConfig:
         
         Applies to all beatmaps in the beatmapset or just the longest/shortest one.
     type: object
+    additionalProperties: false
     properties:
         min_seconds:
             type: integer
@@ -197,6 +201,7 @@ StarRatingConfig:
         
         Applies to all beatmaps in the beatmapset or just the highest/lowest one.
     type: object
+    additionalProperties: false
     properties:
         min:
             type: number
@@ -223,6 +228,7 @@ ARRangeConfig:
     description: |
         Filters beatmaps by their Approach Rate (AR).
     type: object
+    additionalProperties: false
     properties:
         min:
             type: number
@@ -247,6 +253,7 @@ ODRangeConfig:
     description: |
         Filters beatmaps by their Overall Difficulty (OD).
     type: object
+    additionalProperties: false
     properties:
         min:
             type: number
@@ -271,6 +278,7 @@ HPRangeConfig:
     description: |
         Filters beatmaps by their HP Drain (HP Drain Rate).
     type: object
+    additionalProperties: false
     properties:
         min:
             type: number
@@ -295,6 +303,7 @@ CSRangeConfig:
     description: |
         Filters beatmaps by their Circle Size (CS).
     type: object
+    additionalProperties: false
     properties:
         min:
             type: number
@@ -319,6 +328,7 @@ DrainRangeConfig:
     description: |
         Filters beatmaps by their drain rate (time to full life bar).
     type: object
+    additionalProperties: false
     properties:
         min:
             type: number
@@ -342,6 +352,7 @@ BPMConfig:
     description: |
         Filters beatmaps by their BPM (beats per minute).
     type: object
+    additionalProperties: false
     properties:
         min_bpm:
             type: number
@@ -367,6 +378,7 @@ GenreConfig:
     description: |
         Filters beatmaps by their genre.
     type: object
+    additionalProperties: false
     required:
         - genre_ids
     properties:
@@ -388,6 +400,7 @@ LanguageConfig:
     description: |
         Filters beatmaps by their language.
     type: object
+    additionalProperties: false
     required:
         - language_ids
     properties:
@@ -409,6 +422,7 @@ ModeConfig:
     description: |
         Filters beatmaps by game mode (osu, taiko, fruits, mania).
     type: object
+    additionalProperties: false
     required:
         - allowed_modes
     properties:
@@ -425,6 +439,7 @@ DifficultyCountConfig:
     description: |
         Filters beatmapsets by the number of beatmaps (difficulties) they contain.
     type: object
+    additionalProperties: false
     properties:
         min:
             type: integer
@@ -440,6 +455,7 @@ StoryboardConfig:
     description: |
         Filters beatmapsets by whether they contain a storyboard.
     type: object
+    additionalProperties: false
     required:
         - allowed
     properties:
@@ -452,6 +468,7 @@ VideoConfig:
     description: |
         Filters beatmapsets by whether they contain a video background.
     type: object
+    additionalProperties: false
     required:
         - allowed
     properties:
@@ -464,6 +481,7 @@ TagsConfig:
     description: |
         Filters beatmapsets by their tags.
     type: object
+    additionalProperties: false
     required:
         - tag_ids
     properties:
@@ -485,6 +503,7 @@ LengthConfig:
     description: |
         Filters beatmaps by hit length and total length.
     type: object
+    additionalProperties: false
     properties:
         min_hit_length:
             type: integer
@@ -517,6 +536,7 @@ CompositeConfig:
         
         Supports nesting up to 10 levels deep.
     type: object
+    additionalProperties: false
     required:
         - operator
         - rules
@@ -540,6 +560,7 @@ NeverRankedConfig:
         
         Uses the osu! API as the source of truth for ranked status.
     type: object
+    additionalProperties: false
     properties:
         ruleset:
             type: string
@@ -558,6 +579,7 @@ UniqueArtistTitleConfig:
         
         Uses the osu! API as the source of truth. Rejects if the same song is already ranked.
     type: object
+    additionalProperties: false
     properties:
         ruleset:
             type: string

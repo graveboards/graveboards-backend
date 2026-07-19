@@ -108,11 +108,10 @@ class TestPeriodDurationSeconds:
 class TestRateLimitRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_under_limit(self):
+    async def test_check_passes_under_limit_without_mutating(self):
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
-        mock_redis.incr = AsyncMock(return_value=1)
-        mock_redis.expire = AsyncMock(return_value=True)
+        mock_redis.get = AsyncMock(return_value="0")
 
         validator = RateLimitRestriction()
         config = {"max_requests": 2, "period": "week", "scope": "user"}
@@ -126,15 +125,15 @@ class TestRateLimitRestriction:
 
         await validator.check(context)
 
-        mock_redis.incr.assert_called_once()
-        mock_redis.expire.assert_called_once()
+        mock_redis.get.assert_called_once()
+        mock_redis.incr.assert_not_called()
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_over_limit(self):
+    async def test_check_raises_when_at_limit(self):
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
-        mock_redis.incr = AsyncMock(return_value=3)
+        mock_redis.get = AsyncMock(return_value="2")
 
         validator = RateLimitRestriction()
         config = {"max_requests": 2, "period": "week", "scope": "user"}
@@ -146,14 +145,15 @@ class TestRateLimitRestriction:
             config=config,
         )
 
-        with pytest.raises(Exception) as exc_info:
+        with pytest.raises(Forbidden) as exc_info:
             await validator.check(context)
 
         assert "rate limit" in str(exc_info.value.detail).lower()
+        mock_redis.incr.assert_not_called()
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_skips_non_target_user(self):
+    async def test_check_skips_non_target_user(self):
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
 
@@ -174,11 +174,11 @@ class TestRateLimitRestriction:
 
         await validator.check(context)
 
-        mock_redis.incr.assert_not_called()
+        mock_redis.get.assert_not_called()
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_skips_non_user_scope(self):
+    async def test_check_skips_non_user_scope(self):
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
 
@@ -194,27 +194,69 @@ class TestRateLimitRestriction:
 
         await validator.check(context)
 
-        mock_redis.incr.assert_not_called()
+        mock_redis.get.assert_not_called()
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_forbidden_on_violation(self):
+    async def test_reserve_under_limit_consumes_and_returns_token(self):
+        mock_db = AsyncMock()
+        mock_redis = AsyncMock()
+        mock_redis.incr = AsyncMock(return_value=1)
+        mock_redis.expire = AsyncMock(return_value=True)
+
+        validator = RateLimitRestriction()
+        config = {"max_requests": 2, "period": "week", "scope": "user"}
+        context = ExecutionContext(queue_id=1, user_id=12345678, db=mock_db, redis=mock_redis)
+
+        token = await validator.reserve(context, config)
+
+        assert token is not None
+        mock_redis.incr.assert_called_once()
+        mock_redis.expire.assert_called_once()
+        mock_redis.decr.assert_not_called()
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_reserve_over_limit_rejects_without_consuming(self):
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
         mock_redis.incr = AsyncMock(return_value=3)
 
         validator = RateLimitRestriction()
         config = {"max_requests": 2, "period": "week", "scope": "user"}
-        context = ExecutionContext(
-            queue_id=1,
-            user_id=12345678,
-            db=mock_db,
-            redis=mock_redis,
-            config=config,
-        )
+        context = ExecutionContext(queue_id=1, user_id=12345678, db=mock_db, redis=mock_redis)
 
         with pytest.raises(Forbidden):
-            await validator.check(context)
+            await validator.reserve(context, config)
+
+        # The rejected request must not consume quota.
+        mock_redis.decr.assert_called_once()
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_reserve_skips_non_user_scope(self):
+        mock_db = AsyncMock()
+        mock_redis = AsyncMock()
+
+        validator = RateLimitRestriction()
+        config = {"max_requests": 1, "period": "week", "scope": "beatmapset_type"}
+        context = ExecutionContext(queue_id=1, user_id=12345678, db=mock_db, redis=mock_redis)
+
+        token = await validator.reserve(context, config)
+
+        assert token is None
+        mock_redis.incr.assert_not_called()
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_rollback_decrements(self):
+        mock_redis = AsyncMock()
+        validator = RateLimitRestriction()
+        context = ExecutionContext(queue_id=1, user_id=12345678, db=AsyncMock(), redis=mock_redis)
+
+        await validator.rollback(context, "some-key")
+
+        mock_redis.decr.assert_called_once_with("some-key")
 
     @pytest.mark.unit
     def test_config_schema_is_set(self):
