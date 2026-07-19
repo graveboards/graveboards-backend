@@ -37,7 +37,7 @@ Requests:
         requestBody:
             $ref: "../request_bodies/request.yaml#/RequestCreate"
         responses:
-            201:
+            202:
                 $ref: "../responses/202/request.yaml#/RequestCreated"
             400:
                 $ref: "../responses/400/generic.yaml#/BadRequest"
@@ -47,6 +47,8 @@ Requests:
                 $ref: "../responses/403/generic.yaml#/Forbidden"
             409:
                 $ref: "../responses/409/generic.yaml#/Conflict"
+            422:
+                $ref: "../responses/422/generic.yaml#/RuleViolation"
 
 RequestById:
     get:
