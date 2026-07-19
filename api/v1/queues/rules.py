@@ -3,7 +3,7 @@ from connexion import request
 from app.database import PostgresqlDB
 from app.database.models import Queue
 from app.database.queue_access import is_queue_owner_or_manager, can_read_queue
-from app.database.schemas import RuleSchema, RuleCreateSchema, RuleUpdateSchema
+from app.database.schemas import RuleSchema, RuleCreateSchema, RuleReplaceSchema, RuleUpdateSchema
 from app.exceptions import NotFound, Conflict, BadRequest
 from app.security import role_authorization, with_authenticated_user_id
 from app.security.overrides import queue_owner_override
@@ -128,12 +128,15 @@ async def put(queue_id: int, body: dict, **kwargs):
     if not queue:
         raise NotFound(f"Queue with ID '{queue_id}' not found")
 
-    rules_data = body.get("rules", [])
+    if "rules" not in body or not isinstance(body["rules"], list):
+        raise BadRequest("Request body must include a 'rules' array")
+
+    rules_data = body["rules"]
 
     validated = []
     for data in rules_data:
         try:
-            validated.append(RuleCreateSchema.model_validate(data).model_dump(exclude_none=True))
+            validated.append(RuleReplaceSchema.model_validate(data).model_dump(exclude_none=True))
         except Exception as e:
             raise BadRequest(f"Invalid rule data: {e}")
 

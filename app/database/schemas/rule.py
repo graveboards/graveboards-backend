@@ -461,6 +461,10 @@ class RuleCreateSchema(BaseModel):
         return validate_rule_config(type, v)
 
 
+class RuleReplaceSchema(RuleCreateSchema):
+    is_active: bool = True
+
+
 class RuleUpdateSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
