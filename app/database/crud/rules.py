@@ -40,7 +40,11 @@ def _normalize_config(config: dict) -> str:
         if isinstance(obj, dict):
             return {k: _sort(v) for k, v in sorted(obj.items())}
         if isinstance(obj, list):
-            return sorted(_sort(item) for item in obj)
+            normalized = [_sort(item) for item in obj]
+            return sorted(
+                normalized,
+                key=lambda item: json.dumps(item, sort_keys=True, default=str),
+            )
         return obj
 
     return json.dumps(_sort(config), sort_keys=True, default=str)

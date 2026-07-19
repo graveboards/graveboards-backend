@@ -365,4 +365,4 @@ class TestAtomicRuleNodeWithValidator:
         node = AtomicRuleNode("nonexistent_type_xyz", {})
         context = _make_context()
         result = await node.evaluate(context)
-        assert result is True
+        assert result is False

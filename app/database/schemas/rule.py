@@ -343,19 +343,60 @@ class LengthConfig(_StrictConfig):
         return self
 
 
+_COMPOSITE_DISALLOWED_CHILD_TYPES = frozenset({"rate_limit", "cooldown", "blacklist"})
+_MAX_COMPOSITE_DEPTH = 10
+
+
 class CompositeConfig(_StrictConfig):
     operator: Literal["and", "or", "not"]
     rules: list[dict[str, Any]]
 
-    @field_validator("rules")
-    @classmethod
-    def validate_rules(cls, v: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        if not v:
-            raise ValueError("composite rules must contain at least one rule")
-        for i, rule in enumerate(v):
-            if "type" not in rule:
-                raise ValueError(f"Rule at index {i} missing 'type' field")
-        return v
+    @model_validator(mode="after")
+    def validate_composite(self) -> "CompositeConfig":
+        _validate_composite_tree(self.operator, self.rules, depth=1)
+        return self
+
+
+def _validate_composite_tree(
+    operator: str, rules: list[dict[str, Any]], depth: int
+) -> None:
+    if depth > _MAX_COMPOSITE_DEPTH:
+        raise ValueError(
+            f"composite nesting depth exceeds maximum ({_MAX_COMPOSITE_DEPTH})"
+        )
+    if not rules:
+        raise ValueError("composite rules must contain at least one rule")
+    if operator == "not" and len(rules) != 1:
+        raise ValueError("NOT operator requires exactly one child rule")
+
+    for i, child in enumerate(rules):
+        child_type = child.get("type")
+        if not child_type:
+            raise ValueError(f"Rule at index {i} missing 'type' field")
+
+        if child_type in _COMPOSITE_DISALLOWED_CHILD_TYPES:
+            raise ValueError(
+                f"Rule type '{child_type}' cannot be used inside a composite"
+            )
+
+        child_config = child.get("config", {})
+
+        if child_type == "composite":
+            child_operator = child_config.get("operator")
+            if child_operator not in ("and", "or", "not"):
+                raise ValueError(
+                    f"Unknown composite operator: {child_operator}"
+                )
+            _validate_composite_tree(
+                child_operator, child_config.get("rules", []), depth + 1
+            )
+            continue
+
+        if child_type not in RULE_CONFIG_SCHEMA_MAP:
+            raise ValueError(f"Unknown rule type in composite: '{child_type}'")
+
+        # Validate the child config against its own type schema.
+        validate_rule_config(child_type, child_config)
 
 
 class NeverRankedConfig(_StrictConfig):

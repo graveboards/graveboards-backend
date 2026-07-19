@@ -10,6 +10,7 @@ from connexion.exceptions import Forbidden
 from app.database.models import QueueRule
 from app.database.rules.engine.evaluator import build_rule_node, RuleNode
 from app.database.rules.exceptions import RuleViolationError, RetryableValidationError
+from app.database.rules.registry import effective_rule_tier
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +48,7 @@ class Phase2Runner:
             if not self._check_version(rule):
                 continue
 
-            tier = self._get_tier(rule.type)
+            tier = self._get_tier(rule)
             if tier != 3:
                 continue
 
@@ -119,10 +120,8 @@ class Phase2Runner:
             )
             return rule.type, Tier3Outcome.RETRYABLE
 
-    def _get_tier(self, type: str) -> int:
-        from app.database.rules.registry import get_validator_tier
-
-        return get_validator_tier(type) or 3
+    def _get_tier(self, rule: QueueRule) -> int:
+        return effective_rule_tier(rule.type, rule.config or {})
 
     def _check_version(self, rule: QueueRule) -> bool:
         from app.database.rules.registry import get_validator

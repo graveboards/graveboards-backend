@@ -9,6 +9,7 @@ from app.database.models import QueueRule
 from app.database.rules.engine.evaluator import build_rule_node, RuleNode
 from app.database.rules.engine.stateful import STATEFUL_RULE_TYPES
 from app.database.rules.exceptions import RuleViolationError
+from app.database.rules.registry import effective_rule_tier
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ class Phase1Runner:
             if not self._check_version(rule):
                 continue
 
-            tier = self._get_tier(rule.type)
+            tier = self._get_tier(rule)
             if tier not in (1, 2):
                 continue
 
@@ -60,15 +61,8 @@ class Phase1Runner:
                     f"Validation error: {e}",
                 )
 
-    def _get_tier(self, type: str) -> int:
-        from app.database.rules.registry import get_validator_tier
-
-        tier = get_validator_tier(type)
-        if tier is not None:
-            return tier
-        if type == "composite":
-            return 2
-        return 2
+    def _get_tier(self, rule: QueueRule) -> int:
+        return effective_rule_tier(rule.type, rule.config or {})
 
     def _check_version(self, rule: QueueRule) -> bool:
         from app.database.rules.registry import get_validator

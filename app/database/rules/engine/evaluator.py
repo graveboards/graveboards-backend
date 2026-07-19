@@ -35,7 +35,10 @@ class AtomicRuleNode(RuleNode):
         self, context: ExecutionContext, depth: int = 0
     ) -> bool:
         if self._validator_cls is None:
-            return True
+            context.last_violation = RuleViolationError(
+                self.rule_type, f"Unknown rule type '{self.rule_type}'"
+            )
+            return False
 
         original_config = context.config
         context.config = self.config
