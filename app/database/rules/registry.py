@@ -102,6 +102,27 @@ def get_validator_tier(type: str) -> int | None:
     return RULE_TIERS.get(type)
 
 
+def effective_rule_tier(rule_type: str, config: dict) -> int:
+    """Return the phase/tier a rule should execute in, accounting for composites.
+
+    A composite's execution tier is the max tier of its descendants, so a
+    composite containing a Tier-3 (osu! API backed) rule runs in Phase 2 (async,
+    timeout-guarded) instead of synchronously on the Phase-1 request path. Plain
+    rules use their registered tier (defaulting to 2 when unknown).
+    """
+    if rule_type == "composite":
+        children = (config or {}).get("rules", []) or []
+        child_tiers = [
+            effective_rule_tier(child.get("type", ""), child.get("config", {}) or {})
+            for child in children
+        ]
+        # A composite is at least Tier 2 (it runs beatmap-style logic); bump to the
+        # highest descendant tier so Tier-3 descendants push it into Phase 2.
+        return max([2, *child_tiers])
+
+    return RULE_TIERS.get(rule_type, 2)
+
+
 def register_validator(
     type: str,
     validator_class: type[RestrictionBase],

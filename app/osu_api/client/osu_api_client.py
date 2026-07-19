@@ -168,8 +168,13 @@ class OsuAPIClient(OsuAPIClientBase):
         nsfw: bool | None = None,
         page: int = 1,
         sort: str | None = None,
+        query: str | None = None,
     ) -> dict:
-        """Search beatmapsets with server-side filters."""
+        """Search beatmapsets with server-side filters.
+
+        `query` maps to the osu! `q` free-text parameter, letting callers narrow
+        the listing by artist/title instead of paging the entire ranked catalog.
+        """
         url = APIEndpoint.BEATMAPSET_SEARCH.format()
 
         headers = {
@@ -180,6 +185,8 @@ class OsuAPIClient(OsuAPIClientBase):
 
         query_parameters: dict[str, Union[int, str]] = {}
 
+        if query is not None:
+            query_parameters["q"] = query
         if status is not None:
             query_parameters["s"] = status
         if genre is not None:

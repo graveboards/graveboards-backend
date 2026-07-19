@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from app.database.rules.engine.phase2_runner import Phase2Runner
 from app.database.rules.context import ExecutionContext
-from app.database.rules.exceptions import RuleViolationError
+from app.database.rules.exceptions import RuleViolationError, RetryableValidationError
 
 
 def _make_mock_rule(type, config, is_active=True):
@@ -50,6 +50,9 @@ class TestPhase2Runner:
         )
 
         async def mock_evaluate(self, context, depth=0):
+            # A genuine policy violation is signalled via context.last_violation,
+            # mirroring what the real evaluator records.
+            context.last_violation = RuleViolationError("never_ranked", "already ranked")
             return False
 
         with patch(
@@ -62,7 +65,10 @@ class TestPhase2Runner:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_fails_open_on_unexpected_exceptions(self):
+    async def test_unexpected_exception_is_retryable(self):
+        # An unexpected/infra error is neither an accept nor a policy rejection -
+        # it raises RetryableValidationError so the job is retried and not marked
+        # completed.
         runner = Phase2Runner()
         rules = [
             _make_mock_rule("never_ranked", {"ruleset": "osu"}),
@@ -81,9 +87,8 @@ class TestPhase2Runner:
             "app.database.rules.engine.evaluator.AtomicRuleNode.evaluate",
             new=failing_eval,
         ):
-            rejected = await runner.run(rules, context)
-
-        assert rejected == []
+            with pytest.raises(RetryableValidationError):
+                await runner.run(rules, context)
 
     @pytest.mark.unit
     @pytest.mark.asyncio

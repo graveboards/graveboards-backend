@@ -18,6 +18,7 @@ from .queue import QueueSchema, QueueCreateSchema, QueueUpdateSchema
 from .rule import (
     RuleSchema,
     RuleCreateSchema,
+    RuleReplaceSchema,
     RuleUpdateSchema,
     RateLimitConfig,
     CooldownConfig,
@@ -88,4 +89,5 @@ BeatmapTagCreateSchema.model_rebuild()
 BeatmapTagUpdateSchema.model_rebuild()
 RuleSchema.model_rebuild()
 RuleCreateSchema.model_rebuild()
+RuleReplaceSchema.model_rebuild()
 RuleUpdateSchema.model_rebuild()

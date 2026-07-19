@@ -40,15 +40,15 @@ class CSRangeRestriction(BeatmapRestrictionBase):
                         f"maximum allowed CS ({max_cs:.2f})",
                     )
         else:
-            if min_cs is not None and min(cs_values) < min_cs:
+            # logic == "any": at least one beatmap must fall within the range.
+            matched = any(
+                (min_cs is None or cs >= min_cs) and (max_cs is None or cs <= max_cs)
+                for cs in cs_values
+            )
+            if not matched:
                 raise RuleViolationError(
                     self.type,
-                    f"Some beatmaps have CS below minimum allowed "
-                    f"({min_cs:.2f}). Lowest: {min(cs_values):.2f}",
-                )
-            if max_cs is not None and max(cs_values) > max_cs:
-                raise RuleViolationError(
-                    self.type,
-                    f"Some beatmaps have CS above maximum allowed "
-                    f"({max_cs:.2f}). Highest: {max(cs_values):.2f}",
+                    f"No beatmap has CS within the allowed range "
+                    f"(min={min_cs}, max={max_cs}). "
+                    f"Values: {[round(v, 2) for v in cs_values]}",
                 )

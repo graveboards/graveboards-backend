@@ -12,7 +12,6 @@ class GenreRestriction(BeatmapRestrictionBase):
 
     async def check_beatmap(self, context: ExecutionContext) -> None:
         config = context.config
-        logic = config.get("logic", "any")
         beatmapset = context.beatmapset
 
         if beatmapset is None or beatmapset.genre is None:
@@ -24,17 +23,9 @@ class GenreRestriction(BeatmapRestrictionBase):
         allowed_ids = set(config.get("genre_ids", []))
         actual_id = beatmapset.genre.id
 
-        if logic == "all":
-            if actual_id not in allowed_ids:
-                raise RuleViolationError(
-                    self.type,
-                    f"Beatmapset genre ({actual_id}) is not in the allowed "
-                    f"genres: {sorted(allowed_ids)}",
-                )
-        else:
-            if actual_id not in allowed_ids:
-                raise RuleViolationError(
-                    self.type,
-                    f"Beatmapset genre ({actual_id}) is not in the allowed "
-                    f"genres: {sorted(allowed_ids)}",
-                )
+        if actual_id not in allowed_ids:
+            raise RuleViolationError(
+                self.type,
+                f"Beatmapset genre ({actual_id}) is not in the allowed "
+                f"genres: {sorted(allowed_ids)}",
+            )

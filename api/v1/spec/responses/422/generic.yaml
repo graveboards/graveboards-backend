@@ -1,0 +1,6 @@
+RuleViolation:
+    description: The request violates a queue rule (policy) and cannot be accepted
+    content:
+        application/problem+json:
+            schema:
+                $ref: "../../schemas/problem.yaml#Problem"

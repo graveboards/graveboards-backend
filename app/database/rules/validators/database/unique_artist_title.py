@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
+from sqlalchemy import select
 
+from app.database.models import Request
+from app.database.models.beatmapset_snapshot import BeatmapsetSnapshot
 from app.database.rules.base import DatabaseRestrictionBase
 from app.database.rules.exceptions import RuleViolationError
+from app.database.rules.validators.metadata.song_identity import normalized_identity_forms
 
 if TYPE_CHECKING:
     from app.database.rules.context import ExecutionContext
@@ -15,16 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class UniqueArtistTitleConfig(BaseModel):
-    ruleset: str = "osu"
     normalize_versions: bool = True
-
-    @field_validator("ruleset")
-    @classmethod
-    def validate_ruleset(cls, v: str) -> str:
-        valid = {"osu", "taiko", "fruits", "mania"}
-        if v not in valid:
-            raise ValueError(f"ruleset must be one of {sorted(valid)}")
-        return v
 
 
 class UniqueArtistTitleRestriction(DatabaseRestrictionBase):
@@ -32,54 +27,61 @@ class UniqueArtistTitleRestriction(DatabaseRestrictionBase):
     config_schema = UniqueArtistTitleConfig
     supported_versions = {"1.0"}
 
-    _RULESET_TO_INT = {
-        "osu": 2,
-        "taiko": 3,
-        "fruits": 0,
-        "mania": 1,
-    }
-
     async def check_database(self, context: ExecutionContext) -> None:
         config = UniqueArtistTitleConfig(**context.config)
         identity = await context.get_metadata("song_identity")
 
-        if not identity.get("normalized_artist") or not identity.get("normalized_title"):
+        candidate_forms = normalized_identity_forms(
+            identity.get("artist", ""),
+            identity.get("title", ""),
+            identity.get("artist_unicode", ""),
+            identity.get("title_unicode", ""),
+            strip_version_markers=config.normalize_versions,
+        )
+        if not candidate_forms:
             raise RuleViolationError(
                 self.type,
                 "Could not resolve song identity for uniqueness check",
             )
 
-        ruleset_int = self._RULESET_TO_INT.get(config.ruleset, 2)
-        search_status = "ranked,approved,qualified,loved"
+        session = context.session
+        if session is None:
+            raise RuleViolationError(
+                self.type,
+                "Database session unavailable for queue uniqueness check",
+            )
 
-        results = await context.osu_client.search_beatmapsets(
-            status=search_status,
-            mode=ruleset_int,
+        current_beatmapset_id = context.beatmapset.id if context.beatmapset else None
+
+        stmt = (
+            select(
+                BeatmapsetSnapshot.artist,
+                BeatmapsetSnapshot.title,
+                BeatmapsetSnapshot.artist_unicode,
+                BeatmapsetSnapshot.title_unicode,
+                Request.beatmapset_id,
+            )
+            .join(Request, Request.beatmapset_snapshot_id == BeatmapsetSnapshot.id)
+            .where(Request.queue_id == context.queue_id)
         )
+        rows = (await session.execute(stmt)).all()
 
-        beatmapsets = results.get("beatmapsets", [])
-
-        from app.database.rules.validators.metadata.song_identity import _normalize_text
-
-        normalized_artist = identity["normalized_artist"]
-        normalized_title = identity["normalized_title"]
-
-        for bs in beatmapsets:
-            bs_artist = (bs.get("artist") or "").strip()
-            bs_title = (bs.get("title") or "").strip()
-
-            if not bs_artist or not bs_title:
+        for artist, title, artist_unicode, title_unicode, beatmapset_id in rows:
+            # Exclude the beatmapset being submitted; a resubmission of the same
+            # set is handled by the (beatmapset_id, queue_id) uniqueness constraint.
+            if current_beatmapset_id is not None and beatmapset_id == current_beatmapset_id:
                 continue
 
-            normalized_bs_artist = _normalize_text(bs_artist)
-            normalized_bs_title = _normalize_text(bs_title)
-
-            if (
-                normalized_bs_artist == normalized_artist
-                and normalized_bs_title == normalized_title
-            ):
-                existing_id = bs.get("beatmapset_id") or bs.get("id")
+            existing_forms = normalized_identity_forms(
+                artist,
+                title,
+                artist_unicode,
+                title_unicode,
+                strip_version_markers=config.normalize_versions,
+            )
+            if candidate_forms & existing_forms:
                 raise RuleViolationError(
                     self.type,
-                    f"Song '{identity['artist']} - {identity['title']}' already has a ranked request in this queue (beatmapset_id={existing_id})",
+                    f"Song '{identity['artist']} - {identity['title']}' already "
+                    f"has a request in this queue (beatmapset_id={beatmapset_id})",
                 )

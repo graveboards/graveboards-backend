@@ -5,7 +5,7 @@ from api.decorators import api_query
 from api.utils import bleach_body, build_pydantic_include
 from app.database import PostgresqlDB
 from app.database.models import Queue, ModelClass
-from app.database.queue_access import queue_visibility_where, is_queue_owner_or_manager
+from app.database.queue_access import queue_visibility_where, can_read_queue
 from app.database.schemas import QueueSchema
 from app.exceptions import NotFound, Conflict
 from app.security import role_authorization, with_authenticated_user_id
@@ -14,6 +14,14 @@ from app.database.enums import RoleName
 from app.spec import get_include_schema
 
 __all__ = ["search", "get", "post", "patch"]
+
+
+def _filter_public_rules(queue_data: dict) -> dict:
+    """Strip non-public rules from a serialized queue's nested ``rules`` include."""
+    rules = queue_data.get("rules")
+    if isinstance(rules, list):
+        queue_data["rules"] = [rule for rule in rules if rule.get("is_public")]
+    return queue_data
 
 
 @with_authenticated_user_id()
@@ -37,7 +45,7 @@ async def search(_caller_user_id: int = None, **kwargs):
     )
 
     queues_data = [
-        QueueSchema.model_validate(queue).model_dump(include=include)
+        _filter_public_rules(QueueSchema.model_validate(queue).model_dump(include=include))
         for queue in queues
     ]
 
@@ -58,14 +66,13 @@ async def get(queue_id: int, _caller_user_id: int = None, **kwargs):
     if not queue:
         raise NotFound(f"Queue with ID '{queue_id}' not found")
 
-    if queue.visibility == 2 and queue.user_id != _caller_user_id:
-        if not await is_queue_owner_or_manager(db, queue.id, _caller_user_id):
-            # TODO(2026-07-17): this leaks the existence of private queues via 403 vs
-            # 404 on NotFound. Migrate to 404 once queue IDs are non-sequential
-            # (sequential integer IDs make private queues trivially enumerable even
-            # behind a privacy-preserving 404) - see the visibility-enforcement
-            # incident from this date for context.
-            raise Forbidden("You are not authorized to view this queue")
+    if not await can_read_queue(db, queue, _caller_user_id):
+        # TODO(2026-07-17): this leaks the existence of private queues via 403 vs
+        # 404 on NotFound. Migrate to 404 once queue IDs are non-sequential
+        # (sequential integer IDs make private queues trivially enumerable even
+        # behind a privacy-preserving 404) - see the visibility-enforcement
+        # incident from this date for context.
+        raise Forbidden("You are not authorized to view this queue")
 
     include = build_pydantic_include(
         obj=queue,
@@ -73,7 +80,9 @@ async def get(queue_id: int, _caller_user_id: int = None, **kwargs):
         request_include=kwargs.get("_include")
     )
 
-    queue_data = QueueSchema.model_validate(queue).model_dump(include=include)
+    queue_data = _filter_public_rules(
+        QueueSchema.model_validate(queue).model_dump(include=include)
+    )
 
     return queue_data, 200, {"Content-Type": "application/json"}
 

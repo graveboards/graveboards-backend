@@ -40,15 +40,15 @@ class ODRangeRestriction(BeatmapRestrictionBase):
                         f"maximum allowed OD ({max_od:.2f})",
                     )
         else:
-            if min_od is not None and min(od_values) < min_od:
+            # logic == "any": at least one beatmap must fall within the range.
+            matched = any(
+                (min_od is None or od >= min_od) and (max_od is None or od <= max_od)
+                for od in od_values
+            )
+            if not matched:
                 raise RuleViolationError(
                     self.type,
-                    f"Some beatmaps have OD below minimum allowed "
-                    f"({min_od:.2f}). Lowest: {min(od_values):.2f}",
-                )
-            if max_od is not None and max(od_values) > max_od:
-                raise RuleViolationError(
-                    self.type,
-                    f"Some beatmaps have OD above maximum allowed "
-                    f"({max_od:.2f}). Highest: {max(od_values):.2f}",
+                    f"No beatmap has OD within the allowed range "
+                    f"(min={min_od}, max={max_od}). "
+                    f"Values: {[round(v, 2) for v in od_values]}",
                 )

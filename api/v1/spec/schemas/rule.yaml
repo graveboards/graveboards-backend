@@ -91,6 +91,7 @@ RateLimitConfig:
         
         Uses Redis for tracking. Counter resets when the period expires.
     type: object
+    additionalProperties: false
     required:
         - max_requests
         - period
@@ -102,19 +103,20 @@ RateLimitConfig:
             description: Maximum number of requests allowed per period
         period:
             type: string
-            enum: [day, week, month, year]
-            description: Time period for the rate limit
+            pattern: "^(day|week|month|year|[1-9][0-9]*)$"
+            description: Time period for the rate limit - a named period (day, week, month, year) or a positive integer number of seconds
         scope:
             type: string
-            enum: [user, beatmapset_type, artist, creator, custom]
+            enum: [user]
             default: user
-            description: Who this rule applies to
+            description: Who this rule applies to (only "user" is supported)
         target:
             type: array
             items:
                 type: integer
+                minimum: 1
             nullable: true
-            description: Optional list of user IDs to apply this rule to. Empty/null means all users.
+            description: Optional list of positive, unique user IDs to apply this rule to. Empty/null means all users.
 
 CooldownConfig:
     title: CooldownConfig
@@ -123,6 +125,7 @@ CooldownConfig:
         
         Useful for preventing spam or giving time between submissions.
     type: object
+    additionalProperties: false
     required:
         - cooldown_seconds
         - scope
@@ -133,15 +136,16 @@ CooldownConfig:
             description: Duration in seconds before the user can submit again
         scope:
             type: string
-            enum: [user, beatmapset_type, artist, creator, custom]
+            enum: [user]
             default: user
-            description: Who this rule applies to
+            description: Who this rule applies to (only "user" is supported)
         target:
             type: array
             items:
                 type: integer
+                minimum: 1
             nullable: true
-            description: Optional list of user IDs to apply this rule to. Empty/null means all users.
+            description: Optional list of positive, unique user IDs to apply this rule to. Empty/null means all users.
 
 BlacklistConfig:
     title: BlacklistConfig
@@ -150,20 +154,23 @@ BlacklistConfig:
         
         The target array specifies which user IDs are blocked.
     type: object
+    additionalProperties: false
     required:
         - scope
         - target
     properties:
         scope:
             type: string
-            enum: [user, beatmapset_type, artist, creator, custom]
+            enum: [user]
             default: user
-            description: Who this rule applies to
+            description: Who this rule applies to (only "user" is supported)
         target:
             type: array
+            minItems: 1
             items:
                 type: integer
-            description: List of user IDs to blacklist
+                minimum: 1
+            description: Non-empty list of positive, unique user IDs to blacklist
 
 DurationConfig:
     title: DurationConfig
@@ -172,6 +179,7 @@ DurationConfig:
         
         Applies to all beatmaps in the beatmapset or just the longest/shortest one.
     type: object
+    additionalProperties: false
     properties:
         min_seconds:
             type: integer
@@ -197,6 +205,7 @@ StarRatingConfig:
         
         Applies to all beatmaps in the beatmapset or just the highest/lowest one.
     type: object
+    additionalProperties: false
     properties:
         min:
             type: number
@@ -223,6 +232,7 @@ ARRangeConfig:
     description: |
         Filters beatmaps by their Approach Rate (AR).
     type: object
+    additionalProperties: false
     properties:
         min:
             type: number
@@ -247,6 +257,7 @@ ODRangeConfig:
     description: |
         Filters beatmaps by their Overall Difficulty (OD).
     type: object
+    additionalProperties: false
     properties:
         min:
             type: number
@@ -271,6 +282,7 @@ HPRangeConfig:
     description: |
         Filters beatmaps by their HP Drain (HP Drain Rate).
     type: object
+    additionalProperties: false
     properties:
         min:
             type: number
@@ -295,6 +307,7 @@ CSRangeConfig:
     description: |
         Filters beatmaps by their Circle Size (CS).
     type: object
+    additionalProperties: false
     properties:
         min:
             type: number
@@ -317,18 +330,21 @@ CSRangeConfig:
 DrainRangeConfig:
     title: DrainRangeConfig
     description: |
-        Filters beatmaps by their drain rate (time to full life bar).
+        Filters beatmaps by their drain time in seconds (osu! hit_length: the
+        playable length excluding breaks). This is distinct from the HP drain
+        rate stat, which is covered by beatmap_hp_range.
     type: object
+    additionalProperties: false
     properties:
         min:
             type: number
             format: float
             minimum: 0
-            description: Minimum drain rate in seconds
+            description: Minimum drain time in seconds
         max:
             type: number
             format: float
-            description: Maximum drain rate in seconds
+            description: Maximum drain time in seconds
         logic:
             type: string
             enum: [any, all]
@@ -342,6 +358,7 @@ BPMConfig:
     description: |
         Filters beatmaps by their BPM (beats per minute).
     type: object
+    additionalProperties: false
     properties:
         min_bpm:
             type: number
@@ -367,48 +384,41 @@ GenreConfig:
     description: |
         Filters beatmaps by their genre.
     type: object
+    additionalProperties: false
     required:
         - genre_ids
     properties:
         genre_ids:
             type: array
+            minItems: 1
             items:
                 type: integer
-            description: List of genre IDs to match against
-        logic:
-            type: string
-            enum: [any, all]
-            default: any
-            description: |
-                any: at least one beatmap genre must match
-                all: all beatmap genres must be in the list
+                enum: [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14]
+            description: Non-empty list of osu! genre IDs to match against
 
 LanguageConfig:
     title: LanguageConfig
     description: |
         Filters beatmaps by their language.
     type: object
+    additionalProperties: false
     required:
         - language_ids
     properties:
         language_ids:
             type: array
+            minItems: 1
             items:
                 type: integer
-            description: List of language IDs to match against
-        logic:
-            type: string
-            enum: [any, all]
-            default: any
-            description: |
-                any: at least one beatmap language must match
-                all: all beatmap languages must be in the list
+                enum: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+            description: Non-empty list of osu! language IDs to match against
 
 ModeConfig:
     title: ModeConfig
     description: |
         Filters beatmaps by game mode (osu, taiko, fruits, mania).
     type: object
+    additionalProperties: false
     required:
         - allowed_modes
     properties:
@@ -425,6 +435,7 @@ DifficultyCountConfig:
     description: |
         Filters beatmapsets by the number of beatmaps (difficulties) they contain.
     type: object
+    additionalProperties: false
     properties:
         min:
             type: integer
@@ -440,6 +451,7 @@ StoryboardConfig:
     description: |
         Filters beatmapsets by whether they contain a storyboard.
     type: object
+    additionalProperties: false
     required:
         - allowed
     properties:
@@ -452,6 +464,7 @@ VideoConfig:
     description: |
         Filters beatmapsets by whether they contain a video background.
     type: object
+    additionalProperties: false
     required:
         - allowed
     properties:
@@ -464,6 +477,7 @@ TagsConfig:
     description: |
         Filters beatmapsets by their tags.
     type: object
+    additionalProperties: false
     required:
         - tag_ids
     properties:
@@ -485,6 +499,7 @@ LengthConfig:
     description: |
         Filters beatmaps by hit length and total length.
     type: object
+    additionalProperties: false
     properties:
         min_hit_length:
             type: integer
@@ -517,6 +532,7 @@ CompositeConfig:
         
         Supports nesting up to 10 levels deep.
     type: object
+    additionalProperties: false
     required:
         - operator
         - rules
@@ -536,10 +552,12 @@ CompositeConfig:
 NeverRankedConfig:
     title: NeverRankedConfig
     description: |
-        Rejects beatmapsets whose song has never been ranked on osu!.
-        
+        Rejects a beatmapset whose song (artist + title) has ALREADY been ranked
+        on osu!, i.e. only songs that have never been ranked are allowed through.
+
         Uses the osu! API as the source of truth for ranked status.
     type: object
+    additionalProperties: false
     properties:
         ruleset:
             type: string
@@ -549,25 +567,22 @@ NeverRankedConfig:
         normalize_versions:
             type: boolean
             default: true
-            description: Whether to normalize song identity (strip version markers) before checking
+            description: Whether to strip version markers (e.g. "TV Size") from the song identity before comparing
 
 UniqueArtistTitleConfig:
     title: UniqueArtistTitleConfig
     description: |
-        Ensures a song (artist + title) has only been ranked once in a given game mode.
-        
-        Uses the osu! API as the source of truth. Rejects if the same song is already ranked.
+        Enforces queue-local uniqueness: rejects a beatmapset when another
+        beatmapset with the same song (artist + title) already has a request in
+        the same queue. Uses the queue's persisted requests as the source of
+        truth (distinct from never_ranked, which checks the global ranked catalog).
     type: object
+    additionalProperties: false
     properties:
-        ruleset:
-            type: string
-            enum: [osu, taiko, fruits, mania]
-            default: osu
-            description: The game mode to check against on osu!
         normalize_versions:
             type: boolean
             default: true
-            description: Whether to normalize song identity (strip version markers) before checking
+            description: Whether to strip version markers (e.g. "TV Size") from the song identity before comparing
 
 RuleCreate:
     title: RuleCreate
@@ -645,10 +660,8 @@ RuleUpdate:
     title: RuleUpdate
     description: Update an existing rule
     type: object
+    additionalProperties: false
     properties:
-        id:
-            type: integer
-            description: The rule ID to update
         is_active:
             type: boolean
             description: Enable or disable the rule

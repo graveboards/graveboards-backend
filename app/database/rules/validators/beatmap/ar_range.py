@@ -40,15 +40,15 @@ class ARRangeRestriction(BeatmapRestrictionBase):
                         f"maximum allowed AR ({max_ar:.2f})",
                     )
         else:
-            if min_ar is not None and min(ar_values) < min_ar:
+            # logic == "any": at least one beatmap must fall within the range.
+            matched = any(
+                (min_ar is None or ar >= min_ar) and (max_ar is None or ar <= max_ar)
+                for ar in ar_values
+            )
+            if not matched:
                 raise RuleViolationError(
                     self.type,
-                    f"Some beatmaps have AR below minimum allowed "
-                    f"({min_ar:.2f}). Lowest: {min(ar_values):.2f}",
-                )
-            if max_ar is not None and max(ar_values) > max_ar:
-                raise RuleViolationError(
-                    self.type,
-                    f"Some beatmaps have AR above maximum allowed "
-                    f"({max_ar:.2f}). Highest: {max(ar_values):.2f}",
+                    f"No beatmap has AR within the allowed range "
+                    f"(min={min_ar}, max={max_ar}). "
+                    f"Values: {[round(v, 2) for v in ar_values]}",
                 )

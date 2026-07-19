@@ -178,19 +178,20 @@ def create_test_app(mock_rc=None, mock_db=None) -> AsyncApp:
     )
 
     from connexion.lifecycle import ConnexionResponse
-    
+
     class NoopRequestBodyValidator:
         """No-op validator that accepts all request bodies."""
         async def validate(self, request):
             return None
 
+    validator_map = {"parameter": ParameterValidatorPatched}
+    if not os.getenv("GRAVEBOARDS_USE_PRODUCTION_VALIDATOR"):
+        validator_map["body"] = {"*/*": NoopRequestBodyValidator()}
+
     connexion_app.add_api(
         load_spec(),
         resolver=RestyResolver(DEFAULT_MODULE_NAME),
-        validator_map={
-            "parameter": ParameterValidatorPatched,
-            "body": {"*/*": NoopRequestBodyValidator()},
-        }
+        validator_map=validator_map,
     )
 
     connexion_app.add_error_handler(Forbidden, forbidden)

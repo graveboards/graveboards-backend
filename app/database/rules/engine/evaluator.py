@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from connexion.exceptions import Forbidden
@@ -8,6 +9,8 @@ from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError
 from app.database.rules.registry import get_validator, get_validator_tier
 
+
+logger = logging.getLogger(__name__)
 
 MAX_COMPOSITE_DEPTH = 10
 
@@ -32,7 +35,10 @@ class AtomicRuleNode(RuleNode):
         self, context: ExecutionContext, depth: int = 0
     ) -> bool:
         if self._validator_cls is None:
-            return True
+            context.last_violation = RuleViolationError(
+                self.rule_type, f"Unknown rule type '{self.rule_type}'"
+            )
+            return False
 
         original_config = context.config
         context.config = self.config
@@ -41,11 +47,15 @@ class AtomicRuleNode(RuleNode):
             validator = self._validator_cls()
             await validator.check(context)
             return True
-        except RuleViolationError:
+        except RuleViolationError as e:
+            context.last_violation = e
             return False
         except Forbidden:
             raise
         except Exception:
+            logger.exception(
+                "Unexpected error evaluating rule '%s'", self.rule_type
+            )
             return False
         finally:
             context.config = original_config

@@ -205,7 +205,7 @@ QueueRuleById:
             $ref: "../request_bodies/rule.yaml#/RuleUpdateBody"
         responses:
             200:
-                $ref: "../responses/200/rule.yaml#/RulePatched"
+                $ref: "../responses/200/rule.yaml#/RuleResult"
             400:
                 $ref: "../responses/400/generic.yaml#/BadRequest"
             401:

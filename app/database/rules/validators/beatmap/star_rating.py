@@ -27,6 +27,12 @@ class StarRatingRestriction(BeatmapRestrictionBase):
 
         if logic == "max":
             highest = max(star_ratings)
+            if min_sr is not None and highest < min_sr:
+                raise RuleViolationError(
+                    self.type,
+                    f"Highest star rating ({highest:.2f}) is below minimum "
+                    f"allowed star rating ({min_sr:.2f})",
+                )
             if max_sr is not None and highest > max_sr:
                 raise RuleViolationError(
                     self.type,
@@ -41,6 +47,12 @@ class StarRatingRestriction(BeatmapRestrictionBase):
                     self.type,
                     f"Lowest star rating ({lowest:.2f}) is below minimum "
                     f"allowed star rating ({min_sr:.2f})",
+                )
+            if max_sr is not None and lowest > max_sr:
+                raise RuleViolationError(
+                    self.type,
+                    f"Lowest star rating ({lowest:.2f}) exceeds maximum "
+                    f"allowed star rating ({max_sr:.2f})",
                 )
 
         elif logic == "all":
@@ -61,17 +73,15 @@ class StarRatingRestriction(BeatmapRestrictionBase):
                     )
 
         elif logic == "any":
-            if min_sr is not None and min(star_ratings) < min_sr:
+            # At least one beatmap must fall within the range.
+            matched = any(
+                (min_sr is None or sr >= min_sr) and (max_sr is None or sr <= max_sr)
+                for sr in star_ratings
+            )
+            if not matched:
                 raise RuleViolationError(
                     self.type,
-                    f"Some beatmaps have star rating below minimum "
-                    f"allowed ({min_sr:.2f}). Lowest: "
-                    f"{min(star_ratings):.2f}",
-                )
-            if max_sr is not None and max(star_ratings) > max_sr:
-                raise RuleViolationError(
-                    self.type,
-                    f"Some beatmaps have star rating above maximum "
-                    f"allowed ({max_sr:.2f}). Highest: "
-                    f"{max(star_ratings):.2f}",
+                    f"No beatmap has a star rating within the allowed range "
+                    f"(min={min_sr}, max={max_sr}). "
+                    f"Values: {[round(v, 2) for v in star_ratings]}",
                 )

@@ -7,6 +7,7 @@ from pydantic import BaseModel, field_validator
 
 from app.database.rules.base import DatabaseRestrictionBase
 from app.database.rules.exceptions import RuleViolationError
+from app.database.rules.validators.metadata.song_identity import normalized_identity_forms
 from app.osu_api.enums import Ruleset
 
 if TYPE_CHECKING:
@@ -33,50 +34,53 @@ class NeverRankedRestriction(DatabaseRestrictionBase):
     config_schema = NeverRankedConfig
     supported_versions = {"1.0"}
 
-    _RULESET_TO_INT = {
-        "osu": 2,
-        "taiko": 3,
-        "fruits": 0,
-        "mania": 1,
-    }
+    _MAX_SEARCH_PAGES = 5
 
     async def check_database(self, context: ExecutionContext) -> None:
         config = NeverRankedConfig(**context.config)
         identity = await context.get_metadata("song_identity")
 
-        if not identity.get("normalized_artist") or not identity.get("normalized_title"):
+        candidate_forms = normalized_identity_forms(
+            identity.get("artist", ""),
+            identity.get("title", ""),
+            identity.get("artist_unicode", ""),
+            identity.get("title_unicode", ""),
+            strip_version_markers=config.normalize_versions,
+        )
+        if not candidate_forms:
             raise RuleViolationError(
                 self.type,
                 "Could not resolve song identity for ranking check",
             )
 
-        ruleset_int = self._RULESET_TO_INT.get(config.ruleset, 2)
+        mode_int = Ruleset.to_mode_int(config.ruleset)
         search_status = "ranked,approved,qualified,loved"
+        text_query = " ".join(
+            part for part in (identity.get("artist", ""), identity.get("title", "")) if part
+        ).strip()
 
-        results = await context.osu_client.search_beatmapsets(
-            status=search_status,
-            mode=ruleset_int,
-        )
+        for page in range(1, self._MAX_SEARCH_PAGES + 1):
+            results = await context.osu_client.search_beatmapsets(
+                status=search_status,
+                mode=mode_int,
+                query=text_query or None,
+                page=page,
+            )
+            beatmapsets = results.get("beatmapsets", [])
+            if not beatmapsets:
+                break
 
-        beatmapsets = results.get("beatmapsets", [])
-
-        for bs in beatmapsets:
-            bs_artist = (bs.get("artist") or "").strip()
-            bs_title = (bs.get("title") or "").strip()
-
-            if not bs_artist or not bs_title:
-                continue
-
-            from app.database.rules.validators.metadata.song_identity import _normalize_text
-
-            normalized_bs_artist = _normalize_text(bs_artist)
-            normalized_bs_title = _normalize_text(bs_title)
-
-            if (
-                normalized_bs_artist == identity["normalized_artist"]
-                and normalized_bs_title == identity["normalized_title"]
-            ):
-                raise RuleViolationError(
-                    self.type,
-                    f"Song '{identity['artist']} - {identity['title']}' is already ranked on osu! {config.ruleset}",
+            for bs in beatmapsets:
+                bs_forms = normalized_identity_forms(
+                    bs.get("artist", ""),
+                    bs.get("title", ""),
+                    bs.get("artist_unicode", ""),
+                    bs.get("title_unicode", ""),
+                    strip_version_markers=config.normalize_versions,
                 )
+                if candidate_forms & bs_forms:
+                    raise RuleViolationError(
+                        self.type,
+                        f"Song '{identity['artist']} - {identity['title']}' is "
+                        f"already ranked on osu! {config.ruleset}",
+                    )

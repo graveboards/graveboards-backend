@@ -23,11 +23,6 @@ class StoryboardRestriction(BeatmapRestrictionBase):
         has_storyboard = beatmapset.storyboard
         allowed = config.get("allowed", True)
 
-        if allowed and not has_storyboard:
-            raise RuleViolationError(
-                self.type,
-                "Beatmapset does not have a storyboard but one is required",
-            )
         if not allowed and has_storyboard:
             raise RuleViolationError(
                 self.type,

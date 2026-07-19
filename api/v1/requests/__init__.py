@@ -10,14 +10,15 @@ from app.osu_api import OsuAPIClient
 from app.database import PostgresqlDB
 from app.database.models import Request, Queue, ModelClass
 from app.database.schemas import RequestSchema
-from app.security import role_authorization, ownership_authorization
-from app.security.overrides import queue_owner_override
+from app.security import role_authorization, ownership_authorization, with_authenticated_user_id
+from app.security.overrides import queue_owner_override, queue_manager_override
 from app.database.enums import RoleName
 from app.redis import Namespace, ChannelName, RedisClient
 from app.redis.models import QueueRequestHandlerTask, QueueRequestValidationTask
 from app.spec import get_include_schema
-from app.database.rules.context import ExecutionContext
+from app.database.rules.context import ExecutionContext, parse_osu_beatmapset
 from app.database.rules.engine.phase1_runner import Phase1Runner
+from app.database.rules.engine.stateful import reserve_stateful_rules, rollback_reservations
 from app.database.rules.exceptions import RuleViolationError
 from app.database.rules.validators.metadata import (
     SongIdentityProvider,
@@ -85,13 +86,24 @@ async def get(request_id: int, **kwargs):
     return request_data, 200, {"Content-Type": "application/json"}
 
 
-async def post(body: dict, **kwargs):
+@with_authenticated_user_id()
+async def post(body: dict, _caller_user_id: int = None, **kwargs):
     rc: RedisClient = request.state.rc
     db: PostgresqlDB = request.state.db
 
+    if _caller_user_id is None:
+        raise Forbidden("Authenticated user could not be determined")
+
+    submitted_user_id = body.get("user_id")
+
+    if submitted_user_id is not None and submitted_user_id != _caller_user_id:
+        raise Forbidden("You may not submit a request on behalf of another user")
+
+    user_id = _caller_user_id
+    body["user_id"] = user_id
+
     beatmapset_id = body["beatmapset_id"]
     queue_id = body["queue_id"]
-    user_id = body["user_id"]
     queue = await db.get(Queue, id=queue_id)
 
     if not queue:
@@ -111,7 +123,7 @@ async def post(body: dict, **kwargs):
     if (status := beatmapset_dict["status"]) in {"ranked", "approved", "qualified", "loved"}:
         raise BadRequest(f"The beatmapset is already {status} on osu!")
 
-    await _check_queue_rules_phase1(
+    active_rules, rule_context = await _run_phase1_checks(
         queue_id=queue_id,
         user_id=user_id,
         beatmapset=beatmapset_dict,
@@ -145,10 +157,16 @@ async def post(body: dict, **kwargs):
                 f"The request with beatmapset ID '{beatmapset_id}' in queue '{queue.name}' is currently being processed"
             )
 
-    await rc.hset(task_hash_name, mapping=task.serialize())
-    logger.debug(f"POST /requests: stored task at {task_hash_name}, publishing to {ChannelName.QUEUE_REQUEST_HANDLER_TASKS.value}")
-    await rc.publish(ChannelName.QUEUE_REQUEST_HANDLER_TASKS.value, task.hashed_id)
-    logger.debug(f"POST /requests: published job_id={task.hashed_id}")
+    reservations = await reserve_stateful_rules(active_rules, rule_context)
+
+    try:
+        await rc.hset(task_hash_name, mapping=task.serialize())
+        logger.debug(f"POST /requests: stored task at {task_hash_name}, publishing to {ChannelName.QUEUE_REQUEST_HANDLER_TASKS.value}")
+        await rc.publish(ChannelName.QUEUE_REQUEST_HANDLER_TASKS.value, task.hashed_id)
+        logger.debug(f"POST /requests: published job_id={task.hashed_id}")
+    except Exception:
+        await rollback_reservations(reservations, rule_context)
+        raise
 
     return (
         {"message": "Request submitted and queued for processing!", "task_id": task.hashed_id},
@@ -157,23 +175,31 @@ async def post(body: dict, **kwargs):
     )
 
 
-async def _check_queue_rules_phase1(
+async def _run_phase1_checks(
     queue_id: int,
     user_id: int,
     beatmapset: dict,
     db: PostgresqlDB,
     rc: RedisClient,
-) -> None:
+) -> tuple[list, ExecutionContext]:
+    """Run pure Phase-1 eligibility checks and return the active rules and context.
+
+    The returned rules/context are reused by the caller to reserve stateful rule state
+    after the request is successfully enqueued.
+    """
     from app.database.crud.rules import RuleCRUD
 
     rule_crud = RuleCRUD()
     async with db.session() as session:
         rules = await rule_crud.get_rules(queue_id, only_active=True, session=session)
 
+    beatmapset_obj, beatmaps = parse_osu_beatmapset(beatmapset)
+
     context = ExecutionContext(
         queue_id=queue_id,
         user_id=user_id,
-        beatmapset=beatmapset,
+        beatmapset=beatmapset_obj,
+        beatmaps=beatmaps,
         db=db,
         redis=rc,
         metadata_providers=_METADATA_PROVIDERS,
@@ -182,9 +208,14 @@ async def _check_queue_rules_phase1(
     runner = Phase1Runner()
     await runner.run(rules, context)
 
+    return rules, context
 
+
+# Team policy: queue managers (and owners/admins) may change the status of requests
+# on queues they manage - the one queue action a manager is allowed. The body is
+# whitelisted to `status` only, so managers cannot mutate anything else.
 @role_authorization(
-    RoleName.ADMIN, override=queue_owner_override, override_kwargs={"from_request": True}
+    RoleName.ADMIN, override=queue_manager_override, override_kwargs={"from_request": True}
 )
 async def patch(request_id: int, body: dict, **kwargs):
     db: PostgresqlDB = request.state.db

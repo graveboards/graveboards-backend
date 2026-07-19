@@ -56,16 +56,16 @@ class BPMRestriction(BeatmapRestrictionBase):
                     )
 
         else:
+            # logic == "any": at least one beatmap must fall within the range.
             beatmap_bmps = [b.bpm for b in beatmaps]
-            if min_bpm is not None and min(beatmap_bmps) < min_bpm:
+            matched = any(
+                (min_bpm is None or bpm >= min_bpm) and (max_bpm is None or bpm <= max_bpm)
+                for bpm in beatmap_bmps
+            )
+            if not matched:
                 raise RuleViolationError(
                     self.type,
-                    f"Some beatmaps have BPM below minimum allowed "
-                    f"({min_bpm:.2f}). Lowest: {min(beatmap_bmps):.2f}",
-                )
-            if max_bpm is not None and max(beatmap_bmps) > max_bpm:
-                raise RuleViolationError(
-                    self.type,
-                    f"Some beatmaps have BPM above maximum allowed "
-                    f"({max_bpm:.2f}). Highest: {max(beatmap_bmps):.2f}",
+                    f"No beatmap has BPM within the allowed range "
+                    f"(min={min_bpm}, max={max_bpm}). "
+                    f"Values: {[round(v, 2) for v in beatmap_bmps]}",
                 )

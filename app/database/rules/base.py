@@ -34,6 +34,22 @@ class RestrictionBase(ABC):
     async def _check(self, context: ExecutionContext) -> None:
         ...
 
+    async def reserve(self, context: ExecutionContext, config: dict[str, Any]) -> str | None:
+        """Atomically reserve any stateful side effect this rule consumes.
+
+        Stateless rules do nothing. Stateful rules (rate limit, cooldown) override this
+        to consume their Redis state only after all synchronous checks pass, returning a
+        rollback token, and raise ``Forbidden`` if the reservation is not allowed.
+
+        Returns:
+            A rollback token, or ``None`` if the rule does not apply / has no state.
+        """
+        return None
+
+    async def rollback(self, context: ExecutionContext, token: str) -> None:
+        """Undo a reservation previously returned by :meth:`reserve`."""
+        return None
+
 
 class BeatmapRestrictionBase(RestrictionBase):
     async def _check(self, context: ExecutionContext) -> None:

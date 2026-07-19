@@ -1,9 +1,11 @@
+import json
 from typing import ClassVar
 
 from httpx import ConnectTimeout
 from structlog.contextvars import bind_contextvars, clear_contextvars
 
 from app.beatmaps import BeatmapManager
+from app.database.crud.rules import RuleCRUD
 from app.database.models import Request
 from app.database.schemas import RequestSchema
 from app.redis import ChannelName, Namespace
@@ -101,12 +103,30 @@ class QueueRequestHandler(ScheduledService):
             raise
 
     async def _dispatch_validation_task(self, request_id: int, queue_id: int, beatmapset_id: int, http_request_id: str = "") -> None:
+        rules_snapshot = await self._snapshot_active_rules(queue_id)
+
         task = QueueRequestValidationTask(
             request_id=request_id,
             queue_id=queue_id,
             beatmapset_id=beatmapset_id,
             http_request_id=http_request_id,
+            rules_snapshot=rules_snapshot,
         )
         task_hash_name = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(task.hashed_id)
         await self._rc.hset(task_hash_name, mapping=task.serialize())
         await self._rc.publish(ChannelName.QUEUE_REQUEST_VALIDATION_TASKS.value, task.hashed_id)
+
+    async def _snapshot_active_rules(self, queue_id: int) -> str:
+        crud = RuleCRUD()
+        rules = await crud.get_rules(queue_id, only_active=True)
+        snapshot = [
+            {
+                "id": rule.id,
+                "type": rule.type,
+                "version": rule.version,
+                "config": rule.config or {},
+                "is_active": rule.is_active,
+            }
+            for rule in rules
+        ]
+        return json.dumps(snapshot)

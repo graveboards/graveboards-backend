@@ -14,29 +14,27 @@ class TagsRestriction(BeatmapRestrictionBase):
         config = context.config
         logic = config.get("logic", "any")
         beatmaps = context.beatmaps or []
-        beatmapset = context.beatmapset
 
         required_tag_ids = set(config.get("tag_ids", []))
         if not required_tag_ids:
             return
 
         beatmap_tag_ids: set[int] = set()
+        has_tag_metadata = False
         for bm in beatmaps:
             if bm.top_tag_ids:
+                has_tag_metadata = True
                 for tag in bm.top_tag_ids:
                     tag_id = tag.get("tag_id") if isinstance(tag, dict) else None
                     if tag_id is not None:
                         beatmap_tag_ids.add(tag_id)
 
-        if not beatmap_tag_ids and beatmapset:
-            if beatmapset.tags:
-                for tag_str in beatmapset.tags.split(","):
-                    tag_str = tag_str.strip()
-                    if tag_str:
-                        try:
-                            beatmap_tag_ids.add(int(tag_str))
-                        except (ValueError, TypeError):
-                            pass
+        if not has_tag_metadata:
+            raise RuleViolationError(
+                self.type,
+                "Tag metadata (top_tag_ids) is unavailable for this beatmapset, "
+                "so the required-tags rule cannot be evaluated",
+            )
 
         if logic == "all":
             missing = required_tag_ids - beatmap_tag_ids

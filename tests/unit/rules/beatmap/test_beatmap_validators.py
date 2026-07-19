@@ -270,7 +270,7 @@ class TestDifficultyCountRestriction:
 class TestStoryboardRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_storyboard_present_and_required(self):
+    async def test_passes_when_storyboard_present_and_allowed(self):
         validator = StoryboardRestriction()
         beatmapset = MagicMock(storyboard=True)
         context = ExecutionContext(
@@ -284,7 +284,7 @@ class TestStoryboardRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_storyboard_required_but_missing(self):
+    async def test_passes_when_storyboard_absent_and_allowed(self):
         validator = StoryboardRestriction()
         beatmapset = MagicMock(storyboard=False)
         context = ExecutionContext(
@@ -294,9 +294,7 @@ class TestStoryboardRestriction:
             beatmaps=[],
             config={"allowed": True},
         )
-
-        with pytest.raises(RuleViolationError):
-            await validator.check(context)
+        await validator.check(context)
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -318,7 +316,7 @@ class TestStoryboardRestriction:
 class TestVideoRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_video_present_and_required(self):
+    async def test_passes_when_video_present_and_allowed(self):
         validator = VideoRestriction()
         beatmapset = MagicMock(video=True)
         context = ExecutionContext(
@@ -332,7 +330,7 @@ class TestVideoRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_video_required_but_missing(self):
+    async def test_passes_when_video_absent_and_allowed(self):
         validator = VideoRestriction()
         beatmapset = MagicMock(video=False)
         context = ExecutionContext(
@@ -342,9 +340,7 @@ class TestVideoRestriction:
             beatmaps=[],
             config={"allowed": True},
         )
-
-        with pytest.raises(RuleViolationError):
-            await validator.check(context)
+        await validator.check(context)
 
     @pytest.mark.unit
     @pytest.mark.asyncio

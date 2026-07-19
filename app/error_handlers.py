@@ -2,6 +2,7 @@ from connexion.problem import problem
 from connexion.exceptions import Forbidden, BadRequestProblem, Unauthorized, InternalServerError
 from connexion.lifecycle import ConnexionRequest, ConnexionResponse
 
+from app.database.rules.exceptions import RuleViolationError
 from app.observability.metrics.error import errors_total
 
 
@@ -42,3 +43,15 @@ def unauthorized(request: ConnexionRequest, exc: Exception | Unauthorized) -> Co
 def internal_error(request: ConnexionRequest, exc: Exception | InternalServerError) -> ConnexionResponse:
     _track_error(request, 500, "internal_server_error")
     return problem(status=500, title="Internal Server Error", detail="An unexpected error occurred", type="about:blank")
+
+
+def rule_violation(request: ConnexionRequest, exc: Exception | RuleViolationError) -> ConnexionResponse:
+    _track_error(request, 422, "rule_violation")
+    rule_type = getattr(exc, "type", "rule")
+    reason = getattr(exc, "detail", str(exc))
+    return problem(
+        status=422,
+        title="Rule Violation",
+        detail=f"[{rule_type}] {reason}",
+        type="about:blank",
+    )

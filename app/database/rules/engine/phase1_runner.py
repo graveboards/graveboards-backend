@@ -7,7 +7,9 @@ from connexion.exceptions import Forbidden
 
 from app.database.models import QueueRule
 from app.database.rules.engine.evaluator import build_rule_node, RuleNode
+from app.database.rules.engine.stateful import STATEFUL_RULE_TYPES
 from app.database.rules.exceptions import RuleViolationError
+from app.database.rules.registry import effective_rule_tier
 
 logger = logging.getLogger(__name__)
 
@@ -22,17 +24,24 @@ class Phase1Runner:
             if not rule.is_active:
                 continue
 
+            if rule.type in STATEFUL_RULE_TYPES:
+                continue
+
             if not self._check_version(rule):
                 continue
 
-            tier = self._get_tier(rule.type)
+            tier = self._get_tier(rule)
             if tier not in (1, 2):
                 continue
 
             rule_node = self._build_node(rule)
+            context.last_violation = None
             try:
                 passed = await rule_node.evaluate(context)
                 if not passed:
+                    violation = context.last_violation
+                    if isinstance(violation, RuleViolationError):
+                        raise violation
                     raise RuleViolationError(
                         rule.type,
                         f"Rule '{rule.type}' rejected the request",
@@ -52,15 +61,8 @@ class Phase1Runner:
                     f"Validation error: {e}",
                 )
 
-    def _get_tier(self, type: str) -> int:
-        from app.database.rules.registry import get_validator_tier
-
-        tier = get_validator_tier(type)
-        if tier is not None:
-            return tier
-        if type == "composite":
-            return 2
-        return 2
+    def _get_tier(self, rule: QueueRule) -> int:
+        return effective_rule_tier(rule.type, rule.config or {})
 
     def _check_version(self, rule: QueueRule) -> bool:
         from app.database.rules.registry import get_validator
@@ -68,7 +70,17 @@ class Phase1Runner:
         validator_cls = get_validator(rule.type)
         if validator_cls is None:
             return True
-        return rule.version in validator_cls.supported_versions
+        supported = rule.version in validator_cls.supported_versions
+        if not supported:
+            logger.error(
+                "Skipping active rule id=%s type=%s: unsupported version '%s' "
+                "(supported: %s)",
+                getattr(rule, "id", "?"),
+                rule.type,
+                rule.version,
+                sorted(validator_cls.supported_versions),
+            )
+        return supported
 
     def _build_node(self, rule: QueueRule) -> RuleNode:
         rule_data = {

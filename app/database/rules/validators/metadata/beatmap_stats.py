@@ -42,7 +42,7 @@ class BeatmapStatsProvider(MetadataProvider):
         ars = [b.ar for b in beatmaps]
         ods = [b.accuracy for b in beatmaps]
         hps = [b.drain for b in beatmaps]
-        drains = [b.drain for b in beatmaps]
+        drains = [b.hit_length for b in beatmaps]
         bmps = [b.bpm for b in beatmaps]
         modes = list({b.mode for b in beatmaps})
 

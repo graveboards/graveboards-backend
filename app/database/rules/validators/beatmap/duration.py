@@ -23,7 +23,14 @@ class DurationRestriction(BeatmapRestrictionBase):
 
         if logic == "max":
             max_length = max(b.total_length for b in beatmaps)
+            min_seconds = config.get("min_seconds")
             max_seconds = config.get("max_seconds")
+            if min_seconds is not None and max_length < min_seconds:
+                raise RuleViolationError(
+                    self.type,
+                    f"Longest beatmap duration ({max_length}s) is below minimum "
+                    f"allowed duration ({min_seconds}s)",
+                )
             if max_seconds is not None and max_length > max_seconds:
                 raise RuleViolationError(
                     self.type,
@@ -34,11 +41,18 @@ class DurationRestriction(BeatmapRestrictionBase):
         elif logic == "min":
             min_length = min(b.total_length for b in beatmaps)
             min_seconds = config.get("min_seconds")
+            max_seconds = config.get("max_seconds")
             if min_seconds is not None and min_length < min_seconds:
                 raise RuleViolationError(
                     self.type,
                     f"Shortest beatmap duration ({min_length}s) is below minimum "
                     f"allowed duration ({min_seconds}s)",
+                )
+            if max_seconds is not None and min_length > max_seconds:
+                raise RuleViolationError(
+                    self.type,
+                    f"Shortest beatmap duration ({min_length}s) exceeds maximum "
+                    f"allowed duration ({max_seconds}s)",
                 )
 
         elif logic == "all":
