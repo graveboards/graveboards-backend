@@ -2,7 +2,7 @@ from connexion import request
 
 from app.database import PostgresqlDB
 from app.database.models import Queue
-from app.database.queue_access import is_queue_owner_or_manager
+from app.database.queue_access import is_queue_owner_or_manager, can_read_queue
 from app.database.schemas import RuleSchema, RuleCreateSchema, RuleUpdateSchema
 from app.exceptions import NotFound, Conflict, BadRequest
 from app.security import role_authorization, with_authenticated_user_id
@@ -23,7 +23,7 @@ async def search(queue_id: int, _caller_user_id: int = None, **kwargs):
     db: PostgresqlDB = request.state.db
 
     queue = await db.get(Queue, id=queue_id)
-    if not queue:
+    if not queue or not await can_read_queue(db, queue, _caller_user_id):
         raise NotFound(f"Queue with ID '{queue_id}' not found")
 
     crud = RuleCRUD()
@@ -42,7 +42,7 @@ async def get(queue_id: int, rule_id: int, _caller_user_id: int = None, **kwargs
     db: PostgresqlDB = request.state.db
 
     queue = await db.get(Queue, id=queue_id)
-    if not queue:
+    if not queue or not await can_read_queue(db, queue, _caller_user_id):
         raise NotFound(f"Queue with ID '{queue_id}' not found")
 
     crud = RuleCRUD()

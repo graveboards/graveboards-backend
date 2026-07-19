@@ -36,6 +36,24 @@ async def queue_visibility_where(db: "PostgresqlDB", caller_user_id: int | None)
     )
 
 
+async def can_read_queue(
+    db: "PostgresqlDB",
+    queue: Queue,
+    caller_user_id: int | None,
+) -> bool:
+    """Whether a caller may read a specific queue and its nested rule endpoints.
+
+    Centralizes read authorization so the queue endpoint and every nested rule endpoint
+    apply the same policy. Public (0) and unlisted (1) queues are readable by
+    anyone holding the ID; private (2) queues are readable only by the owner, managers,
+    or admins.
+    """
+    if queue.visibility != 2:
+        return True
+
+    return await is_queue_owner_or_manager(db, queue.id, caller_user_id)
+
+
 async def is_queue_owner_or_manager(
     db: "PostgresqlDB",
     queue_id: int,
