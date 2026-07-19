@@ -57,30 +57,22 @@ class LengthRestriction(BeatmapRestrictionBase):
                         f"({max_total_length}s)",
                     )
         else:
-            hit_lengths = [b.hit_length for b in beatmaps]
-            total_lengths = [b.total_length for b in beatmaps]
+            # logic == "any": at least one beatmap must satisfy every configured bound.
+            def within_bounds(beatmap) -> bool:
+                if min_hit_length is not None and beatmap.hit_length < min_hit_length:
+                    return False
+                if max_hit_length is not None and beatmap.hit_length > max_hit_length:
+                    return False
+                if min_total_length is not None and beatmap.total_length < min_total_length:
+                    return False
+                if max_total_length is not None and beatmap.total_length > max_total_length:
+                    return False
+                return True
 
-            if min_hit_length is not None and min(hit_lengths) < min_hit_length:
+            if not any(within_bounds(b) for b in beatmaps):
                 raise RuleViolationError(
                     self.type,
-                    f"Some beatmaps have hit length below minimum "
-                    f"({min_hit_length}s). Lowest: {min(hit_lengths)}s",
-                )
-            if max_hit_length is not None and max(hit_lengths) > max_hit_length:
-                raise RuleViolationError(
-                    self.type,
-                    f"Some beatmaps have hit length above maximum "
-                    f"({max_hit_length}s). Highest: {max(hit_lengths)}s",
-                )
-            if min_total_length is not None and min(total_lengths) < min_total_length:
-                raise RuleViolationError(
-                    self.type,
-                    f"Some beatmaps have total length below minimum "
-                    f"({min_total_length}s). Lowest: {min(total_lengths)}s",
-                )
-            if max_total_length is not None and max(total_lengths) > max_total_length:
-                raise RuleViolationError(
-                    self.type,
-                    f"Some beatmaps have total length above maximum "
-                    f"({max_total_length}s). Highest: {max(total_lengths)}s",
+                    "No beatmap satisfies the configured length range "
+                    f"(hit_length {min_hit_length}-{max_hit_length}s, "
+                    f"total_length {min_total_length}-{max_total_length}s)",
                 )

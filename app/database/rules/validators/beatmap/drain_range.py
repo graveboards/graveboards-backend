@@ -40,15 +40,16 @@ class DrainRangeRestriction(BeatmapRestrictionBase):
                         f"exceeds maximum allowed ({max_drain:.2f})",
                     )
         else:
-            if min_drain is not None and min(drain_values) < min_drain:
+            # logic == "any": at least one beatmap must fall within the range.
+            matched = any(
+                (min_drain is None or drain >= min_drain)
+                and (max_drain is None or drain <= max_drain)
+                for drain in drain_values
+            )
+            if not matched:
                 raise RuleViolationError(
                     self.type,
-                    f"Some beatmaps have drain rate below minimum allowed "
-                    f"({min_drain:.2f}). Lowest: {min(drain_values):.2f}",
-                )
-            if max_drain is not None and max(drain_values) > max_drain:
-                raise RuleViolationError(
-                    self.type,
-                    f"Some beatmaps have drain rate above maximum allowed "
-                    f"({max_drain:.2f}). Highest: {max(drain_values):.2f}",
+                    f"No beatmap has drain time within the allowed range "
+                    f"(min={min_drain}, max={max_drain}). "
+                    f"Values: {[round(v, 2) for v in drain_values]}",
                 )

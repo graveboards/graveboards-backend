@@ -38,24 +38,20 @@ class TestStarRatingRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_any_logic_raises_when_below_min(self):
+    async def test_any_logic_passes_when_at_least_one_in_range(self):
         validator = StarRatingRestriction()
         beatmaps = [_make_beatmap(2.0), _make_beatmap(5.0)]
         context = _make_context(
             beatmaps=beatmaps,
             config={"min": 3.0, "logic": "any"},
         )
-
-        with pytest.raises(RuleViolationError) as exc_info:
-            await validator.check(context)
-
-        assert "below minimum" in str(exc_info.value.detail)
+        await validator.check(context)
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_any_logic_raises_when_above_max(self):
+    async def test_any_logic_raises_when_none_in_range(self):
         validator = StarRatingRestriction()
-        beatmaps = [_make_beatmap(5.0), _make_beatmap(8.0)]
+        beatmaps = [_make_beatmap(8.0), _make_beatmap(9.0)]
         context = _make_context(
             beatmaps=beatmaps,
             config={"max": 7.0, "logic": "any"},
@@ -64,7 +60,7 @@ class TestStarRatingRestriction:
         with pytest.raises(RuleViolationError) as exc_info:
             await validator.check(context)
 
-        assert "above maximum" in str(exc_info.value.detail)
+        assert "within the allowed range" in str(exc_info.value.detail)
 
     @pytest.mark.unit
     @pytest.mark.asyncio

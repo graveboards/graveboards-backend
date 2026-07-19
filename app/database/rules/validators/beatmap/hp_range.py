@@ -40,15 +40,15 @@ class HPRangeRestriction(BeatmapRestrictionBase):
                         f"maximum allowed HP ({max_hp:.2f})",
                     )
         else:
-            if min_hp is not None and min(hp_values) < min_hp:
+            # logic == "any": at least one beatmap must fall within the range.
+            matched = any(
+                (min_hp is None or hp >= min_hp) and (max_hp is None or hp <= max_hp)
+                for hp in hp_values
+            )
+            if not matched:
                 raise RuleViolationError(
                     self.type,
-                    f"Some beatmaps have HP below minimum allowed "
-                    f"({min_hp:.2f}). Lowest: {min(hp_values):.2f}",
-                )
-            if max_hp is not None and max(hp_values) > max_hp:
-                raise RuleViolationError(
-                    self.type,
-                    f"Some beatmaps have HP above maximum allowed "
-                    f"({max_hp:.2f}). Highest: {max(hp_values):.2f}",
+                    f"No beatmap has HP within the allowed range "
+                    f"(min={min_hp}, max={max_hp}). "
+                    f"Values: {[round(v, 2) for v in hp_values]}",
                 )

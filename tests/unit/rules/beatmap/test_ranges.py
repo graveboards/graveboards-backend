@@ -45,22 +45,20 @@ class TestARRangeRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_below_min(self):
+    async def test_any_passes_when_at_least_one_in_range(self):
         validator = ARRangeRestriction()
         beatmaps = [_make_beatmap(ar=3.0), _make_beatmap(ar=6.0)]
         context = _make_context(
             beatmaps=beatmaps,
             config={"min": 4.0},
         )
-
-        with pytest.raises(RuleViolationError):
-            await validator.check(context)
+        await validator.check(context)
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_above_max(self):
+    async def test_any_raises_when_none_in_range(self):
         validator = ARRangeRestriction()
-        beatmaps = [_make_beatmap(ar=6.0), _make_beatmap(ar=8.0)]
+        beatmaps = [_make_beatmap(ar=8.0), _make_beatmap(ar=9.0)]
         context = _make_context(
             beatmaps=beatmaps,
             config={"max": 7.0},
