@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, Literal, Any
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 from pydantic.config import ConfigDict
 
 from app.osu_api.literals import GenreIdLiteral, LanguageIdLiteral, RulesetLiteral
@@ -18,19 +18,28 @@ RuleType = Literal[
     "beatmap_length", "composite",
     "never_ranked", "unique_artist_title",
 ]
-RuleScope = Literal[
-    "user",
-    "beatmapset_type",
-    "artist",
-    "creator",
-    "custom",
-]
+RuleScope = Literal["user"]
+
+
+class _StrictConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+def _validate_target_ids(v: Optional[list[int]]) -> Optional[list[int]]:
+    if v is None:
+        return v
+    for target_id in v:
+        if target_id < 1:
+            raise ValueError("target IDs must be positive")
+    if len(set(v)) != len(v):
+        raise ValueError("target IDs must be unique")
+    return v
 
 
 # ── Tier 1 configs ──────────────────────────────────────────────
 
 
-class RateLimitConfig(BaseModel):
+class RateLimitConfig(_StrictConfig):
     max_requests: int
     period: str
     scope: RuleScope = "user"
@@ -47,14 +56,20 @@ class RateLimitConfig(BaseModel):
     @classmethod
     def validate_period(cls, v: str) -> str:
         valid_periods = {"day", "week", "month", "year"}
-        if not v.isdigit() and v not in valid_periods:
+        if v.isdigit():
+            if int(v) < 1:
+                raise ValueError("numeric period (seconds) must be at least 1")
+            return v
+        if v not in valid_periods:
             raise ValueError(
                 f"period must be one of {sorted(valid_periods)} or a positive integer (seconds)"
             )
         return v
 
+    _validate_target = field_validator("target")(_validate_target_ids)
 
-class CooldownConfig(BaseModel):
+
+class CooldownConfig(_StrictConfig):
     cooldown_seconds: int
     scope: RuleScope = "user"
     target: Optional[list[int]] = None
@@ -66,28 +81,71 @@ class CooldownConfig(BaseModel):
             raise ValueError("cooldown_seconds must be at least 1")
         return v
 
+    _validate_target = field_validator("target")(_validate_target_ids)
 
-class BlacklistConfig(BaseModel):
+
+class BlacklistConfig(_StrictConfig):
     scope: RuleScope = "user"
-    target: list[int] = []
+    target: list[int]
+
+    @field_validator("target")
+    @classmethod
+    def validate_target(cls, v: list[int]) -> list[int]:
+        if not v:
+            raise ValueError("blacklist target must contain at least one user ID")
+        return _validate_target_ids(v)
 
 
 # ── Tier 2 configs ──────────────────────────────────────────────
 
 
-class DurationConfig(BaseModel):
+class DurationConfig(_StrictConfig):
     min_seconds: Optional[int] = None
     max_seconds: Optional[int] = None
     logic: Literal["max", "min", "all"] = "max"
 
+    @field_validator("min_seconds", "max_seconds")
+    @classmethod
+    def validate_non_negative(cls, v: Optional[int]) -> Optional[int]:
+        if v is not None and v < 0:
+            raise ValueError("duration bounds must be non-negative")
+        return v
 
-class StarRatingConfig(BaseModel):
+    @model_validator(mode="after")
+    def validate_bounds(self) -> "DurationConfig":
+        if self.min_seconds is None and self.max_seconds is None:
+            raise ValueError("at least one of min_seconds/max_seconds is required")
+        if (
+            self.min_seconds is not None
+            and self.max_seconds is not None
+            and self.min_seconds > self.max_seconds
+        ):
+            raise ValueError("min_seconds must be <= max_seconds")
+        return self
+
+
+class StarRatingConfig(_StrictConfig):
     min: Optional[float] = None
     max: Optional[float] = None
     logic: Literal["max", "min", "all", "any"] = "any"
 
+    @field_validator("min", "max")
+    @classmethod
+    def validate_non_negative(cls, v: Optional[float]) -> Optional[float]:
+        if v is not None and v < 0:
+            raise ValueError("star rating bounds must be non-negative")
+        return v
 
-class RangeConfig(BaseModel):
+    @model_validator(mode="after")
+    def validate_bounds(self) -> "StarRatingConfig":
+        if self.min is None and self.max is None:
+            raise ValueError("at least one of min/max is required")
+        if self.min is not None and self.max is not None and self.min > self.max:
+            raise ValueError("min must be <= max")
+        return self
+
+
+class RangeConfig(_StrictConfig):
     min: Optional[float] = None
     max: Optional[float] = None
 
@@ -104,6 +162,14 @@ class RangeConfig(BaseModel):
         if v is not None and v < 0:
             raise ValueError("max must be non-negative")
         return v
+
+    @model_validator(mode="after")
+    def validate_bounds(self) -> "RangeConfig":
+        if self.min is None and self.max is None:
+            raise ValueError("at least one of min/max is required")
+        if self.min is not None and self.max is not None and self.min > self.max:
+            raise ValueError("min must be <= max")
+        return self
 
 
 class ARRangeConfig(RangeConfig):
@@ -126,21 +192,54 @@ class DrainRangeConfig(RangeConfig):
     logic: Literal["any", "all"] = "any"
 
 
-class BPMConfig(BaseModel):
+class BPMConfig(_StrictConfig):
     min_bpm: Optional[float] = None
     max_bpm: Optional[float] = None
     logic: Literal["any", "all", "avg"] = "any"
 
+    @field_validator("min_bpm", "max_bpm")
+    @classmethod
+    def validate_non_negative(cls, v: Optional[float]) -> Optional[float]:
+        if v is not None and v < 0:
+            raise ValueError("BPM bounds must be non-negative")
+        return v
 
-class GenreConfig(BaseModel):
+    @model_validator(mode="after")
+    def validate_bounds(self) -> "BPMConfig":
+        if self.min_bpm is None and self.max_bpm is None:
+            raise ValueError("at least one of min_bpm/max_bpm is required")
+        if (
+            self.min_bpm is not None
+            and self.max_bpm is not None
+            and self.min_bpm > self.max_bpm
+        ):
+            raise ValueError("min_bpm must be <= max_bpm")
+        return self
+
+
+class GenreConfig(_StrictConfig):
     genre_ids: list[GenreIdLiteral]
 
+    @field_validator("genre_ids")
+    @classmethod
+    def validate_non_empty(cls, v: list[int]) -> list[int]:
+        if not v:
+            raise ValueError("genre_ids must contain at least one genre")
+        return v
 
-class LanguageConfig(BaseModel):
+
+class LanguageConfig(_StrictConfig):
     language_ids: list[LanguageIdLiteral]
 
+    @field_validator("language_ids")
+    @classmethod
+    def validate_non_empty(cls, v: list[int]) -> list[int]:
+        if not v:
+            raise ValueError("language_ids must contain at least one language")
+        return v
 
-class ModeConfig(BaseModel):
+
+class ModeConfig(_StrictConfig):
     allowed_modes: list[RulesetLiteral]
 
     @field_validator("allowed_modes")
@@ -151,7 +250,7 @@ class ModeConfig(BaseModel):
         return v
 
 
-class DifficultyCountConfig(BaseModel):
+class DifficultyCountConfig(_StrictConfig):
     min: Optional[int] = None
     max: Optional[int] = None
 
@@ -169,29 +268,82 @@ class DifficultyCountConfig(BaseModel):
             raise ValueError("max must be at least 1")
         return v
 
+    @model_validator(mode="after")
+    def validate_bounds(self) -> "DifficultyCountConfig":
+        if self.min is None and self.max is None:
+            raise ValueError("at least one of min/max is required")
+        if self.min is not None and self.max is not None and self.min > self.max:
+            raise ValueError("min must be <= max")
+        return self
 
-class StoryboardConfig(BaseModel):
+
+class StoryboardConfig(_StrictConfig):
     allowed: bool
 
 
-class VideoConfig(BaseModel):
+class VideoConfig(_StrictConfig):
     allowed: bool
 
 
-class TagsConfig(BaseModel):
+class TagsConfig(_StrictConfig):
     tag_ids: list[int]
     logic: Literal["any", "all"] = "any"
 
+    @field_validator("tag_ids")
+    @classmethod
+    def validate_tag_ids(cls, v: list[int]) -> list[int]:
+        if not v:
+            raise ValueError("tag_ids must contain at least one tag")
+        for tag_id in v:
+            if tag_id < 1:
+                raise ValueError("tag IDs must be positive")
+        return v
 
-class LengthConfig(BaseModel):
+
+class LengthConfig(_StrictConfig):
     min_hit_length: Optional[int] = None
     max_hit_length: Optional[int] = None
     min_total_length: Optional[int] = None
     max_total_length: Optional[int] = None
     logic: Literal["any", "all"] = "any"
 
+    @field_validator(
+        "min_hit_length", "max_hit_length", "min_total_length", "max_total_length"
+    )
+    @classmethod
+    def validate_non_negative(cls, v: Optional[int]) -> Optional[int]:
+        if v is not None and v < 0:
+            raise ValueError("length bounds must be non-negative")
+        return v
 
-class CompositeConfig(BaseModel):
+    @model_validator(mode="after")
+    def validate_bounds(self) -> "LengthConfig":
+        if all(
+            bound is None
+            for bound in (
+                self.min_hit_length,
+                self.max_hit_length,
+                self.min_total_length,
+                self.max_total_length,
+            )
+        ):
+            raise ValueError("at least one length bound is required")
+        if (
+            self.min_hit_length is not None
+            and self.max_hit_length is not None
+            and self.min_hit_length > self.max_hit_length
+        ):
+            raise ValueError("min_hit_length must be <= max_hit_length")
+        if (
+            self.min_total_length is not None
+            and self.max_total_length is not None
+            and self.min_total_length > self.max_total_length
+        ):
+            raise ValueError("min_total_length must be <= max_total_length")
+        return self
+
+
+class CompositeConfig(_StrictConfig):
     operator: Literal["and", "or", "not"]
     rules: list[dict[str, Any]]
 
@@ -206,13 +358,12 @@ class CompositeConfig(BaseModel):
         return v
 
 
-class NeverRankedConfig(BaseModel):
+class NeverRankedConfig(_StrictConfig):
     ruleset: Literal["osu", "taiko", "fruits", "mania"] = "osu"
     normalize_versions: bool = True
 
 
-class UniqueArtistTitleConfig(BaseModel):
-    ruleset: Literal["osu", "taiko", "fruits", "mania"] = "osu"
+class UniqueArtistTitleConfig(_StrictConfig):
     normalize_versions: bool = True
 
 
@@ -316,5 +467,4 @@ class RuleUpdateSchema(BaseModel):
     is_active: Optional[bool] = None
     is_public: Optional[bool] = None
     config: Optional[dict[str, Any]] = None
-    version: Optional[str] = None
     version: Optional[str] = None
