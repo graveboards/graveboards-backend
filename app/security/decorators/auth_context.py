@@ -2,6 +2,7 @@ import inspect
 from functools import wraps
 from typing import Callable, Awaitable, ParamSpec, TypeVar
 
+from app.config import get_security_enabled
 from .utils import get_authenticated_user_id
 
 P = ParamSpec("P")
@@ -30,6 +31,10 @@ def with_authenticated_user_id(
 
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+            if not get_security_enabled():
+                kwargs[kwarg_name] = None
+                return await func(*args, **kwargs)
+
             try:
                 user_id = get_authenticated_user_id(kwargs, authorized_user_id_lookup)
             except KeyError:

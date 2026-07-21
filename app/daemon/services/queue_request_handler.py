@@ -118,7 +118,8 @@ class QueueRequestHandler(ScheduledService):
 
     async def _snapshot_active_rules(self, queue_id: int) -> str:
         crud = RuleCRUD()
-        rules = await crud.get_rules(queue_id, only_active=True)
+        async with self._db.session() as session:
+            rules = await crud.get_rules(queue_id, only_active=True, session=session)
         snapshot = [
             {
                 "id": rule.id,

@@ -13,6 +13,7 @@ from app.database.schemas import RequestSchema
 from app.security import role_authorization, ownership_authorization, with_authenticated_user_id
 from app.security.overrides import queue_owner_override, queue_manager_override
 from app.database.enums import RoleName
+from app.config import get_security_enabled
 from app.redis import Namespace, ChannelName, RedisClient
 from app.redis.models import QueueRequestHandlerTask, QueueRequestValidationTask
 from app.spec import get_include_schema
@@ -91,15 +92,19 @@ async def post(body: dict, _caller_user_id: int = None, **kwargs):
     rc: RedisClient = request.state.rc
     db: PostgresqlDB = request.state.db
 
-    if _caller_user_id is None:
-        raise Forbidden("Authenticated user could not be determined")
+    if get_security_enabled():
+        if _caller_user_id is None:
+            raise Forbidden("Authenticated user could not be determined")
 
-    submitted_user_id = body.get("user_id")
+        submitted_user_id = body.get("user_id")
 
-    if submitted_user_id is not None and submitted_user_id != _caller_user_id:
-        raise Forbidden("You may not submit a request on behalf of another user")
+        if submitted_user_id is not None and submitted_user_id != _caller_user_id:
+            raise Forbidden("You may not submit a request on behalf of another user")
 
-    user_id = _caller_user_id
+        user_id = _caller_user_id
+    else:
+        user_id = body.get("user_id")
+
     body["user_id"] = user_id
 
     beatmapset_id = body["beatmapset_id"]
