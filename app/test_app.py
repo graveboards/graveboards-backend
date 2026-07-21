@@ -133,6 +133,31 @@ def get_debug_api_key() -> str:
     return __import__('hashlib').sha256(seed.encode()).hexdigest()[:32]
 
 
+from connexion.security import BearerSecurityHandler, ApiKeySecurityHandler
+
+
+class TestBearerSecurityHandler(BearerSecurityHandler):
+    """No-op Bearer security handler for tests.
+    
+    Accepts any Bearer token without validation.
+    """
+    def _get_verify_func(self, token_info_func):
+        def wrapper(request):
+            return {"sub": "0", "test": True}
+        return wrapper
+
+
+class TestApiKeySecurityHandler(ApiKeySecurityHandler):
+    """No-op API key security handler for tests.
+    
+    Accepts any API key without validation.
+    """
+    def _get_verify_func(self, api_key_info_func, loc, name, required_scopes):
+        def wrapper(request):
+            return True
+        return wrapper
+
+
 def create_test_app(mock_rc=None, mock_db=None) -> AsyncApp:
     """Create a minimal Connexion app for testing.
     
@@ -192,6 +217,7 @@ def create_test_app(mock_rc=None, mock_db=None) -> AsyncApp:
         load_spec(),
         resolver=RestyResolver(DEFAULT_MODULE_NAME),
         validator_map=validator_map,
+        auth_all_paths=True,
     )
 
     connexion_app.add_error_handler(Forbidden, forbidden)
