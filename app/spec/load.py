@@ -79,8 +79,11 @@ def _build_spec() -> dict:
         "build_options": _current_build_options()
     }
 
-    with open(CACHE_FILE, "wb") as f:
-        pickle.dump(cache_payload, f)
+    try:
+        with open(CACHE_FILE, "wb") as f:
+            pickle.dump(cache_payload, f)
+    except (OSError, PermissionError):
+        logger.warning(f"Could not write spec cache to {CACHE_FILE}, continuing without caching")
 
     return spec
 

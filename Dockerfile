@@ -80,7 +80,8 @@ COPY --from=test-builder /usr/local /usr/local
 
 COPY --chmod=755 . .
 
-RUN sed -i 's/\r$//' /app/entrypoint.sh /app/wait-for-it.sh
+RUN sed -i 's/\r$//' /app/entrypoint.sh /app/wait-for-it.sh \
+    && chmod -R a+rwX /app
 
 EXPOSE 8000
 

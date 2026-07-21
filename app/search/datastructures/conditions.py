@@ -232,7 +232,7 @@ class Conditions(BaseModel):
 
     @field_validator("regex", "not_regex", mode="after")
     @classmethod
-    async def validate_regex(cls, value: str | None) -> str | None:
+    def validate_regex(cls, value: str | None) -> str | None:
         """Validate regular expression patterns for safety and complexity.
 
         Enforces:
@@ -262,8 +262,11 @@ class Conditions(BaseModel):
         if not value.strip():
             raise ValueError("Empty pattern")
 
-        if re.search(r"\.\*\.\*", value) or (".+" in value and len(value) < 10):
+        if re.search(r"\.\*\.\*", value) or (r".+" in value and len(value) < 10):
             raise ValueError("Regex pattern may be unsafe or overly greedy")
+
+        if re.search(r"\([^)]*[+*]\)[+*]", value):
+            raise ValueError("Regex contains nested quantifiers that may lead to catastrophic backtracking")
 
         for pattern in DANGEROUS_PATTERNS:
             if re.search(pattern, value):
@@ -273,14 +276,10 @@ class Conditions(BaseModel):
             if re.search(pattern, value):
                 raise ValueError(f"Regex contains a pattern that may lead to catastrophic backtracking: {pattern}")
 
-        compiled = await safe_compile_regex(value, timeout=REGEX_TIMEOUT)
-
-        if compiled is None:
-            # Bypassing compilation safety check (running on non-UNIX system)
-            try:
-                compiled = re.compile(value)
-            except re.error as e:
-                raise ValueError(f"Invalid regex: {e}")
+        try:
+            compiled = re.compile(value)
+        except re.error as e:
+            raise ValueError(f"Invalid regex: {e}")
 
         if compiled.groups > MAX_GROUPS:
             raise ValueError(f"Too many capture groups (>{MAX_GROUPS})")

@@ -70,7 +70,8 @@ class ParameterValidatorPatched(ParameterValidator):
         elif param_name == "include" and value:
             try:
                 request_scope = self.request_scopes.get(request, {})
-                if request_scope.get("path") == os.path.join(API_BASE_PATH, "search"):
+                scope_path = request_scope.get("path", "")
+                if scope_path.endswith(os.path.join(API_BASE_PATH.rstrip("/"), "search")):
                     # The /search include schema is ambiguous due to multiple possibilities depending on the scope
                     # Neither the scope nor the respective include schema can be determined at this point
                     # Delegate this validation to be run by the operation function where the context is available

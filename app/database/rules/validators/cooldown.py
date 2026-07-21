@@ -27,7 +27,7 @@ class CooldownRestriction(RestrictionBase):
         return _is_target_match(config, user_id) and config.get("scope", "user") == "user"
 
     def _redis_key(self, context: ExecutionContext, config: dict) -> str:
-        return Namespace.QUEUE_RESTRICTION_COOLDOWN.hash_name(
+        return Namespace.QUEUE_RULE_COOLDOWN.hash_name(
             f"{context.queue_id}:{context.user_id}:{config_fingerprint(config)}"
         )
 
