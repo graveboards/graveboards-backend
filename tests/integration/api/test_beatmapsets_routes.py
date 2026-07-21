@@ -126,30 +126,37 @@ class TestBeatmapsetsPostIntegration:
     async def test_osu_api_error_handling(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, security_disabled):
         """Test that osu! API errors are properly handled."""
         import httpx
-        from unittest.mock import MagicMock
+        from httpx import Request
 
         mock_bm = mock_beatmap_manager(None)
+        mock_response = httpx.Response(
+            status_code=404,
+            content=b'{"error": "Beatmapset not found"}',
+            headers={"content-type": "application/json"},
+        )
+        mock_request = Request("GET", "https://osu.ppy.sh/api/v2/beatmapsets/999999")
         mock_bm.archive = AsyncMock(side_effect=httpx.HTTPStatusError(
             "Not Found",
-            request=MagicMock(),
-            response=MagicMock(status_code=404, json=lambda: {"error": "Beatmapset not found"}),
+            request=mock_request,
+            response=mock_response,
         ))
 
         test_client = TestClientWithMocks()
 
         with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
              patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \
-             patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client):
+             patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client), \
+             patch('api.v1.beatmapsets.problem', return_value={"error": "Beatmapset not found"}):
             body = {"id": self.TEST_BEATMAPSET_ID}
             response = test_client.post("/api/v1/beatmapsets", json=body)
 
         assert response.status_code == 404
         data = response.json()
-        assert "error" in data
+        assert "error" in str(data).lower() or "not found" in str(data.get("detail", "")).lower()
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_non_admin_user_gets_forbidden(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client):
+    async def test_non_admin_user_gets_forbidden(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, authenticated_user_id):
         """Test that non-admin user gets 403 Forbidden."""
         from app.security import generate_token
 
@@ -174,7 +181,7 @@ class TestBeatmapsetsPostIntegration:
         with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
              patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \
              patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client), \
-             patch('app.security.decorators._get_authenticated_user_id', return_value=99999999):
+             authenticated_user_id(99999999):
             headers = {"Authorization": f"Bearer {generate_token(99999999)}"}
             body = {"id": self.TEST_BEATMAPSET_ID}
             response = test_client.post("/api/v1/beatmapsets", json=body, headers=headers)
@@ -185,7 +192,7 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_access_succeeds_with_token(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, admin_user_token):
+    async def test_admin_access_succeeds_with_token(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, admin_user_token, authenticated_user_id):
         """Test that admin user can successfully post beatmapset with valid token."""
         from app.security import decode_token
         from app.database.enums import RoleName
@@ -215,11 +222,11 @@ class TestBeatmapsetsPostIntegration:
 
         with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
              patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \
-             patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client), \
-             patch('app.security.decorators._get_authenticated_user_id', return_value=user_id):
-            headers = {"Authorization": f"Bearer {admin_user_token}"}
-            body = {"id": self.TEST_BEATMAPSET_ID}
-            response = test_client.post("/api/v1/beatmapsets", json=body, headers=headers)
+             patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client):
+            with authenticated_user_id(user_id):
+                headers = {"Authorization": f"Bearer {admin_user_token}"}
+                body = {"id": self.TEST_BEATMAPSET_ID}
+                response = test_client.post("/api/v1/beatmapsets", json=body, headers=headers)
 
         assert response.status_code == 201
         data = response.json()

@@ -154,7 +154,7 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_duplicate_score(self, TestClientWithMocks, valid_score_body, security_disabled):
+    async def test_admin_duplicate_score(self, TestClientWithMocks, valid_score_body, security_disabled, authenticated_user_id):
         """Test score submission fails when duplicate exists."""
         mock_db = AsyncMock()
         mock_user = MagicMock()
@@ -180,7 +180,7 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_non_admin_user_gets_forbidden(self, TestClientWithMocks, valid_score_body):
+    async def test_non_admin_user_gets_forbidden(self, TestClientWithMocks, valid_score_body, authenticated_user_id):
         """Test that non-admin user gets 403 Forbidden."""
         from app.security import generate_token
 
@@ -194,7 +194,7 @@ class TestScoresPostIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=99999999):
+        with authenticated_user_id(99999999):
             headers = {"Authorization": f"Bearer {generate_token(99999999)}"}
             response = test_client.post("/api/v1/scores", json=valid_score_body, headers=headers)
 
@@ -204,7 +204,7 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_access_succeeds_with_token(self, TestClientWithMocks, valid_score_body, admin_user_token):
+    async def test_admin_access_succeeds_with_token(self, TestClientWithMocks, valid_score_body, admin_user_token, authenticated_user_id):
         """Test that admin user can successfully post score with valid token."""
         from app.security import decode_token
         from app.database.enums import RoleName
@@ -249,7 +249,7 @@ class TestScoresPostIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=user_id):
+        with authenticated_user_id(user_id):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.post("/api/v1/scores", json=valid_score_body, headers=headers)
 

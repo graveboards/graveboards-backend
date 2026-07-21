@@ -51,18 +51,34 @@ class TestRoleAuthorizationWithOneOf:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_user_with_none_of_required_roles_fails(self, TestClientWithMocks):
+    async def test_user_with_none_of_required_roles_fails(self, TestClientWithMocks, authenticated_user_id):
         """Test user with none of the required roles fails."""
+        from app.database.models import Request, Queue
+
         mock_db = AsyncMock()
         
         mock_user = MagicMock()
         mock_user.id = 12345678
         mock_user.roles = []
-        mock_db.get = AsyncMock(return_value=mock_user)
+        
+        mock_request = MagicMock()
+        mock_request.id = 1
+        mock_request.user_id = 12345678
+        mock_request.queue = MagicMock()
+        mock_request.queue.user_id = 99999999
+        
+        async def mock_get(model, **kwargs):
+            if model == Request:
+                return mock_request
+            if model == Queue:
+                return None
+            return mock_user
+        
+        mock_db.get = AsyncMock(side_effect=mock_get)
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.utils.get_authenticated_user_id', return_value=12345678):
+        with authenticated_user_id(12345678):
             response = test_client.patch(
                 "/api/v1/requests/1",
                 json={"status": 1},

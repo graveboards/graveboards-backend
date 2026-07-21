@@ -13,7 +13,7 @@ class TestSecurityConfiguration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_security_enabled_by_default(self, TestClientWithMocks, admin_user_token):
+    async def test_security_enabled_by_default(self, TestClientWithMocks, admin_user_token, authenticated_user_id):
         """Verify security is enabled by default in test environment."""
         from app.database.models import Queue
 
@@ -38,7 +38,7 @@ class TestSecurityConfiguration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=12345678):
+        with authenticated_user_id(12345678):
             response = test_client.patch(
                 "/api/v1/queues/1",
                 json={"name": "Hacked"},
@@ -49,7 +49,7 @@ class TestSecurityConfiguration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_security_can_be_disabled_per_test(self, TestClientWithMocks, security_disabled):
+    async def test_security_can_be_disabled_per_test(self, TestClientWithMocks, security_disabled, authenticated_user_id):
         """Verify security can be disabled for specific tests."""
         mock_db = AsyncMock()
         
@@ -67,7 +67,7 @@ class TestSecurityConfiguration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=12345678):
+        with authenticated_user_id(12345678):
             response = test_client.patch("/api/v1/queues/1", json={"name": "Updated"})
 
         assert response.status_code == 200
@@ -76,7 +76,7 @@ class TestSecurityConfiguration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_security_enabled_enforces_auth(self, TestClientWithMocks, admin_user_token, security_enabled):
+    async def test_security_enabled_enforces_auth(self, TestClientWithMocks, admin_user_token, security_enabled, authenticated_user_id):
         """Verify security enforcement when explicitly enabled."""
         from app.database.models import Queue
 
@@ -99,7 +99,7 @@ class TestSecurityConfiguration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=12345678):
+        with authenticated_user_id(12345678):
             response = test_client.patch(
                 "/api/v1/queues/1",
                 json={"name": "Hacked"},

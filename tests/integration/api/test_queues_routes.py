@@ -140,7 +140,7 @@ class TestQueuesPatchIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=11111111):
+        with patch('app.security.decorators.role_authorization.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.auth_context.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.ownership_authorization.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.ownership_filter.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.utils.get_authenticated_user_id', return_value=11111111):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.patch(
                 f"/api/v1/queues/{self.TEST_QUEUE_ID}",
@@ -192,7 +192,7 @@ class TestQueuesPatchIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=99999999):
+        with patch('app.security.decorators.role_authorization.get_authenticated_user_id', return_value=99999999), patch('app.security.decorators.auth_context.get_authenticated_user_id', return_value=99999999), patch('app.security.decorators.ownership_authorization.get_authenticated_user_id', return_value=99999999), patch('app.security.decorators.ownership_filter.get_authenticated_user_id', return_value=99999999), patch('app.security.decorators.utils.get_authenticated_user_id', return_value=99999999):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.patch(
                 f"/api/v1/queues/{self.TEST_QUEUE_ID}",
@@ -224,7 +224,7 @@ class TestQueuesPatchIntegration:
         
         test_client = TestClientWithMocks(mock_db=mock_db)
         
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=88888888):
+        with patch('app.security.decorators.role_authorization.get_authenticated_user_id', return_value=88888888), patch('app.security.decorators.auth_context.get_authenticated_user_id', return_value=88888888), patch('app.security.decorators.ownership_authorization.get_authenticated_user_id', return_value=88888888), patch('app.security.decorators.ownership_filter.get_authenticated_user_id', return_value=88888888), patch('app.security.decorators.utils.get_authenticated_user_id', return_value=88888888):
             headers = {"Authorization": f"Bearer {generate_token(88888888)}"}
             response = test_client.patch(
                 f"/api/v1/queues/{self.TEST_QUEUE_ID}",
@@ -263,7 +263,7 @@ class TestQueuesPostIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=11111111):
+        with patch('app.security.decorators.role_authorization.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.auth_context.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.ownership_authorization.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.ownership_filter.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.utils.get_authenticated_user_id', return_value=11111111):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.post(
                 "/api/v1/queues",
@@ -296,7 +296,7 @@ class TestQueuesPostIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=88888888):
+        with patch('app.security.decorators.role_authorization.get_authenticated_user_id', return_value=88888888), patch('app.security.decorators.auth_context.get_authenticated_user_id', return_value=88888888), patch('app.security.decorators.ownership_authorization.get_authenticated_user_id', return_value=88888888), patch('app.security.decorators.ownership_filter.get_authenticated_user_id', return_value=88888888), patch('app.security.decorators.utils.get_authenticated_user_id', return_value=88888888):
             headers = {"Authorization": f"Bearer {generate_token(88888888)}"}
             response = test_client.post(
                 "/api/v1/queues",
@@ -331,7 +331,7 @@ class TestQueuesPostIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=11111111):
+        with patch('app.security.decorators.role_authorization.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.auth_context.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.ownership_authorization.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.ownership_filter.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.utils.get_authenticated_user_id', return_value=11111111):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.post(
                 "/api/v1/queues",

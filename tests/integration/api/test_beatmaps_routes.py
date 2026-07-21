@@ -175,7 +175,7 @@ class TestLeaderboardPatchIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_can_update_leaderboard(self, TestClientWithMocks, admin_user_token):
+    async def test_admin_can_update_leaderboard(self, TestClientWithMocks, admin_user_token, authenticated_user_id):
         """Test admin can update leaderboard (e.g., freeze/unfreeze)."""
         from app.database.models import BeatmapSnapshot, Leaderboard
 
@@ -223,7 +223,7 @@ class TestLeaderboardPatchIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=11111111):
+        with authenticated_user_id(11111111):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.patch(
                 f"/api/v1/beatmaps/{self.TEST_BEATMAP_ID}/snapshots/{self.TEST_SNAPSHOT_NUMBER}/leaderboard",
@@ -238,7 +238,7 @@ class TestLeaderboardPatchIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_non_admin_gets_forbidden_on_leaderboard_patch(self, TestClientWithMocks, admin_user_token):
+    async def test_non_admin_gets_forbidden_on_leaderboard_patch(self, TestClientWithMocks, admin_user_token, authenticated_user_id):
         """Test non-admin user gets 403 Forbidden on leaderboard patch."""
         from app.security import generate_token
         from app.database.models import BeatmapSnapshot, Leaderboard
@@ -272,7 +272,7 @@ class TestLeaderboardPatchIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=99999999):
+        with authenticated_user_id(99999999):
             headers = {"Authorization": f"Bearer {generate_token(99999999)}"}
             response = test_client.patch(
                 f"/api/v1/beatmaps/{self.TEST_BEATMAP_ID}/snapshots/{self.TEST_SNAPSHOT_NUMBER}/leaderboard",
