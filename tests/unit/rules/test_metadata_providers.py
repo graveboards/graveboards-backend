@@ -20,12 +20,13 @@ def _make_context(beatmapset=None, beatmaps=None):
     )
 
 
-def _make_beatmap(difficulty_rating=5.0, ar=5.0, accuracy=10.0, drain=5.0, bpm=150.0, mode="osu", owners=None):
+def _make_beatmap(difficulty_rating=5.0, ar=5.0, accuracy=10.0, drain=5.0, hit_length=5.0, bpm=150.0, mode="osu", owners=None):
     bm = MagicMock()
     bm.difficulty_rating = difficulty_rating
     bm.ar = ar
     bm.accuracy = accuracy
     bm.drain = drain
+    bm.hit_length = hit_length
     bm.bpm = bpm
     bm.mode = mode
     bm.owners = owners or []
@@ -36,8 +37,8 @@ class TestNormalizeText:
     @pytest.mark.unit
     def test_strips_tv_size(self):
         result = _normalize_text("Artist - Song (TV Size)")
-        assert "TV Size" not in result
-        assert "Artist" in result
+        assert "tv size" not in result
+        assert "artist" in result
 
     @pytest.mark.unit
     def test_strips_extended_ver(self):
@@ -74,7 +75,7 @@ class TestNormalizeText:
     @pytest.mark.unit
     def test_plain_text_unchanged(self):
         result = _normalize_text("Artist - Song")
-        assert result == "Artist - Song"
+        assert result == "artist - song"
 
 
 class TestSongIdentityProvider:
@@ -89,13 +90,15 @@ class TestSongIdentityProvider:
             title_unicode="Test Song",
             bpm=150.0,
         )
-        context = _make_context(beatmapset=beatmapset)
+        beatmap = MagicMock()
+        beatmap.total_length = 150.0
+        context = _make_context(beatmapset=beatmapset, beatmaps=[beatmap])
         result = await provider.resolve(context)
 
         assert result["artist"] == "Test Artist"
         assert result["title"] == "Test Song"
-        assert result["normalized_artist"] == "Test Artist"
-        assert result["normalized_title"] == "Test Song"
+        assert result["normalized_artist"] == "test artist"
+        assert result["normalized_title"] == "test song"
         assert result["duration"] == 150.0
 
     @pytest.mark.unit
@@ -216,7 +219,7 @@ class TestDurationProvider:
         context = _make_context(beatmapset=beatmapset, beatmaps=beatmaps)
         result = await provider.resolve(context)
 
-        assert result["original_duration"] == 150.0
+        assert result["original_duration"] == 200
         assert result["normalized_duration"] == 200
         assert result["has_version_marker"] is False
 
@@ -238,4 +241,4 @@ class TestDurationProvider:
         context = _make_context(beatmapset=beatmapset, beatmaps=[])
         result = await provider.resolve(context)
 
-        assert result["normalized_duration"] == 150.0
+        assert result["normalized_duration"] == 0

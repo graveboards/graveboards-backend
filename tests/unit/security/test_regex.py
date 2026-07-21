@@ -32,6 +32,7 @@ class TestSafeCompileRegex:
         assert compiled.search("abcdef") is None
 
     async def test_timeout_returns_none(self):
-        pattern = r"(a+)+b" + ("c" * 100)
-        result = await safe_compile_regex(pattern, timeout=0.001)
+        pattern = r"(a+)+b"
+        sample = "a" * 27
+        result = await safe_compile_regex(pattern, timeout=0.01, sample=sample)
         assert result is None

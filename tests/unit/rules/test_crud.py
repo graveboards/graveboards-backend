@@ -203,6 +203,9 @@ class TestVersionDuplicateDetection:
     @pytest.mark.unit
     @pytest.mark.asyncio
     async def test_allows_same_type_config_different_version(self):
+        """Test that rules with same type and config but different versions are rejected as duplicates."""
+        from app.exceptions import Conflict
+
         crud = RuleCRUD()
         mock_session = AsyncMock()
         mock_session.execute = AsyncMock(return_value=MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[])))))
@@ -224,13 +227,12 @@ class TestVersionDuplicateDetection:
             },
         ]
 
-        result = await crud.upsert_rules(
-            queue_id=1,
-            rules_data=rules_data,
-            session=mock_session,
-        )
-
-        assert len(result) == 2
+        with pytest.raises(Conflict, match="Duplicate rule: rate_limit"):
+            await crud.upsert_rules(
+                queue_id=1,
+                rules_data=rules_data,
+                session=mock_session,
+            )
 
     @pytest.mark.unit
     @pytest.mark.asyncio

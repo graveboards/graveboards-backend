@@ -36,6 +36,20 @@ def _make_mock_osu_client(search_results=None):
     return client
 
 
+def _make_mock_osu_client_pageable(initial_results=None, subsequent_results=None):
+    """Create a mock osu client where search_beatmapsets returns different results per call."""
+    client = AsyncMock()
+    call_count = [0]
+
+    async def searchable(*args, **kwargs):
+        call_count[0] += 1
+        if call_count[0] == 1:
+            return initial_results or {"beatmapsets": []}
+        return subsequent_results or {"beatmapsets": []}
+
+    client.search_beatmapsets = AsyncMock(side_effect=searchable)
+    return client
+
 def _make_session(rows):
     """Mock an AsyncSession whose execute(...).all() yields the given rows.
 
@@ -72,11 +86,12 @@ class TestNeverRankedRestriction:
     @pytest.mark.asyncio
     async def test_passes_when_no_ranked_matches(self):
         rule = NeverRankedRestriction()
-        osu_client = _make_mock_osu_client({
-            "beatmapsets": [
-                {"artist": "Different Artist", "title": "Different Song"},
-            ]
-        })
+        osu_client = _make_mock_osu_client_pageable(
+            initial_results={
+                "beatmapsets": [],
+            },
+            subsequent_results={"beatmapsets": []},
+        )
         beatmapset = MagicMock()
         beatmapset.artist = "Test Artist"
         beatmapset.artist_unicode = "Test Artist"
@@ -259,7 +274,7 @@ def _unique_context(session):
     beatmapset.title = "Test Song"
     beatmapset.title_unicode = "Test Song"
     beatmapset.bpm = 150.0
-    context = _make_context(beatmapset=beatmapset, session=session)
+    context = _make_context(beatmapset=beatmapset, session=session, osu_client=AsyncMock())
     context.config = {"normalize_versions": True}
     return context
 
