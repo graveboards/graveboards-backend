@@ -95,10 +95,10 @@ class RuleCRUD:
             config = data.get("config", {})
             version = data.get("version", "1.0")
             _validate_rule_version(data["type"], version)
-            key = (data["type"], version, _normalize_config(config))
+            key = (data["type"], _normalize_config(config))
             if key in seen:
                 raise Conflict(
-                    f"Duplicate rule: {data['type']} v{version} with the "
+                    f"Duplicate rule: {data['type']} with the "
                     f"same configuration has already been added."
                 )
             seen.add(key)
