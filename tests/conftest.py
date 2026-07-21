@@ -9,12 +9,15 @@ Fixture hierarchy:
 - admin_user_token: JWT for admin user ID 11111111
 - security_disabled: Context manager to bypass security decorators
 - security_enabled: Context manager to enforce security decorators
+- authenticated_user_id: Patches get_authenticated_user_id in all decorator modules
 """
 
 import os
+from contextlib import ExitStack
 from pathlib import Path
 
 import pytest
+from unittest.mock import patch
 
 
 def _clear_spec_cache() -> None:
@@ -51,6 +54,66 @@ def security_enabled():
 
     with override_security_enabled(True):
         yield
+
+
+@pytest.fixture
+def authenticated_user_id():
+    """Fixture that returns a context-manager factory to patch
+    ``get_authenticated_user_id`` in every decorator module.
+
+    Each decorator module (``role_authorization``, ``auth_context``,
+    ``ownership_authorization``, ``ownership_filter``) imports
+    ``get_authenticated_user_id`` via ``from .utils import get_authenticated_user_id``,
+    which creates a local reference.  Patching only the source module
+    (``app.security.decorators.utils``) is therefore not enough - we must patch
+    every consumer module so the desired user ID flows through every decorator.
+
+    Usage::
+
+        def test_something(self, authenticated_user_id):
+            with authenticated_user_id(99999999):
+                ...
+    """
+    def _patch(user_id: int):
+        stack = ExitStack()
+        for module in (
+            "app.security.decorators.role_authorization",
+            "app.security.decorators.auth_context",
+            "app.security.decorators.ownership_authorization",
+            "app.security.decorators.ownership_filter",
+            "app.security.decorators.utils",
+        ):
+            stack.enter_context(
+                patch(f"{module}.get_authenticated_user_id", return_value=user_id)
+            )
+        return stack
+
+    return _patch
+
+
+def _patch_all_auth_modules(user_id: int):
+    """Return a context manager that patches ``get_authenticated_user_id`` in every
+    decorator module that imports it.
+
+    Each decorator module (``role_authorization``, ``auth_context``,
+    ``ownership_authorization``, ``ownership_filter``) imports
+    ``get_authenticated_user_id`` via ``from .utils import get_authenticated_user_id``,
+    which creates a local reference.  Patching only the source module
+    (``app.security.decorators.utils``) is therefore not enough - we must patch
+    every consumer module so the desired user ID flows through every decorator.
+    """
+    stack = ExitStack()
+    for module in (
+        "app.security.decorators.role_authorization",
+        "app.security.decorators.auth_context",
+        "app.security.decorators.ownership_authorization",
+        "app.security.decorators.ownership_filter",
+        "app.security.decorators.utils",
+    ):
+        stack.enter_context(
+            patch(f"{module}.get_authenticated_user_id", return_value=user_id)
+        )
+    return stack
 
 
 def TestClientWithMocksFactory(request, mock_rc=None, mock_db=None):
