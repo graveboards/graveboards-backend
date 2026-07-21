@@ -8,6 +8,61 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 
+def _full_beatmapset_dict():
+    return {
+        "id": 11111,
+        "user_id": 67890,
+        "title": "Test Song",
+        "title_unicode": "Test Song",
+        "artist": "Test Artist",
+        "artist_unicode": "Test Artist",
+        "bpm": 180.0,
+        "status": "wip",
+        "ranked": 0,
+        "rating": 4.5,
+        "source": "",
+        "tags": "test tag",
+        "pack_tags": [],
+        "storyboard": False,
+        "spotlight": False,
+        "video": False,
+        "nsfw": False,
+        "can_be_hyped": True,
+        "discussion_enabled": True,
+        "discussion_locked": False,
+        "is_scoreable": True,
+        "favourite_count": 100,
+        "play_count": 5000,
+        "offset": 0,
+        "track_id": None,
+        "preview_url": "https://example.com/pre.mp3",
+        "legacy_thread_url": None,
+        "deleted_at": None,
+        "ranked_date": None,
+        "creator": "TestCreator",
+        "beatmaps": [],
+        "availability": {"download_disabled": False, "more_information": None},
+        "covers": {
+            "cover": "x100", "cover_2x": "x200",
+            "card": "x100", "card_2x": "x200",
+            "list": "x100", "list_2x": "x200",
+            "slimcover": "x100", "slimcover_2x": "x200",
+        },
+        "current_nominations": [],
+        "description": {"description": ""},
+        "genre": None,
+        "hype": {"current": 0, "required": 2},
+        "language": None,
+        "nominations_summary": {
+            "current": 0, "eligible_main_rulesets": None,
+            "required_meta": {"main_ruleset": 0, "non_main_ruleset": 0},
+        },
+        "ratings": [],
+        "last_updated": "2024-06-15T12:00:00+00:00",
+        "submitted_date": "2024-01-01T00:00:00+00:00",
+    }
+
+
 class TestRequestsPostIntegration:
     """Integration tests for POST /api/v1/requests endpoint."""
 
@@ -47,7 +102,7 @@ class TestRequestsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_success_submits_request_and_queues_task(self, TestClientWithMocks, valid_request_body, mock_osu_client, security_disabled):
+    async def test_success_submits_request_and_queues_task(self, TestClientWithMocks, valid_request_body, mock_osu_client, security_disabled, authenticated_user_id):
         """Test successful request submission that queues task for processing."""
         from app.redis.models import QueueRequestHandlerTask
 
@@ -92,17 +147,19 @@ class TestRequestsPostIntegration:
         mock_rc.lock_ctx = MagicMock(return_value=MockLockCtx())
 
         async def mock_get_beatmapset_wip(*args, **kwargs):
-            return {
-                "id": self.TEST_BEATMAPSET_ID,
-                "status": "wip",
-            }
+            beatmapset = _full_beatmapset_dict()
+            beatmapset["id"] = self.TEST_BEATMAPSET_ID
+            return beatmapset
 
         mock_osu_client.get_beatmapset = AsyncMock(side_effect=mock_get_beatmapset_wip)
+        mock_osu_client.__aenter__ = AsyncMock(return_value=mock_osu_client)
+        mock_osu_client.__aexit__ = AsyncMock(return_value=False)
 
         test_client = TestClientWithMocks(mock_rc=mock_rc, mock_db=mock_db)
 
-        with patch('api.v1.requests.OsuAPIClient', return_value=mock_osu_client):
-            response = test_client.post("/api/v1/requests", json=valid_request_body)
+        with authenticated_user_id(self.TEST_USER_ID):
+            with patch('api.v1.requests.OsuAPIClient', return_value=mock_osu_client):
+                response = test_client.post("/api/v1/requests", json=valid_request_body)
 
         assert response.status_code == 202
         data = response.json()
@@ -123,7 +180,7 @@ class TestRequestsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_queue_not_found(self, TestClientWithMocks, valid_request_body, security_disabled):
+    async def test_queue_not_found(self, TestClientWithMocks, valid_request_body, security_disabled, authenticated_user_id):
         """Test request submission fails when queue doesn't exist."""
         mock_db = AsyncMock()
         mock_db.get.return_value = None
@@ -133,7 +190,8 @@ class TestRequestsPostIntegration:
 
         body = valid_request_body.copy()
         body["queue_id"] = -1
-        response = test_client.post("/api/v1/requests", json=body)
+        with authenticated_user_id(self.TEST_USER_ID):
+            response = test_client.post("/api/v1/requests", json=body)
 
         assert response.status_code == 404
         data = response.json()
@@ -141,7 +199,7 @@ class TestRequestsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_queue_closed(self, TestClientWithMocks, valid_request_body, security_disabled):
+    async def test_queue_closed(self, TestClientWithMocks, valid_request_body, security_disabled, authenticated_user_id):
         """Test request submission fails when queue is closed."""
         mock_queue = MagicMock()
         mock_queue.id = self.TEST_QUEUE_ID
@@ -154,7 +212,8 @@ class TestRequestsPostIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        response = test_client.post("/api/v1/requests", json=valid_request_body)
+        with authenticated_user_id(self.TEST_USER_ID):
+            response = test_client.post("/api/v1/requests", json=valid_request_body)
 
         assert response.status_code == 403
         data = response.json()
@@ -162,7 +221,7 @@ class TestRequestsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_duplicate_request(self, TestClientWithMocks, valid_request_body, security_disabled):
+    async def test_duplicate_request(self, TestClientWithMocks, valid_request_body, security_disabled, authenticated_user_id):
         """Test request submission fails when duplicate exists."""
         mock_queue = MagicMock()
         mock_queue.id = self.TEST_QUEUE_ID
@@ -181,7 +240,8 @@ class TestRequestsPostIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        response = test_client.post("/api/v1/requests", json=valid_request_body)
+        with authenticated_user_id(self.TEST_USER_ID):
+            response = test_client.post("/api/v1/requests", json=valid_request_body)
 
         assert response.status_code == 409
         data = response.json()
@@ -189,7 +249,7 @@ class TestRequestsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_task_already_processing(self, TestClientWithMocks, valid_request_body, mock_osu_client, security_disabled):
+    async def test_task_already_processing(self, TestClientWithMocks, valid_request_body, mock_osu_client, security_disabled, authenticated_user_id):
         """Test request submission fails when task is already processing."""
         from app.redis.models import QueueRequestHandlerTask
 
@@ -249,17 +309,19 @@ class TestRequestsPostIntegration:
         mock_osu_client.rc = mock_rc
 
         async def mock_get_beatmapset_wip(*args, **kwargs):
-            return {
-                "id": self.TEST_BEATMAPSET_ID,
-                "status": "wip",
-            }
+            beatmapset = _full_beatmapset_dict()
+            beatmapset["id"] = self.TEST_BEATMAPSET_ID
+            return beatmapset
 
         mock_osu_client.get_beatmapset = AsyncMock(side_effect=mock_get_beatmapset_wip)
+        mock_osu_client.__aenter__ = AsyncMock(return_value=mock_osu_client)
+        mock_osu_client.__aexit__ = AsyncMock(return_value=False)
 
         test_client = TestClientWithMocks(mock_rc=mock_rc, mock_db=mock_db)
 
-        with patch('api.v1.requests.OsuAPIClient', return_value=mock_osu_client):
-            response = test_client.post("/api/v1/requests", json=valid_request_body)
+        with authenticated_user_id(self.TEST_USER_ID):
+            with patch('api.v1.requests.OsuAPIClient', return_value=mock_osu_client):
+                response = test_client.post("/api/v1/requests", json=valid_request_body)
 
         assert response.status_code == 409
         data = response.json()
@@ -267,7 +329,7 @@ class TestRequestsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_task_already_processing_but_failed(self, TestClientWithMocks, valid_request_body, mock_osu_client, security_disabled):
+    async def test_task_already_processing_but_failed(self, TestClientWithMocks, valid_request_body, mock_osu_client, security_disabled, authenticated_user_id):
         """Test request submission succeeds when previous task failed."""
         from app.redis.models import QueueRequestHandlerTask
 
@@ -319,17 +381,19 @@ class TestRequestsPostIntegration:
         mock_osu_client.rc = mock_rc
 
         async def mock_get_beatmapset_wip(*args, **kwargs):
-            return {
-                "id": self.TEST_BEATMAPSET_ID,
-                "status": "wip",
-            }
+            beatmapset = _full_beatmapset_dict()
+            beatmapset["id"] = self.TEST_BEATMAPSET_ID
+            return beatmapset
 
         mock_osu_client.get_beatmapset = AsyncMock(side_effect=mock_get_beatmapset_wip)
+        mock_osu_client.__aenter__ = AsyncMock(return_value=mock_osu_client)
+        mock_osu_client.__aexit__ = AsyncMock(return_value=False)
 
         test_client = TestClientWithMocks(mock_rc=mock_rc, mock_db=mock_db)
 
-        with patch('api.v1.requests.OsuAPIClient', return_value=mock_osu_client):
-            response = test_client.post("/api/v1/requests", json=valid_request_body)
+        with authenticated_user_id(self.TEST_USER_ID):
+            with patch('api.v1.requests.OsuAPIClient', return_value=mock_osu_client):
+                response = test_client.post("/api/v1/requests", json=valid_request_body)
 
         assert response.status_code == 202
         data = response.json()
@@ -338,7 +402,7 @@ class TestRequestsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_bypass_security_with_flag(self, TestClientWithMocks, valid_request_body, mock_osu_client, security_disabled):
+    async def test_bypass_security_with_flag(self, TestClientWithMocks, valid_request_body, mock_osu_client, security_disabled, authenticated_user_id):
         """Test security disabled bypasses authorization."""
         mock_queue = MagicMock()
         mock_queue.id = self.TEST_QUEUE_ID
@@ -373,30 +437,32 @@ class TestRequestsPostIntegration:
         class MockLockCtx:
             async def __aenter__(self):
                 return None
-            async def __aexit__(self, *args):
+            async def __aexit__(*args, authenticated_user_id):
                 pass
         mock_rc.lock_ctx = MagicMock(return_value=MockLockCtx())
 
         mock_osu_client.rc = mock_rc
 
         async def mock_get_beatmapset_wip(*args, **kwargs):
-            return {
-                "id": self.TEST_BEATMAPSET_ID,
-                "status": "wip",
-            }
+            beatmapset = _full_beatmapset_dict()
+            beatmapset["id"] = self.TEST_BEATMAPSET_ID
+            return beatmapset
 
         mock_osu_client.get_beatmapset = AsyncMock(side_effect=mock_get_beatmapset_wip)
+        mock_osu_client.__aenter__ = AsyncMock(return_value=mock_osu_client)
+        mock_osu_client.__aexit__ = AsyncMock(return_value=False)
 
         test_client = TestClientWithMocks(mock_rc=mock_rc, mock_db=mock_db)
 
-        with patch('api.v1.requests.OsuAPIClient', return_value=mock_osu_client):
-            response = test_client.post("/api/v1/requests", json=valid_request_body)
+        with authenticated_user_id(self.TEST_USER_ID):
+            with patch('api.v1.requests.OsuAPIClient', return_value=mock_osu_client):
+                response = test_client.post("/api/v1/requests", json=valid_request_body)
 
         assert response.status_code == 202
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_user_can_get_own_requests(self, TestClientWithMocks, admin_user_token):
+    async def test_user_can_get_own_requests(self, TestClientWithMocks, admin_user_token, authenticated_user_id):
         """Test that user can get their own requests."""
         from app.database.schemas import RequestSchema
 
@@ -419,7 +485,7 @@ class TestRequestsPostIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=12345678):
+        with authenticated_user_id(12345678):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.get("/api/v1/requests", headers=headers)
 
@@ -430,7 +496,7 @@ class TestRequestsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_user_can_see_other_users_requests_in_a_queue(self, TestClientWithMocks):
+    async def test_user_can_see_other_users_requests_in_a_queue(self, TestClientWithMocks, authenticated_user_id):
         """Test that a non-owner authenticated user still sees all requests in a queue.
 
         GET /api/v1/requests is the shared data source for both the public queue
@@ -462,7 +528,7 @@ class TestRequestsPostIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=12345678):
+        with authenticated_user_id(12345678):
             headers = {"Authorization": f"Bearer {generate_token(12345678)}"}
             response = test_client.get("/api/v1/requests", headers=headers)
 
@@ -474,7 +540,7 @@ class TestRequestsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_can_get_all_requests(self, TestClientWithMocks, admin_user_token):
+    async def test_admin_can_get_all_requests(self, TestClientWithMocks, admin_user_token, authenticated_user_id):
         """Test that admin can get all requests."""
         from app.database.schemas import RequestSchema
 
@@ -511,7 +577,7 @@ class TestRequestsPostIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=11111111):
+        with authenticated_user_id(11111111):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.get("/api/v1/requests", headers=headers)
 
@@ -522,7 +588,7 @@ class TestRequestsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_get_request_by_id(self, TestClientWithMocks, admin_user_token):
+    async def test_get_request_by_id(self, TestClientWithMocks, admin_user_token, authenticated_user_id):
         """Test GET /api/v1/requests/{id} returns specific request."""
         from app.security import decode_token
         from app.database.schemas import RequestSchema
@@ -558,8 +624,7 @@ class TestRequestsPostIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=user_id), \
-             patch('app.security.decorators.ownership_authorization', lambda *args, **kwargs: lambda f: f):
+        with authenticated_user_id(user_id):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.get("/api/v1/requests/1", headers=headers)
 
@@ -604,7 +669,7 @@ class TestRequestsPatchIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_can_update_request_status(self, TestClientWithMocks, admin_user_token):
+    async def test_admin_can_update_request_status(self, TestClientWithMocks, admin_user_token, authenticated_user_id):
         """Test admin can update request status."""
         from app.database.schemas import RequestSchema
         from app.database.models import Request
@@ -638,7 +703,7 @@ class TestRequestsPatchIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=11111111):
+        with authenticated_user_id(11111111):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.patch(
                 f"/api/v1/requests/{self.TEST_REQUEST_ID}",
@@ -653,20 +718,27 @@ class TestRequestsPatchIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_non_admin_gets_forbidden_on_request_patch(self, TestClientWithMocks, admin_user_token):
+    async def test_non_admin_gets_forbidden_on_request_patch(self, TestClientWithMocks, admin_user_token, authenticated_user_id):
         """Test non-admin user gets 403 Forbidden on request patch."""
         from app.security import generate_token
+        from app.database.models import Request, Queue
 
         mock_db = AsyncMock()
         
         mock_user = MagicMock()
         mock_user.id = 99999999
         mock_user.roles = []
-        mock_db.get = AsyncMock(return_value=mock_user)
+        
+        async def mock_get(model, **kwargs):
+            if model == Request or model == Queue:
+                return None
+            return mock_user
+        
+        mock_db.get = AsyncMock(side_effect=mock_get)
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=99999999):
+        with authenticated_user_id(99999999):
             headers = {"Authorization": f"Bearer {generate_token(99999999)}"}
             response = test_client.patch(
                 f"/api/v1/requests/{self.TEST_REQUEST_ID}",
@@ -680,7 +752,7 @@ class TestRequestsPatchIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_queue_owner_can_update_request_via_override(self, TestClientWithMocks, admin_user_token):
+    async def test_queue_owner_can_update_request_via_override(self, TestClientWithMocks, admin_user_token, authenticated_user_id):
         """Test queue owner can update request via override."""
         from app.database.schemas import RequestSchema
         from app.database.models import Request, Queue
@@ -723,7 +795,7 @@ class TestRequestsPatchIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=99999999):
+        with authenticated_user_id(99999999):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.patch(
                 f"/api/v1/requests/{self.TEST_REQUEST_ID}",
@@ -895,14 +967,14 @@ class TestRequestsTasksIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_get_all_tasks(self, TestClientWithMocks, admin_user_token, mock_rc_with_task, admin_user):
+    async def test_admin_get_all_tasks(self, TestClientWithMocks, admin_user_token, mock_rc_with_task, admin_user, authenticated_user_id):
         """Test GET /api/v1/requests/tasks returns all tasks."""
         mock_db = AsyncMock()
         mock_db.get = AsyncMock(return_value=admin_user)
 
         test_client = TestClientWithMocks(mock_rc=mock_rc_with_task, mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=11111111):
+        with authenticated_user_id(11111111):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.get("/api/v1/requests/tasks", headers=headers)
 
@@ -916,7 +988,7 @@ class TestRequestsTasksIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_get_all_tasks_empty(self, TestClientWithMocks, admin_user_token, admin_user):
+    async def test_admin_get_all_tasks_empty(self, TestClientWithMocks, admin_user_token, admin_user, authenticated_user_id):
         """Test GET /api/v1/requests/tasks returns empty list when no tasks exist."""
         mock_rc = AsyncMock()
         mock_rc.paginate_scan = AsyncMock(return_value=[])
@@ -926,7 +998,7 @@ class TestRequestsTasksIntegration:
 
         test_client = TestClientWithMocks(mock_rc=mock_rc, mock_db=mock_db)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=11111111):
+        with authenticated_user_id(11111111):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.get("/api/v1/requests/tasks", headers=headers)
 
@@ -937,11 +1009,21 @@ class TestRequestsTasksIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_get_task_by_hashed_id(self, TestClientWithMocks, admin_user_token, mock_rc_with_task):
+    async def test_admin_get_task_by_hashed_id(self, TestClientWithMocks, admin_user_token, mock_rc_with_task, authenticated_user_id):
         """Test GET /api/v1/requests/tasks/{hashed_id} returns specific task."""
-        test_client = TestClientWithMocks(mock_rc=mock_rc_with_task)
+        from app.database.models import User
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=11111111):
+        mock_db = AsyncMock()
+        admin_user = MagicMock()
+        admin_user.id = 11111111
+        admin_role = MagicMock()
+        admin_role.name = "admin"
+        admin_user.roles = [admin_role]
+        mock_db.get = AsyncMock(return_value=admin_user)
+
+        test_client = TestClientWithMocks(mock_rc=mock_rc_with_task, mock_db=mock_db)
+
+        with authenticated_user_id(11111111):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.get("/api/v1/requests/tasks/12345", headers=headers)
 
@@ -955,14 +1037,14 @@ class TestRequestsTasksIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_task_not_found(self, TestClientWithMocks, admin_user_token):
+    async def test_task_not_found(self, TestClientWithMocks, admin_user_token, authenticated_user_id):
         """Test 404 when task doesn't exist."""
         mock_rc = AsyncMock()
         mock_rc.hgetall = AsyncMock(return_value=None)
 
         test_client = TestClientWithMocks(mock_rc=mock_rc)
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=11111111):
+        with authenticated_user_id(11111111):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.get("/api/v1/requests/tasks/999999", headers=headers)
 
@@ -972,13 +1054,13 @@ class TestRequestsTasksIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_non_admin_user_gets_forbidden(self, TestClientWithMocks):
+    async def test_non_admin_user_gets_forbidden(self, TestClientWithMocks, authenticated_user_id):
         """Test that non-admin user gets 403 Forbidden on task endpoints."""
         from app.security import generate_token
 
         test_client = TestClientWithMocks()
 
-        with patch('app.security.decorators._get_authenticated_user_id', return_value=99999999):
+        with authenticated_user_id(99999999):
             headers = {"Authorization": f"Bearer {generate_token(99999999)}"}
             response = test_client.get("/api/v1/requests/tasks", headers=headers)
 
