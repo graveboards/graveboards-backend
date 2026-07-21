@@ -62,6 +62,7 @@ def _is_target_match(config: dict, user_id: int) -> bool:
 class RateLimitRestriction(RestrictionBase):
     type = "rate_limit"
     config_schema = RateLimitConfig
+    supported_versions = {"1.0", "1.1"}
 
     def _applies(self, config: dict, user_id: int) -> bool:
         return _is_target_match(config, user_id) and config.get("scope", "user") == "user"
@@ -69,7 +70,7 @@ class RateLimitRestriction(RestrictionBase):
     def _redis_key(self, context: ExecutionContext, config: dict) -> str:
         period = config.get("period", "week")
         period_bucket = _truncate_to_period(datetime.now(timezone.utc), period)
-        return Namespace.QUEUE_RESTRICTION_RATE_LIMIT.hash_name(
+        return Namespace.QUEUE_RULE_RATE_LIMIT.hash_name(
             f"{context.queue_id}:{context.user_id}:{config_fingerprint(config)}:{period_bucket}"
         )
 
