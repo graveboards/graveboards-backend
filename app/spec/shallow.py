@@ -150,3 +150,59 @@ def populate_shallow_refs(openapi_spec: dict) -> None:
 
         fully_resolved = resolve_schema(schemas[name], ())
         schemas[name] = fully_resolved
+
+    _propagate_to_parameters(openapi_spec, schemas)
+
+
+def _propagate_to_parameters(openapi_spec: dict, schemas: dict) -> None:
+    """Copy resolved schemas back over inlined path parameter copies.
+
+    ``resolve_refs`` dereferences every ``$ref`` into an independent copy, so the
+    schema embedded in each ``include``/``filters`` query parameter under ``paths``
+    is a distinct object from the one under ``components.schemas``.
+    ``populate_shallow_refs`` only mutates the latter, which leaves every parameter
+    copy holding the unexpanded ``*IncludeShallow`` placeholders. The URI parser
+    reads parameter schemas (not ``components``), so without this step it never sees
+    the expanded properties for nested includes and logs "no schema found for
+    deepObject leaf". This overwrites each affected parameter schema with a deep
+    copy of the fully-resolved canonical schema.
+
+    Args:
+        openapi_spec:
+            The OpenAPI specification to mutate in place.
+        schemas:
+            The already-resolved ``components.schemas`` mapping.
+    """
+    http_methods = {"get", "put", "post", "delete", "options", "head", "patch", "trace"}
+
+    def fix_params(params) -> None:
+        if not isinstance(params, list):
+            return
+
+        for parameter in params:
+            if not isinstance(parameter, dict):
+                continue
+
+            schema = parameter.get("schema")
+
+            if not isinstance(schema, dict):
+                continue
+
+            title = schema.get("title")
+
+            if title in SCHEMAS_WITH_SHALLOW_REFS and title in schemas:
+                parameter["schema"] = copy.deepcopy(schemas[title])
+
+    for path_item in openapi_spec.get("paths", {}).values():
+        if not isinstance(path_item, dict):
+            continue
+
+        # Path-level parameters shared across operations
+        fix_params(path_item.get("parameters"))
+
+        # Operation-level parameters
+        for method in http_methods:
+            operation = path_item.get(method)
+
+            if isinstance(operation, dict):
+                fix_params(operation.get("parameters"))
