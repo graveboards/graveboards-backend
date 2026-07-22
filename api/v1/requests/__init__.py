@@ -13,6 +13,7 @@ from app.database.schemas import RequestSchema
 from app.security import role_authorization, ownership_authorization, with_authenticated_user_id
 from app.security.overrides import queue_owner_override, queue_manager_override
 from app.database.enums import RoleName
+from app.database.roles import is_admin
 from app.config import get_security_enabled
 from app.redis import Namespace, ChannelName, RedisClient
 from app.redis.models import QueueRequestHandlerTask, QueueRequestValidationTask
@@ -92,10 +93,23 @@ async def post(body: dict, _caller_user_id: int = None, **kwargs):
     rc: RedisClient = request.state.rc
     db: PostgresqlDB = request.state.db
 
-    if get_security_enabled():
-        if _caller_user_id is None:
-            raise Forbidden("Authenticated user could not be determined")
+    beatmapset_id = body["beatmapset_id"]
+    queue_id = body["queue_id"]
+    queue = await db.get(Queue, id=queue_id)
 
+    if not queue:
+        raise NotFound(f"The queue with ID '{queue_id}' not found")
+
+    if not queue.is_open:
+        raise Forbidden(f"The queue '{queue.name}' is closed")
+
+    if _caller_user_id is None:
+        if get_security_enabled():
+            raise Forbidden("Authenticated user could not be determined")
+        user_id = body.get("user_id")
+    elif await is_admin(db, _caller_user_id):
+        user_id = body.get("user_id")
+    elif queue.enforce_user_id_match:
         submitted_user_id = body.get("user_id")
 
         if submitted_user_id is not None and submitted_user_id != _caller_user_id:
@@ -106,16 +120,6 @@ async def post(body: dict, _caller_user_id: int = None, **kwargs):
         user_id = body.get("user_id")
 
     body["user_id"] = user_id
-
-    beatmapset_id = body["beatmapset_id"]
-    queue_id = body["queue_id"]
-    queue = await db.get(Queue, id=queue_id)
-
-    if not queue:
-        raise NotFound(f"The queue with ID '{queue_id}' not found")
-
-    if not queue.is_open:
-        raise Forbidden(f"The queue '{queue.name}' is closed")
 
     if await db.get(Request, beatmapset_id=beatmapset_id, queue_id=queue_id):
         raise Conflict(
