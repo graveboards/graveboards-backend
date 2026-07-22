@@ -19,6 +19,8 @@ Queue:
             format: date-time
         is_open:
             type: boolean
+        enforce_user_id_match:
+            type: boolean
         visibility:
             $ref: "./sub_schemas/visibility.yaml#/Visibility"
         user_profile:
@@ -45,6 +47,8 @@ QueueCreate:
             type: string
         visibility:
             $ref: "./sub_schemas/visibility.yaml#/Visibility"
+        enforce_user_id_match:
+            type: boolean
     required:
         - user_id
         - name
@@ -59,6 +63,8 @@ QueuePatch:
         description:
             type: string
         is_open:
+            type: boolean
+        enforce_user_id_match:
             type: boolean
         visibility:
             $ref: "./sub_schemas/visibility.yaml#/Visibility"

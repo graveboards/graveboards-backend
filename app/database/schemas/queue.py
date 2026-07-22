@@ -24,6 +24,7 @@ class QueueSchema(BaseModel, BaseModelExtra):
     updated_at: Optional[datetime] = None
     is_open: Optional[bool] = None
     visibility: Optional[int] = None
+    enforce_user_id_match: Optional[bool] = None
 
     requests: list["RequestSchema"] = []
     managers: list["UserSchema"] = []
@@ -39,6 +40,7 @@ class QueueCreateSchema(BaseModel, BaseModelExtra):
     name: str
     description: Optional[str] = None
     visibility: Optional[int] = None
+    enforce_user_id_match: Optional[bool] = None
 
 
 class QueueUpdateSchema(BaseModel, BaseModelExtra):
@@ -49,3 +51,4 @@ class QueueUpdateSchema(BaseModel, BaseModelExtra):
     description: Optional[str] = None
     is_open: Optional[bool] = None
     visibility: Optional[int] = None
+    enforce_user_id_match: Optional[bool] = None
