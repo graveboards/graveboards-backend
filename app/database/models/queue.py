@@ -27,6 +27,7 @@ class Queue(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=aware_utcnow, onupdate=aware_utcnow)
     is_open: Mapped[bool] = mapped_column(Boolean, default=True)
     visibility: Mapped[int] = mapped_column(Integer, default=0)
+    enforce_user_id_match: Mapped[bool] = mapped_column(Boolean, default=True)
 
     # Relationships
     requests: Mapped[list["Request"]] = relationship(
