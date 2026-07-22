@@ -108,7 +108,7 @@ async def post(body: dict, _caller_user_id: int = None, **kwargs):
             raise Forbidden("Authenticated user could not be determined")
         user_id = body.get("user_id")
     elif await is_admin(db, _caller_user_id):
-        user_id = body.get("user_id")
+        user_id = body.get("user_id") or _caller_user_id
     elif queue.enforce_user_id_match:
         submitted_user_id = body.get("user_id")
 
@@ -117,7 +117,7 @@ async def post(body: dict, _caller_user_id: int = None, **kwargs):
 
         user_id = _caller_user_id
     else:
-        user_id = body.get("user_id")
+        user_id = body.get("user_id") or _caller_user_id
 
     body["user_id"] = user_id
 
