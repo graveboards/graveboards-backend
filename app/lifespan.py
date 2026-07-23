@@ -5,8 +5,7 @@ from connexion.middleware import ConnexionMiddleware
 
 from .redis import RedisClient
 from .database import PostgresqlDB
-from .config import CONFIG, ENV, get_security_enabled
-from .enums import Env
+from .config import CONFIG, get_security_enabled
 from .logging import get_logger
 from .daemon import Daemon
 from .bootstrap import SetupRunner
@@ -31,9 +30,6 @@ async def lifespan(app: ConnexionMiddleware):
     await runner.run()
 
     if not get_security_enabled():
-        if ENV is Env.PROD:
-            raise RuntimeError("Refusing to start: DISABLE_SECURITY is set while ENV=prod")
-
         logger.warning("Security has been disabled!")
 
     rc = RedisClient()
