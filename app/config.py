@@ -81,6 +81,8 @@ class Config:
         self.DEBUG = os.getenv("DEBUG", "false").lower() in ("true", "1", "yes")
         self.DISABLE_SECURITY = os.getenv("DISABLE_SECURITY", "false").lower() in ("true", "1", "yes")
         self.DEBUG_API_KEY = os.getenv("DEBUG_API_KEY")
+        self.DEV_ADMIN_USER_ID = int(os.getenv("DEV_ADMIN_USER_ID", "1"))
+        self.DEV_USER_ID = int(os.getenv("DEV_USER_ID", "2"))
 
         self.PROJECT_ROOT = Path(__file__).resolve().parents[1]
         self.SPEC_DIR = os.path.abspath("api/v1/spec")
@@ -178,6 +180,8 @@ ENV = CONFIG.ENV
 DEBUG = CONFIG.DEBUG
 DISABLE_SECURITY = CONFIG.DISABLE_SECURITY
 DEBUG_API_KEY = CONFIG.DEBUG_API_KEY
+DEV_ADMIN_USER_ID = CONFIG.DEV_ADMIN_USER_ID
+DEV_USER_ID = CONFIG.DEV_USER_ID
 PROJECT_ROOT = CONFIG.PROJECT_ROOT
 SPEC_DIR = CONFIG.SPEC_DIR
 OPENAPI_ENTRYPOINT = CONFIG.OPENAPI_ENTRYPOINT

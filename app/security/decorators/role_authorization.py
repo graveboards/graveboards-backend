@@ -6,7 +6,6 @@ from connexion import request
 from connexion.exceptions import Forbidden
 
 from app.database.enums import RoleName
-from app.config import get_security_enabled
 from app.database.roles import get_user_roles
 from .utils import get_authenticated_user_id, strip_auth_info
 
@@ -66,9 +65,6 @@ def role_authorization(
 
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-            if not get_security_enabled():
-                return await func(*args, **kwargs)
-
             db: PostgresqlDB = request.state.db
 
             try:

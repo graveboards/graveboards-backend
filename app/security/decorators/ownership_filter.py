@@ -6,7 +6,6 @@ from collections.abc import Sequence
 from connexion import request
 
 from app.database.enums import RoleName
-from app.config import get_security_enabled
 from app.database.roles import get_user_roles
 from .utils import get_authenticated_user_id, strip_auth_info, get_value
 
@@ -75,9 +74,6 @@ def ownership_filter(
 
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-            if not get_security_enabled():
-                return await func(*args, **kwargs)
-
             try:
                 user_id = get_authenticated_user_id(kwargs, authorized_user_id_lookup)
             except KeyError:

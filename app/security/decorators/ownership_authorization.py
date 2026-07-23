@@ -5,7 +5,6 @@ from typing import Callable, Any, Awaitable, ParamSpec, TypeVar, TYPE_CHECKING
 from connexion import request
 from connexion.exceptions import Forbidden
 
-from app.config import get_security_enabled
 from app.database.roles import is_admin
 from .utils import get_authenticated_user_id, strip_auth_info, get_value
 
@@ -75,9 +74,6 @@ def ownership_authorization(
 
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-            if not get_security_enabled():
-                return await func(*args, **kwargs)
-
             db: PostgresqlDB = request.state.db
 
             try:

@@ -1,9 +1,14 @@
 from typing import Any
 
+from app.config import get_security_enabled
+from app.security.dev_identity import resolve_dev_caller_id
 from app.utils import get_nested_value
 
 
 def get_authenticated_user_id(kwargs: dict[str, Any], user_lookup: str = "user") -> int:
+    if not get_security_enabled():
+        return resolve_dev_caller_id()
+
     # First, try to get from kwargs (most common case)
     try:
         return get_nested_value(kwargs, user_lookup)

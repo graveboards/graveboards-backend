@@ -14,7 +14,6 @@ from app.security import role_authorization, ownership_authorization, with_authe
 from app.security.overrides import queue_owner_override, queue_manager_override
 from app.database.enums import RoleName
 from app.database.roles import is_admin
-from app.config import get_security_enabled
 from app.redis import Namespace, ChannelName, RedisClient
 from app.redis.models import QueueRequestHandlerTask, QueueRequestValidationTask
 from app.spec import get_include_schema
@@ -104,9 +103,7 @@ async def post(body: dict, _caller_user_id: int = None, **kwargs):
         raise Forbidden(f"The queue '{queue.name}' is closed")
 
     if _caller_user_id is None:
-        if get_security_enabled():
-            raise Forbidden("Authenticated user could not be determined")
-        user_id = body.get("user_id")
+        raise Forbidden("Authenticated user could not be determined")
     elif await is_admin(db, _caller_user_id):
         user_id = body.get("user_id") or _caller_user_id
     elif queue.enforce_user_id_match:
