@@ -4,11 +4,9 @@ Unit tests for security decorators.
 Tests the decorator logic and configuration behavior without full HTTP stack.
 """
 import pytest
-from unittest.mock import AsyncMock, MagicMock
 
 from app.security.decorators import role_authorization, ownership_authorization
 from app.database.enums import RoleName
-from app.config import override_security_enabled
 
 
 class TestRoleAuthorizationConfiguration:
@@ -70,30 +68,8 @@ class TestOwnershipAuthorizationConfiguration:
             def sync_endpoint(**kwargs):
                 return ({"data": "success"}, 200)
 
-
-class TestSecurityConfigBehavior:
-    """Test decorator behavior with security configuration."""
-
-    @pytest.mark.asyncio
-    async def test_disable_security_true_allows_anyone(self):
-        """Test that security disabled bypasses all checks."""
-        with override_security_enabled(False):
-            @role_authorization(RoleName.ADMIN)
-            async def endpoint(**kwargs):
-                return {"data": "success"}
-            
-            mock_db = AsyncMock()
-            mock_user = MagicMock()
-            mock_user.id = 123
-            mock_user.roles = []
-            mock_db.get = AsyncMock(return_value=mock_user)
-            
-            scope = {"state": {}}
-            scope["state"]["db"] = mock_db
-            
-            kwargs = {"token_info": {"sub": 999}}
-            
-            result = await endpoint(**kwargs)
-            
-            assert result == {"data": "success"}
-            mock_db.get.assert_not_called()
+# Security-disabled behavior (role_authorization now runs its real DB-backed role
+# check against a resolved dev identity instead of bypassing entirely) needs a live
+# request context to resolve `request.state.db`, so it's covered as an integration
+# test against the real stack in tests/integration/api/test_disabled_security.py
+# rather than here.

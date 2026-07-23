@@ -46,9 +46,27 @@ class TestBeatmapsetsPostIntegration:
         mock_client.rc = mock_rc
         return mock_client
 
+    @pytest.fixture
+    def mock_admin_db(self):
+        """A db mock whose role check resolves to an admin - needed since, with
+        security disabled, role_authorization now runs a real role check against
+        the resolved dev identity instead of skipping it outright.
+        """
+        from app.database.enums import RoleName
+
+        mock_db = AsyncMock()
+        admin_role = MagicMock()
+        admin_role.name = RoleName.ADMIN.value
+        mock_admin_user = MagicMock()
+        mock_admin_user.roles = [admin_role]
+        mock_db.get = AsyncMock(return_value=mock_admin_user)
+        mock_db.add = AsyncMock()
+        mock_db.update = AsyncMock()
+        return mock_db
+
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_archival_creates_snapshot(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, security_disabled):
+    async def test_admin_archival_creates_snapshot(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, mock_admin_db, security_disabled):
         """Test successful beatmap archival that creates new snapshot."""
         mock_bm = mock_beatmap_manager({
             "message": "Snapshotted 1 beatmap(s)",
@@ -58,7 +76,7 @@ class TestBeatmapsetsPostIntegration:
             "snapshotted_beatmaps": [{"id": 1, "beatmap_id": 116383, "snapshot_number": 1, "checksum": "abc"}],
         })
 
-        test_client = TestClientWithMocks()
+        test_client = TestClientWithMocks(mock_db=mock_admin_db)
 
         with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
              patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \
@@ -73,7 +91,7 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_archival_updates_existing(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, security_disabled):
+    async def test_admin_archival_updates_existing(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, mock_admin_db, security_disabled):
         """Test successful beatmap archival that updates existing data."""
         mock_bm = mock_beatmap_manager({
             "message": "Updated 2 field(s) in the beatmapset and 1 field(s) in 1 beatmap(s)",
@@ -83,7 +101,7 @@ class TestBeatmapsetsPostIntegration:
             "snapshotted_beatmaps": [],
         })
 
-        test_client = TestClientWithMocks()
+        test_client = TestClientWithMocks(mock_db=mock_admin_db)
 
         with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
              patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \
@@ -98,7 +116,7 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_archival_up_to_date(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, security_disabled):
+    async def test_admin_archival_up_to_date(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, mock_admin_db, security_disabled):
         """Test successful beatmap archival that detects up-to-date data."""
         mock_bm = mock_beatmap_manager({
             "message": "The beatmapset and its beatmaps are fully up-to-date",
@@ -108,7 +126,7 @@ class TestBeatmapsetsPostIntegration:
             "snapshotted_beatmaps": [],
         })
 
-        test_client = TestClientWithMocks()
+        test_client = TestClientWithMocks(mock_db=mock_admin_db)
 
         with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
              patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \
@@ -123,7 +141,7 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_osu_api_error_handling(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, security_disabled):
+    async def test_osu_api_error_handling(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, mock_admin_db, security_disabled):
         """Test that osu! API errors are properly handled."""
         import httpx
         from httpx import Request
@@ -141,7 +159,7 @@ class TestBeatmapsetsPostIntegration:
             response=mock_response,
         ))
 
-        test_client = TestClientWithMocks()
+        test_client = TestClientWithMocks(mock_db=mock_admin_db)
 
         with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
              patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \
@@ -271,8 +289,10 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_bypass_security_with_flag(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, security_disabled):
-        """Test security disabled bypasses authorization."""
+    async def test_bypass_security_with_flag(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, mock_admin_db, security_disabled):
+        """Test that disabling security resolves an admin dev identity (rather than
+        skipping the check outright), letting the request through.
+        """
         mock_bm = mock_beatmap_manager({
             "message": "Snapshotted 1 beatmap(s)",
             "updated_beatmapset": None,
@@ -281,7 +301,7 @@ class TestBeatmapsetsPostIntegration:
             "snapshotted_beatmaps": [{"id": 1, "beatmap_id": 116383, "snapshot_number": 1, "checksum": "abc"}],
         })
 
-        test_client = TestClientWithMocks()
+        test_client = TestClientWithMocks(mock_db=mock_admin_db)
 
         with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
              patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \

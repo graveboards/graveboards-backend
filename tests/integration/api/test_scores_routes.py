@@ -33,12 +33,28 @@ class TestScoresPostIntegration:
             },
         }
 
+    @pytest.fixture
+    def admin_role_user(self):
+        """A User mock role_authorization's role check resolves the (disabled-security)
+        dev identity to - admin-roled, so it's distinguishable from the handler's own
+        `db.get(User, id=user_id)` lookup, which doesn't request `_include={"roles"}`.
+        """
+        from app.database.enums import RoleName
+
+        admin_role = MagicMock()
+        admin_role.name = RoleName.ADMIN.value
+        mock_admin_user = MagicMock()
+        mock_admin_user.roles = [admin_role]
+        return mock_admin_user
+
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_submission_creates_score(self, TestClientWithMocks, valid_score_body, security_disabled):
+    async def test_admin_submission_creates_score(self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled):
         """Test successful score submission that creates new score."""
+        from app.database.models import User, Beatmap, BeatmapSnapshot, Leaderboard, Score
+
         mock_db = AsyncMock()
-        
+
         mock_user = MagicMock()
         mock_user.id = self.TEST_USER_ID
         mock_beatmap = MagicMock()
@@ -48,14 +64,23 @@ class TestScoresPostIntegration:
         mock_snapshot.beatmap_id = self.TEST_BEATMAP_ID
         mock_leaderboard = MagicMock()
         mock_leaderboard.id = 1
-        
-        mock_db.get.side_effect = [
-            mock_user,
-            mock_beatmap,
-            mock_snapshot,
-            mock_leaderboard,
-            None,
-        ]
+
+        async def mock_get(model, **kwargs):
+            if model == User and kwargs.get("_include", {}).get("roles"):
+                return admin_role_user
+            if model == User:
+                return mock_user
+            if model == Beatmap:
+                return mock_beatmap
+            if model == BeatmapSnapshot:
+                return mock_snapshot
+            if model == Leaderboard:
+                return mock_leaderboard
+            if model == Score:
+                return None
+            return None
+
+        mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.add = AsyncMock()
 
         test_client = TestClientWithMocks(mock_db=mock_db)
@@ -69,10 +94,18 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_user_not_found(self, TestClientWithMocks, valid_score_body, security_disabled):
+    async def test_admin_user_not_found(self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled):
         """Test score submission fails when user doesn't exist."""
+        from app.database.models import User
+
         mock_db = AsyncMock()
-        mock_db.get.return_value = None
+
+        async def mock_get(model, **kwargs):
+            if model == User and kwargs.get("_include", {}).get("roles"):
+                return admin_role_user
+            return None
+
+        mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.add = AsyncMock()
 
         test_client = TestClientWithMocks(mock_db=mock_db)
@@ -87,12 +120,24 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_beatmap_not_found(self, TestClientWithMocks, valid_score_body, security_disabled):
+    async def test_admin_beatmap_not_found(self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled):
         """Test score submission fails when beatmap doesn't exist."""
+        from app.database.models import User, Beatmap
+
         mock_db = AsyncMock()
         mock_user = MagicMock()
         mock_user.id = self.TEST_USER_ID
-        mock_db.get.side_effect = [mock_user, None]
+
+        async def mock_get(model, **kwargs):
+            if model == User and kwargs.get("_include", {}).get("roles"):
+                return admin_role_user
+            if model == User:
+                return mock_user
+            if model == Beatmap:
+                return None
+            return None
+
+        mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.add = AsyncMock()
 
         test_client = TestClientWithMocks(mock_db=mock_db)
@@ -107,14 +152,28 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_beatmap_snapshot_not_found(self, TestClientWithMocks, valid_score_body, security_disabled):
+    async def test_admin_beatmap_snapshot_not_found(self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled):
         """Test score submission fails when beatmap snapshot doesn't exist."""
+        from app.database.models import User, Beatmap, BeatmapSnapshot
+
         mock_db = AsyncMock()
         mock_user = MagicMock()
         mock_user.id = self.TEST_USER_ID
         mock_beatmap = MagicMock()
         mock_beatmap.id = self.TEST_BEATMAP_ID
-        mock_db.get.side_effect = [mock_user, mock_beatmap, None]
+
+        async def mock_get(model, **kwargs):
+            if model == User and kwargs.get("_include", {}).get("roles"):
+                return admin_role_user
+            if model == User:
+                return mock_user
+            if model == Beatmap:
+                return mock_beatmap
+            if model == BeatmapSnapshot:
+                return None
+            return None
+
+        mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.add = AsyncMock()
 
         test_client = TestClientWithMocks(mock_db=mock_db)
@@ -129,8 +188,10 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_leaderboard_not_found(self, TestClientWithMocks, valid_score_body, security_disabled):
+    async def test_admin_leaderboard_not_found(self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled):
         """Test score submission fails when leaderboard doesn't exist."""
+        from app.database.models import User, Beatmap, BeatmapSnapshot, Leaderboard
+
         mock_db = AsyncMock()
         mock_user = MagicMock()
         mock_user.id = self.TEST_USER_ID
@@ -139,7 +200,21 @@ class TestScoresPostIntegration:
         mock_snapshot = MagicMock()
         mock_snapshot.id = 1
         mock_snapshot.beatmap_id = self.TEST_BEATMAP_ID
-        mock_db.get.side_effect = [mock_user, mock_beatmap, mock_snapshot, None]
+
+        async def mock_get(model, **kwargs):
+            if model == User and kwargs.get("_include", {}).get("roles"):
+                return admin_role_user
+            if model == User:
+                return mock_user
+            if model == Beatmap:
+                return mock_beatmap
+            if model == BeatmapSnapshot:
+                return mock_snapshot
+            if model == Leaderboard:
+                return None
+            return None
+
+        mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.add = AsyncMock()
 
         test_client = TestClientWithMocks(mock_db=mock_db)
@@ -154,8 +229,10 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_duplicate_score(self, TestClientWithMocks, valid_score_body, security_disabled, authenticated_user_id):
+    async def test_admin_duplicate_score(self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled):
         """Test score submission fails when duplicate exists."""
+        from app.database.models import User, Beatmap, BeatmapSnapshot, Leaderboard, Score
+
         mock_db = AsyncMock()
         mock_user = MagicMock()
         mock_user.id = self.TEST_USER_ID
@@ -166,6 +243,24 @@ class TestScoresPostIntegration:
         mock_snapshot.beatmap_id = self.TEST_BEATMAP_ID
         mock_leaderboard = MagicMock()
         mock_leaderboard.id = 1
+        mock_existing_score = MagicMock()
+
+        async def mock_get(model, **kwargs):
+            if model == User and kwargs.get("_include", {}).get("roles"):
+                return admin_role_user
+            if model == User:
+                return mock_user
+            if model == Beatmap:
+                return mock_beatmap
+            if model == BeatmapSnapshot:
+                return mock_snapshot
+            if model == Leaderboard:
+                return mock_leaderboard
+            if model == Score:
+                return mock_existing_score
+            return None
+
+        mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.add = AsyncMock()
 
         test_client = TestClientWithMocks(mock_db=mock_db)
@@ -306,8 +401,12 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_bypass_security_with_flag(self, TestClientWithMocks, valid_score_body, security_disabled):
-        """Test security disabled bypasses authorization."""
+    async def test_bypass_security_with_flag(self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled):
+        """Test that disabling security resolves an admin dev identity (rather than
+        skipping the check outright), letting the request through.
+        """
+        from app.database.models import User, Beatmap, BeatmapSnapshot, Leaderboard, Score
+
         mock_db = AsyncMock()
         mock_user = MagicMock()
         mock_user.id = self.TEST_USER_ID
@@ -318,13 +417,23 @@ class TestScoresPostIntegration:
         mock_snapshot.beatmap_id = self.TEST_BEATMAP_ID
         mock_leaderboard = MagicMock()
         mock_leaderboard.id = 1
-        mock_db.get.side_effect = [
-            mock_user,
-            mock_beatmap,
-            mock_snapshot,
-            mock_leaderboard,
-            None,
-        ]
+
+        async def mock_get(model, **kwargs):
+            if model == User and kwargs.get("_include", {}).get("roles"):
+                return admin_role_user
+            if model == User:
+                return mock_user
+            if model == Beatmap:
+                return mock_beatmap
+            if model == BeatmapSnapshot:
+                return mock_snapshot
+            if model == Leaderboard:
+                return mock_leaderboard
+            if model == Score:
+                return None
+            return None
+
+        mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.add = AsyncMock()
 
         test_client = TestClientWithMocks(mock_db=mock_db)

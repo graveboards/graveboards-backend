@@ -45,15 +45,29 @@ class TestProfilesGetIntegration:
     @pytest.mark.asyncio
     async def test_admin_can_get_profile_by_user_id(self, TestClientWithMocks, security_disabled):
         """Test admin can get profile by user id."""
-        from app.database.models import Profile
+        from app.database.models import Profile, User
+        from app.database.enums import RoleName
 
         mock_db = AsyncMock()
-        
+
         profile = Profile()
         profile.id = 1
         profile.user_id = self.TEST_USER_ID
-        
-        mock_db.get = AsyncMock(return_value=profile)
+
+        admin_role = MagicMock()
+        admin_role.name = RoleName.ADMIN
+        mock_admin_user = MagicMock()
+        mock_admin_user.roles = [admin_role]
+
+        # GET /profiles/{user_id} is ownership_authorization-gated: with security
+        # disabled, the resolved dev identity needs to be admin-roled (or match
+        # TEST_USER_ID) to pass the ownership check before the handler's own lookup.
+        async def mock_get(model, **kwargs):
+            if model == User and kwargs.get("_include", {}).get("roles"):
+                return mock_admin_user
+            return profile
+
+        mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.update = AsyncMock()
 
         test_client = TestClientWithMocks(mock_db=mock_db)
@@ -68,8 +82,22 @@ class TestProfilesGetIntegration:
     @pytest.mark.asyncio
     async def test_admin_profile_not_found(self, TestClientWithMocks, security_disabled):
         """Test admin gets 404 when profile doesn't exist."""
+        from app.database.models import User
+        from app.database.enums import RoleName
+
         mock_db = AsyncMock()
-        mock_db.get = AsyncMock(return_value=None)
+
+        admin_role = MagicMock()
+        admin_role.name = RoleName.ADMIN
+        mock_admin_user = MagicMock()
+        mock_admin_user.roles = [admin_role]
+
+        async def mock_get(model, **kwargs):
+            if model == User and kwargs.get("_include", {}).get("roles"):
+                return mock_admin_user
+            return None
+
+        mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.update = AsyncMock()
 
         test_client = TestClientWithMocks(mock_db=mock_db)

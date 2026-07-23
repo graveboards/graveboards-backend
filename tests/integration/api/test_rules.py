@@ -46,10 +46,21 @@ class TestRestrictionsOnRequestSubmission:
             async def __aexit__(self, *args):
                 pass
 
+        from app.database.enums import RoleName
+
+        admin_role = MagicMock()
+        admin_role.name = RoleName.ADMIN.value
+        mock_admin_user = MagicMock()
+        mock_admin_user.roles = [admin_role]
+
         mock_db = AsyncMock()
         mock_db.get.side_effect = [
             mock_queue,
-            None,
+            # With security disabled, post() now resolves a real dev identity and
+            # checks is_admin() (db.get(User, ...)) before falling through to the
+            # enforce_user_id_match check - admin here reproduces this suite's
+            # original "caller may submit whatever user_id the body carries" intent.
+            mock_admin_user,
             None,
         ]
         mock_db.add = AsyncMock()
@@ -187,10 +198,21 @@ class TestRestrictionsOnRequestSubmission:
             async def __aexit__(self, *args):
                 pass
 
+        from app.database.enums import RoleName
+
+        admin_role = MagicMock()
+        admin_role.name = RoleName.ADMIN.value
+        mock_admin_user = MagicMock()
+        mock_admin_user.roles = [admin_role]
+
         mock_db = AsyncMock()
         mock_db.get.side_effect = [
             mock_queue,
-            None,
+            # With security disabled, post() now resolves a real dev identity and
+            # checks is_admin() (db.get(User, ...)) before falling through to the
+            # enforce_user_id_match check - admin here reproduces this suite's
+            # original "caller may submit whatever user_id the body carries" intent.
+            mock_admin_user,
             None,
         ]
         mock_db.add = AsyncMock()
@@ -323,10 +345,21 @@ class TestRestrictionsOnRequestSubmission:
             async def __aexit__(self, *args):
                 pass
 
+        from app.database.enums import RoleName
+
+        admin_role = MagicMock()
+        admin_role.name = RoleName.ADMIN.value
+        mock_admin_user = MagicMock()
+        mock_admin_user.roles = [admin_role]
+
         mock_db = AsyncMock()
         mock_db.get.side_effect = [
             mock_queue,
-            None,
+            # With security disabled, post() now resolves a real dev identity and
+            # checks is_admin() (db.get(User, ...)) before falling through to the
+            # enforce_user_id_match check - admin here reproduces this suite's
+            # original "caller may submit whatever user_id the body carries" intent.
+            mock_admin_user,
             None,
         ]
         mock_db.add = AsyncMock()
@@ -462,10 +495,21 @@ class TestRestrictionsOnRequestSubmission:
             async def __aexit__(self, *args):
                 pass
 
+        from app.database.enums import RoleName
+
+        admin_role = MagicMock()
+        admin_role.name = RoleName.ADMIN.value
+        mock_admin_user = MagicMock()
+        mock_admin_user.roles = [admin_role]
+
         mock_db = AsyncMock()
         mock_db.get.side_effect = [
             mock_queue,
-            None,
+            # With security disabled, post() now resolves a real dev identity and
+            # checks is_admin() (db.get(User, ...)) before falling through to the
+            # enforce_user_id_match check - admin here reproduces this suite's
+            # original "caller may submit whatever user_id the body carries" intent.
+            mock_admin_user,
             None,
         ]
         mock_db.add = AsyncMock()
@@ -582,10 +626,21 @@ class TestRestrictionsOnRequestSubmission:
             async def __aexit__(self, *args):
                 pass
 
+        from app.database.enums import RoleName
+
+        admin_role = MagicMock()
+        admin_role.name = RoleName.ADMIN.value
+        mock_admin_user = MagicMock()
+        mock_admin_user.roles = [admin_role]
+
         mock_db = AsyncMock()
         mock_db.get.side_effect = [
             mock_queue,
-            None,
+            # With security disabled, post() now resolves a real dev identity and
+            # checks is_admin() (db.get(User, ...)) before falling through to the
+            # enforce_user_id_match check - admin here reproduces this suite's
+            # original "caller may submit whatever user_id the body carries" intent.
+            mock_admin_user,
             None,
         ]
         mock_db.add = AsyncMock()
@@ -716,10 +771,21 @@ class TestRestrictionsOnRequestSubmission:
             async def __aexit__(self, *args):
                 pass
 
+        from app.database.enums import RoleName
+
+        admin_role = MagicMock()
+        admin_role.name = RoleName.ADMIN.value
+        mock_admin_user = MagicMock()
+        mock_admin_user.roles = [admin_role]
+
         mock_db = AsyncMock()
         mock_db.get.side_effect = [
             mock_queue,
-            None,
+            # With security disabled, post() now resolves a real dev identity and
+            # checks is_admin() (db.get(User, ...)) before falling through to the
+            # enforce_user_id_match check - admin here reproduces this suite's
+            # original "caller may submit whatever user_id the body carries" intent.
+            mock_admin_user,
             None,
         ]
         mock_db.add = AsyncMock()

@@ -13,16 +13,37 @@ class TestUsersGetIntegration:
     TEST_USER_ID = 12345678
     TEST_USER_ID_2 = 87654321
 
+    @staticmethod
+    def _mock_admin_dev_identity():
+        """A User mock role_authorization's role check resolves the (disabled-security)
+        dev identity to - admin-roled, matching DEV_ADMIN_USER_ID's default behavior."""
+        from app.database.enums import RoleName
+
+        admin_role = MagicMock()
+        admin_role.name = RoleName.ADMIN
+        mock_admin_user = MagicMock()
+        mock_admin_user.roles = [admin_role]
+        return mock_admin_user
+
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_can_get_users_list(self, TestClientWithMocks, security_disabled):
         """Test admin can get users list."""
+        from app.database.models import User
+
         mock_db = AsyncMock()
-        
+        mock_admin_user = self._mock_admin_dev_identity()
+
         # Return plain dicts that match the schema format
         user1 = {"id": self.TEST_USER_ID, "profile": None, "roles": []}
         user2 = {"id": self.TEST_USER_ID_2, "profile": None, "roles": []}
-        
+
+        async def mock_get(model, **kwargs):
+            if model == User and kwargs.get("_include", {}).get("roles"):
+                return mock_admin_user
+            return None
+
+        mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.get_many = AsyncMock(return_value=[user1, user2])
         mock_db.update = AsyncMock()
 
@@ -39,11 +60,19 @@ class TestUsersGetIntegration:
     @pytest.mark.asyncio
     async def test_admin_can_get_user_by_id(self, TestClientWithMocks, security_disabled):
         """Test admin can get user by id."""
+        from app.database.models import User
+
         mock_db = AsyncMock()
-        
+        mock_admin_user = self._mock_admin_dev_identity()
+
         user = {"id": self.TEST_USER_ID, "profile": None, "roles": []}
-        
-        mock_db.get = AsyncMock(return_value=user)
+
+        async def mock_get(model, **kwargs):
+            if model == User and kwargs.get("_include", {}).get("roles"):
+                return mock_admin_user
+            return user
+
+        mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.update = AsyncMock()
 
         test_client = TestClientWithMocks(mock_db=mock_db)
@@ -58,8 +87,17 @@ class TestUsersGetIntegration:
     @pytest.mark.asyncio
     async def test_admin_user_not_found(self, TestClientWithMocks, security_disabled):
         """Test admin gets 404 when user doesn't exist."""
+        from app.database.models import User
+
         mock_db = AsyncMock()
-        mock_db.get = AsyncMock(return_value=None)
+        mock_admin_user = self._mock_admin_dev_identity()
+
+        async def mock_get(model, **kwargs):
+            if model == User and kwargs.get("_include", {}).get("roles"):
+                return mock_admin_user
+            return None
+
+        mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.update = AsyncMock()
 
         test_client = TestClientWithMocks(mock_db=mock_db)
@@ -72,13 +110,25 @@ class TestUsersGetIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_bypass_security_with_flag(self, TestClientWithMocks, security_disabled):
-        """Test security disabled bypasses authorization."""
+    async def test_security_disabled_resolves_dev_identity(self, TestClientWithMocks, security_disabled):
+        """Test that disabling security resolves a real (admin) dev identity rather
+        than skipping the role check outright - the endpoint still succeeds, but
+        because the resolved identity is admin-roled, not because checks were skipped.
+        """
+        from app.database.models import User
+
         mock_db = AsyncMock()
-        
+        mock_admin_user = self._mock_admin_dev_identity()
+
         user1 = {"id": self.TEST_USER_ID, "profile": None, "roles": []}
         user2 = {"id": self.TEST_USER_ID_2, "profile": None, "roles": []}
-        
+
+        async def mock_get(model, **kwargs):
+            if model == User and kwargs.get("_include", {}).get("roles"):
+                return mock_admin_user
+            return None
+
+        mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.get_many = AsyncMock(return_value=[user1, user2])
         mock_db.update = AsyncMock()
 
