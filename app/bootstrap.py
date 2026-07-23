@@ -5,10 +5,19 @@ from datetime import timedelta
 from app.redis import RedisClient, Namespace
 from app.database import PostgresqlDB
 from app.database.models import ApiKey, ScoreFetcherTask, User, Role, Queue
+from app.database.enums import RoleName
 from app.security.api_key import generate_api_key, hash_api_key
 from app.utils import aware_utcnow
 from app.logging import get_logger
-from app.config import BootstrapConfig, DEBUG, DEBUG_API_KEY, JWT_SECRET_KEY
+from app.config import (
+    BootstrapConfig,
+    DEBUG,
+    DEBUG_API_KEY,
+    DEV_ADMIN_USER_ID,
+    DEV_USER_ID,
+    JWT_SECRET_KEY,
+    get_security_enabled,
+)
 
 
 def _get_debug_api_key() -> str:
@@ -86,6 +95,33 @@ class SetupRunner:
                         session=session,
                     )
                     logger.debug(f"Enabled score fetcher for user: {user_cfg.user_id}")
+
+    async def seed_dev_identities(self):
+        """Create the seeded users a dev server impersonates when security is disabled.
+
+        No-op whenever security is enabled, so this never runs against prod - unlike
+        ``initial_users`` (config/bootstrap.yaml, shared with prod), these are sentinel
+        IDs that only need to exist locally for ``resolve_dev_caller_id()``
+        (app/security/dev_identity.py) to have a real user/role to authorize against.
+        """
+        if get_security_enabled():
+            return
+
+        logger = get_logger(__name__)
+
+        async with self.db.session(autoflush=False) as session:
+            admin_role = await self.db.get(Role, name=RoleName.ADMIN.value, session=session)
+            dev_identities = [
+                (DEV_ADMIN_USER_ID, [admin_role] if admin_role else []),
+                (DEV_USER_ID, []),
+            ]
+
+            for user_id, roles in dev_identities:
+                existing_user = await self.db.get(User, id=user_id, session=session)
+
+                if existing_user is None:
+                    await self.db.add(User, id=user_id, roles=roles, session=session)
+                    logger.debug(f"Created dev identity: {user_id}")
 
     async def seed_api_keys(self):
         """Generate API keys for users with generate_api_key=True."""
