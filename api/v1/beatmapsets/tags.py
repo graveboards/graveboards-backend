@@ -3,7 +3,7 @@ from connexion import request
 from api.decorators import api_query
 from api.utils import build_pydantic_include
 from app.database import PostgresqlDB
-from app.database.models import ModelClass, BeatmapsetTag
+from app.database.models import BeatmapsetTag, ModelClass
 from app.database.schemas import BeatmapsetTagSchema
 from app.exceptions import NotFound
 from app.spec import get_include_schema
@@ -15,10 +15,7 @@ __all__ = ["search", "get"]
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
 
-    beatmapset_tags = await db.get_many(
-        BeatmapsetTag,
-        **kwargs
-    )
+    beatmapset_tags = await db.get_many(BeatmapsetTag, **kwargs)
 
     if not beatmapset_tags:
         return [], 200, {"Content-Type": "application/json"}
@@ -26,7 +23,7 @@ async def search(**kwargs):
     include = build_pydantic_include(
         obj=beatmapset_tags[0],
         include_schema=get_include_schema(ModelClass.BEATMAPSET_TAG),
-        request_include=kwargs.get("_include")
+        request_include=kwargs.get("_include"),
     )
 
     beatmapset_tags_data = [
@@ -41,11 +38,7 @@ async def search(**kwargs):
 async def get(beatmapset_tag_id: int, **kwargs):
     db: PostgresqlDB = request.state.db
 
-    beatmapset_tag = await db.get(
-        BeatmapsetTag,
-        id=beatmapset_tag_id,
-        **kwargs
-    )
+    beatmapset_tag = await db.get(BeatmapsetTag, id=beatmapset_tag_id, **kwargs)
 
     if not beatmapset_tag:
         raise NotFound(f"BeatmapsetTag with id '{beatmapset_tag_id}' not found")
@@ -53,9 +46,11 @@ async def get(beatmapset_tag_id: int, **kwargs):
     include = build_pydantic_include(
         obj=beatmapset_tag,
         include_schema=get_include_schema(ModelClass.BEATMAPSET_TAG),
-        request_include=kwargs.get("_include")
+        request_include=kwargs.get("_include"),
     )
 
-    beatmapset_tag_data = BeatmapsetTagSchema.model_validate(beatmapset_tag).model_dump(include=include)
+    beatmapset_tag_data = BeatmapsetTagSchema.model_validate(beatmapset_tag).model_dump(
+        include=include
+    )
 
     return beatmapset_tag_data, 200, {"Content-Type": "application/json"}

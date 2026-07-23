@@ -1,32 +1,32 @@
 from enum import Enum
 from typing import Any
 
-from sqlalchemy.sql.elements import ColumnElement
-from sqlalchemy.orm.mapper import Mapper
-from sqlalchemy.inspection import inspect
 from sqlalchemy.ext.hybrid import HybridExtensionType
+from sqlalchemy.inspection import inspect
+from sqlalchemy.orm.mapper import Mapper
+from sqlalchemy.sql.elements import ColumnElement
 
-from .base import BaseType
-from .user import User
-from .role import Role
-from .profile import Profile
 from .api_key import ApiKey
-from .oauth_token import OAuthToken
-from .score_fetcher_task import ScoreFetcherTask
-from .profile_fetcher_task import ProfileFetcherTask
+from .base import BaseType
 from .beatmap import Beatmap
-from .beatmap_snapshot import BeatmapSnapshot
 from .beatmap_listing import BeatmapListing
-from .beatmapset import Beatmapset
-from .beatmapset_snapshot import BeatmapsetSnapshot
-from .beatmapset_listing import BeatmapsetListing
-from .leaderboard import Leaderboard
-from .score import Score
-from .queue import Queue
-from .request import Request
-from .beatmapset_tag import BeatmapsetTag
+from .beatmap_snapshot import BeatmapSnapshot
 from .beatmap_tag import BeatmapTag
+from .beatmapset import Beatmapset
+from .beatmapset_listing import BeatmapsetListing
+from .beatmapset_snapshot import BeatmapsetSnapshot
+from .beatmapset_tag import BeatmapsetTag
+from .leaderboard import Leaderboard
+from .oauth_token import OAuthToken
+from .profile import Profile
+from .profile_fetcher_task import ProfileFetcherTask
+from .queue import Queue
 from .queue_rule import QueueRule
+from .request import Request
+from .role import Role
+from .score import Score
+from .score_fetcher_task import ScoreFetcherTask
+from .user import User
 
 
 class ModelClass(Enum):
@@ -65,8 +65,11 @@ class ModelClass(Enum):
 
         for column in self.mapper.columns:
             if (
-                not column.primary_key and not column.nullable and column.default is None
-                or column.primary_key and not column.autoincrement
+                not column.primary_key
+                and not column.nullable
+                and column.default is None
+                or column.primary_key
+                and not column.autoincrement
             ):
                 required_columns.add(column.name)
 
@@ -82,7 +85,11 @@ class ModelClass(Enum):
 
     @property
     def hybrid_property_names(self) -> set[str]:
-        return {name for name, attr in self.mapper.all_orm_descriptors.items() if attr.extension_type in HybridExtensionType}
+        return {
+            name
+            for name, attr in self.mapper.all_orm_descriptors.items()
+            if attr.extension_type in HybridExtensionType
+        }
 
     @property
     def all_names(self) -> set[str]:

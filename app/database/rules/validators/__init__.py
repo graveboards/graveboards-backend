@@ -1,25 +1,25 @@
-from app.database.rules.validators.rate_limit import RateLimitRestriction
-from app.database.rules.validators.cooldown import CooldownRestriction
-from app.database.rules.validators.blacklist import BlacklistRestriction
 from app.database.rules.validators.beatmap import (
-    DurationRestriction,
-    StarRatingRestriction,
     ARRangeRestriction,
-    ODRangeRestriction,
-    HPRangeRestriction,
-    CSRangeRestriction,
-    DrainRangeRestriction,
     BPMRestriction,
-    GenreRestriction,
-    LanguageRestriction,
-    ModeRestriction,
-    DifficultyCountRestriction,
-    StoryboardRestriction,
-    VideoRestriction,
-    TagsRestriction,
-    LengthRestriction,
     CombinationRestriction,
+    CSRangeRestriction,
+    DifficultyCountRestriction,
+    DrainRangeRestriction,
+    DurationRestriction,
+    GenreRestriction,
+    HPRangeRestriction,
+    LanguageRestriction,
+    LengthRestriction,
+    ModeRestriction,
+    ODRangeRestriction,
+    StarRatingRestriction,
+    StoryboardRestriction,
+    TagsRestriction,
+    VideoRestriction,
 )
+from app.database.rules.validators.blacklist import BlacklistRestriction
+from app.database.rules.validators.cooldown import CooldownRestriction
+from app.database.rules.validators.rate_limit import RateLimitRestriction
 
 __all__ = [
     "RateLimitRestriction",

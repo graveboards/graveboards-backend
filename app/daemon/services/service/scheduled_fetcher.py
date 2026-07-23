@@ -1,16 +1,17 @@
 import asyncio
-from datetime import datetime, timedelta
-from typing import ClassVar, Any
 from abc import ABC
+from datetime import datetime, timedelta
+from typing import Any, ClassVar
 
-from app.redis import RedisClient
 from app.database import PostgresqlDB
 from app.database.models import Base
-from app.utils import aware_utcnow
 from app.logging import Logger
 from app.osu_api import OsuAPIClient
-from .scheduled import ScheduledService
+from app.redis import RedisClient
+from app.utils import aware_utcnow
+
 from .job import JobLoadInstruction
+from .scheduled import ScheduledService
 
 DEFAULT_FETCH_CONCURRENCY = 5
 DEFAULT_FETCH_INTERVAL_HOURS = 24.0
@@ -44,7 +45,7 @@ class ScheduledFetcherService(ScheduledService, ABC):
         fetch_interval_hours: float = DEFAULT_FETCH_INTERVAL_HOURS,
         fetch_distributed_spacing_seconds: float = DEFAULT_FETCH_DISTRIBUTED_SPACING_SECONDS,
         pending_record_timeout_seconds: float = DEFAULT_PENDING_RECORD_TIMEOUT_SECONDS,
-        fallback_delay_hours: float = DEFAULT_FALLBACK_DELAY_HOURS
+        fallback_delay_hours: float = DEFAULT_FALLBACK_DELAY_HOURS,
     ) -> None:
         """
         Initialize the service.
@@ -77,7 +78,7 @@ class ScheduledFetcherService(ScheduledService, ABC):
             db,
             job_concurrency=fetch_concurrency,
             job_interval_hours=fetch_interval_hours,
-            job_distributed_spacing_seconds=fetch_distributed_spacing_seconds
+            job_distributed_spacing_seconds=fetch_distributed_spacing_seconds,
         )
 
         self._db = db
@@ -101,10 +102,7 @@ class ScheduledFetcherService(ScheduledService, ABC):
             return JobLoadInstruction(execution_time=fallback_time)
 
     async def _get_pending_record(
-        self,
-        record_id: int,
-        timeout: float = None,
-        interval_seconds: float = 0.5
+        self, record_id: int, timeout: float = None, interval_seconds: float = 0.5
     ) -> Any:
         """Wait for a pending record to become available.
 

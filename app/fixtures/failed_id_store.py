@@ -4,9 +4,9 @@ Persists failed IDs uncapped in Redis sets for O(1) lookup.
 Provides a simple API for checking and adding failed IDs across categories.
 """
 
-from typing import Iterable
+from collections.abc import Iterable
 
-from app.redis import RedisClient, Namespace
+from app.redis import Namespace, RedisClient
 
 
 class FailedIdStore:

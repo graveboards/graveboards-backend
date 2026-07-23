@@ -1,12 +1,13 @@
 import struct
 from collections import defaultdict
+from collections.abc import Generator
 from enum import IntFlag, auto
-from typing import Generator, Optional, Annotated
+from typing import Annotated
 
-from pydantic.main import BaseModel
+from pydantic.config import ConfigDict
 from pydantic.fields import Field
 from pydantic.functional_validators import model_validator
-from pydantic.config import ConfigDict
+from pydantic.main import BaseModel
 
 from app.exceptions import AllValuesNullError
 from app.search.enums import Scope, SearchableFieldCategory
@@ -19,9 +20,10 @@ class BeatmapFieldWeights(BaseModel):
     Weights must be within signed byte range (``-128`` to ``127``). ``None`` disables
     scoring for the field.
     """
+
     model_config = ConfigDict(extra="forbid")
 
-    version: Optional[Annotated[int, Field(ge=-128, le=127)]] = 2
+    version: Annotated[int, Field(ge=-128, le=127)] | None = 2
 
 
 class BeatmapsetFieldWeights(BaseModel):
@@ -30,16 +32,17 @@ class BeatmapsetFieldWeights(BaseModel):
     Weights must be within signed byte range (``-128`` to ``127``). ``None`` disables
     scoring for the field.
     """
+
     model_config = ConfigDict(extra="forbid")
 
-    title: Optional[Annotated[int, Field(ge=-128, le=127)]] = 5
-    title_unicode: Optional[Annotated[int, Field(ge=-128, le=127)]] = 5
-    artist: Optional[Annotated[int, Field(ge=-128, le=127)]] = 4
-    artist_unicode: Optional[Annotated[int, Field(ge=-128, le=127)]] = 4
-    creator: Optional[Annotated[int, Field(ge=-128, le=127)]] = 3
-    source: Optional[Annotated[int, Field(ge=-128, le=127)]] = 2
-    tags: Optional[Annotated[int, Field(ge=-128, le=127)]] = 1
-    description: Optional[Annotated[int, Field(ge=-128, le=127)]] = 0
+    title: Annotated[int, Field(ge=-128, le=127)] | None = 5
+    title_unicode: Annotated[int, Field(ge=-128, le=127)] | None = 5
+    artist: Annotated[int, Field(ge=-128, le=127)] | None = 4
+    artist_unicode: Annotated[int, Field(ge=-128, le=127)] | None = 4
+    creator: Annotated[int, Field(ge=-128, le=127)] | None = 3
+    source: Annotated[int, Field(ge=-128, le=127)] | None = 2
+    tags: Annotated[int, Field(ge=-128, le=127)] | None = 1
+    description: Annotated[int, Field(ge=-128, le=127)] | None = 0
 
 
 class QueueFieldWeights(BaseModel):
@@ -48,10 +51,11 @@ class QueueFieldWeights(BaseModel):
     Weights must be within signed byte range (``-128`` to ``127``). ``None`` disables
     scoring for the field.
     """
+
     model_config = ConfigDict(extra="forbid")
 
-    name: Optional[Annotated[int, Field(ge=-128, le=127)]] = 6
-    description: Optional[Annotated[int, Field(ge=-128, le=127)]] = 0
+    name: Annotated[int, Field(ge=-128, le=127)] | None = 6
+    description: Annotated[int, Field(ge=-128, le=127)] | None = 0
 
 
 class RequestFieldWeights(BaseModel):
@@ -60,9 +64,10 @@ class RequestFieldWeights(BaseModel):
     Weights must be within signed byte range (``-128`` to ``127``). ``None`` disables
     scoring for the field.
     """
+
     model_config = ConfigDict(extra="forbid")
 
-    comment: Optional[Annotated[int, Field(ge=-128, le=127)]] = 0
+    comment: Annotated[int, Field(ge=-128, le=127)] | None = 0
 
 
 class FieldWeights(BaseModel):
@@ -71,6 +76,7 @@ class FieldWeights(BaseModel):
     Controls per-field contribution to relevance scoring. Supports compact bitmask-based
     serialization.
     """
+
     model_config = ConfigDict(extra="forbid")
 
     beatmap: BeatmapFieldWeights = Field(default_factory=BeatmapFieldWeights)
@@ -145,9 +151,12 @@ class FieldWeights(BaseModel):
         null_presence = 0
         chunks = []
 
-        def iter_fields() -> Generator[tuple[str, int], None, None]:
+        def iter_fields() -> Generator[tuple[str, int]]:
             for category_name, defaults in _DEFAULTS.items():
-                if SearchableFieldCategory.from_name(category_name) not in SCOPE_CATEGORIES_MAPPING[scope]:
+                if (
+                    SearchableFieldCategory.from_name(category_name)
+                    not in SCOPE_CATEGORIES_MAPPING[scope]
+                ):
                     continue
 
                 model = getattr(self, category_name)
@@ -171,7 +180,7 @@ class FieldWeights(BaseModel):
         return presence_byte + null_presence_byte + b"".join(chunks)
 
     @classmethod
-    def deserialize(cls, data: bytes, offset: int = 0) -> tuple["FieldWeights", int]:
+    def deserialize(cls, data: bytes, offset: int = 0) -> tuple[FieldWeights, int]:
         """Deserialize binary data into a ``FieldWeights`` instance.
 
         Args:

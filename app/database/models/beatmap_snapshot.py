@@ -1,22 +1,27 @@
 from datetime import datetime
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
-from sqlalchemy.sql.schema import ForeignKey, UniqueConstraint
-from sqlalchemy.sql.sqltypes import Integer, String, DateTime, Float, Boolean
-from sqlalchemy.orm import relationship, mapped_column
-from sqlalchemy.orm.base import Mapped
 from sqlalchemy.dialects.postgresql.json import JSONB
+from sqlalchemy.orm import mapped_column, relationship
+from sqlalchemy.orm.base import Mapped
+from sqlalchemy.sql.schema import ForeignKey, UniqueConstraint
+from sqlalchemy.sql.sqltypes import Boolean, Float, Integer, String
 
 from app.utils import aware_utcnow
+
+from .associations import (
+    beatmap_snapshot_beatmapset_snapshot_association,
+    beatmap_snapshot_owner_association,
+    beatmap_tag_beatmap_snapshot_association,
+)
 from .base import Base
-from .associations import beatmap_snapshot_beatmapset_snapshot_association, beatmap_snapshot_owner_association, beatmap_tag_beatmap_snapshot_association
 from .types import AwareDateTime
 
 if TYPE_CHECKING:
+    from .beatmap_tag import BeatmapTag
     from .beatmapset_snapshot import BeatmapsetSnapshot
     from .leaderboard import Leaderboard
     from .profile import Profile
-    from .beatmap_tag import BeatmapTag
 
 
 class BeatmapSnapshot(Base):
@@ -37,10 +42,10 @@ class BeatmapSnapshot(Base):
     count_sliders: Mapped[int] = mapped_column(Integer, nullable=False)
     count_spinners: Mapped[int] = mapped_column(Integer, nullable=False)
     cs: Mapped[float] = mapped_column(Float, nullable=False)
-    deleted_at: Mapped[Optional[datetime]] = mapped_column(AwareDateTime())
+    deleted_at: Mapped[datetime | None] = mapped_column(AwareDateTime())
     difficulty_rating: Mapped[float] = mapped_column(Float, nullable=False)
     drain: Mapped[float] = mapped_column(Float, nullable=False)
-    failtimes: Mapped[dict[str, Optional[list[int]]]] = mapped_column(JSONB, nullable=False)
+    failtimes: Mapped[dict[str, list[int] | None]] = mapped_column(JSONB, nullable=False)
     hit_length: Mapped[int] = mapped_column(Integer, nullable=False)
     is_scoreable: Mapped[bool] = mapped_column(Boolean, nullable=False)
     last_updated: Mapped[datetime] = mapped_column(AwareDateTime(), nullable=False)
@@ -56,27 +61,20 @@ class BeatmapSnapshot(Base):
     version: Mapped[str] = mapped_column(String, nullable=False)
 
     # Relationships
-    beatmapset_snapshots: Mapped[list["BeatmapsetSnapshot"]] = relationship(
+    beatmapset_snapshots: Mapped[list[BeatmapsetSnapshot]] = relationship(
         "BeatmapsetSnapshot",
         secondary=beatmap_snapshot_beatmapset_snapshot_association,
         back_populates="beatmap_snapshots",
-        lazy=True
+        lazy=True,
     )
-    beatmap_tags: Mapped[list["BeatmapTag"]] = relationship(
-        "BeatmapTag",
-        secondary=beatmap_tag_beatmap_snapshot_association,
-        lazy=True
+    beatmap_tags: Mapped[list[BeatmapTag]] = relationship(
+        "BeatmapTag", secondary=beatmap_tag_beatmap_snapshot_association, lazy=True
     )
-    leaderboard: Mapped["Leaderboard"] = relationship(
-        "Leaderboard",
-        uselist=False,
-        back_populates="beatmap_snapshot",
-        lazy=True
+    leaderboard: Mapped[Leaderboard] = relationship(
+        "Leaderboard", uselist=False, back_populates="beatmap_snapshot", lazy=True
     )
-    owner_profiles: Mapped[list["Profile"]] = relationship(
-        "Profile",
-        secondary=beatmap_snapshot_owner_association,
-        lazy=True
+    owner_profiles: Mapped[list[Profile]] = relationship(
+        "Profile", secondary=beatmap_snapshot_owner_association, lazy=True
     )
 
     __table_args__ = (

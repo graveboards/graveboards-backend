@@ -1,13 +1,9 @@
-from enum import Enum, StrEnum, IntEnum
-from typing import Callable
+from collections.abc import Callable
+from enum import Enum, IntEnum, StrEnum
 
 from sqlalchemy.sql import operators
 
-__all__ = [
-    "RoleName",
-    "RequestStatus",
-    "FilterOperator"
-]
+__all__ = ["RoleName", "RequestStatus", "FilterOperator"]
 
 
 class RoleName(StrEnum):
@@ -27,6 +23,7 @@ class FilterOperator(Enum):
     Each operator maps a public string identifier (e.g., ``"eq"``) to a callable that
     applies the operation to a database column.
     """
+
     EQ = "eq", staticmethod(operators.eq)
     NEQ = "neq", staticmethod(operators.ne)
     GT = "gt", staticmethod(operators.gt)
@@ -44,7 +41,7 @@ class FilterOperator(Enum):
         self.method = method
 
     @classmethod
-    def from_name(cls, name: str) -> "FilterOperator":
+    def from_name(cls, name: str) -> FilterOperator:
         """Resolve an operator from its string name.
 
         Args:

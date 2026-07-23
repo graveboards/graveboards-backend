@@ -1,8 +1,9 @@
 import asyncio
 import secrets
 import time
-from contextlib import contextmanager, asynccontextmanager
-from typing import AsyncIterator, Generator, Any
+from collections.abc import AsyncIterator, Generator
+from contextlib import asynccontextmanager, contextmanager
+from typing import Any
 
 from redis import Redis
 from redis.asyncio import Redis as AsyncRedis
@@ -10,20 +11,18 @@ from redis.asyncio import Redis as AsyncRedis
 from app.config import REDIS_CONFIGURATION
 from app.exceptions import RedisLockTimeoutError
 from app.logging import get_logger
-from .constants import LOCK_EXPIRY, LOCK_ACQUISITION_RETRY_INTERVAL, LOCK_ACQUISITION_TIMEOUT
 from app.observability.metrics.redis import (
-    redis_commands_total,
-    redis_commands_duration_seconds,
     redis_cache_hits_total,
     redis_cache_misses_total,
+    redis_commands_duration_seconds,
+    redis_commands_total,
 )
 
-__all__ = [
-    "RedisClient",
-    "redis_connection"
-]
+from .constants import LOCK_ACQUISITION_RETRY_INTERVAL, LOCK_ACQUISITION_TIMEOUT, LOCK_EXPIRY
 
-REDIS_BASE_URL = f"redis://{REDIS_CONFIGURATION["username"]}:***@{REDIS_CONFIGURATION["host"]}:{REDIS_CONFIGURATION["port"]}/{REDIS_CONFIGURATION["db"]}"
+__all__ = ["RedisClient", "redis_connection"]
+
+REDIS_BASE_URL = f"redis://{REDIS_CONFIGURATION['username']}:***@{REDIS_CONFIGURATION['host']}:{REDIS_CONFIGURATION['port']}/{REDIS_CONFIGURATION['db']}"
 logger = get_logger(__name__)
 
 
@@ -33,6 +32,7 @@ class RedisClient(AsyncRedis):
     Designed to centralize redis concerns behind a thin, composable abstraction.
     Uses connection pooling to efficiently reuse connections.
     """
+
     def __init__(self) -> None:
         """Initialize the Redis client using configured connection settings."""
         super().__init__(**REDIS_CONFIGURATION)
@@ -60,11 +60,7 @@ class RedisClient(AsyncRedis):
             redis_commands_duration_seconds.labels(command=command_name).observe(duration)
 
     async def paginate_scan(
-        self,
-        pattern: str,
-        limit: int = None,
-        offset: int = 0,
-        type_: str = None
+        self, pattern: str, limit: int = None, offset: int = 0, type_: str = None
     ) -> list[str]:
         """Scan keys matching a pattern with offset/limit pagination.
 
@@ -106,7 +102,7 @@ class RedisClient(AsyncRedis):
         key: str,
         expiry: int = LOCK_EXPIRY,
         timeout: float = LOCK_ACQUISITION_TIMEOUT,
-        retry_interval: float = LOCK_ACQUISITION_RETRY_INTERVAL
+        retry_interval: float = LOCK_ACQUISITION_RETRY_INTERVAL,
     ) -> AsyncIterator[None]:
         """Acquire a distributed lock using Redis SET NX semantics.
 
@@ -157,7 +153,7 @@ class RedisClient(AsyncRedis):
 
 
 @contextmanager
-def redis_connection() -> Generator[Redis, Any, None]:
+def redis_connection() -> Generator[Redis, Any]:
     """Provide a synchronous Redis connection from the shared pool.
 
     Yields:

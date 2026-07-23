@@ -5,17 +5,15 @@ the osu.sh data archives (https://data.ppy.sh/).
 """
 
 import re
-import asyncio
-from pathlib import Path
-from datetime import datetime
-from typing import Optional
 from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
 
 import httpx
 
 from app.config import PROJECT_ROOT
-from app.logging import get_logger
 from app.fixtures.constants import RULESETS
+from app.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -36,11 +34,11 @@ class ArchiveInfo:
     url: str
     date: datetime
     archive_type: str
-    ruleset: Optional[str] = None
-    selection: Optional[str] = None
-    count: Optional[int] = None
-    compressed_size: Optional[int] = None
-    uncompressed_size: Optional[int] = None
+    ruleset: str | None = None
+    selection: str | None = None
+    count: int | None = None
+    compressed_size: int | None = None
+    uncompressed_size: int | None = None
 
 
 @dataclass
@@ -48,7 +46,7 @@ class ArchiveIndex:
     """Indexed archives with metadata."""
 
     archives: dict[str, ArchiveInfo] = field(default_factory=dict)
-    last_updated: Optional[datetime] = None
+    last_updated: datetime | None = None
     ruleset_archives: dict[str, dict[str, list[ArchiveInfo]]] = field(
         default_factory=lambda: {ruleset: {"top": [], "random": []} for ruleset in RULESETS}
     )
@@ -56,9 +54,9 @@ class ArchiveIndex:
     def get_latest_archive(
         self,
         archive_type: str,
-        ruleset: Optional[str] = None,
-        selection: Optional[str] = None,
-    ) -> Optional[ArchiveInfo]:
+        ruleset: str | None = None,
+        selection: str | None = None,
+    ) -> ArchiveInfo | None:
         """Get the latest archive matching criteria."""
         candidates = []
 
@@ -77,7 +75,7 @@ class ArchiveIndex:
         return max(candidates, key=lambda a: a.date)
 
 
-def parse_archive_filename(filename: str) -> Optional[ArchiveInfo]:
+def parse_archive_filename(filename: str) -> ArchiveInfo | None:
     """Parse an archive filename to extract metadata."""
     osu_files_pattern = r"^(\d{4})_(\d{2})_(\d{2})_osu_files\.tar\.bz2$"
     match = re.match(osu_files_pattern, filename)
@@ -229,7 +227,7 @@ async def refresh_archive_index() -> ArchiveIndex:
     return index
 
 
-async def download_archive(archive_info: ArchiveInfo) -> Optional[Path]:
+async def download_archive(archive_info: ArchiveInfo) -> Path | None:
     """Download an archive from osu.sh."""
     archive_path = ARCHIVE_DIR / archive_info.filename
 
@@ -279,7 +277,7 @@ def cleanup_archives() -> int:
 
 async def extract_sql_from_archive(
     archive_info: ArchiveInfo, allow_download: bool = False
-) -> Optional[Path]:
+) -> Path | None:
     """Extract SQL files from a performance archive.
 
     Args:
@@ -296,7 +294,7 @@ async def extract_sql_from_archive(
 
     if not archive_path.exists():
         if allow_download:
-            logger.info(f"Archive not cached locally, downloading...")
+            logger.info("Archive not cached locally, downloading...")
             archive_path = await download_archive(archive_info)
             if not archive_path:
                 return None
@@ -492,7 +490,7 @@ async def get_beatmap_ids_from_archive(
                             beatmap_id = int(line.split(":")[1].strip())
                             beatmap_ids.add(beatmap_id)
                             break
-            except (ValueError, IOError):
+            except OSError, ValueError:
                 continue
 
     logger.info(f"Extracted {len(beatmap_ids)} beatmap IDs from {archive_info.filename}")

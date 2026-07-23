@@ -64,22 +64,48 @@ markers = [
 
 [tool.black]
 line-length = 100
-target-version = ['py310', 'py311']
+target-version = ['py314']
 include = '\.pyi?$'
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
-select = ["E", "W", "F", "C", "B", "PL", "PT", "ARG"]
-ignore = ["PLR", "B028"]
+target-version = "py314"
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "UP",     # pyupgrade (modernize syntax)
+    "B",      # bugbear
+    "SIM",    # simplify
+    "T20",    # no print
+]
+ignore = [
+    "E501",   # line too long (black handles this)
+    "PLR",    # too many methods/arguments (not enforced)
+    "B028",   # no explicit `stacklevel` keyword argument (not critical)
+    "F403",   # star imports (intentional for re-exports)
+    "F405",   # undefined names from star imports (intentional)
+]
+
+[tool.ruff.lint.per-file-ignores]
 "tests/*" = ["PLR", "S"]
 "manage.py" = ["S"]
-"app/manage/*" = ["S"]
+"app/manage/*" = ["S", "T20"]
+
+[tool.isort]
+profile = "black"
+section_order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+known_first_party = ["app", "api"]
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.14"
 warn_return_any = true
 warn_unused_configs = true
 disallow_incomplete_defs = true

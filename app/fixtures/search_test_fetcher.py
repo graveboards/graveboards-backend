@@ -9,36 +9,18 @@ Uses CoverageRegistry for data-driven bucket tracking instead of 50+ instance at
 
 import json
 import random
-from datetime import datetime, timezone
-from pathlib import Path
+from datetime import UTC, datetime
 from typing import Any
 
-from app.redis import RedisClient
-from app.osu_api.client.osu_api_client import OsuAPIClient
-from app.osu_api.enums import Ruleset
-
-from .metadata_io import load_metadata, save_metadata, load_top_player_ids, save_top_player_ids
-from .paths import get_fixture_path
-from .fetcher import FixtureDataFetcher, FetchEvent
-from .failed_id_store import FailedIdStore
 from app.exceptions import clean_error_msg
-from .id_source import IDSource
-from .constants import (
-    GENRE_IDS,
-    GENRE_NAMES,
-    LANGUAGE_IDS,
-    LANGUAGE_NAMES,
-    COUNTRY_CODES,
-    BEATMAP_STATUSES,
-    BEATMAP_STATUS_NAMES,
-    BEATMAP_MODES,
-    BEATMAP_MODE_NAMES,
-)
-from .search_test_known_ids import (
-    RESTRICTED_BEATMAPSET_IDS,
-    NSFW_BEATMAPSET_IDS,
-)
+from app.redis import RedisClient
+
 from .coverage import CoverageRegistry
+from .failed_id_store import FailedIdStore
+from .fetcher import FixtureDataFetcher
+from .id_source import IDSource
+from .metadata_io import save_metadata
+from .paths import get_fixture_path
 
 
 class SearchTestFixtureFetcher(FixtureDataFetcher):
@@ -221,7 +203,7 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
                     ]
                 ),
             },
-            "last_updated": datetime.now(timezone.utc).isoformat(),
+            "last_updated": datetime.now(UTC).isoformat(),
         }
         save_metadata(self.metadata)
 
@@ -308,9 +290,7 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
                 f"diff={beatmap_data.get('difficulty_rating')})"
             )
 
-        self.metadata["samples"]["beatmaps"]["last_fetched"] = datetime.now(
-            timezone.utc
-        ).isoformat()
+        self.metadata["samples"]["beatmaps"]["last_fetched"] = datetime.now(UTC).isoformat()
         self._save_search_test_coverage_metadata()
         return newly_filled
 
@@ -378,9 +358,7 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
                     self.metadata["samples"]["beatmapsets"].get("count", 0) + 1
                 )
 
-            self.metadata["samples"]["beatmapsets"]["last_fetched"] = datetime.now(
-                timezone.utc
-            ).isoformat()
+            self.metadata["samples"]["beatmapsets"]["last_fetched"] = datetime.now(UTC).isoformat()
             self._save_search_test_coverage_metadata()
 
         return newly_filled
@@ -391,7 +369,6 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
         min_per_bucket: int = 1,
     ) -> dict[str, int]:
         """Fetch random users via rankings and classify into all buckets."""
-        from .constants import RULESETS
         from app.osu_api.enums import Ruleset as RulesetEnum
 
         path = get_fixture_path("users")
@@ -470,6 +447,6 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
             else:
                 ruleset_index += 1
 
-        self.metadata["samples"]["users"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
+        self.metadata["samples"]["users"]["last_fetched"] = datetime.now(UTC).isoformat()
         self._save_search_test_coverage_metadata()
         return newly_filled

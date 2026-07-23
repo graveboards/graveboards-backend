@@ -1,12 +1,12 @@
 from app.database.rules.engine.evaluator import (
-    RuleNode,
-    AtomicRuleNode,
-    CompositeRuleNode,
-    AndNode,
-    OrNode,
-    NotNode,
-    CompositeEvaluator,
     MAX_COMPOSITE_DEPTH,
+    AndNode,
+    AtomicRuleNode,
+    CompositeEvaluator,
+    CompositeRuleNode,
+    NotNode,
+    OrNode,
+    RuleNode,
     build_rule_node,
 )
 

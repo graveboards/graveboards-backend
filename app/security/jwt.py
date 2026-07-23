@@ -1,10 +1,10 @@
 from datetime import timedelta
 
 import jwt
-from jwt.exceptions import InvalidIssuerError, ExpiredSignatureError, InvalidTokenError
+from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 
+from app.config import FRONTEND_BASE_URL, JWT_ALGORITHM, JWT_SECRET_KEY
 from app.utils import aware_utcnow
-from app.config import FRONTEND_BASE_URL, JWT_SECRET_KEY, JWT_ALGORITHM
 
 JWT_LIFETIME_DAYS = 30
 
@@ -42,7 +42,7 @@ def create_token_payload(user_id: int | str) -> dict[str, str | int]:
         "sub": str(user_id),
         "iss": FRONTEND_BASE_URL,
         "iat": int(aware_utcnow().timestamp()),
-        "exp": int((aware_utcnow() + timedelta(days=JWT_LIFETIME_DAYS)).timestamp())
+        "exp": int((aware_utcnow() + timedelta(days=JWT_LIFETIME_DAYS)).timestamp()),
     }
 
 
@@ -80,7 +80,7 @@ def decode_token(token: str) -> dict[str, str | int]:
         key=JWT_SECRET_KEY,
         algorithms=[JWT_ALGORITHM],
         issuer=FRONTEND_BASE_URL,
-        options={"require": ["sub", "iss", "iat", "exp"]}
+        options={"require": ["sub", "iss", "iat", "exp"]},
     )
 
 

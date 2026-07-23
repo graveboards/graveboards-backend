@@ -1,13 +1,12 @@
 import asyncio
 import re
-from typing import Optional
 
 
 async def safe_compile_regex(
-        pattern: str,
-        timeout: float = 0.1,
-        sample: str = "a" * 100,
-) -> Optional[re.Pattern]:
+    pattern: str,
+    timeout: float = 0.1,
+    sample: str = "a" * 100,
+) -> re.Pattern | None:
     """Safely compile a regular expression with timeout protection.
 
     Uses asyncio.to_thread to run blocking regex operations in a thread pool,
@@ -36,5 +35,5 @@ async def safe_compile_regex(
             timeout=timeout,
         )
         return compiled
-    except (asyncio.TimeoutError, re.error, Exception):
+    except TimeoutError, re.error, Exception:
         return None

@@ -2,6 +2,7 @@ import asyncio
 from typing import ClassVar, Never
 
 from app.logging import Logger
+
 from .services import Service, ServiceFactory
 from .services.service.task import BackoffStrategy, TaskFailureHook, TaskMaxRetriesExceededHook
 
@@ -83,7 +84,7 @@ class ServiceSupervisor(Service):
                 backoff=backoff,
                 max_retries=max_retries,
                 on_failure=on_failure,
-                on_max_retries_exceeded=on_max_retries_exceeded
+                on_max_retries_exceeded=on_max_retries_exceeded,
             )
 
     async def wait_stopped(self) -> None:

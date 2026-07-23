@@ -2,26 +2,31 @@ import asyncio
 import json
 import os
 import random
-from datetime import datetime, timezone
+from collections.abc import AsyncIterator, Callable
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import AsyncIterator, Callable, Optional
 
 import httpx
 
-from app.redis import RedisClient
-from app.osu_api.client.osu_api_client import OsuAPIClient
-from app.osu_api.enums import ScoreType, Ruleset
-
-from .metadata_io import load_metadata, save_metadata, load_top_player_ids, save_top_player_ids
-from .paths import get_fixture_path
-from .constants import RULESETS, SCORE_TYPES, ID_RANGES
-from .id_source import IDSource
-from .validation import validate_data
-from .constants import MAX_RETRIES, MAX_RETRIES_SCORES, RANKING_PAGE_SIZE
-from .failed_id_store import FailedIdStore
-from .fetch_loop import FetchConfig, FetchLoop, FetchEvent
-from .progress import ProgressBar
 from app.exceptions import clean_error_msg
+from app.osu_api.client.osu_api_client import OsuAPIClient
+from app.osu_api.enums import Ruleset, ScoreType
+from app.redis import RedisClient
+
+from .constants import (
+    ID_RANGES,
+    MAX_RETRIES,
+    MAX_RETRIES_SCORES,
+    RANKING_PAGE_SIZE,
+    RULESETS,
+    SCORE_TYPES,
+)
+from .failed_id_store import FailedIdStore
+from .fetch_loop import FetchConfig, FetchEvent, FetchLoop
+from .id_source import IDSource
+from .metadata_io import load_metadata, load_top_player_ids, save_metadata, save_top_player_ids
+from .paths import get_fixture_path
+from .validation import validate_data
 
 
 class FixtureDataFetcher:
@@ -115,8 +120,6 @@ class FixtureDataFetcher:
         (e.g. Redis unreachable, network down) rather than transient API errors.
         A connection-level failure won't resolve by retrying with a different ID.
         """
-        import httpx
-
         if error is not None and isinstance(error, httpx.HTTPStatusError):
             return
         self._consecutive_errors += 1
@@ -221,9 +224,7 @@ class FixtureDataFetcher:
             self.logger.warning(f"Only fetched {fetched}/{count} beatmaps")
 
         self.metadata["samples"]["beatmaps"]["count"] += fetched
-        self.metadata["samples"]["beatmaps"]["last_fetched"] = datetime.now(
-            timezone.utc
-        ).isoformat()
+        self.metadata["samples"]["beatmaps"]["last_fetched"] = datetime.now(UTC).isoformat()
         self._mark_metadata_dirty()
         self._flush_metadata()
         self._current_session_results["beatmaps"] = fetched
@@ -249,9 +250,7 @@ class FixtureDataFetcher:
             self.logger.warning(f"Only fetched {fetched}/{count} beatmapsets")
 
         self.metadata["samples"]["beatmapsets"]["count"] += fetched
-        self.metadata["samples"]["beatmapsets"]["last_fetched"] = datetime.now(
-            timezone.utc
-        ).isoformat()
+        self.metadata["samples"]["beatmapsets"]["last_fetched"] = datetime.now(UTC).isoformat()
         self._mark_metadata_dirty()
         self._flush_metadata()
         self._current_session_results["beatmapsets"] = fetched
@@ -325,7 +324,7 @@ class FixtureDataFetcher:
             r: self.metadata["samples"]["users"]["per_ruleset"].get(r, 0) + fetched[r]
             for r in RULESETS
         }
-        self.metadata["samples"]["users"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
+        self.metadata["samples"]["users"]["last_fetched"] = datetime.now(UTC).isoformat()
         self._mark_metadata_dirty()
         self._flush_metadata()
         self._current_session_results["users"] = fetched.copy()
@@ -384,7 +383,7 @@ class FixtureDataFetcher:
             + (fetched if r == ruleset else 0)
             for r in RULESETS
         }
-        self.metadata["samples"]["users"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
+        self.metadata["samples"]["users"]["last_fetched"] = datetime.now(UTC).isoformat()
         self._mark_metadata_dirty()
         self._flush_metadata()
         self._current_session_results["users"] = {
@@ -483,7 +482,7 @@ class FixtureDataFetcher:
             t: self.metadata["samples"]["scores"]["per_type"].get(t, 0) + fetched[t]
             for t in SCORE_TYPES
         }
-        self.metadata["samples"]["scores"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
+        self.metadata["samples"]["scores"]["last_fetched"] = datetime.now(UTC).isoformat()
         self._mark_metadata_dirty()
         self._flush_metadata()
         self._current_session_results["scores"] = fetched.copy()
@@ -554,9 +553,7 @@ class FixtureDataFetcher:
                 break
 
         self.metadata["samples"]["beatmap_scores"]["count"] += fetched
-        self.metadata["samples"]["beatmap_scores"]["last_fetched"] = datetime.now(
-            timezone.utc
-        ).isoformat()
+        self.metadata["samples"]["beatmap_scores"]["last_fetched"] = datetime.now(UTC).isoformat()
         self._mark_metadata_dirty()
         self._flush_metadata()
         self._current_session_results["beatmap_scores"] = fetched
@@ -628,7 +625,7 @@ class FixtureDataFetcher:
 
         self.metadata["samples"]["beatmap_attributes"]["count"] += fetched
         self.metadata["samples"]["beatmap_attributes"]["last_fetched"] = datetime.now(
-            timezone.utc
+            UTC
         ).isoformat()
         self._mark_metadata_dirty()
         self._flush_metadata()
@@ -708,7 +705,7 @@ class FixtureDataFetcher:
 
     async def fetch_top_players(
         self,
-        rulesets: Optional[list[str]] = None,
+        rulesets: list[str] | None = None,
         count_per_ruleset: int = 1000,
     ) -> dict[str, list[int]]:
         if rulesets is None:

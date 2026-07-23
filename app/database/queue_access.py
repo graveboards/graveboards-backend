@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from app.database import PostgresqlDB
 
 
-async def queue_visibility_where(db: "PostgresqlDB", caller_user_id: int | None) -> ColumnElement:
+async def queue_visibility_where(db: PostgresqlDB, caller_user_id: int | None) -> ColumnElement:
     """Build a WHERE condition restricting queues to what a caller may see in a listing.
 
     Queue.visibility: 0 = public (everyone), 1 = unlisted (excluded from listings/
@@ -35,7 +35,7 @@ async def queue_visibility_where(db: "PostgresqlDB", caller_user_id: int | None)
 
 
 async def can_read_queue(
-    db: "PostgresqlDB",
+    db: PostgresqlDB,
     queue: Queue,
     caller_user_id: int | None,
 ) -> bool:
@@ -53,7 +53,7 @@ async def can_read_queue(
 
 
 async def is_queue_owner_or_manager(
-    db: "PostgresqlDB",
+    db: PostgresqlDB,
     queue_id: int,
     caller_user_id: int | None,
 ) -> bool:

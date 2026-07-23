@@ -1,10 +1,6 @@
 from typing import Literal
 
-__all__ = [
-    "RoleNameLiteral",
-    "RequestStatusLiteral",
-    "RequestStatusIntLiteral"
-]
+__all__ = ["RoleNameLiteral", "RequestStatusLiteral", "RequestStatusIntLiteral"]
 
 
 RoleNameLiteral = Literal["admin"]

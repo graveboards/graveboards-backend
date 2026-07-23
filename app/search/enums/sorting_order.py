@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from enum import Enum, IntEnum, auto
-from typing import Callable
 
 from sqlalchemy import asc, desc
 
@@ -9,6 +9,7 @@ class SortingOrder(Enum):
 
     Maps public-facing sort identifiers to ORM ascending or descending functions.
     """
+
     ASCENDING = "asc"
     DESCENDING = "desc"
 
@@ -18,7 +19,7 @@ class SortingOrder(Enum):
         return asc if self is SortingOrder.ASCENDING else desc
 
     @classmethod
-    def from_name(cls, name: str) -> "SortingOrder":
+    def from_name(cls, name: str) -> SortingOrder:
         """Resolve a sorting order from its string name.
 
         Args:

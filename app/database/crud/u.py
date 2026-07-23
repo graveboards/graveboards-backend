@@ -3,16 +3,14 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import BaseType, ModelClass
+
 from .decorators import session_manager
 
 
 class _U:
     @staticmethod
     async def _update_instance(
-        model_class: ModelClass,
-        session: AsyncSession,
-        primary_key: int,
-        **kwargs
+        model_class: ModelClass, session: AsyncSession, primary_key: int, **kwargs
     ) -> BaseType:
         """Update a single model instance by primary key.
 
@@ -69,9 +67,7 @@ class _U:
 
     @staticmethod
     async def _update_instances(
-        model_class: ModelClass,
-        session: AsyncSession,
-        *data: tuple[int, dict[str, Any]]
+        model_class: ModelClass, session: AsyncSession, *data: tuple[int, dict[str, Any]]
     ) -> list[BaseType]:
         """Update multiple model instances by primary key.
 
@@ -104,7 +100,9 @@ class _U:
 
         for i, item in enumerate(data):
             if not isinstance(item, tuple) or len(item) != 2:
-                raise TypeError(f"Update #{i} must be a tuple of (int, dict), got {type(item).__name__}")
+                raise TypeError(
+                    f"Update #{i} must be a tuple of (int, dict), got {type(item).__name__}"
+                )
 
             pk, delta = item
 
@@ -143,11 +141,7 @@ class _U:
 class U(_U):
     @session_manager()
     async def update(
-        self,
-        model: type[BaseType],
-        primary_key: int,
-        session: AsyncSession = None,
-        **kwargs
+        self, model: type[BaseType], primary_key: int, session: AsyncSession = None, **kwargs
     ) -> BaseType:
         """Public API for updating a single model instance.
 
@@ -169,19 +163,11 @@ class U(_U):
         """
         model_class = ModelClass(model)
 
-        return await self._update_instance(
-            model_class,
-            session,
-            primary_key,
-            **kwargs
-        )
+        return await self._update_instance(model_class, session, primary_key, **kwargs)
 
     @session_manager()
     async def update_many(
-        self,
-        model: type[BaseType],
-        *data: tuple[int, dict[str, Any]],
-        session: AsyncSession = None
+        self, model: type[BaseType], *data: tuple[int, dict[str, Any]], session: AsyncSession = None
     ) -> list[BaseType]:
         """Public API for updating multiple model instances.
 
@@ -201,8 +187,4 @@ class U(_U):
         """
         model_class = ModelClass(model)
 
-        return await self._update_instances(
-            model_class,
-            session,
-            *data
-        )
+        return await self._update_instances(model_class, session, *data)

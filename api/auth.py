@@ -1,9 +1,9 @@
 from connexion.lifecycle import ConnexionRequest
-from jwt.exceptions import InvalidIssuerError, ExpiredSignatureError, InvalidTokenError
+from jwt.exceptions import ExpiredSignatureError, InvalidIssuerError, InvalidTokenError
 
 from app.database import PostgresqlDB
 from app.database.models import ApiKey
-from app.security import validate_api_key, validate_token, hash_api_key
+from app.security import hash_api_key, validate_api_key, validate_token
 
 
 async def api_key_info(key: str, request: ConnexionRequest) -> dict | None:
@@ -41,5 +41,5 @@ async def bearer_info(token: str, request: ConnexionRequest) -> dict | None:
     """
     try:
         return validate_token(token)
-    except (InvalidIssuerError, ExpiredSignatureError, InvalidTokenError):
+    except InvalidIssuerError, ExpiredSignatureError, InvalidTokenError:
         return None

@@ -1,26 +1,22 @@
 import json
 import random
-from datetime import datetime, timezone
+from collections.abc import AsyncIterator
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import AsyncIterator, Optional
 
+from app.exceptions import clean_error_msg
+from app.osu_api.enums import Ruleset
 from app.redis import RedisClient
-from app.osu_api.client.osu_api_client import OsuAPIClient
-from app.osu_api.enums import ScoreType, Ruleset
 
+from .constants import RULESETS, SCORE_TYPES
+from .fetcher import FetchEvent, FixtureDataFetcher
+from .id_source import IDSource
 from .metadata_io import (
+    create_targeted_metadata,
     load_metadata,
     save_metadata,
-    load_top_player_ids,
-    save_top_player_ids,
-    create_targeted_metadata,
-    get_fixture_count,
 )
 from .paths import get_fixture_path
-from .constants import RULESETS, SCORE_TYPES, ID_RANGES, DISCUSSION_STATUSES
-from .fetcher import FixtureDataFetcher, FetchEvent
-from app.exceptions import clean_error_msg
-from .id_source import IDSource
 
 
 class TargetedFixtureFetcher(FixtureDataFetcher):
@@ -121,9 +117,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
                 break
 
         self.metadata["samples"]["beatmapsets"]["count"] += fetched
-        self.metadata["samples"]["beatmapsets"]["last_fetched"] = datetime.now(
-            timezone.utc
-        ).isoformat()
+        self.metadata["samples"]["beatmapsets"]["last_fetched"] = datetime.now(UTC).isoformat()
         save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
         self._current_session_results["beatmapsets"] = fetched
 
@@ -190,8 +184,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
                         fetched += 1
                         self._seen_ids.add(beatmap_id)
                         self.logger.debug(
-                            f"Fetched beatmap {beatmap_id} (difficulty={diff}) "
-                            f"({fetched}/{count})"
+                            f"Fetched beatmap {beatmap_id} (difficulty={diff}) ({fetched}/{count})"
                         )
 
                         self._update_beatmap_metadata(beatmap_data)
@@ -218,9 +211,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
             )
 
         self.metadata["samples"]["beatmaps"]["count"] += fetched
-        self.metadata["samples"]["beatmaps"]["last_fetched"] = datetime.now(
-            timezone.utc
-        ).isoformat()
+        self.metadata["samples"]["beatmaps"]["last_fetched"] = datetime.now(UTC).isoformat()
         save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
         self._current_session_results["beatmaps"] = fetched
 
@@ -267,7 +258,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
                 fetched += 1
                 self._seen_ids.add(user_id)
                 self.logger.debug(
-                    f"Fetched user {user_id} ({ruleset}, {activity_level}) " f"({fetched}/{count})"
+                    f"Fetched user {user_id} ({ruleset}, {activity_level}) ({fetched}/{count})"
                 )
 
                 self._update_user_metadata(user_data, ruleset, activity_level)
@@ -285,7 +276,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         self.metadata["samples"]["users"]["per_ruleset"][ruleset] = (
             self.metadata["samples"]["users"]["per_ruleset"].get(ruleset, 0) + fetched
         )
-        self.metadata["samples"]["users"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
+        self.metadata["samples"]["users"]["last_fetched"] = datetime.now(UTC).isoformat()
         save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
         self._current_session_results["users"] = {ruleset: fetched}
 
@@ -328,7 +319,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
                 fetched += 1
                 self._seen_ids.add(beatmap_id)
                 self.logger.debug(
-                    f"Fetched beatmap {beatmap_id} (playcount={playcount}) " f"({fetched}/{count})"
+                    f"Fetched beatmap {beatmap_id} (playcount={playcount}) ({fetched}/{count})"
                 )
 
                 self._update_beatmap_metadata(beatmap_data)
@@ -346,9 +337,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
             )
 
         self.metadata["samples"]["beatmaps"]["count"] += fetched
-        self.metadata["samples"]["beatmaps"]["last_fetched"] = datetime.now(
-            timezone.utc
-        ).isoformat()
+        self.metadata["samples"]["beatmaps"]["last_fetched"] = datetime.now(UTC).isoformat()
         save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
         self._current_session_results["beatmaps"] = fetched
 
@@ -473,7 +462,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
             "ruleset": "osu",
             "difficulty_rating": beatmap_data.get("difficulty_rating", 0),
             "playcount": beatmap_data.get("playcount", 0),
-            "fetched_at": datetime.now(timezone.utc).isoformat(),
+            "fetched_at": datetime.now(UTC).isoformat(),
         }
 
         self._update_status_metadata(beatmaps_meta, beatmap_data)
@@ -506,7 +495,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
                 / f"beatmapset_{beatmapset_id}.json"
             ),
             "status": beatmapset_data.get("status"),
-            "fetched_at": datetime.now(timezone.utc).isoformat(),
+            "fetched_at": datetime.now(UTC).isoformat(),
         }
 
         self._update_status_metadata(beatmapsets_meta, beatmapset_data)
@@ -545,7 +534,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
             ),
             "activity_level": activity_level,
             "ruleset": ruleset,
-            "fetched_at": datetime.now(timezone.utc).isoformat(),
+            "fetched_at": datetime.now(UTC).isoformat(),
         }
 
         activity_meta = users_meta.setdefault("by_activity", {})

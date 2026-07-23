@@ -1,8 +1,8 @@
-from typing import Iterable
+from collections.abc import Iterable
 
-from app.text import align_center, justify
 from app.database import PostgresqlDB, db_lifespan
 from app.database.status import StatusTarget
+from app.text import align_center, justify
 
 
 @db_lifespan

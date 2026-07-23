@@ -5,8 +5,6 @@ using half-open intervals. Used across fetcher types for difficulty, playcount,
 bpm, accuracy, and other range-based classifications.
 """
 
-from typing import Callable
-
 
 class Categorizer:
     """Categorize numeric values into buckets using half-open intervals.

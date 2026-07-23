@@ -1,12 +1,14 @@
 import inspect
+from collections.abc import Awaitable, Callable, Iterable
 from functools import wraps
-from typing import Callable, Awaitable, Iterable, ParamSpec, TypeVar, TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar
 
 from connexion import request
 from connexion.exceptions import Forbidden
 
 from app.database.enums import RoleName
 from app.database.roles import get_user_roles
+
 from .utils import get_authenticated_user_id, strip_auth_info
 
 if TYPE_CHECKING:
@@ -20,7 +22,7 @@ def role_authorization(
     *required_roles: RoleName,
     one_of: Iterable[RoleName] = None,
     override: Callable[..., Awaitable[bool]] = None,
-    override_kwargs: dict[str, Any] = None
+    override_kwargs: dict[str, Any] = None,
 ) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Decorator enforcing role-based access control on endpoints.
 
@@ -50,13 +52,16 @@ def role_authorization(
         Forbidden:
             If authorization fails.
     """
+
     def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
         if not inspect.iscoroutinefunction(func):
             raise ValueError(f"Function '{func.__name__}' must be async to use @role_authorization")
 
         sig = inspect.signature(func)
         if not any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()):
-            raise ValueError(f"Decorated function '{func.__module__}.{func.__name__}' must accept **kwargs to use @role_authorization")
+            raise ValueError(
+                f"Decorated function '{func.__module__}.{func.__name__}' must accept **kwargs to use @role_authorization"
+            )
 
         if required_roles and one_of is not None:
             raise ValueError("Arg(s) 'required_roles' and kwarg 'one_of' are mutually exclusive")
@@ -71,7 +76,9 @@ def role_authorization(
                 user_id = get_authenticated_user_id(kwargs)
             except KeyError:
                 func_path = ".".join((func.__module__, func.__name__))
-                raise ValueError(f"Decorated function '{func_path}' must accept **kwargs to use @role_authorization")
+                raise ValueError(
+                    f"Decorated function '{func_path}' must accept **kwargs to use @role_authorization"
+                )
 
             kwargs["user"] = user_id
             user_roles = await get_user_roles(db, user_id)
@@ -86,10 +93,7 @@ def role_authorization(
             authorized = (
                 user_meets_role_requirements
                 if override is None
-                else (
-                    user_meets_role_requirements
-                    or await override(**override_kwargs_)
-                )
+                else (user_meets_role_requirements or await override(**override_kwargs_))
             )
 
             if not authorized:

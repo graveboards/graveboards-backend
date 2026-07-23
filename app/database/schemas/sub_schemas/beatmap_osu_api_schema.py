@@ -1,11 +1,17 @@
-from typing import Optional, Any, ClassVar, Literal, Union
-from datetime import datetime
 from copy import copy
+from datetime import datetime
+from typing import Any, ClassVar, Literal
 
+from pydantic.functional_validators import field_validator, model_validator
 from pydantic.main import BaseModel
-from pydantic.functional_validators import model_validator, field_validator
 
-from app.osu_api.literals import RankedIntLiteral, RankedStatusLiteral, RulesetLiteral, RulesetIntLiteral
+from app.osu_api.literals import (
+    RankedIntLiteral,
+    RankedStatusLiteral,
+    RulesetIntLiteral,
+    RulesetLiteral,
+)
+
 from .failtimes import FailtimesSchema
 
 
@@ -19,18 +25,18 @@ class BeatmapOsuApiSchema(BaseModel):
     count_sliders: int
     count_spinners: int
     cs: float
-    deleted_at: Optional[datetime]
+    deleted_at: datetime | None
     difficulty_rating: float
     drain: float
-    failtimes: "FailtimesSchema"
+    failtimes: FailtimesSchema
     hit_length: int
     id: int
     is_scoreable: bool
     last_updated: datetime
     max_combo: int
-    mode: "RulesetLiteral"
-    mode_int: "RulesetIntLiteral"
-    owners: list[dict[Literal["id", "username"], Union[int, str]]] = None
+    mode: RulesetLiteral
+    mode_int: RulesetIntLiteral
+    owners: list[dict[Literal["id", "username"], int | str]] = None
     passcount: int
     playcount: int
     ranked: RankedIntLiteral
@@ -51,7 +57,7 @@ class BeatmapOsuApiSchema(BaseModel):
         "ranked",
         "status",
         "top_tag_ids",
-        "user_id"
+        "user_id",
     }
 
     @model_validator(mode="before")
@@ -66,7 +72,10 @@ class BeatmapOsuApiSchema(BaseModel):
             data_copy.id = data_copy.beatmap_id
 
         if hasattr(data_copy, "owner_profiles"):
-            data_copy.owners = [{"id": owner.user_id, "username": owner.username} for owner in data_copy.owner_profiles]
+            data_copy.owners = [
+                {"id": owner.user_id, "username": owner.username}
+                for owner in data_copy.owner_profiles
+            ]
 
         if hasattr(data_copy, "beatmap_tags"):
             data_copy.top_tag_ids = [{"tag_id": tag.id} for tag in data_copy.beatmap_tags]

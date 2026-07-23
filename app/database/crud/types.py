@@ -1,4 +1,5 @@
-from typing import Mapping, Union, Iterable, Literal, TYPE_CHECKING
+from collections.abc import Iterable, Mapping
+from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
     from app.search.datastructures import ConditionField, ConditionValue
@@ -12,7 +13,7 @@ type RelName = str
 type AttrPath = str
 """Type alias representing a model attribute path."""
 
-type Sorting = Iterable[dict[Literal["field", "order"], Union[AttrPath, Literal["asc", "desc"]]]]
+type Sorting = Iterable[dict[Literal["field", "order"], AttrPath | Literal["asc", "desc"]]]
 """Type alias describing sorting configuration for read operations.
 
 Expected format:
@@ -27,7 +28,7 @@ Used by the read layer to construct validated ORDER BY clauses.
 
 type Conditions = Mapping[ConditionField, ConditionValue | None]
 
-type Filters = Mapping[Union[AttrName, RelName], Union[ConditionValue, None, Conditions, "Filters[RelName]"]]
+type Filters = Mapping[AttrName | RelName, ConditionValue | None | Conditions | "Filters[RelName]"]
 """Type alias describing nested filtering configurations for read operations.
 
 Expected format:
@@ -41,7 +42,7 @@ Expected format:
 Used by the read layer to construct validated WHERE clauses.
 """
 
-type Include = Mapping[AttrName, Union[bool, "Include[AttrName]"]]
+type Include = Mapping[AttrName, bool | "Include[AttrName]"]
 """Type alias describing nested relationship loading configuration.
 
 Maps relationship attribute names to:

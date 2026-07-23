@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from connexion.exceptions import Forbidden
 
 from app.database.models import Queue
-from app.redis import Namespace
 from app.database.rules.base import RestrictionBase
 from app.database.rules.context import ExecutionContext
 from app.database.rules.fingerprint import config_fingerprint
 from app.database.schemas.rule import RateLimitConfig
+from app.redis import Namespace
 
 
 def _truncate_to_period(now: datetime, period: str) -> int:
@@ -27,10 +27,10 @@ def _truncate_to_period(now: datetime, period: str) -> int:
             period_seconds = int(period)
             if period_seconds <= 0:
                 raise ValueError
-            epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
+            epoch = datetime(1970, 1, 1, tzinfo=UTC)
             bucket = int((now - epoch).total_seconds() // period_seconds)
             return bucket * period_seconds
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             raise ValueError(f"Invalid period: {period}") from None
 
     return int(truncated.timestamp())
@@ -48,7 +48,7 @@ def _period_duration_seconds(period: str) -> int:
     else:
         try:
             return int(period)
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             return 604800
 
 
@@ -69,7 +69,7 @@ class RateLimitRestriction(RestrictionBase):
 
     def _redis_key(self, context: ExecutionContext, config: dict) -> str:
         period = config.get("period", "week")
-        period_bucket = _truncate_to_period(datetime.now(timezone.utc), period)
+        period_bucket = _truncate_to_period(datetime.now(UTC), period)
         return Namespace.QUEUE_RULE_RATE_LIMIT.hash_name(
             f"{context.queue_id}:{context.user_id}:{config_fingerprint(config)}:{period_bucket}"
         )

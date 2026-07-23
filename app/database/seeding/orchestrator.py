@@ -1,17 +1,18 @@
 import asyncio
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 from app.database import PostgresqlDB
-from .seeders import Seeder, UserSeeder, BeatmapSeeder, QueueSeeder, RequestSeeder
-from .target import SeedTarget, SeederTarget, CLI_TO_SEEDER
+
 from .dependencies import resolve_dependencies
 from .event import SeedEvent
+from .seeders import BeatmapSeeder, QueueSeeder, RequestSeeder, Seeder, UserSeeder
+from .target import CLI_TO_SEEDER, SeederTarget, SeedTarget
 
 SEEDERS: dict[SeederTarget, type[Seeder]] = {
     SeederTarget.USER: UserSeeder,
     SeederTarget.BEATMAP: BeatmapSeeder,
     SeederTarget.QUEUE: QueueSeeder,
-    SeederTarget.REQUEST: RequestSeeder
+    SeederTarget.REQUEST: RequestSeeder,
 }
 """Mapping of ``SeederTarget`` to concrete ``Seeder`` implementation.
 
@@ -33,6 +34,7 @@ class SeederOrchestrator:
     Seeding is deterministic with respect to dependency order while still leveraging
     asyncio concurrency for independent targets.
     """
+
     def __init__(self, db: PostgresqlDB, *targets: SeedTarget):
         """Initialize the orchestrator for the given seed targets.
 
@@ -55,9 +57,7 @@ class SeederOrchestrator:
         self.targets: set[SeederTarget] = self._normalize_cli_targets(targets)
         self.execution_order: list[list[SeederTarget]] = resolve_dependencies(self.targets)
         self.seeders = {
-            target: SEEDERS[target](db)
-            for layer in self.execution_order
-            for target in layer
+            target: SEEDERS[target](db) for layer in self.execution_order for target in layer
         }
         self.totals: dict[SeederTarget, int] = {}
         self.total: int = 0
@@ -65,10 +65,7 @@ class SeederOrchestrator:
 
     def _refresh_totals(self) -> None:
         """Recalculate totals from seeders (call after set_data())."""
-        self.totals = {
-            target: seeder.total
-            for target, seeder in self.seeders.items()
-        }
+        self.totals = {target: seeder.total for target, seeder in self.seeders.items()}
         self.total = sum(t for t in self.totals.values())
 
     async def run_seeders(self) -> AsyncIterator[SeedEvent]:
@@ -87,6 +84,7 @@ class SeederOrchestrator:
         queue: asyncio.Queue[SeedEvent | None] = asyncio.Queue()
 
         for layer in self.execution_order:
+
             async def wrap(target: SeederTarget):
                 try:
                     await self.seeders[target].seed(queue=queue)
@@ -94,10 +92,7 @@ class SeederOrchestrator:
                     await queue.put(None)
 
             tasks = [
-                asyncio.create_task(
-                    wrap(target),
-                    name=f"{target.seed_title} Seed Task"
-                )
+                asyncio.create_task(wrap(target), name=f"{target.seed_title} Seed Task")
                 for target in layer
             ]
 

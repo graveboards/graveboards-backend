@@ -4,7 +4,7 @@ DEPENDENCIES: dict[SeederTarget, set[SeederTarget]] = {
     SeederTarget.USER: set(),
     SeederTarget.BEATMAP: {SeederTarget.USER},
     SeederTarget.QUEUE: {SeederTarget.USER},
-    SeederTarget.REQUEST: {SeederTarget.USER, SeederTarget.QUEUE, SeederTarget.BEATMAP}
+    SeederTarget.REQUEST: {SeederTarget.USER, SeederTarget.QUEUE, SeederTarget.BEATMAP},
 }
 """Directed acyclic dependency graph between seeder targets.
 

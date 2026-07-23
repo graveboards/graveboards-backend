@@ -21,12 +21,10 @@ class DifficultyCountRestriction(BeatmapRestrictionBase):
         if min_count is not None and count < min_count:
             raise RuleViolationError(
                 self.type,
-                f"Beatmapset has {count} difficulty/difficulties, minimum "
-                f"required is {min_count}",
+                f"Beatmapset has {count} difficulty/difficulties, minimum required is {min_count}",
             )
         if max_count is not None and count > max_count:
             raise RuleViolationError(
                 self.type,
-                f"Beatmapset has {count} difficulty/difficulties, maximum "
-                f"allowed is {max_count}",
+                f"Beatmapset has {count} difficulty/difficulties, maximum allowed is {max_count}",
             )

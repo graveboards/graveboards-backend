@@ -1,7 +1,7 @@
-import secrets
 import hashlib
+import secrets
 
-from app.database.models.api_key import ApiKey, API_KEY_LENGTH
+from app.database.models.api_key import API_KEY_LENGTH, ApiKey
 from app.utils import aware_utcnow
 
 
@@ -54,5 +54,5 @@ def validate_api_key(api_key: ApiKey) -> dict[str, int]:
     return {
         "sub": api_key.user_id,
         "iat": int(api_key.created_at.timestamp()),
-        "exp": int(api_key.expires_at.timestamp())
+        "exp": int(api_key.expires_at.timestamp()),
     }

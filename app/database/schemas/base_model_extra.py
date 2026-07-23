@@ -1,15 +1,18 @@
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 from pydantic.functional_serializers import model_serializer
-from pydantic_core.core_schema import SerializerFunctionWrapHandler, SerializationInfo
 from pydantic_core import to_jsonable_python
+from pydantic_core.core_schema import SerializationInfo, SerializerFunctionWrapHandler
 
 
 class BaseModelExtra:
     model_fields = ...
 
     @model_serializer(mode="wrap")
-    def serialize(self, nxt: SerializerFunctionWrapHandler, info: SerializationInfo) -> dict[str, Any]:
+    def serialize(
+        self, nxt: SerializerFunctionWrapHandler, info: SerializationInfo
+    ) -> dict[str, Any]:
         serialized = nxt(self)
         ctx = info.context or {}
 

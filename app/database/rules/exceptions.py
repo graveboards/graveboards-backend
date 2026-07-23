@@ -1,6 +1,3 @@
-from connexion.exceptions import Forbidden
-
-
 class RuleViolationError(Exception):
     def __init__(self, type: str, detail: str):
         self.type = type

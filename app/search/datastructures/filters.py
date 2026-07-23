@@ -1,24 +1,30 @@
 from __future__ import annotations
 
 import struct
-from typing import Iterator, Any, Optional, Union
-from collections.abc import ItemsView
+from collections.abc import ItemsView, Iterator
+from typing import Any
 
+from pydantic.functional_validators import model_validator
 from pydantic.main import BaseModel
 from pydantic.root_model import RootModel
-from pydantic.functional_validators import model_validator
 from pydantic_core import ValidationError
 
-from app.database.utils import extract_inner_types, validate_type
 from app.database.models import ModelClass
+from app.database.utils import extract_inner_types, validate_type
 from app.exceptions import (
+    FieldConditionValidationError,
     FieldNotSupportedError,
-    TypeValidationError,
     FieldValidationError,
+    TypeValidationError,
     UnknownFieldCategoryError,
-    FieldConditionValidationError
 )
-from app.search.enums import SearchableFieldCategory, ModelField, ModelFieldId, SearchableFieldCategoryFlag
+from app.search.enums import (
+    ModelField,
+    ModelFieldId,
+    SearchableFieldCategory,
+    SearchableFieldCategoryFlag,
+)
+
 from .conditions import Conditions, ConditionValue
 
 
@@ -28,7 +34,8 @@ class FieldFilters(RootModel):
     Wraps a mapping of field names to ``Conditions`` objects and provides SQLAlchemy
     model validation and compact binary serialization support.
     """
-    root: dict[str, Union[Conditions, FieldFilters]]
+
+    root: dict[str, Conditions | FieldFilters]
 
     def __iter__(self) -> Iterator[str]:
         """Iterate over filter field names.
@@ -92,7 +99,9 @@ class FieldFilters(RootModel):
         column_map = model_class.value.__annotations__
 
         for field_name, value in self.root.items():
-            is_attribute = field_name in model_class.column_names | model_class.hybrid_property_names
+            is_attribute = (
+                field_name in model_class.column_names | model_class.hybrid_property_names
+            )
             is_relationship = field_name in model_class.relationship_names
 
             if is_attribute:
@@ -103,7 +112,7 @@ class FieldFilters(RootModel):
                         column = column_map[model_field.alias]
                     else:
                         column = column_map[field_name]
-                except (KeyError, ValueError):
+                except KeyError, ValueError:
                     raise FieldNotSupportedError(model_class.value, field_name)
 
                 expected_type = extract_inner_types(column)
@@ -121,18 +130,13 @@ class FieldFilters(RootModel):
                             ) from e
             elif is_relationship:
                 if not isinstance(value, FieldFilters):
-                    raise FieldValidationError(
-                        model_class.value,
-                        field_name,
-                        value,
-                        FieldFilters
-                    )
+                    raise FieldValidationError(model_class.value, field_name, value, FieldFilters)
 
                 try:
                     relationship = model_class.mapper.relationships[field_name]
                     related_model = relationship.mapper.class_
                     related_model_class = ModelClass(related_model)
-                except (KeyError, ValueError):
+                except KeyError, ValueError:
                     raise FieldNotSupportedError(model_class.value, field_name)
 
                 value.validate_against_sqlalchemy_model(related_model_class)
@@ -166,7 +170,7 @@ class FieldFilters(RootModel):
         return length + b"".join(chunks)
 
     @classmethod
-    def deserialize(cls, data: bytes, offset: int = 0) -> tuple["FieldFilters", int]:
+    def deserialize(cls, data: bytes, offset: int = 0) -> tuple[FieldFilters, int]:
         """Deserialize field filters from binary format.
 
         Args:
@@ -200,11 +204,12 @@ class FiltersSchema(BaseModel):
     Validates filter fields against SQLAlchemy models and supports compact binary
     serialization.
     """
-    profile: Optional[FieldFilters] = None
-    beatmap: Optional[FieldFilters] = None
-    beatmapset: Optional[FieldFilters] = None
-    queue: Optional[FieldFilters] = None
-    request: Optional[FieldFilters] = None
+
+    profile: FieldFilters | None = None
+    beatmap: FieldFilters | None = None
+    beatmapset: FieldFilters | None = None
+    queue: FieldFilters | None = None
+    request: FieldFilters | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -254,7 +259,9 @@ class FiltersSchema(BaseModel):
                 continue
 
             if not isinstance(field_filters, dict):
-                raise TypeError(f"Category '{category_name}' expected dict, got {type(field_filters).__name__}")
+                raise TypeError(
+                    f"Category '{category_name}' expected dict, got {type(field_filters).__name__}"
+                )
 
             validated_field_filters = {}
 
@@ -275,7 +282,9 @@ class FiltersSchema(BaseModel):
                             msg = error.get("msg", "Unknown validation error")
 
                         detail = f"{msg}{loc_detail}"
-                        raise FieldConditionValidationError(model_class.value, field_name, detail=detail) from e
+                        raise FieldConditionValidationError(
+                            model_class.value, field_name, detail=detail
+                        ) from e
 
             validated_filters[category_name] = FieldFilters.model_validate(validated_field_filters)
             validated_filters[category_name].validate_against_sqlalchemy_model(model_class)
@@ -321,7 +330,7 @@ class FiltersSchema(BaseModel):
         return presence_byte + b"".join(chunks)
 
     @classmethod
-    def deserialize(cls, data: bytes, offset: int = 0) -> tuple["FiltersSchema", int]:
+    def deserialize(cls, data: bytes, offset: int = 0) -> tuple[FiltersSchema, int]:
         """Deserialize filtering configuration from binary format.
 
         Args:
@@ -356,9 +365,5 @@ class FiltersSchema(BaseModel):
             request, offset = FieldFilters.deserialize(data, offset=offset)
 
         return cls(
-            profile=profile,
-            beatmap=beatmap,
-            beatmapset=beatmapset,
-            queue=queue,
-            request=request
+            profile=profile, beatmap=beatmap, beatmapset=beatmapset, queue=queue, request=request
         ), offset

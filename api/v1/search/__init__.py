@@ -1,35 +1,42 @@
 import json
 import time
 
-from sqlalchemy import func, select as sa_select
-
 from connexion import request
 from connexion.exceptions import Unauthorized
+from sqlalchemy import func
+from sqlalchemy import select as sa_select
 
-from api.auth import bearer_info, api_key_info
+from api.auth import api_key_info, bearer_info
 from api.pagination import build_pagination_response
 from api.utils import pop_auth_info
-from app.patches.validators import validate_include
 from app.database import PostgresqlDB
 from app.database.queue_access import queue_visibility_where
-from app.redis import RedisClient
 from app.exceptions import (
-    FieldValidationError,
-    FieldNotSupportedError,
-    FieldConditionValidationError,
-    UnknownFieldCategoryError,
     AllValuesNullError,
     DeepObjectValidationError,
-    bad_request_factory
+    FieldConditionValidationError,
+    FieldNotSupportedError,
+    FieldValidationError,
+    UnknownFieldCategoryError,
+    bad_request_factory,
 )
-from app.search import compress_query, decompress_query, SearchSchema, SearchEngine, Scope, SCOPE_MODEL_MAPPING
-from app.search.cache import SearchCache
 from app.observability.metrics.search import (
-    search_requests_total,
-    search_duration_seconds,
     search_cache_hits_total,
     search_cache_misses_total,
+    search_duration_seconds,
+    search_requests_total,
 )
+from app.patches.validators import validate_include
+from app.redis import RedisClient
+from app.search import (
+    SCOPE_MODEL_MAPPING,
+    Scope,
+    SearchEngine,
+    SearchSchema,
+    compress_query,
+    decompress_query,
+)
+from app.search.cache import SearchCache
 from app.spec import get_include_schema
 
 __all__ = ["search", "post"]
@@ -42,7 +49,7 @@ EXCEPTIONS = (
     FieldConditionValidationError,
     UnknownFieldCategoryError,
     AllValuesNullError,
-    DeepObjectValidationError
+    DeepObjectValidationError,
 )
 
 # Scopes whose dedicated endpoints (GET /queues, GET /requests) require auth. This
@@ -70,7 +77,7 @@ async def _authenticate_for_scope(scope: Scope) -> int | None:
     token_info = None
 
     if auth_header.lower().startswith("bearer "):
-        token_info = await bearer_info(auth_header[len("bearer "):].strip(), request)
+        token_info = await bearer_info(auth_header[len("bearer ") :].strip(), request)
     elif api_key_header:
         token_info = await api_key_info(api_key_header, request)
 
@@ -114,14 +121,18 @@ async def search(**kwargs):
 
         # Skip the cache for queues, since results depend on the caller's identity
         # (owner/manager visibility) and not just the query parameters.
-        cached_result = await cache.get(
-            scope=sq.scope,
-            search_terms=sq.search_terms.terms if sq.search_terms else "",
-            sorting=sorting_str,
-            filters=filters_str,
-            limit=limit,
-            offset=offset,
-        ) if sq.scope is not Scope.QUEUES else None
+        cached_result = (
+            await cache.get(
+                scope=sq.scope,
+                search_terms=sq.search_terms.terms if sq.search_terms else "",
+                sorting=sorting_str,
+                filters=filters_str,
+                limit=limit,
+                offset=offset,
+            )
+            if sq.scope is not Scope.QUEUES
+            else None
+        )
 
         if cached_result:
             cached = True
@@ -129,7 +140,9 @@ async def search(**kwargs):
             total = cached_result["total"]
             search_cache_hits_total.labels(scope=sq.scope.value).inc()
         else:
-            se = SearchEngine(sq.scope, search_terms=sq.search_terms, sorting=sq.sorting, filters=sq.filters)
+            se = SearchEngine(
+                sq.scope, search_terms=sq.search_terms, sorting=sq.sorting, filters=sq.filters
+            )
 
             if sq.scope is Scope.QUEUES:
                 se.query = se.query.where(await queue_visibility_where(db, caller_user_id))
@@ -193,4 +206,8 @@ async def post(body: dict):
     except EXCEPTIONS as e:
         raise bad_request_factory(e)
 
-    return {"message": "Search resource created successfully", "q": q}, 201, {"Content-Type": "application/json"}
+    return (
+        {"message": "Search resource created successfully", "q": q},
+        201,
+        {"Content-Type": "application/json"},
+    )

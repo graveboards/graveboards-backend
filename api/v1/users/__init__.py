@@ -1,18 +1,19 @@
 from connexion import request
 
 from api.decorators import api_query
-from api.utils import build_pydantic_include, bleach_body
+from api.utils import bleach_body, build_pydantic_include
 from app.database import PostgresqlDB
-from app.database.models import User, ModelClass
-from app.database.schemas import UserSchema
 from app.database.enums import RoleName
-from app.exceptions import NotFound, Conflict
+from app.database.models import ModelClass, User
+from app.database.schemas import UserSchema
+from app.exceptions import Conflict, NotFound
 from app.security import role_authorization
 from app.security.overrides import matching_user_id_override
 from app.spec import get_include_schema
+
 from . import api_key
 
-__all__ = ["search", "get", "post"]
+__all__ = ["search", "get", "post", "api_key"]
 
 
 @role_authorization(RoleName.ADMIN)
@@ -20,10 +21,7 @@ __all__ = ["search", "get", "post"]
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
 
-    users = await db.get_many(
-        User,
-        **kwargs
-    )
+    users = await db.get_many(User, **kwargs)
 
     if not users:
         return [], 200, {"Content-Type": "application/json"}
@@ -31,13 +29,10 @@ async def search(**kwargs):
     include = build_pydantic_include(
         obj=users[0],
         include_schema=get_include_schema(ModelClass.USER),
-        request_include=kwargs.get("_include")
+        request_include=kwargs.get("_include"),
     )
 
-    users_data = [
-        UserSchema.model_validate(user).model_dump(include=include)
-        for user in users
-    ]
+    users_data = [UserSchema.model_validate(user).model_dump(include=include) for user in users]
 
     return users_data, 200, {"Content-Type": "application/json"}
 
@@ -47,11 +42,7 @@ async def search(**kwargs):
 async def get(user_id: int, **kwargs):
     db: PostgresqlDB = request.state.db
 
-    user = await db.get(
-        User,
-        id=user_id,
-        **kwargs
-    )
+    user = await db.get(User, id=user_id, **kwargs)
 
     if not user:
         raise NotFound(f"User with ID '{user_id}' not found")
@@ -59,7 +50,7 @@ async def get(user_id: int, **kwargs):
     include = build_pydantic_include(
         obj=user,
         include_schema=get_include_schema(ModelClass.USER),
-        request_include=kwargs.get("_include")
+        request_include=kwargs.get("_include"),
     )
 
     user_data = UserSchema.model_validate(user).model_dump(include=include)
@@ -76,10 +67,7 @@ async def post(body: dict, **kwargs):
     if await db.get(User, id=user_id):
         raise Conflict(f"The user with ID '{user_id}' already exists")
 
-    body = bleach_body(
-        body,
-        whitelisted_keys={"id", "roles"}
-    )
+    body = bleach_body(body, whitelisted_keys={"id", "roles"})
 
     await db.add(User, **body)
 

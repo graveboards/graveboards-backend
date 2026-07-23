@@ -12,6 +12,7 @@ class SearchableFieldCategory(Enum):
     This enum serves as the boundary between external query input and internal model
     resolution, ensuring category names are validated and storage-layer agnostic.
     """
+
     PROFILE = "profile", ModelClass.PROFILE
     BEATMAP = "beatmap", ModelClass.BEATMAP_SNAPSHOT
     BEATMAPSET = "beatmapset", ModelClass.BEATMAPSET_SNAPSHOT
@@ -24,7 +25,7 @@ class SearchableFieldCategory(Enum):
         self.model_class = model_class
 
     @classmethod
-    def from_name(cls, name: str) -> "SearchableFieldCategory":
+    def from_name(cls, name: str) -> SearchableFieldCategory:
         """Resolve a category from its external string name.
 
         Args:
@@ -45,7 +46,7 @@ class SearchableFieldCategory(Enum):
         raise ValueError(f"No SearchableFieldCategoryFlag exists by the name of '{name}'")
 
     @classmethod
-    def from_model_class(cls, model_class: ModelClass) -> "SearchableFieldCategory":
+    def from_model_class(cls, model_class: ModelClass) -> SearchableFieldCategory:
         """Resolve a category from its internal ``ModelClass``.
 
         Args:
@@ -66,7 +67,9 @@ class SearchableFieldCategory(Enum):
         raise ValueError(f"No SearchableFieldCategoryFlag exists with model class {model_class}")
 
 
-SearchableFieldCategoryFlag = IntFlag("SearchableFieldCategoryFlag", {category.name: auto() for category in SearchableFieldCategory})
+SearchableFieldCategoryFlag = IntFlag(
+    "SearchableFieldCategoryFlag", {category.name: auto() for category in SearchableFieldCategory}
+)
 """Bitmask representation of searchable field categories.
 
 Used for compact encoding of multiple categories within serialized query payloads.

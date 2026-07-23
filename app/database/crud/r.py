@@ -1,32 +1,34 @@
-from typing import Iterable, Any, Optional, Union, Literal
+from collections.abc import Iterable
+from typing import Any, Literal
 
-from sqlalchemy.sql import select, cast
-from sqlalchemy.sql.sqltypes import String, Text
-from sqlalchemy.sql.elements import BinaryExpression, ColumnElement, and_, or_, literal_column
-from sqlalchemy.sql.selectable import Select
-from sqlalchemy.sql.functions import func
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import QueryableAttribute
 from sqlalchemy.orm.interfaces import LoaderOption
-from sqlalchemy.orm.relationships import RelationshipProperty, Relationship
-from sqlalchemy.orm.strategy_options import selectinload, joinedload, noload, Load
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.relationships import Relationship, RelationshipProperty
+from sqlalchemy.orm.strategy_options import Load, joinedload, noload, selectinload
+from sqlalchemy.sql import cast, select
+from sqlalchemy.sql.elements import BinaryExpression, ColumnElement, and_, or_
+from sqlalchemy.sql.functions import func
+from sqlalchemy.sql.selectable import Select
+from sqlalchemy.sql.sqltypes import String, Text
 
+from app.database.ctes.search_terms_filtered import search_terms_filtered_cte_factory
+from app.database.ctes.search_terms_scored import search_terms_scored_ctes_factory
+from app.database.enums import FilterOperator
 from app.database.models import (
+    Base,
     BaseType,
     ModelClass,
-    Base,
 )
-from app.database.utils import get_filter_condition, extract_inner_types
-from app.database.enums import FilterOperator
-from app.utils import clamp
+from app.database.utils import extract_inner_types, get_filter_condition
 from app.search.datastructures import SearchTermsSchema
 from app.search.enums import Scope
 from app.search.mappings import SCOPE_MODEL_MAPPING
-from app.database.ctes.search_terms_filtered import search_terms_filtered_cte_factory
-from app.database.ctes.search_terms_scored import search_terms_scored_ctes_factory
+from app.utils import clamp
+
 from .decorators import session_manager
-from .types import Sorting, Filters, Include
 from .relevance import SCOPE_RELEVANCE_HANDLERS
+from .types import Filters, Include, Sorting
 
 QUERY_MIN_LIMIT = 1
 QUERY_MAX_LIMIT = 100
@@ -45,9 +47,9 @@ class _R:
     async def _get_instance(
         model_class: ModelClass,
         session: AsyncSession,
-        _select: Union[str, Iterable[str]] = None,
-        _join: Union[Any, Iterable[Any]] = None,
-        _where: Union[Any, Iterable[Any]] = None,
+        _select: str | Iterable[str] = None,
+        _join: Any | Iterable[Any] = None,
+        _where: Any | Iterable[Any] = None,
         _sorting: Sorting = None,
         _filters: Filters = None,
         _search: str = None,
@@ -55,7 +57,7 @@ class _R:
         _search_relevance: bool = False,
         _include: Include = None,
         _offset: int = 0,
-        **kwargs
+        **kwargs,
     ) -> BaseType:
         """Fetch a single instance using a dynamically constructed query.
 
@@ -106,7 +108,7 @@ class _R:
             _search_mode,
             _search_relevance,
             _include,
-            **kwargs
+            **kwargs,
         )
         select_stmt = select_stmt.offset(_offset)
 
@@ -116,9 +118,9 @@ class _R:
     async def _get_instances(
         model_class: ModelClass,
         session: AsyncSession,
-        _select: Union[str, Iterable[str]] = None,
-        _join: Union[Any, Iterable[Any]] = None,
-        _where: Union[Any, Iterable[Any]] = None,
+        _select: str | Iterable[str] = None,
+        _join: Any | Iterable[Any] = None,
+        _where: Any | Iterable[Any] = None,
         _sorting: Sorting = None,
         _filters: Filters = None,
         _search: str = None,
@@ -129,7 +131,7 @@ class _R:
         _offset: int = 0,
         _reversed: bool = False,
         _count: bool = False,
-        **kwargs
+        **kwargs,
     ) -> list[BaseType] | tuple[list[BaseType], int | None]:
         """Fetch multiple instances using a dynamically constructed query.
 
@@ -188,7 +190,7 @@ class _R:
             _search_mode,
             _search_relevance,
             _include,
-            **kwargs
+            **kwargs,
         )
 
         if _count:
@@ -197,7 +199,9 @@ class _R:
             results = list((await session.scalars(select_stmt)).all())
             return results, total
         else:
-            select_stmt = select_stmt.limit(clamp(_limit, QUERY_MIN_LIMIT, QUERY_MAX_LIMIT)).offset(_offset)
+            select_stmt = select_stmt.limit(clamp(_limit, QUERY_MIN_LIMIT, QUERY_MAX_LIMIT)).offset(
+                _offset
+            )
             results = list((await session.scalars(select_stmt)).all())
 
             if _reversed:
@@ -208,16 +212,16 @@ class _R:
     @staticmethod
     def _construct_stmt(
         model_class: ModelClass,
-        _select: Union[str, Iterable[str]] = None,
-        _join: Union[Any, Iterable[Any]] = None,
-        _where: Union[Any, Iterable[Any]] = None,
-        _sorting: Union[Any, Iterable[Any]] = None,
+        _select: str | Iterable[str] = None,
+        _join: Any | Iterable[Any] = None,
+        _where: Any | Iterable[Any] = None,
+        _sorting: Any | Iterable[Any] = None,
         _filters: Filters = None,
         _search: str = None,
         _search_mode: SearchMode = "simple",
         _search_relevance: bool = False,
         _include: Include = None,
-        **kwargs
+        **kwargs,
     ) -> Select:
         """Construct a SQLAlchemy ``Select`` statement from query parameters.
 
@@ -283,7 +287,7 @@ class _R:
                 model_class,
                 _search,
                 mode=_search_mode,
-                relevance=_search_relevance and _sorting is None
+                relevance=_search_relevance and _sorting is None,
             )
 
         if _include and not _select:
@@ -295,10 +299,7 @@ class _R:
         return select_stmt
 
     @staticmethod
-    def _apply_select(
-        model_class: ModelClass,
-        select_: Union[str, Iterable[str]]
-    ) -> Select:
+    def _apply_select(model_class: ModelClass, select_: str | Iterable[str]) -> Select:
         """Apply projection to a ``Select`` statement.
 
         Validates requested attribute names against the model metadata and restricts
@@ -326,7 +327,9 @@ class _R:
 
         for name in select_:
             if name not in model_class.all_names:
-                raise ValueError(f"Attribute '{name}' is not a valid column, relationship, nor hybrid property of {model_class.value}")
+                raise ValueError(
+                    f"Attribute '{name}' is not a valid column, relationship, nor hybrid property of {model_class.value}"
+                )
 
             if name in model_class.relationship_names:
                 raise ValueError(f"Invalid attribute '{name}': cannot select relationships")
@@ -340,7 +343,10 @@ class _R:
     @staticmethod
     def _apply_join(
         select_stmt: Select,
-        join: Union[type[BaseType], tuple[type[BaseType], BinaryExpression], Iterable[type[BaseType]], Iterable[tuple[type[BaseType], BinaryExpression]]]
+        join: type[BaseType]
+        | tuple[type[BaseType], BinaryExpression]
+        | Iterable[type[BaseType]]
+        | Iterable[tuple[type[BaseType], BinaryExpression]],
     ) -> tuple[Select, dict[str, type[BaseType]]]:
         """Apply one or more JOIN clauses to a ``Select`` statement.
 
@@ -361,11 +367,17 @@ class _R:
             TypeError:
                 If the join specification is invalid.
         """
+
         def is_base(t: Any) -> bool:
             return isinstance(t, type) and issubclass(t, Base)
 
         def is_tuple(t: Any) -> bool:
-            return isinstance(t, tuple) and len(t) == 2 and issubclass(t[0], Base) and isinstance(t[1], BinaryExpression)
+            return (
+                isinstance(t, tuple)
+                and len(t) == 2
+                and issubclass(t[0], Base)
+                and isinstance(t[1], BinaryExpression)
+            )
 
         if is_base(join):
             join = [(join,)]
@@ -391,10 +403,7 @@ class _R:
         return select_stmt, joined_models
 
     @staticmethod
-    def _apply_where(
-        select_stmt: Select,
-        where: Union[Any, Iterable[Any]]
-    ) -> Select:
+    def _apply_where(select_stmt: Select, where: Any | Iterable[Any]) -> Select:
         """Apply WHERE clause expressions to a ``Select`` statement.
 
         Args:
@@ -416,7 +425,7 @@ class _R:
         select_stmt: Select,
         model_class: ModelClass,
         sorting: Sorting,
-        joined_models: dict[str, type[BaseType]] | None = None
+        joined_models: dict[str, type[BaseType]] | None = None,
     ) -> Select:
         """Apply validated sorting clauses to a ``Select`` statement.
 
@@ -464,7 +473,9 @@ class _R:
             try:
                 prefix, attr_name = field.split(".", 1)
             except ValueError:
-                raise ValueError(f"Invalid field format '{field}' in item #{i}. Expected 'Model.field'")
+                raise ValueError(
+                    f"Invalid field format '{field}' in item #{i}. Expected 'Model.field'"
+                )
 
             if prefix == model_name:
                 target_model = model
@@ -472,17 +483,25 @@ class _R:
             elif joined_models is not None and prefix in joined_models:
                 target_model = joined_models[prefix]
                 target_model_class = ModelClass(target_model)
-                valid_target_fields = target_model_class.column_names | target_model_class.hybrid_property_names
+                valid_target_fields = (
+                    target_model_class.column_names | target_model_class.hybrid_property_names
+                )
             else:
-                raise ValueError(f"Sorting field '{field}' in item #{i} does not match model '{model_name}' or any joined model")
+                raise ValueError(
+                    f"Sorting field '{field}' in item #{i} does not match model '{model_name}' or any joined model"
+                )
 
             if attr_name not in valid_target_fields:
-                raise ValueError(f"Attribute '{attr_name}' in item #{i} is not a valid column or hybrid property of {prefix}")
+                raise ValueError(
+                    f"Attribute '{attr_name}' in item #{i} is not a valid column or hybrid property of {prefix}"
+                )
 
             attr = getattr(target_model, attr_name)
 
             if order not in ("asc", "desc"):
-                raise ValueError(f"Invalid sorting order '{order}' in item #{i}. Must be 'asc' or 'desc'")
+                raise ValueError(
+                    f"Invalid sorting order '{order}' in item #{i}. Must be 'asc' or 'desc'"
+                )
 
             clauses.append(attr.desc() if order == "desc" else attr.asc())
 
@@ -515,6 +534,7 @@ class _R:
             ValueError:
                 If unsupported operators or attributes are encountered.
         """
+
         def parse_filters(
             parent_model_class: ModelClass,
             filters_: Filters,
@@ -524,7 +544,10 @@ class _R:
 
             for attr_name, value in filters_.items():
                 path = f"{prefix}.{attr_name}" if prefix else attr_name
-                is_attribute = attr_name in parent_model_class.column_names | parent_model_class.hybrid_property_names
+                is_attribute = (
+                    attr_name
+                    in parent_model_class.column_names | parent_model_class.hybrid_property_names
+                )
                 is_relationship = attr_name in parent_model_class.relationship_names
 
                 if is_attribute:
@@ -560,7 +583,9 @@ class _R:
                     else:
                         conditions.append(relationship_attr.has(and_(*nested_conditions)))
                 else:
-                    raise ValueError(f"Attribute '{attr_name}' is not a valid field or relationship of {parent_model_class.value.__name__}")
+                    raise ValueError(
+                        f"Attribute '{attr_name}' is not a valid field or relationship of {parent_model_class.value.__name__}"
+                    )
 
             return conditions
 
@@ -604,7 +629,9 @@ class _R:
         if not (search := search.strip()):
             return select_stmt
         if mode == "engine":
-            engine_stmt = _R._apply_search_engine(select_stmt, model_class, search, relevance=relevance)
+            engine_stmt = _R._apply_search_engine(
+                select_stmt, model_class, search, relevance=relevance
+            )
             if engine_stmt is not None:
                 return engine_stmt
 
@@ -616,7 +643,7 @@ class _R:
         model_class: ModelClass,
         search: str,
         relevance: bool = False,
-    ) -> Optional[Select]:
+    ) -> Select | None:
         """Apply scope-aware search term filtering using the main search mappings."""
         scope = MODEL_SCOPE_MAPPING.get(model_class)
 
@@ -635,9 +662,7 @@ class _R:
 
     @staticmethod
     def _apply_search_engine_relevance(
-        select_stmt: Select,
-        scope: Scope,
-        search_terms: SearchTermsSchema
+        select_stmt: Select, scope: Scope, search_terms: SearchTermsSchema
     ) -> Select:
         """Apply relevance-based ordering for engine searches."""
         category_score_ctes = search_terms_scored_ctes_factory(scope, search_terms)
@@ -685,12 +710,7 @@ class _R:
 
         substring_condition = and_(
             *[
-                or_(
-                    *[
-                        cast(col, Text).ilike(f"%{term}%")
-                        for col in string_columns
-                    ]
-                )
+                or_(*[cast(col, Text).ilike(f"%{term}%") for col in string_columns])
                 for term in terms
             ]
         )
@@ -698,11 +718,7 @@ class _R:
         return select_stmt.where(or_(fts_condition, substring_condition))
 
     @staticmethod
-    def _apply_include(
-        select_stmt: Select,
-        model_class: ModelClass,
-        include: Include
-    ) -> Select:
+    def _apply_include(select_stmt: Select, model_class: ModelClass, include: Include) -> Select:
         """Apply eager-loading options based on a nested include specification.
 
         Supports nested relationship loading using `joinedload` or `selectinload`,
@@ -725,8 +741,8 @@ class _R:
             attr: QueryableAttribute,
             rel_info: RelationshipProperty,
             target_model_class: ModelClass,
-            value: Union[bool, Include],
-            path: str
+            value: bool | Include,
+            path: str,
         ) -> LoaderOption:
 
             if isinstance(value, bool) and value:
@@ -738,12 +754,12 @@ class _R:
                 loader = selectinload(attr) if rel_info.uselist else joinedload(attr)
                 return loader.options(*options)
             else:
-                raise TypeError(f"Invalid value type for nested include '{attr.key}': Expected bool or dict, got {type(value).__name__}")
+                raise TypeError(
+                    f"Invalid value type for nested include '{attr.key}': Expected bool or dict, got {type(value).__name__}"
+                )
 
         def parse_includes(
-            parent_model_class: ModelClass,
-            includes: Include,
-            prefix: str = ""
+            parent_model_class: ModelClass, includes: Include, prefix: str = ""
         ) -> list[LoaderOption]:
             options: list[LoaderOption] = []
 
@@ -753,10 +769,15 @@ class _R:
                     rel_info = parent_model_class.mapper.relationships[attr_name]
                     target_model_class = ModelClass(rel_info.mapper.class_)
                     path = f"{prefix}.{attr_name}" if prefix else attr_name
-                elif attr_name in parent_model_class.column_names | parent_model_class.hybrid_property_names:
+                elif (
+                    attr_name
+                    in parent_model_class.column_names | parent_model_class.hybrid_property_names
+                ):
                     continue  # Ignore columns and hybrid properties
                 else:
-                    raise ValueError(f"Attribute '{attr_name}' is not a valid relationship, column, nor property of {parent_model_class.value}")
+                    raise ValueError(
+                        f"Attribute '{attr_name}' is not a valid relationship, column, nor property of {parent_model_class.value}"
+                    )
 
                 loader = parse_node(attr, rel_info, target_model_class, value, path)
                 options.append(loader)
@@ -768,9 +789,7 @@ class _R:
 
     @staticmethod
     def _apply_exclude_lazy(
-        select_stmt: Select,
-        model_class: ModelClass,
-        include: Include | None
+        select_stmt: Select, model_class: ModelClass, include: Include | None
     ) -> Select:
         """Prevent unintended lazy-loading of relationships.
 
@@ -795,11 +814,7 @@ class _R:
         def is_lazy(rel: Relationship) -> bool:
             return rel.lazy in {True, "select", "dynamic"}
 
-        def exclude_unincluded(
-            parent_model_class,
-            includes: Include,
-            base_loader: Load = None
-        ):
+        def exclude_unincluded(parent_model_class, includes: Include, base_loader: Load = None):
             options: list[LoaderOption] = []
 
             for rel in parent_model_class.mapper.relationships:
@@ -808,11 +823,7 @@ class _R:
 
                 attr = parent_model_class.mapper.attrs[rel.key]
 
-                loader = (
-                    base_loader.noload(attr)
-                    if base_loader is not None
-                    else noload(attr)
-                )
+                loader = base_loader.noload(attr) if base_loader is not None else noload(attr)
 
                 if rel.key not in includes:
                     options.append(loader)
@@ -828,23 +839,17 @@ class _R:
                     value = {}  # No sub-relationships of attr are loaded
 
                 next_base = (
-                    base_loader.selectinload(attr)
-                    if rel.uselist
-                    else base_loader.joinedload(attr)
-                ) if base_loader else (
-                    selectinload(attr)
-                    if rel.uselist
-                    else joinedload(attr)
+                    (
+                        base_loader.selectinload(attr)
+                        if rel.uselist
+                        else base_loader.joinedload(attr)
+                    )
+                    if base_loader
+                    else (selectinload(attr) if rel.uselist else joinedload(attr))
                 )
 
                 target_model_class = ModelClass(rel.mapper.class_)
-                options.extend(
-                    exclude_unincluded(
-                        target_model_class,
-                        value,
-                        next_base
-                    )
-                )
+                options.extend(exclude_unincluded(target_model_class, value, next_base))
 
             return options
 
@@ -858,9 +863,9 @@ class R(_R):
         self,
         model: type[BaseType],
         session: AsyncSession = None,
-        _select: Union[str, Iterable[str]] = None,
-        _join: Union[Any, Iterable[Any]] = None,
-        _where: Union[Any, Iterable[Any]] = None,
+        _select: str | Iterable[str] = None,
+        _join: Any | Iterable[Any] = None,
+        _where: Any | Iterable[Any] = None,
         _sorting: Sorting = None,
         _filters: Filters = None,
         _search: str = None,
@@ -868,8 +873,8 @@ class R(_R):
         _search_relevance: bool = False,
         _include: Include = None,
         _offset: int = 0,
-        **kwargs
-    ) -> Optional[BaseType]:
+        **kwargs,
+    ) -> BaseType | None:
         """Public API for fetching a single model instance.
 
         Wraps ``_get_instance`` and manages session lifecycle via the
@@ -924,7 +929,7 @@ class R(_R):
             _search_relevance=_search_relevance,
             _include=_include,
             _offset=_offset,
-            **kwargs
+            **kwargs,
         )
 
     @session_manager()
@@ -932,9 +937,9 @@ class R(_R):
         self,
         model: type[BaseType],
         session: AsyncSession = None,
-        _select: Union[str, Iterable[str]] = None,
-        _join: Union[Any, Iterable[Any]] = None,
-        _where: Union[Any, Iterable[Any]] = None,
+        _select: str | Iterable[str] = None,
+        _join: Any | Iterable[Any] = None,
+        _where: Any | Iterable[Any] = None,
         _sorting: Sorting = None,
         _filters: Filters = None,
         _search: str = None,
@@ -945,7 +950,7 @@ class R(_R):
         _offset: int = 0,
         _reversed: bool = False,
         _count: bool = False,
-        **kwargs
+        **kwargs,
     ) -> list[BaseType] | tuple[list[BaseType], int | None]:
         """Public API for fetching multiple model instances.
 
@@ -1010,5 +1015,5 @@ class R(_R):
             _offset=_offset,
             _reversed=_reversed,
             _count=_count,
-            **kwargs
+            **kwargs,
         )

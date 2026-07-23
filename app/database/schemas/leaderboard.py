@@ -1,8 +1,8 @@
-from typing import Optional, TYPE_CHECKING
 from datetime import datetime
+from typing import TYPE_CHECKING
 
-from pydantic.main import BaseModel
 from pydantic.config import ConfigDict
+from pydantic.main import BaseModel
 
 from .base_model_extra import BaseModelExtra
 
@@ -14,15 +14,15 @@ if TYPE_CHECKING:
 class LeaderboardSchema(BaseModel, BaseModelExtra):
     model_config = ConfigDict(from_attributes=True)
 
-    id: Optional[int] = None
+    id: int | None = None
     beatmap_id: int
     beatmap_snapshot_id: int
     created_at: datetime
     updated_at: datetime
     frozen: bool
 
-    beatmap_snapshot: Optional["BeatmapSnapshotSchema"] = None
-    scores: list["ScoreSchema"] = []
+    beatmap_snapshot: BeatmapSnapshotSchema | None = None
+    scores: list[ScoreSchema] = []
 
 
 class LeaderboardCreateSchema(BaseModel, BaseModelExtra):
@@ -36,5 +36,5 @@ class LeaderboardCreateSchema(BaseModel, BaseModelExtra):
 class LeaderboardUpdateSchema(BaseModel, BaseModelExtra):
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
-    beatmap_snapshot_id: Optional[int] = None
-    frozen: Optional[bool] = None
+    beatmap_snapshot_id: int | None = None
+    frozen: bool | None = None

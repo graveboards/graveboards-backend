@@ -16,15 +16,14 @@ of the requested beatmapset.
 
 import json
 import random
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from itertools import product
 from pathlib import Path
-from typing import Optional
 
 from app.config import PROJECT_ROOT
 from app.fixtures.bn_queue_comments import BN_QUEUE_COMMENTS as REQUEST_COMMENTS
-from app.fixtures.queue_metadata import QUEUE_NAMES, QUEUE_DESCRIPTIONS
 from app.fixtures.metadata_io import load_metadata, save_metadata
+from app.fixtures.queue_metadata import QUEUE_DESCRIPTIONS, QUEUE_NAMES
 
 QUEUE_FIXTURES_PATH = PROJECT_ROOT / "instance" / "fixtures" / "queues"
 REQUEST_FIXTURES_PATH = PROJECT_ROOT / "instance" / "fixtures" / "requests"
@@ -60,7 +59,7 @@ class QueueRequestFixtureGenerator:
                         try:
                             uid = int(f.stem.split("_")[1])
                             user_ids.append(uid)
-                        except (IndexError, ValueError):
+                        except IndexError, ValueError:
                             pass
         return user_ids
 
@@ -72,7 +71,7 @@ class QueueRequestFixtureGenerator:
                 try:
                     bid = int(f.stem.split("_")[1])
                     bms_ids.append(bid)
-                except (IndexError, ValueError):
+                except IndexError, ValueError:
                     pass
         return bms_ids
 
@@ -84,7 +83,7 @@ class QueueRequestFixtureGenerator:
                 try:
                     qid = int(f.stem.split("_")[1])
                     q_ids.append(qid)
-                except (IndexError, ValueError):
+                except IndexError, ValueError:
                     pass
         return q_ids
 
@@ -102,7 +101,7 @@ class QueueRequestFixtureGenerator:
                     data = json.load(fh)
                 if "user_id" in data:
                     owners[bid] = data["user_id"]
-            except (IndexError, ValueError, json.JSONDecodeError, KeyError):
+            except IndexError, ValueError, json.JSONDecodeError, KeyError:
                 continue
 
         return owners
@@ -128,8 +127,8 @@ class QueueRequestFixtureGenerator:
                 "description": random.choice(QUEUE_DESCRIPTIONS),
                 "is_open": is_open,
                 "visibility": visibility,
-                "created_at": datetime.now(timezone.utc) - timedelta(days=random.randint(1, 365)),
-                "updated_at": datetime.now(timezone.utc),
+                "created_at": datetime.now(UTC) - timedelta(days=random.randint(1, 365)),
+                "updated_at": datetime.now(UTC),
             }
             queues.append(queue)
 
@@ -187,8 +186,8 @@ class QueueRequestFixtureGenerator:
                 "comment": comment,
                 "mv_checked": mv_checked,
                 "status": status,
-                "created_at": datetime.now(timezone.utc) - timedelta(days=random.randint(1, 180)),
-                "updated_at": datetime.now(timezone.utc),
+                "created_at": datetime.now(UTC) - timedelta(days=random.randint(1, 180)),
+                "updated_at": datetime.now(UTC),
             }
             requests.append(request)
 
@@ -208,7 +207,7 @@ class QueueRequestFixtureGenerator:
 
         metadata = load_metadata()
         metadata["samples"]["queues"]["count"] = len(queues)
-        metadata["samples"]["queues"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
+        metadata["samples"]["queues"]["last_fetched"] = datetime.now(UTC).isoformat()
         save_metadata(metadata)
 
         return QUEUE_FIXTURES_PATH
@@ -227,7 +226,7 @@ class QueueRequestFixtureGenerator:
 
         metadata = load_metadata()
         metadata["samples"]["requests"]["count"] = len(requests)
-        metadata["samples"]["requests"]["last_fetched"] = datetime.now(timezone.utc).isoformat()
+        metadata["samples"]["requests"]["last_fetched"] = datetime.now(UTC).isoformat()
         save_metadata(metadata)
 
         return REQUEST_FIXTURES_PATH

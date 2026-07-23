@@ -5,23 +5,24 @@ making it easy to adjust defaults in one place.
 
 Usage:
     from app.database.seeding.profiles import SeedProfile, get_profile
-    
+
     profile = get_profile("default")
     print(profile.beatmapsets_count)  # 30
 """
+
 from dataclasses import dataclass
-from typing import Literal
 
 
 @dataclass(frozen=True)
 class SeedProfile:
     """Defines default counts for seeding operations."""
+
     name: str
     beatmapsets_count: int = 30
     users_per_ruleset: int = 0  # Fetched from beatmapset owners, not random
     queue_count: int = 10
     request_count: int = 100
-    
+
     def __repr__(self) -> str:
         return (
             f"SeedProfile(name={self.name!r}, "
@@ -58,9 +59,7 @@ def get_profile(name: str) -> SeedProfile:
     """Get a profile by name, or raise KeyError if not found."""
     if name not in PROFILES:
         available = ", ".join(PROFILES.keys())
-        raise KeyError(
-            f"Unknown profile {name!r}. Available profiles: {available}"
-        )
+        raise KeyError(f"Unknown profile {name!r}. Available profiles: {available}")
     return PROFILES[name]
 
 

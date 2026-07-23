@@ -1,6 +1,6 @@
 """Shared helpers for fixture promotion and demotion."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from shutil import copy2, rmtree
 
@@ -43,7 +43,7 @@ def _move_fixture_files(
     Returns:
         Tuple of (files_copied, files_missing)
     """
-    current_time = datetime.now(timezone.utc).isoformat()
+    current_time = datetime.now(UTC).isoformat()
     copied = 0
     missing = 0
     deleted = 0

@@ -10,6 +10,7 @@ File naming convention:
 """
 
 from pathlib import Path
+
 from app.config import PROJECT_ROOT
 
 # Instance fixtures (production API-fetched data)

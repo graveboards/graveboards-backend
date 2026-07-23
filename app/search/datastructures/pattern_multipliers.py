@@ -1,6 +1,6 @@
 import struct
 from enum import IntFlag, auto
-from typing import Literal, Optional, Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, model_validator
 from pydantic.config import ConfigDict
@@ -18,12 +18,13 @@ class PatternMultipliers(BaseModel):
     Multipliers must be within signed byte range (``-128`` to ``127``). ``None``
     disables scoring for the pattern. However, at least one multiplier must be enabled.
     """
+
     model_config = ConfigDict(extra="forbid")
 
-    exact: Optional[Annotated[int, Field(ge=-128, le=127)]] = 5
-    prefix: Optional[Annotated[int, Field(ge=-128, le=127)]] = 4
-    suffix: Optional[Annotated[int, Field(ge=-128, le=127)]] = 3
-    substring: Optional[Annotated[int, Field(ge=-128, le=127)]] = 2
+    exact: Annotated[int, Field(ge=-128, le=127)] | None = 5
+    prefix: Annotated[int, Field(ge=-128, le=127)] | None = 4
+    suffix: Annotated[int, Field(ge=-128, le=127)] | None = 3
+    substring: Annotated[int, Field(ge=-128, le=127)] | None = 2
 
     @model_validator(mode="after")
     def at_least_one_not_null(self):
@@ -41,7 +42,7 @@ class PatternMultipliers(BaseModel):
 
         raise AllValuesNullError("pattern_multipliers")
 
-    def get_patterns(self, term: str) -> list[tuple[PatternName, str, Optional[int]]]:
+    def get_patterns(self, term: str) -> list[tuple[PatternName, str, int | None]]:
         """Generate SQL pattern variants for a term.
 
         Produces pattern strings suitable for ``LIKE`` comparisons, paired with their
@@ -102,7 +103,7 @@ class PatternMultipliers(BaseModel):
         return presence_byte + null_presence_byte + b"".join(chunks)
 
     @classmethod
-    def deserialize(cls, data: bytes, offset: int = 0) -> tuple["PatternMultipliers", int]:
+    def deserialize(cls, data: bytes, offset: int = 0) -> tuple[PatternMultipliers, int]:
         """Deserialize multipliers from binary format.
 
         Args:
@@ -135,7 +136,7 @@ _DEFAULTS = PatternMultipliers().model_dump()
 
 PatternMultiplierFieldFlag = IntFlag(
     "PatternMultiplierFieldFlag",
-    {field: auto() for field in PatternMultipliers.model_fields.keys()}
+    {field: auto() for field in PatternMultipliers.model_fields.keys()},
 )
 """Bitmask flags representing individual pattern multipliers.
 

@@ -1,4 +1,5 @@
 import os
+
 from prometheus_client import Gauge
 
 from app.version import __version__

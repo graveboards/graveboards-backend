@@ -2,27 +2,22 @@ from connexion import request
 
 from api.decorators import api_query, coerce_arguments
 from api.utils import build_pydantic_include
-from app.exceptions import NotFound
-from app.spec import get_include_schema
 from app.database import PostgresqlDB
 from app.database.models import BeatmapSnapshot, ModelClass
 from app.database.schemas import BeatmapSnapshotSchema
-from . import osu
-from . import leaderboard
-from . import scores
+from app.exceptions import NotFound
+from app.spec import get_include_schema
 
-__all__ = ["search", "get"]
+from . import leaderboard, osu, scores
+
+__all__ = ["search", "get", "leaderboard", "osu", "scores"]
 
 
 @api_query(ModelClass.BEATMAP_SNAPSHOT, many=True)
 async def search(beatmap_id: int, **kwargs):
     db: PostgresqlDB = request.state.db
 
-    beatmap_snapshots = await db.get_many(
-        BeatmapSnapshot,
-        beatmap_id=beatmap_id,
-        **kwargs
-    )
+    beatmap_snapshots = await db.get_many(BeatmapSnapshot, beatmap_id=beatmap_id, **kwargs)
 
     if not beatmap_snapshots:
         return [], 200, {"Content-Type": "application/json"}
@@ -30,7 +25,7 @@ async def search(beatmap_id: int, **kwargs):
     include = build_pydantic_include(
         obj=beatmap_snapshots[0],
         include_schema=get_include_schema(ModelClass.BEATMAP_SNAPSHOT),
-        request_include=kwargs.get("_include")
+        request_include=kwargs.get("_include"),
     )
 
     beatmap_snapshots_data = [
@@ -58,21 +53,22 @@ async def get(beatmap_id: int, snapshot_number: int = -1, **kwargs):
         )
     else:
         beatmap_snapshot = await db.get(
-            BeatmapSnapshot,
-            beatmap_id=beatmap_id,
-            snapshot_number=snapshot_number,
-            **kwargs
+            BeatmapSnapshot, beatmap_id=beatmap_id, snapshot_number=snapshot_number, **kwargs
         )
 
     if not beatmap_snapshot:
-        raise NotFound(f"BeatmapSnapshot with beatmap_id '{beatmap_id}' and snapshot_number '{snapshot_number}' not found")
+        raise NotFound(
+            f"BeatmapSnapshot with beatmap_id '{beatmap_id}' and snapshot_number '{snapshot_number}' not found"
+        )
 
     include = build_pydantic_include(
         obj=beatmap_snapshot,
         include_schema=get_include_schema(ModelClass.BEATMAP_SNAPSHOT),
-        request_include=kwargs.get("_include")
+        request_include=kwargs.get("_include"),
     )
 
-    beatmap_snapshot_data = BeatmapSnapshotSchema.model_validate(beatmap_snapshot).model_dump(include=include)
+    beatmap_snapshot_data = BeatmapSnapshotSchema.model_validate(beatmap_snapshot).model_dump(
+        include=include
+    )
 
     return beatmap_snapshot_data, 200, {"Content-Type": "application/json"}

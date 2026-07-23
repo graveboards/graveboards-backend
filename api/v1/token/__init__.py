@@ -3,11 +3,11 @@ from connexion import request
 from jwt.exceptions import ExpiredSignatureError, InvalidIssuerError, InvalidTokenError
 
 from app.database import PostgresqlDB
-from app.database.models import User, ScoreFetcherTask, OAuthToken
+from app.database.models import OAuthToken, ScoreFetcherTask, User
 from app.exceptions import BadRequest, OsuOAuthError, TooManyRequests
 from app.oauth import OAuth
 from app.osu_api import OsuAPIClient
-from app.redis import RedisClient, Namespace
+from app.redis import Namespace, RedisClient
 from app.security import create_token_payload, encode_token, validate_token
 from app.security.auth_rate_limit import AuthRateLimiter
 from app.security.oauth_encryption import encrypt_token
@@ -20,7 +20,7 @@ async def search(token: str, rc: RedisClient = None):
     if rc is None:
         rc = request.state.rc
 
-    client_ip = request.client.host if hasattr(request, 'client') else "unknown"
+    client_ip = request.client.host if hasattr(request, "client") else "unknown"
     limiter = AuthRateLimiter(rc)
     allowed, retry_after = await limiter.check(client_ip)
     if not allowed:
@@ -28,7 +28,7 @@ async def search(token: str, rc: RedisClient = None):
 
     try:
         jwt_claims = validate_token(token)
-    except (InvalidTokenError, ExpiredSignatureError, InvalidIssuerError):
+    except InvalidTokenError, ExpiredSignatureError, InvalidIssuerError:
         await limiter.record_failure(client_ip)
         raise BadRequest("Invalid or expired JWT")
 
@@ -49,7 +49,7 @@ async def post(
     if db is None:
         db = request.state.db
 
-    client_ip = request.client.host if hasattr(request, 'client') else "unknown"
+    client_ip = request.client.host if hasattr(request, "client") else "unknown"
     limiter = AuthRateLimiter(rc)
     allowed, retry_after = await limiter.check(client_ip)
     if not allowed:
@@ -76,9 +76,7 @@ async def post(
         if oauth is None:
             oauth = OAuth()
         token = await oauth.fetch_token(
-            grant_type="authorization_code",
-            scope="public identify",
-            code=code
+            grant_type="authorization_code", scope="public identify", code=code
         )
         access_token = token["access_token"]
         refresh_token = token["refresh_token"]
@@ -105,7 +103,7 @@ async def post(
         user_id=user_id,
         access_token_enc=encrypt_token(access_token),
         refresh_token_enc=encrypt_token(refresh_token),
-        expires_at=aware_utcnow()
+        expires_at=aware_utcnow(),
     )
 
     payload = create_token_payload(user_id)

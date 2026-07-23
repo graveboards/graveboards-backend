@@ -1,15 +1,13 @@
 from sqlalchemy import event
 from sqlalchemy.engine.base import Connection
-from sqlalchemy.sql import insert
 from sqlalchemy.orm.mapper import Mapper
+from sqlalchemy.sql import insert
 
+from app.database.models import ProfileFetcherTask, ScoreFetcherTask, User
 from app.logging import get_logger
-from app.redis import redis_connection, ChannelName
-from app.database.models import User, ScoreFetcherTask, ProfileFetcherTask
+from app.redis import ChannelName, redis_connection
 
-__all__ = [
-    "user_after_insert"
-]
+__all__ = ["user_after_insert"]
 
 logger = get_logger(__name__)
 
@@ -40,14 +38,9 @@ def user_after_insert(mapper: Mapper[User], connection: Connection, target: User
     info = {"id": target.id}
     logger.debug(f"New User detected (after_insert): {info}")
 
-    insert_score_fetcher_task_stmt = (
-        insert(ScoreFetcherTask)
-        .values(user_id=target.id)
-    )
+    insert_score_fetcher_task_stmt = insert(ScoreFetcherTask).values(user_id=target.id)
     insert_profile_fetcher_task_stmt = (
-        insert(ProfileFetcherTask)
-        .values(user_id=target.id)
-        .returning(ProfileFetcherTask.id)
+        insert(ProfileFetcherTask).values(user_id=target.id).returning(ProfileFetcherTask.id)
     )
 
     connection.execute(insert_score_fetcher_task_stmt)
@@ -58,6 +51,8 @@ def user_after_insert(mapper: Mapper[User], connection: Connection, target: User
     try:
         with redis_connection() as rc:
             rc.publish(ChannelName.PROFILE_FETCHER_TASKS.value, profile_fetcher_task_id)
-            logger.debug(f"Published ProfileFetcherTask ID to redis channel '{ChannelName.PROFILE_FETCHER_TASKS.value}': {profile_fetcher_task_id}")
+            logger.debug(
+                f"Published ProfileFetcherTask ID to redis channel '{ChannelName.PROFILE_FETCHER_TASKS.value}': {profile_fetcher_task_id}"
+            )
     except Exception as e:
         logger.warning(f"Failed to publish to Redis (may not be available): {e}")

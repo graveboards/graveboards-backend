@@ -15,10 +15,11 @@ Usage:
 from rich.console import Console
 from rich.table import Table
 
-from app.redis import RedisClient
-from app.logging import get_logger
 from app.fixtures.criteria import Criteria, FetchCriteria, FetchReport
 from app.fixtures.orchestrator import FixtureOrchestrator
+from app.logging import get_logger
+from app.redis import RedisClient
+
 from .config import FetchConfig
 
 console = Console()

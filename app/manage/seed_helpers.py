@@ -1,15 +1,12 @@
 """Helper functions for seed command fixture assurance."""
 
 import json
-from pathlib import Path
 
 from app.config import PROJECT_ROOT
 from app.database.seeding.profiles import SeedProfile
-from app.fixtures.constants import RULESETS
-from app.fixtures.paths import get_fixture_path
-from app.fixtures.orchestrator import FixtureOrchestrator
 from app.fixtures.criteria import FetchCriteria
-from app.logging import get_logger
+from app.fixtures.orchestrator import FixtureOrchestrator
+from app.fixtures.paths import get_fixture_path
 from app.redis import RedisClient
 
 
@@ -70,7 +67,7 @@ async def ensure_fixtures_async(logger, profile: SeedProfile) -> bool:
                     if user_id:
                         owner_ids.add(user_id)
                         owner_data[user_id] = data.get("user", {})
-                except (json.JSONDecodeError, KeyError):
+                except json.JSONDecodeError, KeyError:
                     continue
 
             if not owner_ids:

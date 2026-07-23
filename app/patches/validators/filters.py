@@ -70,7 +70,9 @@ def validate_filters(filters: dict, schema: dict, path: list[str] = None):
                     last_error = e
 
             if not matched:
-                raise last_error or DeepObjectValidationError(current_path, "Value does not match any allowed condition schema")
+                raise last_error or DeepObjectValidationError(
+                    current_path, "Value does not match any allowed condition schema"
+                )
 
             continue
 
@@ -119,25 +121,34 @@ def validate_value(value: Any, schema: dict, path: list[str]) -> None:
                 validate_value(item, items_schema, path + [str(i)])
         case "string":
             if not isinstance(value, str):
-                raise DeepObjectValidationError(path, f"Expected string, got {type(value).__name__}")
+                raise DeepObjectValidationError(
+                    path, f"Expected string, got {type(value).__name__}"
+                )
 
             if prop_format == "date-time":
                 try:
                     datetime.fromisoformat(value.replace("Z", "+00:00"))
                 except ValueError:
-                    raise DeepObjectValidationError(path, f"Expected ISO 8601 date-time string, got '{value}'")
+                    raise DeepObjectValidationError(
+                        path, f"Expected ISO 8601 date-time string, got '{value}'"
+                    )
         case "integer":
             if not isinstance(value, int):
-                raise DeepObjectValidationError(path, f"Expected integer, got {type(value).__name__}")
+                raise DeepObjectValidationError(
+                    path, f"Expected integer, got {type(value).__name__}"
+                )
         case "number":
             if not isinstance(value, (int, float)):
-                raise DeepObjectValidationError(path, f"Expected number, got {type(value).__name__}")
+                raise DeepObjectValidationError(
+                    path, f"Expected number, got {type(value).__name__}"
+                )
         case "boolean":
             if not isinstance(value, bool):
-                raise DeepObjectValidationError(path, f"Expected boolean, got {type(value).__name__}")
+                raise DeepObjectValidationError(
+                    path, f"Expected boolean, got {type(value).__name__}"
+                )
         case "null":
             if value is not None:
                 raise DeepObjectValidationError(path, f"Expected null, got {type(value).__name__}")
         case _:
             raise DeepObjectValidationError(path, "Invalid filter schema definition")
-

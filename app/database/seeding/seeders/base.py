@@ -1,5 +1,4 @@
 import asyncio
-import json
 from abc import ABC, abstractmethod
 from datetime import datetime
 
@@ -26,8 +25,7 @@ class Seeder(ABC):
         self.total = len(self.data)
 
     @abstractmethod
-    async def seed(self, queue: asyncio.Queue[SeedEvent | None], session: AsyncSession = None):
-        ...
+    async def seed(self, queue: asyncio.Queue[SeedEvent | None], session: AsyncSession = None): ...
 
     @staticmethod
     def _normalize_datetimes(obj):

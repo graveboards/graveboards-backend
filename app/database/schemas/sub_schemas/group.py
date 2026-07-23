@@ -1,10 +1,8 @@
-from typing import Optional
-
 from pydantic.main import BaseModel
 
 
 class GroupSchema(BaseModel):
-    colour: Optional[str]
+    colour: str | None
     has_listing: bool
     has_playmodes: bool
     id: int

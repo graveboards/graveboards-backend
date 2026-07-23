@@ -1,8 +1,6 @@
 """Typed metadata models for fixture tracking."""
 
 from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Optional
 
 
 @dataclass
@@ -10,7 +8,7 @@ class SampleCount:
     """Sample count tracking for a single category."""
 
     count: int = 0
-    last_fetched: Optional[str] = None
+    last_fetched: str | None = None
 
 
 @dataclass
@@ -21,7 +19,7 @@ class UsersSample:
     per_ruleset: dict[str, int] = field(
         default_factory=lambda: {"osu": 0, "taiko": 0, "fruits": 0, "mania": 0}
     )
-    last_fetched: Optional[str] = None
+    last_fetched: str | None = None
 
 
 @dataclass
@@ -30,7 +28,7 @@ class ScoresSample:
 
     count: int = 0
     per_type: dict[str, int] = field(default_factory=lambda: {"best": 0, "firsts": 0, "recent": 0})
-    last_fetched: Optional[str] = None
+    last_fetched: str | None = None
 
 
 @dataclass
@@ -77,7 +75,7 @@ class Samples:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Samples":
+    def from_dict(cls, data: dict) -> Samples:
         """Create from dictionary format."""
         if not data:
             return cls()
@@ -98,7 +96,7 @@ class PromotedFixture:
     """Promotion tracking for a single category."""
 
     count: int = 0
-    last_promoted: Optional[str] = None
+    last_promoted: str | None = None
 
 
 @dataclass
@@ -109,7 +107,7 @@ class PromotedUsers:
     per_ruleset: dict[str, int] = field(
         default_factory=lambda: {"osu": 0, "taiko": 0, "fruits": 0, "mania": 0}
     )
-    last_promoted: Optional[str] = None
+    last_promoted: str | None = None
 
 
 @dataclass
@@ -118,7 +116,7 @@ class PromotedScores:
 
     count: int = 0
     per_type: dict[str, int] = field(default_factory=lambda: {"best": 0, "firsts": 0, "recent": 0})
-    last_promoted: Optional[str] = None
+    last_promoted: str | None = None
 
 
 @dataclass
@@ -171,7 +169,7 @@ class PromotedFixtures:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "PromotedFixtures":
+    def from_dict(cls, data: dict) -> PromotedFixtures:
         """Create from dictionary format."""
         if not data:
             return cls()
@@ -192,18 +190,18 @@ class TargetedFileMetadata:
     """Metadata for a single targeted fixture file."""
 
     filepath: str = ""
-    fetched_at: Optional[str] = None
+    fetched_at: str | None = None
     # Optional fields depending on type
-    status: Optional[str] = None
-    ruleset: Optional[str] = None
-    difficulty_rating: Optional[float] = None
-    playcount: Optional[int] = None
-    activity_level: Optional[str] = None
-    rank: Optional[str] = None
+    status: str | None = None
+    ruleset: str | None = None
+    difficulty_rating: float | None = None
+    playcount: int | None = None
+    activity_level: str | None = None
+    rank: str | None = None
     mods: list[int] = field(default_factory=list)
-    visibility: Optional[int] = None
-    is_open: Optional[bool] = None
-    mv_checked: Optional[bool] = None
+    visibility: int | None = None
+    is_open: bool | None = None
+    mv_checked: bool | None = None
 
 
 @dataclass
@@ -245,7 +243,7 @@ class TargetedMetadata:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "TargetedMetadata":
+    def from_dict(cls, data: dict) -> TargetedMetadata:
         """Create from dictionary format."""
         if not data:
             return cls()
@@ -289,7 +287,7 @@ class SearchTestCoverage:
     restricted_users: dict[str, list[int]] = field(
         default_factory=lambda: {"true_ids": [], "false_ids": []}
     )
-    last_updated: Optional[str] = None
+    last_updated: str | None = None
 
     def to_dict(self) -> dict:
         """Convert to dictionary format."""
@@ -322,7 +320,7 @@ class SearchTestCoverage:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "SearchTestCoverage":
+    def from_dict(cls, data: dict) -> SearchTestCoverage:
         """Create from dictionary format."""
         if not data:
             return cls()
@@ -359,7 +357,7 @@ class SearchTestCoverage:
 class Metadata:
     """Top-level metadata container with all sections."""
 
-    last_updated: Optional[str] = None
+    last_updated: str | None = None
     samples: Samples = field(default_factory=Samples)
     promoted_fixtures: PromotedFixtures = field(default_factory=PromotedFixtures)
     targeted: TargetedMetadata = field(default_factory=TargetedMetadata)
@@ -400,7 +398,7 @@ class Metadata:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Metadata":
+    def from_dict(cls, data: dict) -> Metadata:
         """Create from dictionary format."""
         if not data:
             return cls()

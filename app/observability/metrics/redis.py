@@ -1,5 +1,4 @@
-from prometheus_client import Gauge, Counter, Histogram
-
+from prometheus_client import Counter, Histogram
 
 redis_commands_total = Counter(
     "redis_commands_total",

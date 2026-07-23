@@ -1,20 +1,24 @@
-from typing import Any, Union, get_origin, get_args, Iterable
+from collections.abc import Iterable
+from typing import Any, Union, get_args, get_origin
 from typing import cast as typing_cast
 
-from sqlalchemy.sql import any_, all_, cast
-from sqlalchemy.sql.elements import ColumnClause, literal, BinaryExpression, BindParameter, CollectionAggregate, ColumnElement
-from sqlalchemy.sql.functions import func
-from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.orm.attributes import InstrumentedAttribute
+from sqlalchemy.sql import all_, any_, cast
+from sqlalchemy.sql.elements import (
+    BinaryExpression,
+    BindParameter,
+    CollectionAggregate,
+    ColumnClause,
+    ColumnElement,
+    literal,
+)
+from sqlalchemy.sql.functions import func
 
-from app.exceptions import TypeValidationError
 from app.database.enums import FilterOperator
+from app.exceptions import TypeValidationError
 
-__all__ = [
-    "extract_inner_types",
-    "validate_type",
-    "get_filter_condition"
-]
+__all__ = ["extract_inner_types", "validate_type", "get_filter_condition"]
 
 
 def extract_inner_types(annotated_type: Any) -> type | tuple[type, ...]:
@@ -38,9 +42,7 @@ def extract_inner_types(annotated_type: Any) -> type | tuple[type, ...]:
 
         if origin is Union:
             non_none_args = [arg for arg in args if arg is not type(None)]
-            if len(non_none_args) == 1:
-                return non_none_args[0]
-            elif len(non_none_args) == 2:
+            if len(non_none_args) == 1 or len(non_none_args) == 2:
                 return non_none_args[0]
             else:
                 return tuple(non_none_args)
@@ -121,7 +123,7 @@ def get_filter_condition(
     filter_operator: FilterOperator,
     target: InstrumentedAttribute | ColumnClause,
     value: Any,
-    is_aggregated: bool = False
+    is_aggregated: bool = False,
 ) -> BinaryExpression | BindParameter | CollectionAggregate | ColumnElement[bool]:
     """Construct a SQLAlchemy filter condition dynamically.
 

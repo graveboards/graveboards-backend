@@ -1,28 +1,28 @@
 import sys
 
-from rich.panel import Panel
 from rich.live import Live
-from rich.table import Table
+from rich.panel import Panel
 from rich.progress import (
-    Progress,
     BarColumn,
-    TextColumn,
-    TimeRemainingColumn,
+    Progress,
     TaskID,
+    TextColumn,
     TimeElapsedColumn,
+    TimeRemainingColumn,
 )
+from rich.table import Table
 
 from app.config import PROJECT_ROOT
 from app.database import PostgresqlDB, db_lifespan
 from app.database.seeding import (
     CLI_TO_SEEDER,
-    SeedTarget,
+    SEEDER_TO_CLI,
     SeederOrchestrator,
     SeederTarget,
-    SEEDER_TO_CLI,
+    SeedTarget,
 )
-from app.database.seeding.profiles import get_profile
 from app.database.seeding.fixture_loader import load_seeding_data
+from app.database.seeding.profiles import get_profile
 from app.fixtures.queue_request_generator import QueueRequestFixtureGenerator
 from app.logging import get_logger
 

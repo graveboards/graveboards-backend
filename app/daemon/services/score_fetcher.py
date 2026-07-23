@@ -2,11 +2,12 @@ from typing import ClassVar
 
 from httpx import ConnectTimeout
 
-from app.database.models import ScoreFetcherTask, Leaderboard, BeatmapSnapshot, Score
+from app.database.models import BeatmapSnapshot, Leaderboard, Score, ScoreFetcherTask
 from app.database.schemas import ScoreSchema
+from app.logging import Logger, get_logger
 from app.osu_api.enums import ScoreType
 from app.redis import ChannelName
-from app.logging import get_logger, Logger
+
 from .decorators import auto_retry
 from .service import ScheduledFetcherService
 from .service.job import JobLoadInstruction
@@ -66,9 +67,7 @@ class ScoreFetcher(ScheduledFetcherService):
         await self._respect_rate_limit()
         scores = await self._oac.get_user_scores(user_id, ScoreType.RECENT)
 
-        leaderboards = await self._db.get_many(
-            Leaderboard, _select="beatmap_id"
-        )
+        leaderboards = await self._db.get_many(Leaderboard, _select="beatmap_id")
         eligible_beatmap_ids = {lb.beatmap_id for lb in leaderboards}
 
         for score in scores:
@@ -96,7 +95,7 @@ class ScoreFetcher(ScheduledFetcherService):
         snapshot = await self._db.get(
             BeatmapSnapshot,
             beatmap_id=beatmap_id,
-            _sorting=[{"field": "BeatmapSnapshot.id", "order": "desc"}]
+            _sorting=[{"field": "BeatmapSnapshot.id", "order": "desc"}],
         )
         if not snapshot:
             return None

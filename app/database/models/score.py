@@ -1,11 +1,11 @@
 from datetime import datetime
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
-from sqlalchemy.sql.schema import ForeignKey, UniqueConstraint
-from sqlalchemy.sql.sqltypes import Integer, String, DateTime, Boolean, Float
+from sqlalchemy.dialects.postgresql.json import JSONB
 from sqlalchemy.orm import mapped_column, relationship
 from sqlalchemy.orm.base import Mapped
-from sqlalchemy.dialects.postgresql.json import JSONB
+from sqlalchemy.sql.schema import ForeignKey, UniqueConstraint
+from sqlalchemy.sql.sqltypes import Boolean, DateTime, Float, Integer, String
 
 from .base import Base
 
@@ -16,10 +16,16 @@ if TYPE_CHECKING:
 class Score(Base):
     __tablename__ = "scores"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     beatmap_id: Mapped[int] = mapped_column(Integer, ForeignKey("beatmaps.id"), nullable=False)
-    beatmapset_id: Mapped[int] = mapped_column(Integer, ForeignKey("beatmapsets.id"), nullable=False)
-    leaderboard_id: Mapped[int] = mapped_column(Integer, ForeignKey("leaderboards.id"), nullable=False)
+    beatmapset_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("beatmapsets.id"), nullable=False
+    )
+    leaderboard_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("leaderboards.id"), nullable=False
+    )
 
     # osu! API datastructure
     accuracy: Mapped[float] = mapped_column(Float, nullable=False)
@@ -29,21 +35,23 @@ class Score(Base):
     mode_int: Mapped[int] = mapped_column(Integer, nullable=False)
     mods: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
     perfect: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    pp: Mapped[Optional[float]] = mapped_column(Float)
+    pp: Mapped[float | None] = mapped_column(Float)
     rank: Mapped[str] = mapped_column(String, nullable=False)
     score: Mapped[int] = mapped_column(Integer, nullable=False)
-    statistics: Mapped[dict[str, Optional[int]]] = mapped_column(JSONB, nullable=False)
+    statistics: Mapped[dict[str, int | None]] = mapped_column(JSONB, nullable=False)
     type: Mapped[str] = mapped_column(String, nullable=False)
 
     # Relationships
-    user_profile: Mapped["Profile"] = relationship(
+    user_profile: Mapped[Profile] = relationship(
         "Profile",
         primaryjoin="foreign(Score.user_id) == remote(Profile.user_id)",
         uselist=False,
         overlaps="scores",
-        lazy=True
+        lazy=True,
     )
 
     __table_args__ = (
-        UniqueConstraint("user_id", "beatmap_id", "created_at", name="_user_and_beatmap_and_creation_uc"),
+        UniqueConstraint(
+            "user_id", "beatmap_id", "created_at", name="_user_and_beatmap_and_creation_uc"
+        ),
     )

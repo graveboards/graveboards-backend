@@ -1,8 +1,8 @@
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy.types import TypeDecorator, DateTime
 from sqlalchemy.engine.interfaces import Dialect
+from sqlalchemy.types import DateTime, TypeDecorator
 
 
 class AwareDateTime(TypeDecorator):

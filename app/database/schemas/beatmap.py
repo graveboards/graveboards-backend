@@ -1,25 +1,25 @@
 from __future__ import annotations
 
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
-from pydantic.main import BaseModel
 from pydantic.config import ConfigDict
+from pydantic.main import BaseModel
 
 from .base_model_extra import BaseModelExtra
 
 if TYPE_CHECKING:
-    from .beatmapset import BeatmapsetSchema
     from .beatmap_snapshot import BeatmapSnapshotSchema
+    from .beatmapset import BeatmapsetSchema
 
 
 class BeatmapSchema(BaseModel, BaseModelExtra):
     model_config = ConfigDict(from_attributes=True)
 
-    id: Optional[int] = None
+    id: int | None = None
     beatmapset_id: int
 
-    beatmapset: Optional[BeatmapsetSchema] = None
-    snapshots: list["BeatmapSnapshotSchema"] = []
+    beatmapset: BeatmapsetSchema | None = None
+    snapshots: list[BeatmapSnapshotSchema] = []
 
 
 class BeatmapCreateSchema(BaseModel, BaseModelExtra):
@@ -31,4 +31,4 @@ class BeatmapCreateSchema(BaseModel, BaseModelExtra):
 class BeatmapUpdateSchema(BaseModel, BaseModelExtra):
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
-    beatmapset_id: Optional[int] = None
+    beatmapset_id: int | None = None

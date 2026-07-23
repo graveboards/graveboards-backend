@@ -1,8 +1,7 @@
 from datetime import datetime
-from typing import Optional
 
-from pydantic.main import BaseModel
 from pydantic.config import ConfigDict
+from pydantic.main import BaseModel
 
 from .base_model_extra import BaseModelExtra
 
@@ -10,10 +9,10 @@ from .base_model_extra import BaseModelExtra
 class ProfileFetcherTaskSchema(BaseModel, BaseModelExtra):
     model_config = ConfigDict(from_attributes=True)
 
-    id: Optional[int] = None
+    id: int | None = None
     user_id: int
     enabled: bool = True
-    last_fetch: Optional[datetime] = None
+    last_fetch: datetime | None = None
 
 
 class ProfileFetcherTaskCreateSchema(BaseModel, BaseModelExtra):
@@ -26,5 +25,5 @@ class ProfileFetcherTaskCreateSchema(BaseModel, BaseModelExtra):
 class ProfileFetcherTaskUpdateSchema(BaseModel, BaseModelExtra):
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
-    enabled: Optional[bool] = None
-    last_fetch: Optional[datetime] = None
+    enabled: bool | None = None
+    last_fetch: datetime | None = None

@@ -3,13 +3,13 @@ from connexion import request
 from api.decorators import api_query
 from api.utils import bleach_body, build_pydantic_include
 from app.database import PostgresqlDB
-from app.database.models import Score, User, Beatmap, BeatmapSnapshot, Leaderboard, ModelClass
+from app.database.enums import RoleName
+from app.database.models import Beatmap, BeatmapSnapshot, Leaderboard, ModelClass, Score, User
 from app.database.schemas import ScoreSchema
-from app.exceptions import NotFound, Conflict
+from app.exceptions import Conflict, NotFound
+from app.security import role_authorization
 from app.spec import get_include_schema
 from app.utils import parse_iso8601
-from app.security import role_authorization
-from app.database.enums import RoleName
 
 __all__ = ["search", "get", "post"]
 
@@ -18,10 +18,7 @@ __all__ = ["search", "get", "post"]
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
 
-    scores = await db.get_many(
-        Score,
-        **kwargs
-    )
+    scores = await db.get_many(Score, **kwargs)
 
     if not scores:
         return [], 200, {"Content-Type": "application/json"}
@@ -29,12 +26,11 @@ async def search(**kwargs):
     include = build_pydantic_include(
         obj=scores[0],
         include_schema=get_include_schema(ModelClass.SCORE),
-        request_include=kwargs.get("_include")
+        request_include=kwargs.get("_include"),
     )
 
     scores_data = [
-        ScoreSchema.model_validate(score).model_dump(include=include)
-        for score in scores
+        ScoreSchema.model_validate(score).model_dump(include=include) for score in scores
     ]
 
     return scores_data, 200, {"Content-Type": "application/json"}
@@ -44,11 +40,7 @@ async def search(**kwargs):
 async def get(score_id: int, **kwargs):
     db: PostgresqlDB = request.state.db
 
-    score = await db.get(
-        Score,
-        id=score_id,
-        **kwargs
-    )
+    score = await db.get(Score, id=score_id, **kwargs)
 
     if not score:
         raise NotFound(f"Score with ID '{score_id}' not found")
@@ -56,7 +48,7 @@ async def get(score_id: int, **kwargs):
     include = build_pydantic_include(
         obj=score,
         include_schema=get_include_schema(ModelClass.SCORE),
-        request_include=kwargs.get("_include")
+        request_include=kwargs.get("_include"),
     )
 
     score_data = ScoreSchema.model_validate(score).model_dump(include=include)
@@ -80,25 +72,35 @@ async def post(body: dict, db: PostgresqlDB = None, **kwargs):
     if not await db.get(Beatmap, id=beatmap_id):
         raise NotFound(f"There is no beatmap with ID '{beatmap_id}'")
 
-    beatmap_snapshot = await db.get(BeatmapSnapshot, beatmap_id=beatmap_id, _sorting=[{"field": "BeatmapSnapshot.id", "order": "desc"}])
+    beatmap_snapshot = await db.get(
+        BeatmapSnapshot,
+        beatmap_id=beatmap_id,
+        _sorting=[{"field": "BeatmapSnapshot.id", "order": "desc"}],
+    )
 
     if not beatmap_snapshot:
         raise NotFound(f"There is no beatmap snapshot with beatmap ID '{beatmap_id}'")
 
-    leaderboard = await db.get(Leaderboard, beatmap_id=beatmap_id, beatmap_snapshot_id=beatmap_snapshot.id)
+    leaderboard = await db.get(
+        Leaderboard, beatmap_id=beatmap_id, beatmap_snapshot_id=beatmap_snapshot.id
+    )
 
     if not leaderboard:
-        raise NotFound(f"There is no leaderboard with beatmap ID '{beatmap_id}' and snapshot ID '{beatmap_snapshot.id}'")
+        raise NotFound(
+            f"There is no leaderboard with beatmap ID '{beatmap_id}' and snapshot ID '{beatmap_snapshot.id}'"
+        )
 
     body["leaderboard_id"] = leaderboard.id
 
     if await db.get(Score, user_id=user_id, beatmap_id=beatmap_id, created_at=created_at):
-        raise Conflict(f"The score created by '{user_id}' at '{created_at}' on the beatmap with ID '{beatmap_id}' already exists")
+        raise Conflict(
+            f"The score created by '{user_id}' at '{created_at}' on the beatmap with ID '{beatmap_id}' already exists"
+        )
 
     body = bleach_body(
         body,
         whitelisted_keys={k for k in ScoreSchema.model_fields.keys() if k != "id"},
-        blacklisted_keys={"id"}
+        blacklisted_keys={"id"},
     )
     await db.add(Score, **body)
 

@@ -1,6 +1,5 @@
 from prometheus_client import Counter, Histogram
 
-
 search_requests_total = Counter(
     "search_requests_total",
     "Total number of search requests.",

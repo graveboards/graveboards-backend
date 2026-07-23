@@ -1,23 +1,24 @@
 from __future__ import annotations
 
-import struct
 import re
+import struct
+from collections.abc import Sequence
 from datetime import datetime
-from typing import Union, Optional, Sequence, Any, Literal
-from enum import IntFlag, auto, IntEnum
+from enum import IntEnum, IntFlag, auto
+from typing import Any, Literal
 
 import numpy as np
-from pydantic.main import BaseModel
-from pydantic.fields import Field
-from pydantic.functional_validators import model_validator, field_validator
 from pydantic.config import ConfigDict
+from pydantic.fields import Field
+from pydantic.functional_validators import field_validator, model_validator
+from pydantic.main import BaseModel
 
-from app.security import safe_compile_regex
-
-ConditionField = Literal["eq", "neq", "lt", "lte", "gt", "gte", "in", "not_in", "regex", "not_regex"]
+ConditionField = Literal[
+    "eq", "neq", "lt", "lte", "gt", "gte", "in", "not_in", "regex", "not_regex"
+]
 """Supported field keys for conditions."""
 
-ConditionValue = Union[int, float, str, bool, datetime]
+ConditionValue = int | float | str | bool | datetime
 """Supported primitive value types for field conditions.
 
 Used for equality, comparison, set membership, and serialization.
@@ -26,20 +27,20 @@ Used for equality, comparison, set membership, and serialization.
 MAX_REGEX_LENGTH = 100
 MAX_GROUPS = 10
 DANGEROUS_PATTERNS = {
-    r"\(\?<=.*?\)",     # Lookbehind
-    r"\(\?<!.*?\)",     # Negative lookbehind
-    r"\\\d+",           # Backreferences like \1
-    r"\(\?P<.*?>",      # Named capture groups
-    r"\(\?[^:=!#]"      # Other fancy constructs
+    r"\(\?<=.*?\)",  # Lookbehind
+    r"\(\?<!.*?\)",  # Negative lookbehind
+    r"\\\d+",  # Backreferences like \1
+    r"\(\?P<.*?>",  # Named capture groups
+    r"\(\?[^:=!#]",  # Other fancy constructs
 }
 """Regex constructs that are explicitly disallowed for safety."""
 
 SUSPICIOUS_PATTERNS = {
-    r"\(\s*\.\*\s*\)\+",        # (.*)+ — classic ReDoS
-    r"\(\s*\.\+\s*\)\+",        # (.+)+ — also dangerous
-    r"\(\s*.+\*\s*\)\+",        # nested greedy quantifiers
-    r"\(\s*\.\*\s*\)\{2,}",     # repeated (.*){2+}
-    r"(\.\*){2,}",              # multiple chained .*
+    r"\(\s*\.\*\s*\)\+",  # (.*)+ — classic ReDoS
+    r"\(\s*\.\+\s*\)\+",  # (.+)+ — also dangerous
+    r"\(\s*.+\*\s*\)\+",  # nested greedy quantifiers
+    r"\(\s*\.\*\s*\)\{2,}",  # repeated (.*){2+}
+    r"(\.\*){2,}",  # multiple chained .*
 }
 """Patterns that may cause catastrophic backtracking (ReDoS)."""
 
@@ -51,6 +52,7 @@ class ConditionValueId(IntEnum):
 
     Enables compact, self-describing binary encoding of primitive types.
     """
+
     SIGNED_CHAR = auto()
     SIGNED_VARINT = auto()
     UNSIGNED_CHAR = auto()
@@ -68,6 +70,7 @@ class ConditionFieldFlag(IntFlag):
 
     Used during binary serialization to encode which operators are present for a field.
     """
+
     EQ = auto()
     NEQ = auto()
     LT = auto()
@@ -96,22 +99,20 @@ class Conditions(BaseModel):
     Supports comparison operators, set membership, null checks, and safe regex matching.
     Includes strict validation logic and compact binary serialization.
     """
-    eq: Optional[ConditionValue] = None
-    neq: Optional[ConditionValue] = None
-    lt: Optional[ConditionValue] = None
-    lte: Optional[ConditionValue] = None
-    gt: Optional[ConditionValue] = None
-    gte: Optional[ConditionValue] = None
-    in_: Optional[Sequence[ConditionValue]] = Field(default=None, alias="in")
-    not_in: Optional[Sequence[ConditionValue]] = Field(default=None)
-    is_null: Optional[bool] = None
-    regex: Optional[str] = None
-    not_regex: Optional[str] = None
 
-    model_config = ConfigDict(
-        populate_by_name=True,
-        extra="forbid"
-    )
+    eq: ConditionValue | None = None
+    neq: ConditionValue | None = None
+    lt: ConditionValue | None = None
+    lte: ConditionValue | None = None
+    gt: ConditionValue | None = None
+    gte: ConditionValue | None = None
+    in_: Sequence[ConditionValue] | None = Field(default=None, alias="in")
+    not_in: Sequence[ConditionValue] | None = Field(default=None)
+    is_null: bool | None = None
+    regex: str | None = None
+    not_regex: str | None = None
+
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
 
     def __repr__(self) -> str:
         non_null_fields = self.model_dump(exclude_none=True)
@@ -146,7 +147,9 @@ class Conditions(BaseModel):
         elif value is None:
             return {"is_null": True}
         else:
-            raise TypeError(f"Shorthand value to normalize must be {Optional[ConditionValue]}, got {type(value).__name__}")
+            raise TypeError(
+                f"Shorthand value to normalize must be {ConditionValue | None}, got {type(value).__name__}"
+            )
 
     @model_validator(mode="before")
     @classmethod
@@ -171,7 +174,7 @@ class Conditions(BaseModel):
             }
 
             if extras := set(value) - valid_keys:
-                raise ValueError(f"Unsupported condition keys: {", ".join(extras)}")
+                raise ValueError(f"Unsupported condition keys: {', '.join(extras)}")
 
         return value
 
@@ -188,6 +191,7 @@ class Conditions(BaseModel):
             A parsed datetime, a list of parsed values, or the original value if parsing
             is not applicable.
         """
+
         def parse_datetime_value(value_: Any) -> datetime | Any:
             if isinstance(value_, str):
                 try:
@@ -266,7 +270,9 @@ class Conditions(BaseModel):
             raise ValueError("Regex pattern may be unsafe or overly greedy")
 
         if re.search(r"\([^)]*[+*]\)[+*]", value):
-            raise ValueError("Regex contains nested quantifiers that may lead to catastrophic backtracking")
+            raise ValueError(
+                "Regex contains nested quantifiers that may lead to catastrophic backtracking"
+            )
 
         for pattern in DANGEROUS_PATTERNS:
             if re.search(pattern, value):
@@ -274,7 +280,9 @@ class Conditions(BaseModel):
 
         for pattern in SUSPICIOUS_PATTERNS:
             if re.search(pattern, value):
-                raise ValueError(f"Regex contains a pattern that may lead to catastrophic backtracking: {pattern}")
+                raise ValueError(
+                    f"Regex contains a pattern that may lead to catastrophic backtracking: {pattern}"
+                )
 
         try:
             compiled = re.compile(value)
@@ -412,7 +420,8 @@ class Conditions(BaseModel):
         for flag in ConditionFieldFlag:
             field_name = flag.field_name
             attr_name = next(
-                name for name, field in Conditions.model_fields.items()
+                name
+                for name, field in Conditions.model_fields.items()
                 if field.alias == field_name or name == field_name
             )
             value = getattr(self, attr_name)
@@ -423,9 +432,14 @@ class Conditions(BaseModel):
             presence |= flag
 
             if flag in {
-                ConditionFieldFlag.EQ, ConditionFieldFlag.NEQ, ConditionFieldFlag.LT,
-                ConditionFieldFlag.LTE, ConditionFieldFlag.GT, ConditionFieldFlag.GTE,
-                ConditionFieldFlag.REGEX, ConditionFieldFlag.NOT_REGEX
+                ConditionFieldFlag.EQ,
+                ConditionFieldFlag.NEQ,
+                ConditionFieldFlag.LT,
+                ConditionFieldFlag.LTE,
+                ConditionFieldFlag.GT,
+                ConditionFieldFlag.GTE,
+                ConditionFieldFlag.REGEX,
+                ConditionFieldFlag.NOT_REGEX,
             }:
                 chunks.append(self.serialize_condition_value(value))
             elif flag in {ConditionFieldFlag.IN, ConditionFieldFlag.NOT_IN}:
@@ -436,14 +450,16 @@ class Conditions(BaseModel):
             elif flag is ConditionFieldFlag.IS_NULL:
                 chunks.append(struct.pack("!?", value))
             else:
-                raise TypeError(f"Unsupported type for serialization. Expected {Union[ConditionValue, Sequence[ConditionValue]]}, got {type(value).__name__}")
+                raise TypeError(
+                    f"Unsupported type for serialization. Expected {ConditionValue | Sequence[ConditionValue]}, got {type(value).__name__}"
+                )
 
         presence_byte = struct.pack("!H", presence)
 
         return presence_byte + b"".join(chunks)
 
     @classmethod
-    def deserialize(cls, data: bytes, offset: int = 0) -> tuple["Conditions", int]:
+    def deserialize(cls, data: bytes, offset: int = 0) -> tuple[Conditions, int]:
         """Deserialize binary data into a ``Conditions`` instance.
 
         Args:
@@ -474,9 +490,14 @@ class Conditions(BaseModel):
             field_name = flag.field_name
 
             if flag in {
-                ConditionFieldFlag.EQ, ConditionFieldFlag.NEQ, ConditionFieldFlag.LT,
-                ConditionFieldFlag.LTE, ConditionFieldFlag.GT, ConditionFieldFlag.GTE,
-                ConditionFieldFlag.REGEX, ConditionFieldFlag.NOT_REGEX
+                ConditionFieldFlag.EQ,
+                ConditionFieldFlag.NEQ,
+                ConditionFieldFlag.LT,
+                ConditionFieldFlag.LTE,
+                ConditionFieldFlag.GT,
+                ConditionFieldFlag.GTE,
+                ConditionFieldFlag.REGEX,
+                ConditionFieldFlag.NOT_REGEX,
             }:
                 value, offset = Conditions.deserialize_condition_value(data, offset=offset)
                 values[field_name] = value
@@ -528,10 +549,14 @@ class Conditions(BaseModel):
             elif -128 <= value <= 127:
                 return struct.pack("!Bb", ConditionValueId.SIGNED_CHAR, value)
             elif value >= 0:
-                return struct.pack("!B", ConditionValueId.UNSIGNED_VARINT) + Conditions.encode_varint(value)
+                return struct.pack(
+                    "!B", ConditionValueId.UNSIGNED_VARINT
+                ) + Conditions.encode_varint(value)
             else:
                 zz = Conditions.encode_zigzag(value)
-                return struct.pack("!B", ConditionValueId.SIGNED_VARINT) + Conditions.encode_varint(zz)
+                return struct.pack("!B", ConditionValueId.SIGNED_VARINT) + Conditions.encode_varint(
+                    zz
+                )
         elif isinstance(value, float):
             with np.errstate(over="ignore"):
                 f16 = np.float16(value)
@@ -548,14 +573,22 @@ class Conditions(BaseModel):
                 raise ValueError(f"Float {value} cannot be represented as f16, f32, nor f64")
         elif isinstance(value, str):
             encoded = value.encode()
-            return struct.pack("!B", ConditionValueId.STR) + Conditions.encode_varint(len(encoded)) + encoded
+            return (
+                struct.pack("!B", ConditionValueId.STR)
+                + Conditions.encode_varint(len(encoded))
+                + encoded
+            )
         elif isinstance(value, bool):
             return struct.pack("!B?", ConditionValueId.BOOL, value)
         elif isinstance(value, datetime):
             timestamp = int(value.timestamp() * 1000)
-            return struct.pack("!B", ConditionValueId.DATETIME) + Conditions.encode_varint(timestamp)
+            return struct.pack("!B", ConditionValueId.DATETIME) + Conditions.encode_varint(
+                timestamp
+            )
         else:
-            raise TypeError(f"Unsupported value type. Expected {ConditionValue}, got {type(value).__name__}")
+            raise TypeError(
+                f"Unsupported value type. Expected {ConditionValue}, got {type(value).__name__}"
+            )
 
     @staticmethod
     def deserialize_condition_value(data: bytes, offset: int = 0) -> tuple[ConditionValue, int]:
@@ -599,7 +632,7 @@ class Conditions(BaseModel):
             return struct.unpack_from("!d", data, offset)[0], offset + 8
         elif type_id == ConditionValueId.STR:
             length, offset = Conditions.decode_varint(data, offset)
-            return data[offset:offset + length].decode(), offset + length
+            return data[offset : offset + length].decode(), offset + length
         elif type_id == ConditionValueId.BOOL:
             return struct.unpack_from("!?", data, offset)[0], offset + 1
         elif type_id == ConditionValueId.DATETIME:

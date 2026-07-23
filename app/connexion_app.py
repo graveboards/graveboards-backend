@@ -1,23 +1,23 @@
 import os
 
 from connexion import AsyncApp
-from connexion.exceptions import Forbidden, BadRequestProblem, Unauthorized, InternalServerError
-from connexion.resolver import RestyResolver
+from connexion.exceptions import BadRequestProblem, Forbidden, InternalServerError, Unauthorized
 from connexion.middleware import MiddlewarePosition
+from connexion.resolver import RestyResolver
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 
+from .config import DEFAULT_MODULE_NAME, DISABLE_SECURITY, ENV, INSTANCE_DIR, SPEC_DIR
+from .database.rules.exceptions import RuleViolationError
+from .enums import Env
+from .error_handlers import bad_request, forbidden, internal_error, rule_violation, unauthorized
 from .lifespan import lifespan
 from .logging import setup_logging
+from .observability.context import RequestContextMiddleware
 from .observability.metrics.endpoint import metrics_endpoint
 from .observability.metrics.middleware import MetricsMiddleware
-from .observability.context import RequestContextMiddleware
 from .patches import OpenAPIURIParserPatched, ParameterValidatorPatched
 from .spec import load_spec
-from .error_handlers import forbidden, bad_request, unauthorized, internal_error, rule_violation
-from .database.rules.exceptions import RuleViolationError
-from .config import SPEC_DIR, DEFAULT_MODULE_NAME, INSTANCE_DIR, ENV, DISABLE_SECURITY
-from .enums import Env
 
 
 def create_connexion_app() -> AsyncApp:
@@ -39,15 +39,15 @@ def create_connexion_app() -> AsyncApp:
         specification_dir=SPEC_DIR,
         lifespan=lifespan,
         uri_parser_class=OpenAPIURIParserPatched,  # type: ignore
-        validator_map={
-            "parameter": ParameterValidatorPatched
-        }
+        validator_map={"parameter": ParameterValidatorPatched},
     )
 
     # BEFORE_EXCEPTION sits outer to everything below, so request_id stays bound
     # in structlog contextvars for the whole request, including the access log
     # line MetricsMiddleware emits after the handler returns.
-    connexion_app.add_middleware(RequestContextMiddleware, position=MiddlewarePosition.BEFORE_EXCEPTION)
+    connexion_app.add_middleware(
+        RequestContextMiddleware, position=MiddlewarePosition.BEFORE_EXCEPTION
+    )
 
     # Must be BEFORE_SECURITY (i.e. after RoutingMiddleware), not BEFORE_EXCEPTION:
     # scope["route"] is only populated once RoutingMiddleware has resolved the
@@ -67,15 +67,9 @@ def create_connexion_app() -> AsyncApp:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    connexion_app.add_middleware(
-        GZipMiddleware,
-        position=MiddlewarePosition.BEFORE_EXCEPTION
-    )
+    connexion_app.add_middleware(GZipMiddleware, position=MiddlewarePosition.BEFORE_EXCEPTION)
 
-    connexion_app.add_api(
-        load_spec(),
-        resolver=RestyResolver(DEFAULT_MODULE_NAME)
-    )
+    connexion_app.add_api(load_spec(), resolver=RestyResolver(DEFAULT_MODULE_NAME))
 
     connexion_app.add_error_handler(Forbidden, forbidden)
     connexion_app.add_error_handler(BadRequestProblem, bad_request)

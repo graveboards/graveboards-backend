@@ -2,10 +2,11 @@ import asyncio
 
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
+from app.database.crud import db_session_resolver, session_manager
 from app.database.models import Queue
-from app.database.crud import session_manager, db_session_resolver
 from app.database.seeding import SeederTarget
 from app.database.seeding.event import SeedEvent
+
 from .base import Seeder
 
 
@@ -22,9 +23,6 @@ class QueueSeeder(Seeder):
 
     async def _seed_queue(self, queue_entry: dict):
         if not await self.db.get(
-            Queue,
-            user_id=queue_entry["user_id"],
-            name=queue_entry["name"],
-            session=self.session
+            Queue, user_id=queue_entry["user_id"], name=queue_entry["name"], session=self.session
         ):
             await self.db.add(Queue, **queue_entry, session=self.session)

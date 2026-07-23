@@ -1,8 +1,8 @@
 from io import BytesIO
 
 import aiofiles
-from starlette.responses import PlainTextResponse
 from connexion import request
+from starlette.responses import PlainTextResponse
 
 from api.decorators import coerce_arguments
 from app.beatmaps import BeatmapManager
@@ -26,17 +26,17 @@ async def search(beatmap_id: int, snapshot_number: int = -1):
             BeatmapSnapshot,
             beatmap_id=beatmap_id,
             _order_by=BeatmapSnapshot.snapshot_number.desc(),
-            _offset=offset
+            _offset=offset,
         )
     else:
         beatmap_snapshot = await db.get(
-            BeatmapSnapshot,
-            beatmap_id=beatmap_id,
-            snapshot_number=snapshot_number
+            BeatmapSnapshot, beatmap_id=beatmap_id, snapshot_number=snapshot_number
         )
 
     if not beatmap_snapshot:
-        raise NotFound(f"BeatmapSnapshot with beatmap_id '{beatmap_id}' and snapshot_number '{snapshot_number}' not found")
+        raise NotFound(
+            f"BeatmapSnapshot with beatmap_id '{beatmap_id}' and snapshot_number '{snapshot_number}' not found"
+        )
 
     snapshot_number = beatmap_snapshot.snapshot_number
 

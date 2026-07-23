@@ -6,6 +6,7 @@ class SeedTarget(StrEnum):
 
     Represents user-selectable seeding scopes.
     """
+
     ALL = "all"
     USERS = "users"
     BEATMAPS = "beatmaps"
@@ -18,6 +19,7 @@ class SeederTarget(StrEnum):
 
     Each member corresponds to a concrete ``Seeder`` implementation.
     """
+
     USER = "user"
     BEATMAP = "beatmap"
     QUEUE = "queue"
@@ -33,7 +35,7 @@ CLI_TO_SEEDER: dict[SeedTarget, SeederTarget] = {
     SeedTarget.USERS: SeederTarget.USER,
     SeedTarget.BEATMAPS: SeederTarget.BEATMAP,
     SeedTarget.QUEUES: SeederTarget.QUEUE,
-    SeedTarget.REQUESTS: SeederTarget.REQUEST
+    SeedTarget.REQUESTS: SeederTarget.REQUEST,
 }
 """Mapping from CLI ``SeedTarget`` to internal ``SeederTarget``."""
 

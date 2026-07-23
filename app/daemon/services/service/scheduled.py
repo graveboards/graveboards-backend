@@ -1,17 +1,23 @@
 import asyncio
 import heapq
 import time
-from datetime import datetime, timedelta, timezone
-from typing import ClassVar
 from abc import ABC, abstractmethod
+from datetime import UTC, datetime, timedelta
+from typing import ClassVar
 
 from app.database import PostgresqlDB
 from app.logging import Logger
+from app.observability.metrics.daemon import (
+    daemon_active_jobs,
+    daemon_job_duration_seconds,
+    daemon_jobs_total,
+    daemon_last_job_timestamp,
+)
 from app.redis import RedisClient
 from app.utils import aware_utcnow
-from app.observability.metrics.daemon import daemon_active_jobs, daemon_jobs_total, daemon_job_duration_seconds, daemon_last_job_timestamp
-from .service import Service
+
 from .job import JobLoadInstruction
+from .service import Service
 
 DEFAULT_JOB_CONCURRENCY = 5
 DEFAULT_JOB_INTERVAL_HOURS = 24.0
@@ -43,7 +49,7 @@ class ScheduledService(Service, ABC):
         *,
         job_concurrency: int = DEFAULT_JOB_CONCURRENCY,
         job_interval_hours: float = DEFAULT_JOB_INTERVAL_HOURS,
-        job_distributed_spacing_seconds: float = DEFAULT_JOB_DISTRIBUTED_SPACING_SECONDS
+        job_distributed_spacing_seconds: float = DEFAULT_JOB_DISTRIBUTED_SPACING_SECONDS,
     ) -> None:
         """
         Initialize the service.
@@ -121,16 +127,13 @@ class ScheduledService(Service, ABC):
             )
 
             if job_id in self._active_job_ids:
-                self.logger.debug(
-                    f"Skipping job {job_id}: already in _active_job_ids"
-                )
+                self.logger.debug(f"Skipping job {job_id}: already in _active_job_ids")
                 continue
 
             self._active_job_ids.add(job_id)
             self.logger.debug(f"Spawning job handler for {job_id}")
             self.create_ephemeral_task(
-                self._handle_job(job_id, execution_time),
-                name=f"{self.JOB_NAME}-{job_id}"
+                self._handle_job(job_id, execution_time), name=f"{self.JOB_NAME}-{job_id}"
             )
 
     async def _job_subscriber(self) -> None:
@@ -181,10 +184,7 @@ class ScheduledService(Service, ABC):
         pass
 
     async def _load_job(
-        self,
-        job_id: int,
-        *,
-        instruction: JobLoadInstruction | None = None
+        self, job_id: int, *, instruction: JobLoadInstruction | None = None
     ) -> None:
         """Schedule a job for future execution.
 
@@ -219,7 +219,9 @@ class ScheduledService(Service, ABC):
             execution_time = self._get_latest_execution_time() + timedelta(microseconds=1)
         else:
             if not isinstance(instruction, JobLoadInstruction):
-                raise TypeError(f"Arg 'instruction' must be None or {JobLoadInstruction.__name__}, got {type(instruction).__name__}")
+                raise TypeError(
+                    f"Arg 'instruction' must be None or {JobLoadInstruction.__name__}, got {type(instruction).__name__}"
+                )
 
             if instruction.skip:
                 return
@@ -230,7 +232,9 @@ class ScheduledService(Service, ABC):
                 execution_time = aware_utcnow()
             else:
                 interval = instruction.interval_hours or self._job_interval_hours
-                execution_time = instruction.last_execution.replace(tzinfo=timezone.utc) + timedelta(hours=interval)
+                execution_time = instruction.last_execution.replace(tzinfo=UTC) + timedelta(
+                    hours=interval
+                )
 
         heapq.heappush(self._job_heap, (execution_time, job_id))
 
@@ -267,8 +271,7 @@ class ScheduledService(Service, ABC):
         except Exception as exc:
             duration = time.perf_counter() - start
             self.logger.exception(
-                f"{self.__class__.__name__}.{self._execute_job.__name__} "
-                f"failed for {job_id=}"
+                f"{self.__class__.__name__}.{self._execute_job.__name__} failed for {job_id=}"
             )
             daemon_jobs_total.labels(service=service_name, status="failure").inc()
             daemon_job_duration_seconds.labels(service=service_name).observe(duration)
@@ -310,12 +313,12 @@ class ScheduledService(Service, ABC):
     async def _on_job_success(self, job_id: int) -> None:
         """Execute after a job has completed successfully.
 
-         Subclasses can override this to perform post-success work.
+        Subclasses can override this to perform post-success work.
 
-         Args:
-             job_id:
-                 Identifier of the job.
-         """
+        Args:
+            job_id:
+                Identifier of the job.
+        """
         pass
 
     async def _on_job_error(self, job_id: int, exc: Exception) -> None:
@@ -335,12 +338,12 @@ class ScheduledService(Service, ABC):
     async def _on_job_finish(self, job_id: int) -> None:
         """Execute after a job has finished.
 
-         Subclasses can override this to perform cleanup work.
+        Subclasses can override this to perform cleanup work.
 
-         Args:
-             job_id:
-                 Identifier of the job.
-         """
+        Args:
+            job_id:
+                Identifier of the job.
+        """
         pass
 
     @abstractmethod

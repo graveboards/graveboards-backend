@@ -1,5 +1,3 @@
-from typing import Optional
-
 from connexion import request
 
 from app.exceptions import TooManyRequests
@@ -12,11 +10,11 @@ __all__ = ["search"]
 STATE_EXPIRES_IN = 300
 
 
-async def search(rc: Optional[RedisClient] = None):
+async def search(rc: RedisClient | None = None):
     if rc is None:
         rc = request.state.rc
 
-    client_ip = request.client.host if hasattr(request, 'client') else "unknown"
+    client_ip = request.client.host if hasattr(request, "client") else "unknown"
     limiter = AuthRateLimiter(rc)
     allowed, retry_after = await limiter.check(client_ip)
     if not allowed:
@@ -30,9 +28,6 @@ async def search(rc: Optional[RedisClient] = None):
 
     await limiter.record_success(client_ip)
 
-    data = {
-        "authorization_url": authorization_url,
-        "state": state
-    }
+    data = {"authorization_url": authorization_url, "state": state}
 
     return data, 200, {"Content-Type": "application/json"}

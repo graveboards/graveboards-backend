@@ -1,10 +1,10 @@
 import struct
-from typing import Optional, Iterator
+from collections.abc import Iterator
 
 from pydantic import BaseModel, RootModel
 from pydantic.functional_serializers import field_serializer
 
-from app.search.enums import ModelField, SortingOrder, ModelFieldId, SortingOrderId
+from app.search.enums import ModelField, ModelFieldId, SortingOrder, SortingOrderId
 
 
 class SortingOption(BaseModel):
@@ -13,8 +13,9 @@ class SortingOption(BaseModel):
     Defines a sortable model field and its associated ordering direction. Supports
     compact binary serialization.
     """
+
     field: ModelField
-    order: Optional[SortingOrder] = SortingOrder.ASCENDING
+    order: SortingOrder | None = SortingOrder.ASCENDING
 
     @field_serializer("field", return_type=str)
     def serialize_field(self, field: ModelField) -> str:
@@ -58,7 +59,7 @@ class SortingOption(BaseModel):
         return struct.pack("!BB", field_id, order_id)
 
     @classmethod
-    def deserialize(cls, data: bytes, offset: int = 0) -> tuple["SortingOption", int]:
+    def deserialize(cls, data: bytes, offset: int = 0) -> tuple[SortingOption, int]:
         """Deserialize a sorting option from binary format.
 
         Args:
@@ -85,6 +86,7 @@ class SortingSchema(RootModel):
     Preserves priority order of field-based sorting rules and supports compact binary
     serialization.
     """
+
     root: list[SortingOption]
 
     def __iter__(self) -> Iterator[SortingOption]:
@@ -122,7 +124,7 @@ class SortingSchema(RootModel):
         return option_count + b"".join(chunks)
 
     @classmethod
-    def deserialize(cls, data: bytes, offset: int = 0) -> tuple["SortingSchema", int]:
+    def deserialize(cls, data: bytes, offset: int = 0) -> tuple[SortingSchema, int]:
         """Deserialize sorting options from binary format.
 
         Args:

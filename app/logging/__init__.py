@@ -1,10 +1,10 @@
 import structlog
 
 from app.observability.logging import (
-    get_logger,
-    setup_logging,
     clear_request_context,
+    get_logger,
     log_stack_warning,
+    setup_logging,
 )
 
 Logger = structlog.stdlib.BoundLogger

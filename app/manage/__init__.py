@@ -3,11 +3,10 @@ import logging
 import sys
 import traceback
 
-from app.logging import setup_logging
 from rich.console import Console
-from .status import cmd_status
-from .reset import cmd_reset
-from .seed import cmd_seed
+
+from app.logging import setup_logging
+
 from .api_keys import cmd_generate_api_key
 from .fixtures import (
     cmd_clean_fixtures,
@@ -21,6 +20,10 @@ from .fixtures import (
     cmd_refresh_archives,
     cmd_refresh_top_players,
 )
+from .reset import cmd_reset
+from .seed import cmd_seed
+from .status import cmd_status
+
 
 def build_status_parser(subparsers):
     p = subparsers.add_parser("status", help="View database status")
@@ -57,14 +60,10 @@ def build_seed_parser(subparsers):
 
 
 def build_generate_api_key_parser(subparsers):
-    p = subparsers.add_parser(
-        "generate-api-key",
-        help="Generate a new API key for a user"
-    )
+    p = subparsers.add_parser("generate-api-key", help="Generate a new API key for a user")
     p.add_argument("user_id", type=int, help="osu! user ID")
     p.add_argument(
-        "--expires-days", type=int, default=90,
-        help="Days until key expires (default: 90)"
+        "--expires-days", type=int, default=90, help="Days until key expires (default: 90)"
     )
     return p
 
@@ -91,10 +90,11 @@ def build_migrate_parser(subparsers):
     stamp_p = migrate_subparsers.add_parser("stamp", help="Mark DB as current without running")
     stamp_p.add_argument("revision", help="Revision to stamp to")
     stamp_p.add_argument(
-        "--purge", action="store_true",
+        "--purge",
+        action="store_true",
         help="Clear the stored revision before stamping, instead of resolving it first. "
-             "Use when alembic_version points at a revision whose migration file no longer "
-             "exists (e.g. after a migration history squash)."
+        "Use when alembic_version points at a revision whose migration file no longer "
+        "exists (e.g. after a migration history squash).",
     )
 
     return p
@@ -319,7 +319,13 @@ async def main():
                     expires_days=args.expires_days,
                 )
             case "migrate":
-                from app.database.migrations import run_migrations, downgrade, history, current, stamp
+                from app.database.migrations import (
+                    current,
+                    downgrade,
+                    history,
+                    run_migrations,
+                    stamp,
+                )
 
                 match args.migrate_command:
                     case "run":

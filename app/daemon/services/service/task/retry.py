@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from .types import TaskFailureHook, TaskMaxRetriesExceededHook
 from .backoff import BackoffStrategy
+from .types import TaskFailureHook, TaskMaxRetriesExceededHook
 
 
 @dataclass(frozen=True, slots=True)

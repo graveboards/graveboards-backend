@@ -2,12 +2,13 @@
 
 import json
 import shutil
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from app.logging import get_logger
+
+from .constants import ID_RANGES, RULESETS, SCORE_TYPES
 from .paths import FIXTURES_DIR
-from .constants import RULESETS, SCORE_TYPES, ID_RANGES
 
 logger = get_logger(__name__)
 
@@ -43,7 +44,7 @@ def save_metadata(metadata: dict, fixtures_dir: Path | None = None) -> None:
         metadata: Metadata dictionary to save
         fixtures_dir: Override base directory (defaults to FIXTURES_DIR)
     """
-    metadata["last_updated"] = datetime.now(timezone.utc).isoformat()
+    metadata["last_updated"] = datetime.now(UTC).isoformat()
     metadata.setdefault(
         "promoted_fixtures",
         {

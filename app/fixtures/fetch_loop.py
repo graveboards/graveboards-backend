@@ -8,13 +8,12 @@ success/failure handlers as configuration.
 import asyncio
 import json
 import os
+from collections.abc import AsyncIterator, Callable, Coroutine
+from dataclasses import dataclass
 from pathlib import Path
-from typing import AsyncIterator, Callable, Coroutine, Any
-from dataclasses import dataclass, field
+from typing import Any
 
 import httpx
-
-from app.exceptions import clean_error_msg
 
 
 class FetchEvent:

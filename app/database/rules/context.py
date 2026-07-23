@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from app.database import PostgresqlDB
-    from app.redis import RedisClient
-    from app.osu_api.client import OsuAPIClient
-    from app.database.schemas.sub_schemas import BeatmapsetOsuApiSchema, BeatmapOsuApiSchema
-    from app.database.models.beatmapset_snapshot import BeatmapsetSnapshot
-    from app.database.models.beatmap_snapshot import BeatmapSnapshot
     from app.database.models.base import AsyncSession
+    from app.database.models.beatmap_snapshot import BeatmapSnapshot
+    from app.database.models.beatmapset_snapshot import BeatmapsetSnapshot
+    from app.database.schemas.sub_schemas import BeatmapOsuApiSchema, BeatmapsetOsuApiSchema
+    from app.osu_api.client import OsuAPIClient
+    from app.redis import RedisClient
 
     MetadataProvider = Any
 

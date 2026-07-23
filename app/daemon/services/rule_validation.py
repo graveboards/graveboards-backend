@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import logging
 from types import SimpleNamespace
 from typing import ClassVar
 
@@ -12,19 +11,20 @@ from app.database.enums import RequestStatus
 from app.database.models import Request
 from app.database.rules.context import ExecutionContext, parse_osu_beatmapset
 from app.database.rules.engine.phase2_runner import Phase2Runner
-from app.database.rules.exceptions import RuleViolationError, RetryableValidationError
-from app.database.rules.registry import get_validator, get_validator_tier
+from app.database.rules.exceptions import RetryableValidationError
+from app.database.rules.registry import get_validator_tier
 from app.database.rules.validators.metadata import (
-    SongIdentityProvider,
     BeatmapStatsProvider,
     CreatorIdentityProvider,
     DurationProvider,
+    SongIdentityProvider,
 )
+from app.logging import Logger, get_logger
 from app.osu_api.client import OsuAPIClient
 from app.redis import ChannelName, Namespace
 from app.redis.models import QueueRequestValidationTask
 from app.utils import aware_utcnow
-from app.logging import get_logger, Logger
+
 from .decorators import auto_retry
 from .service import ScheduledService
 from .service.job import JobLoadInstruction
@@ -68,7 +68,9 @@ class RuleValidationService(ScheduledService):
                 self.logger.error(
                     f"QueueRequestValidationTask with hashed ID '{record_id}' not found at {hash_name}"
                 )
-                raise ValueError(f"QueueRequestValidationTask with hashed ID '{record_id}' not found")
+                raise ValueError(
+                    f"QueueRequestValidationTask with hashed ID '{record_id}' not found"
+                )
 
             self.logger.debug(
                 f"Found serialized validation record for {record_id}: keys={list(serialized_record.keys())}"
@@ -128,10 +130,7 @@ class RuleValidationService(ScheduledService):
                 rules = await self._get_active_rules(queue_id, session)
             user_id = request.user_id
 
-        phase2_rules = [
-            r for r in rules
-            if get_validator_tier(r.type) == 3
-        ]
+        phase2_rules = [r for r in rules if get_validator_tier(r.type) == 3]
 
         if not phase2_rules:
             return
@@ -170,9 +169,7 @@ class RuleValidationService(ScheduledService):
                 status=RequestStatus.REJECTED,
                 rejection_reason=rejection_reason,
             )
-            logger.info(
-                f"Request {request_id} rejected by Phase 2 validators: {rejected}"
-            )
+            logger.info(f"Request {request_id} rejected by Phase 2 validators: {rejected}")
 
     async def _get_active_rules(self, queue_id: int, session) -> list:
         from app.database.crud.rules import RuleCRUD
@@ -194,7 +191,7 @@ class RuleValidationService(ScheduledService):
 
         try:
             data = json.loads(rules_snapshot)
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             logger.warning("Could not parse rules snapshot; falling back to live rules")
             return None
 

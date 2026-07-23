@@ -3,6 +3,7 @@ from pydantic.main import BaseModel
 
 class OsuClientOAuthToken(BaseModel):
     """Represents an osu! OAuth client credentials token."""
+
     access_token: str
     token_type: str
     expires_in: int
@@ -22,7 +23,7 @@ class OsuClientOAuthToken(BaseModel):
         return serialized_dict
 
     @classmethod
-    def deserialize(cls, serialized_dict: dict[str, str]) -> "OsuClientOAuthToken":
+    def deserialize(cls, serialized_dict: dict[str, str]) -> OsuClientOAuthToken:
         """Deserialize a stored OAuth token dictionary.
 
         Args:

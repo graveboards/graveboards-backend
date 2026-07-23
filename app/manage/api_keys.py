@@ -1,12 +1,10 @@
-import secrets
-import hashlib
 from datetime import timedelta
 
 from app.database import PostgresqlDB, db_lifespan
-from app.security.api_key import generate_api_key, hash_api_key
 from app.database.models import ApiKey, User
-from app.utils import aware_utcnow
 from app.logging import get_logger
+from app.security.api_key import generate_api_key, hash_api_key
+from app.utils import aware_utcnow
 
 
 @db_lifespan

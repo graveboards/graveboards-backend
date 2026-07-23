@@ -14,7 +14,7 @@ class ProgressBar:
         if self.no_progress:
             return
         try:
-            from rich.progress import Progress, BarColumn, TextColumn, TimeRemainingColumn
+            from rich.progress import BarColumn, Progress, TextColumn, TimeRemainingColumn
 
             self._progress = Progress(
                 TextColumn("[bold blue]{task.description}"),

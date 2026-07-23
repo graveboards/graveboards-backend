@@ -10,21 +10,18 @@ Usage:
     report = await orchestrator.execute()
 """
 
-from app.redis import RedisClient
 from app.fixtures.criteria import (
     FetchCriteria,
     FetchReport,
-    Criteria,
     Source,
-    TargetedOverrides,
-    SearchTestOverrides,
 )
-from app.fixtures.fetcher import FixtureDataFetcher
-from app.fixtures.targeted_fetcher import TargetedFixtureFetcher
-from app.fixtures.search_test_fetcher import SearchTestFixtureFetcher
-from app.fixtures.id_source import IDSource, create_id_source
 from app.fixtures.failed_id_store import FailedIdStore
+from app.fixtures.fetcher import FixtureDataFetcher
+from app.fixtures.id_source import IDSource, create_id_source
+from app.fixtures.search_test_fetcher import SearchTestFixtureFetcher
+from app.fixtures.targeted_fetcher import TargetedFixtureFetcher
 from app.logging import get_logger
+from app.redis import RedisClient
 
 logger = get_logger(__name__)
 
@@ -130,7 +127,7 @@ class FixtureOrchestrator:
         results = self.fetcher.last_fetch_results
         return FetchReport(criteria=self.criteria.criteria, results=results)
 
-    async def _execute_concurrent(self, sample_counts: dict, progress: "ProgressBar") -> None:
+    async def _execute_concurrent(self, sample_counts: dict, progress: ProgressBar) -> None:
         """Execute fetches concurrently for independent categories."""
         import asyncio
 
@@ -217,7 +214,6 @@ class FixtureOrchestrator:
         The adaptive fetch loop prioritizes rare buckets (NSFW, restricted users)
         over common ones, and actions that fill multiple buckets at once.
         """
-        from app.fixtures.display import print_coverage_gaps
 
         st = self.criteria.search_test
         if st.quick:

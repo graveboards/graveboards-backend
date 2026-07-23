@@ -6,6 +6,7 @@ from app.database.schemas.sub_schemas import BeatmapOsuApiSchema
 
 class Beatmap(BeatmapOsuApiSchema):
     """Domain model representing an osu! beatmap."""
+
     def serialize(self) -> dict[str, str]:
         """Serialize the beatmap into a Redis-safe string dictionary.
 
@@ -29,7 +30,7 @@ class Beatmap(BeatmapOsuApiSchema):
         return serialized_dict
 
     @classmethod
-    def deserialize(cls, serialized_dict: dict[str, str]) -> "Beatmap":
+    def deserialize(cls, serialized_dict: dict[str, str]) -> Beatmap:
         """Deserialize a Redis-stored beatmap dictionary.
 
         Args:
@@ -43,13 +44,28 @@ class Beatmap(BeatmapOsuApiSchema):
 
         for key, value in serialized_dict.items():
             match key:
-                case "id" | "user_id" | "count_circles" | "count_sliders" | "count_spinners" | "hit_length" | "max_combo" | "mode_int" | "passcount" | "playcount" | "ranked" | "total_length":
+                case (
+                    "id"
+                    | "user_id"
+                    | "count_circles"
+                    | "count_sliders"
+                    | "count_spinners"
+                    | "hit_length"
+                    | "max_combo"
+                    | "mode_int"
+                    | "passcount"
+                    | "playcount"
+                    | "ranked"
+                    | "total_length"
+                ):
                     value = int(value) if value != "" else None
                 case "accuracy" | "ar" | "bpm" | "cs" | "difficulty_rating" | "drain":
                     value = float(value) if value != "" else None
                 case (
-                    "is_scoreable" |  # Bools
-                    "failtimes" | "owners" | "top_tag_ids"  # Lists
+                    "is_scoreable"  # Bools
+                    | "failtimes"
+                    | "owners"
+                    | "top_tag_ids"  # Lists
                 ):
                     value = literal_eval(value) if value != "" else None
                 case "deleted_at" | "last_updated":

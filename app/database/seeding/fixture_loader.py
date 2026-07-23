@@ -17,18 +17,18 @@ load_seeding_data(targets)
     requested seed targets.  Returns a dict mapping SeederTarget to
     the prepared data list.
 """
+
 from __future__ import annotations
 
 import json
 from datetime import datetime
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from app.config import PROJECT_ROOT
 from app.database.seeding.target import SeederTarget
 
 if TYPE_CHECKING:
-    from app.database.seeding.target import SeedTarget
+    pass
 
 FIXTURES_DIR = PROJECT_ROOT / "instance" / "fixtures"
 
@@ -58,9 +58,7 @@ def check_fixtures(targets: set[SeederTarget]) -> dict:
 
     # Beatmapsets
     bms_path = FIXTURES_DIR / "beatmapsets"
-    counts["beatmapsets"] = (
-        len(list(bms_path.glob("*.json"))) if bms_path.exists() else 0
-    )
+    counts["beatmapsets"] = len(list(bms_path.glob("*.json"))) if bms_path.exists() else 0
 
     # Beatmap tags
     tags_path = FIXTURES_DIR / "beatmap_tags.json"
@@ -147,11 +145,13 @@ def _load_users() -> list[dict]:
                     except ValueError:
                         pass
 
-            users.append({
-                "id": user_id,
-                "profile": api_data,
-                "roles": [],
-            })
+            users.append(
+                {
+                    "id": user_id,
+                    "profile": api_data,
+                    "roles": [],
+                }
+            )
 
     return users
 

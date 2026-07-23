@@ -15,14 +15,14 @@ SCHEMAS_WITH_SHALLOW_REFS = {
     "BeatmapsetInclude",
     "BeatmapsetSnapshotInclude",
     "LeaderboardInclude",
-    "RequestInclude"
+    "RequestInclude",
 }
 
 disabled_nested_obj = {
     "type": "boolean",
     "enum": [False],
     "default": False,
-    "description": "*This nested include has been disabled to prevent infinite recursion*"
+    "description": "*This nested include has been disabled to prevent infinite recursion*",
 }
 
 

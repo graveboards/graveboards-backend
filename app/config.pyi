@@ -1,15 +1,12 @@
+from collections.abc import Iterator
 from enum import Enum
 from pathlib import Path
-from typing import Any, Iterator
-
-from app.bootstrap import SetupRunner
-
+from typing import Any
 
 class Env(Enum):
     PROD = "prod"
     DEV = "dev"
     TEST = "test"
-
 
 class Config:
     ENV: Env
@@ -33,7 +30,6 @@ class Config:
     TEST_POSTGRESQL_CONFIGURATION: dict[str, Any]
     TEST_REDIS_CONFIGURATION: dict[str, Any]
 
-
 CONFIG: Config
 ENV: Env
 DEBUG: bool
@@ -55,7 +51,6 @@ REDIS_CONFIGURATION: dict[str, Any]
 OAUTH_CONFIGURATION: dict[str, Any]
 TEST_POSTGRESQL_CONFIGURATION: dict[str, Any]
 TEST_REDIS_CONFIGURATION: dict[str, Any]
-
 
 def get_security_enabled() -> bool: ...
 def override_security_enabled(enabled: bool) -> Iterator[None]: ...

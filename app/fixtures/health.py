@@ -4,14 +4,13 @@ This module provides health check functionality for fixture data,
 including completeness verification, coverage analysis, and gap detection.
 """
 
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+import json
 from dataclasses import dataclass, field
 from datetime import datetime
-import json
+from typing import Any
 
-from app.fixtures.paths import get_test_fixture_path
 from app.fixtures.constants import RULESETS, SCORE_TYPES
+from app.fixtures.paths import get_test_fixture_path
 
 
 @dataclass
@@ -23,10 +22,10 @@ class FixtureHealthResult:
     actual_count: int
     coverage_percentage: float
     complete: bool
-    files: List[str] = field(default_factory=list)
-    missing_files: List[str] = field(default_factory=list)
-    integrity_errors: List[str] = field(default_factory=list)
-    last_updated: Optional[datetime] = None
+    files: list[str] = field(default_factory=list)
+    missing_files: list[str] = field(default_factory=list)
+    integrity_errors: list[str] = field(default_factory=list)
+    last_updated: datetime | None = None
 
 
 @dataclass
@@ -37,12 +36,12 @@ class FixtureReport:
     complete_categories: int
     incomplete_categories: int
     coverage_percentage: float
-    categories: List[FixtureHealthResult] = field(default_factory=list)
-    missing_gaps: List[Dict[str, Any]] = field(default_factory=list)
+    categories: list[FixtureHealthResult] = field(default_factory=list)
+    missing_gaps: list[dict[str, Any]] = field(default_factory=list)
     generated_at: datetime = field(default_factory=datetime.utcnow)
 
 
-def calculate_fixture_counts() -> Dict[str, int]:
+def calculate_fixture_counts() -> dict[str, int]:
     """Calculate expected fixture counts based on directory contents.
 
     Returns:
@@ -76,7 +75,7 @@ def calculate_fixture_counts() -> Dict[str, int]:
     return counts
 
 
-def validate_fixture_integrity(category: str, filename: str) -> List[str]:
+def validate_fixture_integrity(category: str, filename: str) -> list[str]:
     """Validate a single fixture file's integrity.
 
     Args:
@@ -93,7 +92,7 @@ def validate_fixture_integrity(category: str, filename: str) -> List[str]:
         return [f"File not found: {filename}"]
 
     try:
-        with open(fixture_path, "r") as f:
+        with open(fixture_path) as f:
             data = json.load(f)
     except json.JSONDecodeError as e:
         return [f"Invalid JSON: {str(e)}"]
@@ -106,9 +105,7 @@ def validate_fixture_integrity(category: str, filename: str) -> List[str]:
     return errors
 
 
-def check_category_health(
-    category: str, expected_count: Optional[int] = None
-) -> FixtureHealthResult:
+def check_category_health(category: str, expected_count: int | None = None) -> FixtureHealthResult:
     """Check health of a specific fixture category.
 
     Args:
@@ -204,7 +201,7 @@ def check_all_categories() -> FixtureReport:
     )
 
 
-def get_incomplete_categories() -> List[FixtureHealthResult]:
+def get_incomplete_categories() -> list[FixtureHealthResult]:
     """Get list of incomplete fixture categories.
 
     Returns:
@@ -214,7 +211,7 @@ def get_incomplete_categories() -> List[FixtureHealthResult]:
     return [c for c in report.categories if not c.complete]
 
 
-def get_category_gaps() -> List[Dict[str, Any]]:
+def get_category_gaps() -> list[dict[str, Any]]:
     """Get detailed gap information for each category.
 
     Returns:

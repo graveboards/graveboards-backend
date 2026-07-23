@@ -2,34 +2,34 @@ from connexion import request
 from connexion.exceptions import Forbidden
 from structlog.contextvars import get_contextvars
 
-from app.logging import get_logger
 from api.decorators import api_query
 from api.utils import bleach_body, build_pydantic_include
-from app.exceptions import NotFound, Conflict, BadRequest
-from app.osu_api import OsuAPIClient
 from app.database import PostgresqlDB
-from app.database.models import Request, Queue, ModelClass
-from app.database.schemas import RequestSchema
-from app.security import role_authorization, ownership_authorization, with_authenticated_user_id
-from app.security.overrides import queue_owner_override, queue_manager_override
 from app.database.enums import RoleName
+from app.database.models import ModelClass, Queue, Request
 from app.database.roles import is_admin
-from app.redis import Namespace, ChannelName, RedisClient
-from app.redis.models import QueueRequestHandlerTask, QueueRequestValidationTask
-from app.spec import get_include_schema
 from app.database.rules.context import ExecutionContext, parse_osu_beatmapset
 from app.database.rules.engine.phase1_runner import Phase1Runner
 from app.database.rules.engine.stateful import reserve_stateful_rules, rollback_reservations
-from app.database.rules.exceptions import RuleViolationError
 from app.database.rules.validators.metadata import (
-    SongIdentityProvider,
     BeatmapStatsProvider,
     CreatorIdentityProvider,
     DurationProvider,
+    SongIdentityProvider,
 )
+from app.database.schemas import RequestSchema
+from app.exceptions import BadRequest, Conflict, NotFound
+from app.logging import get_logger
+from app.osu_api import OsuAPIClient
+from app.redis import ChannelName, Namespace, RedisClient
+from app.redis.models import QueueRequestHandlerTask
+from app.security import ownership_authorization, role_authorization, with_authenticated_user_id
+from app.security.overrides import queue_manager_override, queue_owner_override
+from app.spec import get_include_schema
+
 from . import tasks
 
-__all__ = ["search", "get", "post", "patch", "delete"]
+__all__ = ["search", "get", "post", "patch", "delete", "tasks"]
 
 _METADATA_PROVIDERS = {
     "song_identity": SongIdentityProvider,
@@ -167,7 +167,9 @@ async def post(body: dict, _caller_user_id: int = None, **kwargs):
 
     try:
         await rc.hset(task_hash_name, mapping=task.serialize())
-        logger.debug(f"POST /requests: stored task at {task_hash_name}, publishing to {ChannelName.QUEUE_REQUEST_HANDLER_TASKS.value}")
+        logger.debug(
+            f"POST /requests: stored task at {task_hash_name}, publishing to {ChannelName.QUEUE_REQUEST_HANDLER_TASKS.value}"
+        )
         await rc.publish(ChannelName.QUEUE_REQUEST_HANDLER_TASKS.value, task.hashed_id)
         logger.debug(f"POST /requests: published job_id={task.hashed_id}")
     except Exception:

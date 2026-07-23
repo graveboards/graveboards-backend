@@ -9,6 +9,7 @@ class Scope(Enum):
 
     Represents the primary resource type targeted by a query.
     """
+
     BEATMAPS = "beatmaps"
     BEATMAPSETS = "beatmapsets"
     SCORES = "scores"
@@ -16,7 +17,7 @@ class Scope(Enum):
     REQUESTS = "requests"
 
     @classmethod
-    def from_name(cls, name: str) -> "Scope":
+    def from_name(cls, name: str) -> Scope:
         """Resolve a scope from its string name.
 
         Args:

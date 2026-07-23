@@ -1,32 +1,31 @@
-import os
-import json
 import asyncio
 import hashlib
-from datetime import datetime, timezone
+import json
+from datetime import UTC, datetime
 from pathlib import Path
 
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
+from app.beatmaps.manager import download_beatmap_files
 from app.database import PostgresqlDB
+from app.database.crud import db_session_resolver, session_manager
 from app.database.models import (
-    Profile,
-    BeatmapTag,
-    BeatmapsetTag,
-    User,
-    BeatmapSnapshot,
-    BeatmapsetSnapshot,
-    Beatmapset,
     Beatmap,
+    Beatmapset,
+    BeatmapsetSnapshot,
+    BeatmapSnapshot,
+    BeatmapTag,
+    Profile,
+    User,
 )
 from app.database.schemas import (
-    BeatmapSnapshotSchema,
     BeatmapsetSnapshotSchema,
+    BeatmapSnapshotSchema,
     ProfileSchema,
 )
-from app.database.crud import session_manager, db_session_resolver
 from app.database.seeding import SeederTarget
 from app.database.seeding.event import SeedEvent
-from app.beatmaps.manager import download_beatmap_files
+
 from .base import Seeder
 
 BEATMAP_TAGS_PATH = Path("instance/fixtures/beatmap_tags.json")
@@ -108,7 +107,7 @@ class BeatmapSeeder(Seeder):
 
     async def _ensure_user(self, user_id: int, user_dict: dict = None):
         """Ensure User and Profile exist, handling restricted users.
-        
+
         Follows BeatmapManager._populate_user pattern.
         """
         if not await self.db.get(User, id=user_id, session=self.session):
@@ -127,10 +126,9 @@ class BeatmapSeeder(Seeder):
             else:
                 # Try fetching from API (won't work in seeding, but kept for consistency)
                 profile_data = {"id": user_id}
-            
+
             profile_dict = ProfileSchema.model_validate(profile_data).model_dump(
-                exclude={"id", "updated_at"},
-                context={"jsonify_nested": True}
+                exclude={"id", "updated_at"}, context={"jsonify_nested": True}
             )
             await self.db.add(Profile, **profile_dict, session=self.session)
         except Exception as e:
@@ -143,39 +141,50 @@ class BeatmapSeeder(Seeder):
             }
             await self.db.add(Profile, **profile_dict, session=self.session)
 
-    async def _generate_bms_snapshot(self, beatmapset_entry: dict, bms_bm_mapping: dict[int, list[dict]]):
+    async def _generate_bms_snapshot(
+        self, beatmapset_entry: dict, bms_bm_mapping: dict[int, list[dict]]
+    ):
         """Generate BeatmapsetSnapshot using schema validation (following BeatmapManager)."""
         beatmapset_id = beatmapset_entry["id"]
-        
+
         # Map id -> beatmapset_id (following BeatmapManager pattern)
         snapshot_data = beatmapset_entry.copy()
         snapshot_data["beatmapset_id"] = snapshot_data.pop("id")
-        
+
         # Generate checksum from beatmaps (using their checksums if available)
         beatmaps = beatmapset_entry.get("beatmaps", [])
         if beatmaps:
             checksum_parts = [bm.get("checksum", str(bm["id"])) for bm in beatmaps]
             checksum = hashlib.md5(",".join(checksum_parts).encode()).hexdigest()
         else:
-            checksum = hashlib.md5(f"{beatmapset_id}:{datetime.now(timezone.utc).isoformat()}".encode()).hexdigest()
-        
+            checksum = hashlib.md5(
+                f"{beatmapset_id}:{datetime.now(UTC).isoformat()}".encode()
+            ).hexdigest()
+
         # Add checksum BEFORE validation (it's a required field)
         snapshot_data["checksum"] = checksum
-        
+
         # Use schema to validate and exclude relationships/extra fields
         try:
             snapshot_dict = BeatmapsetSnapshotSchema.model_validate(snapshot_data).model_dump(
-                exclude={"id", "beatmap_snapshots", "beatmapset_tags", "user_profile", "beatmaps", "user"}
+                exclude={
+                    "id",
+                    "beatmap_snapshots",
+                    "beatmapset_tags",
+                    "user_profile",
+                    "beatmaps",
+                    "user",
+                }
             )
         except Exception as e:
             self.logger.warning(f"Schema validation failed for beatmapset {beatmapset_id}: {e}")
             # Fallback: manually construct snapshot data with only valid fields
             snapshot_dict = self._build_snapshot_fallback(beatmapset_entry)
-        
+
         # Add relationships
         snapshot_dict["beatmap_snapshots"] = bms_bm_mapping.get(beatmapset_id, [])
         snapshot_dict["snapshot_number"] = 1
-        
+
         # Insert snapshot if it doesn't exist
         if not await self.db.get(BeatmapsetSnapshot, checksum=checksum, session=self.session):
             await self.db.add(BeatmapsetSnapshot, **snapshot_dict, session=self.session)
@@ -184,20 +193,48 @@ class BeatmapSeeder(Seeder):
         """Fallback snapshot construction if schema validation fails."""
         # Valid BeatmapsetSnapshot columns from the model
         valid_columns = {
-            "artist", "artist_unicode", "availability", "bpm", "can_be_hyped",
-            "covers", "creator", "current_nominations", "deleted_at", "description",
-            "discussion_enabled", "discussion_locked", "favourite_count", "genre",
-            "hype", "is_scoreable", "language", "last_updated", "legacy_thread_url",
-            "nominations_summary", "nsfw", "offset", "pack_tags", "play_count",
-            "preview_url", "ranked", "ranked_date", "rating", "ratings", "source",
-            "spotlight", "status", "storyboard", "submitted_date", "tags", "title",
-            "title_unicode", "track_id", "video"
+            "artist",
+            "artist_unicode",
+            "availability",
+            "bpm",
+            "can_be_hyped",
+            "covers",
+            "creator",
+            "current_nominations",
+            "deleted_at",
+            "description",
+            "discussion_enabled",
+            "discussion_locked",
+            "favourite_count",
+            "genre",
+            "hype",
+            "is_scoreable",
+            "language",
+            "last_updated",
+            "legacy_thread_url",
+            "nominations_summary",
+            "nsfw",
+            "offset",
+            "pack_tags",
+            "play_count",
+            "preview_url",
+            "ranked",
+            "ranked_date",
+            "rating",
+            "ratings",
+            "source",
+            "spotlight",
+            "status",
+            "storyboard",
+            "submitted_date",
+            "tags",
+            "title",
+            "title_unicode",
+            "track_id",
+            "video",
         }
-        
-        return {
-            k: v for k, v in beatmapset_entry.items() 
-            if k in valid_columns
-        }
+
+        return {k: v for k, v in beatmapset_entry.items() if k in valid_columns}
 
     async def _seed_beatmap(self, beatmap_entry: dict) -> list[dict]:
         """Seed a beatmap and its snapshot."""
@@ -211,10 +248,12 @@ class BeatmapSeeder(Seeder):
 
         # Ensure beatmap exists
         if not await self.db.get(Beatmap, id=beatmap_id, session=self.session):
-            await self.db.add(Beatmap, id=beatmap_id, beatmapset_id=beatmapset_id, session=self.session)
+            await self.db.add(
+                Beatmap, id=beatmap_id, beatmapset_id=beatmapset_id, session=self.session
+            )
 
         added_bm_dicts: list[dict] = []
-        
+
         # Check if beatmap has snapshot data in fixtures
         snapshots = beatmap_entry.get("snapshots", [])
         if snapshots:
@@ -237,27 +276,37 @@ class BeatmapSeeder(Seeder):
         """Generate BeatmapSnapshot using schema validation."""
         beatmap_id = beatmap_entry["id"]
         checksum = beatmap_entry.get("checksum", hashlib.md5(str(beatmap_id).encode()).hexdigest())
-        
+
         # Check if snapshot already exists
         if await self.db.get(BeatmapSnapshot, checksum=checksum, session=self.session):
-            bm_snapshot = await self.db.get(BeatmapSnapshot, checksum=checksum, session=self.session)
+            bm_snapshot = await self.db.get(
+                BeatmapSnapshot, checksum=checksum, session=self.session
+            )
             return {"id": bm_snapshot.id}
-        
+
         # Map id -> beatmap_id (following BeatmapManager pattern)
         snapshot_data = beatmap_entry.copy()
         snapshot_data["beatmap_id"] = snapshot_data.pop("id")
-        
+
         # Use schema to validate
         try:
             snapshot_dict = BeatmapSnapshotSchema.model_validate(snapshot_data).model_dump(
-                exclude={"id", "beatmapset_snapshots", "beatmap_tags", "leaderboard", "owner_profiles", "owners", "top_tag_ids"}
+                exclude={
+                    "id",
+                    "beatmapset_snapshots",
+                    "beatmap_tags",
+                    "leaderboard",
+                    "owner_profiles",
+                    "owners",
+                    "top_tag_ids",
+                }
             )
         except Exception as e:
             self.logger.debug(f"Schema validation failed for beatmap {beatmap_id}: {e}")
             # Fallback: use the beatmap data directly (it should be valid)
             snapshot_dict = beatmap_entry.copy()
             snapshot_dict["beatmap_id"] = beatmap_id
-        
+
         snapshot_dict["checksum"] = checksum
         snapshot_dict["snapshot_number"] = 1
 
@@ -270,9 +319,13 @@ class BeatmapSeeder(Seeder):
         """Seed an existing beatmap snapshot from fixture data."""
         checksum = beatmap_snapshot_entry["checksum"]
 
-        beatmap_snapshot = await self.db.get(BeatmapSnapshot, checksum=checksum, session=self.session)
+        beatmap_snapshot = await self.db.get(
+            BeatmapSnapshot, checksum=checksum, session=self.session
+        )
         if not beatmap_snapshot:
-            beatmap_snapshot = await self.db.add(BeatmapSnapshot, **beatmap_snapshot_entry, session=self.session)
+            beatmap_snapshot = await self.db.add(
+                BeatmapSnapshot, **beatmap_snapshot_entry, session=self.session
+            )
             self._new_beatmap_ids.append(beatmap_snapshot_entry["beatmap_id"])
 
         return {"id": beatmap_snapshot.id}
@@ -287,11 +340,19 @@ class BeatmapSeeder(Seeder):
         try:
             await download_beatmap_files(self.db, self.session, beatmap_ids)
         except Exception as e:
-            self.logger.warning(f"Failed to download .osu file(s) for beatmap(s) {beatmap_ids}: {e}")
+            self.logger.warning(
+                f"Failed to download .osu file(s) for beatmap(s) {beatmap_ids}: {e}"
+            )
 
-    async def _seed_beatmapset_snapshot(self, beatmapset_snapshot_entry: dict, bm_bms_mapping: dict[int, list[dict]]):
+    async def _seed_beatmapset_snapshot(
+        self, beatmapset_snapshot_entry: dict, bm_bms_mapping: dict[int, list[dict]]
+    ):
         """Seed an existing beatmapset snapshot from fixture data."""
-        beatmapset_snapshot_entry["beatmap_snapshots"] = bm_bms_mapping[beatmapset_snapshot_entry["beatmapset_id"]]
-        
-        if not await self.db.get(BeatmapsetSnapshot, checksum=beatmapset_snapshot_entry["checksum"], session=self.session):
+        beatmapset_snapshot_entry["beatmap_snapshots"] = bm_bms_mapping[
+            beatmapset_snapshot_entry["beatmapset_id"]
+        ]
+
+        if not await self.db.get(
+            BeatmapsetSnapshot, checksum=beatmapset_snapshot_entry["checksum"], session=self.session
+        ):
             await self.db.add(BeatmapsetSnapshot, **beatmapset_snapshot_entry, session=self.session)

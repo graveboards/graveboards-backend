@@ -1,10 +1,10 @@
 from copy import copy
 from datetime import datetime
-from typing import Optional, Any
+from typing import Any
 
-from pydantic.main import BaseModel
 from pydantic.config import ConfigDict
 from pydantic.functional_validators import model_validator
+from pydantic.main import BaseModel
 
 from .base_model_extra import BaseModelExtra
 from .sub_schemas import ScoreStatisticsSchema
@@ -13,7 +13,7 @@ from .sub_schemas import ScoreStatisticsSchema
 class ScoreSchema(BaseModel, BaseModelExtra):
     model_config = ConfigDict(from_attributes=True)
 
-    id: Optional[int] = None
+    id: int | None = None
     user_id: int
     beatmap_id: int
     beatmapset_id: int
@@ -25,10 +25,10 @@ class ScoreSchema(BaseModel, BaseModelExtra):
     mode_int: int
     mods: list[str]
     perfect: bool
-    pp: Optional[float] = None
+    pp: float | None = None
     rank: str
     score: int
-    statistics: "ScoreStatisticsSchema"
+    statistics: ScoreStatisticsSchema
     type: str
 
     @model_validator(mode="before")
@@ -60,22 +60,22 @@ class ScoreCreateSchema(BaseModel, BaseModelExtra):
     score: int
     statistics: ScoreStatisticsSchema
     type: str
-    leaderboard_id: Optional[int] = None
-    pp: Optional[float] = None
+    leaderboard_id: int | None = None
+    pp: float | None = None
 
 
 class ScoreUpdateSchema(BaseModel, BaseModelExtra):
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
-    leaderboard_id: Optional[int] = None
-    accuracy: Optional[float] = None
-    max_combo: Optional[int] = None
-    mode: Optional[str] = None
-    mode_int: Optional[int] = None
-    mods: Optional[list[str]] = None
-    perfect: Optional[bool] = None
-    pp: Optional[float] = None
-    rank: Optional[str] = None
-    score: Optional[int] = None
-    statistics: Optional[ScoreStatisticsSchema] = None
-    type: Optional[str] = None
+    leaderboard_id: int | None = None
+    accuracy: float | None = None
+    max_combo: int | None = None
+    mode: str | None = None
+    mode_int: int | None = None
+    mods: list[str] | None = None
+    perfect: bool | None = None
+    pp: float | None = None
+    rank: str | None = None
+    score: int | None = None
+    statistics: ScoreStatisticsSchema | None = None
+    type: str | None = None

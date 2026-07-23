@@ -1,19 +1,17 @@
-from typing import Optional
-
 from rich.console import Console
 from rich.table import Table
 
 from app.fixtures.constants import RULESETS
 from app.fixtures.fetcher import FixtureDataFetcher
-from app.redis import RedisClient
 from app.logging import get_logger
+from app.redis import RedisClient
 
 console = Console()
 logger = get_logger(__name__)
 
 
 async def cmd_refresh_top_players(
-    rulesets: Optional[list[str]] = None,
+    rulesets: list[str] | None = None,
     count: int = 1000,
 ) -> None:
     rc = RedisClient()

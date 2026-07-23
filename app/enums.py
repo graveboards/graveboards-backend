@@ -1,8 +1,6 @@
 from enum import Enum
 
-__all__ = [
-    "Env"
-]
+__all__ = ["Env"]
 
 
 class Env(Enum):

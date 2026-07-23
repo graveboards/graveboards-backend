@@ -2,22 +2,22 @@ import hashlib
 import secrets
 from datetime import timedelta
 
-from app.redis import RedisClient, Namespace
-from app.database import PostgresqlDB
-from app.database.models import ApiKey, ScoreFetcherTask, User, Role, Queue
-from app.database.enums import RoleName
-from app.security.api_key import generate_api_key, hash_api_key
-from app.utils import aware_utcnow
-from app.logging import get_logger
 from app.config import (
-    BootstrapConfig,
     DEBUG,
     DEBUG_API_KEY,
     DEV_ADMIN_USER_ID,
     DEV_USER_ID,
     JWT_SECRET_KEY,
+    BootstrapConfig,
     get_security_enabled,
 )
+from app.database import PostgresqlDB
+from app.database.enums import RoleName
+from app.database.models import ApiKey, Queue, Role, ScoreFetcherTask, User
+from app.logging import get_logger
+from app.redis import Namespace, RedisClient
+from app.security.api_key import generate_api_key, hash_api_key
+from app.utils import aware_utcnow
 
 
 def _get_debug_api_key() -> str:
@@ -79,7 +79,9 @@ class SetupRunner:
                 existing_user = await self.db.get(User, id=user_cfg.user_id, session=session)
 
                 if existing_user is None:
-                    user_roles = [role_lookup[name] for name in user_cfg.roles if name in role_lookup]
+                    user_roles = [
+                        role_lookup[name] for name in user_cfg.roles if name in role_lookup
+                    ]
                     await self.db.add(User, id=user_cfg.user_id, roles=user_roles, session=session)
                     logger.debug(f"Created user: {user_cfg.user_id}")
 
@@ -154,19 +156,23 @@ class SetupRunner:
         queue_data = []
 
         if self.config.master_queue.user_id:
-            queue_data.append({
-                "user_id": self.config.master_queue.user_id,
-                "name": self.config.master_queue.name,
-                "description": self.config.master_queue.description,
-            })
+            queue_data.append(
+                {
+                    "user_id": self.config.master_queue.user_id,
+                    "name": self.config.master_queue.name,
+                    "description": self.config.master_queue.description,
+                }
+            )
 
         for extra in self.config.extra_queues:
             if extra.user_id:
-                queue_data.append({
-                    "user_id": extra.user_id,
-                    "name": extra.name,
-                    "description": extra.description,
-                })
+                queue_data.append(
+                    {
+                        "user_id": extra.user_id,
+                        "name": extra.name,
+                        "description": extra.description,
+                    }
+                )
 
         if queue_data:
             await self.db.add_many(Queue, *queue_data)
@@ -242,6 +248,7 @@ async def _setup_debug_api_key(rc: RedisClient = None, db: PostgresqlDB = None):
 
     async with db.session() as session:
         from app.config import CONFIG
+
         bootstrap = CONFIG.bootstrap
 
         if bootstrap.initial_users:
@@ -255,7 +262,9 @@ async def _setup_debug_api_key(rc: RedisClient = None, db: PostgresqlDB = None):
         primary_admin = await db.get(User, id=primary_admin_id, session=session)
 
         if primary_admin is None:
-            logger.warning(f"Unable to set debug API key; primary admin user {primary_admin_id} does not exist")
+            logger.warning(
+                f"Unable to set debug API key; primary admin user {primary_admin_id} does not exist"
+            )
             await rc.aclose()
             await db.close()
             return None

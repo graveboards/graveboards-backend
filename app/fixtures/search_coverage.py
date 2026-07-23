@@ -9,8 +9,9 @@ adaptive loop that stops as soon as all buckets are satisfied.
 """
 
 import heapq
-from dataclasses import dataclass, field
-from typing import Any, Callable, Coroutine
+from collections.abc import Callable, Coroutine
+from dataclasses import dataclass
+from typing import Any
 
 # Rarity weights: how hard each bucket is to fill via random fetching.
 # Higher = rarer = should be prioritized when uncovered.
@@ -110,7 +111,7 @@ class HeapEntry:
     sequence: int
     action: Any
 
-    def __lt__(self, other: "HeapEntry") -> bool:
+    def __lt__(self, other: HeapEntry) -> bool:
         return self.priority_value < other.priority_value
 
 
@@ -247,6 +248,7 @@ class SearchTestFetchAction:
     async def fetch_beatmapsets(self) -> dict[str, set[int]]:
         """Fetch one random beatmapset via search."""
         import random
+
         from app.fixtures.paths import get_fixture_path
 
         search_statuses = [1, 4, 0, -1]
@@ -381,10 +383,11 @@ class SearchTestFetchAction:
     async def fetch_special_beatmapset(self) -> dict[str, set[int]]:
         """Fetch one special beatmapset (NSFW, graveyard, restricted)."""
         import random
+
         from app.fixtures.paths import get_fixture_path
         from app.fixtures.search_test_known_ids import (
-            RESTRICTED_BEATMAPSET_IDS,
             NSFW_BEATMAPSET_IDS,
+            RESTRICTED_BEATMAPSET_IDS,
         )
 
         candidate_ids = list(RESTRICTED_BEATMAPSET_IDS) + list(NSFW_BEATMAPSET_IDS)
@@ -644,7 +647,7 @@ async def adaptive_fetch_loop(
             fill_str = ", ".join(SHORT_NAMES.get(k, k) for k in result.keys())
             fetcher.logger.debug(f"  -> filled: {fill_str} ({len(result)} buckets)")
         else:
-            fetcher.logger.debug(f"  -> no new buckets filled")
+            fetcher.logger.debug("  -> no new buckets filled")
             wasted_calls += 1
 
         # Count newly filled buckets
@@ -675,7 +678,7 @@ async def adaptive_fetch_loop(
                     fetcher.logger.debug(f"  -> filled: {fill_str} ({len(result)} buckets)")
                 else:
                     wasted_calls += 1
-                    fetcher.logger.debug(f"  -> no new buckets filled")
+                    fetcher.logger.debug("  -> no new buckets filled")
                 for bucket_key, ids in result.items():
                     newly_filled[bucket_key] = newly_filled.get(bucket_key, 0) + 1
                 _reheap()
@@ -690,7 +693,7 @@ async def adaptive_fetch_loop(
         )
     else:
         fetcher.logger.info(
-            f"Adaptive fetch complete: {total_calls} API calls, " f"{wasted_calls} wasted calls"
+            f"Adaptive fetch complete: {total_calls} API calls, {wasted_calls} wasted calls"
         )
 
     if newly_filled:

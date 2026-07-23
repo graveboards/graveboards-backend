@@ -8,15 +8,14 @@ import structlog
 from structlog.contextvars import bind_contextvars, clear_contextvars
 from structlog.dev import ConsoleRenderer
 from structlog.processors import (
-    add_log_level,
-    format_exc_info,
     StackInfoRenderer,
     TimeStamper,
+    add_log_level,
+    format_exc_info,
 )
 from structlog.stdlib import ProcessorFormatter
 
 from app.config import DEBUG, LOGS_DIR, PROJECT_ROOT
-
 
 SERVICE_NAME = "backend"
 

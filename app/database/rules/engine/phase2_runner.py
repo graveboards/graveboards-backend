@@ -8,8 +8,8 @@ from typing import Any
 from connexion.exceptions import Forbidden
 
 from app.database.models import QueueRule
-from app.database.rules.engine.evaluator import build_rule_node, RuleNode
-from app.database.rules.exceptions import RuleViolationError, RetryableValidationError
+from app.database.rules.engine.evaluator import RuleNode, build_rule_node
+from app.database.rules.exceptions import RetryableValidationError, RuleViolationError
 from app.database.rules.registry import effective_rule_tier
 
 logger = logging.getLogger(__name__)
@@ -94,14 +94,13 @@ class Phase2Runner:
             if isinstance(context.last_violation, RuleViolationError):
                 return rule.type, Tier3Outcome.VIOLATION
             logger.warning(
-                "Phase 2 validator '%s' returned no pass and no violation; "
-                "treating as retryable",
+                "Phase 2 validator '%s' returned no pass and no violation; treating as retryable",
                 rule.type,
             )
             return rule.type, Tier3Outcome.RETRYABLE
         except RuleViolationError:
             return rule.type, Tier3Outcome.VIOLATION
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(
                 "Phase 2 validator '%s' timed out after %ds",
                 rule.type,
@@ -132,8 +131,7 @@ class Phase2Runner:
         supported = rule.version in validator_cls.supported_versions
         if not supported:
             logger.error(
-                "Skipping active rule id=%s type=%s: unsupported version '%s' "
-                "(supported: %s)",
+                "Skipping active rule id=%s type=%s: unsupported version '%s' (supported: %s)",
                 getattr(rule, "id", "?"),
                 rule.type,
                 rule.version,

@@ -3,12 +3,10 @@ from abc import ABC, abstractmethod
 
 class BackoffStrategy(ABC):
     @abstractmethod
-    def next_delay(self) -> float:
-        ...
+    def next_delay(self) -> float: ...
 
     @abstractmethod
-    def reset(self) -> None:
-        ...
+    def reset(self) -> None: ...
 
 
 class ConstantBackoff(BackoffStrategy):

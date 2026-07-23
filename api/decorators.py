@@ -1,19 +1,18 @@
 import inspect
+from collections.abc import Awaitable, Callable
 from functools import wraps
-from typing import Callable, Awaitable, ParamSpec, TypeVar
-from inspect import signature, Parameter
+from inspect import Parameter, signature
+from typing import ParamSpec, TypeVar
 
+from api.utils import coerce_value, pop_auth_info, prime_query_kwargs
 from app.database.models import ModelClass
-from api.utils import pop_auth_info, prime_query_kwargs, coerce_value
-
 
 P = ParamSpec("P")
 T = TypeVar("T")
 
 
 def api_query(
-    model_class: ModelClass,
-    many: bool = False
+    model_class: ModelClass, many: bool = False
 ) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Decorator for normalizing API query handlers.
 
@@ -32,6 +31,7 @@ def api_query(
         ValueError:
             If applied to a non-async function.
     """
+
     def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
         if not inspect.iscoroutinefunction(func):
             raise ValueError(f"Function '{func.__name__}' must be async to use @api_query")
@@ -52,8 +52,7 @@ def api_query(
 
 
 def coerce_arguments(
-    *params: str,
-    **param_mappings: dict
+    *params: str, **param_mappings: dict
 ) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Decorator for runtime coercion of handler arguments.
 
@@ -72,6 +71,7 @@ def coerce_arguments(
         TypeError:
             If parameters lack type annotations.
     """
+
     def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
         if not inspect.iscoroutinefunction(func):
             raise ValueError(f"Function '{func.__name__}' must be async to use @coerce_arguments")
@@ -82,12 +82,16 @@ def coerce_arguments(
 
         for name in all_params:
             if name not in param_signatures:
-                raise ValueError(f"Parameter '{name}' is not in function '{func.__name__}' signature")
+                raise ValueError(
+                    f"Parameter '{name}' is not in function '{func.__name__}' signature"
+                )
 
             parameter = param_signatures[name]
 
             if parameter.annotation is Parameter.empty:
-                raise TypeError(f"Parameter '{name}' in '{func.__name__}' must have a type annotation")
+                raise TypeError(
+                    f"Parameter '{name}' in '{func.__name__}' must have a type annotation"
+                )
 
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:

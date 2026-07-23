@@ -4,13 +4,13 @@ from connexion.exceptions import Forbidden
 from api.decorators import api_query
 from api.utils import bleach_body, build_pydantic_include
 from app.database import PostgresqlDB
-from app.database.models import Queue, ModelClass
-from app.database.queue_access import queue_visibility_where, can_read_queue
+from app.database.enums import RoleName
+from app.database.models import ModelClass, Queue
+from app.database.queue_access import can_read_queue, queue_visibility_where
 from app.database.schemas import QueueSchema
-from app.exceptions import NotFound, Conflict
+from app.exceptions import Conflict, NotFound
 from app.security import role_authorization, with_authenticated_user_id
 from app.security.overrides import queue_owner_override
-from app.database.enums import RoleName
 from app.spec import get_include_schema
 
 __all__ = ["search", "get", "post", "patch"]
@@ -30,9 +30,7 @@ async def search(_caller_user_id: int = None, **kwargs):
     db: PostgresqlDB = request.state.db
 
     queues = await db.get_many(
-        Queue,
-        _where=await queue_visibility_where(db, _caller_user_id),
-        **kwargs
+        Queue, _where=await queue_visibility_where(db, _caller_user_id), **kwargs
     )
 
     if not queues:
@@ -41,7 +39,7 @@ async def search(_caller_user_id: int = None, **kwargs):
     include = build_pydantic_include(
         obj=queues[0],
         include_schema=get_include_schema(ModelClass.QUEUE),
-        request_include=kwargs.get("_include")
+        request_include=kwargs.get("_include"),
     )
 
     queues_data = [
@@ -57,11 +55,7 @@ async def search(_caller_user_id: int = None, **kwargs):
 async def get(queue_id: int, _caller_user_id: int = None, **kwargs):
     db: PostgresqlDB = request.state.db
 
-    queue = await db.get(
-        Queue,
-        id=queue_id,
-        **kwargs
-    )
+    queue = await db.get(Queue, id=queue_id, **kwargs)
 
     if not queue:
         raise NotFound(f"Queue with ID '{queue_id}' not found")
@@ -77,12 +71,10 @@ async def get(queue_id: int, _caller_user_id: int = None, **kwargs):
     include = build_pydantic_include(
         obj=queue,
         include_schema=get_include_schema(ModelClass.QUEUE),
-        request_include=kwargs.get("_include")
+        request_include=kwargs.get("_include"),
     )
 
-    queue_data = _filter_public_rules(
-        QueueSchema.model_validate(queue).model_dump(include=include)
-    )
+    queue_data = _filter_public_rules(QueueSchema.model_validate(queue).model_dump(include=include))
 
     return queue_data, 200, {"Content-Type": "application/json"}
 
@@ -98,10 +90,7 @@ async def post(body: dict, **kwargs):
     if await db.get(Queue, user_id=user_id, name=queue_name):
         raise Conflict(f"Queue '{queue_name}' already exists for user '{user_id}'")
 
-    body = bleach_body(
-        body,
-        whitelisted_keys={"user_id", "name", "description", "visibility"}
-    )
+    body = bleach_body(body, whitelisted_keys={"user_id", "name", "description", "visibility"})
 
     await db.add(Queue, **body)
 
@@ -112,10 +101,7 @@ async def post(body: dict, **kwargs):
 async def patch(queue_id: int, body: dict, **kwargs):
     db: PostgresqlDB = request.state.db
 
-    body = bleach_body(
-        body,
-        whitelisted_keys={"name", "description", "visibility", "is_open"}
-    )
+    body = bleach_body(body, whitelisted_keys={"name", "description", "visibility", "is_open"})
 
     queue = await db.get(Queue, id=queue_id)
 

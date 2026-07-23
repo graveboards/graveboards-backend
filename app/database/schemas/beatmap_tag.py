@@ -1,8 +1,7 @@
-from typing import Optional
 from datetime import datetime
 
-from pydantic.main import BaseModel
 from pydantic.config import ConfigDict
+from pydantic.main import BaseModel
 
 from .base_model_extra import BaseModelExtra
 
@@ -12,7 +11,7 @@ class BeatmapTagSchema(BaseModel, BaseModelExtra):
 
     id: int
     name: str
-    ruleset_id: Optional[int]
+    ruleset_id: int | None
     description: str
     created_at: datetime
     updated_at: datetime
@@ -22,14 +21,14 @@ class BeatmapTagCreateSchema(BaseModel, BaseModelExtra):
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     name: str
-    ruleset_id: Optional[int] = None
+    ruleset_id: int | None = None
     description: str
 
 
 class BeatmapTagUpdateSchema(BaseModel, BaseModelExtra):
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
-    name: Optional[str] = None
-    ruleset_id: Optional[int] = None
-    description: Optional[str] = None
-    updated_at: Optional[datetime] = None
+    name: str | None = None
+    ruleset_id: int | None = None
+    description: str | None = None
+    updated_at: datetime | None = None

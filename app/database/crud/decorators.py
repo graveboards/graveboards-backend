@@ -1,14 +1,22 @@
 from __future__ import annotations
 
 import inspect
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextvars import ContextVar
 from functools import wraps
-from typing import Any, AsyncContextManager, AsyncIterator, Awaitable, Callable, ParamSpec, Protocol, TypeVar
+from typing import (
+    Any,
+    AsyncContextManager,
+    ParamSpec,
+    Protocol,
+    TypeVar,
+)
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.logging import get_logger, log_stack_warning
 from app.database.models import ModelClass
+from app.logging import get_logger, log_stack_warning
+
 from .protocol import DatabaseProtocol
 
 P = ParamSpec("P")
@@ -31,8 +39,7 @@ _active_session: ContextVar[AsyncSession | None] = ContextVar(
 
 
 def session_manager(
-    session_resolver: SessionResolver = None,
-    autoflush_allowed: bool = True
+    session_resolver: SessionResolver = None, autoflush_allowed: bool = True
 ) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Manage ``AsyncSession`` lifecycle for coroutine-based CRUD operations.
 
@@ -81,7 +88,11 @@ def session_manager(
             if current_session is not None:
                 _enforce_autoflush(current_session, autoflush_allowed, func)
                 stack = inspect.stack()
-                log_stack_warning(logger, stack, f"Func '{func.__name__}' called w/o session inside active session context")
+                log_stack_warning(
+                    logger,
+                    stack,
+                    f"Func '{func.__name__}' called w/o session inside active session context",
+                )
                 kwargs["session"] = current_session
                 return await func(self, *args, **kwargs)
 
@@ -102,7 +113,7 @@ def session_manager(
 
 def session_manager_stream(
     session_resolver: Callable[[Any], AsyncContextManager[Any]] = None,
-    autoflush_allowed: bool = True
+    autoflush_allowed: bool = True,
 ) -> Callable[[Callable[P, AsyncIterator[T]]], Callable[P, AsyncIterator[T]]]:
     """Manage ``AsyncSession`` lifecycle for async generator methods.
 
@@ -152,7 +163,11 @@ def session_manager_stream(
             if current_session is not None:
                 _enforce_autoflush(current_session, autoflush_allowed, func)
                 stack = inspect.stack()
-                log_stack_warning(logger, stack, f"Func '{func.__name__}' called w/o session inside active session context")
+                log_stack_warning(
+                    logger,
+                    stack,
+                    f"Func '{func.__name__}' called w/o session inside active session context",
+                )
                 kwargs["session"] = current_session
 
                 async for item in func(self, *args, **kwargs):
@@ -177,7 +192,9 @@ def session_manager_stream(
     return decorator
 
 
-def ensure_required(many: bool = False) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
+def ensure_required(
+    many: bool = False,
+) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Validate presence of required model columns before execution.
 
     This decorator checks that all required columns defined on the model are present in
@@ -195,9 +212,12 @@ def ensure_required(many: bool = False) -> Callable[[Callable[P, Awaitable[T]]],
         ValueError:
             If required columns are missing.
     """
+
     def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
         @wraps(func)
-        async def wrapper(model_class: ModelClass, session: AsyncSession, *args: P.args, **kwargs: P.kwargs) -> T:
+        async def wrapper(
+            model_class: ModelClass, session: AsyncSession, *args: P.args, **kwargs: P.kwargs
+        ) -> T:
             required_columns = model_class.required_columns
 
             def get_missing(d_: dict) -> list[str]:
@@ -207,13 +227,15 @@ def ensure_required(many: bool = False) -> Callable[[Callable[P, Awaitable[T]]],
                 missing_columns = get_missing(kwargs)
 
                 if missing_columns:
-                    raise ValueError(f"Missing required columns: {", ".join(missing_columns)}")
+                    raise ValueError(f"Missing required columns: {', '.join(missing_columns)}")
             else:
                 for i, d in enumerate(args):
                     missing_columns = get_missing(d)
 
                     if missing_columns:
-                        raise ValueError(f"Missing required columns at index {i}: {", ".join(missing_columns)}")
+                        raise ValueError(
+                            f"Missing required columns at index {i}: {', '.join(missing_columns)}"
+                        )
 
             return await func(model_class, session, *args, **kwargs)
 
@@ -229,6 +251,7 @@ class SessionResolver(Protocol):
     instance. This abstraction allows CRUD decorators to remain decoupled from specific
     database wiring strategies.
     """
+
     def __call__(
         self,
         obj: Any,
@@ -243,12 +266,8 @@ class DbSessionResolver(SessionResolver):
     Intended for use when the database handle is stored on an attribute
     named `db` rather than exposed directly via `session()`.
     """
-    def __call__(
-        self,
-        obj: Any,
-        *,
-        autoflush: bool = True
-    ) -> AsyncContextManager[AsyncSession]:
+
+    def __call__(self, obj: Any, *, autoflush: bool = True) -> AsyncContextManager[AsyncSession]:
         return obj.db.session(autoflush=autoflush)
 
 
@@ -256,9 +275,7 @@ db_session_resolver = DbSessionResolver()
 
 
 def _default_session_resolver(
-    obj: DatabaseProtocol,
-    *,
-    autoflush: bool = True
+    obj: DatabaseProtocol, *, autoflush: bool = True
 ) -> AsyncContextManager[AsyncSession]:
     """Default strategy for resolving a session from a ``DatabaseProtocol``.
 
@@ -279,7 +296,7 @@ def _default_session_resolver(
 def _enforce_autoflush(
     session: AsyncSession,
     autoflush_allowed: bool,
-    func: Callable[P, Awaitable[T] | AsyncIterator[T]]
+    func: Callable[P, Awaitable[T] | AsyncIterator[T]],
 ):
     """Enforce autoflush policy for a wrapped CRUD operation.
 
@@ -296,4 +313,6 @@ def _enforce_autoflush(
             If autoflush is enabled when disallowed.
     """
     if not autoflush_allowed and session.autoflush:
-        raise RuntimeError(f"{func.__name__} requires autoflush=False but received session with autoflush=True.")
+        raise RuntimeError(
+            f"{func.__name__} requires autoflush=False but received session with autoflush=True."
+        )

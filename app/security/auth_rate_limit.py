@@ -1,11 +1,10 @@
 import time
-from typing import Optional, Tuple
 
-from app.redis import RedisClient
 from app.observability.metrics.auth import (
-    auth_rate_limit_checks_total,
     auth_lockouts_total,
+    auth_rate_limit_checks_total,
 )
+from app.redis import RedisClient
 
 
 class AuthRateLimiter:
@@ -22,7 +21,7 @@ class AuthRateLimiter:
     def __init__(self, rc: RedisClient):
         self.rc = rc
 
-    async def check(self, ip: str) -> Tuple[bool, Optional[int]]:
+    async def check(self, ip: str) -> tuple[bool, int | None]:
         """Check if request is allowed.
 
         Returns: (allowed, retry_after_seconds)

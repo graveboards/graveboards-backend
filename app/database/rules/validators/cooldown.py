@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from connexion.exceptions import Forbidden
 
 from app.database.models import Queue
-from app.redis import Namespace
 from app.database.rules.base import RestrictionBase
 from app.database.rules.context import ExecutionContext
 from app.database.rules.fingerprint import config_fingerprint
 from app.database.schemas.rule import CooldownConfig
+from app.redis import Namespace
 
 
 def _is_target_match(config: dict, user_id: int) -> bool:
@@ -32,8 +32,8 @@ class CooldownRestriction(RestrictionBase):
         )
 
     def _remaining_seconds(self, last_request_ts, cooldown_seconds: int) -> float:
-        last_request_time = datetime.fromtimestamp(int(last_request_ts), tz=timezone.utc)
-        elapsed = (datetime.now(timezone.utc) - last_request_time).total_seconds()
+        last_request_time = datetime.fromtimestamp(int(last_request_ts), tz=UTC)
+        elapsed = (datetime.now(UTC) - last_request_time).total_seconds()
         return cooldown_seconds - elapsed
 
     async def _cooldown_error(self, context: ExecutionContext, remaining: float) -> Forbidden:
@@ -79,7 +79,7 @@ class CooldownRestriction(RestrictionBase):
 
         cooldown_seconds = config.get("cooldown_seconds")
         redis_key = self._redis_key(context, config)
-        now_ts = int(datetime.now(timezone.utc).timestamp())
+        now_ts = int(datetime.now(UTC).timestamp())
 
         was_set = await context.redis.set(redis_key, now_ts, nx=True, ex=cooldown_seconds)
         if not was_set:

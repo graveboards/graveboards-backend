@@ -1,46 +1,44 @@
-from copy import copy
 from datetime import datetime
-from typing import Optional, Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic.config import ConfigDict
-from pydantic.functional_validators import model_validator
 from pydantic.fields import Field
 
 from .base_model_extra import BaseModelExtra
 from .sub_schemas import BeatmapOsuApiSchema
 
 if TYPE_CHECKING:
+    from .beatmap_tag import BeatmapTagSchema
     from .beatmapset_snapshot import BeatmapsetSnapshotSchema
     from .leaderboard import LeaderboardSchema
     from .profile import ProfileSchema
-    from .beatmap_tag import BeatmapTagSchema
 
 
 class BeatmapSnapshotSchema(BeatmapOsuApiSchema, BaseModelExtra):
     model_config = ConfigDict(from_attributes=True)
 
-    id: Optional[int] = None
+    id: int | None = None
     beatmap_id: int
-    snapshot_number: Optional[int] = None
-    snapshot_date: Optional[datetime] = None
+    snapshot_number: int | None = None
+    snapshot_date: datetime | None = None
 
-    beatmapset_snapshots: list["BeatmapsetSnapshotSchema"] = []
-    beatmap_tags: list["BeatmapTagSchema"] = []
-    leaderboard: Optional["LeaderboardSchema"] = None
-    owner_profiles: list["ProfileSchema"] = []
+    beatmapset_snapshots: list[BeatmapsetSnapshotSchema] = []
+    beatmap_tags: list[BeatmapTagSchema] = []
+    leaderboard: LeaderboardSchema | None = None
+    owner_profiles: list[ProfileSchema] = []
 
-    owners: Optional[list[dict[str, Any]]] = Field(exclude=True, default=None)
-    top_tag_ids: Optional[list[dict[str, int]]] = Field(exclude=True, default=None)
+    owners: list[dict[str, Any]] | None = Field(exclude=True, default=None)
+    top_tag_ids: list[dict[str, int]] | None = Field(exclude=True, default=None)
 
 
 class BeatmapSnapshotCreateSchema(BeatmapOsuApiSchema, BaseModelExtra):
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     beatmap_id: int
-    snapshot_number: Optional[int] = None
+    snapshot_number: int | None = None
 
 
 class BeatmapSnapshotUpdateSchema(BeatmapOsuApiSchema, BaseModelExtra):
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
-    snapshot_number: Optional[int] = None
+    snapshot_number: int | None = None

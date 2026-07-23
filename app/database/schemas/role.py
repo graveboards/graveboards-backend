@@ -1,8 +1,8 @@
-from typing import Optional
-from pydantic.main import BaseModel
 from pydantic.config import ConfigDict
+from pydantic.main import BaseModel
 
 from app.database.literals import RoleNameLiteral
+
 from .base_model_extra import BaseModelExtra
 
 
@@ -22,4 +22,4 @@ class RoleCreateSchema(BaseModel, BaseModelExtra):
 class RoleUpdateSchema(BaseModel, BaseModelExtra):
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
-    name: Optional[RoleNameLiteral] = None
+    name: RoleNameLiteral | None = None

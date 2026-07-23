@@ -10,7 +10,7 @@ __all__ = [
     "GenreId",
     "GenreName",
     "LanguageId",
-    "LanguageName"
+    "LanguageName",
 ]
 
 API_BASEURL = "https://osu.ppy.sh/api/v2"
@@ -69,7 +69,7 @@ class Ruleset(Enum):
         return _RULESET_MODE_INT[self]
 
     @classmethod
-    def to_mode_int(cls, ruleset: "str | Ruleset") -> int:
+    def to_mode_int(cls, ruleset: str | Ruleset) -> int:
         if isinstance(ruleset, str):
             ruleset = cls(ruleset)
         return ruleset.mode_int

@@ -1,7 +1,8 @@
 import asyncio
 import inspect
+from collections.abc import Awaitable, Callable
 from functools import wraps
-from typing import Callable, Any, Awaitable
+from typing import Any
 
 from app.logging import get_logger
 
@@ -10,9 +11,9 @@ logger = get_logger(__name__)
 
 
 def auto_retry(
-        max_attempts: int = MAX_ATTEMPTS,
-        retry_exceptions: tuple[type[Exception]] = (TimeoutError,),
-        backoff_strategy: Callable[[int], float] = lambda attempt_no: attempt_no ** 2
+    max_attempts: int = MAX_ATTEMPTS,
+    retry_exceptions: tuple[type[Exception]] = (TimeoutError,),
+    backoff_strategy: Callable[[int], float] = lambda attempt_no: attempt_no**2,
 ):
     def decorator(func: Callable[..., Awaitable[Any]]):
         if not inspect.iscoroutinefunction(func):
@@ -38,12 +39,14 @@ def auto_retry(
                     exception_type = f"{e.__class__.__module__}.{e.__class__.__name__}"
                     logger.warning(
                         f"Attempt {attempt}/{max_attempts} failed for {func.__name__}. Retrying in {delay:.2f} seconds",
-                        extra={"exception": exception_type}
+                        extra={"exception": exception_type},
                     )
                     await asyncio.sleep(backoff_strategy(attempt))
 
             if last_exception:
-                logger.error(f"All {max_attempts} attempts failed for {func.__name__}. Raising exception")
+                logger.error(
+                    f"All {max_attempts} attempts failed for {func.__name__}. Raising exception"
+                )
                 raise last_exception
 
             return result

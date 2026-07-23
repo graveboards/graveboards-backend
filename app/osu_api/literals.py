@@ -10,30 +10,18 @@ __all__ = [
     "GenreIdLiteral",
     "GenreNameLiteral",
     "LanguageIdLiteral",
-    "LanguageNameLiteral"
+    "LanguageNameLiteral",
 ]
 
 RulesetLiteral = Literal["fruits", "mania", "osu", "taiko"]
 RulesetIntLiteral = Literal[0, 1, 2, 3]
 PlaystyleLiteral = Literal["mouse", "keyboard", "tablet", "touch"]
 ProfilePageLiteral = Literal[
-    "me",
-    "recent_activity",
-    "beatmaps",
-    "historical",
-    "kudosu",
-    "top_ranks",
-    "medals"
+    "me", "recent_activity", "beatmaps", "historical", "kudosu", "top_ranks", "medals"
 ]
 RankedIntLiteral = Literal[-2, -1, 0, 1, 2, 3, 4]
 RankedStatusLiteral = Literal[
-    "graveyard",
-    "wip",
-    "pending",
-    "ranked",
-    "approved",
-    "qualified",
-    "loved"
+    "graveyard", "wip", "pending", "ranked", "approved", "qualified", "loved"
 ]
 GenreIdLiteral = Literal[0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14]
 GenreNameLiteral = Literal[
@@ -50,7 +38,7 @@ GenreNameLiteral = Literal[
     "Metal",
     "Classical",
     "Folk",
-    "Jazz"
+    "Jazz",
 ]
 LanguageIdLiteral = Literal[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
 LanguageNameLiteral = Literal[
@@ -68,5 +56,5 @@ LanguageNameLiteral = Literal[
     "Italian",
     "Russian",
     "Polish",
-    "Other"
+    "Other",
 ]

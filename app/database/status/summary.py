@@ -1,14 +1,8 @@
+from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy.sql import select
 from sqlalchemy.sql.functions import func
-from sqlalchemy.ext.asyncio.session import AsyncSession
 
-from app.database.models import (
-    User,
-    Beatmap,
-    Beatmapset,
-    Queue,
-    Request
-)
+from app.database.models import Beatmap, Beatmapset, Queue, Request, User
 
 
 async def get_summary_status(session: AsyncSession) -> dict:

@@ -26,18 +26,22 @@ class BPMRestriction(BeatmapRestrictionBase):
         max_bpm = config.get("max_bpm")
 
         if logic == "avg":
-            avg_bpm = sum(b.bpm for b in beatmaps) / len(beatmaps) if beatmaps else beatmapset.bpm if beatmapset else 0.0
+            avg_bpm = (
+                sum(b.bpm for b in beatmaps) / len(beatmaps)
+                if beatmaps
+                else beatmapset.bpm
+                if beatmapset
+                else 0.0
+            )
             if min_bpm is not None and avg_bpm < min_bpm:
                 raise RuleViolationError(
                     self.type,
-                    f"Average BPM ({avg_bpm:.2f}) is below minimum allowed "
-                    f"({min_bpm:.2f})",
+                    f"Average BPM ({avg_bpm:.2f}) is below minimum allowed ({min_bpm:.2f})",
                 )
             if max_bpm is not None and avg_bpm > max_bpm:
                 raise RuleViolationError(
                     self.type,
-                    f"Average BPM ({avg_bpm:.2f}) exceeds maximum allowed "
-                    f"({max_bpm:.2f})",
+                    f"Average BPM ({avg_bpm:.2f}) exceeds maximum allowed ({max_bpm:.2f})",
                 )
 
         elif logic == "all":

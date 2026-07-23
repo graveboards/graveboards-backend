@@ -19,10 +19,11 @@ A future migration to async-aware event handling (or moving side effects out
 of SQLAlchemy events into explicit service calls) is tracked as a long-term
 refactoring.
 """
-from .user import *
-from .score_fetcher_task import *
+
 from .beatmap_snapshot import *
 from .beatmapset_snapshot import *
 from .request import *
+from .score_fetcher_task import *
+from .user import *
 
 __all__ = []

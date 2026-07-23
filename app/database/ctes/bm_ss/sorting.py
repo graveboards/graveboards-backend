@@ -1,16 +1,19 @@
 from sqlalchemy.sql import select
-from sqlalchemy.sql.selectable import CTE
 from sqlalchemy.sql.functions import func
+from sqlalchemy.sql.selectable import CTE
 
-from app.database.models import BeatmapsetSnapshot, Request, Queue, BeatmapSnapshot, beatmap_snapshot_beatmapset_snapshot_association
-from app.search.enums import Scope
+from app.database.models import (
+    BeatmapsetSnapshot,
+    BeatmapSnapshot,
+    Queue,
+    Request,
+    beatmap_snapshot_beatmapset_snapshot_association,
+)
 from app.search.datastructures import SortingOption
+from app.search.enums import Scope
 
 
-def bm_ss_sorting_cte_factory(
-    scope: Scope,
-    sorting_option: SortingOption
-) -> CTE:
+def bm_ss_sorting_cte_factory(scope: Scope, sorting_option: SortingOption) -> CTE:
     """Build a beatmap-derived ranking CTE for the given scope.
 
     Projects a beatmap-level sorting field into the active scope and assigns a
@@ -37,10 +40,9 @@ def bm_ss_sorting_cte_factory(
                 select(
                     BeatmapSnapshot.id.label("id"),
                     target.label("target"),
-                    func.row_number().over(
-                        partition_by=BeatmapSnapshot.id,
-                        order_by=sorting_order.sort_func(target)
-                    ).label("rank")
+                    func.row_number()
+                    .over(partition_by=BeatmapSnapshot.id, order_by=sorting_order.sort_func(target))
+                    .label("rank"),
                 )
                 .select_from(BeatmapSnapshot)
                 .distinct(BeatmapSnapshot.id)
@@ -51,19 +53,22 @@ def bm_ss_sorting_cte_factory(
                 select(
                     BeatmapsetSnapshot.id.label("id"),
                     target.label("target"),
-                    func.row_number().over(
-                        partition_by=BeatmapsetSnapshot.id,
-                        order_by=sorting_order.sort_func(target)
-                    ).label("rank")
+                    func.row_number()
+                    .over(
+                        partition_by=BeatmapsetSnapshot.id, order_by=sorting_order.sort_func(target)
+                    )
+                    .label("rank"),
                 )
                 .select_from(BeatmapsetSnapshot)
                 .join(
                     beatmap_snapshot_beatmapset_snapshot_association,
-                    beatmap_snapshot_beatmapset_snapshot_association.c.beatmapset_snapshot_id == BeatmapsetSnapshot.id
+                    beatmap_snapshot_beatmapset_snapshot_association.c.beatmapset_snapshot_id
+                    == BeatmapsetSnapshot.id,
                 )
                 .join(
                     BeatmapSnapshot,
-                    BeatmapSnapshot.id == beatmap_snapshot_beatmapset_snapshot_association.c.beatmap_snapshot_id
+                    BeatmapSnapshot.id
+                    == beatmap_snapshot_beatmapset_snapshot_association.c.beatmap_snapshot_id,
                 )
                 .distinct(BeatmapsetSnapshot.id)
                 .cte(f"beatmapset_beatmap_{field_name}_ranked_cte")
@@ -73,21 +78,22 @@ def bm_ss_sorting_cte_factory(
                 select(
                     Queue.id.label("id"),
                     target.label("target"),
-                    func.row_number().over(
-                        partition_by=Queue.id,
-                        order_by=sorting_order.sort_func(target)
-                    ).label("rank")
+                    func.row_number()
+                    .over(partition_by=Queue.id, order_by=sorting_order.sort_func(target))
+                    .label("rank"),
                 )
                 .select_from(Queue)
                 .join(Queue.requests)
                 .join(Request.beatmapset_snapshot)
                 .join(
                     beatmap_snapshot_beatmapset_snapshot_association,
-                    beatmap_snapshot_beatmapset_snapshot_association.c.beatmapset_snapshot_id == BeatmapsetSnapshot.id
+                    beatmap_snapshot_beatmapset_snapshot_association.c.beatmapset_snapshot_id
+                    == BeatmapsetSnapshot.id,
                 )
                 .join(
                     BeatmapSnapshot,
-                    BeatmapSnapshot.id == beatmap_snapshot_beatmapset_snapshot_association.c.beatmap_snapshot_id
+                    BeatmapSnapshot.id
+                    == beatmap_snapshot_beatmapset_snapshot_association.c.beatmap_snapshot_id,
                 )
                 .distinct(Queue.id)
                 .cte(f"queue_beatmap_{field_name}_ranked_cte")
@@ -97,20 +103,21 @@ def bm_ss_sorting_cte_factory(
                 select(
                     Request.id.label("id"),
                     target.label("target"),
-                    func.row_number().over(
-                        partition_by=Request.id,
-                        order_by=sorting_order.sort_func(target)
-                    ).label("rank")
+                    func.row_number()
+                    .over(partition_by=Request.id, order_by=sorting_order.sort_func(target))
+                    .label("rank"),
                 )
                 .select_from(Request)
                 .join(Request.beatmapset_snapshot)
                 .join(
                     beatmap_snapshot_beatmapset_snapshot_association,
-                    beatmap_snapshot_beatmapset_snapshot_association.c.beatmapset_snapshot_id == BeatmapsetSnapshot.id
+                    beatmap_snapshot_beatmapset_snapshot_association.c.beatmapset_snapshot_id
+                    == BeatmapsetSnapshot.id,
                 )
                 .join(
                     BeatmapSnapshot,
-                    BeatmapSnapshot.id == beatmap_snapshot_beatmapset_snapshot_association.c.beatmap_snapshot_id
+                    BeatmapSnapshot.id
+                    == beatmap_snapshot_beatmapset_snapshot_association.c.beatmap_snapshot_id,
                 )
                 .distinct(Request.id)
                 .cte(f"request_beatmap_{field_name}_ranked_cte")

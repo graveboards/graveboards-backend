@@ -1,32 +1,40 @@
 from datetime import datetime
-from typing import Optional, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
+from sqlalchemy.dialects.postgresql.array import ARRAY
+from sqlalchemy.dialects.postgresql.json import JSONB
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import mapped_column, relationship
+from sqlalchemy.orm.base import Mapped
 from sqlalchemy.sql import select
 from sqlalchemy.sql.schema import ForeignKey, UniqueConstraint
-from sqlalchemy.sql.sqltypes import Integer, String, DateTime, Boolean, Float
-from sqlalchemy.orm import relationship, mapped_column
-from sqlalchemy.orm.base import Mapped
-from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.dialects.postgresql.json import JSONB
-from sqlalchemy.dialects.postgresql.array import ARRAY
+from sqlalchemy.sql.sqltypes import Boolean, Float, Integer, String
 
 from app.utils import aware_utcnow
+
+from .associations import (
+    beatmap_snapshot_beatmapset_snapshot_association,
+    beatmapset_tag_beatmapset_snapshot_association,
+)
 from .base import Base
-from .associations import beatmap_snapshot_beatmapset_snapshot_association, beatmapset_tag_beatmapset_snapshot_association
 from .types import AwareDateTime
 
 if TYPE_CHECKING:
     from .beatmap_snapshot import BeatmapSnapshot
+    from .beatmapset_listing import BeatmapsetListing
     from .beatmapset_tag import BeatmapsetTag
     from .profile import Profile
-    from .beatmapset_listing import BeatmapsetListing
 
 
 class BeatmapsetSnapshot(Base):
     __tablename__ = "beatmapset_snapshots"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    beatmapset_id: Mapped[int] = mapped_column(Integer, ForeignKey("beatmapsets.id", ondelete="CASCADE"), nullable=False)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    beatmapset_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("beatmapsets.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     snapshot_number: Mapped[int] = mapped_column(Integer, nullable=False)
     snapshot_date: Mapped[datetime] = mapped_column(AwareDateTime(), default=aware_utcnow)
     checksum: Mapped[str] = mapped_column(String(32), unique=True, nullable=False)
@@ -35,31 +43,35 @@ class BeatmapsetSnapshot(Base):
     # osu! API datastructure
     artist: Mapped[str] = mapped_column(String, nullable=False)
     artist_unicode: Mapped[str] = mapped_column(String, nullable=False)
-    availability: Mapped[dict[str, Union[bool, str, None]]] = mapped_column(JSONB, nullable=False)
+    availability: Mapped[dict[str, bool | str | None]] = mapped_column(JSONB, nullable=False)
     bpm: Mapped[float] = mapped_column(Float, nullable=False)
     can_be_hyped: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    covers: Mapped[Optional[dict[str, str]]] = mapped_column(JSONB)
+    covers: Mapped[dict[str, str] | None] = mapped_column(JSONB)
     creator: Mapped[str] = mapped_column(String, nullable=False)
-    current_nominations: Mapped[list[dict[str, Union[int, list[str], bool]]]] = mapped_column(JSONB, nullable=False)
-    deleted_at: Mapped[Optional[datetime]] = mapped_column(AwareDateTime())
+    current_nominations: Mapped[list[dict[str, int | list[str] | bool]]] = mapped_column(
+        JSONB, nullable=False
+    )
+    deleted_at: Mapped[datetime | None] = mapped_column(AwareDateTime())
     description: Mapped[dict[str, str]] = mapped_column(JSONB, nullable=False)
     discussion_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False)
     discussion_locked: Mapped[bool] = mapped_column(Boolean, nullable=False)
     favourite_count: Mapped[int] = mapped_column(Integer, nullable=False)
-    genre: Mapped[Optional[dict[str, Union[int, str]]]] = mapped_column(JSONB)
-    hype: Mapped[Optional[dict[str, int]]] = mapped_column(JSONB)
+    genre: Mapped[dict[str, int | str] | None] = mapped_column(JSONB)
+    hype: Mapped[dict[str, int] | None] = mapped_column(JSONB)
     is_scoreable: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    language: Mapped[Optional[dict[str, Union[int, str]]]] = mapped_column(JSONB)
+    language: Mapped[dict[str, int | str] | None] = mapped_column(JSONB)
     last_updated: Mapped[datetime] = mapped_column(AwareDateTime(), nullable=False)
-    legacy_thread_url: Mapped[Optional[str]] = mapped_column(String)
-    nominations_summary: Mapped[dict[str, Union[int, list[str], dict[str, int], None]]] = mapped_column(JSONB, nullable=False)
+    legacy_thread_url: Mapped[str | None] = mapped_column(String)
+    nominations_summary: Mapped[dict[str, int | list[str] | dict[str, int] | None]] = mapped_column(
+        JSONB, nullable=False
+    )
     nsfw: Mapped[bool] = mapped_column(Boolean, nullable=False)
     offset: Mapped[int] = mapped_column(Integer, nullable=False)
     pack_tags: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False)
     play_count: Mapped[int] = mapped_column(Integer, nullable=False)
     preview_url: Mapped[str] = mapped_column(String, nullable=False)
     ranked: Mapped[int] = mapped_column(Integer, nullable=False)
-    ranked_date: Mapped[Optional[datetime]] = mapped_column(AwareDateTime())
+    ranked_date: Mapped[datetime | None] = mapped_column(AwareDateTime())
     rating: Mapped[float] = mapped_column(Float, nullable=False)
     ratings: Mapped[list[int]] = mapped_column(ARRAY(Integer), nullable=False)
     source: Mapped[str] = mapped_column(String, nullable=False)
@@ -70,40 +82,38 @@ class BeatmapsetSnapshot(Base):
     tags: Mapped[str] = mapped_column(String, nullable=False)
     title: Mapped[str] = mapped_column(String, nullable=False)
     title_unicode: Mapped[str] = mapped_column(String, nullable=False)
-    track_id: Mapped[Optional[int]] = mapped_column(Integer)
+    track_id: Mapped[int | None] = mapped_column(Integer)
     video: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
     # Relationships
-    beatmap_snapshots: Mapped[list["BeatmapSnapshot"]] = relationship(
+    beatmap_snapshots: Mapped[list[BeatmapSnapshot]] = relationship(
         "BeatmapSnapshot",
         secondary=beatmap_snapshot_beatmapset_snapshot_association,
         back_populates="beatmapset_snapshots",
-        lazy=True
+        lazy=True,
     )
-    beatmapset_tags: Mapped[list["BeatmapsetTag"]] = relationship(
-        "BeatmapsetTag",
-        secondary=beatmapset_tag_beatmapset_snapshot_association,
-        lazy=True
+    beatmapset_tags: Mapped[list[BeatmapsetTag]] = relationship(
+        "BeatmapsetTag", secondary=beatmapset_tag_beatmapset_snapshot_association, lazy=True
     )
-    user_profile: Mapped["Profile"] = relationship(
+    user_profile: Mapped[Profile] = relationship(
         "Profile",
         primaryjoin="foreign(BeatmapsetSnapshot.user_id) == remote(Profile.user_id)",
         uselist=False,
         overlaps="beatmapset_snapshots",
-        lazy=True
+        lazy=True,
     )
-    beatmapset_listing: Mapped["BeatmapsetListing"] = relationship(
+    beatmapset_listing: Mapped[BeatmapsetListing] = relationship(
         "BeatmapsetListing",
         back_populates="beatmapset_snapshot",
         cascade="all, delete-orphan",
         passive_deletes=True,
         uselist=False,
-        lazy=True
+        lazy=True,
     )
 
     # Hybrid annotations
     availability_download_disabled: Mapped[bool]
-    availability_more_information: Mapped[Optional[str]]
+    availability_more_information: Mapped[str | None]
     description_description: Mapped[str]
     genre_name: Mapped[str]
     genre_id: Mapped[int]
@@ -127,7 +137,9 @@ class BeatmapsetSnapshot(Base):
     hit_lengths_avg: Mapped[int]
 
     __table_args__ = (
-        UniqueConstraint("beatmapset_id", "snapshot_number", name="_beatmapset_and_snapshot_number_uc"),
+        UniqueConstraint(
+            "beatmapset_id", "snapshot_number", name="_beatmapset_and_snapshot_number_uc"
+        ),
     )
 
     @hybrid_property
@@ -308,11 +320,16 @@ class BeatmapsetSnapshot(Base):
 
     @nominations_summary_required_meta_main_ruleset.expression
     def nominations_summary_required_meta_main_ruleset(cls):
-        from app.database.ctes.bms_ss.nominations_summary import nominations_summary_required_meta_main_ruleset_cte
+        from app.database.ctes.bms_ss.nominations_summary import (
+            nominations_summary_required_meta_main_ruleset_cte,
+        )
 
         return (
             select(nominations_summary_required_meta_main_ruleset_cte.c.target)
-            .where(nominations_summary_required_meta_main_ruleset_cte.c.beatmapset_snapshot_id == cls.id)
+            .where(
+                nominations_summary_required_meta_main_ruleset_cte.c.beatmapset_snapshot_id
+                == cls.id
+            )
             .scalar_subquery()
         )
 
@@ -322,11 +339,16 @@ class BeatmapsetSnapshot(Base):
 
     @nominations_summary_required_meta_non_main_ruleset.expression
     def nominations_summary_required_meta_non_main_ruleset(cls):
-        from app.database.ctes.bms_ss.nominations_summary import nominations_summary_required_meta_non_main_ruleset_cte
+        from app.database.ctes.bms_ss.nominations_summary import (
+            nominations_summary_required_meta_non_main_ruleset_cte,
+        )
 
         return (
             select(nominations_summary_required_meta_non_main_ruleset_cte.c.target)
-            .where(nominations_summary_required_meta_non_main_ruleset_cte.c.beatmapset_snapshot_id == cls.id)
+            .where(
+                nominations_summary_required_meta_non_main_ruleset_cte.c.beatmapset_snapshot_id
+                == cls.id
+            )
             .scalar_subquery()
         )
 

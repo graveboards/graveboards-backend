@@ -1,5 +1,5 @@
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from starlette.responses import Response
-from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
 
 async def metrics_endpoint(request):

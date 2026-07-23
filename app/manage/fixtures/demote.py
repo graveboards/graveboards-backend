@@ -2,6 +2,7 @@ from rich.console import Console
 from rich.prompt import Confirm
 
 from app.fixtures.metadata_io import load_metadata, save_metadata
+
 from .helpers import get_categories_to_process
 from .move_helpers import _move_fixture_files
 

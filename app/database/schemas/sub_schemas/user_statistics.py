@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic.main import BaseModel
 
 
@@ -8,10 +6,10 @@ class UserStatisticsSchema(BaseModel):
     count_300: int
     count_50: int
     count_miss: int
-    level: "LevelSchema"
-    global_rank: Optional[int]
-    global_rank_percent: Optional[float]
-    global_rank_exp: Optional[int]
+    level: LevelSchema
+    global_rank: int | None
+    global_rank_percent: float | None
+    global_rank_exp: int | None
     pp: float
     pp_exp: float
     ranked_score: int
@@ -23,9 +21,9 @@ class UserStatisticsSchema(BaseModel):
     maximum_combo: int
     replays_watched_by_others: int
     is_ranked: bool
-    grade_counts: "UserStatisticsGradeCountsSchema"
-    country_rank: Optional[int]
-    rank: "UserStatisticsRankSchema"
+    grade_counts: UserStatisticsGradeCountsSchema
+    country_rank: int | None
+    rank: UserStatisticsRankSchema
 
 
 class LevelSchema(BaseModel):
@@ -42,4 +40,4 @@ class UserStatisticsGradeCountsSchema(BaseModel):
 
 
 class UserStatisticsRankSchema(BaseModel):
-    country: Optional[int]
+    country: int | None

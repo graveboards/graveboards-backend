@@ -5,9 +5,10 @@ registry that tracks coverage buckets. Adding a new bucket requires registering
 one entry instead of adding 3+ attributes and updating 5+ methods.
 """
 
-from dataclasses import dataclass, field
-from typing import Any, Callable
+from collections.abc import Callable
+from dataclasses import dataclass
 from enum import Enum
+from typing import Any
 
 
 class BucketType(Enum):
@@ -575,7 +576,7 @@ class CoverageRegistry:
         Returns:
             Coverage report dictionary
         """
-        from .constants import GENRE_NAMES, LANGUAGE_NAMES, BEATMAP_MODE_NAMES, BEATMAP_STATUS_NAMES
+        from .constants import BEATMAP_MODE_NAMES, BEATMAP_STATUS_NAMES, GENRE_NAMES, LANGUAGE_NAMES
 
         report = {}
 

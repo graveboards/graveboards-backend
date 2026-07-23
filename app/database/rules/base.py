@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel
 
@@ -31,8 +31,7 @@ class RestrictionBase(ABC):
         await self._check(context)
 
     @abstractmethod
-    async def _check(self, context: ExecutionContext) -> None:
-        ...
+    async def _check(self, context: ExecutionContext) -> None: ...
 
     async def reserve(self, context: ExecutionContext, config: dict[str, Any]) -> str | None:
         """Atomically reserve any stateful side effect this rule consumes.
@@ -61,8 +60,7 @@ class BeatmapRestrictionBase(RestrictionBase):
         await self.check_beatmap(context)
 
     @abstractmethod
-    async def check_beatmap(self, context: ExecutionContext) -> None:
-        ...
+    async def check_beatmap(self, context: ExecutionContext) -> None: ...
 
 
 class DatabaseRestrictionBase(RestrictionBase):
@@ -75,5 +73,4 @@ class DatabaseRestrictionBase(RestrictionBase):
         await self.check_database(context)
 
     @abstractmethod
-    async def check_database(self, context: ExecutionContext) -> None:
-        ...
+    async def check_database(self, context: ExecutionContext) -> None: ...

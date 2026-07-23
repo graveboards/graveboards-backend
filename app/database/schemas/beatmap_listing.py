@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
-from pydantic.main import BaseModel
 from pydantic.config import ConfigDict
+from pydantic.main import BaseModel
 
 from .base_model_extra import BaseModelExtra
 
@@ -13,12 +13,12 @@ if TYPE_CHECKING:
 class BeatmapListingSchema(BaseModel, BaseModelExtra):
     model_config = ConfigDict(from_attributes=True)
 
-    id: Optional[int] = None
+    id: int | None = None
     beatmap_id: int
     beatmap_snapshot_id: int
     updated_at: datetime
 
-    beatmap_snapshot: "BeatmapSnapshotSchema"
+    beatmap_snapshot: BeatmapSnapshotSchema
 
 
 class BeatmapListingCreateSchema(BaseModel, BaseModelExtra):
@@ -31,4 +31,4 @@ class BeatmapListingCreateSchema(BaseModel, BaseModelExtra):
 class BeatmapListingUpdateSchema(BaseModel, BaseModelExtra):
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
-    beatmap_snapshot_id: Optional[int] = None
+    beatmap_snapshot_id: int | None = None

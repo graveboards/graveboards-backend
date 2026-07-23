@@ -4,28 +4,26 @@ from connexion.problem import problem
 
 from api.decorators import api_query
 from api.utils import build_pydantic_include
-from app.exceptions import NotFound
-from app.spec import get_include_schema
 from app.beatmaps import BeatmapManager
 from app.database import PostgresqlDB
+from app.database.enums import RoleName
 from app.database.models import Beatmapset, ModelClass
 from app.database.schemas import BeatmapsetSchema
+from app.exceptions import NotFound
 from app.redis import RedisClient
 from app.security import role_authorization
-from app.database.enums import RoleName
+from app.spec import get_include_schema
+
 from . import listings, snapshots, tags
 
-__all__ = ["search", "get", "post"]
+__all__ = ["search", "get", "post", "listings", "snapshots", "tags"]
 
 
 @api_query(ModelClass.BEATMAPSET, many=True)
 async def search(**kwargs):
     db: PostgresqlDB = request.state.db
 
-    beatmapsets = await db.get_many(
-        Beatmapset,
-        **kwargs
-    )
+    beatmapsets = await db.get_many(Beatmapset, **kwargs)
 
     if not beatmapsets:
         return [], 200, {"Content-Type": "application/json"}
@@ -33,7 +31,7 @@ async def search(**kwargs):
     include = build_pydantic_include(
         obj=beatmapsets[0],
         include_schema=get_include_schema(ModelClass.BEATMAPSET),
-        request_include=kwargs.get("_include")
+        request_include=kwargs.get("_include"),
     )
 
     beatmapsets_data = [
@@ -48,10 +46,7 @@ async def search(**kwargs):
 async def get(beatmapset_id: int, **kwargs):
     db: PostgresqlDB = request.state.db
 
-    beatmapset = await db.get(
-        Beatmapset,
-        **kwargs
-    )
+    beatmapset = await db.get(Beatmapset, **kwargs)
 
     if not beatmapset:
         raise NotFound(f"Beatmapset with beatmapset_id '{beatmapset_id}' not found")
@@ -59,7 +54,7 @@ async def get(beatmapset_id: int, **kwargs):
     include = build_pydantic_include(
         obj=beatmapset,
         include_schema=get_include_schema(ModelClass.BEATMAPSET),
-        request_include=kwargs.get("_include")
+        request_include=kwargs.get("_include"),
     )
 
     beatmapset_data = BeatmapsetSchema.model_validate(beatmapset).model_dump(include=include)
@@ -69,7 +64,9 @@ async def get(beatmapset_id: int, **kwargs):
 
 @api_query(ModelClass.BEATMAPSET)
 @role_authorization(RoleName.ADMIN)
-async def post(body: dict, rc: RedisClient = None, db: PostgresqlDB = None, bm: BeatmapManager = None, **kwargs):
+async def post(
+    body: dict, rc: RedisClient = None, db: PostgresqlDB = None, bm: BeatmapManager = None, **kwargs
+):
     if rc is None:
         rc = request.state.rc
     if db is None:
@@ -103,8 +100,16 @@ async def post(body: dict, rc: RedisClient = None, db: PostgresqlDB = None, bm: 
         status_code = 201
     elif changelog.get("updated_beatmapset") or changelog.get("updated_beatmaps"):
         num_beatmaps = len(changelog.get("updated_beatmaps", []))
-        num_beatmapset_fields = len(changelog.get("updated_beatmapset", {})) - 1 if changelog.get("updated_beatmapset") else 0
-        num_beatmap_fields = sum((len(fields) for fields in changelog.get("updated_beatmaps", []))) - num_beatmaps if num_beatmaps else 0
+        num_beatmapset_fields = (
+            len(changelog.get("updated_beatmapset", {})) - 1
+            if changelog.get("updated_beatmapset")
+            else 0
+        )
+        num_beatmap_fields = (
+            sum(len(fields) for fields in changelog.get("updated_beatmaps", [])) - num_beatmaps
+            if num_beatmaps
+            else 0
+        )
         changelog["message"] = (
             f"Updated {num_beatmapset_fields} field(s) in the beatmapset "
             f"and {num_beatmap_fields} field(s) "

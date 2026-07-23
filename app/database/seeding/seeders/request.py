@@ -2,10 +2,11 @@ import asyncio
 
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
-from app.database.models import Request, BeatmapsetSnapshot
-from app.database.crud import session_manager, db_session_resolver
+from app.database.crud import db_session_resolver, session_manager
+from app.database.models import BeatmapsetSnapshot, Request
 from app.database.seeding import SeederTarget
 from app.database.seeding.event import SeedEvent
+
 from .base import Seeder
 
 
@@ -27,13 +28,13 @@ class RequestSeeder(Seeder):
             Request,
             beatmapset_id=beatmapset_id,
             queue_id=request_entry["queue_id"],
-            session=self.session
+            session=self.session,
         ):
             beatmapset_snapshot = await self.db.get(
                 BeatmapsetSnapshot,
                 beatmapset_id=beatmapset_id,
                 _sorting=[{"field": "BeatmapsetSnapshot.id", "order": "desc"}],
-                session=self.session
+                session=self.session,
             )
             if beatmapset_snapshot is None:
                 self.logger.warning(

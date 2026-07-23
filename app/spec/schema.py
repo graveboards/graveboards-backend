@@ -123,4 +123,3 @@ def _get_schema_by_suffix(
         raise ValueError(f"Schema with name '{schema_name}' not found")
 
     return schema
-

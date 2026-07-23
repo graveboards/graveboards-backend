@@ -1,25 +1,23 @@
 import asyncio
-import time
-from typing import Awaitable, Any, ClassVar, Callable
+from collections.abc import Awaitable, Callable
+from typing import Any, ClassVar
 
 from app.logging import Logger
-from .task import (
-    TaskFactory,
-    TaskSpec,
-    BackoffStrategy,
-    TaskRetryPolicy,
-    TaskFailureHook,
-    TaskMaxRetriesExceededHook,
-    TaskSuccessHook,
-    TaskErrorHook,
-    TaskFinishHook
-)
 from app.observability.metrics.daemon import (
-    daemon_service_running,
     daemon_jobs_total,
-    daemon_job_duration_seconds,
-    daemon_last_job_timestamp,
-    daemon_active_jobs,
+    daemon_service_running,
+)
+
+from .task import (
+    BackoffStrategy,
+    TaskErrorHook,
+    TaskFactory,
+    TaskFailureHook,
+    TaskFinishHook,
+    TaskMaxRetriesExceededHook,
+    TaskRetryPolicy,
+    TaskSpec,
+    TaskSuccessHook,
 )
 
 
@@ -37,10 +35,7 @@ class Service:
 
     LOGGER: ClassVar[Logger | None] = None
 
-    def __init__(
-        self,
-        default_backoff_delay: float = 0.0
-    ) -> None:
+    def __init__(self, default_backoff_delay: float = 0.0) -> None:
         """Initialize the service.
 
         Args:
@@ -74,7 +69,7 @@ class Service:
         backoff: BackoffStrategy = None,
         max_retries: int = None,
         on_failure: TaskFailureHook | None = None,
-        on_max_retries_exceeded: TaskMaxRetriesExceededHook | None = None
+        on_max_retries_exceeded: TaskMaxRetriesExceededHook | None = None,
     ) -> None:
         """Register a task to run under the service's lifecycle.
 
@@ -107,7 +102,9 @@ class Service:
                 raise ValueError(f"Task '{name}' already registered")
 
             wrapped_factory = self._wrap_factory(factory, name)
-            retry_policy = TaskRetryPolicy(backoff, max_retries, on_failure, on_max_retries_exceeded)
+            retry_policy = TaskRetryPolicy(
+                backoff, max_retries, on_failure, on_max_retries_exceeded
+            )
             spec = TaskSpec(wrapped_factory, critical, retry_policy)
             self._task_specs[name] = spec
 
@@ -294,11 +291,7 @@ class Service:
         pass
 
     async def _on_task_failure(
-        self,
-        name: str,
-        exc: Exception,
-        failures: int,
-        spec: TaskSpec
+        self, name: str, exc: Exception, failures: int, spec: TaskSpec
     ) -> None:
         """Execute whenever a task fails, before retrying.
 
@@ -318,12 +311,7 @@ class Service:
         """
         daemon_jobs_total.labels(service=self._service_name, status="failure").inc()
 
-    async def _on_critical_failure(
-        self,
-        name: str,
-        exc: Exception,
-        spec: TaskSpec
-    ) -> None:
+    async def _on_critical_failure(self, name: str, exc: Exception, spec: TaskSpec) -> None:
         """Execute when a critical task fails.
 
         Runs after the task's normal failure hooks and before the exception propagates
@@ -341,11 +329,7 @@ class Service:
         """
         daemon_jobs_total.labels(service=self._service_name, status="critical").inc()
 
-    def _start_task(
-        self,
-        name: str,
-        spec: TaskSpec
-    ) -> None:
+    def _start_task(self, name: str, spec: TaskSpec) -> None:
         """Start a single task under structured concurrency with retry logic.
 
         This wraps the task factory in a runner coroutine that:
@@ -393,13 +377,14 @@ class Service:
                         raise
 
                     is_exhausted = (
-                        retry_policy.max_retries is not None
-                        and failures > retry_policy.max_retries
+                        retry_policy.max_retries is not None and failures > retry_policy.max_retries
                     )
 
                     if is_exhausted:
                         if retry_policy.on_max_retries_exceeded:
-                            await self._safe_hook(retry_policy.on_max_retries_exceeded, name, failures)
+                            await self._safe_hook(
+                                retry_policy.on_max_retries_exceeded, name, failures
+                            )
 
                         if retry_policy.backoff:
                             retry_policy.backoff.reset()
@@ -417,10 +402,7 @@ class Service:
         self._tg.create_task(runner(), name=name)
 
     async def _safe_hook(
-        self,
-        hook: Callable[..., Awaitable[Any] | None],
-        *args: Any,
-        **kwargs: Any
+        self, hook: Callable[..., Awaitable[Any] | None], *args: Any, **kwargs: Any
     ) -> None:
         """Run a hook safely, awaiting if it returns a coroutine."""
         try:
@@ -428,6 +410,5 @@ class Service:
                 await maybe
         except Exception:
             self.logger.exception(
-                f"{self.__class__.__name__}.{hook.__name__} "
-                f"raised for args={args}, kwargs={kwargs}"
+                f"{self.__class__.__name__}.{hook.__name__} raised for args={args}, kwargs={kwargs}"
             )

@@ -1,7 +1,7 @@
-from pydantic.main import BaseModel
 from pydantic.config import ConfigDict
 from pydantic.fields import Field
 from pydantic.functional_serializers import model_serializer
+from pydantic.main import BaseModel
 from pydantic_core.core_schema import SerializationInfo
 
 

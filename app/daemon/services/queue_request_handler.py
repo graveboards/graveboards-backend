@@ -8,10 +8,11 @@ from app.beatmaps import BeatmapManager
 from app.database.crud.rules import RuleCRUD
 from app.database.models import Request
 from app.database.schemas import RequestSchema
+from app.logging import Logger, get_logger
 from app.redis import ChannelName, Namespace
 from app.redis.models import QueueRequestHandlerTask, QueueRequestValidationTask
 from app.utils import aware_utcnow
-from app.logging import get_logger, Logger
+
 from .decorators import auto_retry
 from .service import ScheduledService
 from .service.job import JobLoadInstruction
@@ -53,7 +54,9 @@ class QueueRequestHandler(ScheduledService):
             ValueError: If the record does not exist.
         """
         hash_name = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(record_id)
-        self.logger.debug(f"Executing QueueRequestHandler job {record_id}, looking up hash={hash_name}")
+        self.logger.debug(
+            f"Executing QueueRequestHandler job {record_id}, looking up hash={hash_name}"
+        )
 
         try:
             serialized_record = await self._rc.hgetall(hash_name)
@@ -88,9 +91,13 @@ class QueueRequestHandler(ScheduledService):
                 )
                 self.logger.debug(f"Creating Request in DB with: {request_dict}")
                 request = await self._db.add(Request, **request_dict)
-                self.logger.debug(f"Added request id={request.id} for beatmapset {request.beatmapset_id} to queue id={request.queue_id}")
+                self.logger.debug(
+                    f"Added request id={request.id} for beatmapset {request.beatmapset_id} to queue id={request.queue_id}"
+                )
 
-                await self._dispatch_validation_task(request.id, record.queue_id, record.beatmapset_id, record.http_request_id)
+                await self._dispatch_validation_task(
+                    request.id, record.queue_id, record.beatmapset_id, record.http_request_id
+                )
 
                 await self._rc.hset(hash_name, "completed_at", aware_utcnow().isoformat())
                 self.logger.debug(f"Marked {hash_name} as completed_at")
@@ -102,7 +109,9 @@ class QueueRequestHandler(ScheduledService):
             await self._rc.hset(hash_name, "failed_at", aware_utcnow().isoformat())
             raise
 
-    async def _dispatch_validation_task(self, request_id: int, queue_id: int, beatmapset_id: int, http_request_id: str = "") -> None:
+    async def _dispatch_validation_task(
+        self, request_id: int, queue_id: int, beatmapset_id: int, http_request_id: str = ""
+    ) -> None:
         rules_snapshot = await self._snapshot_active_rules(queue_id)
 
         task = QueueRequestValidationTask(

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic.main import BaseModel
 
@@ -10,4 +10,4 @@ class UserAccountHistorySchema(BaseModel):
     length: int
     permanent: bool
     type: Literal["note", "restriction", "silence"]
-    description: Optional[str]
+    description: str | None

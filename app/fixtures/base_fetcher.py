@@ -9,19 +9,16 @@ import json
 import os
 import random
 from pathlib import Path
-from typing import Optional
 
-from app.redis import RedisClient
 from app.osu_api.client.osu_api_client import OsuAPIClient
-from app.osu_api.enums import Ruleset
+from app.redis import RedisClient
 
-from .paths import get_fixture_path
-from .metadata_io import load_metadata, save_metadata, load_top_player_ids
-from .constants import RULESETS, ID_RANGES
+from .constants import ID_RANGES, RULESETS
 from .failed_id_store import FailedIdStore
 from .id_source import IDSource
+from .metadata_io import load_metadata, load_top_player_ids, save_metadata
+from .paths import get_fixture_path
 from .validation import validate_data
-from app.exceptions import clean_error_msg
 
 
 class BaseFetcher:
@@ -216,8 +213,9 @@ class BaseFetcher:
         count_per_ruleset: int = 1000,
     ) -> dict[str, list[int]]:
         """Fetch top player IDs from osu! API rankings."""
-        from .constants import RANKING_PAGE_SIZE
         from app.osu_api.enums import Ruleset as RulesetEnum
+
+        from .constants import RANKING_PAGE_SIZE
 
         if rulesets is None:
             rulesets = RULESETS

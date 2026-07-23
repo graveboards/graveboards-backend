@@ -1,6 +1,5 @@
 from prometheus_client import Gauge, Histogram
 
-
 db_pool_size = Gauge(
     "db_pool_size",
     "Maximum number of connections in the database connection pool.",

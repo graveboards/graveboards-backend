@@ -1,6 +1,3 @@
-from starlette.responses import Response
-
-
 def build_pagination_response(
     data: list,
     total: int,

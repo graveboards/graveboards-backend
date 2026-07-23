@@ -2,19 +2,19 @@
 
 from .models import (
     Metadata,
-    Samples,
-    SampleCount,
-    UsersSample,
-    ScoresSample,
-    PromotedFixtures,
     PromotedFixture,
-    PromotedUsers,
+    PromotedFixtures,
     PromotedScores,
-    TargetedMetadata,
-    TargetedFileMetadata,
+    PromotedUsers,
+    SampleCount,
+    Samples,
+    ScoresSample,
     SearchTestCoverage,
+    TargetedFileMetadata,
+    TargetedMetadata,
+    UsersSample,
 )
-from .store import MetadataStore, FixtureMetadataManager
+from .store import FixtureMetadataManager, MetadataStore
 
 __all__ = [
     "Metadata",

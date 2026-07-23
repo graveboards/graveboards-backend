@@ -3,7 +3,6 @@ from __future__ import annotations
 from connexion.exceptions import Forbidden
 
 from app.database.models import Queue
-from app.redis import Namespace
 from app.database.rules.base import RestrictionBase
 from app.database.rules.context import ExecutionContext
 from app.database.schemas.rule import BlacklistConfig

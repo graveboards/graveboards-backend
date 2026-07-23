@@ -1,12 +1,13 @@
 import os
 import pickle
-import yaml
 
+import yaml
 from connexion.spec import resolve_refs
 
+from app.config import CACHE_FILE, ENV, OPENAPI_ENTRYPOINT, SPEC_DIR, get_security_enabled
 from app.enums import Env
-from app.config import ENV, get_security_enabled, SPEC_DIR, CACHE_FILE, OPENAPI_ENTRYPOINT
 from app.logging import get_logger
+
 from .shallow import populate_shallow_refs
 
 logger = get_logger(__name__)
@@ -51,10 +52,7 @@ def load_spec() -> dict:
 
     cached_options = payload.get("build_options", {})
 
-    if (
-        cache_mtime < latest_spec_mtime
-        or cached_options != _current_build_options()
-    ):
+    if cache_mtime < latest_spec_mtime or cached_options != _current_build_options():
         return _build_spec()
 
     return payload["spec"]
@@ -69,20 +67,17 @@ def _build_spec() -> dict:
     Returns:
         dict: The fully resolved and mutated OpenAPI specification.
     """
-    with open(OPENAPI_ENTRYPOINT, "r") as f:
+    with open(OPENAPI_ENTRYPOINT) as f:
         spec = resolve_refs(yaml.full_load(f), base_uri=f"{SPEC_DIR}/")
 
     _apply_mutations(spec)
 
-    cache_payload = {
-        "spec": spec,
-        "build_options": _current_build_options()
-    }
+    cache_payload = {"spec": spec, "build_options": _current_build_options()}
 
     try:
         with open(CACHE_FILE, "wb") as f:
             pickle.dump(cache_payload, f)
-    except (OSError, PermissionError):
+    except OSError, PermissionError:
         logger.warning(f"Could not write spec cache to {CACHE_FILE}, continuing without caching")
 
     return spec
@@ -117,10 +112,7 @@ def _current_build_options() -> dict:
     Returns:
         dict: A mapping of build-relevant configuration values.
     """
-    return {
-        "env": ENV,
-        "disable_security": not get_security_enabled()
-    }
+    return {"env": ENV, "disable_security": not get_security_enabled()}
 
 
 def _get_latest_spec_mtime() -> float:

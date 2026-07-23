@@ -1,23 +1,27 @@
 from collections import defaultdict
-from typing import Generator
+from collections.abc import Generator
 
-from sqlalchemy.sql import select, cast, union_all
-from sqlalchemy.sql.schema import Table
+from sqlalchemy.sql import cast, select, union_all
 from sqlalchemy.sql.elements import literal
-from sqlalchemy.sql.sqltypes import Integer, String
-from sqlalchemy.sql.selectable import CTE, Select, CompoundSelect, FromClause
 from sqlalchemy.sql.functions import func
+from sqlalchemy.sql.schema import Table
+from sqlalchemy.sql.selectable import CTE, CompoundSelect, FromClause, Select
+from sqlalchemy.sql.sqltypes import Integer, String
 
-from app.search.mappings import SCOPE_CATEGORIES_MAPPING, CATEGORY_MODEL_FIELDS_MAPPING, CATEGORY_FIELD_GROUPS_MAPPING
-from app.search.enums import Scope, SearchableFieldCategory
 from app.search.datastructures import SearchTermsSchema
+from app.search.enums import Scope, SearchableFieldCategory
+from app.search.mappings import (
+    CATEGORY_FIELD_GROUPS_MAPPING,
+    CATEGORY_MODEL_FIELDS_MAPPING,
+    SCOPE_CATEGORIES_MAPPING,
+)
+
 from .hashable_cte import HashableCTE
 from .utils import extract_cte_target_scalar
 
 
 def search_terms_scored_ctes_factory(
-    scope: Scope,
-    search_terms: SearchTermsSchema
+    scope: Scope, search_terms: SearchTermsSchema
 ) -> dict[SearchableFieldCategory, CTE]:
     """Build per-category scoring CTEs for all search terms.
 
@@ -49,7 +53,9 @@ def search_terms_scored_ctes_factory(
     for category, stmts in category_score_stmts.items():
         unioned = union_all(*stmts)
 
-        processed = _process_field_groups(unioned, category, CATEGORY_FIELD_GROUPS_MAPPING).subquery()  # TODO: Allow user to configure FIELD_GROUPS
+        processed = _process_field_groups(
+            unioned, category, CATEGORY_FIELD_GROUPS_MAPPING
+        ).subquery()  # TODO: Allow user to configure FIELD_GROUPS
 
         category_score_ctes[category] = (
             select(
@@ -57,12 +63,16 @@ def search_terms_scored_ctes_factory(
                 func.sum(func.coalesce(processed.c.score, 0)).label("score"),
                 func.jsonb_agg(
                     func.jsonb_build_object(
-                        "field", processed.c.field,
-                        "term", processed.c.term,
-                        "pattern", processed.c.pattern,
-                        "score", processed.c.score
+                        "field",
+                        processed.c.field,
+                        "term",
+                        processed.c.term,
+                        "pattern",
+                        processed.c.pattern,
+                        "score",
+                        processed.c.score,
                     )
-                ).label("score_details")
+                ).label("score_details"),
             )
             .group_by(processed.c.id)
             .cte(f"{category.value}_score_cte")
@@ -72,9 +82,8 @@ def search_terms_scored_ctes_factory(
 
 
 def _generate_term_score_stmts(
-    scope: Scope,
-    search_terms: SearchTermsSchema
-) -> Generator[tuple[SearchableFieldCategory, Select], None, None]:
+    scope: Scope, search_terms: SearchTermsSchema
+) -> Generator[tuple[SearchableFieldCategory, Select]]:
     """Yield weighted scoring SELECT statements for each term and field.
 
     For every searchable field in scope, generates pattern-based match queries using
@@ -111,7 +120,12 @@ def _generate_term_score_stmts(
                 continue
 
             if isinstance(target, HashableCTE):
-                target = extract_cte_target_scalar(target.cte, model_class, id_column_label="beatmapset_snapshot_id", use_alias=True)
+                target = extract_cte_target_scalar(
+                    target.cte,
+                    model_class,
+                    id_column_label="beatmapset_snapshot_id",
+                    use_alias=True,
+                )
 
             for term in terms:
                 pattern_stmts = []
@@ -128,9 +142,8 @@ def _generate_term_score_stmts(
                             literal(field).label("field"),
                             literal(term).label("term"),
                             literal(pattern_name).label("pattern"),
-                            score_value.label("score")
-                        )
-                        .where(getattr(target, like_operator)(pattern))
+                            score_value.label("score"),
+                        ).where(getattr(target, like_operator)(pattern))
                     )
 
                 unioned = union_all(*pattern_stmts).subquery()
@@ -141,18 +154,15 @@ def _generate_term_score_stmts(
                     unioned.c.term,
                     unioned.c.pattern,
                     unioned.c.score,
-                    func.row_number().over(
-                        partition_by=[unioned.c.id, unioned.c.term],
-                        order_by=unioned.c.score.desc()
-                    ).label("rank")
+                    func.row_number()
+                    .over(
+                        partition_by=[unioned.c.id, unioned.c.term], order_by=unioned.c.score.desc()
+                    )
+                    .label("rank"),
                 ).subquery(f"{category.value}_{field}_{term}_ranked_pattern_scores")
 
                 score_stmt = select(
-                    ranked.c.id,
-                    ranked.c.field,
-                    ranked.c.term,
-                    ranked.c.pattern,
-                    ranked.c.score
+                    ranked.c.id, ranked.c.field, ranked.c.term, ranked.c.pattern, ranked.c.score
                 ).where(ranked.c.rank == 1)
 
                 yield category, score_stmt
@@ -161,7 +171,7 @@ def _generate_term_score_stmts(
 def _process_field_groups(
     base_query: CompoundSelect,
     category: SearchableFieldCategory,
-    field_groups_config: dict[SearchableFieldCategory, dict[str, set[str]]]
+    field_groups_config: dict[SearchableFieldCategory, dict[str, set[str]]],
 ) -> CompoundSelect:
     """Apply field grouping rules to a unioned scoring query.
 
@@ -187,31 +197,28 @@ def _process_field_groups(
 
     grouped_fields = {field for group in field_groups.values() for field in group}
 
-    if hasattr(base_query, 'subquery'):
+    if hasattr(base_query, "subquery"):
         base_subq = base_query.subquery()
     else:
         base_subq = base_query
-    
-    non_grouped = (
-        select(base_subq.c)
-        .where(~base_subq.c.field.in_(grouped_fields))
-    )
+
+    non_grouped = select(base_subq.c).where(~base_subq.c.field.in_(grouped_fields))
 
     group_queries = []
 
     for group_name, fields in field_groups.items():
-        if hasattr(base_query, 'subquery'):
+        if hasattr(base_query, "subquery"):
             subq = base_query.subquery()
         else:
             subq = base_query
-        
+
         group_query = (
             select(
                 subq.c.id,
                 literal(group_name).label("field"),
                 subq.c.term,
                 subq.c.pattern,
-                func.max(subq.c.score).label("score")
+                func.max(subq.c.score).label("score"),
             )
             .where(subq.c.field.in_(fields))
             .group_by(subq.c.id, subq.c.term, subq.c.pattern)
@@ -226,7 +233,7 @@ def aggregated_child_scores_to_parent_cte_factory(
     mapping_table: Table | FromClause,
     mapping_child_fk: str,
     mapping_parent_fk: str,
-    cte_name: str
+    cte_name: str,
 ) -> CTE:
     """Aggregate scored child entities into parent-level scores.
 
@@ -257,48 +264,36 @@ def aggregated_child_scores_to_parent_cte_factory(
     exploded = (
         select(
             getattr(mapping_table.c, mapping_parent_fk).label("id"),
-            func.jsonb_array_elements(child_score_cte.c.score_details).label("entry")
+            func.jsonb_array_elements(child_score_cte.c.score_details).label("entry"),
         )
         .select_from(
             child_score_cte.join(
-                mapping_table,
-                getattr(mapping_table.c, mapping_child_fk) == child_score_cte.c.id
+                mapping_table, getattr(mapping_table.c, mapping_child_fk) == child_score_cte.c.id
             )
         )
         .subquery()
     )
 
-    parsed = (
-        select(
-            exploded.c.id,
-            func.cast(exploded.c.entry.op("->>")("field"), String).label("field"),
-            func.cast(exploded.c.entry.op("->>")("term"), String).label("term"),
-            func.cast(exploded.c.entry.op("->>")("pattern"), String).label("pattern"),
-            func.cast(exploded.c.entry.op("->>")("score"), Integer).label("score")
-        )
-        .subquery()
-    )
+    parsed = select(
+        exploded.c.id,
+        func.cast(exploded.c.entry.op("->>")("field"), String).label("field"),
+        func.cast(exploded.c.entry.op("->>")("term"), String).label("term"),
+        func.cast(exploded.c.entry.op("->>")("pattern"), String).label("pattern"),
+        func.cast(exploded.c.entry.op("->>")("score"), Integer).label("score"),
+    ).subquery()
 
-    ranked = (
-        select(
-            parsed,
-            func.row_number()
-            .over(
-                partition_by=[parsed.c.id, parsed.c.field, parsed.c.term],
-                order_by=parsed.c.score.desc()
-            ).label("rank")
+    ranked = select(
+        parsed,
+        func.row_number()
+        .over(
+            partition_by=[parsed.c.id, parsed.c.field, parsed.c.term],
+            order_by=parsed.c.score.desc(),
         )
-        .subquery()
-    )
+        .label("rank"),
+    ).subquery()
 
     max_entries = (
-        select(
-            ranked.c.id,
-            ranked.c.field,
-            ranked.c.term,
-            ranked.c.pattern,
-            ranked.c.score
-        )
+        select(ranked.c.id, ranked.c.field, ranked.c.term, ranked.c.pattern, ranked.c.score)
         .where(ranked.c.rank == 1)
         .subquery()
     )
@@ -309,12 +304,16 @@ def aggregated_child_scores_to_parent_cte_factory(
             func.sum(max_entries.c.score).label("score"),
             func.jsonb_agg(
                 func.jsonb_build_object(
-                    "field", max_entries.c.field,
-                    "term", max_entries.c.term,
-                    "pattern", max_entries.c.pattern,
-                    "score", max_entries.c.score
+                    "field",
+                    max_entries.c.field,
+                    "term",
+                    max_entries.c.term,
+                    "pattern",
+                    max_entries.c.pattern,
+                    "score",
+                    max_entries.c.score,
                 )
-            ).label("score_details")
+            ).label("score_details"),
         )
         .group_by(max_entries.c.id)
         .cte(cte_name)

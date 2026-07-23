@@ -1,11 +1,9 @@
-import uuid
 import hashlib
 import os
-from datetime import datetime, timezone
+import uuid
+from datetime import UTC, datetime
 from io import BytesIO
 from typing import Any
-
-
 
 
 def generate_uuid() -> str:
@@ -13,7 +11,7 @@ def generate_uuid() -> str:
 
 
 def aware_utcnow() -> datetime:
-    return datetime.now(tz=timezone.utc)
+    return datetime.now(tz=UTC)
 
 
 def parse_iso8601(datetime_string: str) -> datetime:

@@ -1,15 +1,11 @@
-from pathlib import Path
-from typing import Optional
 import json
-import random
+from pathlib import Path
 
-from app.logging import get_logger
 from app.config import PROJECT_ROOT
+from app.logging import get_logger
 
-from .metadata_io import load_metadata, save_metadata, create_targeted_metadata
-from .paths import get_fixture_path
-from .constants import RULESETS, SCORE_TYPES
 from .metadata import FixtureMetadataManager
+from .metadata_io import load_metadata
 
 logger = get_logger(__name__)
 
@@ -23,25 +19,25 @@ class FixtureReader:
         self.metadata_manager = FixtureMetadataManager(self.metadata, self.fixture_dir)
         self.metadata_manager.init_metadata()
 
-    def get_beatmap_by_id(self, beatmap_id: int) -> Optional[dict]:
+    def get_beatmap_by_id(self, beatmap_id: int) -> dict | None:
         """Get a specific beatmap by ID."""
         return self._get_fixture_by_id("beatmaps", beatmap_id)
 
-    def get_beatmapset_by_id(self, beatmapset_id: int) -> Optional[dict]:
+    def get_beatmapset_by_id(self, beatmapset_id: int) -> dict | None:
         """Get a specific beatmapset by ID."""
         return self._get_fixture_by_id("beatmapsets", beatmapset_id)
 
-    def get_user_by_id(self, user_id: int, ruleset: str) -> Optional[dict]:
+    def get_user_by_id(self, user_id: int, ruleset: str) -> dict | None:
         """Get a specific user by ID."""
         return self._get_fixture_by_id(
             f"users.{ruleset}", user_id, prefix=f"user_{user_id}_{ruleset}"
         )
 
-    def get_beatmap_scores_by_beatmap(self, beatmap_id: int) -> Optional[dict]:
+    def get_beatmap_scores_by_beatmap(self, beatmap_id: int) -> dict | None:
         """Get beatmap scores by beatmap ID."""
         return self._get_fixture_by_id("beatmap_scores", beatmap_id, prefix=f"scores_{beatmap_id}")
 
-    def get_beatmap_attributes_by_beatmap(self, beatmap_id: int) -> Optional[dict]:
+    def get_beatmap_attributes_by_beatmap(self, beatmap_id: int) -> dict | None:
         """Get beatmap attributes by beatmap ID."""
         return self._get_fixture_by_id(
             "beatmap_attributes", beatmap_id, prefix=f"beatmap_attrs_{beatmap_id}"
@@ -117,11 +113,11 @@ class FixtureReader:
         fixtures = self._get_fixtures("beatmap_attributes", 1, preferences)
         return fixtures[0] if fixtures else None
 
-    def get_queue_by_id(self, queue_id: int) -> Optional[dict]:
+    def get_queue_by_id(self, queue_id: int) -> dict | None:
         """Get a specific queue by ID."""
         return self._get_fixture_by_id("queues", queue_id)
 
-    def get_request_by_id(self, request_id: int) -> Optional[dict]:
+    def get_request_by_id(self, request_id: int) -> dict | None:
         """Get a specific request by ID."""
         return self._get_fixture_by_id("requests", request_id)
 
@@ -339,7 +335,7 @@ class FixtureReader:
         category: str,
         fixture_id: int,
         prefix: str = None,
-    ) -> Optional[dict]:
+    ) -> dict | None:
         """Get a specific fixture by ID."""
         file_metadata = self.metadata.get("targeted", {}).get(category, {}).get("file_metadata", {})
 
@@ -361,7 +357,7 @@ class FixtureReader:
         self,
         category: str,
         file_path: Path,
-    ) -> Optional[dict]:
+    ) -> dict | None:
         """Load fixture from file."""
         try:
             with open(file_path) as f:
@@ -386,7 +382,7 @@ class FixtureReader:
         self,
         file_path: Path,
         category: str,
-    ) -> Optional[int]:
+    ) -> int | None:
         """Extract fixture ID from filename."""
         filename = file_path.stem
 

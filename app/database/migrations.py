@@ -1,5 +1,4 @@
 import subprocess
-from pathlib import Path
 
 from app.config import PROJECT_ROOT
 from app.logging import get_logger

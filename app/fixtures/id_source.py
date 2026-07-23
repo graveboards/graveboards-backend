@@ -13,19 +13,18 @@ Usage:
 import asyncio
 import random
 from abc import ABC, abstractmethod
-from typing import Optional
 
-from app.redis import RedisClient
-from app.fixtures.metadata_io import load_metadata, load_top_player_ids
-from app.fixtures.constants import ID_RANGES, TOP_PLAYERS_PER_RULESET
 from app.fixtures.archives import (
-    refresh_archive_index,
-    load_archive_index,
-    get_user_ids_from_archive,
     get_beatmap_ids_from_archive,
+    get_user_ids_from_archive,
+    load_archive_index,
+    refresh_archive_index,
 )
+from app.fixtures.constants import ID_RANGES, TOP_PLAYERS_PER_RULESET
 from app.fixtures.failed_id_store import FailedIdStore
+from app.fixtures.metadata_io import load_metadata
 from app.logging import get_logger
+from app.redis import RedisClient
 
 logger = get_logger(__name__)
 

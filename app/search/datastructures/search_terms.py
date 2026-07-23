@@ -1,12 +1,14 @@
 import shlex
 import struct
-from typing import Iterator, Union, Annotated
+from collections.abc import Iterator
+from typing import Annotated
 
-from pydantic.main import BaseModel
 from pydantic.fields import Field
 from pydantic.functional_validators import field_validator
+from pydantic.main import BaseModel
 
 from app.search.enums import Scope
+
 from .field_weights import FieldWeights
 from .pattern_multipliers import PatternMultipliers
 
@@ -22,6 +24,7 @@ class SearchTermsSchema(BaseModel):
 
     Supports validation against a search scope and compact binary serialization.
     """
+
     terms: list[Annotated[str, Field(max_length=255)]]
     case_sensitive: bool = False
     pattern_multipliers: PatternMultipliers = PatternMultipliers()
@@ -37,7 +40,7 @@ class SearchTermsSchema(BaseModel):
 
     @field_validator("terms", mode="before")
     @classmethod
-    def validate_terms(cls, raw_terms: Union[str, list[str]]) -> list[str]:
+    def validate_terms(cls, raw_terms: str | list[str]) -> list[str]:
         """Normalize and validate search term input.
 
         Accepts either:
@@ -120,15 +123,15 @@ class SearchTermsSchema(BaseModel):
         flag_byte = struct.pack("!B", flags)
 
         return (
-            term_count +
-            term_data +
-            flag_byte +
-            self.pattern_multipliers.serialize() +
-            self.field_weights.serialize(scope)
+            term_count
+            + term_data
+            + flag_byte
+            + self.pattern_multipliers.serialize()
+            + self.field_weights.serialize(scope)
         )
 
     @classmethod
-    def deserialize(cls, data: bytes, offset: int = 0) -> tuple["SearchTermsSchema", int]:
+    def deserialize(cls, data: bytes, offset: int = 0) -> tuple[SearchTermsSchema, int]:
         """Deserialize search configuration from binary format.
 
         Args:
@@ -149,7 +152,7 @@ class SearchTermsSchema(BaseModel):
         for _ in range(term_count):
             length = struct.unpack_from("!B", data, offset=offset)[0]
             offset += 1
-            term = data[offset:offset + length].decode()
+            term = data[offset : offset + length].decode()
             offset += length
             terms.append(term)
 
@@ -164,5 +167,5 @@ class SearchTermsSchema(BaseModel):
             terms=terms,
             case_sensitive=case_sensitive,
             pattern_multipliers=pattern_multipliers,
-            field_weights=field_weights
+            field_weights=field_weights,
         ), offset

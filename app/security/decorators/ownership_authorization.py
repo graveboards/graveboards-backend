@@ -1,12 +1,14 @@
 import inspect
+from collections.abc import Awaitable, Callable
 from functools import wraps
-from typing import Callable, Any, Awaitable, ParamSpec, TypeVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar
 
 from connexion import request
 from connexion.exceptions import Forbidden
 
 from app.database.roles import is_admin
-from .utils import get_authenticated_user_id, strip_auth_info, get_value
+
+from .utils import get_authenticated_user_id, get_value, strip_auth_info
 
 if TYPE_CHECKING:
     from app.database import PostgresqlDB
@@ -58,13 +60,18 @@ def ownership_authorization(
         Forbidden:
             If the user does not own the resource.
     """
+
     def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
         if not inspect.iscoroutinefunction(func):
-            raise ValueError(f"Function '{func.__name__}' must be async to use @ownership_authorization")
+            raise ValueError(
+                f"Function '{func.__name__}' must be async to use @ownership_authorization"
+            )
 
         sig = inspect.signature(func)
         if not any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()):
-            raise ValueError(f"Decorated function '{func.__module__}.{func.__name__}' must accept **kwargs to use @ownership_authorization")
+            raise ValueError(
+                f"Decorated function '{func.__module__}.{func.__name__}' must accept **kwargs to use @ownership_authorization"
+            )
 
         if resource_id_lookup and resource_model is None:
             raise ValueError(
@@ -80,7 +87,9 @@ def ownership_authorization(
                 authorized_user_id = get_authenticated_user_id(kwargs, authorized_user_id_lookup)
             except KeyError:
                 func_path = ".".join((func.__module__, func.__name__))
-                raise ValueError(f"Decorated function '{func_path}' must accept **kwargs to use @ownership_authorization")
+                raise ValueError(
+                    f"Decorated function '{func_path}' must accept **kwargs to use @ownership_authorization"
+                )
 
             if await is_admin(db, authorized_user_id):
                 strip_auth_info(kwargs)
@@ -103,7 +112,7 @@ def ownership_authorization(
 
 
 async def _resolve_resource_owner(
-    db: "PostgresqlDB",
+    db: PostgresqlDB,
     kwargs: dict[str, Any],
     resource_user_id_lookup: str,
     resource_id_lookup: str = None,

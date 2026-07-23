@@ -1,7 +1,7 @@
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
-from pydantic.main import BaseModel
 from pydantic.config import ConfigDict
+from pydantic.main import BaseModel
 
 from .base_model_extra import BaseModelExtra
 
@@ -13,11 +13,11 @@ if TYPE_CHECKING:
 class BeatmapsetSchema(BaseModel, BaseModelExtra):
     model_config = ConfigDict(from_attributes=True)
 
-    id: Optional[int] = None
+    id: int | None = None
     user_id: int
 
-    beatmaps: list["BeatmapSchema"] = []
-    snapshots: list["BeatmapsetSnapshotSchema"] = []
+    beatmaps: list[BeatmapSchema] = []
+    snapshots: list[BeatmapsetSnapshotSchema] = []
 
 
 class BeatmapsetCreateSchema(BaseModel, BaseModelExtra):
@@ -29,4 +29,4 @@ class BeatmapsetCreateSchema(BaseModel, BaseModelExtra):
 class BeatmapsetUpdateSchema(BaseModel, BaseModelExtra):
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
-    user_id: Optional[int] = None
+    user_id: int | None = None

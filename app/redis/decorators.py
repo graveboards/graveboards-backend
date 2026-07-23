@@ -1,22 +1,22 @@
 import asyncio
 import inspect
-from typing import Callable, Awaitable, ParamSpec, TypeVar, runtime_checkable, Protocol
-from functools import wraps
+from collections.abc import Awaitable, Callable
 from datetime import timedelta
+from functools import wraps
+from typing import ParamSpec, Protocol, TypeVar, runtime_checkable
 
 from app.exceptions import RateLimitExceededError
 from app.logging import get_logger
-from app.utils import aware_utcnow
-from .rc import RedisClient
-from .enums import Namespace
 from app.observability.metrics.rate_limit import (
     rate_limit_attempts_total,
     rate_limit_retries_total,
 )
+from app.utils import aware_utcnow
 
-__all__ = [
-    "rate_limit"
-]
+from .enums import Namespace
+from .rc import RedisClient
+
+__all__ = ["rate_limit"]
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -87,13 +87,15 @@ def rate_limit(
 
             if isinstance(obj, RedisClient):
                 rc = obj
-            elif obj is not None and hasattr(obj, 'rc'):
+            elif obj is not None and hasattr(obj, "rc"):
                 rc = obj.rc
-            elif obj is not None and hasattr(obj, 'incr') and hasattr(obj, 'expire'):
+            elif obj is not None and hasattr(obj, "incr") and hasattr(obj, "expire"):
                 rc = obj
 
             if rc is None:
-                raise ValueError(f"First argument of '{func.__name__}' must be either an instance of {RedisClient.__name__}, an object that contains a 'rc' attribute, or a Redis-like object with 'incr' and 'expire' methods")
+                raise ValueError(
+                    f"First argument of '{func.__name__}' must be either an instance of {RedisClient.__name__}, an object that contains a 'rc' attribute, or a Redis-like object with 'incr' and 'expire' methods"
+                )
 
             async def sub_wrapper() -> T:
                 now = aware_utcnow()
@@ -105,7 +107,7 @@ def rate_limit(
                     last_ts_raw = await rc.get(last_call_key)
                     if last_ts_raw is not None:
                         last_ts = float(last_ts_raw)
-                        elapsed = (now.timestamp() - last_ts)
+                        elapsed = now.timestamp() - last_ts
                         if elapsed < min_interval:
                             sleep_for = min_interval - elapsed
                             logger.debug(
@@ -122,7 +124,9 @@ def rate_limit(
                     window_start = now.replace(second=0, microsecond=0)
                     window_end = window_start + timedelta(seconds=window_size)
                     window_delta_seconds = int((window_end - now).total_seconds() + 1)
-                    counter_hash_name = Namespace.RATE_LIMIT_COUNTER.hash_name(int(window_start.timestamp()))
+                    counter_hash_name = Namespace.RATE_LIMIT_COUNTER.hash_name(
+                        int(window_start.timestamp())
+                    )
 
                     current_count = await rc.incr(counter_hash_name)
                     if current_count == 1:

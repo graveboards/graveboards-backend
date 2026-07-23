@@ -1,14 +1,13 @@
 import types
-from typing import Iterable, Any, Optional, get_origin, get_args, Union, Literal
+from collections.abc import Iterable
+from typing import Any, Literal, Union, get_args, get_origin
 
 from pydantic import BaseModel
 
 from app.database.models import BaseType
 
 
-def pop_auth_info(
-    kwargs: dict[str, Any]
-) -> dict[str, Any]:
+def pop_auth_info(kwargs: dict[str, Any]) -> dict[str, Any]:
     """Remove authentication-related keys from kwargs.
 
     Extracts and removes ``"user"`` and ``"token_info"`` from the provided dictionary if
@@ -24,10 +23,7 @@ def pop_auth_info(
     return {key: kwargs.pop(key) for key in ("user", "token_info") if key in kwargs}
 
 
-def prime_query_kwargs(
-    kwargs: dict[str, Any],
-    many: bool = False
-) -> None:
+def prime_query_kwargs(kwargs: dict[str, Any], many: bool = False) -> None:
     """Normalize query-related kwargs for database consumption.
 
     Moves supported query parameters (e.g., ``limit``, ``offset``) to their internal
@@ -39,19 +35,21 @@ def prime_query_kwargs(
         many:
             Whether the query targets multiple results.
     """
-    params = {
-        "include"
-    } if not many else {
-        "sorting",
-        "filters",
-        "search",
-        "search_mode",
-        "search_relevance",
-        "include",
-        "limit",
-        "offset",
-        "reversed"
-    }
+    params = (
+        {"include"}
+        if not many
+        else {
+            "sorting",
+            "filters",
+            "search",
+            "search_mode",
+            "search_relevance",
+            "include",
+            "limit",
+            "offset",
+            "reversed",
+        }
+    )
 
     for key, value in list(kwargs.items()):
         if key in params:
@@ -61,7 +59,7 @@ def prime_query_kwargs(
 def bleach_body(
     body: dict[str, Any],
     whitelisted_keys: Iterable[str] = None,
-    blacklisted_keys: Iterable[str] = None
+    blacklisted_keys: Iterable[str] = None,
 ) -> dict[str, Any]:
     """Filter a request body using whitelist and/or blacklist rules.
 
@@ -87,14 +85,14 @@ def bleach_body(
         if overlap := whitelist & blacklist:
             raise ValueError(f"Keys cannot be both whitelisted and blacklisted: {sorted(overlap)}")
 
-    return {k: v for k, v in body.items() if (whitelist is None or k in whitelist) and k not in blacklist}
+    return {
+        k: v
+        for k, v in body.items()
+        if (whitelist is None or k in whitelist) and k not in blacklist
+    }
 
 
-def coerce_value(
-    value: Any,
-    annotation: Any,
-    param_name: str
-) -> Any | None:
+def coerce_value(value: Any, annotation: Any, param_name: str) -> Any | None:
     """Coerce a value to match a function parameter annotation.
 
     Supports:
@@ -162,7 +160,9 @@ def coerce_value(
             except Exception as e:
                 last_error = e
 
-        raise TypeError(f"Parameter '{param_name}' does not match any allowed type: {args}") from last_error
+        raise TypeError(
+            f"Parameter '{param_name}' does not match any allowed type: {args}"
+        ) from last_error
 
     if origin is Literal:
         if value not in args:
@@ -180,9 +180,7 @@ def coerce_value(
 
 
 def build_pydantic_include(
-    obj: BaseType | BaseModel,
-    include_schema: dict,
-    request_include: Optional[dict] = None
+    obj: BaseType | BaseModel, include_schema: dict, request_include: dict | None = None
 ) -> dict:
     """Build a Pydantic-compatible include tree from an OpenAPI schema.
 
@@ -225,10 +223,7 @@ def _extract_default_include(include_schema: dict) -> dict:
 
     for name, schema in include_schema.items():
         if schema.get("type") == "boolean":
-            result[name] = {
-                "__enabled__": schema.get("default", False),
-                "__schema__": True
-            }
+            result[name] = {"__enabled__": schema.get("default", False), "__schema__": True}
             continue
 
         if "oneOf" in schema:
@@ -239,13 +234,13 @@ def _extract_default_include(include_schema: dict) -> dict:
 
             result[name] = {
                 "__enabled__": bool_schema.get("default", False) if bool_schema else False,
-                "__schema__": nested
+                "__schema__": nested,
             }
 
     return result
 
 
-def _merge_include(defaults: dict, overrides: Optional[dict] = None) -> dict:
+def _merge_include(defaults: dict, overrides: dict | None = None) -> dict:
     """Merge client include overrides into schema defaults recursively.
 
     Returns:
@@ -264,33 +259,21 @@ def _merge_include(defaults: dict, overrides: Optional[dict] = None) -> dict:
         override = overrides[key]
 
         if override is False:
-            merged[key] = {
-                "__enabled__": False,
-                "__schema__": default["__schema__"]
-            }
+            merged[key] = {"__enabled__": False, "__schema__": default["__schema__"]}
 
         elif override is True:
-            merged[key] = {
-                "__enabled__": True,
-                "__schema__": default["__schema__"]
-            }
+            merged[key] = {"__enabled__": True, "__schema__": default["__schema__"]}
 
         elif isinstance(override, dict):
             merged[key] = {
                 "__enabled__": True,
-                "__schema__": _merge_include(
-                    default["__schema__"],
-                    override
-                )
+                "__schema__": _merge_include(default["__schema__"], override),
             }
 
     return merged
 
 
-def _is_collection(
-    obj: BaseType | BaseModel,
-    attr: str
-) -> bool:
+def _is_collection(obj: BaseType | BaseModel, attr: str) -> bool:
     """Determine whether a model attribute represents a collection."""
     try:
         value = getattr(obj, attr)
@@ -303,10 +286,7 @@ def _is_collection(
     return isinstance(value, Iterable) and not isinstance(value, (str, bytes, dict))
 
 
-def _format_include(
-    obj: BaseType | BaseModel,
-    include_tree: dict
-) -> dict:
+def _format_include(obj: BaseType | BaseModel, include_tree: dict) -> dict:
     """Convert internal include tree metadata into Pydantic include format.
 
     Handles nested objects and collections using ``"__all__"`` for lists.
@@ -330,7 +310,7 @@ def _format_include(
         if value is None:
             continue
 
-        child_obj = (value[0] if _is_collection(obj, field) and value else value)
+        child_obj = value[0] if _is_collection(obj, field) and value else value
 
         nested = _format_include(child_obj, schema)
 

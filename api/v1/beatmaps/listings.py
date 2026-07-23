@@ -17,7 +17,7 @@ async def search(**kwargs):
     beatmap_snapshots = await db.get_many(
         BeatmapSnapshot,
         _join=(BeatmapListing, BeatmapListing.beatmap_snapshot_id == BeatmapSnapshot.id),
-        **kwargs
+        **kwargs,
     )
 
     if not beatmap_snapshots:
@@ -26,7 +26,7 @@ async def search(**kwargs):
     include = build_pydantic_include(
         obj=beatmap_snapshots[0],
         include_schema=get_include_schema(ModelClass.BEATMAP_SNAPSHOT),
-        request_include=kwargs.get("_include")
+        request_include=kwargs.get("_include"),
     )
 
     beatmap_snapshots_data = [

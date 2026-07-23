@@ -15,10 +15,10 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
-from app.fixtures.archives import refresh_archive_index, load_archive_index, cleanup_archives
+from app.fixtures.archives import cleanup_archives, load_archive_index, refresh_archive_index
 from app.fixtures.id_source import ArchiveIDSource
-from app.redis import RedisClient
 from app.logging import get_logger
+from app.redis import RedisClient
 
 console = Console()
 logger = get_logger(__name__)

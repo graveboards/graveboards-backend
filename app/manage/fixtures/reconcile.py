@@ -10,19 +10,19 @@ Examples:
 """
 
 import argparse
-from typing import Optional
 import asyncio
 
-from app.fixtures.reader import FixtureReader
-from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
 from rich.box import SIMPLE_HEAD
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+
+from app.fixtures.reader import FixtureReader
 
 console = Console()
 
 
-async def cmd_reconcile(category: Optional[str] = None, dry_run: bool = False) -> None:
+async def cmd_reconcile(category: str | None = None, dry_run: bool = False) -> None:
     """Reconcile fixture metadata counts with actual disk state.
 
     Args:

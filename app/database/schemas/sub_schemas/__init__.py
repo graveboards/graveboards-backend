@@ -1,7 +1,7 @@
 from .availability import AvailabilitySchema
 from .beatmap_osu_api_schema import BeatmapOsuApiSchema
-from .beatmapset_osu_api_schema import BeatmapsetOsuApiSchema
 from .beatmapset_description import BeatmapsetDescriptionSchema
+from .beatmapset_osu_api_schema import BeatmapsetOsuApiSchema
 from .country import CountrySchema
 from .cover import CoverSchema
 from .covers import CoversSchema
@@ -59,5 +59,5 @@ __all__ = [
     "UserBadgeSchema",
     "UserGroupSchema",
     "UserMonthlyPlaycountSchema",
-    "UserStatisticsSchema"
+    "UserStatisticsSchema",
 ]

@@ -3,10 +3,11 @@ import os
 from connexion.lifecycle import ConnexionRequest
 from connexion.validators import ParameterValidator
 
+from app.config import API_BASE_PATH
 from app.exceptions import ArrayValidationError, DeepObjectValidationError, bad_request_factory
 from app.spec import get_filter_schema, get_include_schema
-from app.config import API_BASE_PATH
-from .validators import validate_sorting, validate_filters, validate_include
+
+from .validators import validate_filters, validate_include, validate_sorting
 
 
 class ParameterValidatorPatched(ParameterValidator):
@@ -20,14 +21,14 @@ class ParameterValidatorPatched(ParameterValidator):
 
     Addresses Connexion limitations around complex query schemas.
     """
-    def __init__(
-        self,
-        parameters,
-        uri_parser,
-        strict_validation=False,
-        security_query_params=None
-    ):
-        super().__init__(parameters, uri_parser, strict_validation=strict_validation, security_query_params=security_query_params)
+
+    def __init__(self, parameters, uri_parser, strict_validation=False, security_query_params=None):
+        super().__init__(
+            parameters,
+            uri_parser,
+            strict_validation=strict_validation,
+            security_query_params=security_query_params,
+        )
         self.request_scopes: dict[ConnexionRequest, dict] = {}
 
     def validate_query_parameter(self, param: dict, request: ConnexionRequest):
@@ -39,6 +40,10 @@ class ParameterValidatorPatched(ParameterValidator):
               include schemas. `/search` validation is deferred due to schema ambiguity.
             - `filters`: Recursive deep-object validation against dynamically resolved
               filter schemas.
+
+        Note:
+            Connexion doesn't expose the schema title in the parameter dict, so we
+            resolve it manually from ``param["schema"]["title"]``.
 
         Args:
             param:
@@ -63,7 +68,9 @@ class ParameterValidatorPatched(ParameterValidator):
                 raise bad_request_factory(e)
         elif param_name == "filters" and value:
             try:
-                resolved_schema = get_filter_schema(schema_name=param["schema"]["title"])  # Connexion doesn't expose the schema title here; we resolve it manually.
+                resolved_schema = get_filter_schema(
+                    schema_name=param["schema"]["title"]
+                )
                 return validate_filters(value, resolved_schema)
             except DeepObjectValidationError as e:
                 raise bad_request_factory(e)
@@ -77,7 +84,9 @@ class ParameterValidatorPatched(ParameterValidator):
                     # Delegate this validation to be run by the operation function where the context is available
                     return None
 
-                resolved_schema = get_include_schema(schema_name=param["schema"]["title"])  # Connexion doesn't expose the schema title here; we resolve it manually.
+                resolved_schema = get_include_schema(
+                    schema_name=param["schema"]["title"]
+                )
                 return validate_include(value, resolved_schema)
             except DeepObjectValidationError as e:
                 raise bad_request_factory(e)

@@ -1,20 +1,17 @@
-from typing import Iterable
+from collections.abc import Iterable
 
-from sqlalchemy.sql import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import select
 from sqlalchemy.sql.elements import and_
 
 from app.database.models import BaseType, ModelClass
+
 from .decorators import session_manager
 
 
 class _D:
     @staticmethod
-    async def _delete_instance(
-        model_class: ModelClass,
-        session: AsyncSession,
-        **kwargs
-    ):
+    async def _delete_instance(model_class: ModelClass, session: AsyncSession, **kwargs):
         """Delete a single model instance matching strict filter criteria.
 
         Performs attribute validation, executes a filtered SELECT to resolve matching
@@ -60,17 +57,15 @@ class _D:
             raise ValueError(f"No {model.__name__} matches the provided filters")
 
         if len(rows) > 1:
-            raise ValueError(f"Delete would affect {len(rows)} rows; filters are not specific enough")
+            raise ValueError(
+                f"Delete would affect {len(rows)} rows; filters are not specific enough"
+            )
 
         await session.delete(rows[0])
         await session.flush()
 
     @staticmethod
-    async def _delete_instances(
-        model_class: ModelClass,
-        session: AsyncSession,
-        **kwargs
-    ) -> int:
+    async def _delete_instances(model_class: ModelClass, session: AsyncSession, **kwargs) -> int:
         """Delete multiple model instances matching filter criteria.
 
         Supports equality filters and iterable-based membership filters (translated into
@@ -131,12 +126,7 @@ class _D:
 
 class D(_D):
     @session_manager()
-    async def delete(
-        self,
-        model: type[BaseType],
-        session: AsyncSession = None,
-        **kwargs
-    ):
+    async def delete(self, model: type[BaseType], session: AsyncSession = None, **kwargs):
         """Public API for deleting a single model instance.
 
         Wraps ``_delete_instance`` and manages session lifecycle via the
@@ -152,18 +142,11 @@ class D(_D):
         """
         model_class = ModelClass(model)
 
-        await self._delete_instance(
-            model_class,
-            session,
-            **kwargs
-        )
+        await self._delete_instance(model_class, session, **kwargs)
 
     @session_manager()
     async def delete_many(
-            self,
-            model: type[BaseType],
-            session: AsyncSession = None,
-            **kwargs
+        self, model: type[BaseType], session: AsyncSession = None, **kwargs
     ) -> int:
         """Public API for deleting multiple model instances.
 
@@ -183,8 +166,4 @@ class D(_D):
         """
         model_class = ModelClass(model)
 
-        return await self._delete_instances(
-            model_class,
-            session,
-            **kwargs
-        )
+        return await self._delete_instances(model_class, session, **kwargs)

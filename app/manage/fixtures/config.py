@@ -1,11 +1,12 @@
 """CLI configuration dataclasses for fixture commands."""
 
 from dataclasses import dataclass
+
 from app.fixtures.criteria import (
     Criteria,
-    Source,
     FetchCriteria,
     SearchTestOverrides,
+    Source,
     TargetedOverrides,
 )
 

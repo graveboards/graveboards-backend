@@ -1,25 +1,30 @@
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
 
-from sqlalchemy import event
-from sqlalchemy.sql import select
-from sqlalchemy.pool.base import ConnectionPoolEntry
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncEngine, AsyncSession
-from sqlalchemy.engine import URL
 from asyncpg.connection import Connection
+from sqlalchemy import event
+from sqlalchemy.engine import URL
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+from sqlalchemy.pool.base import ConnectionPoolEntry
+from sqlalchemy.sql import select
 
 from app.config import POSTGRESQL_CONFIGURATION
 from app.logging import get_logger
-from .crud import CRUD
-from . import events
 from app.observability.metrics.db import (
-    db_pool_size,
-    db_pool_checked_out,
-    db_pool_checked_in,
-    db_pool_overflow,
-    db_query_duration_seconds,
     classify_query,
+    db_pool_checked_in,
+    db_pool_checked_out,
+    db_pool_overflow,
+    db_pool_size,
+    db_query_duration_seconds,
 )
+
+from .crud import CRUD
 
 DATABASE_URI = URL.create(**POSTGRESQL_CONFIGURATION)
 logger = get_logger(__name__)
@@ -41,11 +46,7 @@ class PostgresqlDB(CRUD):
     def __init__(self):
         """Initialize the async engine and register connection hooks."""
         self.engine: AsyncEngine = create_async_engine(
-            DATABASE_URI,
-            pool_size=20,
-            max_overflow=10,
-            pool_recycle=300,
-            pool_pre_ping=True
+            DATABASE_URI, pool_size=20, max_overflow=10, pool_recycle=300, pool_pre_ping=True
         )
 
         self._setup_pool_metrics()

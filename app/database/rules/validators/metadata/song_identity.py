@@ -6,7 +6,6 @@ from typing import Any
 
 from app.database.rules.context import ExecutionContext
 
-
 _VERSION_MARKER_PATTERN = re.compile(
     r"\(?(?:"
     r"TV Size"
@@ -72,12 +71,10 @@ def normalized_identity_forms(
 class MetadataProvider(ABC):
     @property
     @abstractmethod
-    def name(self) -> str:
-        ...
+    def name(self) -> str: ...
 
     @abstractmethod
-    async def resolve(self, context: ExecutionContext) -> dict[str, Any]:
-        ...
+    async def resolve(self, context: ExecutionContext) -> dict[str, Any]: ...
 
 
 class SongIdentityProvider(MetadataProvider):

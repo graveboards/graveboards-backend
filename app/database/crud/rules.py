@@ -4,7 +4,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import QueueRule
-from app.exceptions import Conflict, BadRequest
+from app.exceptions import BadRequest, Conflict
+
 from .decorators import session_manager
 
 RULE_UPDATABLE_FIELDS = frozenset({"is_active", "is_public", "config", "version"})
@@ -36,6 +37,7 @@ def _normalize_config(config: dict) -> str:
     Sorts keys recursively and serializes to JSON so that two configs with the same
     data produce identical strings regardless of key order.
     """
+
     def _sort(obj):
         if isinstance(obj, dict):
             return {k: _sort(v) for k, v in sorted(obj.items())}
@@ -151,8 +153,8 @@ class RuleCRUD:
             Conflict:
                 If the update would duplicate an existing rule in the queue.
         """
-        from app.database.schemas.rule import validate_rule_config
         from app.database.rules.registry import get_supported_versions
+        from app.database.schemas.rule import validate_rule_config
 
         disallowed = set(updates) - RULE_UPDATABLE_FIELDS
         if disallowed:

@@ -1,6 +1,5 @@
 from prometheus_client import Counter, Histogram
 
-
 osu_api_requests_total = Counter(
     "osu_api_requests_total",
     "Total number of osu! API requests.",

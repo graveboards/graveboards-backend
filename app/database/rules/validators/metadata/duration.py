@@ -5,7 +5,6 @@ from typing import Any
 from app.database.rules.context import ExecutionContext
 from app.database.rules.validators.metadata.song_identity import MetadataProvider
 
-
 _VERSION_MARKERS = [
     "TV Size",
     "Extended ver.",

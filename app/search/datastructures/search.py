@@ -1,15 +1,16 @@
 import struct
-from typing import Optional, cast
-from enum import IntFlag, auto, IntEnum
+from enum import IntEnum, IntFlag, auto
+from typing import cast
 
-from pydantic.main import BaseModel
-from pydantic.functional_validators import model_validator
 from pydantic.config import ConfigDict
+from pydantic.functional_validators import model_validator
+from pydantic.main import BaseModel
 
-from app.search.enums import ScopeLiteral, Scope
+from app.search.enums import Scope, ScopeLiteral
+
+from .filters import FiltersSchema
 from .search_terms import SearchTermsSchema
 from .sorting import SortingSchema
-from .filters import FiltersSchema
 
 
 class ScopeId(IntEnum):
@@ -18,6 +19,7 @@ class ScopeId(IntEnum):
     Used during binary serialization to represent a ``Scope`` as a compact unsigned
     integer.
     """
+
     BEATMAPS = 1
     BEATMAPSETS = 2
     # SCORES = 3
@@ -34,7 +36,7 @@ class ScopeId(IntEnum):
         return cast(ScopeLiteral, self.name.lower())
 
     @classmethod
-    def from_name(cls, name: str) -> "ScopeId":
+    def from_name(cls, name: str) -> ScopeId:
         """Resolve a scope identifier from its name.
 
         Args:
@@ -62,6 +64,7 @@ class SearchFieldFlag(IntFlag):
     Used during binary serialization to encode optional sections of a ``SearchSchema``
     instance.
     """
+
     SEARCH_TERMS = auto()
     SORTING = auto()
     FILTERS = auto()
@@ -78,12 +81,13 @@ class SearchSchema(BaseModel):
 
     Supports validation and compact binary serialization for transport or storage.
     """
+
     model_config = ConfigDict(extra="forbid")
 
     scope: Scope
-    search_terms: Optional[SearchTermsSchema] = None
-    sorting: Optional[SortingSchema] = None
-    filters: Optional[FiltersSchema] = None
+    search_terms: SearchTermsSchema | None = None
+    sorting: SortingSchema | None = None
+    filters: FiltersSchema | None = None
 
     @model_validator(mode="after")
     def validate_search(self):
@@ -139,7 +143,7 @@ class SearchSchema(BaseModel):
         return scope_byte + presence_byte + b"".join(chunks)
 
     @classmethod
-    def deserialize(cls, data: bytes) -> "SearchSchema":
+    def deserialize(cls, data: bytes) -> SearchSchema:
         """Deserialize binary data into a ``SearchSchema`` instance.
 
         Args:
@@ -167,9 +171,4 @@ class SearchSchema(BaseModel):
         if offset != len(data):
             raise ValueError("Unexpected trailing bytes in serialized search schema")
 
-        return cls(
-            scope=scope,
-            search_terms=search_terms,
-            sorting=sorting,
-            filters=filters
-        )
+        return cls(scope=scope, search_terms=search_terms, sorting=sorting, filters=filters)

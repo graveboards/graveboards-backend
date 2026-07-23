@@ -1,12 +1,13 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy.sql.schema import ForeignKey
-from sqlalchemy.sql.sqltypes import Integer, String, DateTime, Boolean, JSON
-from sqlalchemy.orm import relationship, mapped_column
+from sqlalchemy.orm import mapped_column, relationship
 from sqlalchemy.orm.base import Mapped
+from sqlalchemy.sql.schema import ForeignKey
+from sqlalchemy.sql.sqltypes import JSON, Boolean, DateTime, Integer, String
 
 from app.utils import aware_utcnow
+
 from .base import Base
 
 if TYPE_CHECKING:
@@ -19,9 +20,7 @@ class QueueRule(Base):
     queue_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("queues.id", ondelete="CASCADE"), nullable=False
     )
-    type: Mapped[str] = mapped_column(
-        String(50), nullable=False
-    )
+    type: Mapped[str] = mapped_column(String(50), nullable=False)
     config: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_public: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
@@ -31,8 +30,4 @@ class QueueRule(Base):
         DateTime(timezone=True), default=aware_utcnow, onupdate=aware_utcnow
     )
 
-    queue: Mapped["Queue"] = relationship(
-        "Queue",
-        back_populates="rules",
-        lazy=True
-    )
+    queue: Mapped[Queue] = relationship("Queue", back_populates="rules", lazy=True)

@@ -2,12 +2,14 @@ from ast import literal_eval
 from datetime import datetime
 
 from app.database.schemas.sub_schemas import BeatmapsetOsuApiSchema
+
 from .beatmap import Beatmap
 
 
 class Beatmapset(BeatmapsetOsuApiSchema):
     """Domain model representing an osu! beatmapset and its beatmaps."""
-    beatmaps: list["Beatmap"]
+
+    beatmaps: list[Beatmap]
 
     def serialize(self) -> dict[str, str]:
         """Serialize the beatmapset into a Redis-safe string dictionary.
@@ -23,7 +25,16 @@ class Beatmapset(BeatmapsetOsuApiSchema):
                     value = value.isoformat() if value is not None else ""
                 case "beatmaps":
                     value = [beatmap.serialize() for beatmap in value]
-                case "availability" | "covers" | "current_nominations" | "description" | "genre" | "hype" | "language" | "nominations_summary":
+                case (
+                    "availability"
+                    | "covers"
+                    | "current_nominations"
+                    | "description"
+                    | "genre"
+                    | "hype"
+                    | "language"
+                    | "nominations_summary"
+                ):
                     if isinstance(value, list):
                         value = [item.model_dump(mode="json") for item in value]
                     elif value is not None:
@@ -34,7 +45,7 @@ class Beatmapset(BeatmapsetOsuApiSchema):
         return serialized_dict
 
     @classmethod
-    def deserialize(cls, serialized_dict: dict[str, str]) -> "Beatmapset":
+    def deserialize(cls, serialized_dict: dict[str, str]) -> Beatmapset:
         """Deserialize a Redis-stored beatmapset dictionary.
 
         Args:
@@ -48,14 +59,39 @@ class Beatmapset(BeatmapsetOsuApiSchema):
 
         for key, value in serialized_dict.items():
             match key:
-                case "id" | "user_id" | "favourite_count" | "offset" | "play_count" | "ranked" | "track_id":
+                case (
+                    "id"
+                    | "user_id"
+                    | "favourite_count"
+                    | "offset"
+                    | "play_count"
+                    | "ranked"
+                    | "track_id"
+                ):
                     value = int(value) if value != "" else None
                 case "bpm" | "rating":
                     value = float(value) if value != "" else None
                 case (
-                    "verified" | "nsfw" | "video" | "is_scoreable" | "spotlight" | "discussion_enabled" | "discussion_locked" | "can_be_hyped" | "storyboard" |  # Bools
-                    "availability" | "description" | "nominations_summary" | "user" | "covers" | "genre" | "hype" | "language" |  # Dicts
-                    "pack_tags" | "current_nominations" | "ratings"  # Lists
+                    "verified"
+                    | "nsfw"
+                    | "video"
+                    | "is_scoreable"
+                    | "spotlight"
+                    | "discussion_enabled"
+                    | "discussion_locked"
+                    | "can_be_hyped"
+                    | "storyboard"  # Bools
+                    | "availability"
+                    | "description"
+                    | "nominations_summary"
+                    | "user"
+                    | "covers"
+                    | "genre"
+                    | "hype"
+                    | "language"  # Dicts
+                    | "pack_tags"
+                    | "current_nominations"
+                    | "ratings"  # Lists
                 ):
                     value = literal_eval(value) if value != "" else None
                 case "deleted_at" | "last_updated" | "submitted_date" | "ranked_date":

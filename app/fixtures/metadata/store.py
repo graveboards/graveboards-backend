@@ -1,13 +1,13 @@
 """Metadata store with section-level dirty tracking and coverage management."""
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
 
 from app.logging import get_logger
-from ..paths import FIXTURES_DIR
+
 from ..constants import RULESETS, SCORE_TYPES
+from ..paths import FIXTURES_DIR
 from .models import Metadata
 
 logger = get_logger(__name__)
@@ -46,7 +46,7 @@ class MetadataStore:
         if not self._dirty_sections:
             return
 
-        self.data.last_updated = datetime.now(timezone.utc).isoformat()
+        self.data.last_updated = datetime.now(UTC).isoformat()
 
         # Mark all sections as clean after save
         self._dirty_sections.clear()
@@ -131,7 +131,7 @@ class FixtureMetadataManager:
     @staticmethod
     def _get_current_timestamp() -> str:
         """Get current UTC timestamp in ISO format."""
-        return datetime.now(timezone.utc).isoformat()
+        return datetime.now(UTC).isoformat()
 
     async def refresh_category_metadata(self, category: str, dry_run: bool = False) -> list[dict]:
         """Refresh metadata for a category to match disk state."""
@@ -175,7 +175,9 @@ class FixtureMetadataManager:
                 "action": (
                     "sync"
                     if disk_count > 0
-                    else "remove" if old_meta_count > 0 and disk_count == 0 else "add"
+                    else "remove"
+                    if old_meta_count > 0 and disk_count == 0
+                    else "add"
                 ),
                 "fixture_id": category,
                 "disk_count": disk_count,

@@ -1,4 +1,4 @@
-from .daemon import Daemon
 from . import services
+from .daemon import Daemon
 
-__all__ = ["Daemon"]
+__all__ = ["Daemon", "services"]

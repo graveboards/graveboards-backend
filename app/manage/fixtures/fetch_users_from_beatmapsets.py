@@ -9,13 +9,14 @@ Usage:
 """
 
 import json
+
 from rich.console import Console
 
 from app.config import PROJECT_ROOT
-from app.redis import RedisClient
-from app.logging import get_logger
-from app.fixtures.orchestrator import FixtureOrchestrator
 from app.fixtures.criteria import FetchCriteria
+from app.fixtures.orchestrator import FixtureOrchestrator
+from app.logging import get_logger
+from app.redis import RedisClient
 
 console = Console()
 logger = get_logger(__name__)
@@ -41,7 +42,7 @@ async def cmd_fetch_users_from_beatmapsets():
             user_id = data.get("user_id")
             if user_id:
                 owner_ids.add(user_id)
-        except (json.JSONDecodeError, KeyError):
+        except json.JSONDecodeError, KeyError:
             continue
 
     if not owner_ids:

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional
-
 from app.logging import get_logger
 from app.utils import aware_utcnow
 
@@ -19,18 +17,19 @@ async def _get_shared_db() -> PostgresqlDB:
     global _db
     if _db is None:
         from app.database import PostgresqlDB
+
         _db = PostgresqlDB()
     return _db
 
 
 async def audit_log(
     action: str,
-    user_id: Optional[int] = None,
-    entity_type: Optional[str] = None,
-    entity_id: Optional[str] = None,
-    details: Optional[dict] = None,
-    ip_address: Optional[str] = None,
-    user_agent: Optional[str] = None,
+    user_id: int | None = None,
+    entity_type: str | None = None,
+    entity_id: str | None = None,
+    details: dict | None = None,
+    ip_address: str | None = None,
+    user_agent: str | None = None,
 ):
     """Record an audit event.
 

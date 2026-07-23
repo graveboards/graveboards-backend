@@ -16,22 +16,21 @@ Flags:
     --gaps        Show missing fixture gaps
 """
 
-from rich.console import Console
+from rich import box
 from rich.columns import Columns
-from rich.console import Group
+from rich.console import Console, Group
 from rich.panel import Panel
 from rich.table import Table
-from rich import box
 
-from app.fixtures.paths import (
-    TEST_FIXTURES_DIR,
-    QUEUE_TEST_FIXTURES_DIR,
-    REQUEST_TEST_FIXTURES_DIR,
-    FIXTURES_DIR,
-)
-from app.fixtures.metadata_io import load_metadata, save_metadata
 from app.fixtures.constants import RULESETS, SCORE_TYPES
 from app.fixtures.health import check_category_health
+from app.fixtures.metadata_io import load_metadata, save_metadata
+from app.fixtures.paths import (
+    FIXTURES_DIR,
+    QUEUE_TEST_FIXTURES_DIR,
+    REQUEST_TEST_FIXTURES_DIR,
+    TEST_FIXTURES_DIR,
+)
 
 console = Console()
 
@@ -330,8 +329,8 @@ async def cmd_fixture_status(
         detailed: Include detailed file lists
         gaps: Show missing fixture gaps (only for promoted)
     """
-    from app.fixtures.reader import FixtureReader
     from app.fixtures.paths import FIXTURES_DIR
+    from app.fixtures.reader import FixtureReader
 
     metadata = load_metadata()
 

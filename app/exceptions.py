@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import datetime
-from typing import Any, Sequence, TYPE_CHECKING
-
-from app.utils import aware_utcnow
+from typing import TYPE_CHECKING, Any
 
 from authlib.integrations.base_client.errors import OAuthError
 from connexion.exceptions import BadRequestProblem, ClientProblem
+
+from app.utils import aware_utcnow
 
 if TYPE_CHECKING:
     from app.database.models import BaseType
@@ -51,13 +52,7 @@ class TypeValidationError(TypeError):
 
 
 class FieldValidationError(TypeValidationError):
-    def __init__(
-        self,
-        model: BaseType,
-        field: str,
-        value: Any,
-        *target_types: type
-    ):
+    def __init__(self, model: BaseType, field: str, value: Any, *target_types: type):
         self.model = model
         self.field = field
         self.value = value
@@ -79,7 +74,7 @@ class FieldNotSupportedError(Exception):
     def __init__(self, model: BaseType, field: str):
         self.model = model
         self.field = field
-        
+
     def __str__(self):
         return self.message
 
@@ -139,7 +134,9 @@ class RestrictedUserError(ValueError):
 
 
 class RateLimitExceededError(Exception):
-    def __init__(self, next_window: datetime | None = None, last_call_timestamp: float | None = None):
+    def __init__(
+        self, next_window: datetime | None = None, last_call_timestamp: float | None = None
+    ):
         self.next_window = next_window
         self.last_call_timestamp = last_call_timestamp
 
@@ -237,7 +234,9 @@ class OsuOAuthError(BadRequest):
         self.ext = {"oauth_error": e.error}
 
         if e.error == "invalid_request":
-            self.ext["hint"] = "The authorization code may have already been used, expired, or the state parameter does not match"
+            self.ext["hint"] = (
+                "The authorization code may have already been used, expired, or the state parameter does not match"
+            )
 
 
 class TooManyRequests(ClientProblem):

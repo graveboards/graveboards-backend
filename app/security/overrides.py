@@ -11,8 +11,7 @@ if TYPE_CHECKING:
 
 
 async def matching_user_id_override(
-    authenticated_user_id_lookup: str = "user",
-    resource_user_id_lookup: str = "user_id", **kwargs
+    authenticated_user_id_lookup: str = "user", resource_user_id_lookup: str = "user_id", **kwargs
 ) -> bool:
     """Override authorization when authenticated and resource user IDs match.
 
@@ -35,7 +34,8 @@ async def matching_user_id_override(
 async def queue_owner_override(
     db: PostgresqlDB,
     authenticated_user_id_lookup: str = "user",
-    from_request: bool = False, **kwargs
+    from_request: bool = False,
+    **kwargs,
 ) -> bool:
     """Override authorization if the authenticated user owns the queue.
 
@@ -72,7 +72,8 @@ async def queue_owner_override(
 async def queue_manager_override(
     db: PostgresqlDB,
     authenticated_user_id_lookup: str = "user",
-    from_request: bool = False, **kwargs
+    from_request: bool = False,
+    **kwargs,
 ) -> bool:
     """Override authorization if the authenticated user owns or manages the queue.
 

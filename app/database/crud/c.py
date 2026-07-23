@@ -1,23 +1,20 @@
 from typing import Any
 
-from sqlalchemy.sql import select, and_
-from sqlalchemy.sql.schema import UniqueConstraint
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.strategy_options import selectinload
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import and_, select
+from sqlalchemy.sql.schema import UniqueConstraint
 
 from app.database.models import BaseType, ModelClass
-from .decorators import session_manager, ensure_required
+
+from .decorators import ensure_required, session_manager
 
 
 class _C:
     @staticmethod
     @ensure_required()
-    async def _add_instance(
-        model_class: ModelClass,
-        session: AsyncSession,
-        **kwargs
-    ) -> BaseType:
+    async def _add_instance(model_class: ModelClass, session: AsyncSession, **kwargs) -> BaseType:
         """Create or resolve a single model instance.
 
         Validates input attributes against the model schema, then processed through
@@ -63,9 +60,7 @@ class _C:
     @staticmethod
     @ensure_required(many=True)
     async def _add_instances(
-        model_class: ModelClass,
-        session: AsyncSession,
-        *data: dict
+        model_class: ModelClass, session: AsyncSession, *data: dict
     ) -> list[BaseType]:
         """Create or resolve multiple model instances.
 
@@ -168,20 +163,18 @@ class _C:
         pk_keys = [col.key for col in mapper.primary_key]
         column_keys = model_class.column_names
         relationship_keys = model_class.relationship_names
-        relationship_loaders = [
-            selectinload(getattr(model, rel.key))
-            for rel in mapper.relationships
-        ] if _load_relationships else []
+        relationship_loaders = (
+            [selectinload(getattr(model, rel.key)) for rel in mapper.relationships]
+            if _load_relationships
+            else []
+        )
         instance = None
 
         # Lookup via primary key
         if all(pk in data for pk in pk_keys):
             identity = tuple(data[pk] for pk in pk_keys)
 
-            pk_conditions = [
-                getattr(model, pk) == identity[i]
-                for i, pk in enumerate(pk_keys)
-            ]
+            pk_conditions = [getattr(model, pk) == identity[i] for i, pk in enumerate(pk_keys)]
             stmt = select(model).where(and_(*pk_conditions)).options(*relationship_loaders)
             instance = await session.scalar(stmt)
 
@@ -215,16 +208,9 @@ class _C:
                 if not all(col in data for col in columns):
                     continue
 
-                conditions = [
-                    getattr(model, col) == data[col]
-                    for col in columns
-                ]
+                conditions = [getattr(model, col) == data[col] for col in columns]
 
-                stmt = (
-                    select(model)
-                    .where(and_(*conditions))
-                    .options(*relationship_loaders)
-                )
+                stmt = select(model).where(and_(*conditions)).options(*relationship_loaders)
 
                 instance = await session.scalar(stmt)
 
@@ -323,12 +309,7 @@ class _C:
 
 class C(_C):
     @session_manager()
-    async def add(
-        self,
-        model: type[BaseType],
-        session: AsyncSession = None,
-        **kwargs
-    ) -> BaseType:
+    async def add(self, model: type[BaseType], session: AsyncSession = None, **kwargs) -> BaseType:
         """Public API for creating or resolving a single model instance.
 
         Wraps ``_add_instance`` and manages session lifecycle via the
@@ -347,18 +328,11 @@ class C(_C):
         """
         model_class = ModelClass(model)
 
-        return await self._add_instance(
-            model_class,
-            session,
-            **kwargs
-        )
+        return await self._add_instance(model_class, session, **kwargs)
 
     @session_manager()
     async def add_many(
-        self,
-        model: type[BaseType],
-        *data: dict,
-        session: AsyncSession = None
+        self, model: type[BaseType], *data: dict, session: AsyncSession = None
     ) -> list[BaseType]:
         """Public API for creating or resolving multiple model instances.
 

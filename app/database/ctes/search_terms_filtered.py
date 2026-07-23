@@ -1,30 +1,27 @@
-from typing import TypeAlias, Union, Literal
+from typing import Literal
 
-from sqlalchemy.sql import select, union_all, and_, exists, true
-from sqlalchemy.sql.selectable import CTE, Select
 from sqlalchemy.orm import InstrumentedAttribute
+from sqlalchemy.sql import and_, exists, select, true, union_all
+from sqlalchemy.sql.selectable import CTE, Select
 
 from app.database.models import (
-    beatmap_snapshot_beatmapset_snapshot_association,
-    BeatmapSnapshot,
     BeatmapsetSnapshot,
+    BeatmapSnapshot,
+    Queue,
     Request,
-    Queue
+    beatmap_snapshot_beatmapset_snapshot_association,
 )
-from app.search.mappings import SCOPE_CATEGORIES_MAPPING, CATEGORY_MODEL_FIELDS_MAPPING
-from app.search.enums import Scope, SearchableFieldCategory
 from app.search.datastructures import SearchTermsSchema
+from app.search.enums import Scope, SearchableFieldCategory
+from app.search.mappings import CATEGORY_MODEL_FIELDS_MAPPING, SCOPE_CATEGORIES_MAPPING
+
 from .hashable_cte import HashableCTE
 from .utils import extract_cte_target_scalar
 
+type TermName = str
 
-TermName: TypeAlias = str
 
-
-def search_terms_filtered_cte_factory(
-    scope: Scope,
-    search_terms: SearchTermsSchema
-) -> CTE:
+def search_terms_filtered_cte_factory(scope: Scope, search_terms: SearchTermsSchema) -> CTE:
     """Build a CTE that filters entities by requiring all search terms to match.
 
     For the given scope, generates per-term subqueries across all configured searchable
@@ -48,7 +45,7 @@ def search_terms_filtered_cte_factory(
     field_weights = search_terms.field_weights
     like_operator: Literal["like", "ilike"] = "like" if search_terms.case_sensitive else "ilike"
     term_ctes: dict[TermName, CTE] = {}
-    
+
     for term in terms:
         term_queries = []
 
@@ -66,9 +63,16 @@ def search_terms_filtered_cte_factory(
                     continue
 
                 if isinstance(target, HashableCTE):
-                    target = extract_cte_target_scalar(target.cte, model_class, id_column_label="beatmapset_snapshot_id", use_alias=True)
+                    target = extract_cte_target_scalar(
+                        target.cte,
+                        model_class,
+                        id_column_label="beatmapset_snapshot_id",
+                        use_alias=True,
+                    )
 
-                term_queries.append(get_filter_stmt(scope, category, target, like_operator, pattern))
+                term_queries.append(
+                    get_filter_stmt(scope, category, target, like_operator, pattern)
+                )
 
             if term_queries:
                 term_cte = union_all(*term_queries).cte(f"term_{term}_ids_cte")
@@ -80,10 +84,9 @@ def search_terms_filtered_cte_factory(
             and_(
                 true(),
                 *[
-                    exists()
-                    .where(term_ctes[terms[0]].c.id == term_ctes[term].c.id)
+                    exists().where(term_ctes[terms[0]].c.id == term_ctes[term].c.id)
                     for term in terms[1:]
-                ]
+                ],
             )
         )
         .distinct()
@@ -96,9 +99,9 @@ def search_terms_filtered_cte_factory(
 def get_filter_stmt(
     scope: Scope,
     category: SearchableFieldCategory,
-    target: Union[InstrumentedAttribute, HashableCTE],
+    target: InstrumentedAttribute | HashableCTE,
     like_operator: Literal["like", "ilike"],
-    pattern: str
+    pattern: str,
 ) -> Select:
     """Construct a scope-aware SELECT statement for filtering by a pattern.
 
@@ -134,11 +137,13 @@ def get_filter_stmt(
                         select(BeatmapSnapshot.id)
                         .join(
                             beatmap_snapshot_beatmapset_snapshot_association,
-                            beatmap_snapshot_beatmapset_snapshot_association.c.beatmap_snapshot_id == BeatmapSnapshot.id
+                            beatmap_snapshot_beatmapset_snapshot_association.c.beatmap_snapshot_id
+                            == BeatmapSnapshot.id,
                         )
                         .join(
                             BeatmapsetSnapshot,
-                            BeatmapsetSnapshot.id == beatmap_snapshot_beatmapset_snapshot_association.c.beatmapset_snapshot_id
+                            BeatmapsetSnapshot.id
+                            == beatmap_snapshot_beatmapset_snapshot_association.c.beatmapset_snapshot_id,
                         )
                         .where(getattr(target, like_operator)(pattern))
                         .distinct()
@@ -152,11 +157,13 @@ def get_filter_stmt(
                         select(BeatmapsetSnapshot.id)
                         .join(
                             beatmap_snapshot_beatmapset_snapshot_association,
-                            beatmap_snapshot_beatmapset_snapshot_association.c.beatmapset_snapshot_id == BeatmapsetSnapshot.id
+                            beatmap_snapshot_beatmapset_snapshot_association.c.beatmapset_snapshot_id
+                            == BeatmapsetSnapshot.id,
                         )
                         .join(
                             BeatmapSnapshot,
-                            BeatmapSnapshot.id == beatmap_snapshot_beatmapset_snapshot_association.c.beatmap_snapshot_id
+                            BeatmapSnapshot.id
+                            == beatmap_snapshot_beatmapset_snapshot_association.c.beatmap_snapshot_id,
                         )
                         .where(getattr(target, like_operator)(pattern))
                         .distinct()
@@ -177,15 +184,17 @@ def get_filter_stmt(
                         .join(Queue.requests)
                         .join(
                             BeatmapsetSnapshot,
-                            BeatmapsetSnapshot.beatmapset_id == Request.beatmapset_id
+                            BeatmapsetSnapshot.beatmapset_id == Request.beatmapset_id,
                         )
                         .join(
                             beatmap_snapshot_beatmapset_snapshot_association,
-                            beatmap_snapshot_beatmapset_snapshot_association.c.beatmapset_snapshot_id == BeatmapsetSnapshot.id
+                            beatmap_snapshot_beatmapset_snapshot_association.c.beatmapset_snapshot_id
+                            == BeatmapsetSnapshot.id,
                         )
                         .join(
                             BeatmapSnapshot,
-                            BeatmapSnapshot.id == beatmap_snapshot_beatmapset_snapshot_association.c.beatmap_snapshot_id
+                            BeatmapSnapshot.id
+                            == beatmap_snapshot_beatmapset_snapshot_association.c.beatmap_snapshot_id,
                         )
                         .where(getattr(target, like_operator)(pattern))
                         .distinct()
@@ -196,16 +205,14 @@ def get_filter_stmt(
                         .join(Queue.requests)
                         .join(
                             BeatmapsetSnapshot,
-                            BeatmapsetSnapshot.beatmapset_id == Request.beatmapset_id
+                            BeatmapsetSnapshot.beatmapset_id == Request.beatmapset_id,
                         )
                         .where(getattr(target, like_operator)(pattern))
                         .distinct()
                     )
                 case SearchableFieldCategory.QUEUE:
                     stmt = (
-                        select(Queue.id)
-                        .where(getattr(target, like_operator)(pattern))
-                        .distinct()
+                        select(Queue.id).where(getattr(target, like_operator)(pattern)).distinct()
                     )
                 case SearchableFieldCategory.REQUEST:
                     stmt = (
@@ -223,15 +230,17 @@ def get_filter_stmt(
                         select(Request.id)
                         .join(
                             BeatmapsetSnapshot,
-                            BeatmapsetSnapshot.beatmapset_id == Request.beatmapset_id
+                            BeatmapsetSnapshot.beatmapset_id == Request.beatmapset_id,
                         )
                         .join(
                             beatmap_snapshot_beatmapset_snapshot_association,
-                            beatmap_snapshot_beatmapset_snapshot_association.c.beatmapset_snapshot_id == BeatmapsetSnapshot.id
+                            beatmap_snapshot_beatmapset_snapshot_association.c.beatmapset_snapshot_id
+                            == BeatmapsetSnapshot.id,
                         )
                         .join(
                             BeatmapSnapshot,
-                            BeatmapSnapshot.id == beatmap_snapshot_beatmapset_snapshot_association.c.beatmap_snapshot_id
+                            BeatmapSnapshot.id
+                            == beatmap_snapshot_beatmapset_snapshot_association.c.beatmap_snapshot_id,
                         )
                         .where(getattr(target, like_operator)(pattern))
                         .distinct()
@@ -241,16 +250,14 @@ def get_filter_stmt(
                         select(Request.id)
                         .join(
                             BeatmapsetSnapshot,
-                            BeatmapsetSnapshot.beatmapset_id == Request.beatmapset_id
+                            BeatmapsetSnapshot.beatmapset_id == Request.beatmapset_id,
                         )
                         .where(getattr(target, like_operator)(pattern))
                         .distinct()
                     )
                 case SearchableFieldCategory.REQUEST:
                     stmt = (
-                        select(Request.id)
-                        .where(getattr(target, like_operator)(pattern))
-                        .distinct()
+                        select(Request.id).where(getattr(target, like_operator)(pattern)).distinct()
                     )
                 case _:
                     raise ValueError(f"Unsupported category for scope {scope}: {category}")

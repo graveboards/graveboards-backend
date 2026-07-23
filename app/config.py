@@ -1,8 +1,8 @@
 import os
+from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
 from pathlib import Path
-from typing import Iterator
 
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -10,10 +10,8 @@ from pydantic_settings.sources import YamlConfigSettingsSource
 
 from .enums import Env
 
-
 _SECURITY_ENABLED_OVERRIDE: ContextVar[bool | None] = ContextVar(
-    "security_enabled_override",
-    default=None
+    "security_enabled_override", default=None
 )
 
 _bootstrap_yaml_file: str = "config/bootstrap.yaml"
@@ -38,9 +36,7 @@ class UserConfig(BaseSettings):
 
 class BootstrapConfig(BaseSettings):
     model_config = SettingsConfigDict(
-        yaml_file="config/bootstrap.yaml",
-        yaml_file_encoding="utf-8",
-        extra="ignore"
+        yaml_file="config/bootstrap.yaml", yaml_file_encoding="utf-8", extra="ignore"
     )
 
     master_queue: QueueConfig = QueueConfig()
@@ -79,7 +75,11 @@ class Config:
         load_dotenv()
         self.ENV = Env(os.getenv("ENV", "prod").lower())
         self.DEBUG = os.getenv("DEBUG", "false").lower() in ("true", "1", "yes")
-        self.DISABLE_SECURITY = os.getenv("DISABLE_SECURITY", "false").lower() in ("true", "1", "yes")
+        self.DISABLE_SECURITY = os.getenv("DISABLE_SECURITY", "false").lower() in (
+            "true",
+            "1",
+            "yes",
+        )
         self.DEBUG_API_KEY = os.getenv("DEBUG_API_KEY")
         self.DEV_ADMIN_USER_ID = int(os.getenv("DEV_ADMIN_USER_ID", "1"))
         self.DEV_USER_ID = int(os.getenv("DEV_USER_ID", "2"))
@@ -106,7 +106,7 @@ class Config:
             "port": os.getenv("POSTGRESQL_PORT"),
             "username": os.getenv("POSTGRESQL_USERNAME"),
             "password": os.getenv("POSTGRESQL_PASSWORD"),
-            "database": os.getenv("POSTGRESQL_DATABASE")
+            "database": os.getenv("POSTGRESQL_DATABASE"),
         }
 
         self.REDIS_CONFIGURATION = {
@@ -116,7 +116,7 @@ class Config:
             "password": os.getenv("REDIS_PASSWORD"),
             "db": os.getenv("REDIS_DB"),
             "decode_responses": True,
-            "protocol": 3
+            "protocol": 3,
         }
 
         self.OAUTH_CONFIGURATION = {
@@ -125,7 +125,7 @@ class Config:
             "redirect_uri": self.FRONTEND_BASE_URL + "/callback",
             "authorize_url": "https://osu.ppy.sh/oauth/authorize",
             "token_endpoint": "https://osu.ppy.sh/oauth/token",
-            "token_endpoint_auth_method": "client_secret_basic"
+            "token_endpoint_auth_method": "client_secret_basic",
         }
 
         self.TEST_POSTGRESQL_CONFIGURATION = {
@@ -134,7 +134,9 @@ class Config:
             "port": os.getenv("TEST_POSTGRESQL_PORT", os.getenv("POSTGRESQL_PORT")),
             "username": os.getenv("TEST_POSTGRESQL_USERNAME", os.getenv("POSTGRESQL_USERNAME")),
             "password": os.getenv("TEST_POSTGRESQL_PASSWORD", os.getenv("POSTGRESQL_PASSWORD")),
-            "database": os.getenv("TEST_POSTGRESQL_DATABASE", os.getenv("POSTGRESQL_DATABASE") + "_test")
+            "database": os.getenv(
+                "TEST_POSTGRESQL_DATABASE", os.getenv("POSTGRESQL_DATABASE") + "_test"
+            ),
         }
 
         self.TEST_REDIS_CONFIGURATION = {
@@ -144,13 +146,15 @@ class Config:
             "password": os.getenv("TEST_REDIS_PASSWORD", os.getenv("REDIS_PASSWORD")),
             "db": int(os.getenv("TEST_REDIS_DB", os.getenv("REDIS_DB", "1"))),
             "decode_responses": True,
-            "protocol": 3
+            "protocol": 3,
         }
 
     @property
     def bootstrap(self) -> BootstrapConfig:
         global _bootstrap_yaml_file
-        _bootstrap_yaml_file = "config/bootstrap.test.yaml" if self.ENV == Env.TEST else "config/bootstrap.yaml"
+        _bootstrap_yaml_file = (
+            "config/bootstrap.test.yaml" if self.ENV == Env.TEST else "config/bootstrap.yaml"
+        )
         return BootstrapConfig(_env_file=None)
 
 

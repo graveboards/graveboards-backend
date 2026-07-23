@@ -1,21 +1,20 @@
 from sqlalchemy import event, text
 from sqlalchemy.engine.base import Connection
-from sqlalchemy.sql import select, insert, update, func
 from sqlalchemy.orm.mapper import Mapper
+from sqlalchemy.sql import func, insert, select, update
 
+from app.database.models import BeatmapsetListing, BeatmapsetSnapshot, Request
 from app.logging import get_logger
-from app.database.models import BeatmapsetSnapshot, BeatmapsetListing, Request
 
-__all__ = [
-    "beatmapset_snapshot_before_insert",
-    "beatmapset_snapshot_after_insert"
-]
+__all__ = ["beatmapset_snapshot_before_insert", "beatmapset_snapshot_after_insert"]
 
 logger = get_logger(__name__)
 
 
 @event.listens_for(BeatmapsetSnapshot, "before_insert")
-def beatmapset_snapshot_before_insert(mapper: Mapper[BeatmapsetSnapshot], connection: Connection, target: BeatmapsetSnapshot):
+def beatmapset_snapshot_before_insert(
+    mapper: Mapper[BeatmapsetSnapshot], connection: Connection, target: BeatmapsetSnapshot
+):
     """Assign the next sequential snapshot number for a ``BeatmapsetSnapshot``.
 
     Determines the maximum ``snapshot_number`` for the associated ``beatmapset_id`` and
@@ -36,13 +35,13 @@ def beatmapset_snapshot_before_insert(mapper: Mapper[BeatmapsetSnapshot], connec
         return
 
     connection.execute(
-        text("SELECT pg_advisory_xact_lock(:beatmapset_id)")
-        .bindparams(beatmapset_id=target.beatmapset_id)
+        text("SELECT pg_advisory_xact_lock(:beatmapset_id)").bindparams(
+            beatmapset_id=target.beatmapset_id
+        )
     )
 
-    select_stmt = (
-        select(func.max(BeatmapsetSnapshot.snapshot_number))
-        .where(BeatmapsetSnapshot.beatmapset_id == target.beatmapset_id)
+    select_stmt = select(func.max(BeatmapsetSnapshot.snapshot_number)).where(
+        BeatmapsetSnapshot.beatmapset_id == target.beatmapset_id
     )
 
     latest_snapshot = connection.scalar(select_stmt)
@@ -50,7 +49,9 @@ def beatmapset_snapshot_before_insert(mapper: Mapper[BeatmapsetSnapshot], connec
 
 
 @event.listens_for(BeatmapsetSnapshot, "after_insert")
-def beatmapset_snapshot_after_insert(mapper: Mapper[BeatmapsetSnapshot], connection: Connection, target: BeatmapsetSnapshot):
+def beatmapset_snapshot_after_insert(
+    mapper: Mapper[BeatmapsetSnapshot], connection: Connection, target: BeatmapsetSnapshot
+):
     """Propagate a new ``BeatmapsetSnapshot`` to dependent tables.
 
     After insertion:
@@ -75,21 +76,21 @@ def beatmapset_snapshot_after_insert(mapper: Mapper[BeatmapsetSnapshot], connect
     info = {"id": target.id, "beatmapset_id": target.beatmapset_id}
     logger.debug(f"New BeatmapsetSnapshot detected (after_insert): {info}")
 
-    beatmapset_listing_stmt = (
-        select(BeatmapsetListing.id)
-        .where(BeatmapsetListing.beatmapset_id == target.beatmapset_id)
+    beatmapset_listing_stmt = select(BeatmapsetListing.id).where(
+        BeatmapsetListing.beatmapset_id == target.beatmapset_id
     )
 
     beatmapset_listing_id = connection.scalar(beatmapset_listing_stmt)
 
     if not beatmapset_listing_id:
-        insert_beatmapset_listing_stmt = (
-            insert(BeatmapsetListing)
-            .values(beatmapset_id=target.beatmapset_id, beatmapset_snapshot_id=target.id)
+        insert_beatmapset_listing_stmt = insert(BeatmapsetListing).values(
+            beatmapset_id=target.beatmapset_id, beatmapset_snapshot_id=target.id
         )
 
         connection.execute(insert_beatmapset_listing_stmt)
-        logger.debug(f"No existing BeatmapsetListing found, inserted new BeatmapsetListing with beatmapset_snapshot_id={target.id}")
+        logger.debug(
+            f"No existing BeatmapsetListing found, inserted new BeatmapsetListing with beatmapset_snapshot_id={target.id}"
+        )
     else:
         update_beatmapset_listing_stmt = (
             update(BeatmapsetListing)
@@ -100,12 +101,9 @@ def beatmapset_snapshot_after_insert(mapper: Mapper[BeatmapsetSnapshot], connect
         connection.execute(update_beatmapset_listing_stmt)
         logger.debug(f"Updated existing BeatmapsetListing with beatmapset_snapshot_id={target.id}")
 
-    older_snapshot_ids_subq = (
-        select(BeatmapsetSnapshot.id)
-        .where(
-            BeatmapsetSnapshot.beatmapset_id == target.beatmapset_id,
-            BeatmapsetSnapshot.snapshot_number < target.snapshot_number,
-        )
+    older_snapshot_ids_subq = select(BeatmapsetSnapshot.id).where(
+        BeatmapsetSnapshot.beatmapset_id == target.beatmapset_id,
+        BeatmapsetSnapshot.snapshot_number < target.snapshot_number,
     )
 
     update_request_stmt = (
@@ -118,6 +116,6 @@ def beatmapset_snapshot_after_insert(mapper: Mapper[BeatmapsetSnapshot], connect
     )
 
     update_request_result = connection.execute(update_request_stmt)
-    logger.debug(f"Updated {update_request_result.rowcount} Request(s) with beatmapset_snapshot_id={target.id}")
-
-
+    logger.debug(
+        f"Updated {update_request_result.rowcount} Request(s) with beatmapset_snapshot_id={target.id}"
+    )

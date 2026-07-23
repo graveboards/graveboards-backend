@@ -7,8 +7,7 @@ from connexion.exceptions import Forbidden
 
 from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError
-from app.database.rules.registry import get_validator, get_validator_tier
-
+from app.database.rules.registry import get_validator
 
 logger = logging.getLogger(__name__)
 
@@ -20,9 +19,7 @@ class RuleNode:
         self.rule_type = rule_type
         self.config = config
 
-    async def evaluate(
-        self, context: ExecutionContext, depth: int = 0
-    ) -> bool:
+    async def evaluate(self, context: ExecutionContext, depth: int = 0) -> bool:
         raise NotImplementedError
 
 
@@ -31,9 +28,7 @@ class AtomicRuleNode(RuleNode):
         super().__init__(rule_type, config)
         self._validator_cls = get_validator(rule_type)
 
-    async def evaluate(
-        self, context: ExecutionContext, depth: int = 0
-    ) -> bool:
+    async def evaluate(self, context: ExecutionContext, depth: int = 0) -> bool:
         if self._validator_cls is None:
             context.last_violation = RuleViolationError(
                 self.rule_type, f"Unknown rule type '{self.rule_type}'"
@@ -53,9 +48,7 @@ class AtomicRuleNode(RuleNode):
         except Forbidden:
             raise
         except Exception:
-            logger.exception(
-                "Unexpected error evaluating rule '%s'", self.rule_type
-            )
+            logger.exception("Unexpected error evaluating rule '%s'", self.rule_type)
             return False
         finally:
             context.config = original_config
@@ -72,9 +65,7 @@ class AndNode(CompositeRuleNode):
     def __init__(self, rules: list[RuleNode]):
         super().__init__("and", rules)
 
-    async def evaluate(
-        self, context: ExecutionContext, depth: int = 0
-    ) -> bool:
+    async def evaluate(self, context: ExecutionContext, depth: int = 0) -> bool:
         if depth > MAX_COMPOSITE_DEPTH:
             raise RuleViolationError(
                 "composite",
@@ -90,9 +81,7 @@ class OrNode(CompositeRuleNode):
     def __init__(self, rules: list[RuleNode]):
         super().__init__("or", rules)
 
-    async def evaluate(
-        self, context: ExecutionContext, depth: int = 0
-    ) -> bool:
+    async def evaluate(self, context: ExecutionContext, depth: int = 0) -> bool:
         if depth > MAX_COMPOSITE_DEPTH:
             raise RuleViolationError(
                 "composite",
@@ -108,9 +97,7 @@ class NotNode(CompositeRuleNode):
     def __init__(self, rule: RuleNode):
         super().__init__("not", [rule])
 
-    async def evaluate(
-        self, context: ExecutionContext, depth: int = 0
-    ) -> bool:
+    async def evaluate(self, context: ExecutionContext, depth: int = 0) -> bool:
         if depth > MAX_COMPOSITE_DEPTH:
             raise RuleViolationError(
                 "composite",

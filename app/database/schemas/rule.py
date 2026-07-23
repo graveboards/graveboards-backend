@@ -1,22 +1,36 @@
 from datetime import datetime
-from typing import Optional, Literal, Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, field_validator, model_validator
 from pydantic.config import ConfigDict
 
 from app.osu_api.literals import GenreIdLiteral, LanguageIdLiteral, RulesetLiteral
+
 from .base_model_extra import BaseModelExtra
 
-
 RuleType = Literal[
-    "rate_limit", "cooldown", "blacklist",
-    "beatmap_duration", "beatmap_star_rating", "beatmap_ar_range",
-    "beatmap_od_range", "beatmap_hp_range", "beatmap_cs_range",
-    "beatmap_drain_range", "beatmap_bpm", "beatmap_genre",
-    "beatmap_language", "beatmap_mode", "beatmap_difficulty_count",
-    "beatmap_storyboard", "beatmap_video", "beatmap_tags",
-    "beatmap_length", "composite",
-    "never_ranked", "unique_artist_title",
+    "rate_limit",
+    "cooldown",
+    "blacklist",
+    "beatmap_duration",
+    "beatmap_star_rating",
+    "beatmap_ar_range",
+    "beatmap_od_range",
+    "beatmap_hp_range",
+    "beatmap_cs_range",
+    "beatmap_drain_range",
+    "beatmap_bpm",
+    "beatmap_genre",
+    "beatmap_language",
+    "beatmap_mode",
+    "beatmap_difficulty_count",
+    "beatmap_storyboard",
+    "beatmap_video",
+    "beatmap_tags",
+    "beatmap_length",
+    "composite",
+    "never_ranked",
+    "unique_artist_title",
 ]
 RuleScope = Literal["user"]
 
@@ -25,7 +39,7 @@ class _StrictConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-def _validate_target_ids(v: Optional[list[int]]) -> Optional[list[int]]:
+def _validate_target_ids(v: list[int] | None) -> list[int] | None:
     if v is None:
         return v
     for target_id in v:
@@ -43,7 +57,7 @@ class RateLimitConfig(_StrictConfig):
     max_requests: int
     period: str
     scope: RuleScope = "user"
-    target: Optional[list[int]] = None
+    target: list[int] | None = None
 
     @field_validator("max_requests")
     @classmethod
@@ -72,7 +86,7 @@ class RateLimitConfig(_StrictConfig):
 class CooldownConfig(_StrictConfig):
     cooldown_seconds: int
     scope: RuleScope = "user"
-    target: Optional[list[int]] = None
+    target: list[int] | None = None
 
     @field_validator("cooldown_seconds")
     @classmethod
@@ -100,19 +114,19 @@ class BlacklistConfig(_StrictConfig):
 
 
 class DurationConfig(_StrictConfig):
-    min_seconds: Optional[int] = None
-    max_seconds: Optional[int] = None
+    min_seconds: int | None = None
+    max_seconds: int | None = None
     logic: Literal["max", "min", "all"] = "max"
 
     @field_validator("min_seconds", "max_seconds")
     @classmethod
-    def validate_non_negative(cls, v: Optional[int]) -> Optional[int]:
+    def validate_non_negative(cls, v: int | None) -> int | None:
         if v is not None and v < 0:
             raise ValueError("duration bounds must be non-negative")
         return v
 
     @model_validator(mode="after")
-    def validate_bounds(self) -> "DurationConfig":
+    def validate_bounds(self) -> DurationConfig:
         if self.min_seconds is None and self.max_seconds is None:
             raise ValueError("at least one of min_seconds/max_seconds is required")
         if (
@@ -125,19 +139,19 @@ class DurationConfig(_StrictConfig):
 
 
 class StarRatingConfig(_StrictConfig):
-    min: Optional[float] = None
-    max: Optional[float] = None
+    min: float | None = None
+    max: float | None = None
     logic: Literal["max", "min", "all", "any"] = "any"
 
     @field_validator("min", "max")
     @classmethod
-    def validate_non_negative(cls, v: Optional[float]) -> Optional[float]:
+    def validate_non_negative(cls, v: float | None) -> float | None:
         if v is not None and v < 0:
             raise ValueError("star rating bounds must be non-negative")
         return v
 
     @model_validator(mode="after")
-    def validate_bounds(self) -> "StarRatingConfig":
+    def validate_bounds(self) -> StarRatingConfig:
         if self.min is None and self.max is None:
             raise ValueError("at least one of min/max is required")
         if self.min is not None and self.max is not None and self.min > self.max:
@@ -146,25 +160,25 @@ class StarRatingConfig(_StrictConfig):
 
 
 class RangeConfig(_StrictConfig):
-    min: Optional[float] = None
-    max: Optional[float] = None
+    min: float | None = None
+    max: float | None = None
 
     @field_validator("min")
     @classmethod
-    def validate_min(cls, v: Optional[float]) -> Optional[float]:
+    def validate_min(cls, v: float | None) -> float | None:
         if v is not None and v < 0:
             raise ValueError("min must be non-negative")
         return v
 
     @field_validator("max")
     @classmethod
-    def validate_max(cls, v: Optional[float]) -> Optional[float]:
+    def validate_max(cls, v: float | None) -> float | None:
         if v is not None and v < 0:
             raise ValueError("max must be non-negative")
         return v
 
     @model_validator(mode="after")
-    def validate_bounds(self) -> "RangeConfig":
+    def validate_bounds(self) -> RangeConfig:
         if self.min is None and self.max is None:
             raise ValueError("at least one of min/max is required")
         if self.min is not None and self.max is not None and self.min > self.max:
@@ -193,26 +207,22 @@ class DrainRangeConfig(RangeConfig):
 
 
 class BPMConfig(_StrictConfig):
-    min_bpm: Optional[float] = None
-    max_bpm: Optional[float] = None
+    min_bpm: float | None = None
+    max_bpm: float | None = None
     logic: Literal["any", "all", "avg"] = "any"
 
     @field_validator("min_bpm", "max_bpm")
     @classmethod
-    def validate_non_negative(cls, v: Optional[float]) -> Optional[float]:
+    def validate_non_negative(cls, v: float | None) -> float | None:
         if v is not None and v < 0:
             raise ValueError("BPM bounds must be non-negative")
         return v
 
     @model_validator(mode="after")
-    def validate_bounds(self) -> "BPMConfig":
+    def validate_bounds(self) -> BPMConfig:
         if self.min_bpm is None and self.max_bpm is None:
             raise ValueError("at least one of min_bpm/max_bpm is required")
-        if (
-            self.min_bpm is not None
-            and self.max_bpm is not None
-            and self.min_bpm > self.max_bpm
-        ):
+        if self.min_bpm is not None and self.max_bpm is not None and self.min_bpm > self.max_bpm:
             raise ValueError("min_bpm must be <= max_bpm")
         return self
 
@@ -251,25 +261,25 @@ class ModeConfig(_StrictConfig):
 
 
 class DifficultyCountConfig(_StrictConfig):
-    min: Optional[int] = None
-    max: Optional[int] = None
+    min: int | None = None
+    max: int | None = None
 
     @field_validator("min")
     @classmethod
-    def validate_min(cls, v: Optional[int]) -> Optional[int]:
+    def validate_min(cls, v: int | None) -> int | None:
         if v is not None and v < 1:
             raise ValueError("min must be at least 1")
         return v
 
     @field_validator("max")
     @classmethod
-    def validate_max(cls, v: Optional[int]) -> Optional[int]:
+    def validate_max(cls, v: int | None) -> int | None:
         if v is not None and v < 1:
             raise ValueError("max must be at least 1")
         return v
 
     @model_validator(mode="after")
-    def validate_bounds(self) -> "DifficultyCountConfig":
+    def validate_bounds(self) -> DifficultyCountConfig:
         if self.min is None and self.max is None:
             raise ValueError("at least one of min/max is required")
         if self.min is not None and self.max is not None and self.min > self.max:
@@ -301,23 +311,21 @@ class TagsConfig(_StrictConfig):
 
 
 class LengthConfig(_StrictConfig):
-    min_hit_length: Optional[int] = None
-    max_hit_length: Optional[int] = None
-    min_total_length: Optional[int] = None
-    max_total_length: Optional[int] = None
+    min_hit_length: int | None = None
+    max_hit_length: int | None = None
+    min_total_length: int | None = None
+    max_total_length: int | None = None
     logic: Literal["any", "all"] = "any"
 
-    @field_validator(
-        "min_hit_length", "max_hit_length", "min_total_length", "max_total_length"
-    )
+    @field_validator("min_hit_length", "max_hit_length", "min_total_length", "max_total_length")
     @classmethod
-    def validate_non_negative(cls, v: Optional[int]) -> Optional[int]:
+    def validate_non_negative(cls, v: int | None) -> int | None:
         if v is not None and v < 0:
             raise ValueError("length bounds must be non-negative")
         return v
 
     @model_validator(mode="after")
-    def validate_bounds(self) -> "LengthConfig":
+    def validate_bounds(self) -> LengthConfig:
         if all(
             bound is None
             for bound in (
@@ -352,18 +360,14 @@ class CompositeConfig(_StrictConfig):
     rules: list[dict[str, Any]]
 
     @model_validator(mode="after")
-    def validate_composite(self) -> "CompositeConfig":
+    def validate_composite(self) -> CompositeConfig:
         _validate_composite_tree(self.operator, self.rules, depth=1)
         return self
 
 
-def _validate_composite_tree(
-    operator: str, rules: list[dict[str, Any]], depth: int
-) -> None:
+def _validate_composite_tree(operator: str, rules: list[dict[str, Any]], depth: int) -> None:
     if depth > _MAX_COMPOSITE_DEPTH:
-        raise ValueError(
-            f"composite nesting depth exceeds maximum ({_MAX_COMPOSITE_DEPTH})"
-        )
+        raise ValueError(f"composite nesting depth exceeds maximum ({_MAX_COMPOSITE_DEPTH})")
     if not rules:
         raise ValueError("composite rules must contain at least one rule")
     if operator == "not" and len(rules) != 1:
@@ -375,21 +379,15 @@ def _validate_composite_tree(
             raise ValueError(f"Rule at index {i} missing 'type' field")
 
         if child_type in _COMPOSITE_DISALLOWED_CHILD_TYPES:
-            raise ValueError(
-                f"Rule type '{child_type}' cannot be used inside a composite"
-            )
+            raise ValueError(f"Rule type '{child_type}' cannot be used inside a composite")
 
         child_config = child.get("config", {})
 
         if child_type == "composite":
             child_operator = child_config.get("operator")
             if child_operator not in ("and", "or", "not"):
-                raise ValueError(
-                    f"Unknown composite operator: {child_operator}"
-                )
-            _validate_composite_tree(
-                child_operator, child_config.get("rules", []), depth + 1
-            )
+                raise ValueError(f"Unknown composite operator: {child_operator}")
+            _validate_composite_tree(child_operator, child_config.get("rules", []), depth + 1)
             continue
 
         if child_type not in RULE_CONFIG_SCHEMA_MAP:
@@ -413,10 +411,22 @@ class UniqueArtistTitleConfig(_StrictConfig):
 
 Tier1Config = RateLimitConfig | CooldownConfig | BlacklistConfig
 Tier2Config = (
-    DurationConfig | StarRatingConfig | ARRangeConfig | ODRangeConfig
-    | HPRangeConfig | CSRangeConfig | DrainRangeConfig | BPMConfig
-    | GenreConfig | LanguageConfig | ModeConfig | DifficultyCountConfig
-    | StoryboardConfig | VideoConfig | TagsConfig | LengthConfig
+    DurationConfig
+    | StarRatingConfig
+    | ARRangeConfig
+    | ODRangeConfig
+    | HPRangeConfig
+    | CSRangeConfig
+    | DrainRangeConfig
+    | BPMConfig
+    | GenreConfig
+    | LanguageConfig
+    | ModeConfig
+    | DifficultyCountConfig
+    | StoryboardConfig
+    | VideoConfig
+    | TagsConfig
+    | LengthConfig
     | CompositeConfig
 )
 Tier3Config = NeverRankedConfig | UniqueArtistTitleConfig
@@ -430,15 +440,15 @@ RuleConfig = Tier1Config | Tier2Config | Tier3Config
 class RuleSchema(BaseModel, BaseModelExtra):
     model_config = ConfigDict(from_attributes=True)
 
-    id: Optional[int] = None
+    id: int | None = None
     queue_id: int
     type: RuleType
     config: dict[str, Any] = {}
-    is_active: Optional[bool] = None
-    is_public: Optional[bool] = None
+    is_active: bool | None = None
+    is_public: bool | None = None
     version: str = "1.0"
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime]
+    created_at: datetime | None = None
+    updated_at: datetime | None
 
 
 RULE_CONFIG_SCHEMA_MAP: dict[str, type[BaseModel]] = {
@@ -492,9 +502,7 @@ class RuleCreateSchema(BaseModel):
 
     @field_validator("config")
     @classmethod
-    def validate_config_by_type(
-        cls, v: dict[str, Any], info
-    ) -> dict[str, Any]:
+    def validate_config_by_type(cls, v: dict[str, Any], info) -> dict[str, Any]:
         type = info.data.get("type")
         if not type:
             return v
@@ -509,7 +517,7 @@ class RuleReplaceSchema(RuleCreateSchema):
 class RuleUpdateSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    is_active: Optional[bool] = None
-    is_public: Optional[bool] = None
-    config: Optional[dict[str, Any]] = None
-    version: Optional[str] = None
+    is_active: bool | None = None
+    is_public: bool | None = None
+    config: dict[str, Any] | None = None
+    version: str | None = None

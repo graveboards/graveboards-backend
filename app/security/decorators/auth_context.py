@@ -1,6 +1,7 @@
 import inspect
+from collections.abc import Awaitable, Callable
 from functools import wraps
-from typing import Callable, Awaitable, ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar
 
 from .utils import get_authenticated_user_id
 
@@ -24,9 +25,12 @@ def with_authenticated_user_id(
     that decorator strips it. The decorated function must pop ``kwarg_name`` out of
     ``kwargs`` before passing ``**kwargs`` through to a DB filter_by-style call.
     """
+
     def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
         if not inspect.iscoroutinefunction(func):
-            raise ValueError(f"Function '{func.__name__}' must be async to use @with_authenticated_user_id")
+            raise ValueError(
+                f"Function '{func.__name__}' must be async to use @with_authenticated_user_id"
+            )
 
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:

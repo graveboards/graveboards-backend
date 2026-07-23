@@ -6,7 +6,6 @@ from app.database.rules.base import BeatmapRestrictionBase
 from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError
 
-
 COMBINATION_TEMPLATES: dict[str, dict[str, Any]] = {
     "any": {
         "operator": "and",

@@ -6,7 +6,7 @@ from typing import Any
 from connexion.exceptions import Forbidden
 
 from app.database.models import QueueRule
-from app.database.rules.engine.evaluator import build_rule_node, RuleNode
+from app.database.rules.engine.evaluator import RuleNode, build_rule_node
 from app.database.rules.engine.stateful import STATEFUL_RULE_TYPES
 from app.database.rules.exceptions import RuleViolationError
 from app.database.rules.registry import effective_rule_tier
@@ -73,8 +73,7 @@ class Phase1Runner:
         supported = rule.version in validator_cls.supported_versions
         if not supported:
             logger.error(
-                "Skipping active rule id=%s type=%s: unsupported version '%s' "
-                "(supported: %s)",
+                "Skipping active rule id=%s type=%s: unsupported version '%s' (supported: %s)",
                 getattr(rule, "id", "?"),
                 rule.type,
                 rule.version,

@@ -1,14 +1,15 @@
-from typing import Optional, Any, ClassVar
 from datetime import datetime
+from typing import Any, ClassVar
 
 from pydantic.main import BaseModel
 
 from app.osu_api.literals import RankedIntLiteral, RankedStatusLiteral
+
 from .availability import AvailabilitySchema
 from .beatmap_osu_api_schema import BeatmapOsuApiSchema
+from .beatmapset_description import BeatmapsetDescriptionSchema
 from .covers import CoversSchema
 from .current_nomination import CurrentNominationSchema
-from .beatmapset_description import BeatmapsetDescriptionSchema
 from .genre import GenreSchema
 from .hype import HypeSchema
 from .language import LanguageSchema
@@ -18,33 +19,33 @@ from .nominations_summary import NominationsSummarySchema
 class BeatmapsetOsuApiSchema(BaseModel):
     artist: str
     artist_unicode: str
-    availability: "AvailabilitySchema"
-    beatmaps: Optional[list["BeatmapOsuApiSchema"]] = None
+    availability: AvailabilitySchema
+    beatmaps: list[BeatmapOsuApiSchema] | None = None
     bpm: float
     can_be_hyped: bool
-    covers: "CoversSchema"
+    covers: CoversSchema
     creator: str
-    current_nominations: list["CurrentNominationSchema"]
-    deleted_at: Optional[datetime]
-    description: "BeatmapsetDescriptionSchema"
+    current_nominations: list[CurrentNominationSchema]
+    deleted_at: datetime | None
+    description: BeatmapsetDescriptionSchema
     discussion_enabled: bool
     discussion_locked: bool
     favourite_count: int
-    genre: Optional["GenreSchema"]
-    hype: Optional["HypeSchema"]
+    genre: GenreSchema | None
+    hype: HypeSchema | None
     id: int
     is_scoreable: bool
-    language: Optional["LanguageSchema"]
+    language: LanguageSchema | None
     last_updated: datetime
-    legacy_thread_url: Optional[str]
-    nominations_summary: "NominationsSummarySchema"
+    legacy_thread_url: str | None
+    nominations_summary: NominationsSummarySchema
     nsfw: bool
     offset: int
     pack_tags: list[str]
     play_count: int
     preview_url: str
     ranked: RankedIntLiteral
-    ranked_date: Optional[datetime]
+    ranked_date: datetime | None
     rating: float
     ratings: list[int]
     source: str
@@ -55,8 +56,8 @@ class BeatmapsetOsuApiSchema(BaseModel):
     tags: str
     title: str
     title_unicode: str
-    track_id: Optional[int]
-    user: Optional[dict[str, Any]] = None
+    track_id: int | None
+    user: dict[str, Any] | None = None
     user_id: int
     video: bool
 
@@ -82,5 +83,5 @@ class BeatmapsetOsuApiSchema(BaseModel):
         "ratings",
         "spotlight",
         "status",
-        "track_id"
+        "track_id",
     }

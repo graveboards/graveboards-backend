@@ -3,12 +3,12 @@ from connexion.exceptions import Forbidden
 
 from api.utils import build_pydantic_include
 from app.database import PostgresqlDB
+from app.database.enums import RoleName
 from app.database.roles import is_admin
 from app.exceptions import NotFound
-from app.security import role_authorization, with_authenticated_user_id
-from app.database.enums import RoleName
 from app.redis import Namespace
 from app.redis.models import QueueRequestHandlerTask
+from app.security import role_authorization, with_authenticated_user_id
 from app.spec import get_include_schema
 
 __all__ = ["search", "get"]
@@ -21,21 +21,28 @@ async def search(**kwargs):
     limit = kwargs.get("limit")
     offset = kwargs.get("offset")
 
-    task_hash_names = await rc.paginate_scan(f"{Namespace.QUEUE_REQUEST_HANDLER_TASK.value}:*", type_="HASH", limit=limit, offset=offset)
+    task_hash_names = await rc.paginate_scan(
+        f"{Namespace.QUEUE_REQUEST_HANDLER_TASK.value}:*", type_="HASH", limit=limit, offset=offset
+    )
 
     if not task_hash_names:
         return [], 200, {"Content-Type": "application/json"}
 
     serialized_tasks = [await rc.hgetall(task_hash_name) for task_hash_name in task_hash_names]
-    deserialized_tasks = [QueueRequestHandlerTask.deserialize(serialized_task) for serialized_task in serialized_tasks]
+    deserialized_tasks = [
+        QueueRequestHandlerTask.deserialize(serialized_task) for serialized_task in serialized_tasks
+    ]
 
     include = build_pydantic_include(
         obj=deserialized_tasks[0],
         include_schema=get_include_schema(schema_name="RequestTaskInclude"),
-        request_include=kwargs.get("include")
+        request_include=kwargs.get("include"),
     )
 
-    tasks = [deserialized_task.model_dump(mode="json", include=include) for deserialized_task in deserialized_tasks]
+    tasks = [
+        deserialized_task.model_dump(mode="json", include=include)
+        for deserialized_task in deserialized_tasks
+    ]
 
     return tasks, 200, {"Content-Type": "application/json"}
 
@@ -61,7 +68,7 @@ async def get(hashed_id: int, _caller_user_id: int = None, **kwargs):
     include = build_pydantic_include(
         obj=deserialized_task,
         include_schema=get_include_schema(schema_name="RequestTaskInclude"),
-        request_include=kwargs.get("include")
+        request_include=kwargs.get("include"),
     )
 
     task = deserialized_task.model_dump(mode="json", include=include)

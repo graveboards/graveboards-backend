@@ -1,10 +1,7 @@
 from app.exceptions import ArrayValidationError
 
 
-def validate_sorting(
-    sorting: list,
-    schema: dict
-):
+def validate_sorting(sorting: list, schema: dict):
     """Validate structured sorting directives.
 
     Ensures each sorting entry:
@@ -24,7 +21,9 @@ def validate_sorting(
     """
     items_schema = schema.get("items", {})
     allowed_fields = set(items_schema.get("properties", {}).get("field", {}).get("enum", []))
-    allowed_orders = set(items_schema.get("properties", {}).get("order", {}).get("enum", ["asc", "desc"]))
+    allowed_orders = set(
+        items_schema.get("properties", {}).get("order", {}).get("enum", ["asc", "desc"])
+    )
 
     for i, item in enumerate(sorting):
         field = item.get("field")

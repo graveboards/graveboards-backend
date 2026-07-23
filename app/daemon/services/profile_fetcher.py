@@ -2,12 +2,13 @@ from typing import ClassVar
 
 from httpx import ConnectTimeout, HTTPStatusError, ReadTimeout
 
-from app.database.models import ProfileFetcherTask, User, Profile, Base
+from app.database.models import Base, Profile, ProfileFetcherTask, User
 from app.database.schemas import ProfileSchema
-from app.redis import ChannelName, Namespace, LOCK_EXPIRY
 from app.exceptions import RedisLockTimeoutError
-from app.logging import get_logger, Logger
+from app.logging import Logger, get_logger
+from app.redis import LOCK_EXPIRY, ChannelName, Namespace
 from app.utils import aware_utcnow
+
 from .decorators import auto_retry
 from .service import ScheduledFetcherService
 from .service.job import JobLoadInstruction
@@ -46,7 +47,9 @@ class ProfileFetcher(ScheduledFetcherService):
             else:
                 execution_time = None
 
-            instruction = JobLoadInstruction(execution_time=execution_time, last_execution=record.last_fetch)
+            instruction = JobLoadInstruction(
+                execution_time=execution_time, last_execution=record.last_fetch
+            )
             await self._load_job(record.id, instruction=instruction)
             loaded += 1
 
@@ -84,8 +87,7 @@ class ProfileFetcher(ScheduledFetcherService):
                 await self._respect_rate_limit()
                 user_dict = await self._oac.get_user(user_id)  # Rare httpx.readtimeout can occur
                 profile_dict = ProfileSchema.model_validate(user_dict).model_dump(
-                    exclude={"id", "updated_at", "is_restricted"},
-                    context={"jsonify_nested": True}
+                    exclude={"id", "updated_at", "is_restricted"}, context={"jsonify_nested": True}
                 )
 
                 if not (profile := await self._db.get(Profile, user_id=user_id)):
@@ -93,8 +95,12 @@ class ProfileFetcher(ScheduledFetcherService):
                     info = {"id": profile.id, "user_id": user_id}
                     self.logger.debug(f"Fetched and added profile: {info}")
                 else:
-                    profile_dict["is_restricted"] = False  # Handle case of user getting unrestricted: 404 raised if restricted; thus, we can surmise no longer restricted
-                    old_profile_dict = ProfileSchema.model_validate(profile).model_dump(context={"jsonify_nested": True})
+                    profile_dict["is_restricted"] = (
+                        False  # Handle case of user getting unrestricted: 404 raised if restricted; thus, we can surmise no longer restricted
+                    )
+                    old_profile_dict = ProfileSchema.model_validate(profile).model_dump(
+                        context={"jsonify_nested": True}
+                    )
                     delta = {}
 
                     for key, value in profile_dict.items():
@@ -108,7 +114,9 @@ class ProfileFetcher(ScheduledFetcherService):
 
                     if delta:
                         await self._db.update(Profile, profile.id, **delta)
-                        self.logger.debug(f"Fetched and updated profile for user {user_id}: {set(delta.keys())}")
+                        self.logger.debug(
+                            f"Fetched and updated profile for user {user_id}: {set(delta.keys())}"
+                        )
                     else:
                         self.logger.debug(f"Profile fetched for user {user_id} is up-to-date")
         except RedisLockTimeoutError as e:

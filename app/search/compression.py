@@ -74,5 +74,5 @@ def decompress_query(q: str, serialized: bool = True) -> bytes | dict[str, Any]:
             decompressed = json.loads(json_str)
 
         return decompressed
-    except (binascii.Error, brotli.error, json.JSONDecodeError):
+    except binascii.Error, brotli.error, json.JSONDecodeError:
         raise ValueError("Could not decompress query, ensure it's valid and complete")

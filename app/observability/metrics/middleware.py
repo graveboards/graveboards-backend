@@ -5,11 +5,12 @@ from urllib.parse import parse_qsl
 
 from connexion.middleware.abstract import ROUTING_CONTEXT
 from starlette.requests import Request
-from starlette.types import ASGIApp, Scope, Receive, Send
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from app.observability.logging import get_logger
+
 from .error import errors_total
-from .http import http_requests_total, http_request_duration_seconds, http_requests_in_flight
+from .http import http_request_duration_seconds, http_requests_in_flight, http_requests_total
 
 logger = get_logger("app.access")
 
@@ -25,15 +26,26 @@ _STATIC_ROUTE_ENDPOINTS = {"/metrics": "metrics"}
 # Field names (checked case-insensitively, dot/underscore/hyphen-agnostic via a
 # plain lowercase match on the key as-is) that never get logged verbatim, in
 # either query params or request bodies - auth material and credentials.
-_SENSITIVE_KEYS = frozenset({
-    "password", "passwd", "pwd",
-    "token", "access_token", "refresh_token", "id_token",
-    "secret", "client_secret",
-    "api_key", "apikey", "x-api-key",
-    "authorization",
-    "code",  # OAuth authorization code - single-use bearer credential
-    "csrf", "csrf_token",
-})
+_SENSITIVE_KEYS = frozenset(
+    {
+        "password",
+        "passwd",
+        "pwd",
+        "token",
+        "access_token",
+        "refresh_token",
+        "id_token",
+        "secret",
+        "client_secret",
+        "api_key",
+        "apikey",
+        "x-api-key",
+        "authorization",
+        "code",  # OAuth authorization code - single-use bearer credential
+        "csrf",
+        "csrf_token",
+    }
+)
 _REDACTED = "***REDACTED***"
 
 # Only buffer+replay bodies for methods that carry one, small enough to be an
@@ -62,7 +74,9 @@ def _get_endpoint(scope: Scope) -> str:
 
 def _redact(value):
     if isinstance(value, dict):
-        return {k: (_REDACTED if k.lower() in _SENSITIVE_KEYS else _redact(v)) for k, v in value.items()}
+        return {
+            k: (_REDACTED if k.lower() in _SENSITIVE_KEYS else _redact(v)) for k, v in value.items()
+        }
     if isinstance(value, list):
         return [_redact(v) for v in value]
     return value
@@ -135,7 +149,7 @@ def _try_parse_sorting(params: dict) -> dict:
     if isinstance(raw, str):
         try:
             params["sorting"] = json.loads(raw)
-        except (json.JSONDecodeError, TypeError):
+        except json.JSONDecodeError, TypeError:
             pass
     elif isinstance(raw, list):
         parsed = []
@@ -144,7 +158,7 @@ def _try_parse_sorting(params: dict) -> dict:
                 try:
                     parsed.append(json.loads(item))
                     continue
-                except (json.JSONDecodeError, TypeError):
+                except json.JSONDecodeError, TypeError:
                     pass
             parsed.append(item)
         params["sorting"] = parsed
@@ -308,7 +322,10 @@ class MetricsMiddleware:
                 parsed_body = _parse_body(body_bytes, content_type)
                 if parsed_body is not None:
                     extra_fields["body"] = parsed_body
-            elif method in _BODY_LOGGABLE_METHODS and request.headers.get("content-length") not in (None, "0"):
+            elif method in _BODY_LOGGABLE_METHODS and request.headers.get("content-length") not in (
+                None,
+                "0",
+            ):
                 extra_fields["body"] = "<not captured: too large or unsupported content-type>"
 
             logger.info(

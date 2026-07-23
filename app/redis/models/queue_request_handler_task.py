@@ -1,21 +1,21 @@
 from ast import literal_eval
 from datetime import datetime
-from typing import Optional
 
-from pydantic.main import BaseModel
 from pydantic.fields import computed_field
+from pydantic.main import BaseModel
 
 
 class QueueRequestHandlerTask(BaseModel):
     """Represents a queued beatmapset request processing task."""
+
     user_id: int
     beatmapset_id: int
     queue_id: int
     comment: str
     mv_checked: bool
     http_request_id: str = ""
-    completed_at: Optional[datetime] = None
-    failed_at: Optional[datetime] = None
+    completed_at: datetime | None = None
+    failed_at: datetime | None = None
 
     @computed_field
     @property
@@ -45,7 +45,7 @@ class QueueRequestHandlerTask(BaseModel):
         return serialized_dict
 
     @classmethod
-    def deserialize(cls, serialized_dict: dict[str, str]) -> "QueueRequestHandlerTask":
+    def deserialize(cls, serialized_dict: dict[str, str]) -> QueueRequestHandlerTask:
         """Deserialize a stored task dictionary.
 
         Args:

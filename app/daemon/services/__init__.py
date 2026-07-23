@@ -1,8 +1,8 @@
-from .service import Service, task, job, ServiceFactory
-from .score_fetcher import ScoreFetcher
 from .profile_fetcher import ProfileFetcher
 from .queue_request_handler import QueueRequestHandler
 from .rule_validation import RuleValidationService
+from .score_fetcher import ScoreFetcher
+from .service import Service, ServiceFactory, job, task
 
 __all__ = [
     "Service",

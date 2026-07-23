@@ -19,46 +19,46 @@ Responsibilities:
     - Downloading ``.osu`` files to the local filesystem for new snapshots.
     - Generating ZIP archives of beatmap files for download.
 """
-import os
+
 import asyncio
+import os
+from copy import copy
 from io import BytesIO
 from zipfile import ZipFile
-from copy import copy
-from typing import Union
 
-import httpx
 import aiofiles
+import httpx
 from httpx import HTTPError
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
+from app.config import INSTANCE_DIR
+from app.database import PostgresqlDB
+from app.database.models import (
+    Beatmap,
+    Beatmapset,
+    BeatmapsetSnapshot,
+    BeatmapsetTag,
+    BeatmapSnapshot,
+    BeatmapTag,
+    Profile,
+    ProfileFetcherTask,
+    User,
+)
+from app.database.schemas import (
+    BeatmapOsuApiSchema,
+    BeatmapsetOsuApiSchema,
+    BeatmapsetSnapshotSchema,
+    BeatmapSnapshotSchema,
+    BeatmapTagSchema,
+    ProfileSchema,
+)
+from app.exceptions import RedisLockTimeoutError, RestrictedUserError
 from app.logging import get_logger
 from app.osu_api import OsuAPIClient
 from app.osu_api.client.base import OsuAPIMetricsTransport
-from app.database import PostgresqlDB
-from app.database.models import (
-    Profile,
-    BeatmapsetTag,
-    BeatmapTag,
-    User,
-    BeatmapSnapshot,
-    BeatmapsetSnapshot,
-    Beatmapset,
-    Beatmap,
-    ProfileFetcherTask
-)
-from app.database.schemas import (
-    BeatmapSnapshotSchema,
-    BeatmapsetSnapshotSchema,
-    ProfileSchema,
-    BeatmapTagSchema,
-    BeatmapsetOsuApiSchema,
-    BeatmapOsuApiSchema
-)
-from app.redis import RedisClient, Namespace
-from app.utils import combine_checksums, aware_utcnow
-from app.exceptions import RestrictedUserError, RedisLockTimeoutError
-from app.config import INSTANCE_DIR
+from app.redis import Namespace, RedisClient
+from app.utils import aware_utcnow, combine_checksums
 
 BEATMAPS_PATH = os.path.join(INSTANCE_DIR, "beatmaps")
 BEATMAPSETS_PATH = os.path.join(INSTANCE_DIR, "beatmapsets")
@@ -68,9 +68,7 @@ logger = get_logger(__name__)
 
 
 async def download_beatmap_files(
-    db: PostgresqlDB,
-    session: AsyncSession | None,
-    beatmap_ids: list[int]
+    db: PostgresqlDB, session: AsyncSession | None, beatmap_ids: list[int]
 ) -> None:
     """Download `.osu` files for the given beatmap IDs.
 
@@ -93,13 +91,11 @@ async def download_beatmap_files(
             url = f"{BEATMAP_DOWNLOAD_BASEURL}{beatmap_id}"
             output_directory = os.path.join(BEATMAPS_PATH, str(beatmap_id))
             os.makedirs(output_directory, exist_ok=True)
-            beatmap_snapshot = (
-                await db.get(
-                    BeatmapSnapshot,
-                    beatmap_id=beatmap_id,
-                    _sorting=[{"field": "BeatmapSnapshot.id", "order": "desc"}],
-                    session=session
-                )
+            beatmap_snapshot = await db.get(
+                BeatmapSnapshot,
+                beatmap_id=beatmap_id,
+                _sorting=[{"field": "BeatmapSnapshot.id", "order": "desc"}],
+                session=session,
             )
             output_path = os.path.join(output_directory, f"{beatmap_snapshot.snapshot_number}.osu")
             exists = os.path.exists(output_path)
@@ -113,7 +109,9 @@ async def download_beatmap_files(
             logger.debug(f"Downloaded .osu file to '{output_path}'")
 
             if exists:
-                logger.warning(f"Overwrote .osu file at '{output_path}'")  # Caused by local instance files not being in sync with the database (e.g., leftover files)
+                logger.warning(
+                    f"Overwrote .osu file at '{output_path}'"
+                )  # Caused by local instance files not being in sync with the database (e.g., leftover files)
 
 
 class BeatmapManager:
@@ -128,11 +126,8 @@ class BeatmapManager:
     Handles snapshot creation, delta updates, tag synchronization, ownership resolution,
     and downloadable artifact generation.
     """
-    def __init__(
-        self,
-        rc: RedisClient,
-        db: PostgresqlDB
-    ) -> None:
+
+    def __init__(self, rc: RedisClient, db: PostgresqlDB) -> None:
         """Initialize the BeatmapManager.
 
         Args:
@@ -149,10 +144,8 @@ class BeatmapManager:
         self._changelog = {}
 
     async def archive(
-        self,
-        beatmapset_id: int,
-        download: bool = True
-    ) -> dict[str, Union[dict, list[dict], str, None]]:
+        self, beatmapset_id: int, download: bool = True
+    ) -> dict[str, dict | list[dict] | str | None]:
         """Archive or update a beatmapset and its beatmaps.
 
         Fetches the latest beatmapset from the osu! API and determines whether a new
@@ -177,7 +170,9 @@ class BeatmapManager:
             async with self.db.session() as session:
                 self._session = session
                 beatmapset_dict = await self.oac.get_beatmapset(beatmapset_id)
-                checksum = combine_checksums([beatmap["checksum"] for beatmap in beatmapset_dict["beatmaps"]])
+                checksum = combine_checksums(
+                    [beatmap["checksum"] for beatmap in beatmapset_dict["beatmaps"]]
+                )
 
                 await self._populate_beatmapset(beatmapset_dict)
 
@@ -187,12 +182,17 @@ class BeatmapManager:
                     await self._snapshot_beatmapset(beatmapset_dict)
 
                     if download:
-                        beatmap_ids = [bm_ss_dict["beatmap_id"] for bm_ss_dict in self._changelog["snapshotted_beatmaps"]]
+                        beatmap_ids = [
+                            bm_ss_dict["beatmap_id"]
+                            for bm_ss_dict in self._changelog["snapshotted_beatmaps"]
+                        ]
                         await self._download(beatmap_ids)
                 else:
                     await self._update_beatmapset(beatmapset_dict)
 
-                logger.debug(f"Finished archive process for beatmapset {beatmapset_id}: changelog={self._changelog}")
+                logger.debug(
+                    f"Finished archive process for beatmapset {beatmapset_id}: changelog={self._changelog}"
+                )
         finally:
             self._session = None
 
@@ -201,10 +201,7 @@ class BeatmapManager:
         finally:
             self._reset_changelog()
 
-    async def _snapshot_beatmapset(
-        self,
-        beatmapset_dict: dict
-    ) -> None:
+    async def _snapshot_beatmapset(self, beatmapset_dict: dict) -> None:
         """Create a new ``BeatmapsetSnapshot`` and associated relationships.
 
         Snapshots:
@@ -217,21 +214,27 @@ class BeatmapManager:
                 Raw beatmapset payload from osu! API.
         """
         # Exclude "id" in the osu! payload it is the beatmapset id, which must not become the snapshot's surrogate primary key
-        beatmapset_snapshot_dict = BeatmapsetSnapshotSchema.model_validate(beatmapset_dict).model_dump(
-            exclude={"id", "beatmap_snapshots", "beatmapset_tags", "user_profile"}
+        beatmapset_snapshot_dict = BeatmapsetSnapshotSchema.model_validate(
+            beatmapset_dict
+        ).model_dump(exclude={"id", "beatmap_snapshots", "beatmapset_tags", "user_profile"})
+        beatmapset_snapshot_dict["beatmap_snapshots"] = await self._snapshot_beatmaps(
+            beatmapset_dict["beatmaps"]
         )
-        beatmapset_snapshot_dict["beatmap_snapshots"] = await self._snapshot_beatmaps(beatmapset_dict["beatmaps"])
-        beatmapset_snapshot_dict["beatmapset_tags"] = await self._populate_beatmapset_tags(beatmapset_dict["tags"])
-        beatmapset_snapshot = await self.db.add(BeatmapsetSnapshot, **beatmapset_snapshot_dict, session=self._session)
+        beatmapset_snapshot_dict["beatmapset_tags"] = await self._populate_beatmapset_tags(
+            beatmapset_dict["tags"]
+        )
+        beatmapset_snapshot = await self.db.add(
+            BeatmapsetSnapshot, **beatmapset_snapshot_dict, session=self._session
+        )
 
-        info = {field: getattr(beatmapset_snapshot, field) for field in {"id", "beatmapset_id", "snapshot_number", "checksum"}}
+        info = {
+            field: getattr(beatmapset_snapshot, field)
+            for field in {"id", "beatmapset_id", "snapshot_number", "checksum"}
+        }
         self._changelog["snapshotted_beatmapset"] = info
         logger.debug(f"Snapshotted beatmapset: {info}")
 
-    async def _snapshot_beatmaps(
-        self,
-        beatmap_dicts: list[dict]
-) -> list[BeatmapSnapshot]:
+    async def _snapshot_beatmaps(self, beatmap_dicts: list[dict]) -> list[BeatmapSnapshot]:
         """Create ``BeatmapSnapshot`` records for new beatmaps.
 
         Existing snapshots (matched by checksum) are reused.
@@ -246,20 +249,39 @@ class BeatmapManager:
         beatmap_snapshots = []
 
         for beatmap_dict in beatmap_dicts:
-            beatmap_snapshot = await self.db.get(BeatmapSnapshot, checksum=beatmap_dict["checksum"], session=self._session)
+            beatmap_snapshot = await self.db.get(
+                BeatmapSnapshot, checksum=beatmap_dict["checksum"], session=self._session
+            )
 
             if not beatmap_snapshot:
                 beatmap_dict["beatmap_id"] = beatmap_dict["id"]
                 # Exclude "id" in the osu! payload it is the beatmap id, which must not become the snapshot's surrogate primary key
-                beatmap_snapshot_dict = BeatmapSnapshotSchema.model_validate(beatmap_dict).model_dump(
-                    exclude={"id", "beatmapset_snapshots", "beatmap_tags", "leaderboard", "owner_profiles"}
+                beatmap_snapshot_dict = BeatmapSnapshotSchema.model_validate(
+                    beatmap_dict
+                ).model_dump(
+                    exclude={
+                        "id",
+                        "beatmapset_snapshots",
+                        "beatmap_tags",
+                        "leaderboard",
+                        "owner_profiles",
+                    }
                 )
-                beatmap_snapshot_dict["beatmap_tags"] = await self._populate_beatmap_tags(beatmap_dict["top_tag_ids"])
+                beatmap_snapshot_dict["beatmap_tags"] = await self._populate_beatmap_tags(
+                    beatmap_dict["top_tag_ids"]
+                )
                 owners = beatmap_dict["owners"] or [{"id": beatmap_dict["user_id"]}]
-                beatmap_snapshot_dict["owner_profiles"] = await self._populate_owner_profiles(owners)
-                beatmap_snapshot = await self.db.add(BeatmapSnapshot, **beatmap_snapshot_dict, session=self._session)
+                beatmap_snapshot_dict["owner_profiles"] = await self._populate_owner_profiles(
+                    owners
+                )
+                beatmap_snapshot = await self.db.add(
+                    BeatmapSnapshot, **beatmap_snapshot_dict, session=self._session
+                )
 
-                info = {field: getattr(beatmap_snapshot, field) for field in {"id", "beatmap_id", "snapshot_number", "checksum"}}
+                info = {
+                    field: getattr(beatmap_snapshot, field)
+                    for field in {"id", "beatmap_id", "snapshot_number", "checksum"}
+                }
                 self._changelog["snapshotted_beatmaps"].append(info)
                 logger.debug(f"Snapshotted beatmap: {info}")
 
@@ -267,10 +289,7 @@ class BeatmapManager:
 
         return beatmap_snapshots
 
-    async def _update_beatmapset(
-        self,
-        beatmapset_dict: dict
-    ) -> None:
+    async def _update_beatmapset(self, beatmapset_dict: dict) -> None:
         """Apply field-level updates to the latest ``BeatmapsetSnapshot``.
 
         Computes a delta against UPDATABLE_FIELDS and persists only changed values.
@@ -278,14 +297,18 @@ class BeatmapManager:
         """
         await self._update_beatmaps(beatmapset_dict["beatmaps"])
 
-        checksum = combine_checksums([beatmap["checksum"] for beatmap in beatmapset_dict["beatmaps"]])
+        checksum = combine_checksums(
+            [beatmap["checksum"] for beatmap in beatmapset_dict["beatmaps"]]
+        )
         beatmapset_snapshot = await self.db.get(
             BeatmapsetSnapshot,
             checksum=checksum,
             _sorting=[{"field": "BeatmapsetSnapshot.id", "order": "desc"}],
-            session=self._session
+            session=self._session,
         )
-        old = BeatmapsetOsuApiSchema.model_validate(beatmapset_snapshot, from_attributes=True).model_dump()
+        old = BeatmapsetOsuApiSchema.model_validate(
+            beatmapset_snapshot, from_attributes=True
+        ).model_dump()
         new = BeatmapsetOsuApiSchema.model_validate(beatmapset_dict).model_dump()
         delta = {}
 
@@ -294,16 +317,18 @@ class BeatmapManager:
                 delta[field] = new_value
 
         if delta:
-            await self.db.update(BeatmapsetSnapshot, beatmapset_snapshot.id, **delta, session=self._session)
+            await self.db.update(
+                BeatmapsetSnapshot, beatmapset_snapshot.id, **delta, session=self._session
+            )
 
             info = {**{"beatmapset_id": beatmapset_snapshot.beatmapset_id}, **delta}
-            self._changelog["updated_beatmapset"] = {**{"beatmapset_id": beatmapset_snapshot.beatmapset_id}, **delta}
+            self._changelog["updated_beatmapset"] = {
+                **{"beatmapset_id": beatmapset_snapshot.beatmapset_id},
+                **delta,
+            }
             logger.debug(f"Updated beatmapset: {info}")
 
-    async def _update_beatmaps(
-        self,
-        beatmap_dicts: list[dict]
-    ) -> None:
+    async def _update_beatmaps(self, beatmap_dicts: list[dict]) -> None:
         """Apply field-level updates to existing BeatmapSnapshot records.
 
         Also refreshes many-to-many relationships for beatmap tags and owner profiles.
@@ -313,9 +338,11 @@ class BeatmapManager:
                 BeatmapSnapshot,
                 checksum=beatmap_dict["checksum"],
                 _include={"beatmap_tags": True, "owner_profiles": True},
-                session=self._session
+                session=self._session,
             )
-            old = BeatmapOsuApiSchema.model_validate(beatmap_snapshot, from_attributes=True).model_dump()
+            old = BeatmapOsuApiSchema.model_validate(
+                beatmap_snapshot, from_attributes=True
+            ).model_dump()
             new = BeatmapOsuApiSchema.model_validate(beatmap_dict).model_dump()
             delta = {}
 
@@ -334,8 +361,16 @@ class BeatmapManager:
                 # Always ensure at least one owner in owner_profiles
                 # Beatmap user_id inherits from beatmapset if no owners specified on the osu! website
                 owner_profiles_ = await self._populate_owner_profiles(owners)
-                beatmap_tags = await self.db.get_many(BeatmapTag, _where=BeatmapTag.id.in_([t.id for t in beatmap_tags_]), session=self._session)
-                owner_profiles = await self.db.get_many(Profile, _where=Profile.id.in_([p.id for p in owner_profiles_]), session=self._session)
+                beatmap_tags = await self.db.get_many(
+                    BeatmapTag,
+                    _where=BeatmapTag.id.in_([t.id for t in beatmap_tags_]),
+                    session=self._session,
+                )
+                owner_profiles = await self.db.get_many(
+                    Profile,
+                    _where=Profile.id.in_([p.id for p in owner_profiles_]),
+                    session=self._session,
+                )
                 beatmap_snapshot.beatmap_tags = beatmap_tags
                 beatmap_snapshot.owner_profiles = owner_profiles
 
@@ -343,10 +378,7 @@ class BeatmapManager:
                 self._changelog["updated_beatmaps"].append(info)
                 logger.debug(f"Updated beatmap: {info}")
 
-    async def _populate_beatmapset(
-        self,
-        beatmapset_dict: dict
-    ) -> None:
+    async def _populate_beatmapset(self, beatmapset_dict: dict) -> None:
         """Ensure ``Beatmapset`` and related ``Beatmap`` records exist.
 
         Populates users, profile, the beatmapset, and child beatmaps.
@@ -356,30 +388,35 @@ class BeatmapManager:
         """
         beatmapset_id = beatmapset_dict["id"]
         user_id = beatmapset_dict["user_id"]
-        lock_hash_name = Namespace.LOCK.hash_name(Namespace.CACHED_BEATMAPSET.hash_name(beatmapset_id))
+        lock_hash_name = Namespace.LOCK.hash_name(
+            Namespace.CACHED_BEATMAPSET.hash_name(beatmapset_id)
+        )
 
         async with self.rc.lock_ctx(lock_hash_name):
             try:
                 await self._populate_user(user_id)
             except RestrictedUserError:
                 user_dict = beatmapset_dict["user"]
-                await self._populate_profile(user_id, restricted_user_dict=user_dict, is_restricted=True)
+                await self._populate_profile(
+                    user_id, restricted_user_dict=user_dict, is_restricted=True
+                )
 
             if not await self.db.get(Beatmapset, id=beatmapset_id, session=self._session):
                 try:
-                    await self.db.add(Beatmapset, id=beatmapset_id, user_id=user_id, session=self._session)
+                    await self.db.add(
+                        Beatmapset, id=beatmapset_id, user_id=user_id, session=self._session
+                    )
                     info = {"id": beatmapset_id, "user_id": user_id}
                     logger.debug(f"Added beatmapset: {info}")
                 except IntegrityError:
-                    logger.warning(f"Beatmapset {beatmapset_id} already exists after lock acquisition, skipping insert")
+                    logger.warning(
+                        f"Beatmapset {beatmapset_id} already exists after lock acquisition, skipping insert"
+                    )
 
             for beatmap_dict in beatmapset_dict["beatmaps"]:
                 await self._populate_beatmap(beatmap_dict)
 
-    async def _populate_beatmap(
-        self,
-        beatmap_dict: dict
-    ) -> None:
+    async def _populate_beatmap(self, beatmap_dict: dict) -> None:
         """Ensure a Beatmap record exists and user ownership is resolved."""
         beatmap_id = beatmap_dict["id"]
         beatmapset_id = beatmap_dict["beatmapset_id"]
@@ -392,16 +429,15 @@ class BeatmapManager:
 
         if not await self.db.get(Beatmap, id=beatmap_id, session=self._session):
             try:
-                await self.db.add(Beatmap, id=beatmap_id, beatmapset_id=beatmapset_id, session=self._session)
+                await self.db.add(
+                    Beatmap, id=beatmap_id, beatmapset_id=beatmapset_id, session=self._session
+                )
                 info = {"id": beatmap_id, "beatmapset_id": beatmapset_id}
                 logger.debug(f"Added beatmap: {info}")
             except IntegrityError:
                 logger.warning(f"Beatmap {beatmap_id} already exists, skipping insert")
 
-    async def _populate_user(
-        self,
-        user_id: int
-    ) -> User:
+    async def _populate_user(self, user_id: int) -> User:
         """Ensure a ``User`` exists and populate their ``Profile``.
 
         Returns:
@@ -425,10 +461,7 @@ class BeatmapManager:
         return user
 
     async def _populate_profile(
-        self,
-        user_id: int,
-        restricted_user_dict: dict = None,
-        is_restricted: bool = False
+        self, user_id: int, restricted_user_dict: dict = None, is_restricted: bool = False
     ) -> Profile:
         """Create or update a Profile with distributed locking.
 
@@ -455,14 +488,16 @@ class BeatmapManager:
 
         try:
             async with self.rc.lock_ctx(lock_hash_name):
-                if (profile := await self.db.get(Profile, user_id=user_id, session=self._session)) and not is_restricted:
+                if (
+                    profile := await self.db.get(Profile, user_id=user_id, session=self._session)
+                ) and not is_restricted:
                     return profile
 
                 if not is_restricted:
                     user_dict = await self.oac.get_user(user_id)
                     profile_dict = ProfileSchema.model_validate(user_dict).model_dump(
                         exclude={"id", "updated_at", "is_restricted"},
-                        context={"jsonify_nested": True}
+                        context={"jsonify_nested": True},
                     )
                 else:
                     user_dict = {
@@ -471,34 +506,43 @@ class BeatmapManager:
                         **{
                             "id": user_id,
                             "is_restricted": True,
-                        }
+                        },
                     }
                     profile_dict = ProfileSchema.model_validate(user_dict).model_dump(
-                        exclude={"id", "updated_at"},
-                        context={"jsonify_nested": True}
+                        exclude={"id", "updated_at"}, context={"jsonify_nested": True}
                     )
 
                 try:
                     profile = await self.db.add(Profile, **profile_dict, session=self._session)
-                    info = {"id": profile.id, "user_id": profile.user_id, "is_restricted": profile.is_restricted}
+                    info = {
+                        "id": profile.id,
+                        "user_id": profile.user_id,
+                        "is_restricted": profile.is_restricted,
+                    }
                     logger.debug(f"Added profile: {info}")
                 except IntegrityError:
-                    logger.warning(f"IntegrityError - This shouldn't happen after obtaining the lock... {user_id=}")
+                    logger.warning(
+                        f"IntegrityError - This shouldn't happen after obtaining the lock... {user_id=}"
+                    )
                     profile = await self.db.get(Profile, user_id=user_id, session=self._session)
-                    profile = await self.db.update(Profile, profile.id, **profile_dict, session=self._session)
+                    profile = await self.db.update(
+                        Profile, profile.id, **profile_dict, session=self._session
+                    )
 
                 task = await self.db.get(ProfileFetcherTask, user_id=user_id, session=self._session)
                 if task:
-                    await self.db.update(ProfileFetcherTask, task.id, last_fetch=aware_utcnow(), session=self._session)
+                    await self.db.update(
+                        ProfileFetcherTask,
+                        task.id,
+                        last_fetch=aware_utcnow(),
+                        session=self._session,
+                    )
 
                 return profile
         except RedisLockTimeoutError:
             raise
 
-    async def _populate_owner_profiles(
-        self,
-        owners: list[dict]
-    ) -> list[Profile]:
+    async def _populate_owner_profiles(self, owners: list[dict]) -> list[Profile]:
         """Resolve and populate ``Profile`` instances for beatmap owners.
 
         Returns:
@@ -513,16 +557,15 @@ class BeatmapManager:
                 user = await self._populate_user(user_id)
                 profile = user.profile
             except RestrictedUserError:
-                profile = await self._populate_profile(user_id, restricted_user_dict=owner_dict, is_restricted=True)
+                profile = await self._populate_profile(
+                    user_id, restricted_user_dict=owner_dict, is_restricted=True
+                )
 
             profiles.append(profile)
 
         return profiles
 
-    async def _populate_beatmapset_tags(
-        self,
-        tags_str: str
-    ) -> list[BeatmapsetTag]:
+    async def _populate_beatmapset_tags(self, tags_str: str) -> list[BeatmapsetTag]:
         """Create/retrieve tag records from a space-delimited string.
 
         Returns:
@@ -535,8 +578,14 @@ class BeatmapManager:
             return []
 
         for tag_str in tag_strs:
-            if not (beatmapset_tag := await self.db.get(BeatmapsetTag, name=tag_str, session=self._session)):
-                beatmapset_tag = await self.db.add(BeatmapsetTag, name=tag_str, session=self._session)
+            if not (
+                beatmapset_tag := await self.db.get(
+                    BeatmapsetTag, name=tag_str, session=self._session
+                )
+            ):
+                beatmapset_tag = await self.db.add(
+                    BeatmapsetTag, name=tag_str, session=self._session
+                )
                 info = {"id": beatmapset_tag.id, "name": beatmapset_tag.name}
                 logger.debug(f"Added beatmapset tag: {info}")
 
@@ -544,10 +593,7 @@ class BeatmapManager:
 
         return beatmapset_tags
 
-    async def _populate_beatmap_tags(
-        self,
-        top_tag_ids: list[dict[str, int]]
-    ) -> list[BeatmapTag]:
+    async def _populate_beatmap_tags(self, top_tag_ids: list[dict[str, int]]) -> list[BeatmapTag]:
         """Resolve ```BeatmapTag``` records from osu! tag IDs.
 
         If tags are missing locally, synchronizes from the osu! API.
@@ -555,10 +601,15 @@ class BeatmapManager:
         Returns:
             List of beatmap tag instances.
         """
+
         async def fetch_beatmap_tag(_recursed=False) -> BeatmapTag | None:
-            if not (beatmap_tag_ := await self.db.get(BeatmapTag, id=tag_id, session=self._session)):
+            if not (
+                beatmap_tag_ := await self.db.get(BeatmapTag, id=tag_id, session=self._session)
+            ):
                 if _recursed:
-                    logger.warning(f"fetch_beatmap_tag() recursed more than once for {tag_id=}, skipping")
+                    logger.warning(
+                        f"fetch_beatmap_tag() recursed more than once for {tag_id=}, skipping"
+                    )
                     return None
 
                 await self._update_beatmap_tags_from_osu()
@@ -592,16 +643,19 @@ class BeatmapManager:
                 await self.db.add(BeatmapTag, **osu_beatmap_tag, session=self._session)
                 logger.debug(f"Added beatmap tag: {osu_beatmap_tag}")
             else:
-                old_osu_beatmap_tag = BeatmapTagSchema.model_validate(beatmap_tag).model_dump(exclude={"created_at", "updated_at"})
+                old_osu_beatmap_tag = BeatmapTagSchema.model_validate(beatmap_tag).model_dump(
+                    exclude={"created_at", "updated_at"}
+                )
 
                 if osu_beatmap_tag != old_osu_beatmap_tag:
-                    await self.db.update(BeatmapTag, primary_key=tag_id, **osu_beatmap_tag, session=self._session)
-                    logger.debug(f"Updated beatmap tag: old={old_osu_beatmap_tag}, new={osu_beatmap_tag}")
+                    await self.db.update(
+                        BeatmapTag, primary_key=tag_id, **osu_beatmap_tag, session=self._session
+                    )
+                    logger.debug(
+                        f"Updated beatmap tag: old={old_osu_beatmap_tag}, new={osu_beatmap_tag}"
+                    )
 
-    async def _download(
-        self,
-        beatmap_ids: list[int]
-    ) -> None:
+    async def _download(self, beatmap_ids: list[int]) -> None:
         """Download `.osu` files for the given beatmap IDs.
 
         Files are stored under versioned snapshot directories. Existing files are
@@ -610,10 +664,7 @@ class BeatmapManager:
         await download_beatmap_files(self.db, self._session, beatmap_ids)
 
     @staticmethod
-    async def get(
-        beatmap_id: int,
-        snapshot_number: int
-    ) -> bytes:
+    async def get(beatmap_id: int, snapshot_number: int) -> bytes:
         """Retrieve the raw `.osu` file contents for a snapshot from disk.
 
         Returns:
@@ -623,19 +674,20 @@ class BeatmapManager:
             FileNotFoundError:
                 If the file does not exist.
         """
-        file_path = BEATMAP_SNAPSHOT_FILE_PATH.format(beatmap_id=beatmap_id, snapshot_number=snapshot_number)
+        file_path = BEATMAP_SNAPSHOT_FILE_PATH.format(
+            beatmap_id=beatmap_id, snapshot_number=snapshot_number
+        )
 
         if not os.path.exists(file_path):
-            raise FileNotFoundError(f"No .osu file found for beatmap {beatmap_id}, snapshot {snapshot_number}")
+            raise FileNotFoundError(
+                f"No .osu file found for beatmap {beatmap_id}, snapshot {snapshot_number}"
+            )
 
         async with aiofiles.open(file_path, "rb") as file:
             return await file.read()
 
     @staticmethod
-    def get_path(
-        beatmap_id: int,
-        snapshot_number: int
-    ) -> str:
+    def get_path(beatmap_id: int, snapshot_number: int) -> str:
         """Resolve the filesystem path to a `.osu` snapshot file.
 
         Returns:
@@ -645,18 +697,18 @@ class BeatmapManager:
             FileNotFoundError:
                 If the file does not exist.
         """
-        file_path = BEATMAP_SNAPSHOT_FILE_PATH.format(beatmap_id=beatmap_id, snapshot_number=snapshot_number)
+        file_path = BEATMAP_SNAPSHOT_FILE_PATH.format(
+            beatmap_id=beatmap_id, snapshot_number=snapshot_number
+        )
 
         if not os.path.exists(file_path):
-            raise FileNotFoundError(f"No .osu file found for beatmap {beatmap_id}, snapshot {snapshot_number}")
+            raise FileNotFoundError(
+                f"No .osu file found for beatmap {beatmap_id}, snapshot {snapshot_number}"
+            )
 
         return file_path
 
-    async def get_zip(
-        self,
-        beatmapset_id: int,
-        snapshot_number: int = -1
-    ) -> BytesIO:
+    async def get_zip(self, beatmapset_id: int, snapshot_number: int = -1) -> BytesIO:
         """Create a ZIP archive containing `.osu` files for a snapshot.
 
         If ``snapshot_number`` is negative, selects snapshots relative to the most
@@ -677,23 +729,27 @@ class BeatmapManager:
                 beatmapset_id=beatmapset_id,
                 _order_by=BeatmapsetSnapshot.snapshot_number.desc(),
                 _include={"beatmap_snapshots": True},
-                _offset=offset
+                _offset=offset,
             )
         else:
             beatmapset_snapshot = await self.db.get(
                 BeatmapsetSnapshot,
                 beatmapset_id=beatmapset_id,
                 snapshot_number=snapshot_number,
-                _include={"beatmap_snapshots": True}
+                _include={"beatmap_snapshots": True},
             )
 
         if not beatmapset_snapshot:
-            raise ValueError(f"No snapshot found for beatmapset {beatmapset_id}, snapshot {snapshot_number}")
+            raise ValueError(
+                f"No snapshot found for beatmapset {beatmapset_id}, snapshot {snapshot_number}"
+            )
 
         beatmap_paths = []
 
         for beatmap_snapshot in beatmapset_snapshot.beatmap_snapshots:
-            beatmap_path = self.get_path(beatmap_snapshot.beatmap_id, beatmap_snapshot.snapshot_number)
+            beatmap_path = self.get_path(
+                beatmap_snapshot.beatmap_id, beatmap_snapshot.snapshot_number
+            )
 
             if os.path.exists(beatmap_path):
                 beatmap_paths.append((beatmap_path, f"{beatmap_snapshot.beatmap_id}.osu"))
@@ -703,9 +759,7 @@ class BeatmapManager:
         return await asyncio.to_thread(self._create_zip, beatmap_paths)
 
     @staticmethod
-    def _create_zip(
-        beatmap_paths: list[tuple[str, str]]
-    ) -> BytesIO:
+    def _create_zip(beatmap_paths: list[tuple[str, str]]) -> BytesIO:
         """Create an in-memory ZIP archive from beatmap file paths.
 
         Returns:
@@ -726,5 +780,5 @@ class BeatmapManager:
             "snapshotted_beatmapset": None,
             "snapshotted_beatmaps": [],
             "updated_beatmapset": None,
-            "updated_beatmaps": []
+            "updated_beatmaps": [],
         }

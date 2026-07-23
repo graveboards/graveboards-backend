@@ -2,10 +2,11 @@ import asyncio
 
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
+from app.database.crud import db_session_resolver, session_manager
 from app.database.models import User
-from app.database.crud import session_manager, db_session_resolver
 from app.database.seeding import SeederTarget
 from app.database.seeding.event import SeedEvent
+
 from .base import Seeder
 
 

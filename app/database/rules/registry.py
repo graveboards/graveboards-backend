@@ -1,31 +1,28 @@
 from __future__ import annotations
 
-from typing import Any
-
 from app.database.rules.base import RestrictionBase
-from app.database.rules.validators.rate_limit import RateLimitRestriction
-from app.database.rules.validators.cooldown import CooldownRestriction
-from app.database.rules.validators.blacklist import BlacklistRestriction
-from app.database.rules.validators.beatmap.duration import DurationRestriction
-from app.database.rules.validators.beatmap.star_rating import StarRatingRestriction
 from app.database.rules.validators.beatmap.ar_range import ARRangeRestriction
-from app.database.rules.validators.beatmap.od_range import ODRangeRestriction
-from app.database.rules.validators.beatmap.hp_range import HPRangeRestriction
-from app.database.rules.validators.beatmap.cs_range import CSRangeRestriction
-from app.database.rules.validators.beatmap.drain_range import DrainRangeRestriction
 from app.database.rules.validators.beatmap.bpm import BPMRestriction
-from app.database.rules.validators.beatmap.genre import GenreRestriction
-from app.database.rules.validators.beatmap.language import LanguageRestriction
-from app.database.rules.validators.beatmap.mode import ModeRestriction
-from app.database.rules.validators.beatmap.difficulty_count import DifficultyCountRestriction
-from app.database.rules.validators.beatmap.storyboard import StoryboardRestriction
-from app.database.rules.validators.beatmap.video import VideoRestriction
-from app.database.rules.validators.beatmap.tags import TagsRestriction
-from app.database.rules.validators.beatmap.length import LengthRestriction
 from app.database.rules.validators.beatmap.combinations import CombinationRestriction
+from app.database.rules.validators.beatmap.cs_range import CSRangeRestriction
+from app.database.rules.validators.beatmap.difficulty_count import DifficultyCountRestriction
+from app.database.rules.validators.beatmap.drain_range import DrainRangeRestriction
+from app.database.rules.validators.beatmap.duration import DurationRestriction
+from app.database.rules.validators.beatmap.genre import GenreRestriction
+from app.database.rules.validators.beatmap.hp_range import HPRangeRestriction
+from app.database.rules.validators.beatmap.language import LanguageRestriction
+from app.database.rules.validators.beatmap.length import LengthRestriction
+from app.database.rules.validators.beatmap.mode import ModeRestriction
+from app.database.rules.validators.beatmap.od_range import ODRangeRestriction
+from app.database.rules.validators.beatmap.star_rating import StarRatingRestriction
+from app.database.rules.validators.beatmap.storyboard import StoryboardRestriction
+from app.database.rules.validators.beatmap.tags import TagsRestriction
+from app.database.rules.validators.beatmap.video import VideoRestriction
+from app.database.rules.validators.blacklist import BlacklistRestriction
+from app.database.rules.validators.cooldown import CooldownRestriction
 from app.database.rules.validators.database.never_ranked import NeverRankedRestriction
 from app.database.rules.validators.database.unique_artist_title import UniqueArtistTitleRestriction
-
+from app.database.rules.validators.rate_limit import RateLimitRestriction
 
 TIER_1_VALIDATORS: dict[str, type[RestrictionBase]] = {
     RateLimitRestriction.type: RateLimitRestriction,

@@ -10,7 +10,7 @@ class MatchmakingStatsSchema(BaseModel):
     rating: int
     total_points: int
     user_id: int
-    pool: "MatchmakingPoolSchema"
+    pool: MatchmakingPoolSchema
 
 
 class MatchmakingPoolSchema(BaseModel):

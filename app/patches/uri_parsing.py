@@ -3,7 +3,7 @@ import re
 from datetime import datetime
 
 from connexion.uri_parsing import OpenAPIURIParser
-from connexion.utils import coerce_type, TypeValidationError
+from connexion.utils import TypeValidationError, coerce_type
 
 from app.logging import get_logger
 
@@ -26,7 +26,11 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
     """
 
     def _make_deep_object(self, k, v):
-        """Patched to preserve repeated values for deepObject arrays."""
+        """Patched to preserve repeated values for deepObject arrays.
+
+        Returns the root key wrapped in a list to support Connexion's parser merge
+        behavior for repeated parameters.
+        """
         if not isinstance(v, list):
             v = [v]
 
@@ -56,14 +60,18 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
         for kp in key_path[:-1]:
             while "oneOf" in schema:
                 # Pick first object branch
-                schema = next((b for b in schema["oneOf"] if b.get("type") == "object"), schema["oneOf"][0])
+                schema = next(
+                    (b for b in schema["oneOf"] if b.get("type") == "object"), schema["oneOf"][0]
+                )
 
             schema = schema.get("properties", {}).get(kp, {})
 
         last_key = key_path[-1]
 
         while "oneOf" in schema:
-            schema = next((b for b in schema["oneOf"] if b.get("type") == "object"), schema["oneOf"][0])
+            schema = next(
+                (b for b in schema["oneOf"] if b.get("type") == "object"), schema["oneOf"][0]
+            )
 
         last_schema = schema.get("properties", {}).get(last_key, {})
 
@@ -73,10 +81,10 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
         # Preserve list only if leaf type is array
         if last_schema.get("type") == "array":
             if (
-                k.startswith("filters") and
-                isinstance(v, list) and
-                len(v) == 1 and
-                isinstance(v[0], str)
+                k.startswith("filters")
+                and isinstance(v, list)
+                and len(v) == 1
+                and isinstance(v[0], str)
             ):
                 # Support non-exploded forms
                 v = v[0].split(",")
@@ -85,8 +93,6 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
         else:
             prev[last_key] = v[0] if len(v) == 1 else v
 
-        # Return root wrapped in a list. This is required by Connexion's
-        # parser merge behavior to correctly handle repeated parameters.
         return root_key, [root], True
 
     def resolve_params(self, params, _in):
@@ -128,17 +134,23 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
 
             if k == "include":
                 try:
-                    resolved_param[k] = self.coerce_include(param_defn, resolved_param[k], "parameter", k)
+                    resolved_param[k] = self.coerce_include(
+                        param_defn, resolved_param[k], "parameter", k
+                    )
                 except TypeValidationError:
                     pass
             elif k == "sorting":
                 try:
-                    resolved_param[k] = self.coerce_sorting(param_defn, resolved_param[k], "parameter", k)
+                    resolved_param[k] = self.coerce_sorting(
+                        param_defn, resolved_param[k], "parameter", k
+                    )
                 except TypeValidationError:
                     pass
             elif k == "filters":
                 try:
-                    resolved_param[k] = self.coerce_filters(param_defn, resolved_param[k], "parameter", k)
+                    resolved_param[k] = self.coerce_filters(
+                        param_defn, resolved_param[k], "parameter", k
+                    )
                 except TypeValidationError:
                     pass
             else:
@@ -190,9 +202,9 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
                     return branch
 
                 if branch_type == "boolean" and (
-                    isinstance(data, bool) or
-                    isinstance(data, str) and
-                    data.lower() in affirmative_literals | negative_literals
+                    isinstance(data, bool)
+                    or isinstance(data, str)
+                    and data.lower() in affirmative_literals | negative_literals
                 ):
                     return branch
 
@@ -317,6 +329,7 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
         Returns:
             Coerced filters structure matching schema shape.
         """
+
         def cast(data):
             if isinstance(data, str):
                 lower = data.lower()

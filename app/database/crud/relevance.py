@@ -1,9 +1,15 @@
-from sqlalchemy.sql.functions import func
 from sqlalchemy.sql.elements import literal_column
+from sqlalchemy.sql.functions import func
 
-from app.database.models import BeatmapSnapshot, BeatmapsetSnapshot, Queue, Request, beatmap_snapshot_beatmapset_snapshot_association
-from app.search.enums import Scope, SearchableFieldCategory
 from app.database.ctes.search_terms_scored import aggregated_child_scores_to_parent_cte_factory
+from app.database.models import (
+    BeatmapsetSnapshot,
+    BeatmapSnapshot,
+    Queue,
+    Request,
+    beatmap_snapshot_beatmapset_snapshot_association,
+)
+from app.search.enums import Scope, SearchableFieldCategory
 
 
 def _apply_beatmaps_relevance(select_stmt, category_score_ctes, search_terms):
@@ -23,19 +29,24 @@ def _apply_beatmaps_relevance(select_stmt, category_score_ctes, search_terms):
         else None
     )
 
-    beatmap_score_column = (beatmap_cte.c.score if beatmap_cte is not None else literal_column("0"))
-    beatmapset_score_column = (aggregated_beatmapset_cte.c.score if aggregated_beatmapset_cte is not None else literal_column("0"))
+    beatmap_score_column = beatmap_cte.c.score if beatmap_cte is not None else literal_column("0")
+    beatmapset_score_column = (
+        aggregated_beatmapset_cte.c.score
+        if aggregated_beatmapset_cte is not None
+        else literal_column("0")
+    )
 
     total_score_column = (
-        func.coalesce(beatmap_score_column, 0) +
-        func.coalesce(beatmapset_score_column, 0)
+        func.coalesce(beatmap_score_column, 0) + func.coalesce(beatmapset_score_column, 0)
     ).label("total_score")
 
     if beatmap_cte is not None:
         select_stmt = select_stmt.outerjoin(beatmap_cte, beatmap_cte.c.id == BeatmapSnapshot.id)
 
     if aggregated_beatmapset_cte is not None:
-        select_stmt = select_stmt.outerjoin(aggregated_beatmapset_cte, aggregated_beatmapset_cte.c.id == BeatmapSnapshot.id)
+        select_stmt = select_stmt.outerjoin(
+            aggregated_beatmapset_cte, aggregated_beatmapset_cte.c.id == BeatmapSnapshot.id
+        )
 
     return select_stmt.order_by(None).order_by(total_score_column.desc())
 
@@ -57,19 +68,28 @@ def _apply_beatmapsets_relevance(select_stmt, category_score_ctes, search_terms)
         else None
     )
 
-    beatmap_score_column = (aggregated_beatmap_cte.c.score if aggregated_beatmap_cte is not None else literal_column("0"))
-    beatmapset_score_column = (beatmapset_cte.c.score if beatmapset_cte is not None else literal_column("0"))
+    beatmap_score_column = (
+        aggregated_beatmap_cte.c.score
+        if aggregated_beatmap_cte is not None
+        else literal_column("0")
+    )
+    beatmapset_score_column = (
+        beatmapset_cte.c.score if beatmapset_cte is not None else literal_column("0")
+    )
 
     total_score_column = (
-        func.coalesce(beatmap_score_column, 0) +
-        func.coalesce(beatmapset_score_column, 0)
+        func.coalesce(beatmap_score_column, 0) + func.coalesce(beatmapset_score_column, 0)
     ).label("total_score")
 
     if aggregated_beatmap_cte is not None:
-        select_stmt = select_stmt.outerjoin(aggregated_beatmap_cte, aggregated_beatmap_cte.c.id == BeatmapsetSnapshot.id)
+        select_stmt = select_stmt.outerjoin(
+            aggregated_beatmap_cte, aggregated_beatmap_cte.c.id == BeatmapsetSnapshot.id
+        )
 
     if beatmapset_cte is not None:
-        select_stmt = select_stmt.outerjoin(beatmapset_cte, beatmapset_cte.c.id == BeatmapsetSnapshot.id)
+        select_stmt = select_stmt.outerjoin(
+            beatmapset_cte, beatmapset_cte.c.id == BeatmapsetSnapshot.id
+        )
 
     return select_stmt.order_by(None).order_by(total_score_column.desc())
 
@@ -99,7 +119,7 @@ def _apply_queues_relevance(select_stmt, category_score_ctes, search_terms):
             Request.__table__,
             "beatmapset_snapshot_id",
             "queue_id",
-            "queue_aggregated_from_beatmap_scores_cte"
+            "queue_aggregated_from_beatmap_scores_cte",
         )
     else:
         queue_from_beatmap_cte = None
@@ -110,7 +130,7 @@ def _apply_queues_relevance(select_stmt, category_score_ctes, search_terms):
             Request.__table__,
             "beatmapset_snapshot_id",
             "queue_id",
-            "queue_aggregated_from_beatmapset_scores_cte"
+            "queue_aggregated_from_beatmapset_scores_cte",
         )
     else:
         queue_from_beatmapset_cte = None
@@ -121,34 +141,52 @@ def _apply_queues_relevance(select_stmt, category_score_ctes, search_terms):
             Request.__table__,
             "id",
             "queue_id",
-            "queue_aggregated_from_request_scores_cte"
+            "queue_aggregated_from_request_scores_cte",
         )
     else:
         queue_from_request_cte = None
 
-    beatmap_score_column = (queue_from_beatmap_cte.c.score if queue_from_beatmap_cte is not None else literal_column("0"))
-    beatmapset_score_column = (queue_from_beatmapset_cte.c.score if queue_from_beatmapset_cte is not None else literal_column("0"))
-    queue_score_column = (queue_cte.c.score if queue_cte is not None else literal_column("0"))
-    request_score_column = (queue_from_request_cte.c.score if queue_from_request_cte is not None else literal_column("0"))
+    beatmap_score_column = (
+        queue_from_beatmap_cte.c.score
+        if queue_from_beatmap_cte is not None
+        else literal_column("0")
+    )
+    beatmapset_score_column = (
+        queue_from_beatmapset_cte.c.score
+        if queue_from_beatmapset_cte is not None
+        else literal_column("0")
+    )
+    queue_score_column = queue_cte.c.score if queue_cte is not None else literal_column("0")
+    request_score_column = (
+        queue_from_request_cte.c.score
+        if queue_from_request_cte is not None
+        else literal_column("0")
+    )
 
     total_score_column = (
-        func.coalesce(beatmap_score_column, 0) +
-        func.coalesce(beatmapset_score_column, 0) +
-        func.coalesce(queue_score_column, 0) +
-        func.coalesce(request_score_column, 0)
+        func.coalesce(beatmap_score_column, 0)
+        + func.coalesce(beatmapset_score_column, 0)
+        + func.coalesce(queue_score_column, 0)
+        + func.coalesce(request_score_column, 0)
     ).label("total_score")
 
     if queue_from_beatmap_cte is not None:
-        select_stmt = select_stmt.outerjoin(queue_from_beatmap_cte, queue_from_beatmap_cte.c.id == Queue.id)
+        select_stmt = select_stmt.outerjoin(
+            queue_from_beatmap_cte, queue_from_beatmap_cte.c.id == Queue.id
+        )
 
     if queue_from_beatmapset_cte is not None:
-        select_stmt = select_stmt.outerjoin(queue_from_beatmapset_cte, queue_from_beatmapset_cte.c.id == Queue.id)
+        select_stmt = select_stmt.outerjoin(
+            queue_from_beatmapset_cte, queue_from_beatmapset_cte.c.id == Queue.id
+        )
 
     if queue_cte is not None:
         select_stmt = select_stmt.outerjoin(queue_cte, queue_cte.c.id == Queue.id)
 
     if queue_from_request_cte is not None:
-        select_stmt = select_stmt.outerjoin(queue_from_request_cte, queue_from_request_cte.c.id == Queue.id)
+        select_stmt = select_stmt.outerjoin(
+            queue_from_request_cte, queue_from_request_cte.c.id == Queue.id
+        )
 
     return select_stmt.order_by(None).order_by(total_score_column.desc())
 
@@ -171,21 +209,31 @@ def _apply_requests_relevance(select_stmt, category_score_ctes, search_terms):
         else None
     )
 
-    beatmap_score_column = (aggregated_beatmap_cte.c.score if aggregated_beatmap_cte is not None else literal_column("0"))
-    beatmapset_score_column = (beatmapset_cte.c.score if beatmapset_cte is not None else literal_column("0"))
-    request_score_column = (request_cte.c.score if request_cte is not None else literal_column("0"))
+    beatmap_score_column = (
+        aggregated_beatmap_cte.c.score
+        if aggregated_beatmap_cte is not None
+        else literal_column("0")
+    )
+    beatmapset_score_column = (
+        beatmapset_cte.c.score if beatmapset_cte is not None else literal_column("0")
+    )
+    request_score_column = request_cte.c.score if request_cte is not None else literal_column("0")
 
     total_score_column = (
-        func.coalesce(beatmap_score_column, 0) +
-        func.coalesce(beatmapset_score_column, 0) +
-        func.coalesce(request_score_column, 0)
+        func.coalesce(beatmap_score_column, 0)
+        + func.coalesce(beatmapset_score_column, 0)
+        + func.coalesce(request_score_column, 0)
     ).label("total_score")
 
     if aggregated_beatmap_cte is not None:
-        select_stmt = select_stmt.outerjoin(aggregated_beatmap_cte, aggregated_beatmap_cte.c.id == Request.beatmapset_snapshot_id)
+        select_stmt = select_stmt.outerjoin(
+            aggregated_beatmap_cte, aggregated_beatmap_cte.c.id == Request.beatmapset_snapshot_id
+        )
 
     if beatmapset_cte is not None:
-        select_stmt = select_stmt.outerjoin(beatmapset_cte, beatmapset_cte.c.id == Request.beatmapset_snapshot_id)
+        select_stmt = select_stmt.outerjoin(
+            beatmapset_cte, beatmapset_cte.c.id == Request.beatmapset_snapshot_id
+        )
 
     if request_cte is not None:
         select_stmt = select_stmt.outerjoin(request_cte, request_cte.c.id == Request.id)
