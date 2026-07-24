@@ -14,7 +14,7 @@ from sqlalchemy.pool.base import ConnectionPoolEntry
 from sqlalchemy.sql import select
 
 from app.config import POSTGRESQL_CONFIGURATION
-from app.logging import get_logger
+from app.observability.logging import get_logger
 from app.observability.metrics.db import (
     classify_query,
     db_pool_checked_in,

@@ -6,8 +6,8 @@ from app.database import PostgresqlDB
 from app.database.enums import RoleName
 from app.database.roles import is_admin
 from app.exceptions import NotFound
-from app.redis import Namespace
-from app.redis.models import QueueRequestHandlerTask
+from app.redis_client import Namespace
+from app.redis_client.models import QueueRequestHandlerTask
 from app.security import role_authorization, with_authenticated_user_id
 from app.spec import get_include_schema
 

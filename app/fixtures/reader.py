@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 from app.config import PROJECT_ROOT
-from app.logging import get_logger
+from app.observability.logging import get_logger
 
 from .metadata import FixtureMetadataManager
 from .metadata_io import load_metadata

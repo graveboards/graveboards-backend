@@ -19,10 +19,10 @@ from app.database.rules.validators.metadata import (
     DurationProvider,
     SongIdentityProvider,
 )
-from app.logging import Logger, get_logger
+from app.observability.logging import Logger, get_logger
 from app.osu_api.client import OsuAPIClient
-from app.redis import ChannelName, Namespace
-from app.redis.models import QueueRequestValidationTask
+from app.redis_client import ChannelName, Namespace
+from app.redis_client.models import QueueRequestValidationTask
 from app.utils import aware_utcnow
 
 from .decorators import auto_retry

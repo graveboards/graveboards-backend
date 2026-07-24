@@ -13,7 +13,7 @@ import httpx
 
 from app.config import PROJECT_ROOT
 from app.fixtures.constants import RULESETS
-from app.logging import get_logger
+from app.observability.logging import get_logger
 
 logger = get_logger(__name__)
 

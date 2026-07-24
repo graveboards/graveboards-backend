@@ -10,8 +10,8 @@ from app.bootstrap import SetupRunner
 from app.config import CONFIG
 from app.database import PostgresqlDB
 from app.database.models import Beatmapset, BeatmapsetSnapshot, Request, User
-from app.logging import get_logger, setup_logging
-from app.redis import RedisClient
+from app.observability.logging import get_logger, setup_logging
+from app.redis_client import RedisClient
 
 TIMEOUT_SECS = 60.0
 

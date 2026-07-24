@@ -24,7 +24,7 @@ async def test_get_beatmap_from_redis_cache(api_client):
     fixture_manager = FixtureReader()
     mock_data = _get_beatmap_with_fallback(fixture_manager)
 
-    from app.redis.models import Beatmap
+    from app.redis_client.models import Beatmap
     beatmap_obj = Beatmap.model_validate(mock_data)
     serialized_beatmap = beatmap_obj.serialize()
 
@@ -135,7 +135,7 @@ async def test_get_beatmapset_from_redis_cache(api_client):
     fixture_manager = FixtureReader()
     mock_data = _get_beatmapset_with_fallback(fixture_manager)
 
-    from app.redis.models import Beatmapset
+    from app.redis_client.models import Beatmapset
     beatmapset_obj = Beatmapset.model_validate(mock_data)
     serialized_beatmapset = beatmapset_obj.serialize()
 

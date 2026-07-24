@@ -2,10 +2,10 @@
 
 from datetime import datetime
 
-from app.redis.models.beatmap import Beatmap
-from app.redis.models.beatmapset import Beatmapset
-from app.redis.models.osu_client_oauth_token import OsuClientOAuthToken
-from app.redis.models.queue_request_handler_task import QueueRequestHandlerTask
+from app.redis_client.models.beatmap import Beatmap
+from app.redis_client.models.beatmapset import Beatmapset
+from app.redis_client.models.osu_client_oauth_token import OsuClientOAuthToken
+from app.redis_client.models.queue_request_handler_task import QueueRequestHandlerTask
 
 
 def _full_beatmap_dict():

@@ -4,7 +4,7 @@ import traceback
 
 from rich.console import Console
 
-from app.logging import setup_logging
+from app.observability.logging import setup_logging
 
 from .api_keys import cmd_generate_api_key
 from .fixtures import (

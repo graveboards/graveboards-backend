@@ -24,8 +24,8 @@ from app.fixtures.fetcher import FixtureDataFetcher
 from app.fixtures.id_source import IDSource, create_id_source
 from app.fixtures.search_test_fetcher import SearchTestFixtureFetcher
 from app.fixtures.targeted_fetcher import TargetedFixtureFetcher
-from app.logging import get_logger
-from app.redis import RedisClient
+from app.observability.logging import get_logger
+from app.redis_client import RedisClient
 
 if TYPE_CHECKING:
     from app.fixtures.progress import ProgressBar

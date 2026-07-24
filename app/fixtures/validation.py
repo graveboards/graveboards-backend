@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from app.logging import get_logger
+from app.observability.logging import get_logger
 
 logger = get_logger(__name__)
 

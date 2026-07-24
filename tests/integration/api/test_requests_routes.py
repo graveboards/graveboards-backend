@@ -104,7 +104,7 @@ class TestRequestsPostIntegration:
     @pytest.mark.asyncio
     async def test_success_submits_request_and_queues_task(self, TestClientWithMocks, valid_request_body, mock_osu_client, security_disabled, authenticated_user_id):
         """Test successful request submission that queues task for processing."""
-        from app.redis.models import QueueRequestHandlerTask
+        from app.redis_client.models import QueueRequestHandlerTask
 
         mock_queue = MagicMock()
         mock_queue.id = self.TEST_QUEUE_ID
@@ -251,7 +251,7 @@ class TestRequestsPostIntegration:
     @pytest.mark.asyncio
     async def test_task_already_processing(self, TestClientWithMocks, valid_request_body, mock_osu_client, security_disabled, authenticated_user_id):
         """Test request submission fails when task is already processing."""
-        from app.redis.models import QueueRequestHandlerTask
+        from app.redis_client.models import QueueRequestHandlerTask
 
         mock_queue = MagicMock()
         mock_queue.id = self.TEST_QUEUE_ID
@@ -933,7 +933,7 @@ class TestRequestsTasksIntegration:
         """Create a mock Redis client with a task."""
         from unittest.mock import AsyncMock
 
-        from app.redis.models import QueueRequestHandlerTask
+        from app.redis_client.models import QueueRequestHandlerTask
 
         task = QueueRequestHandlerTask(
             user_id=self.TEST_USER_ID,

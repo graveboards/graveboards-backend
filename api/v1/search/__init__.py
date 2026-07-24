@@ -27,7 +27,7 @@ from app.observability.metrics.search import (
     search_requests_total,
 )
 from app.patches.validators import validate_include
-from app.redis import RedisClient
+from app.redis_client import RedisClient
 from app.search import (
     SCOPE_MODEL_MAPPING,
     Scope,

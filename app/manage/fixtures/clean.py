@@ -15,7 +15,7 @@ from app.fixtures.metadata_io import (
     save_metadata,
 )
 from app.fixtures.paths import FIXTURES_DIR
-from app.redis import RedisClient
+from app.redis_client import RedisClient
 
 console = Console()
 

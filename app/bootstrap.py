@@ -14,8 +14,8 @@ from app.config import (
 from app.database import PostgresqlDB
 from app.database.enums import RoleName
 from app.database.models import ApiKey, Queue, Role, ScoreFetcherTask, User
-from app.logging import get_logger
-from app.redis import Namespace, RedisClient
+from app.observability.logging import get_logger
+from app.redis_client import Namespace, RedisClient
 from app.security.api_key import generate_api_key, hash_api_key
 from app.utils import aware_utcnow
 

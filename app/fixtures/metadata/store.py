@@ -4,7 +4,7 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
-from app.logging import get_logger
+from app.observability.logging import get_logger
 
 from ..constants import RULESETS, SCORE_TYPES
 from ..paths import FIXTURES_DIR

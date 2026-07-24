@@ -23,8 +23,8 @@ from app.fixtures.archives import (
 from app.fixtures.constants import ID_RANGES, TOP_PLAYERS_PER_RULESET
 from app.fixtures.failed_id_store import FailedIdStore
 from app.fixtures.metadata_io import load_metadata
-from app.logging import get_logger
-from app.redis import RedisClient
+from app.observability.logging import get_logger
+from app.redis_client import RedisClient
 
 logger = get_logger(__name__)
 

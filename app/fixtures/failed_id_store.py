@@ -6,7 +6,7 @@ Provides a simple API for checking and adding failed IDs across categories.
 
 from collections.abc import Iterable
 
-from app.redis import Namespace, RedisClient
+from app.redis_client import Namespace, RedisClient
 
 
 class FailedIdStore:

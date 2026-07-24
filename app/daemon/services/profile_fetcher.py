@@ -5,8 +5,8 @@ from httpx import ConnectTimeout, HTTPStatusError, ReadTimeout
 from app.database.models import Base, Profile, ProfileFetcherTask, User
 from app.database.schemas import ProfileSchema
 from app.exceptions import RedisLockTimeoutError
-from app.logging import Logger, get_logger
-from app.redis import LOCK_EXPIRY, ChannelName, Namespace
+from app.observability.logging import Logger, get_logger
+from app.redis_client import LOCK_EXPIRY, ChannelName, Namespace
 from app.utils import aware_utcnow
 
 from .decorators import auto_retry

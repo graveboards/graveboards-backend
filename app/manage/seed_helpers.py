@@ -7,7 +7,7 @@ from app.database.seeding.profiles import SeedProfile
 from app.fixtures.criteria import FetchCriteria
 from app.fixtures.orchestrator import FixtureOrchestrator
 from app.fixtures.paths import get_fixture_path
-from app.redis import RedisClient
+from app.redis_client import RedisClient
 
 
 async def ensure_fixtures_async(logger, profile: SeedProfile) -> bool:

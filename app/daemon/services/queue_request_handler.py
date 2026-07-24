@@ -8,9 +8,9 @@ from app.beatmaps import BeatmapManager
 from app.database.crud.rules import RuleCRUD
 from app.database.models import Request
 from app.database.schemas import RequestSchema
-from app.logging import Logger, get_logger
-from app.redis import ChannelName, Namespace
-from app.redis.models import QueueRequestHandlerTask, QueueRequestValidationTask
+from app.observability.logging import Logger, get_logger
+from app.redis_client import ChannelName, Namespace
+from app.redis_client.models import QueueRequestHandlerTask, QueueRequestValidationTask
 from app.utils import aware_utcnow
 
 from .decorators import auto_retry

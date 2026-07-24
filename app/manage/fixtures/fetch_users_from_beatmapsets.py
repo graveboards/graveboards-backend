@@ -15,8 +15,8 @@ from rich.console import Console
 from app.config import PROJECT_ROOT
 from app.fixtures.criteria import FetchCriteria
 from app.fixtures.orchestrator import FixtureOrchestrator
-from app.logging import get_logger
-from app.redis import RedisClient
+from app.observability.logging import get_logger
+from app.redis_client import RedisClient
 
 console = Console()
 logger = get_logger(__name__)

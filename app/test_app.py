@@ -28,7 +28,7 @@ from app.config import (
 )
 from app.error_handlers import forbidden
 from app.patches import OpenAPIURIParserPatched, ParameterValidatorPatched
-from app.redis import RedisClient
+from app.redis_client import RedisClient
 from app.spec import load_spec
 
 

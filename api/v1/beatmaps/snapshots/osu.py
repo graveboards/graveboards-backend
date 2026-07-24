@@ -9,7 +9,7 @@ from app.beatmaps import BeatmapManager
 from app.database import PostgresqlDB
 from app.database.models import BeatmapSnapshot
 from app.exceptions import NotFound
-from app.redis import RedisClient
+from app.redis_client import RedisClient
 
 __all__ = ["search"]
 

@@ -1,7 +1,7 @@
 import pytest
 
 from app.oauth import OAuth
-from app.redis import Namespace, RedisClient
+from app.redis_client import Namespace, RedisClient
 from app.security import create_token_payload, encode_token
 
 

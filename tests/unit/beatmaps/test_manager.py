@@ -6,7 +6,7 @@ import pytest
 from app.beatmaps.manager import BeatmapManager
 from app.database import PostgresqlDB
 from app.database.models import BeatmapTag
-from app.redis import RedisClient
+from app.redis_client import RedisClient
 
 
 class TestBeatmapManager:

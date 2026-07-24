@@ -30,7 +30,7 @@ async def test_initialization(mock_redis_client):
 @pytest.mark.asyncio
 async def test_get_token_from_cache(mock_redis_client):
     from app.osu_api.client.base import OsuAPIClientBase
-    from app.redis.models import OsuClientOAuthToken
+    from app.redis_client.models import OsuClientOAuthToken
 
     client = OsuAPIClientBase(mock_redis_client)
     current_time = int(time.time())

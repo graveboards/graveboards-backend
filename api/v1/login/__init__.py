@@ -2,7 +2,7 @@ from connexion import request
 
 from app.exceptions import TooManyRequests
 from app.oauth import OAuth
-from app.redis import Namespace, RedisClient
+from app.redis_client import Namespace, RedisClient
 from app.security.auth_rate_limit import AuthRateLimiter
 
 __all__ = ["search"]

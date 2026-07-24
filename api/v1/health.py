@@ -4,7 +4,7 @@ import time
 from connexion import request
 
 from app.database import PostgresqlDB
-from app.redis import RedisClient
+from app.redis_client import RedisClient
 from app.utils import aware_utcnow
 from app.version import __version__
 

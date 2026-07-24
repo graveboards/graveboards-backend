@@ -13,7 +13,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from app.exceptions import clean_error_msg
-from app.redis import RedisClient
+from app.redis_client import RedisClient
 
 from .coverage import CoverageRegistry
 from .failed_id_store import FailedIdStore
@@ -44,7 +44,7 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
 
         # Set default logger if not provided
         if self.logger is None:
-            from app.logging import get_logger
+            from app.observability.logging import get_logger
 
             self.logger = get_logger(__name__)
 

@@ -5,15 +5,15 @@ import httpx
 from pydantic import ValidationError
 
 from app.exceptions import RedisLockTimeoutError
-from app.logging import get_logger
+from app.observability.logging import get_logger
 from app.oauth import OAuth
 from app.observability.metrics.osu import (
     osu_api_errors_total,
     osu_api_request_duration_seconds,
     osu_api_requests_total,
 )
-from app.redis import Namespace, RedisClient
-from app.redis.models import OsuClientOAuthToken
+from app.redis_client import Namespace, RedisClient
+from app.redis_client.models import OsuClientOAuthToken
 
 MAX_TOKEN_FETCH_RETRIES = 3
 logger = get_logger(__name__)

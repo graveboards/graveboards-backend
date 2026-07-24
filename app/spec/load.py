@@ -6,7 +6,7 @@ from connexion.spec import resolve_refs
 
 from app.config import CACHE_FILE, ENV, OPENAPI_ENTRYPOINT, SPEC_DIR, get_security_enabled
 from app.enums import Env
-from app.logging import get_logger
+from app.observability.logging import get_logger
 
 from .shallow import populate_shallow_refs
 

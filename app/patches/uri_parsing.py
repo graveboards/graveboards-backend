@@ -6,7 +6,7 @@ from datetime import datetime
 from connexion.uri_parsing import OpenAPIURIParser
 from connexion.utils import TypeValidationError, coerce_type
 
-from app.logging import get_logger
+from app.observability.logging import get_logger
 
 affirmative_literals = {"true", "t", "yes", "y"}
 negative_literals = {"false", "f", "no", "n"}

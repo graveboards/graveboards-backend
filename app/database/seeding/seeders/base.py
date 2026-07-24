@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio.session import AsyncSession
 
 from app.database import PostgresqlDB
 from app.database.seeding.event import SeedEvent
-from app.logging import get_logger
+from app.observability.logging import get_logger
 
 
 class Seeder(ABC):

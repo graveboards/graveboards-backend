@@ -4,7 +4,7 @@ from sqlalchemy.orm.mapper import Mapper
 from sqlalchemy.sql import func, insert, select, update
 
 from app.database.models import BeatmapListing, BeatmapSnapshot
-from app.logging import get_logger
+from app.observability.logging import get_logger
 
 __all__ = ["beatmap_snapshot_before_insert", "beatmap_snapshot_after_insert"]
 

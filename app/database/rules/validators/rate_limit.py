@@ -9,7 +9,7 @@ from app.database.rules.base import RestrictionBase
 from app.database.rules.context import ExecutionContext
 from app.database.rules.fingerprint import config_fingerprint
 from app.database.schemas.rule import RateLimitConfig
-from app.redis import Namespace
+from app.redis_client import Namespace
 
 
 def _truncate_to_period(now: datetime, period: str) -> int:

@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from app.exceptions import RateLimitExceededError
-from app.redis.decorators import rate_limit
+from app.redis_client.decorators import rate_limit
 
 
 class TestRateLimitDecorator:

@@ -1,7 +1,7 @@
 import asyncio
 from typing import ClassVar, Never
 
-from app.logging import Logger
+from app.observability.logging import Logger
 
 from .services import Service, ServiceFactory
 from .services.service.task import BackoffStrategy, TaskFailureHook, TaskMaxRetriesExceededHook

@@ -2,8 +2,8 @@ from sqlalchemy import event
 from sqlalchemy.orm.attributes import AttributeEventToken
 
 from app.database.models import ScoreFetcherTask
-from app.logging import get_logger
-from app.redis import ChannelName, redis_connection
+from app.observability.logging import get_logger
+from app.redis_client import ChannelName, redis_connection
 
 __all__ = ["score_fetcher_task_enabled_set"]
 

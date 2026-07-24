@@ -17,7 +17,7 @@ from rich.table import Table
 
 from app.config import PROJECT_ROOT
 from app.fixtures.queue_request_generator import QueueRequestFixtureGenerator
-from app.logging import get_logger
+from app.observability.logging import get_logger
 
 console = Console()
 logger = get_logger(__name__)

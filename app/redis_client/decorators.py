@@ -6,7 +6,7 @@ from functools import wraps
 from typing import ParamSpec, Protocol, TypeVar, runtime_checkable
 
 from app.exceptions import RateLimitExceededError
-from app.logging import get_logger
+from app.observability.logging import get_logger
 from app.observability.metrics.rate_limit import (
     rate_limit_attempts_total,
     rate_limit_retries_total,

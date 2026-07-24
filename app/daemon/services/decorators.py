@@ -4,7 +4,7 @@ from collections.abc import Awaitable, Callable
 from functools import wraps
 from typing import Any
 
-from app.logging import get_logger
+from app.observability.logging import get_logger
 
 MAX_ATTEMPTS = 5
 logger = get_logger(__name__)

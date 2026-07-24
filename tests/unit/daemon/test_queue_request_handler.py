@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from app.daemon.services.queue_request_handler import QueueRequestHandler
-from app.redis.models import QueueRequestHandlerTask
+from app.redis_client.models import QueueRequestHandlerTask
 
 
 class TestQueueRequestHandler:

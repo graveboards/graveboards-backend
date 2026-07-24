@@ -6,7 +6,7 @@ from app.database import PostgresqlDB
 from app.database.enums import RoleName
 from app.database.models import ApiKey, User
 from app.exceptions import NotFound
-from app.logging import get_logger
+from app.observability.logging import get_logger
 from app.security import role_authorization
 from app.security.api_key import generate_api_key, hash_api_key
 from app.security.overrides import matching_user_id_override

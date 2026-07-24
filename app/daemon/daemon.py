@@ -1,8 +1,8 @@
 from typing import ClassVar
 
 from app.database import PostgresqlDB
-from app.logging import Logger, get_logger
-from app.redis import RedisClient
+from app.observability.logging import Logger, get_logger
+from app.redis_client import RedisClient
 
 from .services import ProfileFetcher, QueueRequestHandler, RuleValidationService, ScoreFetcher
 from .supervisor import ServiceSupervisor

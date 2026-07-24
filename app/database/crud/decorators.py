@@ -15,7 +15,7 @@ from typing import (
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import ModelClass
-from app.logging import get_logger, log_stack_warning
+from app.observability.logging import get_logger, log_stack_warning
 
 from .protocol import DatabaseProtocol
 

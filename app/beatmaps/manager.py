@@ -54,10 +54,10 @@ from app.database.schemas import (
     ProfileSchema,
 )
 from app.exceptions import RedisLockTimeoutError, RestrictedUserError
-from app.logging import get_logger
+from app.observability.logging import get_logger
 from app.osu_api import OsuAPIClient
 from app.osu_api.client.base import OsuAPIMetricsTransport
-from app.redis import Namespace, RedisClient
+from app.redis_client import Namespace, RedisClient
 from app.utils import aware_utcnow, combine_checksums
 
 BEATMAPS_PATH = os.path.join(INSTANCE_DIR, "beatmaps")

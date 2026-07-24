@@ -2,7 +2,7 @@ from sqlalchemy.sql import select, text
 
 from app.database.models import Base, ModelClass
 from app.database.sql import RESET_SEQUENCES_SQL
-from app.logging import get_logger
+from app.observability.logging import get_logger
 
 from .c import C
 from .d import D

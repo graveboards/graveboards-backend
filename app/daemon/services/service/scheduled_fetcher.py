@@ -5,9 +5,9 @@ from typing import Any, ClassVar
 
 from app.database import PostgresqlDB
 from app.database.models import Base
-from app.logging import Logger
+from app.observability.logging import Logger
 from app.osu_api import OsuAPIClient
-from app.redis import RedisClient
+from app.redis_client import RedisClient
 from app.utils import aware_utcnow
 
 from .job import JobLoadInstruction

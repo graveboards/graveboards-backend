@@ -1,9 +1,9 @@
 from pydantic_core import ValidationError
 
-from app.logging import get_logger
+from app.observability.logging import get_logger
 from app.osu_api.enums import APIEndpoint, Ruleset, ScoreType
-from app.redis import CACHED_BEATMAP_EXPIRY, CACHED_BEATMAPSET_EXPIRY, Namespace, rate_limit
-from app.redis.models import Beatmap, Beatmapset
+from app.redis_client import CACHED_BEATMAP_EXPIRY, CACHED_BEATMAPSET_EXPIRY, Namespace, rate_limit
+from app.redis_client.models import Beatmap, Beatmapset
 
 from .base import OsuAPIClientBase
 

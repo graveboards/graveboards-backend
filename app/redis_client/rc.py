@@ -10,7 +10,7 @@ from redis.asyncio import Redis as AsyncRedis
 
 from app.config import REDIS_CONFIGURATION
 from app.exceptions import RedisLockTimeoutError
-from app.logging import get_logger
+from app.observability.logging import get_logger
 from app.observability.metrics.redis import (
     redis_cache_hits_total,
     redis_cache_misses_total,

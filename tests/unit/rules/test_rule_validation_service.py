@@ -1,8 +1,8 @@
 
 import pytest
 
-from app.redis import ChannelName
-from app.redis.models import QueueRequestValidationTask
+from app.redis_client import ChannelName
+from app.redis_client.models import QueueRequestValidationTask
 
 
 class TestQueueRequestValidationTask:

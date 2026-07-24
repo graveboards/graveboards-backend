@@ -1,7 +1,7 @@
 import subprocess
 
 from app.config import PROJECT_ROOT
-from app.logging import get_logger
+from app.observability.logging import get_logger
 
 
 def run_migrations() -> None:

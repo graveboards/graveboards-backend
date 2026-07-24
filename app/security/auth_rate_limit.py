@@ -4,7 +4,7 @@ from app.observability.metrics.auth import (
     auth_lockouts_total,
     auth_rate_limit_checks_total,
 )
-from app.redis import RedisClient
+from app.redis_client import RedisClient
 
 
 class AuthRateLimiter:

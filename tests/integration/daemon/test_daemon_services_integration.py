@@ -75,7 +75,7 @@ class TestServiceSupervisor:
     @pytest.fixture
     def supervisor(self):
         """Create a ServiceSupervisor with a valid LOGGER."""
-        from app.logging import get_logger
+        from app.observability.logging import get_logger
         ServiceSupervisor.LOGGER = get_logger("test.supervisor")
         supervisor = ServiceSupervisor()
         return supervisor
@@ -83,7 +83,7 @@ class TestServiceSupervisor:
     @pytest.mark.asyncio
     async def test_register_service_stores_factory(self, supervisor):
         """Test registering a service stores the factory under the given name."""
-        from app.logging import get_logger
+        from app.observability.logging import get_logger
 
         class TestService(Service):
             LOGGER = get_logger("test.service")
@@ -98,7 +98,7 @@ class TestServiceSupervisor:
     @pytest.mark.asyncio
     async def test_register_duplicate_service_raises(self, supervisor):
         """Test registering a service with a duplicate name raises ValueError."""
-        from app.logging import get_logger
+        from app.observability.logging import get_logger
 
         class TestService(Service):
             LOGGER = get_logger("test.service")
@@ -114,7 +114,7 @@ class TestServiceSupervisor:
     @pytest.mark.asyncio
     async def test_supervisor_init_has_empty_services(self):
         """Test ServiceSupervisor starts with empty services dict."""
-        from app.logging import get_logger
+        from app.observability.logging import get_logger
         ServiceSupervisor.LOGGER = get_logger("test.supervisor")
         supervisor = ServiceSupervisor()
         assert supervisor._services == {}
@@ -134,7 +134,7 @@ class TestScheduledService:
     @pytest.mark.asyncio
     async def test_service_with_logger_initializes(self):
         """Test Service subclass with LOGGER initializes correctly."""
-        from app.logging import get_logger
+        from app.observability.logging import get_logger
 
         class GoodService(Service):
             LOGGER = get_logger(__name__)

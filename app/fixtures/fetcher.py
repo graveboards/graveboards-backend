@@ -12,7 +12,7 @@ import httpx
 from app.exceptions import clean_error_msg
 from app.osu_api.client.osu_api_client import OsuAPIClient
 from app.osu_api.enums import Ruleset, ScoreType
-from app.redis import RedisClient
+from app.redis_client import RedisClient
 
 from .constants import (
     ID_RANGES,

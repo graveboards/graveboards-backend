@@ -5,7 +5,7 @@ from api.decorators import coerce_arguments
 from app.beatmaps import BeatmapManager
 from app.database import PostgresqlDB
 from app.exceptions import NotFound
-from app.redis import RedisClient
+from app.redis_client import RedisClient
 from app.utils import stream_file
 
 __all__ = ["search"]

@@ -17,8 +17,8 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from app.fixtures.archives import cleanup_archives, load_archive_index, refresh_archive_index
 from app.fixtures.id_source import ArchiveIDSource
-from app.logging import get_logger
-from app.redis import RedisClient
+from app.observability.logging import get_logger
+from app.redis_client import RedisClient
 
 console = Console()
 logger = get_logger(__name__)

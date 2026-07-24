@@ -12,7 +12,7 @@ import random
 from pathlib import Path
 
 from app.osu_api.client.osu_api_client import OsuAPIClient
-from app.redis import RedisClient
+from app.redis_client import RedisClient
 
 from .constants import ID_RANGES, RULESETS
 from .failed_id_store import FailedIdStore

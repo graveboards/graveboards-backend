@@ -4,9 +4,9 @@ from httpx import ConnectTimeout
 
 from app.database.models import BeatmapSnapshot, Leaderboard, Score, ScoreFetcherTask
 from app.database.schemas import ScoreSchema
-from app.logging import Logger, get_logger
+from app.observability.logging import Logger, get_logger
 from app.osu_api.enums import ScoreType
-from app.redis import ChannelName
+from app.redis_client import ChannelName
 
 from .decorators import auto_retry
 from .service import ScheduledFetcherService

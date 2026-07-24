@@ -38,7 +38,7 @@ from app.database.models import (
     beatmap_snapshot_beatmapset_snapshot_association,
 )
 from app.database.utils import get_filter_condition
-from app.logging import get_logger
+from app.observability.logging import get_logger
 from app.spec import get_include_schema
 from app.text import align_center
 

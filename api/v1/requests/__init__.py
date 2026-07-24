@@ -19,10 +19,10 @@ from app.database.rules.validators.metadata import (
 )
 from app.database.schemas import RequestSchema
 from app.exceptions import BadRequest, Conflict, NotFound
-from app.logging import get_logger
+from app.observability.logging import get_logger
 from app.osu_api import OsuAPIClient
-from app.redis import ChannelName, Namespace, RedisClient
-from app.redis.models import QueueRequestHandlerTask
+from app.redis_client import ChannelName, Namespace, RedisClient
+from app.redis_client.models import QueueRequestHandlerTask
 from app.security import ownership_authorization, role_authorization, with_authenticated_user_id
 from app.security.overrides import queue_manager_override, queue_owner_override
 from app.spec import get_include_schema

@@ -24,7 +24,7 @@ from app.database.seeding import (
 from app.database.seeding.fixture_loader import load_seeding_data
 from app.database.seeding.profiles import get_profile
 from app.fixtures.queue_request_generator import QueueRequestFixtureGenerator
-from app.logging import get_logger
+from app.observability.logging import get_logger
 
 
 @db_lifespan

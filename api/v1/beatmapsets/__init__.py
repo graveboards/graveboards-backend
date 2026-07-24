@@ -10,7 +10,7 @@ from app.database.enums import RoleName
 from app.database.models import Beatmapset, ModelClass
 from app.database.schemas import BeatmapsetSchema
 from app.exceptions import NotFound
-from app.redis import RedisClient
+from app.redis_client import RedisClient
 from app.security import role_authorization
 from app.spec import get_include_schema
 

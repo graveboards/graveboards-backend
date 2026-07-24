@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
 
 from app.osu_api import OsuAPIClient
-from app.redis import RedisClient
+from app.redis_client import RedisClient
 
 
 def create_mock_oauth(fetch_token_response: dict = None):

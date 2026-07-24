@@ -17,8 +17,8 @@ from rich.table import Table
 
 from app.fixtures.criteria import Criteria, FetchCriteria, FetchReport
 from app.fixtures.orchestrator import FixtureOrchestrator
-from app.logging import get_logger
-from app.redis import RedisClient
+from app.observability.logging import get_logger
+from app.redis_client import RedisClient
 
 from .config import FetchConfig
 

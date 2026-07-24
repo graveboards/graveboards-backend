@@ -6,7 +6,7 @@ from pathlib import Path
 
 from app.exceptions import clean_error_msg
 from app.osu_api.enums import Ruleset
-from app.redis import RedisClient
+from app.redis_client import RedisClient
 
 from .constants import RULESETS, SCORE_TYPES
 from .failed_id_store import FailedIdStore

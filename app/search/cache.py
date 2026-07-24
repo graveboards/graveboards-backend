@@ -2,7 +2,7 @@ import hashlib
 import json
 from enum import Enum
 
-from app.redis import RedisClient
+from app.redis_client import RedisClient
 from app.search.enums import Scope
 
 

@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from app.exceptions import RedisLockTimeoutError
-from app.redis.rc import RedisClient
+from app.redis_client.rc import RedisClient
 
 
 class TestLockCtx:

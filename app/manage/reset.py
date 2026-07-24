@@ -4,7 +4,7 @@ from app.bootstrap import SetupRunner
 from app.config import CONFIG
 from app.database import PostgresqlDB, db_lifespan
 from app.database.seeding import SeedTarget
-from app.logging import get_logger
+from app.observability.logging import get_logger
 
 from .seed import cmd_seed
 

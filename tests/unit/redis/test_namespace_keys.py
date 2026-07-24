@@ -1,5 +1,5 @@
 
-from app.redis.enums import Namespace
+from app.redis_client.enums import Namespace
 
 
 class TestNamespaceKeys:

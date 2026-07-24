@@ -9,7 +9,7 @@ import asyncio
 
 import pytest
 
-from app.redis.models import Beatmap, OsuClientOAuthToken, QueueRequestHandlerTask
+from app.redis_client.models import Beatmap, OsuClientOAuthToken, QueueRequestHandlerTask
 
 pytestmark = pytest.mark.integration
 
@@ -27,7 +27,7 @@ def get_redis_client():
     """Create a RedisClient connected to the test Redis instance."""
     import os
 
-    from app.redis.rc import RedisClient
+    from app.redis_client.rc import RedisClient
 
     url = os.environ["REDIS_TEST_URL"]
     rc = RedisClient.__new__(RedisClient)

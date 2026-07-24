@@ -4,8 +4,8 @@ from sqlalchemy.orm.mapper import Mapper
 from sqlalchemy.sql import insert
 
 from app.database.models import ProfileFetcherTask, ScoreFetcherTask, User
-from app.logging import get_logger
-from app.redis import ChannelName, redis_connection
+from app.observability.logging import get_logger
+from app.redis_client import ChannelName, redis_connection
 
 __all__ = ["user_after_insert"]
 

@@ -3,8 +3,8 @@ from rich.table import Table
 
 from app.fixtures.constants import RULESETS
 from app.fixtures.fetcher import FixtureDataFetcher
-from app.logging import get_logger
-from app.redis import RedisClient
+from app.observability.logging import get_logger
+from app.redis_client import RedisClient
 
 console = Console()
 logger = get_logger(__name__)

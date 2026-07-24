@@ -7,7 +7,7 @@ QueueRequestHandlerTask).
 
 from datetime import datetime
 
-from app.redis.models import Beatmap, Beatmapset, OsuClientOAuthToken, QueueRequestHandlerTask
+from app.redis_client.models import Beatmap, Beatmapset, OsuClientOAuthToken, QueueRequestHandlerTask
 
 
 def _full_beatmap_dict():

@@ -2,7 +2,7 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from typing import Any, ClassVar
 
-from app.logging import Logger
+from app.observability.logging import Logger
 from app.observability.metrics.daemon import (
     daemon_jobs_total,
     daemon_service_running,

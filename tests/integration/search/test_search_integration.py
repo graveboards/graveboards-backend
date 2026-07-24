@@ -38,7 +38,7 @@ async def search_test_fetcher():
     from metadata.json that was previously populated by the CLI.
     """
     from app.fixtures.search_test_fetcher import SearchTestFixtureFetcher
-    from app.redis import RedisClient
+    from app.redis_client import RedisClient
 
     rc = RedisClient()
     fetcher = SearchTestFixtureFetcher(rc)

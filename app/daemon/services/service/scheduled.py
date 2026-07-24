@@ -6,14 +6,14 @@ from datetime import UTC, datetime, timedelta
 from typing import ClassVar
 
 from app.database import PostgresqlDB
-from app.logging import Logger
+from app.observability.logging import Logger
 from app.observability.metrics.daemon import (
     daemon_active_jobs,
     daemon_job_duration_seconds,
     daemon_jobs_total,
     daemon_last_job_timestamp,
 )
-from app.redis import RedisClient
+from app.redis_client import RedisClient
 from app.utils import aware_utcnow
 
 from .job import JobLoadInstruction

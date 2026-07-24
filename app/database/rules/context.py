@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from app.database.models.beatmapset_snapshot import BeatmapsetSnapshot
     from app.database.schemas.sub_schemas import BeatmapOsuApiSchema, BeatmapsetOsuApiSchema
     from app.osu_api.client import OsuAPIClient
-    from app.redis import RedisClient
+    from app.redis_client import RedisClient
 
     MetadataProvider = Any
 

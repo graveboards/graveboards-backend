@@ -7,7 +7,7 @@ from app.database.models import OAuthToken, ScoreFetcherTask, User
 from app.exceptions import BadRequest, OsuOAuthError, TooManyRequests
 from app.oauth import OAuth
 from app.osu_api import OsuAPIClient
-from app.redis import Namespace, RedisClient
+from app.redis_client import Namespace, RedisClient
 from app.security import create_token_payload, encode_token, validate_token
 from app.security.auth_rate_limit import AuthRateLimiter
 from app.security.oauth_encryption import encrypt_token

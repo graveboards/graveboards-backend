@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from app.osu_api import OsuAPIClient
-from app.redis import RedisClient
+from app.redis_client import RedisClient
 
 
 class TestTokenPostEndpoint:

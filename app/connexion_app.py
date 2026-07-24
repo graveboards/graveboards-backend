@@ -12,7 +12,7 @@ from .database.rules.exceptions import RuleViolationError
 from .enums import Env
 from .error_handlers import bad_request, forbidden, internal_error, rule_violation, unauthorized
 from .lifespan import lifespan
-from .logging import setup_logging
+from .observability.logging import setup_logging
 from .observability.context import RequestContextMiddleware
 from .observability.metrics.endpoint import metrics_endpoint
 from .observability.metrics.middleware import MetricsMiddleware
