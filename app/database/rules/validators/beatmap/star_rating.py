@@ -56,7 +56,7 @@ class StarRatingRestriction(BeatmapRestrictionBase):
                 )
 
         elif logic == "all":
-            for beatmap, sr in zip(beatmaps, star_ratings):
+            for beatmap, sr in zip(beatmaps, star_ratings, strict=False):
                 if min_sr is not None and sr < min_sr:
                     raise RuleViolationError(
                         self.type,

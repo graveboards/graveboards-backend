@@ -131,7 +131,7 @@ def validate_value(value: Any, schema: dict, path: list[str]) -> None:
                 except ValueError:
                     raise DeepObjectValidationError(
                         path, f"Expected ISO 8601 date-time string, got '{value}'"
-                    )
+                    ) from None
         case "integer":
             if not isinstance(value, int):
                 raise DeepObjectValidationError(

@@ -51,7 +51,7 @@ def prime_query_kwargs(kwargs: dict[str, Any], many: bool = False) -> None:
         }
     )
 
-    for key, value in list(kwargs.items()):
+    for key, _value in list(kwargs.items()):
         if key in params:
             kwargs["_" + key] = kwargs.pop(key)
 
@@ -81,9 +81,8 @@ def bleach_body(
     whitelist = set(whitelisted_keys) if whitelisted_keys is not None else None
     blacklist = set(blacklisted_keys or ())
 
-    if whitelist is not None:
-        if overlap := whitelist & blacklist:
-            raise ValueError(f"Keys cannot be both whitelisted and blacklisted: {sorted(overlap)}")
+    if whitelist is not None and (overlap := whitelist & blacklist):
+        raise ValueError(f"Keys cannot be both whitelisted and blacklisted: {sorted(overlap)}")
 
     return {
         k: v
@@ -144,7 +143,7 @@ def coerce_value(value: Any, annotation: Any, param_name: str) -> Any | None:
                 name = annotation.__name__
             except AttributeError:
                 name = str(annotation)
-            raise TypeError(f"Failed to coerce parameter '{param_name}' to {name}")
+            raise TypeError(f"Failed to coerce parameter '{param_name}' to {name}") from None
 
     # Handle Union types (including int | None / types.UnionType)
     if origin is Union or (hasattr(types, "UnionType") and origin is types.UnionType):

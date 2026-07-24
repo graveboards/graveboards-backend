@@ -1,3 +1,4 @@
+import contextlib
 import json
 import re
 import time
@@ -84,7 +85,7 @@ def _redact(value):
 
 def _get_query_params(request: Request) -> dict:
     params = {}
-    for key in request.query_params.keys():
+    for key in request.query_params:
         values = request.query_params.getlist(key)
         params[key] = values[0] if len(values) == 1 else values
     params = _reconstruct_nested_params(params)
@@ -147,10 +148,8 @@ def _try_parse_sorting(params: dict) -> dict:
     raw = params["sorting"]
 
     if isinstance(raw, str):
-        try:
+        with contextlib.suppress(json.JSONDecodeError, TypeError):
             params["sorting"] = json.loads(raw)
-        except json.JSONDecodeError, TypeError:
-            pass
     elif isinstance(raw, list):
         parsed = []
         for item in raw:

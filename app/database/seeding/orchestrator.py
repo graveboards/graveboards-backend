@@ -16,7 +16,7 @@ SEEDERS: dict[SeederTarget, type[Seeder]] = {
 }
 """Mapping of ``SeederTarget`` to concrete ``Seeder`` implementation.
 
-This registry allows the orchestrator to dynamically instantiate the correct seeder 
+This registry allows the orchestrator to dynamically instantiate the correct seeder
 class for each logical domain target.
 """
 

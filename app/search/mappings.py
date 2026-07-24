@@ -106,7 +106,7 @@ SCOPE_OPTIONS_MAPPING = {
 }
 """Eager-loading strategy per ``Scope``.
 
-Defines ORM loading behavior (selectinload/joinedload/noload) to optimize query 
+Defines ORM loading behavior (selectinload/joinedload/noload) to optimize query
 execution and prevent N+1 issues.
 """
 

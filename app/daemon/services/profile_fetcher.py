@@ -42,10 +42,7 @@ class ProfileFetcher(ScheduledFetcherService):
             if not record.enabled:
                 continue
 
-            if record.user_id in missing_profile_user_ids:
-                execution_time = aware_utcnow()
-            else:
-                execution_time = None
+            execution_time = aware_utcnow() if record.user_id in missing_profile_user_ids else None
 
             instruction = JobLoadInstruction(
                 execution_time=execution_time, last_execution=record.last_fetch

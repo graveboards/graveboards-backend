@@ -26,7 +26,7 @@ class DrainRangeRestriction(BeatmapRestrictionBase):
         max_drain = config.get("max")
 
         if logic == "all":
-            for beatmap, drain in zip(beatmaps, drain_values):
+            for beatmap, drain in zip(beatmaps, drain_values, strict=False):
                 if min_drain is not None and drain < min_drain:
                     raise RuleViolationError(
                         self.type,

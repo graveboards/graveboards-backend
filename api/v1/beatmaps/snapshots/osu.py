@@ -46,8 +46,8 @@ async def search(beatmap_id: int, snapshot_number: int = -1):
     try:
         async with aiofiles.open(dotosu_file_path, "rb") as file:
             dotosu_file_data = await file.read()
-    except FileNotFoundError:
-        raise NotFound(f"Beatmap .osu file not found: {beatmap_id}/{snapshot_number}.osu")
+    except FileNotFoundError as e:
+        raise NotFound(f"Beatmap .osu file not found: {beatmap_id}/{snapshot_number}.osu") from e
 
     dotosu_file_io = BytesIO(dotosu_file_data)
     dotosu_file_io.seek(0)

@@ -139,5 +139,5 @@ class ServiceSupervisor(Service):
         async with self._service_lock:
             services = dict(self._services)
 
-        for name, service in services.items():
+        for name, _service in services.items():
             await self.stop_service(name)

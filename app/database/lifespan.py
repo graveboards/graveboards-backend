@@ -8,7 +8,7 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
-def db_lifespan(
+def db_lifespan[**P, R](
     func: Callable[Concatenate[PostgresqlDB, P], Awaitable[R]],
 ) -> Callable[P, Awaitable[R]]:
     """Ensure a PostgresqlDB lifecycle around an async function.

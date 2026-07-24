@@ -99,7 +99,7 @@ async def post(body: dict, db: PostgresqlDB = None, **kwargs):
 
     body = bleach_body(
         body,
-        whitelisted_keys={k for k in ScoreSchema.model_fields.keys() if k != "id"},
+        whitelisted_keys={k for k in ScoreSchema.model_fields if k != "id"},
         blacklisted_keys={"id"},
     )
     await db.add(Score, **body)

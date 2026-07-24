@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import json
 import os
 import random
@@ -101,9 +102,7 @@ class FixtureDataFetcher:
         """Check if an ID should be skipped (seen, failed, or excluded)."""
         if id_ in self._seen_ids:
             return True
-        if id_ in self.exclude_ids:
-            return True
-        return False
+        return id_ in self.exclude_ids
 
     def _mark_metadata_dirty(self) -> None:
         """Mark metadata as dirty so it gets flushed later."""
@@ -746,12 +745,10 @@ class FixtureDataFetcher:
                 except Exception as e:
                     error_detail = f"{type(e).__name__}: {e}"
                     if hasattr(e, "response") and e.response is not None:
-                        try:
+                        with contextlib.suppress(Exception):
                             error_detail += (
                                 f" (status={e.response.status_code}, body={e.response.text[:200]})"
                             )
-                        except Exception:
-                            pass
                     self.logger.error(f"Error fetching ranking for {ruleset_name}: {error_detail}")
                     break
 

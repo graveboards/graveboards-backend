@@ -26,7 +26,7 @@ class ARRangeRestriction(BeatmapRestrictionBase):
         max_ar = config.get("max")
 
         if logic == "all":
-            for beatmap, ar in zip(beatmaps, ar_values):
+            for beatmap, ar in zip(beatmaps, ar_values, strict=False):
                 if min_ar is not None and ar < min_ar:
                     raise RuleViolationError(
                         self.type,

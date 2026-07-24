@@ -1,4 +1,5 @@
 """Progress bar handler for fixture fetch operations."""
+import contextlib
 
 
 class ProgressBar:
@@ -46,7 +47,5 @@ class ProgressBar:
     def stop(self):
         """Stop the progress display."""
         if self._progress:
-            try:
+            with contextlib.suppress(Exception):
                 self._progress.stop()
-            except Exception:
-                pass

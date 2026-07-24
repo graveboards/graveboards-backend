@@ -54,24 +54,17 @@ def calculate_sample_counts(
         ]
     )
 
-    if use_minimal:
-        base = MINIMAL_PROFILE.copy()
-    else:
-        base = BASE_SAMPLE_COUNTS.copy()
+    base = MINIMAL_PROFILE.copy() if use_minimal else BASE_SAMPLE_COUNTS.copy()
 
-    if scale != 1.0:
-        if isinstance(base, dict):
-            for key, value in base.items():
-                if isinstance(value, int):
-                    base[key] = max(1, int(value * scale))
-                elif isinstance(value, dict):
-                    for subkey, subvalue in value.items():
-                        base[key][subkey] = max(1, int(subvalue * scale))
+    if scale != 1.0 and isinstance(base, dict):
+        for key, value in base.items():
+            if isinstance(value, int):
+                base[key] = max(1, int(value * scale))
+            elif isinstance(value, dict):
+                for subkey, subvalue in value.items():
+                    base[key][subkey] = max(1, int(subvalue * scale))
 
-    if has_explicit_categories:
-        result = {}
-    else:
-        result = base.copy()
+    result = {} if has_explicit_categories else base.copy()
 
     overrides = {
         "beatmaps": beatmaps,

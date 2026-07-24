@@ -69,7 +69,7 @@ class SearchTermsSchema(BaseModel):
             try:
                 parsed = shlex.split(raw_terms)
             except ValueError as e:
-                raise ValueError(f"Invalid search string: {e}")
+                raise ValueError(f"Invalid search string: {e}") from e
         elif isinstance(raw_terms, list):
             if not all(isinstance(item, str) for item in raw_terms):
                 raise TypeError("All search terms must be strings")

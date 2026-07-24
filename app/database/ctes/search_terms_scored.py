@@ -197,20 +197,14 @@ def _process_field_groups(
 
     grouped_fields = {field for group in field_groups.values() for field in group}
 
-    if hasattr(base_query, "subquery"):
-        base_subq = base_query.subquery()
-    else:
-        base_subq = base_query
+    base_subq = base_query.subquery() if hasattr(base_query, "subquery") else base_query
 
     non_grouped = select(base_subq.c).where(~base_subq.c.field.in_(grouped_fields))
 
     group_queries = []
 
     for group_name, fields in field_groups.items():
-        if hasattr(base_query, "subquery"):
-            subq = base_query.subquery()
-        else:
-            subq = base_query
+        subq = base_query.subquery() if hasattr(base_query, "subquery") else base_query
 
         group_query = (
             select(

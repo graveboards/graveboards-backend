@@ -456,7 +456,7 @@ class BeatmapManager:
             profile = await self._populate_profile(user_id)
             user.profile = profile
         except HTTPError:
-            raise RestrictedUserError(user_id)
+            raise RestrictedUserError(user_id) from None
 
         return user
 

@@ -293,7 +293,7 @@ def _default_session_resolver(
     return obj.session(autoflush=autoflush)
 
 
-def _enforce_autoflush(
+def _enforce_autoflush[**P, T](
     session: AsyncSession,
     autoflush_allowed: bool,
     func: Callable[P, Awaitable[T] | AsyncIterator[T]],

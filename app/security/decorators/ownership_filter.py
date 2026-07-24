@@ -80,11 +80,11 @@ def ownership_filter(
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             try:
                 user_id = get_authenticated_user_id(kwargs, authorized_user_id_lookup)
-            except KeyError:
+            except KeyError as e:
                 func_path = ".".join((func.__module__, func.__name__))
                 raise ValueError(
                     f"Decorated function '{func_path}' must accept **kwargs to use @ownership_filter"
-                )
+                ) from e
 
             if bypass_roles or override:
                 db: PostgresqlDB = request.state.db

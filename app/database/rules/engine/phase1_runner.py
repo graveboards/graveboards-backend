@@ -59,7 +59,7 @@ class Phase1Runner:
                 raise RuleViolationError(
                     rule.type,
                     f"Validation error: {e}",
-                )
+                ) from e
 
     def _get_tier(self, rule: QueueRule) -> int:
         return effective_rule_tier(rule.type, rule.config or {})

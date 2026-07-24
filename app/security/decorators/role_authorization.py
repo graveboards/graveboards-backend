@@ -74,11 +74,11 @@ def role_authorization(
 
             try:
                 user_id = get_authenticated_user_id(kwargs)
-            except KeyError:
+            except KeyError as e:
                 func_path = ".".join((func.__module__, func.__name__))
                 raise ValueError(
                     f"Decorated function '{func_path}' must accept **kwargs to use @role_authorization"
-                )
+                ) from e
 
             kwargs["user"] = user_id
             user_roles = await get_user_roles(db, user_id)

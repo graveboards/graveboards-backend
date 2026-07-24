@@ -1,3 +1,4 @@
+import contextlib
 import json
 import re
 from datetime import datetime
@@ -35,11 +36,11 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
             v = [v]
 
         root_key = None
-        if k in self.param_schemas.keys():
+        if k in self.param_schemas:
             root_key = k
             is_deep = False
         else:
-            for key in self.param_schemas.keys():
+            for key in self.param_schemas:
                 if k.startswith(key) and "[" in k:
                     root_key = key
             if not root_key:
@@ -119,9 +120,8 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
                 resolved_param[k] = values
                 continue
 
-            if _in == "path":
-                if param_schema and param_schema.get("type") == "array":
-                    values = [values]
+            if _in == "path" and param_schema and param_schema.get("type") == "array":
+                values = [values]
 
             if param_schema and param_schema["type"] == "array":
                 if k == "sorting":
@@ -133,31 +133,23 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
                 resolved_param[k] = values
 
             if k == "include":
-                try:
+                with contextlib.suppress(TypeValidationError):
                     resolved_param[k] = self.coerce_include(
                         param_defn, resolved_param[k], "parameter", k
                     )
-                except TypeValidationError:
-                    pass
             elif k == "sorting":
-                try:
+                with contextlib.suppress(TypeValidationError):
                     resolved_param[k] = self.coerce_sorting(
                         param_defn, resolved_param[k], "parameter", k
                     )
-                except TypeValidationError:
-                    pass
             elif k == "filters":
-                try:
+                with contextlib.suppress(TypeValidationError):
                     resolved_param[k] = self.coerce_filters(
                         param_defn, resolved_param[k], "parameter", k
                     )
-                except TypeValidationError:
-                    pass
             else:
-                try:
+                with contextlib.suppress(TypeValidationError):
                     resolved_param[k] = coerce_type(param_defn, resolved_param[k], "parameter", k)
-                except TypeValidationError:
-                    pass
 
         return resolved_param
 
@@ -240,10 +232,7 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
                 return {k: cast(v, {}) for k, v in data.items()}
 
             if isinstance(data, list):
-                if isinstance(schema, dict):
-                    items_schema = schema.get("items", {})
-                else:
-                    items_schema = {}
+                items_schema = schema.get("items", {}) if isinstance(schema, dict) else {}
 
                 return [cast(v, items_schema) for v in data]
 
@@ -283,10 +272,7 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
         if isinstance(value, str):
             try:
                 parsed = json.loads(value)
-                if isinstance(parsed, list):
-                    value = parsed
-                else:
-                    value = [parsed]
+                value = parsed if isinstance(parsed, list) else [parsed]
             except json.JSONDecodeError:
                 value = [value]
 

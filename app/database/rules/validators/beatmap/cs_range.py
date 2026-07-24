@@ -26,7 +26,7 @@ class CSRangeRestriction(BeatmapRestrictionBase):
         max_cs = config.get("max")
 
         if logic == "all":
-            for beatmap, cs in zip(beatmaps, cs_values):
+            for beatmap, cs in zip(beatmaps, cs_values, strict=False):
                 if min_cs is not None and cs < min_cs:
                     raise RuleViolationError(
                         self.type,

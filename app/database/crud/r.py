@@ -475,7 +475,7 @@ class _R:
             except ValueError:
                 raise ValueError(
                     f"Invalid field format '{field}' in item #{i}. Expected 'Model.field'"
-                )
+                ) from None
 
             if prefix == model_name:
                 target_model = model

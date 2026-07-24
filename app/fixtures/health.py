@@ -230,7 +230,6 @@ def get_category_gaps() -> list[dict[str, Any]]:
     for category in categories:
         health = check_category_health(category)
         if health.expected_count > 0 and health.actual_count < health.expected_count:
-            expected_files = set(f.name for f in get_test_fixture_path(category).glob("*.json"))
             expected_list = sorted([f.name for f in get_test_fixture_path(category).glob("*.json")])
 
             gaps.append(

@@ -136,7 +136,7 @@ _DEFAULTS = PatternMultipliers().model_dump()
 
 PatternMultiplierFieldFlag = IntFlag(
     "PatternMultiplierFieldFlag",
-    {field: auto() for field in PatternMultipliers.model_fields.keys()},
+    {field: auto() for field in PatternMultipliers.model_fields},
 )
 """Bitmask flags representing individual pattern multipliers.
 

@@ -77,16 +77,15 @@ def _move_fixture_files(
             if src_path.exists():
                 for filepath in src_path.glob("*.json"):
                     copy_operations.append((filepath, dst_path / filepath.name, category, None))
-        elif category in ["users", "scores"]:
-            if src_path.exists():
-                for sub in src_path.iterdir():
-                    if sub.is_dir():
-                        sub_dst = dst_path / sub.name
-                        sub_dst.mkdir(parents=True, exist_ok=True)
-                        for filepath in sub.glob("*.json"):
-                            copy_operations.append(
-                                (filepath, sub_dst / filepath.name, category, sub.name)
-                            )
+        elif category in ["users", "scores"] and src_path.exists():
+            for sub in src_path.iterdir():
+                if sub.is_dir():
+                    sub_dst = dst_path / sub.name
+                    sub_dst.mkdir(parents=True, exist_ok=True)
+                    for filepath in sub.glob("*.json"):
+                        copy_operations.append(
+                            (filepath, sub_dst / filepath.name, category, sub.name)
+                        )
 
     # Phase 2: Execute all copy operations, tracking missing files
     for src, dst, _, _ in copy_operations:

@@ -71,5 +71,5 @@ def parse_user_ids(env_var: str, required: bool = False) -> list[int]:
         return []
     try:
         return [int(uid.strip()) for uid in value.split(",") if uid.strip()]
-    except ValueError:
-        raise ValueError(f"{env_var} must contain only comma-separated integers")
+    except ValueError as err:
+        raise ValueError(f"{env_var} must contain only comma-separated integers") from err

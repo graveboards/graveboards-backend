@@ -171,7 +171,7 @@ async def search(**kwargs):
 
             search_cache_misses_total.labels(scope=sq.scope.value).inc()
     except EXCEPTIONS as e:
-        raise bad_request_factory(e)
+        raise bad_request_factory(e) from e
 
     request_url = str(request.url)
     page_data, status, headers = build_pagination_response(
@@ -198,13 +198,12 @@ async def search(**kwargs):
 
 
 async def post(body: dict):
-    rc: RedisClient = request.state.rc  # TODO: caching
-
+    # TODO: caching
     try:
         search_query = SearchSchema.model_validate(body)
         q = compress_query(search_query.serialize())
     except EXCEPTIONS as e:
-        raise bad_request_factory(e)
+        raise bad_request_factory(e) from e
 
     return (
         {"message": "Search resource created successfully", "q": q},

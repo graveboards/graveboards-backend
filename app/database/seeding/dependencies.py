@@ -8,7 +8,7 @@ DEPENDENCIES: dict[SeederTarget, set[SeederTarget]] = {
 }
 """Directed acyclic dependency graph between seeder targets.
 
-Each key depends on the set of ``SeederTargets`` listed as its value. This graph defines 
+Each key depends on the set of ``SeederTargets`` listed as its value. This graph defines
 execution constraints for topological ordering.
 """
 

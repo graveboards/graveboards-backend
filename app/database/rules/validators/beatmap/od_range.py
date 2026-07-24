@@ -26,7 +26,7 @@ class ODRangeRestriction(BeatmapRestrictionBase):
         max_od = config.get("max")
 
         if logic == "all":
-            for beatmap, od in zip(beatmaps, od_values):
+            for beatmap, od in zip(beatmaps, od_values, strict=False):
                 if min_od is not None and od < min_od:
                     raise RuleViolationError(
                         self.type,

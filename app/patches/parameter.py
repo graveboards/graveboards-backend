@@ -65,7 +65,7 @@ class ParameterValidatorPatched(ParameterValidator):
             try:
                 return validate_sorting(value, param.get("schema"))
             except ArrayValidationError as e:
-                raise bad_request_factory(e)
+                raise bad_request_factory(e) from e
         elif param_name == "filters" and value:
             try:
                 resolved_schema = get_filter_schema(
@@ -73,7 +73,7 @@ class ParameterValidatorPatched(ParameterValidator):
                 )
                 return validate_filters(value, resolved_schema)
             except DeepObjectValidationError as e:
-                raise bad_request_factory(e)
+                raise bad_request_factory(e) from e
         elif param_name == "include" and value:
             try:
                 request_scope = self.request_scopes.get(request, {})
@@ -89,7 +89,7 @@ class ParameterValidatorPatched(ParameterValidator):
                 )
                 return validate_include(value, resolved_schema)
             except DeepObjectValidationError as e:
-                raise bad_request_factory(e)
+                raise bad_request_factory(e) from e
 
         return self.validate_parameter("query", value, param, param_name=param_name)
 

@@ -375,9 +375,8 @@ class CoverageRegistry:
 
         # nominations
         noms = data.get("current_nominations")
-        if noms and isinstance(noms, dict):
-            if noms.get("nominators"):
-                self._set_bool_bucket("fetched_beatmapset_nominations", True, newly_filled)
+        if noms and isinstance(noms, dict) and noms.get("nominators"):
+            self._set_bool_bucket("fetched_beatmapset_nominations", True, newly_filled)
 
         # sr_gaps / hit_lengths from beatmaps within the beatmapset
         beatmaps = data.get("beatmaps", [])

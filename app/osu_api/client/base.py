@@ -136,7 +136,7 @@ class OsuAPIClientBase:
 
                 raise TimeoutError(
                     f"Failed to fetch token after {MAX_TOKEN_FETCH_RETRIES} retries due to ReadTimeout"
-                )
+                ) from None
 
     async def get_auth_headers(self, access_token: str = None) -> dict:
         return {"Authorization": f"Bearer {access_token or await self.get_token()}"}

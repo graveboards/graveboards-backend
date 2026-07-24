@@ -96,15 +96,14 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
     def _save_search_test_coverage_metadata(self) -> None:
         """Persist current coverage state to metadata.json."""
         MAX_COVERAGE_LIST_SIZE = 200
-        coverage_report = self.coverage.get_coverage_report()
 
         # Convert registry state to metadata format
         self.metadata["search_test_coverage"] = {
             "beatmapset_genres": sorted(
-                [k for k in self.coverage._data.get("fetched_beatmapset_genres", {}).keys()]
+                [k for k in self.coverage._data.get("fetched_beatmapset_genres", {})]
             )[:MAX_COVERAGE_LIST_SIZE],
             "beatmapset_languages": sorted(
-                [k for k in self.coverage._data.get("fetched_beatmapset_languages", {}).keys()]
+                [k for k in self.coverage._data.get("fetched_beatmapset_languages", {})]
             )[:MAX_COVERAGE_LIST_SIZE],
             "beatmapset_nsfw_true_ids": sorted(
                 [
@@ -141,10 +140,10 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
                 list(self.coverage._data.get("fetched_beatmapset_tags", set()))
             )[:MAX_COVERAGE_LIST_SIZE],
             "beatmap_modes": sorted(
-                [k for k in self.coverage._data.get("fetched_beatmap_modes", {}).keys()]
+                [k for k in self.coverage._data.get("fetched_beatmap_modes", {})]
             )[:MAX_COVERAGE_LIST_SIZE],
             "beatmap_statuses": sorted(
-                [k for k in self.coverage._data.get("fetched_beatmap_statuses", {}).keys()]
+                [k for k in self.coverage._data.get("fetched_beatmap_statuses", {})]
             )[:MAX_COVERAGE_LIST_SIZE],
             "beatmap_difficulties": {
                 k: sorted(v)
@@ -183,7 +182,7 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
                 k: sorted(v) for k, v in self.coverage._data.get("fetched_beatmap_cs", {}).items()
             }[:MAX_COVERAGE_LIST_SIZE],
             "country_codes": sorted(
-                [k for k in self.coverage._data.get("fetched_country_codes", {}).keys()]
+                [k for k in self.coverage._data.get("fetched_country_codes", {})]
             )[:MAX_COVERAGE_LIST_SIZE],
             "restricted_users": {
                 "true_ids": sorted(
@@ -275,7 +274,7 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
             classifications = self._classify_beatmap(beatmap_data, beatmap_id)
 
             # Update newly_filled counters
-            for bucket_name, ids in classifications.items():
+            for bucket_name, _ids in classifications.items():
                 newly_filled[bucket_name] = newly_filled.get(bucket_name, 0) + 1
 
             # Update metadata counts
@@ -351,7 +350,7 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
                 classifications = self._classify_beatmapset(bs_full, bs_id)
 
                 # Update newly_filled counters
-                for bucket_name, ids in classifications.items():
+                for bucket_name, _ids in classifications.items():
                     newly_filled[bucket_name] = newly_filled.get(bucket_name, 0) + 1
 
                 self.metadata["samples"]["beatmapsets"]["count"] = (
@@ -430,7 +429,7 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
                 classifications = self._classify_user(user_data, user_id)
 
                 # Update newly_filled counters
-                for bucket_name, ids in classifications.items():
+                for bucket_name, _ids in classifications.items():
                     newly_filled[bucket_name] = newly_filled.get(bucket_name, 0) + 1
 
                 self.metadata["samples"]["users"]["count"] = (

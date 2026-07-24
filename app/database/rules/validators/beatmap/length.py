@@ -65,9 +65,7 @@ class LengthRestriction(BeatmapRestrictionBase):
                     return False
                 if min_total_length is not None and beatmap.total_length < min_total_length:
                     return False
-                if max_total_length is not None and beatmap.total_length > max_total_length:
-                    return False
-                return True
+                return not (max_total_length is not None and beatmap.total_length > max_total_length)
 
             if not any(within_bounds(b) for b in beatmaps):
                 raise RuleViolationError(

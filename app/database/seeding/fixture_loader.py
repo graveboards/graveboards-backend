@@ -20,6 +20,7 @@ load_seeding_data(targets)
 
 from __future__ import annotations
 
+import contextlib
 import json
 from datetime import datetime
 from typing import TYPE_CHECKING
@@ -140,10 +141,8 @@ def _load_users() -> list[dict]:
             # Only convert known DateTime columns, not JSONB fields
             for col in datetime_columns:
                 if col in api_data and isinstance(api_data[col], str):
-                    try:
+                    with contextlib.suppress(ValueError):
                         api_data[col] = datetime.fromisoformat(api_data[col])
-                    except ValueError:
-                        pass
 
             users.append(
                 {
@@ -197,10 +196,8 @@ def _load_queues() -> list[dict]:
         # Convert ISO string timestamps back to datetime objects
         for col in ("created_at", "updated_at"):
             if col in queue_data and isinstance(queue_data[col], str):
-                try:
+                with contextlib.suppress(ValueError):
                     queue_data[col] = datetime.fromisoformat(queue_data[col])
-                except ValueError:
-                    pass
 
         queues.append(queue_data)
 
@@ -221,10 +218,8 @@ def _load_requests() -> list[dict]:
         # Convert ISO string timestamps back to datetime objects
         for col in ("created_at", "updated_at"):
             if col in request_data and isinstance(request_data[col], str):
-                try:
+                with contextlib.suppress(ValueError):
                     request_data[col] = datetime.fromisoformat(request_data[col])
-                except ValueError:
-                    pass
 
         requests.append(request_data)
 

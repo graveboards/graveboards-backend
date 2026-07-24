@@ -26,7 +26,7 @@ class HPRangeRestriction(BeatmapRestrictionBase):
         max_hp = config.get("max")
 
         if logic == "all":
-            for beatmap, hp in zip(beatmaps, hp_values):
+            for beatmap, hp in zip(beatmaps, hp_values, strict=False):
                 if min_hp is not None and hp < min_hp:
                     raise RuleViolationError(
                         self.type,

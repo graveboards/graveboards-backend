@@ -110,7 +110,7 @@ async def post(queue_id: int, body: dict, **kwargs):
     try:
         rule_data = RuleCreateSchema.model_validate(body).model_dump(exclude_none=True)
     except Exception as e:
-        raise BadRequest(f"Invalid rule data: {e}")
+        raise BadRequest(f"Invalid rule data: {e}") from e
 
     crud = RuleCRUD()
     async with db.session() as session:
@@ -148,7 +148,7 @@ async def patch(queue_id: int, rule_id: int, body: dict, **kwargs):
     try:
         updates = RuleUpdateSchema.model_validate(body).model_dump(exclude_unset=True)
     except Exception as e:
-        raise BadRequest(f"Invalid rule update: {e}")
+        raise BadRequest(f"Invalid rule update: {e}") from e
 
     crud = RuleCRUD()
     async with db.session() as session:
@@ -225,7 +225,7 @@ async def put(queue_id: int, body: dict, **kwargs):
         try:
             validated.append(RuleReplaceSchema.model_validate(data).model_dump(exclude_none=True))
         except Exception as e:
-            raise BadRequest(f"Invalid rule data: {e}")
+            raise BadRequest(f"Invalid rule data: {e}") from e
 
     crud = RuleCRUD()
     async with db.session() as session:

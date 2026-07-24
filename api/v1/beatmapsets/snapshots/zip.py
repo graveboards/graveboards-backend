@@ -19,10 +19,10 @@ async def search(beatmapset_id: int, snapshot_number: int = -1):
     try:
         bm = BeatmapManager(rc, db)
         zip_file_io = await bm.get_zip(beatmapset_id, snapshot_number)
-    except ValueError:
+    except ValueError as e:
         raise NotFound(
             f"BeatmapsetSnapshot with beatmapset_id '{beatmapset_id}' and snapshot_number '{snapshot_number}' not found"
-        )
+        ) from e
 
     return StreamingResponse(
         content=stream_file(zip_file_io),

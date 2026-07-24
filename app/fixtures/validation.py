@@ -89,12 +89,11 @@ def validate_data(data: Any, data_type: str) -> tuple[bool, str]:
             return False, f"Missing required field: {field}"
 
     for field, expected_type in schema.get("type_checks", {}).items():
-        if field in data:
-            if not isinstance(data[field], expected_type):
-                return (
-                    False,
-                    f"Field '{field}' expected {expected_type}, got {type(data[field]).__name__}",
-                )
+        if field in data and not isinstance(data[field], expected_type):
+            return (
+                False,
+                f"Field '{field}' expected {expected_type}, got {type(data[field]).__name__}",
+            )
 
     return True, ""
 

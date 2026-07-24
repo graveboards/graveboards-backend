@@ -28,9 +28,9 @@ async def search(token: str, rc: RedisClient = None):
 
     try:
         jwt_claims = validate_token(token)
-    except InvalidTokenError, ExpiredSignatureError, InvalidIssuerError:
+    except (InvalidTokenError, ExpiredSignatureError, InvalidIssuerError) as e:
         await limiter.record_failure(client_ip)
-        raise BadRequest("Invalid or expired JWT")
+        raise BadRequest("Invalid or expired JWT") from e
 
     await limiter.record_success(client_ip)
 
@@ -80,9 +80,8 @@ async def post(
         )
         access_token = token["access_token"]
         refresh_token = token["refresh_token"]
-        expires_at = token["expires_at"]
     except OAuthError as e:
-        raise OsuOAuthError(e)
+        raise OsuOAuthError(e) from e
 
     if osu_api_client is None:
         osu_api_client = OsuAPIClient(rc)

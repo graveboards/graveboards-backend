@@ -112,8 +112,8 @@ class FieldFilters(RootModel):
                         column = column_map[model_field.alias]
                     else:
                         column = column_map[field_name]
-                except KeyError, ValueError:
-                    raise FieldNotSupportedError(model_class.value, field_name)
+                except (KeyError, ValueError) as e:
+                    raise FieldNotSupportedError(model_class.value, field_name) from e
 
                 expected_type = extract_inner_types(column)
 
@@ -136,8 +136,8 @@ class FieldFilters(RootModel):
                     relationship = model_class.mapper.relationships[field_name]
                     related_model = relationship.mapper.class_
                     related_model_class = ModelClass(related_model)
-                except KeyError, ValueError:
-                    raise FieldNotSupportedError(model_class.value, field_name)
+                except (KeyError, ValueError) as e:
+                    raise FieldNotSupportedError(model_class.value, field_name) from e
 
                 value.validate_against_sqlalchemy_model(related_model_class)
             else:
@@ -248,7 +248,7 @@ class FiltersSchema(BaseModel):
                 filter_category = SearchableFieldCategory.from_name(category_name)
                 model_class = filter_category.model_class
             except ValueError:
-                raise UnknownFieldCategoryError(category_name)
+                raise UnknownFieldCategoryError(category_name) from None
 
             if field_filters is None:
                 continue

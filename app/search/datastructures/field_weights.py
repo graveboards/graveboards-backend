@@ -218,12 +218,12 @@ FieldWeightFieldFlag = IntFlag(
     {
         f"{category_name}__{field}": auto()
         for category_name, defaults in _DEFAULTS.items()
-        for field in defaults.keys()
+        for field in defaults
     },
 )
 """
 Bitmask flags representing individual field weights.
 
-Each flag corresponds to a flattened "category__field" identifier and is used to encode 
+Each flag corresponds to a flattened "category__field" identifier and is used to encode
 presence and null-state information during binary serialization.
 """

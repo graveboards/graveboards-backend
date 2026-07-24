@@ -362,7 +362,6 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         beatmaps_targeted = counts.get("beatmaps", {})
         beatmapsets_targeted = counts.get("beatmapsets", {})
         users_targeted = counts.get("users", {})
-        scores_targeted = counts.get("scores", {})
 
         beatmaps_count = beatmaps_targeted.get("total", 0)
         beatmapsets_count = beatmapsets_targeted.get("total", 0)

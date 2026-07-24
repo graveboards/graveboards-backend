@@ -287,7 +287,7 @@ class Conditions(BaseModel):
         try:
             compiled = re.compile(value)
         except re.error as e:
-            raise ValueError(f"Invalid regex: {e}")
+            raise ValueError(f"Invalid regex: {e}") from e
 
         if compiled.groups > MAX_GROUPS:
             raise ValueError(f"Too many capture groups (>{MAX_GROUPS})")

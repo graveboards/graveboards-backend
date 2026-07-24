@@ -420,9 +420,8 @@ class FixtureReader:
             if filename.startswith("queue_"):
                 return int(filename[6:])
 
-        elif category == "requests":
-            if filename.startswith("request_"):
-                return int(filename[8:])
+        elif category == "requests" and filename.startswith("request_"):
+            return int(filename[8:])
 
         return None
 

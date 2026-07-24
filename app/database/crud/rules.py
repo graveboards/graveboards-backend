@@ -179,7 +179,7 @@ class RuleCRUD:
             try:
                 updates["config"] = validate_rule_config(rule.type, updates["config"])
             except Exception as e:
-                raise BadRequest(f"Invalid config for rule type '{rule.type}': {e}")
+                raise BadRequest(f"Invalid config for rule type '{rule.type}': {e}") from e
 
         # Validate version against the type's supported versions.
         if updates.get("version") is not None:

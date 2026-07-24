@@ -205,11 +205,10 @@ class CoverageTracker:
                         count += 1
                         if BUCKET_RARITY.get(bucket_key, 0) >= RARE_BUCKET_THRESHOLD:
                             rare_uncovered += 1
-            elif isinstance(attr, bool):
-                if not attr:
-                    count += 1
-                    if BUCKET_RARITY.get(bucket_key, 0) >= RARE_BUCKET_THRESHOLD:
-                        rare_uncovered += 1
+            elif isinstance(attr, bool) and not attr:
+                count += 1
+                if BUCKET_RARITY.get(bucket_key, 0) >= RARE_BUCKET_THRESHOLD:
+                    rare_uncovered += 1
         return count, rare_uncovered
 
     def compute_action_priority(self, action: FetchAction) -> float:
@@ -284,7 +283,7 @@ class SearchTestFetchAction:
         result: dict[str, set[int]] = {}
         for bucket_name, cats in classifications.items():
             if isinstance(cats, dict):
-                for cat, ids in cats.items():
+                for _cat, ids in cats.items():
                     if len(ids) == 1:
                         result.setdefault(bucket_name, set()).update(ids)
             elif isinstance(cats, set) and len(cats) == 1:
@@ -317,7 +316,7 @@ class SearchTestFetchAction:
         result: dict[str, set[int]] = {}
         for bucket_name, cats in classifications.items():
             if isinstance(cats, dict):
-                for cat, ids in cats.items():
+                for _cat, ids in cats.items():
                     if len(ids) == 1:
                         result.setdefault(bucket_name, set()).update(ids)
             elif isinstance(cats, set) and len(cats) == 1:
@@ -368,7 +367,7 @@ class SearchTestFetchAction:
         result: dict[str, set[int]] = {}
         for bucket_name, cats in classifications.items():
             if isinstance(cats, dict):
-                for cat, ids in cats.items():
+                for _cat, ids in cats.items():
                     if len(ids) == 1:
                         result.setdefault(bucket_name, set()).update(ids)
 
@@ -416,7 +415,7 @@ class SearchTestFetchAction:
             result: dict[str, set[int]] = {}
             for bucket_name, cats in classifications.items():
                 if isinstance(cats, dict):
-                    for cat, ids in cats.items():
+                    for _cat, ids in cats.items():
                         if len(ids) == 1:
                             result.setdefault(bucket_name, set()).update(ids)
                 elif isinstance(cats, set) and len(cats) == 1:
@@ -644,14 +643,14 @@ async def adaptive_fetch_loop(
         total_calls += action.cost
 
         if result:
-            fill_str = ", ".join(SHORT_NAMES.get(k, k) for k in result.keys())
+            fill_str = ", ".join(SHORT_NAMES.get(k, k) for k in result)
             fetcher.logger.debug(f"  -> filled: {fill_str} ({len(result)} buckets)")
         else:
             fetcher.logger.debug("  -> no new buckets filled")
             wasted_calls += 1
 
         # Count newly filled buckets
-        for bucket_key, ids in result.items():
+        for bucket_key, _ids in result.items():
             newly_filled[bucket_key] = newly_filled.get(bucket_key, 0) + 1
 
         # Re-evaluate priorities
@@ -674,12 +673,12 @@ async def adaptive_fetch_loop(
                 result = await users_action.execute()
                 total_calls += 1
                 if result:
-                    fill_str = ", ".join(SHORT_NAMES.get(k, k) for k in result.keys())
+                    fill_str = ", ".join(SHORT_NAMES.get(k, k) for k in result)
                     fetcher.logger.debug(f"  -> filled: {fill_str} ({len(result)} buckets)")
                 else:
                     wasted_calls += 1
                     fetcher.logger.debug("  -> no new buckets filled")
-                for bucket_key, ids in result.items():
+                for bucket_key, _ids in result.items():
                     newly_filled[bucket_key] = newly_filled.get(bucket_key, 0) + 1
                 _reheap()
                 _, rare_count = tracker.total_uncovered()

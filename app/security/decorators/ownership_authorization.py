@@ -85,11 +85,11 @@ def ownership_authorization(
 
             try:
                 authorized_user_id = get_authenticated_user_id(kwargs, authorized_user_id_lookup)
-            except KeyError:
+            except KeyError as e:
                 func_path = ".".join((func.__module__, func.__name__))
                 raise ValueError(
                     f"Decorated function '{func_path}' must accept **kwargs to use @ownership_authorization"
-                )
+                ) from e
 
             if await is_admin(db, authorized_user_id):
                 strip_auth_info(kwargs)
@@ -157,7 +157,7 @@ async def _resolve_resource_owner(
             raise ValueError(
                 f"Cannot resolve resource owner: '{resource_user_id_lookup}' not in "
                 f"kwargs and '{resource_id_lookup}' not in kwargs for resource fetching"
-            )
+            ) from None
 
         resource = await db.get(resource_model, id=resource_id)
         if resource is None:
@@ -168,7 +168,7 @@ async def _resolve_resource_owner(
         except KeyError:
             raise ValueError(
                 f"Resource owner ID '{resource_user_id_lookup}' not found on fetched resource"
-            )
+            ) from None
 
     raise ValueError(
         f"Cannot resolve resource owner: '{resource_user_id_lookup}' not in kwargs. "
