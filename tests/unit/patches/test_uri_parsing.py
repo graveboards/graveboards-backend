@@ -2,7 +2,6 @@ import pytest
 
 from app.patches.uri_parsing import OpenAPIURIParserPatched
 
-
 pytestmark = pytest.mark.unit
 
 

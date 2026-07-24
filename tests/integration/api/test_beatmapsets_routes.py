@@ -3,9 +3,9 @@ Integration tests for POST /api/v1/beatmapsets endpoint (admin-only).
 
 Tests the beatmap archival via full HTTP stack.
 """
-import os
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 
 class TestBeatmapsetsPostIntegration:
@@ -16,7 +16,7 @@ class TestBeatmapsetsPostIntegration:
     @pytest.fixture
     def mock_beatmap_manager(self):
         """Create a mock beatmap manager with proper archive behavior."""
-        from unittest.mock import MagicMock, AsyncMock
+        from unittest.mock import AsyncMock, MagicMock
 
         def create_manager(result):
             mock_bm = MagicMock()
@@ -212,8 +212,8 @@ class TestBeatmapsetsPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_access_succeeds_with_token(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, admin_user_token, authenticated_user_id):
         """Test that admin user can successfully post beatmapset with valid token."""
-        from app.security import decode_token
         from app.database.enums import RoleName
+        from app.security import decode_token
 
         mock_bm = mock_beatmap_manager({
             "message": "Snapshotted 1 beatmap(s)",
@@ -372,7 +372,6 @@ class TestBeatmapsetsPostIntegration:
 @pytest.mark.asyncio
 async def test_get_beatmapset_zip(TestClientWithMocks):
     """Test GET /api/v1/beatmapsets/{id}/snapshots/{n}/zip returns zip file."""
-    from app.beatmaps import BeatmapManager
     from io import BytesIO
 
     mock_db = AsyncMock()

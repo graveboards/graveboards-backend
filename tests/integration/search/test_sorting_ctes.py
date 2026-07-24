@@ -13,9 +13,8 @@ pytestmark = [pytest.mark.integration]
 def test_sorting_schema_structure():
     """Test sorting schema structure."""
     from app.search.datastructures import SortingSchema
-    from app.search.enums import ModelField, SortingOrder
-
     from app.search.datastructures.sorting import SortingOption
+    from app.search.enums import ModelField, SortingOrder
 
     sorting_schema = SortingSchema(
         [
@@ -44,9 +43,8 @@ def test_sorting_schema_empty():
 def test_sorting_schema_single_field():
     """Test sorting schema with single field."""
     from app.search.datastructures import SortingSchema
-    from app.search.enums import ModelField, SortingOrder
-
     from app.search.datastructures.sorting import SortingOption
+    from app.search.enums import ModelField, SortingOrder
 
     sorting_schema = SortingSchema(
         [SortingOption(field=ModelField.BEATMAPSNAPSHOT__RANKED, order=SortingOrder.ASCENDING)]
@@ -70,9 +68,8 @@ def test_sorting_order_enum():
 def test_sorting_schema_validation():
     """Test sorting schema validation."""
     from app.search.datastructures import SortingSchema
-    from app.search.enums import ModelField
-
     from app.search.datastructures.sorting import SortingOption
+    from app.search.enums import ModelField
 
     with pytest.raises(Exception):
         SortingSchema([{"invalid": "schema"}])
@@ -85,9 +82,8 @@ def test_sorting_schema_validation():
 def test_sorting_schema_multiple_fields():
     """Test sorting schema with multiple fields."""
     from app.search.datastructures import SortingSchema
-    from app.search.enums import ModelField, SortingOrder
-
     from app.search.datastructures.sorting import SortingOption
+    from app.search.enums import ModelField, SortingOrder
 
     sorting_schema = SortingSchema(
         [

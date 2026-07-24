@@ -6,10 +6,9 @@ This module defines schemas and validation functions for osu! API response data.
 
 import json
 from pathlib import Path
-from typing import Dict, Optional, Tuple
 
 try:
-    from jsonschema import validate, ValidationError
+    from jsonschema import ValidationError, validate
     HAS_JSONSCHEMA = True
 except ImportError:
     HAS_JSONSCHEMA = False
@@ -110,7 +109,7 @@ SCHEMA_MAP = {
 }
 
 
-def validate_fixture_file(filepath: Path, category: Optional[str] = None) -> Tuple[bool, Optional[str]]:
+def validate_fixture_file(filepath: Path, category: str | None = None) -> tuple[bool, str | None]:
     """Validate a fixture file against its schema.
     
     Args:
@@ -147,7 +146,7 @@ def validate_fixture_file(filepath: Path, category: Optional[str] = None) -> Tup
         return False, f"Schema validation error: {e.message} at path: {list(e.path)}"
 
 
-def validate_all_fixtures(fixtures_dir: Path) -> Dict[str, list]:
+def validate_all_fixtures(fixtures_dir: Path) -> dict[str, list]:
     """Validate all fixture files in a directory.
     
     Args:
@@ -158,7 +157,7 @@ def validate_all_fixtures(fixtures_dir: Path) -> Dict[str, list]:
     """
     results = {}
 
-    for category in SCHEMA_MAP.keys():
+    for category in SCHEMA_MAP:
         category_dir = fixtures_dir / category
         if not category_dir.exists():
             continue
@@ -173,7 +172,7 @@ def validate_all_fixtures(fixtures_dir: Path) -> Dict[str, list]:
     return results
 
 
-def _infer_category_from_path(filepath: Path) -> Optional[str]:
+def _infer_category_from_path(filepath: Path) -> str | None:
     """Infer category name from file path."""
     parents = filepath.parent.parts
     for parent in reversed(parents):

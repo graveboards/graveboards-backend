@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from app.database.models import Beatmap, Beatmapset
 
@@ -180,44 +181,44 @@ class TestLeaderboardPatchIntegration:
         from app.database.models import BeatmapSnapshot, Leaderboard
 
         mock_db = AsyncMock()
-        
+
         beatmap_snapshot_data = {
             "id": 1,
             "beatmap_id": self.TEST_BEATMAP_ID,
             "snapshot_number": self.TEST_SNAPSHOT_NUMBER,
         }
-        
+
         mock_beatmap_snapshot = MagicMock()
         mock_beatmap_snapshot.id = 1
         mock_beatmap_snapshot.beatmap_id = self.TEST_BEATMAP_ID
         mock_beatmap_snapshot.snapshot_number = self.TEST_SNAPSHOT_NUMBER
-        
+
         leaderboard_data = {
             "id": 1,
             "beatmap_id": self.TEST_BEATMAP_ID,
             "beatmap_snapshot_id": 1,
             "frozen": False,
         }
-        
+
         mock_leaderboard = MagicMock()
         mock_leaderboard.id = 1
         mock_leaderboard.beatmap_id = self.TEST_BEATMAP_ID
         mock_leaderboard.beatmap_snapshot_id = 1
         mock_leaderboard.frozen = False
-        
+
         mock_user = MagicMock()
         mock_user.id = 11111111
         admin_role = MagicMock()
         admin_role.name = "admin"
         mock_user.roles = [admin_role]
-        
+
         async def mock_get(model, **kwargs):
             if model == BeatmapSnapshot:
                 return mock_beatmap_snapshot
             elif model == Leaderboard:
                 return mock_leaderboard
             return mock_user
-        
+
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.update = AsyncMock()
 
@@ -241,33 +242,32 @@ class TestLeaderboardPatchIntegration:
     async def test_non_admin_gets_forbidden_on_leaderboard_patch(self, TestClientWithMocks, admin_user_token, authenticated_user_id):
         """Test non-admin user gets 403 Forbidden on leaderboard patch."""
         from app.security import generate_token
-        from app.database.models import BeatmapSnapshot, Leaderboard
 
         mock_db = AsyncMock()
-        
+
         beatmap_snapshot_data = {
             "id": 1,
             "beatmap_id": self.TEST_BEATMAP_ID,
             "snapshot_number": self.TEST_SNAPSHOT_NUMBER,
         }
-        
+
         mock_beatmap_snapshot = MagicMock()
         mock_beatmap_snapshot.id = 1
         mock_beatmap_snapshot.beatmap_id = self.TEST_BEATMAP_ID
         mock_beatmap_snapshot.snapshot_number = self.TEST_SNAPSHOT_NUMBER
-        
+
         mock_leaderboard = MagicMock()
         mock_leaderboard.id = 1
         mock_leaderboard.beatmap_id = self.TEST_BEATMAP_ID
         mock_leaderboard.beatmap_snapshot_id = 1
-        
+
         mock_user = MagicMock()
         mock_user.id = 99999999
         mock_user.roles = []
-        
+
         async def mock_get(model, **kwargs):
             return mock_user
-        
+
         mock_db.get = AsyncMock(side_effect=mock_get)
 
         test_client = TestClientWithMocks(mock_db=mock_db)

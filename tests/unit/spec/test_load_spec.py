@@ -1,12 +1,13 @@
+from unittest.mock import mock_open, patch
+
 import pytest
-from unittest.mock import patch, mock_open
 
 from app.spec.load import (
-    load_spec,
-    _build_spec,
     _apply_mutations,
+    _build_spec,
     _current_build_options,
     _get_latest_spec_mtime,
+    load_spec,
 )
 
 

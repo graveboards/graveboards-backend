@@ -3,8 +3,8 @@ import pytest
 from app.daemon.services.service.task.backoff import (
     BackoffStrategy,
     ConstantBackoff,
-    LinearBackoff,
     ExponentialBackoff,
+    LinearBackoff,
 )
 
 

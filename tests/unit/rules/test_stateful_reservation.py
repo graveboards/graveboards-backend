@@ -1,14 +1,14 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
 from connexion.exceptions import Forbidden
 
 from app.database.rules.context import ExecutionContext
 from app.database.rules.engine.stateful import (
-    reserve_stateful_rules,
-    rollback_reservations,
     STATEFUL_RULE_TYPES,
     Reservation,
+    reserve_stateful_rules,
+    rollback_reservations,
 )
 
 
@@ -24,7 +24,7 @@ def _rule(type_, config, is_active=True, version="1.0"):
 class TestReserveStatefulRules:
     @pytest.mark.unit
     def test_stateful_types(self):
-        assert STATEFUL_RULE_TYPES == frozenset({"rate_limit", "cooldown"})
+        assert frozenset({"rate_limit", "cooldown"}) == STATEFUL_RULE_TYPES
 
     @pytest.mark.unit
     @pytest.mark.asyncio

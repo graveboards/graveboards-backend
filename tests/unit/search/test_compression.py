@@ -2,7 +2,6 @@ import pytest
 
 from app.search.compression import compress_query, decompress_query
 
-
 pytestmark = pytest.mark.unit
 
 

@@ -3,14 +3,13 @@ Unit tests for POST /api/v1/token endpoint.
 
 Tests token exchange logic with mocked dependencies.
 """
+from datetime import UTC, datetime, timedelta
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
 
-from unittest.mock import patch, MagicMock, AsyncMock
-from datetime import datetime, timedelta, timezone
-
-from app.redis import Namespace, RedisClient
-from app.oauth import OAuth
 from app.osu_api import OsuAPIClient
+from app.redis import RedisClient
 
 
 class TestTokenPostEndpoint:
@@ -20,7 +19,7 @@ class TestTokenPostEndpoint:
     TEST_STATE = "test_csrf_state_12345"
     TEST_ACCESS_TOKEN = "test_access_token_xyz"
     TEST_REFRESH_TOKEN = "test_refresh_token_abc"
-    TEST_EXPIRES_AT = int((datetime.now(timezone.utc) + timedelta(hours=1)).timestamp())
+    TEST_EXPIRES_AT = int((datetime.now(UTC) + timedelta(hours=1)).timestamp())
 
     @pytest.fixture
     def valid_oauth_token(self):
@@ -101,7 +100,7 @@ class TestTokenPostEndpoint:
             rc=mock_rc,
             db=mock_db,
         )
-        
+
         assert result[1] == 201
         assert "token" in result[0]
         assert len(result[0]["token"]) > 0
@@ -112,12 +111,12 @@ class TestTokenPostEndpoint:
         """Test POST /api/v1/token with missing code."""
         from api.v1.token import post
         from app.exceptions import BadRequest
-        
+
         mock_oauth = await self._create_mock_oauth()
         mock_osu_client = await self._create_mock_osu_api_client()
         mock_rc = await self._create_mock_redis()
         mock_db = await self._create_mock_db()
-        
+
         try:
             await post(
                 body={"state": self.TEST_STATE},
@@ -136,12 +135,12 @@ class TestTokenPostEndpoint:
         """Test POST /api/v1/token with missing state."""
         from api.v1.token import post
         from app.exceptions import BadRequest
-        
+
         mock_oauth = await self._create_mock_oauth()
         mock_osu_client = await self._create_mock_osu_api_client()
         mock_rc = await self._create_mock_redis()
         mock_db = await self._create_mock_db()
-        
+
         try:
             await post(
                 body={"code": "test_code"},
@@ -160,13 +159,13 @@ class TestTokenPostEndpoint:
         """Test POST /api/v1/token with invalid state."""
         from api.v1.token import post
         from app.exceptions import BadRequest
-        
+
         mock_oauth = await self._create_mock_oauth()
         mock_osu_client = await self._create_mock_osu_api_client()
         mock_rc = await self._create_mock_redis()
         mock_rc.getdel = AsyncMock(return_value=None)
         mock_db = await self._create_mock_db()
-        
+
         try:
             await post(
                 body={"code": "test_code", "state": "invalid_state"},
@@ -183,10 +182,11 @@ class TestTokenPostEndpoint:
     @pytest.mark.asyncio
     async def test_post_token_oauth_error(self, valid_user_data):
         """Test POST /api/v1/token with OAuth error."""
-        from api.v1.token import post
         from authlib.integrations.base_client.errors import OAuthError
+
+        from api.v1.token import post
         from app.exceptions import OsuOAuthError
-        
+
         mock_oauth = AsyncMock()
         mock_oauth.fetch_token.side_effect = OAuthError(
             error="invalid_request",
@@ -195,7 +195,7 @@ class TestTokenPostEndpoint:
         mock_osu_client = await self._create_mock_osu_api_client(valid_user_data)
         mock_rc = await self._create_mock_redis()
         mock_db = await self._create_mock_db()
-        
+
         try:
             await post(
                 body={"code": "expired_code", "state": self.TEST_STATE},

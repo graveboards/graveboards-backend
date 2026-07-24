@@ -4,13 +4,13 @@ These tests use mocked Redis and database objects to test daemon behavior
 without requiring real infrastructure.
 """
 
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
 
 from app.daemon.daemon import Daemon
+from app.daemon.services import Service
 from app.daemon.supervisor import ServiceSupervisor
-from app.daemon.services import Service, ProfileFetcher, QueueRequestHandler, ScoreFetcher
 
 
 class TestDaemonLifecycle:

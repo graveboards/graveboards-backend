@@ -1,9 +1,10 @@
-import pytest
 from unittest.mock import MagicMock
 
-from app.database.rules.validators.beatmap.star_rating import StarRatingRestriction
+import pytest
+
 from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError
+from app.database.rules.validators.beatmap.star_rating import StarRatingRestriction
 from app.database.schemas.rule import StarRatingConfig
 
 

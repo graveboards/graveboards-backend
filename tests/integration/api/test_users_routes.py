@@ -3,8 +3,9 @@ Integration tests for GET /api/v1/users endpoints.
 
 Tests the users retrieval via full HTTP stack.
 """
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 
 class TestUsersGetIntegration:
@@ -148,8 +149,8 @@ class TestUsersPostIntegration:
     @pytest.mark.asyncio
     async def test_create_user_success(self, TestClientWithMocks, admin_user_token):
         """Test successful user creation."""
-        from app.database.models import User
         from app.database.enums import RoleName
+        from app.database.models import User
 
         mock_db = AsyncMock()
 
@@ -188,8 +189,8 @@ class TestUsersPostIntegration:
     @pytest.mark.asyncio
     async def test_create_user_conflict(self, TestClientWithMocks, admin_user_token):
         """Test 409 when user already exists."""
-        from app.database.models import User
         from app.database.enums import RoleName
+        from app.database.models import User
 
         mock_db = AsyncMock()
 

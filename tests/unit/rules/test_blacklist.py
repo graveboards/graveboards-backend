@@ -1,11 +1,10 @@
-import pytest
 from unittest.mock import AsyncMock
 
+import pytest
 from connexion.exceptions import Forbidden
 
-from app.database.rules.validators.blacklist import BlacklistRestriction
 from app.database.rules.context import ExecutionContext
-from app.database.rules.exceptions import RuleViolationError
+from app.database.rules.validators.blacklist import BlacklistRestriction
 
 
 def _make_context(queue_id: int = 1, user_id: int = 12345678, config: dict | None = None):

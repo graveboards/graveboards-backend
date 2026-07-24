@@ -1,5 +1,6 @@
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 
 from app.database.crud.rules import RuleCRUD, _normalize_config
 from app.exceptions import Conflict

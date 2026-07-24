@@ -1,7 +1,6 @@
 import pytest
 
-from app.database.crud import c
-from app.database.crud.types import Sorting, Filters, Include
+from app.database.crud.types import Filters, Include, Sorting
 
 
 class TestCreateInputValidation:
@@ -214,7 +213,7 @@ class TestDeleteInputValidation:
     async def test_delete_with_valid_id(self, db_session):
         """Test delete with valid primary key."""
         from app.database.db import PostgresqlDB
-        from app.database.models import User, Beatmapset
+        from app.database.models import Beatmapset, User
 
         db = PostgresqlDB()
 
@@ -234,7 +233,7 @@ class TestDeleteInputValidation:
     async def test_delete_rejects_invalid_id_type(self, db_session):
         """Test delete raises ValueError for non-existent record."""
         from app.database.db import PostgresqlDB
-        from app.database.models import User, Beatmapset
+        from app.database.models import Beatmapset, User
 
         db = PostgresqlDB()
 

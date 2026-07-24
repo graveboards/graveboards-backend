@@ -1,20 +1,19 @@
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
+import pytest
+
+from app.database.rules.context import ExecutionContext
 from app.database.rules.engine.evaluator import (
-    RuleNode,
-    AtomicRuleNode,
-    CompositeRuleNode,
-    AndNode,
-    OrNode,
-    NotNode,
-    CompositeEvaluator,
     MAX_COMPOSITE_DEPTH,
+    AndNode,
+    AtomicRuleNode,
+    CompositeEvaluator,
+    NotNode,
+    OrNode,
+    RuleNode,
     build_rule_node,
 )
-from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError
-from app.database.rules.registry import RULE_REGISTRY, RULE_TIERS
 
 
 def _make_context(config=None):

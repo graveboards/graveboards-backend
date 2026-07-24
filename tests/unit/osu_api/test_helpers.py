@@ -2,11 +2,11 @@
 
 from tests.unit.osu_api.test_utils import (
     _create_mock_beatmap,
-    _create_mock_beatmapset,
-    _create_mock_user,
-    _create_mock_score,
-    _create_mock_beatmap_scores,
     _create_mock_beatmap_attributes,
+    _create_mock_beatmap_scores,
+    _create_mock_beatmapset,
+    _create_mock_score,
+    _create_mock_user,
 )
 
 

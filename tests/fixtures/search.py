@@ -2,7 +2,7 @@ from datetime import datetime
 
 import pytest
 
-from app.database.models import Beatmap, Beatmapset, BeatmapSnapshot, BeatmapsetSnapshot
+from app.database.models import Beatmap, Beatmapset, BeatmapsetSnapshot, BeatmapSnapshot
 from tests.fixtures.osu import load_beatmap, load_beatmapset
 
 

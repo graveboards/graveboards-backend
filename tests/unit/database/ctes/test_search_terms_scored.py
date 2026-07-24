@@ -1,14 +1,14 @@
-import pytest
-from unittest.mock import patch, MagicMock
 
-from app.search.datastructures import SearchTermsSchema, FieldWeights, PatternMultipliers
-from app.search.enums import Scope, SearchableFieldCategory
+import pytest
+
 from app.database.ctes.search_terms_scored import (
-    search_terms_scored_ctes_factory,
     _generate_term_score_stmts,
     _process_field_groups,
-    aggregated_child_scores_to_parent_cte_factory
+    aggregated_child_scores_to_parent_cte_factory,
+    search_terms_scored_ctes_factory,
 )
+from app.search.datastructures import FieldWeights, PatternMultipliers, SearchTermsSchema
+from app.search.enums import Scope, SearchableFieldCategory
 
 
 class TestSearchTermsScoredCTE:
@@ -115,9 +115,9 @@ class TestGenerateTermScoreStmts:
             case_sensitive=False,
             field_weights=FieldWeights()
         )
-        
+
         stmts = list(_generate_term_score_stmts(Scope.BEATMAPS, terms))
-        
+
         assert len(stmts) > 0
         for category, stmt in stmts:
             assert category is not None
@@ -129,38 +129,38 @@ class TestProcessFieldGroups:
 
     def test_process_field_groups_no_groups(self):
         """Test processing with no field groups."""
-        from sqlalchemy.sql import union_all, select, literal
-        
+        from sqlalchemy.sql import literal, select, union_all
+
         base_query = union_all(
             select(literal(1).label("id"), literal("field").label("field")),
             select(literal(2).label("id"), literal("field").label("field"))
         )
-        
+
         result = _process_field_groups(base_query, SearchableFieldCategory.BEATMAP, {})
-        
+
         assert result is not None
 
     def test_process_field_groups_with_groups(self):
         """Test processing with field groups."""
-        from sqlalchemy.sql import union_all, select, literal
-        
+        from sqlalchemy.sql import literal, select, union_all
+
         base_query = union_all(
             select(literal(1).label("id"), literal("title").label("field"), literal("term").label("term"), literal("pattern").label("pattern"), literal(10).label("score")),
             select(literal(2).label("id"), literal("title_unicode").label("field"), literal("term").label("term"), literal("pattern").label("pattern"), literal(15).label("score"))
         ).subquery()
-        
+
         field_groups_config = {
             SearchableFieldCategory.BEATMAPSET: {
                 "title": {"title", "title_unicode"}
             }
         }
-        
+
         result = _process_field_groups(
             base_query,
             SearchableFieldCategory.BEATMAPSET,
             field_groups_config
         )
-        
+
         assert result is not None
 
 
@@ -169,13 +169,12 @@ class TestAggregatedChildScoresToParentCTE:
 
     def test_aggregated_child_scores_basic(self):
         """Test basic child to parent aggregation."""
-        from sqlalchemy.sql import select, literal, func
+        from sqlalchemy.sql import func, literal, select
+
         from app.database.models import (
-            BeatmapSnapshot,
-            BeatmapsetSnapshot,
-            beatmap_snapshot_beatmapset_snapshot_association
+            beatmap_snapshot_beatmapset_snapshot_association,
         )
-        
+
         child_score_cte = (
             select(
                 literal(1).label("id"),
@@ -188,7 +187,7 @@ class TestAggregatedChildScoresToParentCTE:
             )
             .cte("child_score_cte")
         )
-        
+
         result = aggregated_child_scores_to_parent_cte_factory(
             child_score_cte=child_score_cte,
             mapping_table=beatmap_snapshot_beatmapset_snapshot_association,
@@ -196,5 +195,5 @@ class TestAggregatedChildScoresToParentCTE:
             mapping_parent_fk="beatmapset_snapshot_id",
             cte_name="parent_score_cte"
         )
-        
+
         assert result is not None

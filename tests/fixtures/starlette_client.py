@@ -18,14 +18,13 @@ tests.conftest.TestClient instead.
 """
 
 import pytest
-
 from starlette.applications import Starlette
-from starlette.testclient import TestClient as StarletteTestClient
-from starlette.routing import Route
-from starlette.responses import JSONResponse
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
+from starlette.responses import JSONResponse
+from starlette.routing import Route
+from starlette.testclient import TestClient as StarletteTestClient
 
 from app.oauth import OAuth
 

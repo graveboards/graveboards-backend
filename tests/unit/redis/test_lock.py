@@ -1,11 +1,11 @@
 """Unit tests for Redis distributed lock (lock_ctx)."""
 
-import asyncio
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
-from app.redis.rc import RedisClient
+import pytest
+
 from app.exceptions import RedisLockTimeoutError
+from app.redis.rc import RedisClient
 
 
 class TestLockCtx:

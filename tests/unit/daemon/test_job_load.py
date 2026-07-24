@@ -1,5 +1,6 @@
+from datetime import UTC, datetime
+
 import pytest
-from datetime import datetime, timezone
 
 from app.daemon.services.service.job.load import JobLoadInstruction
 
@@ -9,7 +10,7 @@ class TestJobLoadInstruction:
 
     def test_create_with_execution_time(self):
         """Test creating instruction with execution_time."""
-        execution_time = datetime.now(timezone.utc)
+        execution_time = datetime.now(UTC)
         instruction = JobLoadInstruction(execution_time=execution_time)
 
         assert instruction.execution_time == execution_time
@@ -19,7 +20,7 @@ class TestJobLoadInstruction:
 
     def test_create_with_last_execution(self):
         """Test creating instruction with last_execution."""
-        last_execution = datetime.now(timezone.utc)
+        last_execution = datetime.now(UTC)
         instruction = JobLoadInstruction(last_execution=last_execution)
 
         assert instruction.execution_time is None
@@ -29,8 +30,8 @@ class TestJobLoadInstruction:
 
     def test_create_with_all_fields(self):
         """Test creating instruction with all fields."""
-        execution_time = datetime.now(timezone.utc)
-        last_execution = datetime.now(timezone.utc)
+        execution_time = datetime.now(UTC)
+        last_execution = datetime.now(UTC)
         instruction = JobLoadInstruction(
             execution_time=execution_time,
             last_execution=last_execution,
@@ -71,7 +72,7 @@ class TestJobLoadInstruction:
         instruction = JobLoadInstruction()
 
         with pytest.raises(Exception):
-            instruction.execution_time = datetime.now(timezone.utc)
+            instruction.execution_time = datetime.now(UTC)
 
     def test_slots_for_memory_efficiency(self):
         """Test that instruction uses slots."""
@@ -82,7 +83,7 @@ class TestJobLoadInstruction:
 
     def test_equality_with_same_values(self):
         """Test equality comparison with same values."""
-        execution_time = datetime.now(timezone.utc)
+        execution_time = datetime.now(UTC)
         instruction1 = JobLoadInstruction(execution_time=execution_time)
         instruction2 = JobLoadInstruction(execution_time=execution_time)
 
@@ -91,10 +92,10 @@ class TestJobLoadInstruction:
     def test_inequality_with_different_values(self):
         """Test inequality comparison with different values."""
         instruction1 = JobLoadInstruction(
-            execution_time=datetime(2026, 1, 1, tzinfo=timezone.utc)
+            execution_time=datetime(2026, 1, 1, tzinfo=UTC)
         )
         instruction2 = JobLoadInstruction(
-            execution_time=datetime(2026, 1, 2, tzinfo=timezone.utc)
+            execution_time=datetime(2026, 1, 2, tzinfo=UTC)
         )
 
         assert instruction1 != instruction2
@@ -110,7 +111,7 @@ class TestJobLoadInstruction:
 
     def test_none_execution_time_vs_zero_timestamp(self):
         """Test difference between None and timestamp."""
-        timestamp = datetime(1970, 1, 1, tzinfo=timezone.utc)
+        timestamp = datetime(1970, 1, 1, tzinfo=UTC)
         instruction1 = JobLoadInstruction(execution_time=None)
         instruction2 = JobLoadInstruction(execution_time=timestamp)
 
@@ -121,7 +122,7 @@ class TestJobLoadInstruction:
     def test_hashability(self):
         """Test that instruction is hashable."""
         instruction = JobLoadInstruction(
-            execution_time=datetime(2026, 1, 1, tzinfo=timezone.utc)
+            execution_time=datetime(2026, 1, 1, tzinfo=UTC)
         )
 
         instruction_set = {instruction}
@@ -129,7 +130,7 @@ class TestJobLoadInstruction:
 
     def test_string_representation(self):
         """Test string representation."""
-        execution_time = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        execution_time = datetime(2026, 1, 1, tzinfo=UTC)
         instruction = JobLoadInstruction(execution_time=execution_time)
 
         repr_str = repr(instruction)
@@ -148,8 +149,8 @@ class TestJobLoadInstruction:
 
     def test_multiple_instructions_independent(self):
         """Test that multiple instructions are independent."""
-        instruction1 = JobLoadInstruction(execution_time=datetime(2026, 1, 1, tzinfo=timezone.utc))
-        instruction2 = JobLoadInstruction(execution_time=datetime(2026, 1, 2, tzinfo=timezone.utc))
+        instruction1 = JobLoadInstruction(execution_time=datetime(2026, 1, 1, tzinfo=UTC))
+        instruction2 = JobLoadInstruction(execution_time=datetime(2026, 1, 2, tzinfo=UTC))
 
         assert instruction1.execution_time != instruction2.execution_time
 
@@ -167,7 +168,7 @@ class TestJobLoadInstruction:
 
     def test_instruction_datetime_timezone_aware(self):
         """Test that datetime must be timezone-aware."""
-        utc_time = datetime.now(timezone.utc)
+        utc_time = datetime.now(UTC)
         instruction = JobLoadInstruction(execution_time=utc_time)
 
         assert instruction.execution_time.tzinfo is not None

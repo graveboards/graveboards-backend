@@ -3,11 +3,12 @@ Unit tests for security overrides.
 
 Tests the authorization override functions for user ID matching and queue ownership.
 """
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from app.security.overrides import matching_user_id_override, queue_owner_override
+import pytest
+
 from app.database.models import Queue, Request
+from app.security.overrides import matching_user_id_override, queue_owner_override
 
 
 class TestMatchingUserIdOverride:

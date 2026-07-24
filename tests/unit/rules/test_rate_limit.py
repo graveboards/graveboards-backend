@@ -1,21 +1,22 @@
-import pytest
-from unittest.mock import AsyncMock, MagicMock
+from datetime import UTC
+from unittest.mock import AsyncMock
 
+import pytest
 from connexion.exceptions import Forbidden
 
-from app.database.rules.validators.rate_limit import (
-    RateLimitRestriction,
-    _truncate_to_period,
-    _period_duration_seconds,
-)
+from app.database.rules.context import ExecutionContext
 from app.database.rules.registry import (
-    get_validator,
-    get_validator_tier,
-    get_supported_versions,
     RULE_REGISTRY,
     RULE_TIERS,
+    get_supported_versions,
+    get_validator,
+    get_validator_tier,
 )
-from app.database.rules.context import ExecutionContext
+from app.database.rules.validators.rate_limit import (
+    RateLimitRestriction,
+    _period_duration_seconds,
+    _truncate_to_period,
+)
 
 
 def _make_context(queue_id: int = 1, user_id: int = 12345678, config: dict | None = None):
@@ -31,54 +32,54 @@ def _make_context(queue_id: int = 1, user_id: int = 12345678, config: dict | Non
 class TestTruncateToPeriod:
     @pytest.mark.unit
     def test_truncate_to_day(self):
-        from datetime import datetime, timezone, time
+        from datetime import datetime
 
-        dt = datetime(2024, 6, 15, 14, 30, 45, 123456, tzinfo=timezone.utc)
+        dt = datetime(2024, 6, 15, 14, 30, 45, 123456, tzinfo=UTC)
         result = _truncate_to_period(dt, "day")
-        expected = datetime(2024, 6, 15, 0, 0, 0, tzinfo=timezone.utc).timestamp()
+        expected = datetime(2024, 6, 15, 0, 0, 0, tzinfo=UTC).timestamp()
         assert result == int(expected)
 
     @pytest.mark.unit
     def test_truncate_to_week(self):
-        from datetime import datetime, timezone
+        from datetime import datetime
 
-        dt = datetime(2024, 6, 15, 14, 30, 0, tzinfo=timezone.utc)
+        dt = datetime(2024, 6, 15, 14, 30, 0, tzinfo=UTC)
         result = _truncate_to_period(dt, "week")
-        expected = datetime(2024, 6, 10, 0, 0, 0, tzinfo=timezone.utc).timestamp()
+        expected = datetime(2024, 6, 10, 0, 0, 0, tzinfo=UTC).timestamp()
         assert result == int(expected)
 
     @pytest.mark.unit
     def test_truncate_to_month(self):
-        from datetime import datetime, timezone
+        from datetime import datetime
 
-        dt = datetime(2024, 6, 15, 14, 30, 0, tzinfo=timezone.utc)
+        dt = datetime(2024, 6, 15, 14, 30, 0, tzinfo=UTC)
         result = _truncate_to_period(dt, "month")
-        expected = datetime(2024, 6, 1, 0, 0, 0, tzinfo=timezone.utc).timestamp()
+        expected = datetime(2024, 6, 1, 0, 0, 0, tzinfo=UTC).timestamp()
         assert result == int(expected)
 
     @pytest.mark.unit
     def test_truncate_to_year(self):
-        from datetime import datetime, timezone
+        from datetime import datetime
 
-        dt = datetime(2024, 6, 15, 14, 30, 0, tzinfo=timezone.utc)
+        dt = datetime(2024, 6, 15, 14, 30, 0, tzinfo=UTC)
         result = _truncate_to_period(dt, "year")
-        expected = datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc).timestamp()
+        expected = datetime(2024, 1, 1, 0, 0, 0, tzinfo=UTC).timestamp()
         assert result == int(expected)
 
     @pytest.mark.unit
     def test_truncate_to_custom_seconds(self):
-        from datetime import datetime, timezone
+        from datetime import datetime
 
-        dt = datetime(2024, 6, 15, 14, 30, 45, tzinfo=timezone.utc)
+        dt = datetime(2024, 6, 15, 14, 30, 45, tzinfo=UTC)
         result = _truncate_to_period(dt, "3600")
         expected = 1718460000
         assert result == expected
 
     @pytest.mark.unit
     def test_truncate_to_invalid_period_raises(self):
-        from datetime import datetime, timezone
+        from datetime import datetime
 
-        dt = datetime(2024, 6, 15, 14, 30, 0, tzinfo=timezone.utc)
+        dt = datetime(2024, 6, 15, 14, 30, 0, tzinfo=UTC)
         with pytest.raises(ValueError, match="Invalid period"):
             _truncate_to_period(dt, "invalid")
 

@@ -3,9 +3,9 @@ Integration tests for POST /api/v1/requests endpoint.
 
 Tests the beatmapset request submission via full HTTP stack.
 """
-import os
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 
 def _full_beatmapset_dict():
@@ -331,7 +331,6 @@ class TestRequestsPostIntegration:
     @pytest.mark.asyncio
     async def test_task_already_processing_but_failed(self, TestClientWithMocks, valid_request_body, mock_osu_client, security_disabled, authenticated_user_id):
         """Test request submission succeeds when previous task failed."""
-        from app.redis.models import QueueRequestHandlerTask
 
         mock_queue = MagicMock()
         mock_queue.id = self.TEST_QUEUE_ID
@@ -506,8 +505,8 @@ class TestRequestsPostIntegration:
         where @ownership_filter() silently emptied this listing for anyone who
         wasn't the literal submitter.
         """
-        from app.security import generate_token
         from app.database.schemas import RequestSchema
+        from app.security import generate_token
 
         mock_db = AsyncMock()
         request_data = {
@@ -590,12 +589,11 @@ class TestRequestsPostIntegration:
     @pytest.mark.asyncio
     async def test_get_request_by_id(self, TestClientWithMocks, admin_user_token, authenticated_user_id):
         """Test GET /api/v1/requests/{id} returns specific request."""
-        from app.security import decode_token
         from app.database.schemas import RequestSchema
-        from app.database.models import Request
+        from app.security import decode_token
 
         mock_db = AsyncMock()
-        
+
         request_data = {
             "id": 1,
             "user_id": 12345678,
@@ -604,9 +602,9 @@ class TestRequestsPostIntegration:
             "status": 0,
             "mv_checked": False,
         }
-        
+
         mock_request = RequestSchema.model_validate(request_data)
-        
+
         decoded_token = decode_token(admin_user_token)
         user_id = int(decoded_token["sub"])
         mock_user = MagicMock()
@@ -614,12 +612,12 @@ class TestRequestsPostIntegration:
         admin_role = MagicMock()
         admin_role.name = "admin"
         mock_user.roles = [admin_role]
-        
+
         async def mock_get(model, **kwargs):
             if model.__name__ == "Request":
                 return mock_request
             return mock_user
-        
+
         mock_db.get = AsyncMock(side_effect=mock_get)
 
         test_client = TestClientWithMocks(mock_db=mock_db)
@@ -671,11 +669,11 @@ class TestRequestsPatchIntegration:
     @pytest.mark.asyncio
     async def test_admin_can_update_request_status(self, TestClientWithMocks, admin_user_token, authenticated_user_id):
         """Test admin can update request status."""
-        from app.database.schemas import RequestSchema
         from app.database.models import Request
+        from app.database.schemas import RequestSchema
 
         mock_db = AsyncMock()
-        
+
         request_data = {
             "id": self.TEST_REQUEST_ID,
             "user_id": 12345678,
@@ -684,20 +682,20 @@ class TestRequestsPatchIntegration:
             "status": 0,
             "mv_checked": False,
         }
-        
+
         mock_request = RequestSchema.model_validate(request_data)
-        
+
         mock_user = MagicMock()
         mock_user.id = 11111111
         admin_role = MagicMock()
         admin_role.name = "admin"
         mock_user.roles = [admin_role]
-        
+
         async def mock_get(model, **kwargs):
             if model == Request:
                 return mock_request
             return mock_user
-        
+
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.update = AsyncMock()
 
@@ -720,20 +718,20 @@ class TestRequestsPatchIntegration:
     @pytest.mark.asyncio
     async def test_non_admin_gets_forbidden_on_request_patch(self, TestClientWithMocks, admin_user_token, authenticated_user_id):
         """Test non-admin user gets 403 Forbidden on request patch."""
+        from app.database.models import Queue, Request
         from app.security import generate_token
-        from app.database.models import Request, Queue
 
         mock_db = AsyncMock()
-        
+
         mock_user = MagicMock()
         mock_user.id = 99999999
         mock_user.roles = []
-        
+
         async def mock_get(model, **kwargs):
             if model == Request or model == Queue:
                 return None
             return mock_user
-        
+
         mock_db.get = AsyncMock(side_effect=mock_get)
 
         test_client = TestClientWithMocks(mock_db=mock_db)
@@ -754,11 +752,11 @@ class TestRequestsPatchIntegration:
     @pytest.mark.asyncio
     async def test_queue_owner_can_update_request_via_override(self, TestClientWithMocks, admin_user_token, authenticated_user_id):
         """Test queue owner can update request via override."""
+        from app.database.models import Queue, Request
         from app.database.schemas import RequestSchema
-        from app.database.models import Request, Queue
 
         mock_db = AsyncMock()
-        
+
         request_data = {
             "id": self.TEST_REQUEST_ID,
             "user_id": 12345678,
@@ -767,19 +765,19 @@ class TestRequestsPatchIntegration:
             "status": 0,
             "mv_checked": False,
         }
-        
+
         mock_request = RequestSchema.model_validate(request_data)
         mock_request.queue = MagicMock()
         mock_request.queue.user_id = 99999999
-        
+
         mock_queue = MagicMock()
         mock_queue.id = 1
         mock_queue.user_id = 99999999
-        
+
         mock_user = MagicMock()
         mock_user.id = 99999999
         mock_user.roles = []
-        
+
         async def mock_get(model, **kwargs):
             if model == Request:
                 if kwargs.get("id") == self.TEST_REQUEST_ID:
@@ -789,7 +787,7 @@ class TestRequestsPatchIntegration:
             elif model == Queue:
                 return mock_queue
             return mock_user
-        
+
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.update = AsyncMock()
 
@@ -812,7 +810,7 @@ class TestRequestsPatchIntegration:
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_request_model_creation():
-    from app.database.models import Request, Queue
+    from app.database.models import Request
 
     request = Request(
         user_id=12345678,
@@ -900,7 +898,7 @@ async def test_request_relationships():
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_request_unique_constraint():
-    from app.database.models import Request, Queue
+    from app.database.models import Queue, Request
 
     queue = Queue(
         user_id=12345678,
@@ -934,6 +932,7 @@ class TestRequestsTasksIntegration:
     def mock_rc_with_task(self):
         """Create a mock Redis client with a task."""
         from unittest.mock import AsyncMock
+
         from app.redis.models import QueueRequestHandlerTask
 
         task = QueueRequestHandlerTask(
@@ -955,6 +954,7 @@ class TestRequestsTasksIntegration:
     def admin_user(self):
         """Create a mock admin user."""
         from unittest.mock import MagicMock
+
         from app.database.enums import RoleName
 
         mock_user = MagicMock()
@@ -1011,7 +1011,6 @@ class TestRequestsTasksIntegration:
     @pytest.mark.asyncio
     async def test_admin_get_task_by_hashed_id(self, TestClientWithMocks, admin_user_token, mock_rc_with_task, authenticated_user_id):
         """Test GET /api/v1/requests/tasks/{hashed_id} returns specific task."""
-        from app.database.models import User
 
         mock_db = AsyncMock()
         admin_user = MagicMock()

@@ -1,8 +1,9 @@
-import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
 
-from app.redis.decorators import rate_limit
+import pytest
+
 from app.exceptions import RateLimitExceededError
+from app.redis.decorators import rate_limit
 
 
 class TestRateLimitDecorator:
@@ -205,11 +206,11 @@ class TestRateLimitDecorator:
             def __init__(self):
                 self.incr_calls = 0
                 self.expire_calls = 0
-            
+
             async def incr(self, name):
                 self.incr_calls += 1
                 return self.incr_calls
-            
+
             async def expire(self, name, time):
                 self.expire_calls += 1
                 return True
@@ -218,11 +219,11 @@ class TestRateLimitDecorator:
             def __init__(self):
                 self.incr_calls = 0
                 self.expire_calls = 0
-            
+
             async def incr(self, name):
                 self.incr_calls += 1
                 return self.incr_calls
-            
+
             async def expire(self, name, time):
                 self.expire_calls += 1
                 return True

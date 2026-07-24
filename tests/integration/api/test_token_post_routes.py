@@ -6,9 +6,10 @@ These tests verify that the Connexion endpoint correctly:
 - Validates required parameters (code, state)
 - Rejects invalid requests (missing params, invalid state)
 """
+from datetime import UTC, datetime, timedelta
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
-from datetime import datetime, timedelta, timezone
 
 
 class TestTokenPostIntegration:
@@ -23,7 +24,7 @@ class TestTokenPostIntegration:
         body = f"state={self.TEST_STATE}"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         response = TestClient.post("/api/v1/token", data=body, headers=headers)
-        
+
         assert response.status_code == 400
         data = response.json()
         assert "code" in data["detail"].lower() or "Missing" in data["detail"]
@@ -32,10 +33,10 @@ class TestTokenPostIntegration:
     @pytest.mark.asyncio
     async def test_token_exchange_missing_state(self, TestClient):
         """Test POST /api/v1/token with missing state returns 400."""
-        body = f"code=test_code"
+        body = "code=test_code"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         response = TestClient.post("/api/v1/token", data=body, headers=headers)
-        
+
         assert response.status_code == 400
         data = response.json()
         assert "state" in data["detail"].lower() or "Missing" in data["detail"]
@@ -54,7 +55,7 @@ class TestTokenPostIntegration:
             return {
                 "access_token": "test_access_token_xyz",
                 "refresh_token": "test_refresh_token_abc",
-                "expires_at": int((datetime.now(timezone.utc) + timedelta(hours=1)).timestamp()),
+                "expires_at": int((datetime.now(UTC) + timedelta(hours=1)).timestamp()),
             }
 
         async def async_mock_get_own_data(*args, **kwargs):

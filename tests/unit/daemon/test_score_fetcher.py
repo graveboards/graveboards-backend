@@ -1,8 +1,9 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
 
 from app.daemon.services.score_fetcher import ScoreFetcher
-from app.database.models import ScoreFetcherTask, Leaderboard
+from app.database.models import Leaderboard, ScoreFetcherTask
 
 
 class TestScoreFetcher:
@@ -23,7 +24,7 @@ class TestScoreFetcher:
             mock_redis.return_value = mock_redis_ctx
             mock_redis_ctx.__enter__ = MagicMock()
             mock_redis_ctx.__exit__ = MagicMock()
-            
+
             task1 = ScoreFetcherTask(id=1, user_id=123, enabled=True, last_fetch=None)
             task2 = ScoreFetcherTask(id=2, user_id=456, enabled=False, last_fetch=None)
             service._db.get_many = AsyncMock(return_value=[task1, task2])
@@ -45,7 +46,6 @@ class TestScoreFetcher:
 
     async def test_auto_retry_decorator_applied(self, service):
         """Test that _execute_job has auto_retry decorator."""
-        import inspect
 
         assert hasattr(service._execute_job, "__wrapped__")
 

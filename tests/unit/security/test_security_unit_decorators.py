@@ -5,8 +5,8 @@ Tests the decorator logic and configuration behavior without full HTTP stack.
 """
 import pytest
 
-from app.security.decorators import role_authorization, ownership_authorization
 from app.database.enums import RoleName
+from app.security.decorators import ownership_authorization, role_authorization
 
 
 class TestRoleAuthorizationConfiguration:
@@ -18,7 +18,7 @@ class TestRoleAuthorizationConfiguration:
         @role_authorization(RoleName.ADMIN)
         async def admin_endpoint(**kwargs):
             return {"data": "success"}
-        
+
         assert hasattr(admin_endpoint, '__security_authorization__')
         assert admin_endpoint.__security_authorization__ is True
 
@@ -56,7 +56,7 @@ class TestOwnershipAuthorizationConfiguration:
         @ownership_authorization()
         async def endpoint(**kwargs):
             return ({"data": "success"}, 200)
-        
+
         assert hasattr(endpoint, '__security_authorization__')
         assert endpoint.__security_authorization__ is True
 

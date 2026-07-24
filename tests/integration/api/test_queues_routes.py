@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from app.database.models import Queue
 
@@ -106,7 +107,7 @@ class TestQueuesPatchIntegration:
         from app.database.models import Queue
 
         mock_db = AsyncMock()
-        
+
         queue_data = {
             "id": self.TEST_QUEUE_ID,
             "user_id": 12345678,
@@ -115,7 +116,7 @@ class TestQueuesPatchIntegration:
             "visibility": 0,
             "is_open": True,
         }
-        
+
         mock_queue = MagicMock()
         mock_queue.id = self.TEST_QUEUE_ID
         mock_queue.user_id = 12345678
@@ -123,18 +124,18 @@ class TestQueuesPatchIntegration:
         mock_queue.description = "Original description"
         mock_queue.visibility = 0
         mock_queue.is_open = True
-        
+
         mock_user = MagicMock()
         mock_user.id = 11111111
         admin_role = MagicMock()
         admin_role.name = "admin"
         mock_user.roles = [admin_role]
-        
+
         async def mock_get(model, **kwargs):
             if model == Queue:
                 return mock_queue
             return mock_user
-        
+
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.update = AsyncMock()
 
@@ -158,9 +159,9 @@ class TestQueuesPatchIntegration:
     async def test_queue_owner_can_update_queue(self, TestClientWithMocks, admin_user_token):
         """Test queue owner can update queue."""
         from app.database.models import Queue
-        
+
         mock_db = AsyncMock()
-        
+
         queue_data = {
             "id": self.TEST_QUEUE_ID,
             "user_id": 99999999,
@@ -169,7 +170,7 @@ class TestQueuesPatchIntegration:
             "visibility": 0,
             "is_open": True,
         }
-        
+
         mock_queue = MagicMock()
         mock_queue.id = self.TEST_QUEUE_ID
         mock_queue.user_id = 99999999
@@ -177,16 +178,16 @@ class TestQueuesPatchIntegration:
         mock_queue.description = "Original description"
         mock_queue.visibility = 0
         mock_queue.is_open = True
-        
+
         mock_user = MagicMock()
         mock_user.id = 99999999
         mock_user.roles = []
-        
+
         async def mock_get(model, **kwargs):
             if model == Queue:
                 return mock_queue
             return mock_user
-        
+
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.update = AsyncMock()
 
@@ -209,21 +210,20 @@ class TestQueuesPatchIntegration:
     async def test_non_admin_gets_forbidden_on_queue_patch(self, TestClientWithMocks, admin_user_token):
         """Test non-admin user gets 403 Forbidden on queue patch."""
         from app.security import generate_token
-        from app.database.models import Queue
-        
+
         mock_db = AsyncMock()
-        
+
         mock_user = MagicMock()
         mock_user.id = 88888888
         mock_user.roles = []
-        
+
         async def mock_get(model, **kwargs):
             return mock_user
-        
+
         mock_db.get = AsyncMock(side_effect=mock_get)
-        
+
         test_client = TestClientWithMocks(mock_db=mock_db)
-        
+
         with patch('app.security.decorators.role_authorization.get_authenticated_user_id', return_value=88888888), patch('app.security.decorators.auth_context.get_authenticated_user_id', return_value=88888888), patch('app.security.decorators.ownership_authorization.get_authenticated_user_id', return_value=88888888), patch('app.security.decorators.ownership_filter.get_authenticated_user_id', return_value=88888888), patch('app.security.decorators.utils.get_authenticated_user_id', return_value=88888888):
             headers = {"Authorization": f"Bearer {generate_token(88888888)}"}
             response = test_client.patch(
@@ -231,7 +231,7 @@ class TestQueuesPatchIntegration:
                 json={"name": "Hacked Queue"},
                 headers=headers
             )
-        
+
         assert response.status_code == 403
         data = response.json()
         assert "forbidden" in data.get("detail", "").lower() or "not authorized" in data.get("detail", "").lower()
@@ -281,7 +281,6 @@ class TestQueuesPostIntegration:
     async def test_non_admin_cannot_create_queue(self, TestClientWithMocks):
         """Test non-admin gets 403 on queue creation."""
         from app.security import generate_token
-        from app.database.models import Queue
 
         mock_db = AsyncMock()
 
@@ -358,8 +357,8 @@ class TestQueuesGetIntegration:
     @pytest.mark.asyncio
     async def test_get_queue_by_id(self, TestClientWithMocks, admin_user_token):
         """Test GET /api/v1/queues/{id} returns specific queue."""
-        from app.database.schemas import QueueSchema
         from app.database.models import Queue
+        from app.database.schemas import QueueSchema
 
         mock_db = AsyncMock()
 

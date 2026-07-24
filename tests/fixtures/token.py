@@ -1,11 +1,11 @@
 """
 Test fixtures for token endpoint testing.
 """
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
-from datetime import datetime, timezone, timedelta
 
-from app.redis import RedisClient
 from app.osu_api import OsuAPIClient
+from app.redis import RedisClient
 
 
 def create_mock_oauth(fetch_token_response: dict = None):
@@ -22,7 +22,7 @@ def create_mock_oauth(fetch_token_response: dict = None):
     mock_oauth.fetch_token = AsyncMock(return_value=fetch_token_response or {
         "access_token": "test_access_token",
         "refresh_token": "test_refresh_token",
-        "expires_at": int((datetime.now(timezone.utc) + timedelta(hours=1)).timestamp())
+        "expires_at": int((datetime.now(UTC) + timedelta(hours=1)).timestamp())
     })
     return mock_oauth
 
@@ -72,5 +72,5 @@ def create_expired_token_payload(user_id: int = 12345678):
     """
     from app.security import create_token_payload
     payload = create_token_payload(user_id)
-    payload["exp"] = int((datetime.now(timezone.utc) - timedelta(hours=1)).timestamp())
+    payload["exp"] = int((datetime.now(UTC) - timedelta(hours=1)).timestamp())
     return payload

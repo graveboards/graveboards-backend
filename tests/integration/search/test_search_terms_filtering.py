@@ -33,8 +33,8 @@ def test_search_terms_filtered_cte_with_beatmaps_scope():
     """Test search terms filtered CTE with beatmaps scope."""
     try:
         from app.database.ctes.search_terms_filtered import build_search_terms_filtered_cte
-        from app.search.enums import Scope
         from app.search.datastructures import SearchTermsSchema
+        from app.search.enums import Scope
 
         search_terms = SearchTermsSchema(terms=["test"])
         cte = build_search_terms_filtered_cte(Scope.BEATMAPS, search_terms)
@@ -48,8 +48,8 @@ def test_search_terms_filtered_cte_with_queues_scope():
     """Test search terms filtered CTE with queues scope."""
     try:
         from app.database.ctes.search_terms_filtered import build_search_terms_filtered_cte
-        from app.search.enums import Scope
         from app.search.datastructures import SearchTermsSchema
+        from app.search.enums import Scope
 
         search_terms = SearchTermsSchema(terms=["test"])
         cte = build_search_terms_filtered_cte(Scope.QUEUES, search_terms)
@@ -63,8 +63,8 @@ def test_search_terms_filtered_cte_with_requests_scope():
     """Test search terms filtered CTE with requests scope."""
     try:
         from app.database.ctes.search_terms_filtered import build_search_terms_filtered_cte
-        from app.search.enums import Scope
         from app.search.datastructures import SearchTermsSchema
+        from app.search.enums import Scope
 
         search_terms = SearchTermsSchema(terms=["test"])
         cte = build_search_terms_filtered_cte(Scope.REQUESTS, search_terms)
@@ -78,8 +78,8 @@ def test_search_terms_filtered_cte_filter_validation():
     """Test search terms filtered CTE filter validation."""
     try:
         from app.database.ctes.search_terms_filtered import build_search_terms_filtered_cte
-        from app.search.enums import Scope
         from app.search.datastructures import SearchTermsSchema
+        from app.search.enums import Scope
 
         search_terms = SearchTermsSchema(terms=["test"])
         cte = build_search_terms_filtered_cte(Scope.BEATMAPS, search_terms)
@@ -93,8 +93,8 @@ def test_search_terms_filtered_cte_case_sensitivity():
     """Test search terms filtered CTE case sensitivity."""
     try:
         from app.database.ctes.search_terms_filtered import build_search_terms_filtered_cte
-        from app.search.enums import Scope
         from app.search.datastructures import SearchTermsSchema
+        from app.search.enums import Scope
 
         search_terms = SearchTermsSchema(terms=["test"], case_sensitive=True)
         cte = build_search_terms_filtered_cte(Scope.BEATMAPS, search_terms)
@@ -108,8 +108,8 @@ def test_search_terms_filtered_cte_debug_mode():
     """Test search terms filtered CTE debug mode."""
     try:
         from app.database.ctes.search_terms_filtered import build_search_terms_filtered_cte
-        from app.search.enums import Scope
         from app.search.datastructures import SearchTermsSchema
+        from app.search.enums import Scope
 
         search_terms = SearchTermsSchema(terms=["test"])
         cte = build_search_terms_filtered_cte(Scope.BEATMAPS, search_terms)

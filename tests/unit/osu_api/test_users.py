@@ -1,10 +1,10 @@
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
+import pytest
 
 from app.fixtures.reader import FixtureReader
-from tests.unit.osu_api.test_helpers import _get_user_with_fallback, _get_scores_with_fallback
 from tests.unit.osu_api.conftest import MockResponse
+from tests.unit.osu_api.test_helpers import _get_scores_with_fallback, _get_user_with_fallback
 
 
 @pytest.mark.asyncio
@@ -29,7 +29,7 @@ async def test_get_user_parses_response(api_client):
 @pytest.mark.asyncio
 async def test_get_user_scores(api_client):
     api_client_obj, mock_redis = api_client
-    from app.osu_api.enums import ScoreType, Ruleset
+    from app.osu_api.enums import Ruleset, ScoreType
 
     fixture_manager = FixtureReader()
     mock_data = _get_scores_with_fallback(fixture_manager, score_type="best")
@@ -49,7 +49,7 @@ async def test_get_user_scores(api_client):
 @pytest.mark.asyncio
 async def test_get_user_scores_recent(api_client):
     api_client_obj, mock_redis = api_client
-    from app.osu_api.enums import ScoreType, Ruleset
+    from app.osu_api.enums import Ruleset, ScoreType
 
     fixture_manager = FixtureReader()
     mock_data = _get_scores_with_fallback(fixture_manager, score_type="recent")
@@ -70,7 +70,7 @@ async def test_get_user_scores_recent(api_client):
 @pytest.mark.asyncio
 async def test_get_user_scores_firsts(api_client):
     api_client_obj, mock_redis = api_client
-    from app.osu_api.enums import ScoreType, Ruleset
+    from app.osu_api.enums import Ruleset, ScoreType
 
     fixture_manager = FixtureReader()
     mock_data = _get_scores_with_fallback(fixture_manager, score_type="firsts")

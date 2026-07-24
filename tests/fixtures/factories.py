@@ -7,11 +7,10 @@ Uses factory_boy for deterministic and customizable test data generation.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 import factory
-from factory import Sequence, LazyAttribute
-
+from factory import LazyAttribute, Sequence
 
 
 class BeatmapFactory(factory.Factory):
@@ -39,7 +38,7 @@ class BeatmapFactory(factory.Factory):
 def generate_beatmap_data(
     count: int = 1,
     **overrides
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Generate beatmap test data with optional overrides."""
     return [BeatmapFactory.build(**overrides) for _ in range(count)]
 
@@ -48,7 +47,7 @@ def generate_user_data(
     count: int = 1,
     ruleset: str = "osu",
     **overrides
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Generate user/tester data with optional overrides."""
     data = []
     for i in range(count):
@@ -76,7 +75,7 @@ def generate_score_data(
     count: int = 1,
     ruleset: str = "osu",
     **overrides
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Generate score test data with optional overrides."""
     data = []
     for i in range(count):
@@ -104,7 +103,7 @@ def generate_score_data(
 def generate_beatmapset_data(
     count: int = 1,
     **overrides
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Generate beatmapset test data with optional overrides."""
     data = []
     for i in range(count):
@@ -126,7 +125,7 @@ def generate_beatmapset_data(
 def generate_beatmap_attributes_data(
     count: int = 1,
     **overrides
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Generate beatmap attributes test data with optional overrides."""
     data = []
     for i in range(count):

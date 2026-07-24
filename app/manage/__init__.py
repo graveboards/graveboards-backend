@@ -1,6 +1,5 @@
 import argparse
 import logging
-import sys
 import traceback
 
 from rich.console import Console

@@ -5,7 +5,6 @@ app.redis.models serialization (Beatmap, Beatmapset, OsuClientOAuthToken,
 QueueRequestHandlerTask).
 """
 
-import pytest
 from datetime import datetime
 
 from app.redis.models import Beatmap, Beatmapset, OsuClientOAuthToken, QueueRequestHandlerTask

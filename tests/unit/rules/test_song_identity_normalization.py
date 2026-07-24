@@ -1,11 +1,12 @@
+from unittest.mock import MagicMock
+
 import pytest
 
-from app.database.rules.validators.metadata.song_identity import (
-    _normalize_text,
-    SongIdentityProvider,
-)
 from app.database.rules.context import ExecutionContext
-from unittest.mock import AsyncMock, MagicMock
+from app.database.rules.validators.metadata.song_identity import (
+    SongIdentityProvider,
+    _normalize_text,
+)
 
 
 class TestNormalizeTextComprehensive:

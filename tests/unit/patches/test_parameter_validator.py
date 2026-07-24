@@ -1,10 +1,9 @@
+
 import pytest
-from urllib.parse import urlencode
 from connexion.lifecycle import ConnexionRequest
 
 from app.patches.parameter import ParameterValidatorPatched
 from app.patches.uri_parsing import OpenAPIURIParserPatched
-
 
 pytestmark = pytest.mark.unit
 
@@ -124,7 +123,7 @@ def make_request(query_params=None, scope_path="/api/v1/test", validator=None):
         # For sorting: value should be JSON string
         # For filters/include: values should be deepObject format
         from urllib.parse import urlencode
-        
+
         flat_query = {}
         for k, v in query_params.items():
             if isinstance(v, list):
@@ -135,11 +134,11 @@ def make_request(query_params=None, scope_path="/api/v1/test", validator=None):
                     flat_query[f"{k}[{dk}]"] = str(dv) if not isinstance(dv, str) else dv
             else:
                 flat_query[k] = str(v) if not isinstance(v, str) else v
-        
+
         query_string = urlencode(flat_query, doseq=True)
     else:
         query_string = ""
-    
+
     scope = {
         "type": "http",
         "method": "GET",
@@ -147,11 +146,11 @@ def make_request(query_params=None, scope_path="/api/v1/test", validator=None):
         "query_string": query_string.encode(),
         "headers": []
     }
-    
+
     uri_parser = None
     if validator:
         uri_parser = validator.uri_parser
-    
+
     return ConnexionRequest(scope, uri_parser=uri_parser)
 
 
@@ -166,7 +165,7 @@ class TestParameterValidator:
     def test_validate_query_parameter_sorting(self):
         """Test validation of sorting parameter."""
         validator = make_validator()
-        
+
         param = {
             "name": "sorting",
             "in": "query",
@@ -204,7 +203,7 @@ class TestParameterValidator:
     def test_validate_query_parameter_filters(self):
         """Test validation of filters parameter."""
         validator = make_validator()
-        
+
         param = {
             "name": "filters",
             "in": "query",
@@ -236,7 +235,7 @@ class TestParameterValidator:
     def test_validate_query_parameter_include(self):
         """Test validation of include parameter."""
         validator = make_validator()
-        
+
         param = {
             "name": "include",
             "in": "query",
@@ -276,7 +275,7 @@ class TestParameterValidator:
     def test_validate_query_parameter_include_search_defers_validation(self):
         """Test that include validation is deferred for /search endpoint."""
         validator = make_validator()
-        
+
         param = {
             "name": "include",
             "in": "query",
@@ -303,7 +302,7 @@ class TestParameterValidator:
     def test_validate_query_parameter_default_validation(self):
         """Test that parameters with default values are handled correctly."""
         validator = make_validator()
-        
+
         # Test with a parameter that has a default
         param = {
             "name": "offset",
@@ -327,7 +326,7 @@ class TestParameterValidator:
     def test_validate_query_parameter_missing_parameter(self):
         """Test handling of missing parameter."""
         validator = make_validator()
-        
+
         param = {
             "name": "limit",
             "in": "query",
@@ -347,7 +346,7 @@ class TestParameterValidator:
     def test_validate_sets_and_clears_request_scopes(self):
         """Test that request_scopes is set and cleared during validation."""
         validator = make_validator()
-        
+
         scope = {
             "type": "http",
             "path": "/api/v1/test",
@@ -362,7 +361,7 @@ class TestParameterValidator:
     def test_validate_calls_validate_request(self):
         """Test that validate calls validate_request."""
         validator = make_validator()
-        
+
         scope = {
             "type": "http",
             "path": "/api/v1/test",
@@ -382,7 +381,7 @@ class TestParameterValidator:
     def test_validate_preserves_scope(self):
         """Test that scope is preserved through validation."""
         validator = make_validator()
-        
+
         scope = {
             "type": "http",
             "path": "/api/v1/test"
@@ -394,9 +393,9 @@ class TestParameterValidator:
     def test_parameter_validator_with_security_params(self):
         """Test validator with security query params."""
         parameters = []
-        
+
         uri_parser = OpenAPIURIParserPatched(parameters, {})
-        
+
         validator = ParameterValidatorPatched(
             parameters=parameters,
             uri_parser=uri_parser,
@@ -410,9 +409,9 @@ class TestParameterValidator:
     def test_parameter_validator_strict_validation(self):
         """Test validator with strict validation."""
         parameters = [{"name": "limit", "in": "query", "required": True}]
-        
+
         uri_parser = OpenAPIURIParserPatched(parameters, {})
-        
+
         validator = ParameterValidatorPatched(
             parameters=parameters,
             uri_parser=uri_parser,
@@ -424,7 +423,7 @@ class TestParameterValidator:
     def test_validate_sorting_with_api_validation(self):
         """Test that sorting validation uses API validation."""
         validator = make_validator()
-        
+
         param = {
             "name": "sorting",
             "in": "query",
@@ -462,7 +461,7 @@ class TestParameterValidator:
     def test_validate_filters_with_api_validation(self):
         """Test that filters validation uses API validation."""
         validator = make_validator()
-        
+
         param = {
             "name": "filters",
             "in": "query",
@@ -494,7 +493,7 @@ class TestParameterValidator:
     def test_validate_include_with_api_validation(self):
         """Test that include validation uses API validation."""
         validator = make_validator()
-        
+
         param = {
             "name": "include",
             "in": "query",

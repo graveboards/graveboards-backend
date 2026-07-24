@@ -1,15 +1,15 @@
 import pytest
 
+from app.database.rules.base import RestrictionBase
 from app.database.rules.registry import (
     RULE_REGISTRY,
     RULE_TIERS,
+    get_supported_versions,
     get_validator,
     get_validator_tier,
     get_validators_for_tier,
-    get_supported_versions,
     register_validator,
 )
-from app.database.rules.base import RestrictionBase
 
 
 class TestRegistryAllValidators:

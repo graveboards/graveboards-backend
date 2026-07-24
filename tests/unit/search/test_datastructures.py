@@ -1,15 +1,15 @@
 import pytest
 
 from app.search.datastructures import (
-    SearchSchema,
     Conditions,
-    SearchTermsSchema,
-    SortingSchema,
-    SortingOption,
-    FiltersSchema,
     FieldFilters,
     FieldWeights,
+    FiltersSchema,
     PatternMultipliers,
+    SearchSchema,
+    SearchTermsSchema,
+    SortingOption,
+    SortingSchema,
 )
 from app.search.enums import Scope
 

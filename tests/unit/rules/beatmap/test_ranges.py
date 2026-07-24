@@ -1,13 +1,14 @@
-import pytest
 from unittest.mock import MagicMock
 
-from app.database.rules.validators.beatmap.ar_range import ARRangeRestriction
-from app.database.rules.validators.beatmap.od_range import ODRangeRestriction
-from app.database.rules.validators.beatmap.hp_range import HPRangeRestriction
-from app.database.rules.validators.beatmap.cs_range import CSRangeRestriction
-from app.database.rules.validators.beatmap.drain_range import DrainRangeRestriction
+import pytest
+
 from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError
+from app.database.rules.validators.beatmap.ar_range import ARRangeRestriction
+from app.database.rules.validators.beatmap.cs_range import CSRangeRestriction
+from app.database.rules.validators.beatmap.drain_range import DrainRangeRestriction
+from app.database.rules.validators.beatmap.hp_range import HPRangeRestriction
+from app.database.rules.validators.beatmap.od_range import ODRangeRestriction
 
 
 def _make_beatmap(ar=5.0, accuracy=10.0, drain=5.0, cs=4.0, hit_length=180, version="Normal"):

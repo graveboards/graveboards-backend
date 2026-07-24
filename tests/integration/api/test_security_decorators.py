@@ -4,11 +4,11 @@ Integration tests for security decorator edge cases.
 Tests the role_authorization and ownership_authorization decorators
 using the actual API endpoints that employ these decorators.
 """
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.database.enums import RoleName
-from app.database.schemas import RequestSchema, QueueSchema
+import pytest
+
+from app.database.schemas import RequestSchema
 from app.security import generate_token
 
 
@@ -20,14 +20,14 @@ class TestRoleAuthorizationWithOneOf:
     async def test_user_with_one_of_required_roles_succeeds(self, TestClientWithMocks):
         """Test user with one of the required roles succeeds."""
         mock_db = AsyncMock()
-        
+
         mock_user = MagicMock()
         mock_user.id = 12345678
         admin_role = MagicMock()
         admin_role.name = "admin"
         mock_user.roles = [admin_role]
         mock_db.get = AsyncMock(return_value=mock_user)
-        
+
         mock_request = MagicMock()
         mock_request.id = 1
         mock_request.user_id = 87654321
@@ -53,27 +53,27 @@ class TestRoleAuthorizationWithOneOf:
     @pytest.mark.asyncio
     async def test_user_with_none_of_required_roles_fails(self, TestClientWithMocks, authenticated_user_id):
         """Test user with none of the required roles fails."""
-        from app.database.models import Request, Queue
+        from app.database.models import Queue, Request
 
         mock_db = AsyncMock()
-        
+
         mock_user = MagicMock()
         mock_user.id = 12345678
         mock_user.roles = []
-        
+
         mock_request = MagicMock()
         mock_request.id = 1
         mock_request.user_id = 12345678
         mock_request.queue = MagicMock()
         mock_request.queue.user_id = 99999999
-        
+
         async def mock_get(model, **kwargs):
             if model == Request:
                 return mock_request
             if model == Queue:
                 return None
             return mock_user
-        
+
         mock_db.get = AsyncMock(side_effect=mock_get)
 
         test_client = TestClientWithMocks(mock_db=mock_db)
@@ -99,7 +99,7 @@ class TestRoleAuthorizationWithCustomOverride:
         """Test that custom override callback allows access."""
 
         mock_db = AsyncMock()
-        
+
         mock_queue = MagicMock()
         mock_queue.id = 1
         mock_queue.user_id = 99999999
@@ -107,16 +107,16 @@ class TestRoleAuthorizationWithCustomOverride:
         mock_queue.description = "Original"
         mock_queue.visibility = 0
         mock_queue.is_open = True
-        
+
         mock_user = MagicMock()
         mock_user.id = 99999999
         mock_user.roles = []
-        
+
         async def mock_get(model, **kwargs):
             if model.__name__ == "Queue":
                 return mock_queue
             return mock_user
-        
+
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.update = AsyncMock()
 
@@ -139,7 +139,7 @@ class TestRoleAuthorizationWithCustomOverride:
         """Test that custom override callback denies access when it returns False."""
 
         mock_db = AsyncMock()
-        
+
         mock_queue = MagicMock()
         mock_queue.id = 1
         mock_queue.user_id = 11111111
@@ -147,16 +147,16 @@ class TestRoleAuthorizationWithCustomOverride:
         mock_queue.description = "Original"
         mock_queue.visibility = 0
         mock_queue.is_open = True
-        
+
         mock_user = MagicMock()
         mock_user.id = 99999999
         mock_user.roles = []
-        
+
         async def mock_get(model, **kwargs):
             if model.__name__ == "Queue":
                 return mock_queue
             return mock_user
-        
+
         mock_db.get = AsyncMock(side_effect=mock_get)
 
         test_client = TestClientWithMocks(mock_db=mock_db)
@@ -182,7 +182,7 @@ class TestOwnershipAuthorizationSuccess:
         """Test that user can get their own requests via ownership."""
 
         mock_db = AsyncMock()
-        
+
         request_data = {
             "id": 1,
             "user_id": 12345678,
@@ -193,7 +193,7 @@ class TestOwnershipAuthorizationSuccess:
         }
         mock_request = RequestSchema.model_validate(request_data)
         mock_db.get_many = AsyncMock(return_value=[mock_request])
-        
+
         mock_user = MagicMock()
         mock_user.id = 12345678
         mock_user.roles = []
@@ -219,7 +219,7 @@ class TestOwnershipAuthorizationSuccess:
         """Test that user can get specific request they own via ownership."""
 
         mock_db = AsyncMock()
-        
+
         request_data = {
             "id": 1,
             "user_id": 12345678,
@@ -229,17 +229,16 @@ class TestOwnershipAuthorizationSuccess:
             "mv_checked": False,
         }
         mock_request = RequestSchema.model_validate(request_data)
-        
+
         mock_user = MagicMock()
         mock_user.id = 12345678
         mock_user.roles = []
-        
+
         async def mock_get(model, **kwargs):
-            from app.database.models import Request
             if model.__name__ == "Request":
                 return mock_request
             return mock_user
-        
+
         mock_db.get = AsyncMock(side_effect=mock_get)
 
         test_client = TestClientWithMocks(mock_db=mock_db)
@@ -309,7 +308,7 @@ class TestOwnershipAuthorizationFailure:
         """Test that user gets 403 when trying to access request they don't own."""
 
         mock_db = AsyncMock()
-        
+
         request_data = {
             "id": 1,
             "user_id": 99999999,
@@ -319,17 +318,16 @@ class TestOwnershipAuthorizationFailure:
             "mv_checked": False,
         }
         mock_request = RequestSchema.model_validate(request_data)
-        
+
         mock_user = MagicMock()
         mock_user.id = 12345678
         mock_user.roles = []
-        
+
         async def mock_get(model, **kwargs):
-            from app.database.models import Request
             if model.__name__ == "Request":
                 return mock_request
             return mock_user
-        
+
         mock_db.get = AsyncMock(side_effect=mock_get)
 
         test_client = TestClientWithMocks(mock_db=mock_db)
@@ -407,7 +405,7 @@ class TestOwnershipAuthorizationAdminOverride:
         """Test that admin can get specific request regardless of ownership."""
 
         mock_db = AsyncMock()
-        
+
         request_data = {
             "id": 1,
             "user_id": 99999999,
@@ -417,19 +415,18 @@ class TestOwnershipAuthorizationAdminOverride:
             "mv_checked": False,
         }
         mock_request = RequestSchema.model_validate(request_data)
-        
+
         mock_admin_user = MagicMock()
         mock_admin_user.id = 11111111
         admin_role = MagicMock()
         admin_role.name = "admin"
         mock_admin_user.roles = [admin_role]
-        
+
         async def mock_get(model, **kwargs):
-            from app.database.models import Request
             if model.__name__ == "Request":
                 return mock_request
             return mock_admin_user
-        
+
         mock_db.get = AsyncMock(side_effect=mock_get)
 
         test_client = TestClientWithMocks(mock_db=mock_db)

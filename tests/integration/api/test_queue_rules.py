@@ -3,8 +3,9 @@ Integration tests for /queues/{queue_id}/rules endpoint.
 
 Tests full CRUD operations for queue rules via the dedicated endpoint.
 """
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 
 class TestQueueRulesCRUD:
@@ -48,7 +49,7 @@ class TestQueueRulesCRUD:
         """Create a mock rule with proper attribute values (not MagicMock)."""
         from dataclasses import dataclass, field
         from datetime import datetime
-        
+
         @dataclass
         class MockRule:
             id: int
@@ -60,7 +61,7 @@ class TestQueueRulesCRUD:
             is_public: bool
             updated_at: datetime = field(default_factory=lambda: datetime.now())
             created_at: datetime = field(default_factory=lambda: datetime.now())
-        
+
         return MockRule(
             id=rule_id or self.TEST_RULE_ID,
             queue_id=queue_id or self.TEST_QUEUE_ID,
@@ -93,23 +94,23 @@ class TestQueueRulesCRUD:
         mock_session_instance = MagicMock()
         mock_session_instance.__aenter__ = AsyncMock(return_value=mock_session_instance)
         mock_session_instance.__aexit__ = AsyncMock(return_value=False)
-        
+
         mock_db = AsyncMock()
         if queue and user:
             from app.database.models import Queue, User
-            mock_db.get = AsyncMock(side_effect=lambda model, *args, **kwargs: 
+            mock_db.get = AsyncMock(side_effect=lambda model, *args, **kwargs:
                 queue if model == Queue else (user if model == User else None))
         elif user:
             from app.database.models import User
-            mock_db.get = AsyncMock(side_effect=lambda model, *args, **kwargs: 
+            mock_db.get = AsyncMock(side_effect=lambda model, *args, **kwargs:
                 user if model == User else None)
         elif queue:
             from app.database.models import Queue
-            mock_db.get = AsyncMock(side_effect=lambda model, *args, **kwargs: 
+            mock_db.get = AsyncMock(side_effect=lambda model, *args, **kwargs:
                 queue if model == Queue else None)
         else:
             mock_db.get.return_value = None
-        
+
         # session should return an async context manager, not a coroutine
         mock_db.session = MagicMock(return_value=mock_session_instance)
         return mock_db
@@ -374,7 +375,7 @@ class TestQueueRulesCRUD:
         with authenticated_user_id(self.ADMIN_USER_ID):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.get(
-                f"/api/v1/queues/999999/rules",
+                "/api/v1/queues/999999/rules",
                 headers=headers,
             )
 

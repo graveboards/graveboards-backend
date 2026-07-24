@@ -6,9 +6,10 @@ must match (AND logic) across the appropriate field categories.
 
 import pytest
 from sqlalchemy.dialects import postgresql
-from app.search.enums import Scope
+
 from app.database.ctes.search_terms_filtered import search_terms_filtered_cte_factory
 from app.search.datastructures import SearchTermsSchema
+from app.search.enums import Scope
 
 
 def _compile_postgres(cte):

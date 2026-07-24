@@ -1,9 +1,10 @@
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
-from app.database.rules.engine.evaluator import build_rule_node, AndNode, OrNode, AtomicRuleNode
-from app.database.rules.engine.phase1_runner import Phase1Runner
+import pytest
+
 from app.database.rules.context import ExecutionContext
+from app.database.rules.engine.evaluator import build_rule_node
+from app.database.rules.engine.phase1_runner import Phase1Runner
 from app.database.rules.exceptions import RuleViolationError
 
 

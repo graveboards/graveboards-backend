@@ -19,9 +19,10 @@ Tests that need database:
 """
 
 import pytest
-from app.search.enums import Scope
+
+from app.search.datastructures import FiltersSchema, SearchTermsSchema
 from app.search.engine import SearchEngine
-from app.search.datastructures import SearchTermsSchema, FiltersSchema
+from app.search.enums import Scope
 
 
 @pytest.mark.integration

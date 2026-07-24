@@ -2,10 +2,8 @@ import sys
 from logging.config import fileConfig
 from pathlib import Path
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
 from alembic import context
+from sqlalchemy import engine_from_config, pool
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -23,6 +21,7 @@ sys.path.insert(0, str(project_root))
 # Add your model's MetaData object here for 'autogenerate' support
 # Import Base directly from the base module to avoid circular imports
 from app.database.models.base import Base  # noqa: E402
+
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
@@ -36,8 +35,9 @@ def get_sqlalchemy_url() -> str:
 
     Uses psycopg2 (synchronous) for migrations instead of asyncpg (async).
     """
-    from app.config import POSTGRESQL_CONFIGURATION
     from sqlalchemy import URL
+
+    from app.config import POSTGRESQL_CONFIGURATION
 
     # Override drivername to use synchronous psycopg2 for migrations
     config = POSTGRESQL_CONFIGURATION.copy()

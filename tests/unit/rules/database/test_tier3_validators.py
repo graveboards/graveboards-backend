@@ -1,16 +1,17 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.database.rules.validators.database.never_ranked import (
-    NeverRankedRestriction,
-    NeverRankedConfig,
-)
-from app.database.rules.validators.database.unique_artist_title import (
-    UniqueArtistTitleRestriction,
-    UniqueArtistTitleConfig,
-)
+import pytest
+
 from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError
+from app.database.rules.validators.database.never_ranked import (
+    NeverRankedConfig,
+    NeverRankedRestriction,
+)
+from app.database.rules.validators.database.unique_artist_title import (
+    UniqueArtistTitleConfig,
+    UniqueArtistTitleRestriction,
+)
 
 
 def _make_context(beatmapset=None, osu_client=None, session=None):

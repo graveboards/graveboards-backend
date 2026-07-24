@@ -1,9 +1,10 @@
 import time
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from app.database.rules.engine.phase1_runner import Phase1Runner
+import pytest
+
 from app.database.rules.context import ExecutionContext
+from app.database.rules.engine.phase1_runner import Phase1Runner
 
 
 def _make_mock_rule(type, config, is_active=True):

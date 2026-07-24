@@ -1,8 +1,7 @@
 from unittest.mock import patch
 
 import pytest
-
-from jwt.exceptions import InvalidTokenError, ExpiredSignatureError
+from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 
 
 class TestDecodeToken:

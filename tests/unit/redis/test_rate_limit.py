@@ -1,12 +1,12 @@
 """Unit tests for rate_limit decorator edge cases not covered by test_rate_limit_decorator.py."""
 
-import asyncio
 import time
-import pytest
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from app.redis.decorators import rate_limit
+import pytest
+
 from app.exceptions import RateLimitExceededError
+from app.redis.decorators import rate_limit
 
 
 class MockRedisClient:
@@ -40,7 +40,7 @@ class TestRateLimitModule:
     @pytest.mark.asyncio
     async def test_rate_limit_error_contains_timing_info(self):
         """Test RateLimitExceededError has next_window and last_call_timestamp."""
-        next_win = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+        next_win = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
         exc = RateLimitExceededError(
             next_window=next_win,
             last_call_timestamp=1704110400.0,

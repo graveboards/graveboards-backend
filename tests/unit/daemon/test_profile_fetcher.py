@@ -1,10 +1,9 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
-from datetime import datetime
 
 from app.daemon.services.profile_fetcher import ProfileFetcher
-from app.database.models import ProfileFetcherTask, User, Profile
-from app.exceptions import RedisLockTimeoutError
+from app.database.models import ProfileFetcherTask
 
 
 class TestProfileFetcher:
@@ -93,6 +92,5 @@ class TestProfileFetcher:
 
     async def test_auto_retry_decorator_applied(self, service):
         """Test that _execute_job has auto_retry decorator."""
-        import inspect
 
         assert hasattr(service._execute_job, "__wrapped__")

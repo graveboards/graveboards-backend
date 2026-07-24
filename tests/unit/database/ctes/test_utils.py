@@ -1,10 +1,8 @@
-import pytest
 from sqlalchemy.sql import select
-from sqlalchemy.sql.selectable import CTE, Select
-from sqlalchemy.orm import aliased
+from sqlalchemy.sql.selectable import Select
 
 from app.database.ctes.utils import extract_cte_target_scalar
-from app.database.models import ModelClass, BeatmapSnapshot
+from app.database.models import BeatmapSnapshot, ModelClass
 
 
 class TestCTEUtils:
@@ -17,7 +15,7 @@ class TestCTEUtils:
             BeatmapSnapshot.beatmap_id.label("target")
         ).cte("test_cte")
         result = extract_cte_target_scalar(stmt, ModelClass.BEATMAP_SNAPSHOT)
-        
+
         assert result is not None
 
     def test_extract_cte_target_scalar_with_alias(self):
@@ -27,7 +25,7 @@ class TestCTEUtils:
             BeatmapSnapshot.beatmap_id.label("target")
         ).cte("test_cte")
         result = extract_cte_target_scalar(stmt, ModelClass.BEATMAP_SNAPSHOT, use_alias=True)
-        
+
         assert result is not None
 
     def test_extract_cte_target_scalar_custom_id_label(self):
@@ -37,5 +35,5 @@ class TestCTEUtils:
             BeatmapSnapshot.beatmap_id.label("target")
         ).cte("test_cte")
         result = extract_cte_target_scalar(stmt, ModelClass.BEATMAP_SNAPSHOT, id_column_label="beatmap_id")
-        
+
         assert result is not None

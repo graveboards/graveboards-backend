@@ -1,14 +1,19 @@
 """Integration tests for error handlers and custom exceptions."""
 
+
 import pytest
-from unittest.mock import MagicMock
+from authlib.integrations.base_client.errors import OAuthError
 
 from app.exceptions import (
-    BadRequest, NotFound, Conflict, TypeValidationError,
-    RestrictedUserError, RedisLockTimeoutError, RateLimitExceededError,
-    bad_request_factory, OsuOAuthError
+    BadRequest,
+    Conflict,
+    NotFound,
+    OsuOAuthError,
+    RedisLockTimeoutError,
+    RestrictedUserError,
+    TypeValidationError,
+    bad_request_factory,
 )
-from authlib.integrations.base_client.errors import OAuthError
 
 
 class TestForbiddenErrorHandler:

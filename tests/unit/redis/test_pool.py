@@ -1,6 +1,5 @@
 """Unit tests for Redis connection pool singleton."""
 
-import pytest
 from redis import ConnectionPool
 
 
@@ -15,8 +14,8 @@ class TestConnectionPool:
 
     def test_pool_uses_redis_configuration(self):
         """Test pool is initialized with REDIS_CONFIGURATION values."""
-        from app.redis.pool import connection_pool
         from app.config import REDIS_CONFIGURATION
+        from app.redis.pool import connection_pool
 
         assert connection_pool.connection_kwargs.get("host") == REDIS_CONFIGURATION["host"]
         assert connection_pool.connection_kwargs.get("port") == REDIS_CONFIGURATION["port"]

@@ -1,11 +1,12 @@
-import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
 from io import BytesIO
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from app.beatmaps.manager import BeatmapManager
-from app.redis import RedisClient
 from app.database import PostgresqlDB
 from app.database.models import BeatmapTag
+from app.redis import RedisClient
 
 
 class TestBeatmapManager:

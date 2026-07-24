@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import AsyncMock
+
+import pytest
 
 from app.search.datastructures import SearchSchema
 from app.search.enums import Scope
@@ -95,7 +96,6 @@ class TestSearchHttpIntegration:
     @pytest.mark.asyncio
     async def test_search_post_returns_201(self, TestClientWithMocks):
         """Test POST /api/v1/search returns 201 with compressed query."""
-        from app.search import compress_query
 
         mock_rc = AsyncMock()
 

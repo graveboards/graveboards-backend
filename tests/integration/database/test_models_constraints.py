@@ -1,9 +1,15 @@
 import pytest
-from app.database.db import PostgresqlDB
 from sqlalchemy.sql import select
 
-from app.database.models import User, Queue, Request, Beatmapset, BeatmapsetSnapshot, BeatmapsetListing
-
+from app.database.db import PostgresqlDB
+from app.database.models import (
+    Beatmapset,
+    BeatmapsetListing,
+    BeatmapsetSnapshot,
+    Queue,
+    Request,
+    User,
+)
 
 
 @pytest.mark.asyncio

@@ -5,11 +5,11 @@ They are marked with @pytest.mark.integration and will be skipped if
 REDIS_TEST_URL is not set or Redis is unreachable.
 """
 
-import pytest
 import asyncio
 
-from app.redis.models import Beatmap, Beatmapset, OsuClientOAuthToken, QueueRequestHandlerTask
+import pytest
 
+from app.redis.models import Beatmap, OsuClientOAuthToken, QueueRequestHandlerTask
 
 pytestmark = pytest.mark.integration
 
@@ -26,6 +26,7 @@ def require_redis(func):
 def get_redis_client():
     """Create a RedisClient connected to the test Redis instance."""
     import os
+
     from app.redis.rc import RedisClient
 
     url = os.environ["REDIS_TEST_URL"]

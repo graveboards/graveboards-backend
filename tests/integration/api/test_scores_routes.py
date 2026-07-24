@@ -3,9 +3,9 @@ Integration tests for POST /api/v1/scores endpoint (admin-only).
 
 Tests the score submission via full HTTP stack.
 """
-import os
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 
 
 class TestScoresPostIntegration:
@@ -51,7 +51,7 @@ class TestScoresPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_submission_creates_score(self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled):
         """Test successful score submission that creates new score."""
-        from app.database.models import User, Beatmap, BeatmapSnapshot, Leaderboard, Score
+        from app.database.models import Beatmap, BeatmapSnapshot, Leaderboard, Score, User
 
         mock_db = AsyncMock()
 
@@ -116,13 +116,13 @@ class TestScoresPostIntegration:
 
         assert response.status_code == 404
         data = response.json()
-        assert f"There is no user with ID" in data["detail"]
+        assert "There is no user with ID" in data["detail"]
 
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_beatmap_not_found(self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled):
         """Test score submission fails when beatmap doesn't exist."""
-        from app.database.models import User, Beatmap
+        from app.database.models import Beatmap, User
 
         mock_db = AsyncMock()
         mock_user = MagicMock()
@@ -148,13 +148,13 @@ class TestScoresPostIntegration:
 
         assert response.status_code == 404
         data = response.json()
-        assert f"There is no beatmap with ID" in data["detail"]
+        assert "There is no beatmap with ID" in data["detail"]
 
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_beatmap_snapshot_not_found(self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled):
         """Test score submission fails when beatmap snapshot doesn't exist."""
-        from app.database.models import User, Beatmap, BeatmapSnapshot
+        from app.database.models import Beatmap, BeatmapSnapshot, User
 
         mock_db = AsyncMock()
         mock_user = MagicMock()
@@ -184,13 +184,13 @@ class TestScoresPostIntegration:
 
         assert response.status_code == 404
         data = response.json()
-        assert f"There is no beatmap snapshot" in data["detail"]
+        assert "There is no beatmap snapshot" in data["detail"]
 
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_leaderboard_not_found(self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled):
         """Test score submission fails when leaderboard doesn't exist."""
-        from app.database.models import User, Beatmap, BeatmapSnapshot, Leaderboard
+        from app.database.models import Beatmap, BeatmapSnapshot, Leaderboard, User
 
         mock_db = AsyncMock()
         mock_user = MagicMock()
@@ -225,13 +225,13 @@ class TestScoresPostIntegration:
 
         assert response.status_code == 404
         data = response.json()
-        assert f"There is no leaderboard" in data["detail"]
+        assert "There is no leaderboard" in data["detail"]
 
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_duplicate_score(self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled):
         """Test score submission fails when duplicate exists."""
-        from app.database.models import User, Beatmap, BeatmapSnapshot, Leaderboard, Score
+        from app.database.models import Beatmap, BeatmapSnapshot, Leaderboard, Score, User
 
         mock_db = AsyncMock()
         mock_user = MagicMock()
@@ -301,15 +301,15 @@ class TestScoresPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_access_succeeds_with_token(self, TestClientWithMocks, valid_score_body, admin_user_token, authenticated_user_id):
         """Test that admin user can successfully post score with valid token."""
-        from app.security import decode_token
         from app.database.enums import RoleName
-        from app.database.models import User, Beatmap, BeatmapSnapshot, Leaderboard, Score
+        from app.database.models import Beatmap, BeatmapSnapshot, Leaderboard, Score, User
+        from app.security import decode_token
 
         decoded_token = decode_token(admin_user_token)
         user_id = int(decoded_token["sub"])
-        
+
         mock_db = AsyncMock()
-        
+
         mock_user = MagicMock()
         mock_user.id = user_id
         admin_role = MagicMock()
@@ -357,7 +357,7 @@ class TestScoresPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_success_with_auth(self, TestClientWithMocks, valid_score_body, admin_user_token):
         """Test that admin user can successfully post score with valid token."""
-        from app.database.models import User, Beatmap, BeatmapSnapshot, Leaderboard, Score
+        from app.database.models import Beatmap, BeatmapSnapshot, Leaderboard, Score, User
 
         mock_db = AsyncMock()
         mock_user = MagicMock()
@@ -405,7 +405,7 @@ class TestScoresPostIntegration:
         """Test that disabling security resolves an admin dev identity (rather than
         skipping the check outright), letting the request through.
         """
-        from app.database.models import User, Beatmap, BeatmapSnapshot, Leaderboard, Score
+        from app.database.models import Beatmap, BeatmapSnapshot, Leaderboard, Score, User
 
         mock_db = AsyncMock()
         mock_user = MagicMock()
@@ -448,12 +448,12 @@ class TestScoresPostIntegration:
     @pytest.mark.asyncio
     async def test_get_score_list(self, TestClientWithMocks):
         """Test GET /api/v1/scores returns list of scores."""
-        from app.database.schemas import ScoreSchema, ScoreStatisticsSchema
-        from pydantic import TypeAdapter
         from datetime import datetime
 
+        from app.database.schemas import ScoreSchema
+
         mock_db = AsyncMock()
-        
+
         score_data_1 = {
             "id": 1,
             "user_id": self.TEST_USER_ID,
@@ -510,7 +510,7 @@ class TestScoresPostIntegration:
             },
             "type": "approved",
         }
-        
+
         mock_score1 = ScoreSchema.model_validate(score_data_1)
         mock_score2 = ScoreSchema.model_validate(score_data_2)
         mock_db.get_many = AsyncMock(return_value=[mock_score1, mock_score2])
@@ -528,11 +528,12 @@ class TestScoresPostIntegration:
     @pytest.mark.asyncio
     async def test_get_score_by_id(self, TestClientWithMocks):
         """Test GET /api/v1/scores/{id} returns specific score."""
-        from app.database.schemas import ScoreSchema
         from datetime import datetime
 
+        from app.database.schemas import ScoreSchema
+
         mock_db = AsyncMock()
-        
+
         score_data = {
             "id": 1,
             "user_id": self.TEST_USER_ID,
@@ -561,7 +562,7 @@ class TestScoresPostIntegration:
             },
             "type": "approved",
         }
-        
+
         mock_score = ScoreSchema.model_validate(score_data)
         mock_db.get = AsyncMock(return_value=mock_score)
 
@@ -577,10 +578,9 @@ class TestScoresPostIntegration:
     @pytest.mark.asyncio
     async def test_get_score_not_found(self, TestClientWithMocks):
         """Test GET /api/v1/scores/{id} returns 404 for non-existent score."""
-        from app.database.models import Score
 
         mock_db = AsyncMock()
-        
+
         async def mock_get(model, **kwargs):
             if model.__name__ == "Score":
                 return None
@@ -588,7 +588,7 @@ class TestScoresPostIntegration:
             mock_user.id = 12345678
             mock_user.roles = []
             return mock_user
-        
+
         mock_db.get = AsyncMock(side_effect=mock_get)
 
         test_client = TestClientWithMocks(mock_db=mock_db)

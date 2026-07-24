@@ -1,7 +1,7 @@
 import pytest
 
-from app.database.utils import get_filter_condition
 from app.database.enums import FilterOperator
+from app.database.utils import get_filter_condition
 
 
 class TestGetFilterCondition:
@@ -28,6 +28,7 @@ class TestGetFilterCondition:
 @pytest.fixture
 def mock_column_clause():
     from unittest.mock import MagicMock
+
     from sqlalchemy.sql.elements import ColumnClause
 
     column = MagicMock(spec=ColumnClause)

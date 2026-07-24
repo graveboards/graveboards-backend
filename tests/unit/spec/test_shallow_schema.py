@@ -29,7 +29,7 @@ class TestShallowSchema:
             "RequestInclude",
         }
 
-        assert SCHEMAS_WITH_SHALLOW_REFS == expected
+        assert expected == SCHEMAS_WITH_SHALLOW_REFS
 
     def test_disabled_nested_obj_structure(self):
         """Test that disabled_nested_obj has correct structure."""

@@ -1,6 +1,5 @@
 """Tests for conftest fixtures: security_disabled, security_enabled, admin_user_token."""
 
-import pytest
 
 
 class TestConftestFixtures:

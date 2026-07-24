@@ -1,9 +1,19 @@
 from datetime import datetime, timedelta
-from typing import Optional
 
 import pytest
 
-from app.database.models import User, Profile, Queue, Request, Beatmap, Beatmapset, BeatmapListing, BeatmapTag, BeatmapsetListing, BeatmapsetTag
+from app.database.models import (
+    Beatmap,
+    BeatmapListing,
+    Beatmapset,
+    BeatmapsetListing,
+    BeatmapsetTag,
+    BeatmapTag,
+    Profile,
+    Queue,
+    Request,
+    User,
+)
 
 
 def create_user(**kwargs) -> User:
@@ -23,7 +33,7 @@ def create_user(**kwargs) -> User:
     )
 
 
-def create_profile(user_id: Optional[int] = None, **kwargs) -> Profile:
+def create_profile(user_id: int | None = None, **kwargs) -> Profile:
     """Create a profile model instance with defaults."""
     return Profile(
         id=kwargs.get("id"),
@@ -43,7 +53,7 @@ def create_profile(user_id: Optional[int] = None, **kwargs) -> Profile:
     )
 
 
-def create_queue(user_id: Optional[int] = None, **kwargs) -> Queue:
+def create_queue(user_id: int | None = None, **kwargs) -> Queue:
     """Create a queue model instance with defaults."""
     return Queue(
         id=kwargs.get("id"),
@@ -61,7 +71,7 @@ def create_queue(user_id: Optional[int] = None, **kwargs) -> Queue:
     )
 
 
-def create_request(queue_id: Optional[int] = None, beatmapset_id: Optional[int] = None, **kwargs) -> Request:
+def create_request(queue_id: int | None = None, beatmapset_id: int | None = None, **kwargs) -> Request:
     """Create a request model instance with defaults."""
     return Request(
         id=kwargs.get("id"),
@@ -104,7 +114,7 @@ def request_factory():
     return create_request
 
 
-def create_beatmap(beatmapset_id: Optional[int] = None, **kwargs) -> Beatmap:
+def create_beatmap(beatmapset_id: int | None = None, **kwargs) -> Beatmap:
     """Create a beatmap model instance with defaults."""
     return Beatmap(
         id=kwargs.get("id", 116383),
@@ -112,7 +122,7 @@ def create_beatmap(beatmapset_id: Optional[int] = None, **kwargs) -> Beatmap:
     )
 
 
-def create_beatmapset(user_id: Optional[int] = None, **kwargs) -> Beatmapset:
+def create_beatmapset(user_id: int | None = None, **kwargs) -> Beatmapset:
     """Create a beatmapset model instance with defaults."""
     return Beatmapset(
         id=kwargs.get("id", 35965),
@@ -132,7 +142,7 @@ def beatmapset_factory():
     return create_beatmapset
 
 
-def create_beatmap_listing(beatmap_id: Optional[int] = None, beatmap_snapshot_id: Optional[int] = None, **kwargs) -> BeatmapListing:
+def create_beatmap_listing(beatmap_id: int | None = None, beatmap_snapshot_id: int | None = None, **kwargs) -> BeatmapListing:
     """Create a beatmap listing model instance with defaults."""
     return BeatmapListing(
         id=kwargs.get("id"),
@@ -154,7 +164,7 @@ def create_beatmap_tag(**kwargs) -> BeatmapTag:
     )
 
 
-def create_beatmapset_listing(beatmapset_id: Optional[int] = None, beatmapset_snapshot_id: Optional[int] = None, **kwargs) -> BeatmapsetListing:
+def create_beatmapset_listing(beatmapset_id: int | None = None, beatmapset_snapshot_id: int | None = None, **kwargs) -> BeatmapsetListing:
     """Create a beatmapset listing model instance with defaults."""
     return BeatmapsetListing(
         id=kwargs.get("id"),

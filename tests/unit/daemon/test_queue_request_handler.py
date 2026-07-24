@@ -1,6 +1,7 @@
-import pytest
-from unittest.mock import MagicMock, AsyncMock, patch, call
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from app.daemon.services.queue_request_handler import QueueRequestHandler
 from app.redis.models import QueueRequestHandlerTask
@@ -181,7 +182,6 @@ class TestQueueRequestHandler:
 
     async def test_auto_retry_decorator_applied(self, service):
         """Test that _execute_job has auto_retry decorator."""
-        import inspect
 
         assert hasattr(service._execute_job, "__wrapped__") or hasattr(service._execute_job, "__call__")
 

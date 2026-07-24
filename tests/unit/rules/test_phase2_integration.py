@@ -1,9 +1,10 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.database.rules.engine.phase2_runner import Phase2Runner
+import pytest
+
 from app.database.rules.context import ExecutionContext
-from app.database.rules.exceptions import RuleViolationError, RetryableValidationError
+from app.database.rules.engine.phase2_runner import Phase2Runner
+from app.database.rules.exceptions import RetryableValidationError, RuleViolationError
 
 
 def _make_mock_rule(type, config, is_active=True):

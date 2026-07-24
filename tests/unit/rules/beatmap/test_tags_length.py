@@ -1,10 +1,11 @@
-import pytest
 from unittest.mock import MagicMock
 
-from app.database.rules.validators.beatmap.tags import TagsRestriction
-from app.database.rules.validators.beatmap.length import LengthRestriction
+import pytest
+
 from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError
+from app.database.rules.validators.beatmap.length import LengthRestriction
+from app.database.rules.validators.beatmap.tags import TagsRestriction
 
 
 def _make_beatmap(hit_length=180, total_length=200, top_tag_ids=None, version="Normal"):

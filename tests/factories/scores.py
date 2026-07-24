@@ -1,11 +1,10 @@
-from typing import Optional
 
-from app.database.models import Score, Profile
-from app.database.schemas import ScoreSchema, ProfileSchema
-from tests.fixtures.osu import load_user_scores_best, load_user
+from app.database.models import Profile, Score
+from app.database.schemas import ProfileSchema, ScoreSchema
+from tests.fixtures.osu import load_user, load_user_scores_best
 
 
-def create_score_from_best(score_data: dict, user_id: Optional[int] = None, beatmap_id: Optional[int] = None, beatmapset_id: Optional[int] = None, leaderboard_id: int = 1) -> Score:
+def create_score_from_best(score_data: dict, user_id: int | None = None, beatmap_id: int | None = None, beatmapset_id: int | None = None, leaderboard_id: int = 1) -> Score:
     """Create a Score model instance from osu! API score data."""
     schema_data = ScoreSchema.model_validate(score_data)
     return Score(

@@ -1,15 +1,16 @@
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
+
+from app.database.rules.context import ExecutionContext
+from app.database.rules.exceptions import RuleViolationError
 from app.database.rules.validators.beatmap.bpm import BPMRestriction
+from app.database.rules.validators.beatmap.difficulty_count import DifficultyCountRestriction
 from app.database.rules.validators.beatmap.genre import GenreRestriction
 from app.database.rules.validators.beatmap.language import LanguageRestriction
 from app.database.rules.validators.beatmap.mode import ModeRestriction
-from app.database.rules.validators.beatmap.difficulty_count import DifficultyCountRestriction
 from app.database.rules.validators.beatmap.storyboard import StoryboardRestriction
 from app.database.rules.validators.beatmap.video import VideoRestriction
-from app.database.rules.context import ExecutionContext
-from app.database.rules.exceptions import RuleViolationError
 
 
 def _make_beatmap(bpm=150.0, mode="osu", version="Normal"):

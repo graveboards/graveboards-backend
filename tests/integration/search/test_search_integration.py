@@ -10,17 +10,21 @@ results match expected behavior.
 Run with: pytest tests/integration/search/test_search_integration.py -m integration
 """
 import json
+from datetime import UTC, datetime
+
 import pytest
-from pathlib import Path
-from datetime import datetime, timezone
 
+from app.database.models import (
+    Beatmap,
+    Beatmapset,
+    BeatmapsetSnapshot,
+    BeatmapSnapshot,
+    User,
+)
 from app.fixtures.paths import FIXTURES_DIR
+from app.search.datastructures import SearchTermsSchema
 from app.search.engine import SearchEngine
-from app.search.datastructures import SearchTermsSchema, FiltersSchema
-from app.search.enums import Scope, ModelField, SortingOrder
-from app.database.models import Beatmapset, Beatmap, BeatmapSnapshot, BeatmapsetSnapshot, Profile, User
-from tests.fixtures.osu import load_beatmapset, load_beatmap
-
+from app.search.enums import ModelField, Scope, SortingOrder
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -33,8 +37,8 @@ async def search_test_fetcher():
     This does NOT perform any API calls. It only reads the coverage state
     from metadata.json that was previously populated by the CLI.
     """
-    from app.redis import RedisClient
     from app.fixtures.search_test_fetcher import SearchTestFixtureFetcher
+    from app.redis import RedisClient
 
     rc = RedisClient()
     fetcher = SearchTestFixtureFetcher(rc)
@@ -62,7 +66,7 @@ class SearchFixtureSeeder:
         filepath = FIXTURES_DIR / category / filename
         if not filepath.exists():
             return None
-        with open(filepath, "r") as f:
+        with open(filepath) as f:
             return json.load(f)
 
     async def seed_beatmapset_from_coverage(self, bs_id: int) -> BeatmapsetSnapshot | None:
@@ -73,7 +77,7 @@ class SearchFixtureSeeder:
 
         user_data = bs_data.get("user", {})
         user_id = user_data.get("id") if user_data else None
-        
+
         # Seed the user first if they exist in our fixtures
         if user_id:
             user_json = self._load_json("users/osu", f"user_{user_id}_osu.json")
@@ -133,7 +137,7 @@ class SearchFixtureSeeder:
                 is_scoreable=bm_data.get("is_scoreable", True),
                 last_updated=datetime.fromisoformat(
                     bm_data.get("last_updated", "2024-01-01T00:00:00+00:00").replace("Z", "+00:00")
-                ) if bm_data.get("last_updated") else datetime.now(timezone.utc),
+                ) if bm_data.get("last_updated") else datetime.now(UTC),
                 max_combo=bm_data.get("max_combo", 1000),
                 mode=bm_data.get("mode", "osu"),
                 mode_int=bm_data.get("mode_int", 0),
@@ -165,7 +169,7 @@ class SearchFixtureSeeder:
         if isinstance(ratings, dict):
             ratings = list(ratings.values())
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         bs_snapshot = BeatmapsetSnapshot(
             beatmapset_id=bs_id,
             user_id=user_id,
@@ -218,7 +222,9 @@ class SearchFixtureSeeder:
         await self.session.flush()
 
         # Associate beatmap snapshots with beatmapset snapshot via the association table
-        from app.database.models.associations import beatmap_snapshot_beatmapset_snapshot_association
+        from app.database.models.associations import (
+            beatmap_snapshot_beatmapset_snapshot_association,
+        )
         for bm_snapshot in beatmap_snapshots:
             assoc = beatmap_snapshot_beatmapset_snapshot_association.insert().values(
                 beatmap_snapshot_id=bm_snapshot.id,
@@ -662,7 +668,6 @@ class TestSearchUsers:
             pytest.skip(f"Could not load user data for country {cc}")
         await db_transaction.commit()
 
-        from app.search.datastructures import SortingSchema
         engine = SearchEngine(
             scope=Scope.BEATMAPS,  # Users search via profile scope
             filters={"beatmap": {"mode_int": 0}},  # Basic filter to test engine
@@ -685,7 +690,6 @@ class TestSearchUsers:
         await db_transaction.commit()
 
         # Verify engine can be created with restricted filter
-        from app.search.datastructures import SortingSchema
         engine = SearchEngine(
             scope=Scope.BEATMAPS,
             filters={"beatmap": {"mode_int": 0}},

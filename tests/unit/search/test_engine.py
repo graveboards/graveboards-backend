@@ -1,10 +1,11 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
+from app.search.datastructures import FieldWeights, SearchTermsSchema
 from app.search.engine import SearchEngine
 from app.search.enums import Scope
-from app.search.datastructures import SearchTermsSchema, FieldWeights
 
 
 class TestSearchEngineCTEs:

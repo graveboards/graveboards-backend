@@ -3,9 +3,10 @@ Integration tests for queue rule enforcement.
 
 Tests rule checks during request submission and rule management via queue PATCH.
 """
-import os
-import pytest
+from datetime import UTC
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 
 class TestRestrictionsOnRequestSubmission:
@@ -31,7 +32,6 @@ class TestRestrictionsOnRequestSubmission:
         self, TestClientWithMocks, valid_request_body, security_disabled
     ):
         """Test request succeeds when queue has no rules."""
-        from app.database.models import Queue
 
         mock_queue = MagicMock()
         mock_queue.id = self.TEST_QUEUE_ID
@@ -167,8 +167,6 @@ class TestRestrictionsOnRequestSubmission:
         self, TestClientWithMocks, valid_request_body, security_disabled
     ):
         """Test request is blocked when rate limit is exceeded."""
-        from app.database.models import Queue
-        from app.database.models.queue_rule import QueueRule
 
         mock_queue = MagicMock()
         mock_queue.id = self.TEST_QUEUE_ID
@@ -314,9 +312,8 @@ class TestRestrictionsOnRequestSubmission:
         self, TestClientWithMocks, valid_request_body, security_disabled
     ):
         """Test request is blocked when cooldown period is active."""
-        from datetime import datetime, timezone, timedelta
+        from datetime import datetime, timedelta
 
-        from app.database.models import Queue
 
         mock_queue = MagicMock()
         mock_queue.id = self.TEST_QUEUE_ID
@@ -365,7 +362,7 @@ class TestRestrictionsOnRequestSubmission:
         mock_db.add = AsyncMock()
         mock_db.session = MockSession
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         thirty_minutes_ago = int((now - timedelta(minutes=30)).timestamp())
 
         mock_rc = AsyncMock()
@@ -466,7 +463,6 @@ class TestRestrictionsOnRequestSubmission:
         self, TestClientWithMocks, valid_request_body, security_disabled
     ):
         """Test request is blocked when user is blacklisted."""
-        from app.database.models import Queue
 
         mock_queue = MagicMock()
         mock_queue.id = self.TEST_QUEUE_ID
@@ -611,7 +607,6 @@ class TestRestrictionsOnRequestSubmission:
         self, TestClientWithMocks, valid_request_body, security_disabled
     ):
         """Test request succeeds when rule exists but is inactive."""
-        from app.database.models import Queue
 
         mock_queue = MagicMock()
         mock_queue.id = self.TEST_QUEUE_ID
@@ -747,7 +742,6 @@ class TestRestrictionsOnRequestSubmission:
         self, TestClientWithMocks, security_disabled
     ):
         """Test request succeeds when user is not in rule target list."""
-        from app.database.models import Queue
 
         different_user = 99999999
         body = {
@@ -1034,7 +1028,6 @@ class TestQueueRulesPatch:
     ):
         """Test non-admin non-owner gets 403 when trying to set rules."""
         from app.security import generate_token
-        from app.database.models import Queue
 
         mock_queue = MagicMock()
         mock_queue.id = self.TEST_QUEUE_ID

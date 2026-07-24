@@ -1,6 +1,5 @@
 """Tests for the test infrastructure itself: create_test_app, middleware, and fixtures."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
 from connexion import AsyncApp

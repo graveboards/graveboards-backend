@@ -1,6 +1,7 @@
-import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from app.daemon.services.service.service import Service
 

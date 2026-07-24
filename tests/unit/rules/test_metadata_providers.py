@@ -1,14 +1,15 @@
-import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
+import pytest
+
+from app.database.rules.context import ExecutionContext
+from app.database.rules.validators.metadata.beatmap_stats import BeatmapStatsProvider
+from app.database.rules.validators.metadata.creator_identity import CreatorIdentityProvider
+from app.database.rules.validators.metadata.duration import DurationProvider
 from app.database.rules.validators.metadata.song_identity import (
     SongIdentityProvider,
     _normalize_text,
 )
-from app.database.rules.validators.metadata.beatmap_stats import BeatmapStatsProvider
-from app.database.rules.validators.metadata.creator_identity import CreatorIdentityProvider
-from app.database.rules.validators.metadata.duration import DurationProvider
-from app.database.rules.context import ExecutionContext
 
 
 def _make_context(beatmapset=None, beatmaps=None):

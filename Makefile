@@ -1,6 +1,6 @@
 COMPOSE=docker compose
 
-.PHONY: help up down build logs shell status reset seed fresh test clean migrate-upgrade migrate-downgrade migrate-history migrate-current migrate-stamp migrate-stamp-head migrate-stamp-purge-head
+.PHONY: help up down build logs shell status reset seed fresh test clean lint format migrate-upgrade migrate-downgrade migrate-history migrate-current migrate-stamp migrate-stamp-head migrate-stamp-purge-head
 
 help:
 	@echo "Available commands:"
@@ -27,6 +27,9 @@ help:
 	@echo "                                         file that no longer exists, e.g. after a squash)"
 	@echo "  ------------Testing-------------"
 	@echo "  make test      - Run test suite"
+	@echo "  ------------Linting-------------"
+	@echo "  make lint      - Check code (ruff lint + ruff format + mypy)"
+	@echo "  make format    - Fix code (ruff lint --fix + ruff format)"
 	@echo "  ------------Cleaning------------"
 	@echo "  make clean     - Remove Docker resources"
 
@@ -90,6 +93,21 @@ clean:
 	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml rm -f
 	$(COMPOSE) -f ../graveboards-deploy/docker-compose.test.yml down -v --remove-orphans
 	$(COMPOSE) -f ../graveboards-deploy/docker-compose.test.yml rm -f
+
+# ---------- Linting ----------
+
+lint:
+	@if [ "$$(uname)" = "Linux" ]; then \
+		{ ruff check . || true; ruff format --check . || true; mypy . || true; } 2>&1 | tee /tmp/graveboards-lint.log; \
+	else \
+		ruff check . || true; \
+		ruff format --check . || true; \
+		mypy . || true; \
+	fi
+
+format:
+	ruff check --fix . || true
+	ruff format .
 
 # ---------- Migrations ----------
 

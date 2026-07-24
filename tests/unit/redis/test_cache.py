@@ -1,6 +1,5 @@
 """Unit tests for Redis model serialization (Beatmap, Beatmapset, OAuthToken, QueueRequestHandlerTask)."""
 
-import pytest
 from datetime import datetime
 
 from app.redis.models.beatmap import Beatmap

@@ -1,10 +1,11 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
 from app.database.rules.base import (
-    RestrictionBase,
     BeatmapRestrictionBase,
     DatabaseRestrictionBase,
+    RestrictionBase,
 )
 from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError

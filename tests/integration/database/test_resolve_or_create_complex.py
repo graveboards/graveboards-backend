@@ -16,8 +16,13 @@ import pytest
 
 from app.database.db import PostgresqlDB
 from app.database.models import (
-    User, Profile, Beatmap, Beatmapset, BeatmapSnapshot, BeatmapsetSnapshot,
-    BeatmapTag, BeatmapsetTag,
+    Beatmap,
+    Beatmapset,
+    BeatmapsetSnapshot,
+    BeatmapSnapshot,
+    BeatmapTag,
+    Profile,
+    User,
 )
 
 

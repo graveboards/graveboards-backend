@@ -1,13 +1,9 @@
 import pytest
 from sqlalchemy import column
 
-from app.database.utils import (
-    extract_inner_types,
-    validate_type,
-    get_filter_condition
-)
-from app.exceptions import TypeValidationError
 from app.database.enums import FilterOperator
+from app.database.utils import extract_inner_types, get_filter_condition, validate_type
+from app.exceptions import TypeValidationError
 
 
 class TestExtractInnerTypes:
@@ -24,22 +20,20 @@ class TestExtractInnerTypes:
         assert result is int
 
     def test_unwraps_list_type(self):
-        from typing import List
 
-        result = extract_inner_types(List[int])
+        result = extract_inner_types(list[int])
         assert result is int
 
     def test_unwraps_tuple_type(self):
-        from typing import Tuple
 
-        result = extract_inner_types(Tuple[int, str])
+        result = extract_inner_types(tuple[int, str])
         assert result is int
 
     def test_unwraps_nested_optional(self):
-        from typing import Optional, List
+        from typing import Optional
 
-        result = extract_inner_types(Optional[List[int]])
-        assert result is List[int]
+        result = extract_inner_types(Optional[list[int]])
+        assert result is list[int]
 
     def test_returns_plain_type_unmodified(self):
         result = extract_inner_types(int)
@@ -69,28 +63,22 @@ class TestValidateType:
         validate_type(bool, True)
 
     def test_validates_list_of_ints(self):
-        from typing import List
-        validate_type(List[int], [1, 2, 3])
+        validate_type(list[int], [1, 2, 3])
 
     def test_validates_list_of_strings(self):
-        from typing import List
-        validate_type(List[str], ["a", "b", "c"])
+        validate_type(list[str], ["a", "b", "c"])
 
     def test_validates_tuple(self):
-        from typing import Tuple
-        validate_type(Tuple[int, str], (42, "hello"))
+        validate_type(tuple[int, str], (42, "hello"))
 
     def test_validates_dict(self):
-        from typing import Dict
-        validate_type(Dict[str, int], {"a": 1, "b": 2})
+        validate_type(dict[str, int], {"a": 1, "b": 2})
 
     def test_validates_nested_list(self):
-        from typing import List
-        validate_type(List[List[int]], [[1, 2], [3, 4]])
+        validate_type(list[list[int]], [[1, 2], [3, 4]])
 
     def test_validates_nested_dict(self):
-        from typing import Dict
-        validate_type(Dict[str, Dict[str, int]], {"a": {"b": 1}})
+        validate_type(dict[str, dict[str, int]], {"a": {"b": 1}})
 
     def test_rejects_string_for_int(self):
         with pytest.raises(TypeValidationError):
@@ -105,19 +93,16 @@ class TestValidateType:
             validate_type(str, 42)
 
     def test_rejects_wrong_list_element_type(self):
-        from typing import List
         with pytest.raises(TypeValidationError):
-            validate_type(List[int], [1, "string", 3])
+            validate_type(list[int], [1, "string", 3])
 
     def test_rejects_wrong_dict_key_type(self):
-        from typing import Dict
         with pytest.raises(TypeValidationError):
-            validate_type(Dict[int, str], {1: "a", "b": 2})
+            validate_type(dict[int, str], {1: "a", "b": 2})
 
     def test_rejects_wrong_dict_value_type(self):
-        from typing import Dict
         with pytest.raises(TypeValidationError):
-            validate_type(Dict[str, int], {"a": "string"})
+            validate_type(dict[str, int], {"a": "string"})
 
     def test_validates_union_type_int(self):
         from typing import Union

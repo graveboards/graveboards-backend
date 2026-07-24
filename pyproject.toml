@@ -32,7 +32,6 @@ dev = [
     "pytest>=7.4.0",
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.1.0",
-    "black>=23.0.0",
     "ruff>=0.0.280",
     "mypy>=1.5.0",
 ]
@@ -62,11 +61,6 @@ markers = [
     "search: tests that exercise the search engine with queries",
 ]
 
-[tool.black]
-line-length = 100
-target-version = ['py314']
-include = '\.pyi?$'
-
 [tool.ruff]
 line-length = 100
 target-version = "py314"
@@ -87,7 +81,7 @@ select = [
     "T20",    # no print
 ]
 ignore = [
-    "E501",   # line too long (black handles this)
+    "E501",   # line too long (ruff format handles this)
     "PLR",    # too many methods/arguments (not enforced)
     "B028",   # no explicit `stacklevel` keyword argument (not critical)
     "F403",   # star imports (intentional for re-exports)
@@ -96,15 +90,22 @@ ignore = [
     "SIM117", # nested with statements (style preference)
 ]
 
+[tool.ruff.lint.isort]
+known-first-party = ["app", "api", "tests"]
+known-third-party = ["alembic"]
+sections = {
+    "future" = ["__future__"],
+    "standard-library" = [],
+    "third-party" = [],
+    "first-party" = ["app", "api"],
+    "local-folder" = []
+}
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["PLR", "S"]
 "manage.py" = ["S"]
 "app/manage/*" = ["S", "T20"]
-
-[tool.isort]
-profile = "black"
-section_order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
-known_first_party = ["app", "api"]
 
 [tool.mypy]
 python_version = "3.14"

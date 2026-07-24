@@ -1,7 +1,7 @@
 import pytest
-from app.database.db import PostgresqlDB
 
-from app.database.models import User, Profile
+from app.database.db import PostgresqlDB
+from app.database.models import Profile, User
 
 
 @pytest.mark.asyncio

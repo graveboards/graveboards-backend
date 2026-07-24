@@ -7,8 +7,9 @@ skips authorization entirely - it resolves a dev identity (DEV_ADMIN_USER_ID
 by default, or whatever the X-Debug-User-Id header requests) and runs the
 same role/ownership checks against it that a real request would go through.
 """
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 
 class TestSecurityConfiguration:
@@ -93,8 +94,8 @@ class TestSecurityConfiguration:
         the "just works" dev experience DISABLE_SECURITY exists for. Here we
         simulate that seeded admin role via the mock.
         """
-        from app.database.models import Queue
         from app.database.enums import RoleName
+        from app.database.models import Queue
 
         mock_db = AsyncMock()
 
@@ -134,8 +135,8 @@ class TestSecurityConfiguration:
         while security is disabled, e.g. to exercise the non-admin code path
         without needing real credentials.
         """
-        from app.database.models import Queue
         from app.config import DEV_USER_ID
+        from app.database.models import Queue
 
         mock_db = AsyncMock()
 

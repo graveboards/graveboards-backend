@@ -1,17 +1,17 @@
-import json
 import asyncio
+import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from httpx import HTTPStatusError
 
+from app.beatmaps import BeatmapManager
+from app.bootstrap import SetupRunner
+from app.config import CONFIG
 from app.database import PostgresqlDB
 from app.database.models import Beatmapset, BeatmapsetSnapshot, Request, User
-from app.beatmaps import BeatmapManager
+from app.logging import get_logger, setup_logging
 from app.redis import RedisClient
-from app.config import CONFIG
-from app.bootstrap import SetupRunner
-from app.logging import setup_logging, get_logger
 
 TIMEOUT_SECS = 60.0
 
@@ -20,7 +20,7 @@ async def migrate(input_path: str = "requests.json"):
     logger = get_logger("migrate")
     logger.info("Starting migration...")
 
-    with open(input_path, "r") as file:
+    with open(input_path) as file:
         rows: list[dict] = sorted(json.load(file), key=lambda r: r["id"])
         total_rows = len(rows)
 
@@ -31,8 +31,8 @@ async def migrate(input_path: str = "requests.json"):
         for i, row in enumerate(rows, start=1):
             beatmapset_id = row["beatmapset_id"]
             user_id = row["user_id"]
-            row["created_at"] = datetime.fromisoformat(row["created_at"]).replace(tzinfo=timezone.utc)
-            row["updated_at"] = datetime.fromisoformat(row["updated_at"]).replace(tzinfo=timezone.utc)
+            row["created_at"] = datetime.fromisoformat(row["created_at"]).replace(tzinfo=UTC)
+            row["updated_at"] = datetime.fromisoformat(row["updated_at"]).replace(tzinfo=UTC)
 
             async with db.session() as session:
                 if not await db.get(User, id=user_id, session=session):
@@ -50,7 +50,7 @@ async def migrate(input_path: str = "requests.json"):
                         timeout=TIMEOUT_SECS
                     )
                     row["beatmapset_snapshot_id"] = changelog["snapshotted_beatmapset"]["id"]
-                except (HTTPStatusError, asyncio.TimeoutError) as e:
+                except (TimeoutError, HTTPStatusError) as e:
                     if isinstance(e, HTTPStatusError) and e.response.status_code == 404:
                         logger.warning(f"Beatmapset {beatmapset_id} not found, skipping")
                         continue

@@ -1,13 +1,13 @@
-import pytest
+from datetime import UTC
 from unittest.mock import AsyncMock
 
+import pytest
 from connexion.exceptions import Forbidden
 
+from app.database.rules.context import ExecutionContext
 from app.database.rules.validators.cooldown import (
     CooldownRestriction,
 )
-from app.database.rules.context import ExecutionContext
-from app.database.rules.exceptions import RuleViolationError
 
 
 def _make_context(queue_id: int = 1, user_id: int = 12345678, config: dict | None = None):
@@ -46,12 +46,12 @@ class TestCooldownRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
     async def test_raises_when_cooldown_active(self):
-        from datetime import datetime, timezone, timedelta
+        from datetime import datetime, timedelta
 
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         thirty_minutes_ago = int((now - timedelta(minutes=30)).timestamp())
         mock_redis.get = AsyncMock(return_value=str(thirty_minutes_ago))
 
@@ -74,12 +74,12 @@ class TestCooldownRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
     async def test_check_passes_when_cooldown_expired(self):
-        from datetime import datetime, timezone, timedelta
+        from datetime import datetime, timedelta
 
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         two_hours_ago = int((now - timedelta(hours=2)).timestamp())
         mock_redis.get = AsyncMock(return_value=str(two_hours_ago))
 
@@ -171,11 +171,11 @@ class TestCooldownReserve:
     @pytest.mark.unit
     @pytest.mark.asyncio
     async def test_reserve_when_active_rejects(self):
-        from datetime import datetime, timezone, timedelta
+        from datetime import datetime, timedelta
 
         mock_redis = AsyncMock()
         mock_redis.set = AsyncMock(return_value=None)  # SET NX failed - cooldown active
-        thirty_minutes_ago = int((datetime.now(timezone.utc) - timedelta(minutes=30)).timestamp())
+        thirty_minutes_ago = int((datetime.now(UTC) - timedelta(minutes=30)).timestamp())
         mock_redis.get = AsyncMock(return_value=str(thirty_minutes_ago))
 
         validator = CooldownRestriction()
@@ -214,12 +214,12 @@ class TestCooldownRestrictionDetailMessage:
     @pytest.mark.unit
     @pytest.mark.asyncio
     async def test_includes_remaining_time_in_hours_and_minutes(self):
-        from datetime import datetime, timezone, timedelta
+        from datetime import datetime, timedelta
 
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         thirty_minutes_ago = int((now - timedelta(minutes=30)).timestamp())
         mock_redis.get = AsyncMock(return_value=str(thirty_minutes_ago))
 

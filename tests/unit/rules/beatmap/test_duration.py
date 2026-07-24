@@ -1,9 +1,10 @@
-import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
-from app.database.rules.validators.beatmap.duration import DurationRestriction
+import pytest
+
 from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError
+from app.database.rules.validators.beatmap.duration import DurationRestriction
 from app.database.schemas.rule import DurationConfig
 
 

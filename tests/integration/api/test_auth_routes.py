@@ -1,7 +1,7 @@
 import pytest
 
 from app.oauth import OAuth
-from app.redis import RedisClient, Namespace
+from app.redis import Namespace, RedisClient
 from app.security import create_token_payload, encode_token
 
 
@@ -20,12 +20,12 @@ async def test_login_flow_returns_authorization_url():
 @pytest.mark.asyncio
 async def test_csrf_state_is_validated():
     from unittest.mock import AsyncMock
-    
+
     rc = AsyncMock(spec=RedisClient)
     rc.set = AsyncMock(return_value=True)
     rc.get = AsyncMock(return_value="valid")
     rc.delete = AsyncMock(return_value=True)
-    
+
     oauth = OAuth()
     authorization_url, state = oauth.create_authorization_url()
 
@@ -63,8 +63,9 @@ async def test_jwt_token_validation():
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_invalid_token_raises_error():
-    from app.security import validate_token
     from jwt.exceptions import InvalidTokenError
+
+    from app.security import validate_token
 
     with pytest.raises(InvalidTokenError):
         validate_token("invalid.token.here")
@@ -73,9 +74,11 @@ async def test_invalid_token_raises_error():
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_expired_token_raises_error():
-    from app.security import create_token_payload, encode_token
     import time
+
     from jwt.exceptions import ExpiredSignatureError
+
+    from app.security import create_token_payload, encode_token
 
     payload = create_token_payload(12345678)
     payload["exp"] = int(time.time()) - 3600

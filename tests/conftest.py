@@ -15,9 +15,9 @@ Fixture hierarchy:
 import os
 from contextlib import ExitStack
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
-from unittest.mock import patch
 
 
 def _clear_spec_cache() -> None:
@@ -126,9 +126,10 @@ def TestClientWithMocksFactory(request, mock_rc=None, mock_db=None):
     Returns:
         TestClient configured with the provided mocks
     """
-    from app.test_app import create_test_app
     from starlette.testclient import TestClient
-    
+
+    from app.test_app import create_test_app
+
     test_client = TestClient(create_test_app(mock_rc=mock_rc, mock_db=mock_db))
     return test_client
 
@@ -154,8 +155,9 @@ def TestClient():
         TestClient instance with real app configuration
     """
     from starlette.testclient import TestClient
+
     from app.test_app import create_test_app
-    
+
     test_client = TestClient(create_test_app())
     return test_client
 
@@ -185,16 +187,16 @@ async def db_session():
     from app.database.models import Base
 
     db = PostgresqlDB()
-    
+
     async with db.engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     async with db.session() as session:
         yield session
-    
+
     async with db.engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
-    
+
     await db.close()
 
 
@@ -212,15 +214,15 @@ async def db_transaction():
     from app.database.models import Base
 
     db = PostgresqlDB()
-    
+
     async with db.engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     async with db.session() as session:
         yield session
         await session.commit()
-    
+
     async with db.engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
-    
+
     await db.close()

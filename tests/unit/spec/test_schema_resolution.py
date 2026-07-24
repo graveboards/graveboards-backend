@@ -1,11 +1,12 @@
-import pytest
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from app.spec.schema import (
-    get_filter_schema,
-    get_include_schema,
     _get_schema_by_suffix,
     _get_spec_cached,
+    get_filter_schema,
+    get_include_schema,
 )
 
 

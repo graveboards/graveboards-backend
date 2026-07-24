@@ -3,8 +3,9 @@ Integration tests for GET /api/v1/profiles endpoints.
 
 Tests the profiles retrieval via full HTTP stack.
 """
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 
 
 class TestProfilesGetIntegration:
@@ -20,15 +21,15 @@ class TestProfilesGetIntegration:
         from app.database.models import Profile
 
         mock_db = AsyncMock()
-        
+
         profile1 = Profile()
         profile1.id = 1
         profile1.user_id = self.TEST_USER_ID
-        
+
         profile2 = Profile()
         profile2.id = 2
         profile2.user_id = self.TEST_USER_ID_2
-        
+
         mock_db.get_many = AsyncMock(return_value=[profile1, profile2])
         mock_db.update = AsyncMock()
 
@@ -45,8 +46,8 @@ class TestProfilesGetIntegration:
     @pytest.mark.asyncio
     async def test_admin_can_get_profile_by_user_id(self, TestClientWithMocks, security_disabled):
         """Test admin can get profile by user id."""
-        from app.database.models import Profile, User
         from app.database.enums import RoleName
+        from app.database.models import Profile, User
 
         mock_db = AsyncMock()
 
@@ -82,8 +83,8 @@ class TestProfilesGetIntegration:
     @pytest.mark.asyncio
     async def test_admin_profile_not_found(self, TestClientWithMocks, security_disabled):
         """Test admin gets 404 when profile doesn't exist."""
-        from app.database.models import User
         from app.database.enums import RoleName
+        from app.database.models import User
 
         mock_db = AsyncMock()
 
@@ -115,15 +116,15 @@ class TestProfilesGetIntegration:
         from app.database.models import Profile
 
         mock_db = AsyncMock()
-        
+
         profile1 = Profile()
         profile1.id = 1
         profile1.user_id = self.TEST_USER_ID
-        
+
         profile2 = Profile()
         profile2.id = 2
         profile2.user_id = self.TEST_USER_ID_2
-        
+
         mock_db.get_many = AsyncMock(return_value=[profile1, profile2])
         mock_db.update = AsyncMock()
 

@@ -1,8 +1,9 @@
-import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
 import asyncio
+from unittest.mock import patch
 
-from app.daemon.services.decorators import auto_retry, MAX_ATTEMPTS
+import pytest
+
+from app.daemon.services.decorators import MAX_ATTEMPTS, auto_retry
 
 
 class TestAutoRetryDecorator:
@@ -126,7 +127,7 @@ class TestAutoRetryDecorator:
             nonlocal call_count
             call_count += 1
             if call_count < 3:
-                raise asyncio.TimeoutError()
+                raise TimeoutError()
             return "success"
 
         result = await timeout_then_succeed()
