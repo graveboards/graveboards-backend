@@ -3,6 +3,7 @@ Integration tests for POST /api/v1/beatmapsets endpoint (admin-only).
 
 Tests the beatmap archival via full HTTP stack.
 """
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -66,21 +67,39 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_archival_creates_snapshot(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, mock_admin_db, security_disabled):
+    async def test_admin_archival_creates_snapshot(
+        self,
+        TestClientWithMocks,
+        mock_beatmap_manager,
+        mock_osu_client,
+        mock_admin_db,
+        security_disabled,
+    ):
         """Test successful beatmap archival that creates new snapshot."""
-        mock_bm = mock_beatmap_manager({
-            "message": "Snapshotted 1 beatmap(s)",
-            "updated_beatmapset": None,
-            "updated_beatmaps": [],
-            "snapshotted_beatmapset": {"id": 1, "beatmapset_id": self.TEST_BEATMAPSET_ID, "snapshot_number": 1, "checksum": "abc"},
-            "snapshotted_beatmaps": [{"id": 1, "beatmap_id": 116383, "snapshot_number": 1, "checksum": "abc"}],
-        })
+        mock_bm = mock_beatmap_manager(
+            {
+                "message": "Snapshotted 1 beatmap(s)",
+                "updated_beatmapset": None,
+                "updated_beatmaps": [],
+                "snapshotted_beatmapset": {
+                    "id": 1,
+                    "beatmapset_id": self.TEST_BEATMAPSET_ID,
+                    "snapshot_number": 1,
+                    "checksum": "abc",
+                },
+                "snapshotted_beatmaps": [
+                    {"id": 1, "beatmap_id": 116383, "snapshot_number": 1, "checksum": "abc"}
+                ],
+            }
+        )
 
         test_client = TestClientWithMocks(mock_db=mock_admin_db)
 
-        with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
-             patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \
-             patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client):
+        with (
+            patch("api.v1.beatmapsets.BeatmapManager", return_value=mock_bm),
+            patch("app.beatmaps.BeatmapManager", return_value=mock_bm),
+            patch("app.osu_api.OsuAPIClient", return_value=mock_osu_client),
+        ):
             body = {"id": self.TEST_BEATMAPSET_ID}
             response = test_client.post("/api/v1/beatmapsets", json=body)
 
@@ -91,21 +110,36 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_archival_updates_existing(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, mock_admin_db, security_disabled):
+    async def test_admin_archival_updates_existing(
+        self,
+        TestClientWithMocks,
+        mock_beatmap_manager,
+        mock_osu_client,
+        mock_admin_db,
+        security_disabled,
+    ):
         """Test successful beatmap archival that updates existing data."""
-        mock_bm = mock_beatmap_manager({
-            "message": "Updated 2 field(s) in the beatmapset and 1 field(s) in 1 beatmap(s)",
-            "updated_beatmapset": {"beatmapset_id": self.TEST_BEATMAPSET_ID, "bpm": 130.0, "title": "New Title"},
-            "updated_beatmaps": [{"beatmap_id": 116383, "version": "Hard"}],
-            "snapshotted_beatmapset": None,
-            "snapshotted_beatmaps": [],
-        })
+        mock_bm = mock_beatmap_manager(
+            {
+                "message": "Updated 2 field(s) in the beatmapset and 1 field(s) in 1 beatmap(s)",
+                "updated_beatmapset": {
+                    "beatmapset_id": self.TEST_BEATMAPSET_ID,
+                    "bpm": 130.0,
+                    "title": "New Title",
+                },
+                "updated_beatmaps": [{"beatmap_id": 116383, "version": "Hard"}],
+                "snapshotted_beatmapset": None,
+                "snapshotted_beatmaps": [],
+            }
+        )
 
         test_client = TestClientWithMocks(mock_db=mock_admin_db)
 
-        with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
-             patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \
-             patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client):
+        with (
+            patch("api.v1.beatmapsets.BeatmapManager", return_value=mock_bm),
+            patch("app.beatmaps.BeatmapManager", return_value=mock_bm),
+            patch("app.osu_api.OsuAPIClient", return_value=mock_osu_client),
+        ):
             body = {"id": self.TEST_BEATMAPSET_ID}
             response = test_client.post("/api/v1/beatmapsets", json=body)
 
@@ -116,21 +150,32 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_archival_up_to_date(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, mock_admin_db, security_disabled):
+    async def test_admin_archival_up_to_date(
+        self,
+        TestClientWithMocks,
+        mock_beatmap_manager,
+        mock_osu_client,
+        mock_admin_db,
+        security_disabled,
+    ):
         """Test successful beatmap archival that detects up-to-date data."""
-        mock_bm = mock_beatmap_manager({
-            "message": "The beatmapset and its beatmaps are fully up-to-date",
-            "updated_beatmapset": None,
-            "updated_beatmaps": [],
-            "snapshotted_beatmapset": None,
-            "snapshotted_beatmaps": [],
-        })
+        mock_bm = mock_beatmap_manager(
+            {
+                "message": "The beatmapset and its beatmaps are fully up-to-date",
+                "updated_beatmapset": None,
+                "updated_beatmaps": [],
+                "snapshotted_beatmapset": None,
+                "snapshotted_beatmaps": [],
+            }
+        )
 
         test_client = TestClientWithMocks(mock_db=mock_admin_db)
 
-        with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
-             patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \
-             patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client):
+        with (
+            patch("api.v1.beatmapsets.BeatmapManager", return_value=mock_bm),
+            patch("app.beatmaps.BeatmapManager", return_value=mock_bm),
+            patch("app.osu_api.OsuAPIClient", return_value=mock_osu_client),
+        ):
             body = {"id": self.TEST_BEATMAPSET_ID}
             response = test_client.post("/api/v1/beatmapsets", json=body)
 
@@ -141,7 +186,14 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_osu_api_error_handling(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, mock_admin_db, security_disabled):
+    async def test_osu_api_error_handling(
+        self,
+        TestClientWithMocks,
+        mock_beatmap_manager,
+        mock_osu_client,
+        mock_admin_db,
+        security_disabled,
+    ):
         """Test that osu! API errors are properly handled."""
         import httpx
         from httpx import Request
@@ -153,18 +205,22 @@ class TestBeatmapsetsPostIntegration:
             headers={"content-type": "application/json"},
         )
         mock_request = Request("GET", "https://osu.ppy.sh/api/v2/beatmapsets/999999")
-        mock_bm.archive = AsyncMock(side_effect=httpx.HTTPStatusError(
-            "Not Found",
-            request=mock_request,
-            response=mock_response,
-        ))
+        mock_bm.archive = AsyncMock(
+            side_effect=httpx.HTTPStatusError(
+                "Not Found",
+                request=mock_request,
+                response=mock_response,
+            )
+        )
 
         test_client = TestClientWithMocks(mock_db=mock_admin_db)
 
-        with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
-             patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \
-             patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client), \
-             patch('api.v1.beatmapsets.problem', return_value={"error": "Beatmapset not found"}):
+        with (
+            patch("api.v1.beatmapsets.BeatmapManager", return_value=mock_bm),
+            patch("app.beatmaps.BeatmapManager", return_value=mock_bm),
+            patch("app.osu_api.OsuAPIClient", return_value=mock_osu_client),
+            patch("api.v1.beatmapsets.problem", return_value={"error": "Beatmapset not found"}),
+        ):
             body = {"id": self.TEST_BEATMAPSET_ID}
             response = test_client.post("/api/v1/beatmapsets", json=body)
 
@@ -174,17 +230,28 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_non_admin_user_gets_forbidden(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, authenticated_user_id):
+    async def test_non_admin_user_gets_forbidden(
+        self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, authenticated_user_id
+    ):
         """Test that non-admin user gets 403 Forbidden."""
         from app.security import generate_token
 
-        mock_bm = mock_beatmap_manager({
-            "message": "Snapshotted 1 beatmap(s)",
-            "updated_beatmapset": None,
-            "updated_beatmaps": [],
-            "snapshotted_beatmapset": {"id": 1, "beatmapset_id": self.TEST_BEATMAPSET_ID, "snapshot_number": 1, "checksum": "abc"},
-            "snapshotted_beatmaps": [{"id": 1, "beatmap_id": 116383, "snapshot_number": 1, "checksum": "abc"}],
-        })
+        mock_bm = mock_beatmap_manager(
+            {
+                "message": "Snapshotted 1 beatmap(s)",
+                "updated_beatmapset": None,
+                "updated_beatmaps": [],
+                "snapshotted_beatmapset": {
+                    "id": 1,
+                    "beatmapset_id": self.TEST_BEATMAPSET_ID,
+                    "snapshot_number": 1,
+                    "checksum": "abc",
+                },
+                "snapshotted_beatmaps": [
+                    {"id": 1, "beatmap_id": 116383, "snapshot_number": 1, "checksum": "abc"}
+                ],
+            }
+        )
 
         mock_db = AsyncMock()
         mock_user = MagicMock()
@@ -196,32 +263,53 @@ class TestBeatmapsetsPostIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
-             patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \
-             patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client), \
-             authenticated_user_id(99999999):
+        with (
+            patch("api.v1.beatmapsets.BeatmapManager", return_value=mock_bm),
+            patch("app.beatmaps.BeatmapManager", return_value=mock_bm),
+            patch("app.osu_api.OsuAPIClient", return_value=mock_osu_client),
+            authenticated_user_id(99999999),
+        ):
             headers = {"Authorization": f"Bearer {generate_token(99999999)}"}
             body = {"id": self.TEST_BEATMAPSET_ID}
             response = test_client.post("/api/v1/beatmapsets", json=body, headers=headers)
 
         assert response.status_code == 403
         data = response.json()
-        assert "forbidden" in data.get("detail", "").lower() or "not authorized" in data.get("detail", "").lower()
+        assert (
+            "forbidden" in data.get("detail", "").lower()
+            or "not authorized" in data.get("detail", "").lower()
+        )
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_access_succeeds_with_token(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, admin_user_token, authenticated_user_id):
+    async def test_admin_access_succeeds_with_token(
+        self,
+        TestClientWithMocks,
+        mock_beatmap_manager,
+        mock_osu_client,
+        admin_user_token,
+        authenticated_user_id,
+    ):
         """Test that admin user can successfully post beatmapset with valid token."""
         from app.database.enums import RoleName
         from app.security import decode_token
 
-        mock_bm = mock_beatmap_manager({
-            "message": "Snapshotted 1 beatmap(s)",
-            "updated_beatmapset": None,
-            "updated_beatmaps": [],
-            "snapshotted_beatmapset": {"id": 1, "beatmapset_id": self.TEST_BEATMAPSET_ID, "snapshot_number": 1, "checksum": "abc"},
-            "snapshotted_beatmaps": [{"id": 1, "beatmap_id": 116383, "snapshot_number": 1, "checksum": "abc"}],
-        })
+        mock_bm = mock_beatmap_manager(
+            {
+                "message": "Snapshotted 1 beatmap(s)",
+                "updated_beatmapset": None,
+                "updated_beatmaps": [],
+                "snapshotted_beatmapset": {
+                    "id": 1,
+                    "beatmapset_id": self.TEST_BEATMAPSET_ID,
+                    "snapshot_number": 1,
+                    "checksum": "abc",
+                },
+                "snapshotted_beatmaps": [
+                    {"id": 1, "beatmap_id": 116383, "snapshot_number": 1, "checksum": "abc"}
+                ],
+            }
+        )
 
         decoded_token = decode_token(admin_user_token)
         user_id = int(decoded_token["sub"])
@@ -238,9 +326,11 @@ class TestBeatmapsetsPostIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
-             patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \
-             patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client):
+        with (
+            patch("api.v1.beatmapsets.BeatmapManager", return_value=mock_bm),
+            patch("app.beatmaps.BeatmapManager", return_value=mock_bm),
+            patch("app.osu_api.OsuAPIClient", return_value=mock_osu_client),
+        ):
             with authenticated_user_id(user_id):
                 headers = {"Authorization": f"Bearer {admin_user_token}"}
                 body = {"id": self.TEST_BEATMAPSET_ID}
@@ -253,17 +343,28 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_success_with_auth(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, admin_user_token):
+    async def test_admin_success_with_auth(
+        self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, admin_user_token
+    ):
         """Test that admin user can successfully post beatmapset with valid token."""
         from app.database.enums import RoleName
 
-        mock_bm = mock_beatmap_manager({
-            "message": "Snapshotted 1 beatmap(s)",
-            "updated_beatmapset": None,
-            "updated_beatmaps": [],
-            "snapshotted_beatmapset": {"id": 1, "beatmapset_id": self.TEST_BEATMAPSET_ID, "snapshot_number": 1, "checksum": "abc"},
-            "snapshotted_beatmaps": [{"id": 1, "beatmap_id": 116383, "snapshot_number": 1, "checksum": "abc"}],
-        })
+        mock_bm = mock_beatmap_manager(
+            {
+                "message": "Snapshotted 1 beatmap(s)",
+                "updated_beatmapset": None,
+                "updated_beatmaps": [],
+                "snapshotted_beatmapset": {
+                    "id": 1,
+                    "beatmapset_id": self.TEST_BEATMAPSET_ID,
+                    "snapshot_number": 1,
+                    "checksum": "abc",
+                },
+                "snapshotted_beatmaps": [
+                    {"id": 1, "beatmap_id": 116383, "snapshot_number": 1, "checksum": "abc"}
+                ],
+            }
+        )
 
         mock_db = AsyncMock()
         mock_user = MagicMock()
@@ -276,9 +377,11 @@ class TestBeatmapsetsPostIntegration:
         headers = {"Authorization": f"Bearer {admin_user_token}"}
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
-             patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \
-             patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client):
+        with (
+            patch("api.v1.beatmapsets.BeatmapManager", return_value=mock_bm),
+            patch("app.beatmaps.BeatmapManager", return_value=mock_bm),
+            patch("app.osu_api.OsuAPIClient", return_value=mock_osu_client),
+        ):
             body = {"id": self.TEST_BEATMAPSET_ID}
             response = test_client.post("/api/v1/beatmapsets", json=body, headers=headers)
 
@@ -289,23 +392,41 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_bypass_security_with_flag(self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, mock_admin_db, security_disabled):
+    async def test_bypass_security_with_flag(
+        self,
+        TestClientWithMocks,
+        mock_beatmap_manager,
+        mock_osu_client,
+        mock_admin_db,
+        security_disabled,
+    ):
         """Test that disabling security resolves an admin dev identity (rather than
         skipping the check outright), letting the request through.
         """
-        mock_bm = mock_beatmap_manager({
-            "message": "Snapshotted 1 beatmap(s)",
-            "updated_beatmapset": None,
-            "updated_beatmaps": [],
-            "snapshotted_beatmapset": {"id": 1, "beatmapset_id": self.TEST_BEATMAPSET_ID, "snapshot_number": 1, "checksum": "abc"},
-            "snapshotted_beatmaps": [{"id": 1, "beatmap_id": 116383, "snapshot_number": 1, "checksum": "abc"}],
-        })
+        mock_bm = mock_beatmap_manager(
+            {
+                "message": "Snapshotted 1 beatmap(s)",
+                "updated_beatmapset": None,
+                "updated_beatmaps": [],
+                "snapshotted_beatmapset": {
+                    "id": 1,
+                    "beatmapset_id": self.TEST_BEATMAPSET_ID,
+                    "snapshot_number": 1,
+                    "checksum": "abc",
+                },
+                "snapshotted_beatmaps": [
+                    {"id": 1, "beatmap_id": 116383, "snapshot_number": 1, "checksum": "abc"}
+                ],
+            }
+        )
 
         test_client = TestClientWithMocks(mock_db=mock_admin_db)
 
-        with patch('api.v1.beatmapsets.BeatmapManager', return_value=mock_bm), \
-             patch('app.beatmaps.BeatmapManager', return_value=mock_bm), \
-             patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client):
+        with (
+            patch("api.v1.beatmapsets.BeatmapManager", return_value=mock_bm),
+            patch("app.beatmaps.BeatmapManager", return_value=mock_bm),
+            patch("app.osu_api.OsuAPIClient", return_value=mock_osu_client),
+        ):
             body = {"id": self.TEST_BEATMAPSET_ID}
             response = test_client.post("/api/v1/beatmapsets", json=body)
 
@@ -397,7 +518,7 @@ async def test_get_beatmapset_zip(TestClientWithMocks):
 
     test_client = TestClientWithMocks(mock_db=mock_db, mock_rc=mock_rc)
 
-    with patch('api.v1.beatmapsets.snapshots.zip.BeatmapManager', return_value=mock_bm):
+    with patch("api.v1.beatmapsets.snapshots.zip.BeatmapManager", return_value=mock_bm):
         response = test_client.get("/api/v1/beatmapsets/35965/snapshots/1/zip")
 
     assert response.status_code == 200
@@ -419,7 +540,7 @@ async def test_get_beatmapset_zip_not_found(TestClientWithMocks):
 
     test_client = TestClientWithMocks(mock_db=mock_db, mock_rc=mock_rc)
 
-    with patch('app.beatmaps.BeatmapManager', return_value=mock_bm):
+    with patch("app.beatmaps.BeatmapManager", return_value=mock_bm):
         response = test_client.get("/api/v1/beatmapsets/999999/snapshots/1/zip")
 
     assert response.status_code == 404
@@ -442,14 +563,18 @@ async def test_get_snapshot(TestClientWithMocks):
 
     test_client = TestClientWithMocks(mock_db=mock_db)
 
-    with patch('app.database.schemas.beatmapset_snapshot.BeatmapsetSnapshotSchema.model_validate') as mock_validate:
+    with patch(
+        "app.database.schemas.beatmapset_snapshot.BeatmapsetSnapshotSchema.model_validate"
+    ) as mock_validate:
         mock_validate.return_value = MagicMock(
-            model_dump=MagicMock(return_value={
-                "id": 1,
-                "beatmapset_id": 35965,
-                "snapshot_number": 1,
-                "checksum": "abc123"
-            })
+            model_dump=MagicMock(
+                return_value={
+                    "id": 1,
+                    "beatmapset_id": 35965,
+                    "snapshot_number": 1,
+                    "checksum": "abc123",
+                }
+            )
         )
         response = test_client.get("/api/v1/beatmapsets/35965/snapshots/1")
 

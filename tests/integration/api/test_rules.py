@@ -3,6 +3,7 @@ Integration tests for queue rule enforcement.
 
 Tests rule checks during request submission and rule management via queue PATCH.
 """
+
 from datetime import UTC
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -43,6 +44,7 @@ class TestRestrictionsOnRequestSubmission:
                 sess = AsyncMock()
                 sess.execute = AsyncMock(return_value=MagicMock())
                 return sess
+
             async def __aexit__(self, *args):
                 pass
 
@@ -87,62 +89,61 @@ class TestRestrictionsOnRequestSubmission:
 
         async def mock_get_beatmapset_wip(*args, **kwargs):
             return {
-                    "id": self.TEST_BEATMAPSET_ID,
-                    "status": "wip",
-                    "artist": "Test Artist",
-                    "artist_unicode": "Test Artist",
-                    "availability": {"download_disabled": False, "more_information": None},
-                    "bpm": 150.0,
-                    "can_be_hyped": False,
-                    "covers": {
-                        "cover": "",
-                        "cover@2x": "",
-                        "card": "",
-                        "card@2x": "",
-                        "list": "",
-                        "list@2x": "",
-                        "slimcover": "",
-                        "slimcover@2x": "",
-                    },
-                    "creator": "TestMapper",
-                    "current_nominations": [],
-                    "deleted_at": None,
-                    "description": {"description": ""},
-                    "discussion_enabled": True,
-                    "discussion_locked": False,
-                    "favourite_count": 0,
-                    "genre": {"id": 0, "name": "Any"},
-                    "hype": {"current": 0, "required": 0},
-                    "id": self.TEST_BEATMAPSET_ID,
-                    "is_scoreable": True,
-                    "language": {"id": 0, "name": "Any"},
-                    "last_updated": "2024-01-01T00:00:00+00:00",
-                    "legacy_thread_url": "",
-                    "nominations_summary": {
-                        "current": 0,
-                        "eligible_main_rulesets": None,
-                        "required_meta": {"main_ruleset": 0, "non_main_ruleset": 0},
-                    },
-                    "nsfw": False,
-                    "offset": 0,
-                    "pack_tags": [],
-                    "play_count": 0,
-                    "preview_url": "",
-                    "ranked": 0,
-                    "ranked_date": None,
-                    "rating": 0.0,
-                    "ratings": [],
-                    "source": "",
-                    "spotlight": False,
-                    "storyboard": False,
-                    "submitted_date": "2024-01-01T00:00:00+00:00",
-                    "tags": "",
-                    "title": "Test Song",
-                    "title_unicode": "Test Song",
-                    "track_id": None,
-                    "user_id": 12345678,
-                    "video": False,
-                }
+                "id": self.TEST_BEATMAPSET_ID,
+                "status": "wip",
+                "artist": "Test Artist",
+                "artist_unicode": "Test Artist",
+                "availability": {"download_disabled": False, "more_information": None},
+                "bpm": 150.0,
+                "can_be_hyped": False,
+                "covers": {
+                    "cover": "",
+                    "cover@2x": "",
+                    "card": "",
+                    "card@2x": "",
+                    "list": "",
+                    "list@2x": "",
+                    "slimcover": "",
+                    "slimcover@2x": "",
+                },
+                "creator": "TestMapper",
+                "current_nominations": [],
+                "deleted_at": None,
+                "description": {"description": ""},
+                "discussion_enabled": True,
+                "discussion_locked": False,
+                "favourite_count": 0,
+                "genre": {"id": 0, "name": "Any"},
+                "hype": {"current": 0, "required": 0},
+                "is_scoreable": True,
+                "language": {"id": 0, "name": "Any"},
+                "last_updated": "2024-01-01T00:00:00+00:00",
+                "legacy_thread_url": "",
+                "nominations_summary": {
+                    "current": 0,
+                    "eligible_main_rulesets": None,
+                    "required_meta": {"main_ruleset": 0, "non_main_ruleset": 0},
+                },
+                "nsfw": False,
+                "offset": 0,
+                "pack_tags": [],
+                "play_count": 0,
+                "preview_url": "",
+                "ranked": 0,
+                "ranked_date": None,
+                "rating": 0.0,
+                "ratings": [],
+                "source": "",
+                "spotlight": False,
+                "storyboard": False,
+                "submitted_date": "2024-01-01T00:00:00+00:00",
+                "tags": "",
+                "title": "Test Song",
+                "title_unicode": "Test Song",
+                "track_id": None,
+                "user_id": 12345678,
+                "video": False,
+            }
 
         mock_osu_client = MagicMock()
         mock_osu_client.__aenter__ = AsyncMock(return_value=mock_osu_client)
@@ -151,12 +152,29 @@ class TestRestrictionsOnRequestSubmission:
 
         test_client = TestClientWithMocks(mock_rc=mock_rc, mock_db=mock_db)
 
-        with patch("api.v1.requests.OsuAPIClient", return_value=mock_osu_client), \
-             patch("app.security.decorators.role_authorization.get_authenticated_user_id", return_value=self.TEST_USER_ID), \
-             patch("app.security.decorators.auth_context.get_authenticated_user_id", return_value=self.TEST_USER_ID), \
-             patch("app.security.decorators.ownership_authorization.get_authenticated_user_id", return_value=self.TEST_USER_ID), \
-             patch("app.security.decorators.ownership_filter.get_authenticated_user_id", return_value=self.TEST_USER_ID), \
-             patch("app.security.decorators.utils.get_authenticated_user_id", return_value=self.TEST_USER_ID):
+        with (
+            patch("api.v1.requests.OsuAPIClient", return_value=mock_osu_client),
+            patch(
+                "app.security.decorators.role_authorization.get_authenticated_user_id",
+                return_value=self.TEST_USER_ID,
+            ),
+            patch(
+                "app.security.decorators.auth_context.get_authenticated_user_id",
+                return_value=self.TEST_USER_ID,
+            ),
+            patch(
+                "app.security.decorators.ownership_authorization.get_authenticated_user_id",
+                return_value=self.TEST_USER_ID,
+            ),
+            patch(
+                "app.security.decorators.ownership_filter.get_authenticated_user_id",
+                return_value=self.TEST_USER_ID,
+            ),
+            patch(
+                "app.security.decorators.utils.get_authenticated_user_id",
+                return_value=self.TEST_USER_ID,
+            ),
+        ):
             response = test_client.post("/api/v1/requests", json=valid_request_body)
 
         assert response.status_code == 202
@@ -193,6 +211,7 @@ class TestRestrictionsOnRequestSubmission:
                 sess = AsyncMock()
                 sess.execute = AsyncMock(return_value=mock_result)
                 return sess
+
             async def __aexit__(self, *args):
                 pass
 
@@ -235,62 +254,61 @@ class TestRestrictionsOnRequestSubmission:
 
         async def mock_get_beatmapset_wip(*args, **kwargs):
             return {
-                    "id": self.TEST_BEATMAPSET_ID,
-                    "status": "wip",
-                    "artist": "Test Artist",
-                    "artist_unicode": "Test Artist",
-                    "availability": {"download_disabled": False, "more_information": None},
-                    "bpm": 150.0,
-                    "can_be_hyped": False,
-                    "covers": {
-                        "cover": "",
-                        "cover@2x": "",
-                        "card": "",
-                        "card@2x": "",
-                        "list": "",
-                        "list@2x": "",
-                        "slimcover": "",
-                        "slimcover@2x": "",
-                    },
-                    "creator": "TestMapper",
-                    "current_nominations": [],
-                    "deleted_at": None,
-                    "description": {"description": ""},
-                    "discussion_enabled": True,
-                    "discussion_locked": False,
-                    "favourite_count": 0,
-                    "genre": {"id": 0, "name": "Any"},
-                    "hype": {"current": 0, "required": 0},
-                    "id": self.TEST_BEATMAPSET_ID,
-                    "is_scoreable": True,
-                    "language": {"id": 0, "name": "Any"},
-                    "last_updated": "2024-01-01T00:00:00+00:00",
-                    "legacy_thread_url": "",
-                    "nominations_summary": {
-                        "current": 0,
-                        "eligible_main_rulesets": None,
-                        "required_meta": {"main_ruleset": 0, "non_main_ruleset": 0},
-                    },
-                    "nsfw": False,
-                    "offset": 0,
-                    "pack_tags": [],
-                    "play_count": 0,
-                    "preview_url": "",
-                    "ranked": 0,
-                    "ranked_date": None,
-                    "rating": 0.0,
-                    "ratings": [],
-                    "source": "",
-                    "spotlight": False,
-                    "storyboard": False,
-                    "submitted_date": "2024-01-01T00:00:00+00:00",
-                    "tags": "",
-                    "title": "Test Song",
-                    "title_unicode": "Test Song",
-                    "track_id": None,
-                    "user_id": 12345678,
-                    "video": False,
-                }
+                "id": self.TEST_BEATMAPSET_ID,
+                "status": "wip",
+                "artist": "Test Artist",
+                "artist_unicode": "Test Artist",
+                "availability": {"download_disabled": False, "more_information": None},
+                "bpm": 150.0,
+                "can_be_hyped": False,
+                "covers": {
+                    "cover": "",
+                    "cover@2x": "",
+                    "card": "",
+                    "card@2x": "",
+                    "list": "",
+                    "list@2x": "",
+                    "slimcover": "",
+                    "slimcover@2x": "",
+                },
+                "creator": "TestMapper",
+                "current_nominations": [],
+                "deleted_at": None,
+                "description": {"description": ""},
+                "discussion_enabled": True,
+                "discussion_locked": False,
+                "favourite_count": 0,
+                "genre": {"id": 0, "name": "Any"},
+                "hype": {"current": 0, "required": 0},
+                "is_scoreable": True,
+                "language": {"id": 0, "name": "Any"},
+                "last_updated": "2024-01-01T00:00:00+00:00",
+                "legacy_thread_url": "",
+                "nominations_summary": {
+                    "current": 0,
+                    "eligible_main_rulesets": None,
+                    "required_meta": {"main_ruleset": 0, "non_main_ruleset": 0},
+                },
+                "nsfw": False,
+                "offset": 0,
+                "pack_tags": [],
+                "play_count": 0,
+                "preview_url": "",
+                "ranked": 0,
+                "ranked_date": None,
+                "rating": 0.0,
+                "ratings": [],
+                "source": "",
+                "spotlight": False,
+                "storyboard": False,
+                "submitted_date": "2024-01-01T00:00:00+00:00",
+                "tags": "",
+                "title": "Test Song",
+                "title_unicode": "Test Song",
+                "track_id": None,
+                "user_id": 12345678,
+                "video": False,
+            }
 
         mock_osu_client = MagicMock()
         mock_osu_client.__aenter__ = AsyncMock(return_value=mock_osu_client)
@@ -313,7 +331,6 @@ class TestRestrictionsOnRequestSubmission:
     ):
         """Test request is blocked when cooldown period is active."""
         from datetime import datetime, timedelta
-
 
         mock_queue = MagicMock()
         mock_queue.id = self.TEST_QUEUE_ID
@@ -339,6 +356,7 @@ class TestRestrictionsOnRequestSubmission:
                 sess = AsyncMock()
                 sess.execute = AsyncMock(return_value=mock_result)
                 return sess
+
             async def __aexit__(self, *args):
                 pass
 
@@ -386,62 +404,61 @@ class TestRestrictionsOnRequestSubmission:
 
         async def mock_get_beatmapset_wip(*args, **kwargs):
             return {
-                    "id": self.TEST_BEATMAPSET_ID,
-                    "status": "wip",
-                    "artist": "Test Artist",
-                    "artist_unicode": "Test Artist",
-                    "availability": {"download_disabled": False, "more_information": None},
-                    "bpm": 150.0,
-                    "can_be_hyped": False,
-                    "covers": {
-                        "cover": "",
-                        "cover@2x": "",
-                        "card": "",
-                        "card@2x": "",
-                        "list": "",
-                        "list@2x": "",
-                        "slimcover": "",
-                        "slimcover@2x": "",
-                    },
-                    "creator": "TestMapper",
-                    "current_nominations": [],
-                    "deleted_at": None,
-                    "description": {"description": ""},
-                    "discussion_enabled": True,
-                    "discussion_locked": False,
-                    "favourite_count": 0,
-                    "genre": {"id": 0, "name": "Any"},
-                    "hype": {"current": 0, "required": 0},
-                    "id": self.TEST_BEATMAPSET_ID,
-                    "is_scoreable": True,
-                    "language": {"id": 0, "name": "Any"},
-                    "last_updated": "2024-01-01T00:00:00+00:00",
-                    "legacy_thread_url": "",
-                    "nominations_summary": {
-                        "current": 0,
-                        "eligible_main_rulesets": None,
-                        "required_meta": {"main_ruleset": 0, "non_main_ruleset": 0},
-                    },
-                    "nsfw": False,
-                    "offset": 0,
-                    "pack_tags": [],
-                    "play_count": 0,
-                    "preview_url": "",
-                    "ranked": 0,
-                    "ranked_date": None,
-                    "rating": 0.0,
-                    "ratings": [],
-                    "source": "",
-                    "spotlight": False,
-                    "storyboard": False,
-                    "submitted_date": "2024-01-01T00:00:00+00:00",
-                    "tags": "",
-                    "title": "Test Song",
-                    "title_unicode": "Test Song",
-                    "track_id": None,
-                    "user_id": 12345678,
-                    "video": False,
-                }
+                "id": self.TEST_BEATMAPSET_ID,
+                "status": "wip",
+                "artist": "Test Artist",
+                "artist_unicode": "Test Artist",
+                "availability": {"download_disabled": False, "more_information": None},
+                "bpm": 150.0,
+                "can_be_hyped": False,
+                "covers": {
+                    "cover": "",
+                    "cover@2x": "",
+                    "card": "",
+                    "card@2x": "",
+                    "list": "",
+                    "list@2x": "",
+                    "slimcover": "",
+                    "slimcover@2x": "",
+                },
+                "creator": "TestMapper",
+                "current_nominations": [],
+                "deleted_at": None,
+                "description": {"description": ""},
+                "discussion_enabled": True,
+                "discussion_locked": False,
+                "favourite_count": 0,
+                "genre": {"id": 0, "name": "Any"},
+                "hype": {"current": 0, "required": 0},
+                "is_scoreable": True,
+                "language": {"id": 0, "name": "Any"},
+                "last_updated": "2024-01-01T00:00:00+00:00",
+                "legacy_thread_url": "",
+                "nominations_summary": {
+                    "current": 0,
+                    "eligible_main_rulesets": None,
+                    "required_meta": {"main_ruleset": 0, "non_main_ruleset": 0},
+                },
+                "nsfw": False,
+                "offset": 0,
+                "pack_tags": [],
+                "play_count": 0,
+                "preview_url": "",
+                "ranked": 0,
+                "ranked_date": None,
+                "rating": 0.0,
+                "ratings": [],
+                "source": "",
+                "spotlight": False,
+                "storyboard": False,
+                "submitted_date": "2024-01-01T00:00:00+00:00",
+                "tags": "",
+                "title": "Test Song",
+                "title_unicode": "Test Song",
+                "track_id": None,
+                "user_id": 12345678,
+                "video": False,
+            }
 
         mock_osu_client = MagicMock()
         mock_osu_client.__aenter__ = AsyncMock(return_value=mock_osu_client)
@@ -488,6 +505,7 @@ class TestRestrictionsOnRequestSubmission:
                 sess = AsyncMock()
                 sess.execute = AsyncMock(return_value=mock_result)
                 return sess
+
             async def __aexit__(self, *args):
                 pass
 
@@ -530,62 +548,61 @@ class TestRestrictionsOnRequestSubmission:
 
         async def mock_get_beatmapset_wip(*args, **kwargs):
             return {
-                    "id": self.TEST_BEATMAPSET_ID,
-                    "status": "wip",
-                    "artist": "Test Artist",
-                    "artist_unicode": "Test Artist",
-                    "availability": {"download_disabled": False, "more_information": None},
-                    "bpm": 150.0,
-                    "can_be_hyped": False,
-                    "covers": {
-                        "cover": "",
-                        "cover@2x": "",
-                        "card": "",
-                        "card@2x": "",
-                        "list": "",
-                        "list@2x": "",
-                        "slimcover": "",
-                        "slimcover@2x": "",
-                    },
-                    "creator": "TestMapper",
-                    "current_nominations": [],
-                    "deleted_at": None,
-                    "description": {"description": ""},
-                    "discussion_enabled": True,
-                    "discussion_locked": False,
-                    "favourite_count": 0,
-                    "genre": {"id": 0, "name": "Any"},
-                    "hype": {"current": 0, "required": 0},
-                    "id": self.TEST_BEATMAPSET_ID,
-                    "is_scoreable": True,
-                    "language": {"id": 0, "name": "Any"},
-                    "last_updated": "2024-01-01T00:00:00+00:00",
-                    "legacy_thread_url": "",
-                    "nominations_summary": {
-                        "current": 0,
-                        "eligible_main_rulesets": None,
-                        "required_meta": {"main_ruleset": 0, "non_main_ruleset": 0},
-                    },
-                    "nsfw": False,
-                    "offset": 0,
-                    "pack_tags": [],
-                    "play_count": 0,
-                    "preview_url": "",
-                    "ranked": 0,
-                    "ranked_date": None,
-                    "rating": 0.0,
-                    "ratings": [],
-                    "source": "",
-                    "spotlight": False,
-                    "storyboard": False,
-                    "submitted_date": "2024-01-01T00:00:00+00:00",
-                    "tags": "",
-                    "title": "Test Song",
-                    "title_unicode": "Test Song",
-                    "track_id": None,
-                    "user_id": 12345678,
-                    "video": False,
-                }
+                "id": self.TEST_BEATMAPSET_ID,
+                "status": "wip",
+                "artist": "Test Artist",
+                "artist_unicode": "Test Artist",
+                "availability": {"download_disabled": False, "more_information": None},
+                "bpm": 150.0,
+                "can_be_hyped": False,
+                "covers": {
+                    "cover": "",
+                    "cover@2x": "",
+                    "card": "",
+                    "card@2x": "",
+                    "list": "",
+                    "list@2x": "",
+                    "slimcover": "",
+                    "slimcover@2x": "",
+                },
+                "creator": "TestMapper",
+                "current_nominations": [],
+                "deleted_at": None,
+                "description": {"description": ""},
+                "discussion_enabled": True,
+                "discussion_locked": False,
+                "favourite_count": 0,
+                "genre": {"id": 0, "name": "Any"},
+                "hype": {"current": 0, "required": 0},
+                "is_scoreable": True,
+                "language": {"id": 0, "name": "Any"},
+                "last_updated": "2024-01-01T00:00:00+00:00",
+                "legacy_thread_url": "",
+                "nominations_summary": {
+                    "current": 0,
+                    "eligible_main_rulesets": None,
+                    "required_meta": {"main_ruleset": 0, "non_main_ruleset": 0},
+                },
+                "nsfw": False,
+                "offset": 0,
+                "pack_tags": [],
+                "play_count": 0,
+                "preview_url": "",
+                "ranked": 0,
+                "ranked_date": None,
+                "rating": 0.0,
+                "ratings": [],
+                "source": "",
+                "spotlight": False,
+                "storyboard": False,
+                "submitted_date": "2024-01-01T00:00:00+00:00",
+                "tags": "",
+                "title": "Test Song",
+                "title_unicode": "Test Song",
+                "track_id": None,
+                "user_id": 12345678,
+                "video": False,
+            }
 
         mock_osu_client = MagicMock()
         mock_osu_client.__aenter__ = AsyncMock(return_value=mock_osu_client)
@@ -618,6 +635,7 @@ class TestRestrictionsOnRequestSubmission:
                 sess = AsyncMock()
                 sess.execute = AsyncMock(return_value=MagicMock())
                 return sess
+
             async def __aexit__(self, *args):
                 pass
 
@@ -662,62 +680,61 @@ class TestRestrictionsOnRequestSubmission:
 
         async def mock_get_beatmapset_wip(*args, **kwargs):
             return {
-                    "id": self.TEST_BEATMAPSET_ID,
-                    "status": "wip",
-                    "artist": "Test Artist",
-                    "artist_unicode": "Test Artist",
-                    "availability": {"download_disabled": False, "more_information": None},
-                    "bpm": 150.0,
-                    "can_be_hyped": False,
-                    "covers": {
-                        "cover": "",
-                        "cover@2x": "",
-                        "card": "",
-                        "card@2x": "",
-                        "list": "",
-                        "list@2x": "",
-                        "slimcover": "",
-                        "slimcover@2x": "",
-                    },
-                    "creator": "TestMapper",
-                    "current_nominations": [],
-                    "deleted_at": None,
-                    "description": {"description": ""},
-                    "discussion_enabled": True,
-                    "discussion_locked": False,
-                    "favourite_count": 0,
-                    "genre": {"id": 0, "name": "Any"},
-                    "hype": {"current": 0, "required": 0},
-                    "id": self.TEST_BEATMAPSET_ID,
-                    "is_scoreable": True,
-                    "language": {"id": 0, "name": "Any"},
-                    "last_updated": "2024-01-01T00:00:00+00:00",
-                    "legacy_thread_url": "",
-                    "nominations_summary": {
-                        "current": 0,
-                        "eligible_main_rulesets": None,
-                        "required_meta": {"main_ruleset": 0, "non_main_ruleset": 0},
-                    },
-                    "nsfw": False,
-                    "offset": 0,
-                    "pack_tags": [],
-                    "play_count": 0,
-                    "preview_url": "",
-                    "ranked": 0,
-                    "ranked_date": None,
-                    "rating": 0.0,
-                    "ratings": [],
-                    "source": "",
-                    "spotlight": False,
-                    "storyboard": False,
-                    "submitted_date": "2024-01-01T00:00:00+00:00",
-                    "tags": "",
-                    "title": "Test Song",
-                    "title_unicode": "Test Song",
-                    "track_id": None,
-                    "user_id": 12345678,
-                    "video": False,
-                }
+                "id": self.TEST_BEATMAPSET_ID,
+                "status": "wip",
+                "artist": "Test Artist",
+                "artist_unicode": "Test Artist",
+                "availability": {"download_disabled": False, "more_information": None},
+                "bpm": 150.0,
+                "can_be_hyped": False,
+                "covers": {
+                    "cover": "",
+                    "cover@2x": "",
+                    "card": "",
+                    "card@2x": "",
+                    "list": "",
+                    "list@2x": "",
+                    "slimcover": "",
+                    "slimcover@2x": "",
+                },
+                "creator": "TestMapper",
+                "current_nominations": [],
+                "deleted_at": None,
+                "description": {"description": ""},
+                "discussion_enabled": True,
+                "discussion_locked": False,
+                "favourite_count": 0,
+                "genre": {"id": 0, "name": "Any"},
+                "hype": {"current": 0, "required": 0},
+                "is_scoreable": True,
+                "language": {"id": 0, "name": "Any"},
+                "last_updated": "2024-01-01T00:00:00+00:00",
+                "legacy_thread_url": "",
+                "nominations_summary": {
+                    "current": 0,
+                    "eligible_main_rulesets": None,
+                    "required_meta": {"main_ruleset": 0, "non_main_ruleset": 0},
+                },
+                "nsfw": False,
+                "offset": 0,
+                "pack_tags": [],
+                "play_count": 0,
+                "preview_url": "",
+                "ranked": 0,
+                "ranked_date": None,
+                "rating": 0.0,
+                "ratings": [],
+                "source": "",
+                "spotlight": False,
+                "storyboard": False,
+                "submitted_date": "2024-01-01T00:00:00+00:00",
+                "tags": "",
+                "title": "Test Song",
+                "title_unicode": "Test Song",
+                "track_id": None,
+                "user_id": 12345678,
+                "video": False,
+            }
 
         mock_osu_client = MagicMock()
         mock_osu_client.__aenter__ = AsyncMock(return_value=mock_osu_client)
@@ -726,12 +743,29 @@ class TestRestrictionsOnRequestSubmission:
 
         test_client = TestClientWithMocks(mock_rc=mock_rc, mock_db=mock_db)
 
-        with patch("api.v1.requests.OsuAPIClient", return_value=mock_osu_client), \
-             patch("app.security.decorators.role_authorization.get_authenticated_user_id", return_value=self.TEST_USER_ID), \
-             patch("app.security.decorators.auth_context.get_authenticated_user_id", return_value=self.TEST_USER_ID), \
-             patch("app.security.decorators.ownership_authorization.get_authenticated_user_id", return_value=self.TEST_USER_ID), \
-             patch("app.security.decorators.ownership_filter.get_authenticated_user_id", return_value=self.TEST_USER_ID), \
-             patch("app.security.decorators.utils.get_authenticated_user_id", return_value=self.TEST_USER_ID):
+        with (
+            patch("api.v1.requests.OsuAPIClient", return_value=mock_osu_client),
+            patch(
+                "app.security.decorators.role_authorization.get_authenticated_user_id",
+                return_value=self.TEST_USER_ID,
+            ),
+            patch(
+                "app.security.decorators.auth_context.get_authenticated_user_id",
+                return_value=self.TEST_USER_ID,
+            ),
+            patch(
+                "app.security.decorators.ownership_authorization.get_authenticated_user_id",
+                return_value=self.TEST_USER_ID,
+            ),
+            patch(
+                "app.security.decorators.ownership_filter.get_authenticated_user_id",
+                return_value=self.TEST_USER_ID,
+            ),
+            patch(
+                "app.security.decorators.utils.get_authenticated_user_id",
+                return_value=self.TEST_USER_ID,
+            ),
+        ):
             response = test_client.post("/api/v1/requests", json=valid_request_body)
 
         assert response.status_code == 202
@@ -762,6 +796,7 @@ class TestRestrictionsOnRequestSubmission:
                 sess = AsyncMock()
                 sess.execute = AsyncMock(return_value=MagicMock())
                 return sess
+
             async def __aexit__(self, *args):
                 pass
 
@@ -814,62 +849,61 @@ class TestRestrictionsOnRequestSubmission:
 
         async def mock_get_beatmapset_wip(*args, **kwargs):
             return {
-                    "id": self.TEST_BEATMAPSET_ID,
-                    "status": "wip",
-                    "artist": "Test Artist",
-                    "artist_unicode": "Test Artist",
-                    "availability": {"download_disabled": False, "more_information": None},
-                    "bpm": 150.0,
-                    "can_be_hyped": False,
-                    "covers": {
-                        "cover": "",
-                        "cover@2x": "",
-                        "card": "",
-                        "card@2x": "",
-                        "list": "",
-                        "list@2x": "",
-                        "slimcover": "",
-                        "slimcover@2x": "",
-                    },
-                    "creator": "TestMapper",
-                    "current_nominations": [],
-                    "deleted_at": None,
-                    "description": {"description": ""},
-                    "discussion_enabled": True,
-                    "discussion_locked": False,
-                    "favourite_count": 0,
-                    "genre": {"id": 0, "name": "Any"},
-                    "hype": {"current": 0, "required": 0},
-                    "id": self.TEST_BEATMAPSET_ID,
-                    "is_scoreable": True,
-                    "language": {"id": 0, "name": "Any"},
-                    "last_updated": "2024-01-01T00:00:00+00:00",
-                    "legacy_thread_url": "",
-                    "nominations_summary": {
-                        "current": 0,
-                        "eligible_main_rulesets": None,
-                        "required_meta": {"main_ruleset": 0, "non_main_ruleset": 0},
-                    },
-                    "nsfw": False,
-                    "offset": 0,
-                    "pack_tags": [],
-                    "play_count": 0,
-                    "preview_url": "",
-                    "ranked": 0,
-                    "ranked_date": None,
-                    "rating": 0.0,
-                    "ratings": [],
-                    "source": "",
-                    "spotlight": False,
-                    "storyboard": False,
-                    "submitted_date": "2024-01-01T00:00:00+00:00",
-                    "tags": "",
-                    "title": "Test Song",
-                    "title_unicode": "Test Song",
-                    "track_id": None,
-                    "user_id": 12345678,
-                    "video": False,
-                }
+                "id": self.TEST_BEATMAPSET_ID,
+                "status": "wip",
+                "artist": "Test Artist",
+                "artist_unicode": "Test Artist",
+                "availability": {"download_disabled": False, "more_information": None},
+                "bpm": 150.0,
+                "can_be_hyped": False,
+                "covers": {
+                    "cover": "",
+                    "cover@2x": "",
+                    "card": "",
+                    "card@2x": "",
+                    "list": "",
+                    "list@2x": "",
+                    "slimcover": "",
+                    "slimcover@2x": "",
+                },
+                "creator": "TestMapper",
+                "current_nominations": [],
+                "deleted_at": None,
+                "description": {"description": ""},
+                "discussion_enabled": True,
+                "discussion_locked": False,
+                "favourite_count": 0,
+                "genre": {"id": 0, "name": "Any"},
+                "hype": {"current": 0, "required": 0},
+                "is_scoreable": True,
+                "language": {"id": 0, "name": "Any"},
+                "last_updated": "2024-01-01T00:00:00+00:00",
+                "legacy_thread_url": "",
+                "nominations_summary": {
+                    "current": 0,
+                    "eligible_main_rulesets": None,
+                    "required_meta": {"main_ruleset": 0, "non_main_ruleset": 0},
+                },
+                "nsfw": False,
+                "offset": 0,
+                "pack_tags": [],
+                "play_count": 0,
+                "preview_url": "",
+                "ranked": 0,
+                "ranked_date": None,
+                "rating": 0.0,
+                "ratings": [],
+                "source": "",
+                "spotlight": False,
+                "storyboard": False,
+                "submitted_date": "2024-01-01T00:00:00+00:00",
+                "tags": "",
+                "title": "Test Song",
+                "title_unicode": "Test Song",
+                "track_id": None,
+                "user_id": 12345678,
+                "video": False,
+            }
 
         mock_osu_client = MagicMock()
         mock_osu_client.__aenter__ = AsyncMock(return_value=mock_osu_client)
@@ -878,12 +912,29 @@ class TestRestrictionsOnRequestSubmission:
 
         test_client = TestClientWithMocks(mock_rc=mock_rc, mock_db=mock_db)
 
-        with patch("api.v1.requests.OsuAPIClient", return_value=mock_osu_client), \
-             patch("app.security.decorators.role_authorization.get_authenticated_user_id", return_value=different_user), \
-             patch("app.security.decorators.auth_context.get_authenticated_user_id", return_value=different_user), \
-             patch("app.security.decorators.ownership_authorization.get_authenticated_user_id", return_value=different_user), \
-             patch("app.security.decorators.ownership_filter.get_authenticated_user_id", return_value=different_user), \
-             patch("app.security.decorators.utils.get_authenticated_user_id", return_value=different_user):
+        with (
+            patch("api.v1.requests.OsuAPIClient", return_value=mock_osu_client),
+            patch(
+                "app.security.decorators.role_authorization.get_authenticated_user_id",
+                return_value=different_user,
+            ),
+            patch(
+                "app.security.decorators.auth_context.get_authenticated_user_id",
+                return_value=different_user,
+            ),
+            patch(
+                "app.security.decorators.ownership_authorization.get_authenticated_user_id",
+                return_value=different_user,
+            ),
+            patch(
+                "app.security.decorators.ownership_filter.get_authenticated_user_id",
+                return_value=different_user,
+            ),
+            patch(
+                "app.security.decorators.utils.get_authenticated_user_id",
+                return_value=different_user,
+            ),
+        ):
             response = test_client.post("/api/v1/requests", json=body)
 
         assert response.status_code == 202
@@ -924,6 +975,7 @@ class TestQueueRulesPatch:
                 sess = AsyncMock()
                 sess.execute = AsyncMock(return_value=MagicMock())
                 return sess
+
             async def __aexit__(self, *args):
                 pass
 
@@ -934,7 +986,25 @@ class TestQueueRulesPatch:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.role_authorization.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.auth_context.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.ownership_authorization.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.ownership_filter.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.utils.get_authenticated_user_id', return_value=11111111):
+        with (
+            patch(
+                "app.security.decorators.role_authorization.get_authenticated_user_id",
+                return_value=11111111,
+            ),
+            patch(
+                "app.security.decorators.auth_context.get_authenticated_user_id",
+                return_value=11111111,
+            ),
+            patch(
+                "app.security.decorators.ownership_authorization.get_authenticated_user_id",
+                return_value=11111111,
+            ),
+            patch(
+                "app.security.decorators.ownership_filter.get_authenticated_user_id",
+                return_value=11111111,
+            ),
+            patch("app.security.decorators.utils.get_authenticated_user_id", return_value=11111111),
+        ):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.patch(
                 f"/api/v1/queues/{self.TEST_QUEUE_ID}",
@@ -959,9 +1029,7 @@ class TestQueueRulesPatch:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_queue_owner_can_set_rules(
-        self, TestClientWithMocks, admin_user_token
-    ):
+    async def test_queue_owner_can_set_rules(self, TestClientWithMocks, admin_user_token):
         """Test queue owner can set rules via PATCH."""
         from app.database.models import Queue
 
@@ -989,6 +1057,7 @@ class TestQueueRulesPatch:
                 sess = AsyncMock()
                 sess.execute = AsyncMock(return_value=MagicMock())
                 return sess
+
             async def __aexit__(self, *args):
                 pass
 
@@ -999,7 +1068,25 @@ class TestQueueRulesPatch:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.role_authorization.get_authenticated_user_id', return_value=owner_id), patch('app.security.decorators.auth_context.get_authenticated_user_id', return_value=owner_id), patch('app.security.decorators.ownership_authorization.get_authenticated_user_id', return_value=owner_id), patch('app.security.decorators.ownership_filter.get_authenticated_user_id', return_value=owner_id), patch('app.security.decorators.utils.get_authenticated_user_id', return_value=owner_id):
+        with (
+            patch(
+                "app.security.decorators.role_authorization.get_authenticated_user_id",
+                return_value=owner_id,
+            ),
+            patch(
+                "app.security.decorators.auth_context.get_authenticated_user_id",
+                return_value=owner_id,
+            ),
+            patch(
+                "app.security.decorators.ownership_authorization.get_authenticated_user_id",
+                return_value=owner_id,
+            ),
+            patch(
+                "app.security.decorators.ownership_filter.get_authenticated_user_id",
+                return_value=owner_id,
+            ),
+            patch("app.security.decorators.utils.get_authenticated_user_id", return_value=owner_id),
+        ):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.patch(
                 f"/api/v1/queues/{self.TEST_QUEUE_ID}",
@@ -1023,9 +1110,7 @@ class TestQueueRulesPatch:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_non_admin_cannot_set_rules(
-        self, TestClientWithMocks, admin_user_token
-    ):
+    async def test_non_admin_cannot_set_rules(self, TestClientWithMocks, admin_user_token):
         """Test non-admin non-owner gets 403 when trying to set rules."""
         from app.security import generate_token
 
@@ -1046,7 +1131,25 @@ class TestQueueRulesPatch:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.role_authorization.get_authenticated_user_id', return_value=88888888), patch('app.security.decorators.auth_context.get_authenticated_user_id', return_value=88888888), patch('app.security.decorators.ownership_authorization.get_authenticated_user_id', return_value=88888888), patch('app.security.decorators.ownership_filter.get_authenticated_user_id', return_value=88888888), patch('app.security.decorators.utils.get_authenticated_user_id', return_value=88888888):
+        with (
+            patch(
+                "app.security.decorators.role_authorization.get_authenticated_user_id",
+                return_value=88888888,
+            ),
+            patch(
+                "app.security.decorators.auth_context.get_authenticated_user_id",
+                return_value=88888888,
+            ),
+            patch(
+                "app.security.decorators.ownership_authorization.get_authenticated_user_id",
+                return_value=88888888,
+            ),
+            patch(
+                "app.security.decorators.ownership_filter.get_authenticated_user_id",
+                return_value=88888888,
+            ),
+            patch("app.security.decorators.utils.get_authenticated_user_id", return_value=88888888),
+        ):
             headers = {"Authorization": f"Bearer {generate_token(88888888)}"}
             response = test_client.patch(
                 f"/api/v1/queues/{self.TEST_QUEUE_ID}",
@@ -1066,4 +1169,7 @@ class TestQueueRulesPatch:
 
         assert response.status_code == 403
         data = response.json()
-        assert "forbidden" in data.get("detail", "").lower() or "not authorized" in data.get("detail", "").lower()
+        assert (
+            "forbidden" in data.get("detail", "").lower()
+            or "not authorized" in data.get("detail", "").lower()
+        )

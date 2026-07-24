@@ -1,5 +1,7 @@
+import contextlib
 
 import pytest
+from connexion.exceptions import BadRequest
 from connexion.lifecycle import ConnexionRequest
 
 from app.patches.parameter import ParameterValidatorPatched
@@ -26,16 +28,13 @@ def make_validator(parameters=None, strict_validation=False, security_query_para
                         "properties": {
                             "field": {
                                 "type": "string",
-                                "enum": ["Beatmap.id", "Beatmap.beatmapset_id"]
+                                "enum": ["Beatmap.id", "Beatmap.beatmapset_id"],
                             },
-                            "order": {
-                                "type": "string",
-                                "enum": ["asc", "desc"]
-                            }
+                            "order": {"type": "string", "enum": ["asc", "desc"]},
                         },
-                        "required": ["field"]
-                    }
-                }
+                        "required": ["field"],
+                    },
+                },
             },
             {
                 "name": "filters",
@@ -47,20 +46,13 @@ def make_validator(parameters=None, strict_validation=False, security_query_para
                     "type": "object",
                     "additionalProperties": False,
                     "properties": {
-                        "id": {
-                            "type": "object",
-                            "properties": {
-                                "eq": {"type": "integer"}
-                            }
-                        },
+                        "id": {"type": "object", "properties": {"eq": {"type": "integer"}}},
                         "beatmapset_id": {
                             "type": "object",
-                            "properties": {
-                                "eq": {"type": "integer"}
-                            }
-                        }
-                    }
-                }
+                            "properties": {"eq": {"type": "integer"}},
+                        },
+                    },
+                },
             },
             {
                 "name": "include",
@@ -75,20 +67,14 @@ def make_validator(parameters=None, strict_validation=False, security_query_para
                         "id": {"type": "boolean", "default": True},
                         "beatmapset_id": {"type": "boolean", "default": True},
                         "beatmapset": {
-                            "oneOf": [
-                                {"type": "object"},
-                                {"type": "boolean", "default": False}
-                            ]
+                            "oneOf": [{"type": "object"}, {"type": "boolean", "default": False}]
                         },
                         "snapshots": {
-                            "oneOf": [
-                                {"type": "object"},
-                                {"type": "boolean", "default": False}
-                            ]
-                        }
-                    }
-                }
-            }
+                            "oneOf": [{"type": "object"}, {"type": "boolean", "default": False}]
+                        },
+                    },
+                },
+            },
         ]
 
     uri_parser = OpenAPIURIParserPatched(parameters, {})
@@ -96,16 +82,13 @@ def make_validator(parameters=None, strict_validation=False, security_query_para
         parameters=parameters,
         uri_parser=uri_parser,
         strict_validation=strict_validation,
-        security_query_params=security_query_params
+        security_query_params=security_query_params,
     )
 
 
 def setup_request_scope(validator, request, scope_path="/api/v1/test"):
     """Set up request scope for testing."""
-    scope = {
-        "type": "http",
-        "path": scope_path
-    }
+    scope = {"type": "http", "path": scope_path}
     connexion_request = ConnexionRequest(scope, uri_parser=validator.uri_parser)
     validator.request_scopes[connexion_request] = scope
     return connexion_request
@@ -113,7 +96,7 @@ def setup_request_scope(validator, request, scope_path="/api/v1/test"):
 
 def make_request(query_params=None, scope_path="/api/v1/test", validator=None):
     """Create a ConnexionRequest with query parameters.
-    
+
     Query params are passed as-is and will be parsed by the uri_parser.
     For complex params like sorting (JSON), use URL-encoded JSON strings.
     For deepObject params like filters/include, use dict format.
@@ -144,7 +127,7 @@ def make_request(query_params=None, scope_path="/api/v1/test", validator=None):
         "method": "GET",
         "path": scope_path,
         "query_string": query_string.encode(),
-        "headers": []
+        "headers": [],
     }
 
     uri_parser = None
@@ -178,22 +161,19 @@ class TestParameterValidator:
                     "properties": {
                         "field": {
                             "type": "string",
-                            "enum": ["Beatmap.id", "Beatmap.beatmapset_id"]
+                            "enum": ["Beatmap.id", "Beatmap.beatmapset_id"],
                         },
-                        "order": {
-                            "type": "string",
-                            "enum": ["asc", "desc"]
-                        }
+                        "order": {"type": "string", "enum": ["asc", "desc"]},
                     },
-                    "required": ["field"]
-                }
-            }
+                    "required": ["field"],
+                },
+            },
         }
 
         request = make_request(
-            query_params={"sorting": '[{\"field\": \"Beatmap.id\", \"order\": \"asc\"}]'},
+            query_params={"sorting": '[{"field": "Beatmap.id", "order": "asc"}]'},
             scope_path="/api/v1/beatmaps",
-            validator=validator
+            validator=validator,
         )
 
         result = validator.validate_query_parameter(param, request)
@@ -211,21 +191,14 @@ class TestParameterValidator:
                 "title": "BeatmapFilter",
                 "type": "object",
                 "additionalProperties": False,
-                "properties": {
-                    "id": {
-                        "type": "object",
-                        "properties": {
-                            "eq": {"type": "integer"}
-                        }
-                    }
-                }
-            }
+                "properties": {"id": {"type": "object", "properties": {"eq": {"type": "integer"}}}},
+            },
         }
 
         request = make_request(
             query_params={"filters[id][eq]": "123"},
             scope_path="/api/v1/beatmaps",
-            validator=validator
+            validator=validator,
         )
 
         result = validator.validate_query_parameter(param, request)
@@ -247,25 +220,19 @@ class TestParameterValidator:
                     "id": {"type": "boolean", "default": True},
                     "beatmapset_id": {"type": "boolean", "default": True},
                     "beatmapset": {
-                        "oneOf": [
-                            {"type": "object"},
-                            {"type": "boolean", "default": False}
-                        ]
+                        "oneOf": [{"type": "object"}, {"type": "boolean", "default": False}]
                     },
                     "snapshots": {
-                        "oneOf": [
-                            {"type": "object"},
-                            {"type": "boolean", "default": False}
-                        ]
-                    }
-                }
-         }
+                        "oneOf": [{"type": "object"}, {"type": "boolean", "default": False}]
+                    },
+                },
+            },
         }
 
         request = make_request(
-            query_params={"sorting": '[{\"field\": \"Beatmap.id\", \"order\": \"asc\"}]'},
+            query_params={"sorting": '[{"field": "Beatmap.id", "order": "asc"}]'},
             scope_path="/api/v1/beatmaps",
-            validator=validator
+            validator=validator,
         )
 
         result = validator.validate_query_parameter(param, request)
@@ -285,14 +252,12 @@ class TestParameterValidator:
                 "additionalProperties": False,
                 "properties": {
                     "id": {"type": "boolean", "default": True},
-                }
-            }
+                },
+            },
         }
 
         request = make_request(
-            query_params={"include[id]": "true"},
-            scope_path="/api/v1/search",
-            validator=validator
+            query_params={"include[id]": "true"}, scope_path="/api/v1/search", validator=validator
         )
 
         result = validator.validate_query_parameter(param, request)
@@ -304,18 +269,10 @@ class TestParameterValidator:
         validator = make_validator()
 
         # Test with a parameter that has a default
-        param = {
-            "name": "offset",
-            "in": "query",
-            "schema": {"type": "integer", "default": 0}
-        }
+        param = {"name": "offset", "in": "query", "schema": {"type": "integer", "default": 0}}
 
         # Test with no value - should use default
-        request = make_request(
-            query_params={},
-            scope_path="/api/v1/beatmaps",
-            validator=validator
-        )
+        request = make_request(query_params={}, scope_path="/api/v1/beatmaps", validator=validator)
 
         # Missing required parameter returns None
         result = validator.validate_query_parameter(param, request)
@@ -327,17 +284,9 @@ class TestParameterValidator:
         """Test handling of missing parameter."""
         validator = make_validator()
 
-        param = {
-            "name": "limit",
-            "in": "query",
-            "schema": {"type": "integer"}
-        }
+        param = {"name": "limit", "in": "query", "schema": {"type": "integer"}}
 
-        request = make_request(
-            query_params={},
-            scope_path="/api/v1/beatmaps",
-            validator=validator
-        )
+        request = make_request(query_params={}, scope_path="/api/v1/beatmaps", validator=validator)
 
         result = validator.validate_query_parameter(param, request)
 
@@ -347,12 +296,7 @@ class TestParameterValidator:
         """Test that request_scopes is set and cleared during validation."""
         validator = make_validator()
 
-        scope = {
-            "type": "http",
-            "path": "/api/v1/test",
-            "query_string": b"",
-            "headers": []
-        }
+        scope = {"type": "http", "path": "/api/v1/test", "query_string": b"", "headers": []}
 
         validator.validate(scope)
 
@@ -362,19 +306,12 @@ class TestParameterValidator:
         """Test that validate calls validate_request."""
         validator = make_validator()
 
-        scope = {
-            "type": "http",
-            "path": "/api/v1/test",
-            "query_string": b"",
-            "headers": []
-        }
+        scope = {"type": "http", "path": "/api/v1/test", "query_string": b"", "headers": []}
 
         # validate_request will try to validate query params but there are none
         # so it should raise an exception (or not, depending on implementation)
-        try:
+        with contextlib.suppress(Exception):
             validator.validate(scope)
-        except Exception:
-            pass  # Expected to fail since there's no query params to validate
 
         assert validator.request_scopes == {}
 
@@ -382,12 +319,9 @@ class TestParameterValidator:
         """Test that scope is preserved through validation."""
         validator = make_validator()
 
-        scope = {
-            "type": "http",
-            "path": "/api/v1/test"
-        }
+        scope = {"type": "http", "path": "/api/v1/test"}
 
-        with pytest.raises(Exception):
+        with pytest.raises(BadRequest):
             validator.validate(scope)
 
     def test_parameter_validator_with_security_params(self):
@@ -400,7 +334,7 @@ class TestParameterValidator:
             parameters=parameters,
             uri_parser=uri_parser,
             strict_validation=False,
-            security_query_params=["api_key"]
+            security_query_params=["api_key"],
         )
 
         assert validator is not None
@@ -413,9 +347,7 @@ class TestParameterValidator:
         uri_parser = OpenAPIURIParserPatched(parameters, {})
 
         validator = ParameterValidatorPatched(
-            parameters=parameters,
-            uri_parser=uri_parser,
-            strict_validation=True
+            parameters=parameters, uri_parser=uri_parser, strict_validation=True
         )
 
         assert validator is not None
@@ -436,22 +368,19 @@ class TestParameterValidator:
                     "properties": {
                         "field": {
                             "type": "string",
-                            "enum": ["Beatmap.id", "Beatmap.beatmapset_id"]
+                            "enum": ["Beatmap.id", "Beatmap.beatmapset_id"],
                         },
-                        "order": {
-                            "type": "string",
-                            "enum": ["asc", "desc"]
-                        }
+                        "order": {"type": "string", "enum": ["asc", "desc"]},
                     },
-                    "required": ["field"]
-                }
-            }
+                    "required": ["field"],
+                },
+            },
         }
 
         request = make_request(
-            query_params={"sorting": '[{\"field\": \"Beatmap.id\", \"order\": \"asc\"}]'},
+            query_params={"sorting": '[{"field": "Beatmap.id", "order": "asc"}]'},
             scope_path="/api/v1/beatmaps",
-            validator=validator
+            validator=validator,
         )
 
         result = validator.validate_query_parameter(param, request)
@@ -469,21 +398,14 @@ class TestParameterValidator:
                 "title": "BeatmapFilter",
                 "type": "object",
                 "additionalProperties": False,
-                "properties": {
-                    "id": {
-                        "type": "object",
-                        "properties": {
-                            "eq": {"type": "integer"}
-                        }
-                    }
-                }
-            }
+                "properties": {"id": {"type": "object", "properties": {"eq": {"type": "integer"}}}},
+            },
         }
 
         request = make_request(
             query_params={"filters[id][eq]": "123"},
             scope_path="/api/v1/beatmaps",
-            validator=validator
+            validator=validator,
         )
 
         result = validator.validate_query_parameter(param, request)
@@ -504,14 +426,14 @@ class TestParameterValidator:
                 "properties": {
                     "id": {"type": "boolean", "default": True},
                     "beatmapset_id": {"type": "boolean", "default": True},
-                }
-            }
+                },
+            },
         }
 
         request = make_request(
             query_params={"include[id]": "true", "include[beatmapset_id]": "false"},
             scope_path="/api/v1/beatmaps",
-            validator=validator
+            validator=validator,
         )
 
         result = validator.validate_query_parameter(param, request)

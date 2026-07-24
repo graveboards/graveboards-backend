@@ -31,9 +31,7 @@ def _make_context(beatmapset=None, osu_client=None, session=None):
 
 def _make_mock_osu_client(search_results=None):
     client = AsyncMock()
-    client.search_beatmapsets = AsyncMock(
-        return_value=search_results or {"beatmapsets": []}
-    )
+    client.search_beatmapsets = AsyncMock(return_value=search_results or {"beatmapsets": []})
     return client
 
 
@@ -50,6 +48,7 @@ def _make_mock_osu_client_pageable(initial_results=None, subsequent_results=None
 
     client.search_beatmapsets = AsyncMock(side_effect=searchable)
     return client
+
 
 def _make_session(rows):
     """Mock an AsyncSession whose execute(...).all() yields the given rows.
@@ -78,7 +77,7 @@ class TestNeverRankedConfig:
 
     @pytest.mark.unit
     def test_invalid_ruleset(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             NeverRankedConfig(ruleset="invalid")
 
 
@@ -107,17 +106,19 @@ class TestNeverRankedRestriction:
         context.config = {"ruleset": "osu", "normalize_versions": True}
 
         mock_provider = AsyncMock()
-        mock_provider.resolve = AsyncMock(return_value={
-            "artist": "Test Artist",
-            "artist_unicode": "Test Artist",
-            "title": "Test Song",
-            "title_unicode": "Test Song",
-            "normalized_artist": "Test Artist",
-            "normalized_title": "Test Song",
-            "normalized_artist_unicode": "Test Artist",
-            "normalized_title_unicode": "Test Song",
-            "duration": 150.0,
-        })
+        mock_provider.resolve = AsyncMock(
+            return_value={
+                "artist": "Test Artist",
+                "artist_unicode": "Test Artist",
+                "title": "Test Song",
+                "title_unicode": "Test Song",
+                "normalized_artist": "Test Artist",
+                "normalized_title": "Test Song",
+                "normalized_artist_unicode": "Test Artist",
+                "normalized_title_unicode": "Test Song",
+                "duration": 150.0,
+            }
+        )
         context.metadata_providers = {"song_identity": lambda: mock_provider}
 
         with patch.object(ExecutionContext, "get_metadata", new=mock_provider.resolve):
@@ -129,11 +130,13 @@ class TestNeverRankedRestriction:
     @pytest.mark.asyncio
     async def test_raises_when_ranked_match_found(self):
         rule = NeverRankedRestriction()
-        osu_client = _make_mock_osu_client({
-            "beatmapsets": [
-                {"artist": "Test Artist", "title": "Test Song"},
-            ]
-        })
+        osu_client = _make_mock_osu_client(
+            {
+                "beatmapsets": [
+                    {"artist": "Test Artist", "title": "Test Song"},
+                ]
+            }
+        )
         beatmapset = MagicMock()
         beatmapset.artist = "Test Artist"
         beatmapset.artist_unicode = "Test Artist"
@@ -148,12 +151,14 @@ class TestNeverRankedRestriction:
         context.config = {"ruleset": "osu", "normalize_versions": True}
 
         mock_provider = AsyncMock()
-        mock_provider.resolve = AsyncMock(return_value={
-            "artist": "Test Artist",
-            "title": "Test Song",
-            "normalized_artist": "Test Artist",
-            "normalized_title": "Test Song",
-        })
+        mock_provider.resolve = AsyncMock(
+            return_value={
+                "artist": "Test Artist",
+                "title": "Test Song",
+                "normalized_artist": "Test Artist",
+                "normalized_title": "Test Song",
+            }
+        )
         context.metadata_providers = {"song_identity": lambda: mock_provider}
 
         with pytest.raises(RuleViolationError, match="already ranked"):
@@ -164,11 +169,13 @@ class TestNeverRankedRestriction:
     @pytest.mark.asyncio
     async def test_normalizes_version_markers_in_search(self):
         rule = NeverRankedRestriction()
-        osu_client = _make_mock_osu_client({
-            "beatmapsets": [
-                {"artist": "Test Artist", "title": "Test Song (TV Size)"},
-            ]
-        })
+        osu_client = _make_mock_osu_client(
+            {
+                "beatmapsets": [
+                    {"artist": "Test Artist", "title": "Test Song (TV Size)"},
+                ]
+            }
+        )
         beatmapset = MagicMock()
         beatmapset.artist = "Test Artist"
         beatmapset.artist_unicode = "Test Artist"
@@ -183,12 +190,14 @@ class TestNeverRankedRestriction:
         context.config = {"ruleset": "osu", "normalize_versions": True}
 
         mock_provider = AsyncMock()
-        mock_provider.resolve = AsyncMock(return_value={
-            "artist": "Test Artist",
-            "title": "Test Song",
-            "normalized_artist": "Test Artist",
-            "normalized_title": "Test Song",
-        })
+        mock_provider.resolve = AsyncMock(
+            return_value={
+                "artist": "Test Artist",
+                "title": "Test Song",
+                "normalized_artist": "Test Artist",
+                "normalized_title": "Test Song",
+            }
+        )
         context.metadata_providers = {"song_identity": lambda: mock_provider}
 
         with pytest.raises(RuleViolationError, match="already ranked"):
@@ -214,12 +223,14 @@ class TestNeverRankedRestriction:
         context.config = {"ruleset": "taiko", "normalize_versions": True}
 
         mock_provider = AsyncMock()
-        mock_provider.resolve = AsyncMock(return_value={
-            "artist": "Artist",
-            "title": "Song",
-            "normalized_artist": "Artist",
-            "normalized_title": "Song",
-        })
+        mock_provider.resolve = AsyncMock(
+            return_value={
+                "artist": "Artist",
+                "title": "Song",
+                "normalized_artist": "Artist",
+                "normalized_title": "Song",
+            }
+        )
         context.metadata_providers = {"song_identity": lambda: mock_provider}
 
         with patch.object(ExecutionContext, "get_metadata", new=mock_provider.resolve):
@@ -247,12 +258,14 @@ class TestNeverRankedRestriction:
         context.config = {"ruleset": "osu", "normalize_versions": True}
 
         mock_provider = AsyncMock()
-        mock_provider.resolve = AsyncMock(return_value={
-            "artist": "",
-            "title": "",
-            "normalized_artist": "",
-            "normalized_title": "",
-        })
+        mock_provider.resolve = AsyncMock(
+            return_value={
+                "artist": "",
+                "title": "",
+                "normalized_artist": "",
+                "normalized_title": "",
+            }
+        )
         context.metadata_providers = {"song_identity": lambda: mock_provider}
 
         with pytest.raises(RuleViolationError, match="Could not resolve"):
@@ -295,9 +308,11 @@ class TestUniqueArtistTitleRestriction:
     @pytest.mark.asyncio
     async def test_passes_when_no_duplicate(self):
         rule = UniqueArtistTitleRestriction()
-        session = _make_session([
-            ("Other Artist", "Other Song", "Other Artist", "Other Song", 111),
-        ])
+        session = _make_session(
+            [
+                ("Other Artist", "Other Song", "Other Artist", "Other Song", 111),
+            ]
+        )
         context = _unique_context(session)
 
         mock_provider = AsyncMock()
@@ -311,9 +326,11 @@ class TestUniqueArtistTitleRestriction:
     @pytest.mark.asyncio
     async def test_raises_when_duplicate_found(self):
         rule = UniqueArtistTitleRestriction()
-        session = _make_session([
-            ("Test Artist", "Test Song", "Test Artist", "Test Song", 12345),
-        ])
+        session = _make_session(
+            [
+                ("Test Artist", "Test Song", "Test Artist", "Test Song", 12345),
+            ]
+        )
         context = _unique_context(session)
 
         mock_provider = AsyncMock()
@@ -329,9 +346,11 @@ class TestUniqueArtistTitleRestriction:
     async def test_excludes_current_beatmapset(self):
         # A duplicate row that IS the submitted beatmapset must not trip the rule.
         rule = UniqueArtistTitleRestriction()
-        session = _make_session([
-            ("Test Artist", "Test Song", "Test Artist", "Test Song", 999),
-        ])
+        session = _make_session(
+            [
+                ("Test Artist", "Test Song", "Test Artist", "Test Song", 999),
+            ]
+        )
         context = _unique_context(session)
 
         mock_provider = AsyncMock()

@@ -1,3 +1,4 @@
+from dataclasses import FrozenInstanceError
 from unittest.mock import MagicMock
 
 import pytest
@@ -25,7 +26,7 @@ class TestTaskRetryPolicy:
             backoff=backoff,
             max_retries=3,
             on_failure=on_failure,
-            on_max_retries_exceeded=on_max_retries_exceeded
+            on_max_retries_exceeded=on_max_retries_exceeded,
         )
 
         assert policy.backoff is backoff
@@ -64,7 +65,7 @@ class TestTaskRetryPolicy:
         backoff = ConstantBackoff(delay=1.0)
         policy = TaskRetryPolicy(backoff=backoff, max_retries=5)
 
-        with pytest.raises(Exception):
+        with pytest.raises(FrozenInstanceError):
             policy.max_retries = 10
 
     def test_policy_is_slotted(self):
@@ -112,14 +113,14 @@ class TestTaskRetryPolicy:
             backoff=backoff,
             max_retries=3,
             on_failure=on_failure,
-            on_max_retries_exceeded=on_max_retries
+            on_max_retries_exceeded=on_max_retries,
         )
 
         policy2 = TaskRetryPolicy(
             backoff=backoff,
             max_retries=3,
             on_failure=on_failure,
-            on_max_retries_exceeded=on_max_retries
+            on_max_retries_exceeded=on_max_retries,
         )
 
         # Dataclasses with same values should be equal
@@ -143,10 +144,7 @@ class TestTaskRetryPolicy:
         )
 
         backoff = ConstantBackoff(delay=5.0)
-        policy = TaskRetryPolicy(
-            backoff=backoff,
-            max_retries=3
-        )
+        policy = TaskRetryPolicy(backoff=backoff, max_retries=3)
 
         repr_str = repr(policy)
 
@@ -170,10 +168,7 @@ class TestTaskRetryPolicy:
     def test_policy_none_backoff_vs_zero_delay(self):
         """Test difference between None backoff and zero delay."""
         policy1 = TaskRetryPolicy(backoff=None, max_retries=5)
-        policy2 = TaskRetryPolicy(
-            backoff=ConstantBackoff(delay=0.0),
-            max_retries=5
-        )
+        policy2 = TaskRetryPolicy(backoff=ConstantBackoff(delay=0.0), max_retries=5)
 
         assert policy1.backoff is None
         assert policy2.backoff is not None

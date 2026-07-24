@@ -12,6 +12,7 @@ class TestService:
     @pytest.fixture
     def service(self):
         """Create a test service instance."""
+
         class TestService(Service):
             LOGGER = MagicMock()
 
@@ -57,6 +58,7 @@ class TestService:
 
     async def test_service_stores_task_specs(self, service):
         """Test that service stores task specifications."""
+
         async def task_factory():
             return "task_result"
 
@@ -75,6 +77,7 @@ class TestService:
 
     async def test_service_register_task_duplicate_raises(self, service):
         """Test that registering duplicate task name raises."""
+
         async def task_factory():
             return "task_result"
 
@@ -277,6 +280,7 @@ class TestService:
 
     async def test_service_default_backoff_delay(self):
         """Test service with custom default backoff delay."""
+
         class TestService(Service):
             LOGGER = MagicMock()
 

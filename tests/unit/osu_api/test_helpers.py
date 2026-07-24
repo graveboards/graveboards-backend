@@ -1,5 +1,3 @@
-
-
 from tests.unit.osu_api.test_utils import (
     _create_mock_beatmap,
     _create_mock_beatmap_attributes,

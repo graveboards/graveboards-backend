@@ -25,9 +25,9 @@ async def test_transaction_isolation_separate_transactions(db_session):
     """Test that changes in one transaction are not visible to another."""
     db = PostgresqlDB()
 
-    user1 = await db.add(User, session=db_session, id=90002)
+    await db.add(User, session=db_session, id=90002)
 
-    user2 = await db.add(User, session=db_session, id=90003)
+    await db.add(User, session=db_session, id=90003)
 
     await db_session.commit()
 
@@ -40,9 +40,9 @@ async def test_concurrent_insert_same_table(db_session):
     """Test concurrent inserts don't interfere."""
     db = PostgresqlDB()
 
-    user1 = await db.add(User, session=db_session, id=90101)
-    user2 = await db.add(User, session=db_session, id=90102)
-    user3 = await db.add(User, session=db_session, id=90103)
+    await db.add(User, session=db_session, id=90101)
+    await db.add(User, session=db_session, id=90102)
+    await db.add(User, session=db_session, id=90103)
 
     await db_session.commit()
 
@@ -56,7 +56,7 @@ async def test_concurrent_update_same_row(db_session):
     """Test concurrent updates to same row - last write wins."""
     db = PostgresqlDB()
 
-    user = await db.add(User, session=db_session, id=90200)
+    await db.add(User, session=db_session, id=90200)
     profile = await db.add(Profile, session=db_session, user_id=90200, username="oldname")
 
     await db_session.commit()
@@ -77,9 +77,9 @@ async def test_transaction_nested_rollbacks(db_session):
     """Test nested transaction scenarios."""
     db = PostgresqlDB()
 
-    user1 = await db.add(User, session=db_session, id=90301)
-    user2 = await db.add(User, session=db_session, id=90302)
-    user3 = await db.add(User, session=db_session, id=90303)
+    await db.add(User, session=db_session, id=90301)
+    await db.add(User, session=db_session, id=90302)
+    await db.add(User, session=db_session, id=90303)
 
     await db_session.commit()
 
@@ -97,7 +97,7 @@ async def test_transaction_consistency_after_rollback(db_session):
     await db_session.rollback()
     await db_session.commit()
 
-    user1 = await db.add(User, session=db_session, id=90402)
+    await db.add(User, session=db_session, id=90402)
     await db_session.commit()
 
     result = await db.get(User, session=db_session, id=90402)
@@ -133,7 +133,7 @@ async def test_transaction_constraint_violation_rollback(db_session):
         await db.add(User, session=db_session, id=90601)
         await db_session.commit()
         pytest.fail("Should have raised an error")
-    except:
+    except Exception:
         await db_session.rollback()
         await db_session.commit()
 

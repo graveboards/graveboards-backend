@@ -1,6 +1,5 @@
 """Integration tests for error handlers and custom exceptions."""
 
-
 import pytest
 from authlib.integrations.base_client.errors import OAuthError
 
@@ -29,7 +28,11 @@ class TestForbiddenErrorHandler:
         response = TestClient.get("/api/v1/nonexistent-resource-that-does-not-exist-at-all")
         data = response.json()
         assert "detail" in data
-        assert "status" in data or "code" in data or response.status_code == data.get("status_code", response.status_code)
+        assert (
+            "status" in data
+            or "code" in data
+            or response.status_code == data.get("status_code", response.status_code)
+        )
 
 
 class TestCustomExceptions:
@@ -126,7 +129,9 @@ class TestCustomExceptions:
         oauth_exc = OAuthError(error="invalid_request", description="bad code")
         exc = OsuOAuthError(oauth_exc)
         assert "hint" in exc.ext
-        assert "authorization code" in exc.ext["hint"].lower() or "expired" in exc.ext["hint"].lower()
+        assert (
+            "authorization code" in exc.ext["hint"].lower() or "expired" in exc.ext["hint"].lower()
+        )
 
     def test_osu_oauth_error_other_error_no_hint(self):
         """Test OsuOAuthError does not add hint for non-invalid_request errors."""

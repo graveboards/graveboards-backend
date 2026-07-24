@@ -3,6 +3,7 @@ Integration tests for GET /api/v1/users endpoints.
 
 Tests the users retrieval via full HTTP stack.
 """
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -111,7 +112,9 @@ class TestUsersGetIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_security_disabled_resolves_dev_identity(self, TestClientWithMocks, security_disabled):
+    async def test_security_disabled_resolves_dev_identity(
+        self, TestClientWithMocks, security_disabled
+    ):
         """Test that disabling security resolves a real (admin) dev identity rather
         than skipping the role check outright - the endpoint still succeeds, but
         because the resolved identity is admin-roled, not because checks were skipped.
@@ -172,12 +175,28 @@ class TestUsersPostIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.role_authorization.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.auth_context.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.ownership_authorization.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.ownership_filter.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.utils.get_authenticated_user_id', return_value=11111111):
+        with (
+            patch(
+                "app.security.decorators.role_authorization.get_authenticated_user_id",
+                return_value=11111111,
+            ),
+            patch(
+                "app.security.decorators.auth_context.get_authenticated_user_id",
+                return_value=11111111,
+            ),
+            patch(
+                "app.security.decorators.ownership_authorization.get_authenticated_user_id",
+                return_value=11111111,
+            ),
+            patch(
+                "app.security.decorators.ownership_filter.get_authenticated_user_id",
+                return_value=11111111,
+            ),
+            patch("app.security.decorators.utils.get_authenticated_user_id", return_value=11111111),
+        ):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.post(
-                "/api/v1/users",
-                json={"id": 99999999, "roles": []},
-                headers=headers
+                "/api/v1/users", json={"id": 99999999, "roles": []}, headers=headers
             )
 
         assert response.status_code == 201
@@ -211,12 +230,28 @@ class TestUsersPostIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.role_authorization.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.auth_context.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.ownership_authorization.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.ownership_filter.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.utils.get_authenticated_user_id', return_value=11111111):
+        with (
+            patch(
+                "app.security.decorators.role_authorization.get_authenticated_user_id",
+                return_value=11111111,
+            ),
+            patch(
+                "app.security.decorators.auth_context.get_authenticated_user_id",
+                return_value=11111111,
+            ),
+            patch(
+                "app.security.decorators.ownership_authorization.get_authenticated_user_id",
+                return_value=11111111,
+            ),
+            patch(
+                "app.security.decorators.ownership_filter.get_authenticated_user_id",
+                return_value=11111111,
+            ),
+            patch("app.security.decorators.utils.get_authenticated_user_id", return_value=11111111),
+        ):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.post(
-                "/api/v1/users",
-                json={"id": 99999999, "roles": []},
-                headers=headers
+                "/api/v1/users", json={"id": 99999999, "roles": []}, headers=headers
             )
 
         assert response.status_code == 409

@@ -1,6 +1,8 @@
 import pytest
+from pydantic import ValidationError
 
 from app.database.crud.types import Filters, Include, Sorting
+from app.exceptions import DeepObjectValidationError
 
 
 class TestCreateInputValidation:
@@ -32,12 +34,9 @@ class TestCreateInputValidation:
         """Test create rejects unknown fields."""
         from app.database.schemas import BeatmapsetCreateSchema
 
-        data = {
-            "user_id": 456,
-            "unknown_field": "value"
-        }
+        data = {"user_id": 456, "unknown_field": "value"}
 
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             BeatmapsetCreateSchema.model_validate(data)
 
     def test_create_validates_types_beatmapset(self):
@@ -48,7 +47,7 @@ class TestCreateInputValidation:
             "user_id": "not_an_int",
         }
 
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             BeatmapsetCreateSchema.model_validate(data)
 
     def test_create_validates_types_beatmap(self):
@@ -59,7 +58,7 @@ class TestCreateInputValidation:
             "beatmapset_id": "not_an_int",
         }
 
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             BeatmapCreateSchema.model_validate(data)
 
 
@@ -81,12 +80,9 @@ class TestBeatmapCreateInputValidation:
         """Test create rejects unknown fields."""
         from app.database.schemas import BeatmapCreateSchema
 
-        data = {
-            "beatmapset_id": 456,
-            "unknown_field": "value"
-        }
+        data = {"beatmapset_id": 456, "unknown_field": "value"}
 
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             BeatmapCreateSchema.model_validate(data)
 
 
@@ -97,50 +93,33 @@ class TestReadInputValidation:
         """Test valid sorting configuration."""
         sorting: Sorting = [
             {"field": "Beatmapset.id", "order": "asc"},
-            {"field": "Beatmapset.created_at", "order": "desc"}
+            {"field": "Beatmapset.created_at", "order": "desc"},
         ]
         assert len(sorting) == 2
 
     def test_sorting_default_order(self):
         """Test sorting with default order."""
-        sorting: Sorting = [
-            {"field": "Beatmapset.id"}
-        ]
+        sorting: Sorting = [{"field": "Beatmapset.id"}]
         assert sorting[0]["field"] == "Beatmapset.id"
 
     def test_valid_filter_structure(self):
         """Test valid filter configuration."""
-        filters: Filters = {
-            "id": {"eq": 123},
-            "user": {
-                "username": {"eq": "test_user"}
-            }
-        }
+        filters: Filters = {"id": {"eq": 123}, "user": {"username": {"eq": "test_user"}}}
         assert filters["id"]["eq"] == 123
 
     def test_filter_with_null_check(self):
         """Test filter with null condition."""
-        filters: Filters = {
-            "deleted_at": {"is_null": True}
-        }
+        filters: Filters = {"deleted_at": {"is_null": True}}
         assert filters["deleted_at"]["is_null"] is True
 
     def test_valid_include_structure(self):
         """Test valid include configuration."""
-        include: Include = {
-            "user": True,
-            "beatmaps": {
-                "owner_profiles": True
-            }
-        }
+        include: Include = {"user": True, "beatmaps": {"owner_profiles": True}}
         assert include["user"] is True
 
     def test_include_with_explicit_false(self):
         """Test include with explicit false."""
-        include: Include = {
-            "user": True,
-            "Beatmapset.user": False
-        }
+        include: Include = {"user": True, "Beatmapset.user": False}
         assert include["Beatmapset.user"] is False
 
     def test_invalid_include_type(self):
@@ -150,7 +129,7 @@ class TestReadInputValidation:
         include = {"user": "not_a_boolean"}
         schema = {"properties": {"user": {"type": "boolean"}}}
 
-        with pytest.raises(Exception):
+        with pytest.raises(DeepObjectValidationError):
             validate_include(include, schema)
 
 
@@ -172,9 +151,7 @@ class TestUpdateInputValidation:
         """Test update allows None fields for partial updates."""
         from app.database.schemas import BeatmapsetUpdateSchema
 
-        data = {
-            "user_id": None
-        }
+        data = {"user_id": None}
 
         schema = BeatmapsetUpdateSchema.model_validate(data)
         assert schema.user_id is None
@@ -183,9 +160,7 @@ class TestUpdateInputValidation:
         """Test update with partial fields."""
         from app.database.schemas import BeatmapsetUpdateSchema
 
-        data = {
-            "user_id": 789
-        }
+        data = {"user_id": 789}
 
         schema = BeatmapsetUpdateSchema.model_validate(data)
         assert schema.user_id == 789
@@ -194,16 +169,10 @@ class TestUpdateInputValidation:
         """Test update with beatmap schema."""
         from app.database.schemas import BeatmapUpdateSchema
 
-        data = {
-            "beatmapset_id": 789
-        }
+        data = {"beatmapset_id": 789}
 
         schema = BeatmapUpdateSchema.model_validate(data)
         assert schema.beatmapset_id == 789
-
-
-
-
 
 
 class TestDeleteInputValidation:
@@ -217,7 +186,7 @@ class TestDeleteInputValidation:
 
         db = PostgresqlDB()
 
-        user = await db.add(User, session=db_session, id=99999)
+        await db.add(User, session=db_session, id=99999)
         created = await db.add(
             Beatmapset,
             session=db_session,
@@ -237,8 +206,8 @@ class TestDeleteInputValidation:
 
         db = PostgresqlDB()
 
-        user = await db.add(User, session=db_session, id=99998)
-        created = await db.add(
+        await db.add(User, session=db_session, id=99998)
+        await db.add(
             Beatmapset,
             session=db_session,
             id=99998,
@@ -255,15 +224,8 @@ class TestComplexValidationScenarios:
     def test_nested_filters_validation(self):
         """Test nested filter validation."""
         filters: Filters = {
-            "beatmaps": {
-                "checksum": {"eq": "abc123"}
-            },
-            "user": {
-                "username": {"regex": "test.*"},
-                "profile": {
-                    "osu_id": {"in": [1, 2, 3]}
-                }
-            }
+            "beatmaps": {"checksum": {"eq": "abc123"}},
+            "user": {"username": {"regex": "test.*"}, "profile": {"osu_id": {"in": [1, 2, 3]}}},
         }
 
         assert filters["beatmaps"]["checksum"]["eq"] == "abc123"
@@ -274,7 +236,7 @@ class TestComplexValidationScenarios:
         sorting: Sorting = [
             {"field": "Beatmapset.created_at", "order": "desc"},
             {"field": "Beatmapset.id", "order": "asc"},
-            {"field": "Beatmapset.channel_id", "order": "desc"}
+            {"field": "Beatmapset.channel_id", "order": "desc"},
         ]
 
         assert len(sorting) == 3
@@ -284,11 +246,8 @@ class TestComplexValidationScenarios:
         """Test include with both boolean and nested structures."""
         include: Include = {
             "user": True,
-            "beatmaps": {
-                "owner_profiles": True,
-                "beatmap_tags": False
-            },
-            "user.profile": True
+            "beatmaps": {"owner_profiles": True, "beatmap_tags": False},
+            "user.profile": True,
         }
 
         assert include["user"] is True
@@ -298,7 +257,7 @@ class TestComplexValidationScenarios:
         """Test filter with range conditions."""
         filters: Filters = {
             "id": {"gt": 100, "lt": 200},
-            "created_at": {"gte": "2024-01-01T00:00:00+00:00"}
+            "created_at": {"gte": "2024-01-01T00:00:00+00:00"},
         }
 
         assert filters["id"]["gt"] == 100
@@ -306,23 +265,14 @@ class TestComplexValidationScenarios:
 
     def test_multiple_filter_operators(self):
         """Test filter with multiple operators on same field."""
-        filters: Filters = {
-            "id": {
-                "eq": 123,
-                "neq": 456,
-                "in": [1, 2, 3, 4, 5]
-            }
-        }
+        filters: Filters = {"id": {"eq": 123, "neq": 456, "in": [1, 2, 3, 4, 5]}}
 
         assert filters["id"]["eq"] == 123
         assert filters["id"]["in"] == [1, 2, 3, 4, 5]
 
     def test_null_conditions(self):
         """Test null condition handling."""
-        filters: Filters = {
-            "deleted_at": {"is_null": True},
-            "scheduled_end": {"is_null": False}
-        }
+        filters: Filters = {"deleted_at": {"is_null": True}, "scheduled_end": {"is_null": False}}
 
         assert filters["deleted_at"]["is_null"] is True
         assert filters["scheduled_end"]["is_null"] is False

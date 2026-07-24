@@ -1,4 +1,3 @@
-
 import pytest
 
 from app.redis_client import ChannelName

@@ -26,30 +26,20 @@ class TestSchemaResolution:
                 "schemas": {
                     "BeatmapFilter": {
                         "type": "object",
-                        "properties": {
-                            "id": {"type": "integer"},
-                            "checksum": {"type": "string"}
-                        }
+                        "properties": {"id": {"type": "integer"}, "checksum": {"type": "string"}},
                     },
                     "BeatmapInclude": {
                         "type": "object",
-                        "properties": {
-                            "user": {"type": "boolean"},
-                            "beatmaps": {"type": "object"}
-                        }
+                        "properties": {"user": {"type": "boolean"}, "beatmaps": {"type": "object"}},
                     },
                     "BeatmapsetFilter": {
                         "type": "object",
-                        "properties": {
-                            "user_id": {"type": "integer"}
-                        }
+                        "properties": {"user_id": {"type": "integer"}},
                     },
                     "BeatmapsetInclude": {
                         "type": "object",
-                        "properties": {
-                            "user": {"type": "boolean"}
-                        }
-                    }
+                        "properties": {"user": {"type": "boolean"}},
+                    },
                 }
             }
         }
@@ -97,11 +87,7 @@ class TestSchemaResolution:
             _get_schema_by_suffix("Filter")
 
         with pytest.raises(ValueError):
-            _get_schema_by_suffix(
-                "Filter",
-                model_class=MagicMock(),
-                schema_name="TestFilter"
-            )
+            _get_schema_by_suffix("Filter", model_class=MagicMock(), schema_name="TestFilter")
 
     def test_get_schema_by_suffix_suffix_mismatch(self, mock_spec):
         """Test that _get_schema_by_suffix validates suffix."""
@@ -118,30 +104,21 @@ class TestSchemaResolution:
         from app.database.models import ModelClass
 
         with patch("app.spec.schema.load_spec", return_value=mock_spec):
-            schema = _get_schema_by_suffix(
-                "Filter",
-                model_class=ModelClass.BEATMAPSET
-            )
+            schema = _get_schema_by_suffix("Filter", model_class=ModelClass.BEATMAPSET)
 
         assert schema is not None
 
     def test_get_schema_by_suffix_resolves_by_name(self, mock_spec):
         """Test that _get_schema_by_suffix resolves by schema name."""
         with patch("app.spec.schema.load_spec", return_value=mock_spec):
-            schema = _get_schema_by_suffix(
-                "Include",
-                schema_name="BeatmapsetInclude"
-            )
+            schema = _get_schema_by_suffix("Include", schema_name="BeatmapsetInclude")
 
         assert schema is not None
 
     def test_get_schema_by_suffix_model_enum_required(self, mock_spec):
         """Test that _get_schema_by_suffix validates model class enum."""
         with pytest.raises(ValueError):
-            _get_schema_by_suffix(
-                "Filter",
-                model_class="not_an_enum"
-            )
+            _get_schema_by_suffix("Filter", model_class="not_an_enum")
 
     def test_get_schema_by_suffix_schema_name_must_end_with_suffix(self, mock_spec):
         """Test that schema name must end with suffix."""
@@ -154,10 +131,7 @@ class TestSchemaResolution:
             get_filter_schema()
 
         with pytest.raises(ValueError):
-            get_filter_schema(
-                model_class=MagicMock(),
-                schema_name="TestFilter"
-            )
+            get_filter_schema(model_class=MagicMock(), schema_name="TestFilter")
 
     def test_get_include_schema_invalid_arguments(self):
         """Test that get_include_schema rejects invalid arguments."""
@@ -165,10 +139,7 @@ class TestSchemaResolution:
             get_include_schema()
 
         with pytest.raises(ValueError):
-            get_include_schema(
-                model_class=MagicMock(),
-                schema_name="TestInclude"
-            )
+            get_include_schema(model_class=MagicMock(), schema_name="TestInclude")
 
     def test_schema_caching_with_lru(self, mock_spec):
         """Test that schema loading is cached."""

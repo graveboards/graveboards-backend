@@ -82,7 +82,14 @@ class TestLoadSpec:
 
         assert result == "cached_spec"
 
-    def test_load_spec_non_prod_invalidates_on_mtime(self, mock_yaml_full_load, mock_resolve_refs, mock_os_path_getmtime, mock_pickle, mock_os_walk):
+    def test_load_spec_non_prod_invalidates_on_mtime(
+        self,
+        mock_yaml_full_load,
+        mock_resolve_refs,
+        mock_os_path_getmtime,
+        mock_pickle,
+        mock_os_walk,
+    ):
         """Test that non-prod mode invalidates cache on mtime."""
         from app.enums import Env
 
@@ -95,7 +102,7 @@ class TestLoadSpec:
 
         mock_pickle.load.return_value = {
             "spec": "old_spec",
-            "build_options": {"env": Env.DEV, "disable_security": False}
+            "build_options": {"env": Env.DEV, "disable_security": False},
         }
 
         with patch("app.spec.load.os.path.exists", return_value=True):
@@ -108,7 +115,14 @@ class TestLoadSpec:
         assert result == {"spec": "new_spec"}
         mock_build.assert_called_once()
 
-    def test_load_spec_non_prod_invalidates_on_options(self, mock_yaml_full_load, mock_resolve_refs, mock_os_path_getmtime, mock_pickle, mock_os_walk):
+    def test_load_spec_non_prod_invalidates_on_options(
+        self,
+        mock_yaml_full_load,
+        mock_resolve_refs,
+        mock_os_path_getmtime,
+        mock_pickle,
+        mock_os_walk,
+    ):
         """Test that non-prod mode invalidates cache on build options."""
         from app.enums import Env
 
@@ -121,13 +135,16 @@ class TestLoadSpec:
 
         mock_pickle.load.return_value = {
             "spec": "old_spec",
-            "build_options": {"env": Env.DEV, "disable_security": False}
+            "build_options": {"env": Env.DEV, "disable_security": False},
         }
 
         with patch("app.spec.load.os.path.exists", return_value=True):
             with patch("app.spec.load.ENV", Env.DEV):
                 with patch("builtins.open", mock_open(read_data="data")):
-                    with patch("app.spec.load._current_build_options", return_value={"env": Env.DEV, "disable_security": True}):
+                    with patch(
+                        "app.spec.load._current_build_options",
+                        return_value={"env": Env.DEV, "disable_security": True},
+                    ):
                         with patch("app.spec.load._build_spec") as mock_build:
                             mock_build.return_value = {"spec": "new_spec"}
                             result = load_spec()
@@ -167,7 +184,7 @@ class TestLoadSpec:
         with patch("app.spec.load.open", mock_open(read_data="spec: data")):
             with patch("app.spec.load.SPEC_DIR", "/spec"):
                 with patch("app.spec.load.populate_shallow_refs") as mock_populate:
-                    result = _build_spec()
+                    _build_spec()
 
         mock_populate.assert_called_once()
 
@@ -181,7 +198,7 @@ class TestLoadSpec:
             with patch("app.spec.load.SPEC_DIR", "/spec"):
                 with patch("app.spec.load.pickle.dump") as mock_dump:
                     with patch("app.spec.load._current_build_options", return_value={}):
-                        result = _build_spec()
+                        _build_spec()
 
         assert mock_dump.called
 
@@ -197,7 +214,9 @@ class TestLoadSpec:
 
         mock_populate.assert_called_once_with(spec)
 
-    def test_apply_mutations_removes_security_when_disabled(self, mock_yaml_full_load, mock_resolve_refs):
+    def test_apply_mutations_removes_security_when_disabled(
+        self, mock_yaml_full_load, mock_resolve_refs
+    ):
         """Test that security is removed when disabled."""
         from app.enums import Env
 
@@ -207,11 +226,7 @@ class TestLoadSpec:
         spec = {
             "components": {"schemas": {}},
             "security": [{"oauth": []}],
-            "paths": {
-                "/test": {
-                    "get": {"security": [{"oauth": []}]}
-                }
-            }
+            "paths": {"/test": {"get": {"security": [{"oauth": []}]}}},
         }
 
         with patch("app.spec.load.populate_shallow_refs"):
@@ -222,18 +237,16 @@ class TestLoadSpec:
         assert "security" not in spec
         assert "security" not in spec["paths"]["/test"]["get"]
 
-    def test_apply_mutations_keeps_security_when_enabled(self, mock_yaml_full_load, mock_resolve_refs):
+    def test_apply_mutations_keeps_security_when_enabled(
+        self, mock_yaml_full_load, mock_resolve_refs
+    ):
         """Test that security is kept when enabled."""
         from app.enums import Env
 
         spec = {
             "components": {"schemas": {}},
             "security": [{"oauth": []}],
-            "paths": {
-                "/test": {
-                    "get": {"security": [{"oauth": []}]}
-                }
-            }
+            "paths": {"/test": {"get": {"security": [{"oauth": []}]}}},
         }
 
         with patch("app.spec.load.populate_shallow_refs"):
@@ -244,7 +257,9 @@ class TestLoadSpec:
         assert "security" in spec
         assert "security" in spec["paths"]["/test"]["get"]
 
-    def test_current_build_options_returns_env_and_security(self, mock_yaml_full_load, mock_resolve_refs):
+    def test_current_build_options_returns_env_and_security(
+        self, mock_yaml_full_load, mock_resolve_refs
+    ):
         """Test that _current_build_options returns current options."""
         from app.enums import Env
 
@@ -288,7 +303,7 @@ class TestLoadSpec:
 
         with patch("app.spec.load.os.path.getmtime") as mock_getmtime:
             mock_getmtime.return_value = 150
-            result = _get_latest_spec_mtime()
+            _get_latest_spec_mtime()
 
         mock_getmtime.assert_any_call("/spec/subdir/nested.yaml")
 
@@ -309,7 +324,9 @@ class TestLoadSpec:
         assert "/spec/b.json" not in call_args
         assert "/spec/c.txt" not in call_args
 
-    def test_load_spec_with_existing_cache(self, mock_yaml_full_load, mock_resolve_refs, mock_pickle):
+    def test_load_spec_with_existing_cache(
+        self, mock_yaml_full_load, mock_resolve_refs, mock_pickle
+    ):
         """Test that load_spec uses existing cache."""
         from app.enums import Env
 

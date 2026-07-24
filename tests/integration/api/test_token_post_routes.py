@@ -6,6 +6,7 @@ These tests verify that the Connexion endpoint correctly:
 - Validates required parameters (code, state)
 - Rejects invalid requests (missing params, invalid state)
 """
+
 from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -80,10 +81,12 @@ class TestTokenPostIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.oauth.OAuth', return_value=mock_oauth), \
-             patch('app.osu_api.OsuAPIClient', return_value=mock_osu_client), \
-             patch('api.v1.token.OAuth', return_value=mock_oauth), \
-             patch('api.v1.token.OsuAPIClient', return_value=mock_osu_client):
+        with (
+            patch("app.oauth.OAuth", return_value=mock_oauth),
+            patch("app.osu_api.OsuAPIClient", return_value=mock_osu_client),
+            patch("api.v1.token.OAuth", return_value=mock_oauth),
+            patch("api.v1.token.OsuAPIClient", return_value=mock_osu_client),
+        ):
             response = test_client.post("/api/v1/token", data=body, headers=headers)
 
         assert response.status_code == 201

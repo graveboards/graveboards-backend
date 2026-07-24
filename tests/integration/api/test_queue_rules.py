@@ -3,6 +3,7 @@ Integration tests for /queues/{queue_id}/rules endpoint.
 
 Tests full CRUD operations for queue rules via the dedicated endpoint.
 """
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -98,16 +99,24 @@ class TestQueueRulesCRUD:
         mock_db = AsyncMock()
         if queue and user:
             from app.database.models import Queue, User
-            mock_db.get = AsyncMock(side_effect=lambda model, *args, **kwargs:
-                queue if model == Queue else (user if model == User else None))
+
+            mock_db.get = AsyncMock(
+                side_effect=lambda model, *args, **kwargs: (
+                    queue if model == Queue else (user if model == User else None)
+                )
+            )
         elif user:
             from app.database.models import User
-            mock_db.get = AsyncMock(side_effect=lambda model, *args, **kwargs:
-                user if model == User else None)
+
+            mock_db.get = AsyncMock(
+                side_effect=lambda model, *args, **kwargs: user if model == User else None
+            )
         elif queue:
             from app.database.models import Queue
-            mock_db.get = AsyncMock(side_effect=lambda model, *args, **kwargs:
-                queue if model == Queue else None)
+
+            mock_db.get = AsyncMock(
+                side_effect=lambda model, *args, **kwargs: queue if model == Queue else None
+            )
         else:
             mock_db.get.return_value = None
 
@@ -117,23 +126,22 @@ class TestQueueRulesCRUD:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_lists_rules(self, TestClientWithMocks, admin_user_token, valid_rule_data, authenticated_user_id):
+    async def test_admin_lists_rules(
+        self, TestClientWithMocks, admin_user_token, valid_rule_data, authenticated_user_id
+    ):
         """Test admin can list all rules for a queue."""
         from app.database.crud.rules import RuleCRUD
 
         mock_queue = self._make_mock_queue()
         mock_rule = self._make_mock_rule()
-        mock_admin_user = self._make_mock_user(
-            self.ADMIN_USER_ID,
-            roles=[self._make_role("admin")]
-        )
+        mock_admin_user = self._make_mock_user(self.ADMIN_USER_ID, roles=[self._make_role("admin")])
 
         mock_crud = MagicMock(spec=RuleCRUD)
         mock_crud.get_rules = AsyncMock(return_value=[mock_rule])
 
         mock_db = self._make_mock_db(queue=mock_queue, user=mock_admin_user)
 
-        with patch('api.v1.queues.rules.RuleCRUD', return_value=mock_crud):
+        with patch("api.v1.queues.rules.RuleCRUD", return_value=mock_crud):
             test_client = TestClientWithMocks(mock_db=mock_db)
 
             with authenticated_user_id(self.ADMIN_USER_ID):
@@ -150,23 +158,22 @@ class TestQueueRulesCRUD:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_gets_single_rule(self, TestClientWithMocks, admin_user_token, authenticated_user_id):
+    async def test_admin_gets_single_rule(
+        self, TestClientWithMocks, admin_user_token, authenticated_user_id
+    ):
         """Test admin can get a single rule by ID."""
         from app.database.crud.rules import RuleCRUD
 
         mock_queue = self._make_mock_queue()
         mock_rule = self._make_mock_rule()
-        mock_admin_user = self._make_mock_user(
-            self.ADMIN_USER_ID,
-            roles=[self._make_role("admin")]
-        )
+        mock_admin_user = self._make_mock_user(self.ADMIN_USER_ID, roles=[self._make_role("admin")])
 
         mock_crud = MagicMock(spec=RuleCRUD)
         mock_crud.get_rule = AsyncMock(return_value=mock_rule)
 
         mock_db = self._make_mock_db(queue=mock_queue, user=mock_admin_user)
 
-        with patch('api.v1.queues.rules.RuleCRUD', return_value=mock_crud):
+        with patch("api.v1.queues.rules.RuleCRUD", return_value=mock_crud):
             test_client = TestClientWithMocks(mock_db=mock_db)
 
             with authenticated_user_id(self.ADMIN_USER_ID):
@@ -182,15 +189,14 @@ class TestQueueRulesCRUD:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_creates_rule(self, TestClientWithMocks, admin_user_token, valid_rule_data, authenticated_user_id):
+    async def test_admin_creates_rule(
+        self, TestClientWithMocks, admin_user_token, valid_rule_data, authenticated_user_id
+    ):
         """Test admin can create a new rule."""
         from app.database.crud.rules import RuleCRUD
 
         mock_queue = self._make_mock_queue()
-        mock_admin_user = self._make_mock_user(
-            self.ADMIN_USER_ID,
-            roles=[self._make_role("admin")]
-        )
+        mock_admin_user = self._make_mock_user(self.ADMIN_USER_ID, roles=[self._make_role("admin")])
 
         mock_crud = MagicMock(spec=RuleCRUD)
         mock_crud.get_rules = AsyncMock(return_value=[])
@@ -199,7 +205,7 @@ class TestQueueRulesCRUD:
 
         mock_db = self._make_mock_db(queue=mock_queue, user=mock_admin_user)
 
-        with patch('api.v1.queues.rules.RuleCRUD', return_value=mock_crud):
+        with patch("api.v1.queues.rules.RuleCRUD", return_value=mock_crud):
             test_client = TestClientWithMocks(mock_db=mock_db)
 
             with authenticated_user_id(self.ADMIN_USER_ID):
@@ -214,23 +220,22 @@ class TestQueueRulesCRUD:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_updates_rule(self, TestClientWithMocks, admin_user_token, authenticated_user_id):
+    async def test_admin_updates_rule(
+        self, TestClientWithMocks, admin_user_token, authenticated_user_id
+    ):
         """Test admin can update an existing rule."""
         from app.database.crud.rules import RuleCRUD
 
         mock_queue = self._make_mock_queue()
         mock_rule = self._make_mock_rule()
-        mock_admin_user = self._make_mock_user(
-            self.ADMIN_USER_ID,
-            roles=[self._make_role("admin")]
-        )
+        mock_admin_user = self._make_mock_user(self.ADMIN_USER_ID, roles=[self._make_role("admin")])
 
         mock_crud = MagicMock(spec=RuleCRUD)
         mock_crud.update_rule = AsyncMock(return_value=mock_rule)
 
         mock_db = self._make_mock_db(queue=mock_queue, user=mock_admin_user)
 
-        with patch('api.v1.queues.rules.RuleCRUD', return_value=mock_crud):
+        with patch("api.v1.queues.rules.RuleCRUD", return_value=mock_crud):
             test_client = TestClientWithMocks(mock_db=mock_db)
 
             with authenticated_user_id(self.ADMIN_USER_ID):
@@ -245,23 +250,22 @@ class TestQueueRulesCRUD:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_deletes_rule(self, TestClientWithMocks, admin_user_token, authenticated_user_id):
+    async def test_admin_deletes_rule(
+        self, TestClientWithMocks, admin_user_token, authenticated_user_id
+    ):
         """Test admin can delete a rule."""
         from app.database.crud.rules import RuleCRUD
 
         mock_queue = self._make_mock_queue()
         mock_rule = self._make_mock_rule()
-        mock_admin_user = self._make_mock_user(
-            self.ADMIN_USER_ID,
-            roles=[self._make_role("admin")]
-        )
+        mock_admin_user = self._make_mock_user(self.ADMIN_USER_ID, roles=[self._make_role("admin")])
 
         mock_crud = MagicMock(spec=RuleCRUD)
         mock_crud.delete_rule = AsyncMock(return_value=mock_rule)
 
         mock_db = self._make_mock_db(queue=mock_queue, user=mock_admin_user)
 
-        with patch('api.v1.queues.rules.RuleCRUD', return_value=mock_crud):
+        with patch("api.v1.queues.rules.RuleCRUD", return_value=mock_crud):
             test_client = TestClientWithMocks(mock_db=mock_db)
 
             with authenticated_user_id(self.ADMIN_USER_ID):
@@ -275,22 +279,21 @@ class TestQueueRulesCRUD:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_replaces_all_rules(self, TestClientWithMocks, admin_user_token, valid_rule_data, authenticated_user_id):
+    async def test_admin_replaces_all_rules(
+        self, TestClientWithMocks, admin_user_token, valid_rule_data, authenticated_user_id
+    ):
         """Test admin can replace all rules for a queue."""
         from app.database.crud.rules import RuleCRUD
 
         mock_queue = self._make_mock_queue()
-        mock_admin_user = self._make_mock_user(
-            self.ADMIN_USER_ID,
-            roles=[self._make_role("admin")]
-        )
+        mock_admin_user = self._make_mock_user(self.ADMIN_USER_ID, roles=[self._make_role("admin")])
 
         mock_crud = MagicMock(spec=RuleCRUD)
         mock_crud.upsert_rules = AsyncMock(return_value=[])
 
         mock_db = self._make_mock_db(queue=mock_queue, user=mock_admin_user)
 
-        with patch('api.v1.queues.rules.RuleCRUD', return_value=mock_crud):
+        with patch("api.v1.queues.rules.RuleCRUD", return_value=mock_crud):
             test_client = TestClientWithMocks(mock_db=mock_db)
 
             with authenticated_user_id(self.ADMIN_USER_ID):
@@ -305,15 +308,14 @@ class TestQueueRulesCRUD:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_owner_manages_rules(self, TestClientWithMocks, admin_user_token, valid_rule_data, authenticated_user_id):
+    async def test_owner_manages_rules(
+        self, TestClientWithMocks, admin_user_token, valid_rule_data, authenticated_user_id
+    ):
         """Test queue owner can manage rules."""
         from app.database.crud.rules import RuleCRUD
 
         mock_queue = self._make_mock_queue(user_id=self.TEST_USER_ID)
-        mock_owner_user = self._make_mock_user(
-            self.TEST_USER_ID,
-            roles=[]
-        )
+        mock_owner_user = self._make_mock_user(self.TEST_USER_ID, roles=[])
 
         mock_crud = MagicMock(spec=RuleCRUD)
         mock_crud.get_rules = AsyncMock(return_value=[])
@@ -322,7 +324,7 @@ class TestQueueRulesCRUD:
 
         mock_db = self._make_mock_db(queue=mock_queue, user=mock_owner_user)
 
-        with patch('api.v1.queues.rules.RuleCRUD', return_value=mock_crud):
+        with patch("api.v1.queues.rules.RuleCRUD", return_value=mock_crud):
             test_client = TestClientWithMocks(mock_db=mock_db)
 
             with authenticated_user_id(self.TEST_USER_ID):
@@ -337,13 +339,12 @@ class TestQueueRulesCRUD:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_non_owner_gets_forbidden(self, TestClientWithMocks, admin_user_token, valid_rule_data, authenticated_user_id):
+    async def test_non_owner_gets_forbidden(
+        self, TestClientWithMocks, admin_user_token, valid_rule_data, authenticated_user_id
+    ):
         """Test non-owner non-admin gets 403."""
         mock_queue = self._make_mock_queue(user_id=self.TEST_USER_ID)
-        mock_other_user = self._make_mock_user(
-            99999999,
-            roles=[]
-        )
+        mock_other_user = self._make_mock_user(99999999, roles=[])
 
         mock_db = self._make_mock_db(queue=mock_queue, user=mock_other_user)
 
@@ -361,12 +362,11 @@ class TestQueueRulesCRUD:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_missing_queue_returns_404(self, TestClientWithMocks, admin_user_token, authenticated_user_id):
+    async def test_missing_queue_returns_404(
+        self, TestClientWithMocks, admin_user_token, authenticated_user_id
+    ):
         """Test 404 when queue doesn't exist."""
-        mock_admin_user = self._make_mock_user(
-            self.ADMIN_USER_ID,
-            roles=[self._make_role("admin")]
-        )
+        mock_admin_user = self._make_mock_user(self.ADMIN_USER_ID, roles=[self._make_role("admin")])
 
         mock_db = self._make_mock_db(user=mock_admin_user)
 
@@ -383,22 +383,21 @@ class TestQueueRulesCRUD:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_missing_rule_returns_404(self, TestClientWithMocks, admin_user_token, authenticated_user_id):
+    async def test_missing_rule_returns_404(
+        self, TestClientWithMocks, admin_user_token, authenticated_user_id
+    ):
         """Test 404 when rule doesn't exist."""
         from app.database.crud.rules import RuleCRUD
 
         mock_queue = self._make_mock_queue()
-        mock_admin_user = self._make_mock_user(
-            self.ADMIN_USER_ID,
-            roles=[self._make_role("admin")]
-        )
+        mock_admin_user = self._make_mock_user(self.ADMIN_USER_ID, roles=[self._make_role("admin")])
 
         mock_crud = MagicMock(spec=RuleCRUD)
         mock_crud.get_rule = AsyncMock(return_value=None)
 
         mock_db = self._make_mock_db(queue=mock_queue, user=mock_admin_user)
 
-        with patch('api.v1.queues.rules.RuleCRUD', return_value=mock_crud):
+        with patch("api.v1.queues.rules.RuleCRUD", return_value=mock_crud):
             test_client = TestClientWithMocks(mock_db=mock_db)
 
             with authenticated_user_id(self.ADMIN_USER_ID):
@@ -412,15 +411,14 @@ class TestQueueRulesCRUD:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_duplicate_rule_returns_409(self, TestClientWithMocks, admin_user_token, valid_rule_data, authenticated_user_id):
+    async def test_duplicate_rule_returns_409(
+        self, TestClientWithMocks, admin_user_token, valid_rule_data, authenticated_user_id
+    ):
         """Test 409 when duplicate rule exists."""
         from app.database.crud.rules import RuleCRUD
 
         mock_queue = self._make_mock_queue()
-        mock_admin_user = self._make_mock_user(
-            self.ADMIN_USER_ID,
-            roles=[self._make_role("admin")]
-        )
+        mock_admin_user = self._make_mock_user(self.ADMIN_USER_ID, roles=[self._make_role("admin")])
 
         existing_rule = self._make_mock_rule(rule_type=valid_rule_data["type"])
         existing_rule.config = valid_rule_data["config"]
@@ -429,13 +427,15 @@ class TestQueueRulesCRUD:
         mock_crud.get_rules = AsyncMock(return_value=[existing_rule])
         # Make create_rule raise Conflict to simulate duplicate detection
         from app.exceptions import Conflict
+
         async def mock_create_rule(*args, **kwargs):
             raise Conflict("Duplicate rule")
+
         mock_crud.create_rule = mock_create_rule
 
         mock_db = self._make_mock_db(queue=mock_queue, user=mock_admin_user)
 
-        with patch('api.v1.queues.rules.RuleCRUD', return_value=mock_crud):
+        with patch("api.v1.queues.rules.RuleCRUD", return_value=mock_crud):
             test_client = TestClientWithMocks(mock_db=mock_db)
 
             with authenticated_user_id(self.ADMIN_USER_ID):
@@ -450,13 +450,12 @@ class TestQueueRulesCRUD:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_invalid_rule_config_returns_400(self, TestClientWithMocks, admin_user_token, authenticated_user_id):
+    async def test_invalid_rule_config_returns_400(
+        self, TestClientWithMocks, admin_user_token, authenticated_user_id
+    ):
         """Test 400 when rule config is invalid."""
         mock_queue = self._make_mock_queue()
-        mock_admin_user = self._make_mock_user(
-            self.ADMIN_USER_ID,
-            roles=[self._make_role("admin")]
-        )
+        mock_admin_user = self._make_mock_user(self.ADMIN_USER_ID, roles=[self._make_role("admin")])
 
         mock_db = self._make_mock_db(queue=mock_queue, user=mock_admin_user)
 
@@ -476,13 +475,12 @@ class TestQueueRulesCRUD:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_patch_queue_no_longer_affects_rules(self, TestClientWithMocks, admin_user_token, authenticated_user_id):
+    async def test_patch_queue_no_longer_affects_rules(
+        self, TestClientWithMocks, admin_user_token, authenticated_user_id
+    ):
         """Test that patching queue doesn't affect rules."""
         mock_queue = self._make_mock_queue()
-        mock_admin_user = self._make_mock_user(
-            self.ADMIN_USER_ID,
-            roles=[self._make_role("admin")]
-        )
+        mock_admin_user = self._make_mock_user(self.ADMIN_USER_ID, roles=[self._make_role("admin")])
 
         mock_db = self._make_mock_db(queue=mock_queue, user=mock_admin_user)
         mock_db.update = AsyncMock()
@@ -503,7 +501,7 @@ class TestQueueRulesCRUD:
                                 "scope": "user",
                             },
                         }
-                    ]
+                    ],
                 },
                 headers=headers,
             )

@@ -1,4 +1,5 @@
 import pytest
+from pydantic import ValidationError
 
 from app.search.datastructures import (
     Conditions,
@@ -25,11 +26,7 @@ class TestDatastructures:
 
     def test_conditions_multiple_fields(self):
         """Test Conditions with multiple fields."""
-        conditions = Conditions(
-            eq=123,
-            gt=100,
-            lt=200
-        )
+        conditions = Conditions(eq=123, gt=100, lt=200)
 
         assert conditions.eq == 123
         assert conditions.gt == 100
@@ -49,102 +46,81 @@ class TestDatastructures:
 
     def test_conditions_validate_keys(self):
         """Test Conditions validates keys."""
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             Conditions.model_validate({"invalid": 123})
 
     def test_sorting_option_creation(self):
         """Test SortingOption creation."""
-        option = SortingOption(
-            field="BeatmapSnapshot.beatmap_id",
-            order="asc"
-        )
+        option = SortingOption(field="BeatmapSnapshot.beatmap_id", order="asc")
 
         assert option.order.value == "asc"
 
     def test_sorting_schema_creation(self):
         """Test SortingSchema creation."""
-        schema = SortingSchema(root=[
-            SortingOption(field="BeatmapSnapshot.beatmap_id")
-        ])
+        schema = SortingSchema(root=[SortingOption(field="BeatmapSnapshot.beatmap_id")])
 
         assert len(schema.root) == 1
 
     def test_field_filters_creation(self):
         """Test FieldFilters creation."""
-        filters = FieldFilters(root={
-            "id": Conditions(eq=123)
-        })
+        filters = FieldFilters(root={"id": Conditions(eq=123)})
 
         assert "id" in filters
 
     def test_filters_schema_creation(self):
         """Test FiltersSchema creation."""
-        schema = FiltersSchema(
-            profile=FieldFilters(root={})
-        )
+        schema = FiltersSchema(profile=FieldFilters(root={}))
 
         assert schema.profile is not None
 
     def test_search_schema_creation(self):
         """Test SearchSchema creation."""
-        schema = SearchSchema(
-            scope=Scope.BEATMAPS
-        )
+        schema = SearchSchema(scope=Scope.BEATMAPS)
 
         assert schema.scope == Scope.BEATMAPS
 
     def test_search_schema_with_sorting(self):
         """Test SearchSchema with sorting."""
-        schema = SearchSchema(
-            scope=Scope.BEATMAPS,
-            sorting=SortingSchema(root=[])
-        )
+        schema = SearchSchema(scope=Scope.BEATMAPS, sorting=SortingSchema(root=[]))
 
         assert schema.sorting is not None
 
     def test_search_schema_with_filters(self):
         """Test SearchSchema with filters."""
-        schema = SearchSchema(
-            scope=Scope.BEATMAPS,
-            filters=FiltersSchema()
-        )
+        schema = SearchSchema(scope=Scope.BEATMAPS, filters=FiltersSchema())
 
         assert schema.filters is not None
 
     def test_search_schema_with_search_terms(self):
         """Test SearchSchema with search terms."""
         schema = SearchSchema(
-            scope=Scope.BEATMAPS,
-            search_terms=SearchTermsSchema(terms=["beatmap"])
+            scope=Scope.BEATMAPS, search_terms=SearchTermsSchema(terms=["beatmap"])
         )
 
         assert schema.search_terms is not None
 
     def test_search_schema_extra_forbidden(self):
         """Test SearchSchema forbids extra fields."""
-        with pytest.raises(Exception):
-            SearchSchema(
-                scope=Scope.BEATMAPS,
-                extra_field="value"
-            )
+        with pytest.raises(ValidationError):
+            SearchSchema(scope=Scope.BEATMAPS, extra_field="value")
 
     def test_conditions_max_regex_length(self):
         """Test Conditions validates regex length."""
         long_pattern = "a" * 150
 
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             Conditions(regex=long_pattern)
 
     def test_conditions_empty_regex(self):
         """Test Conditions rejects empty regex."""
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             Conditions(regex="")
 
     def test_conditions_dangerous_regex(self):
         """Test Conditions rejects dangerous regex."""
         dangerous_pattern = "(a+)+b"
 
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             Conditions(regex=dangerous_pattern)
 
     def test_conditions_valid_regex(self):
@@ -159,7 +135,7 @@ class TestDatastructures:
         """Test Conditions validates capture groups."""
         pattern = "((a)(b)(c)(d)(e)(f)(g)(h)(i)(j))"
 
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             Conditions(regex=pattern)
 
     def test_field_weights_creation(self):
@@ -182,10 +158,7 @@ class TestDatastructures:
 
     def test_conditions_values_for_validation(self):
         """Test conditions values for validation."""
-        conditions = Conditions.model_validate({
-            "gt": 100,
-            "in": [123, 2, 3]
-        })
+        conditions = Conditions.model_validate({"gt": 100, "in": [123, 2, 3]})
 
         values = conditions.values_for_validation()
 
@@ -194,10 +167,7 @@ class TestDatastructures:
 
     def test_field_filters_items(self):
         """Test FieldFilters items method."""
-        filters = FieldFilters(root={
-            "id": Conditions(eq=123),
-            "name": Conditions(eq="test")
-        })
+        filters = FieldFilters(root={"id": Conditions(eq=123), "name": Conditions(eq="test")})
 
         items = filters.items()
 
@@ -205,10 +175,12 @@ class TestDatastructures:
 
     def test_sorting_schema_iteration(self):
         """Test SortingSchema iteration."""
-        schema = SortingSchema(root=[
-            SortingOption(field="BeatmapSnapshot.beatmap_id"),
-            SortingOption(field="BeatmapSnapshot.beatmap_id")
-        ])
+        schema = SortingSchema(
+            root=[
+                SortingOption(field="BeatmapSnapshot.beatmap_id"),
+                SortingOption(field="BeatmapSnapshot.beatmap_id"),
+            ]
+        )
 
         options = list(schema)
 
@@ -216,9 +188,7 @@ class TestDatastructures:
 
     def test_field_filters_len(self):
         """Test FieldFilters __len__."""
-        filters = FieldFilters(root={
-            "id": Conditions(eq=123)
-        })
+        filters = FieldFilters(root={"id": Conditions(eq=123)})
 
         assert len(filters) == 1
 
@@ -231,25 +201,25 @@ class TestDatastructures:
 
     def test_conditions_is_null_exclusive(self):
         """Test Conditions is_null is exclusive."""
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             Conditions(is_null=True, eq=123)
 
     def test_conditions_range_validation(self):
         """Test Conditions range validation."""
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             Conditions(gt=200, lt=100)
 
     def test_conditions_range_lte_validation(self):
         """Test Conditions lte range validation."""
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             Conditions(gte=200, lt=100)
 
     def test_conditions_in_contains_eq(self):
         """Test Conditions in contains eq."""
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             Conditions(eq=10, in_=[1, 2, 3])
 
     def test_conditions_eq_not_in_not_in(self):
         """Test Conditions eq not in not_in."""
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             Conditions(eq=2, not_in_=[1, 2, 3])

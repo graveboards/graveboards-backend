@@ -49,8 +49,8 @@ class TestReserveStatefulRules:
     @pytest.mark.asyncio
     async def test_rejection_rolls_back_prior_reservations(self):
         redis = AsyncMock()
-        redis.incr = AsyncMock(return_value=1)      # rate_limit reserves successfully
-        redis.set = AsyncMock(return_value=None)     # cooldown SET NX fails -> Forbidden
+        redis.incr = AsyncMock(return_value=1)  # rate_limit reserves successfully
+        redis.set = AsyncMock(return_value=None)  # cooldown SET NX fails -> Forbidden
         redis.get = AsyncMock(return_value=None)
         context = ExecutionContext(queue_id=1, user_id=42, db=AsyncMock(), redis=redis)
 
@@ -73,7 +73,11 @@ class TestReserveStatefulRules:
         context = ExecutionContext(queue_id=1, user_id=42, db=AsyncMock(), redis=redis)
 
         rules = [
-            _rule("rate_limit", {"max_requests": 5, "period": "week", "scope": "user"}, is_active=False),
+            _rule(
+                "rate_limit",
+                {"max_requests": 5, "period": "week", "scope": "user"},
+                is_active=False,
+            ),
             _rule("cooldown", {"cooldown_seconds": 60, "scope": "user"}, version="99.0"),
         ]
 

@@ -5,7 +5,9 @@ import pytest
 
 @pytest.fixture(autouse=True)
 def mock_rate_limit_decorator():
-    with patch('app.osu_api.client.osu_api_client.rate_limit', lambda *args, **kwargs: lambda func: func):
+    with patch(
+        "app.osu_api.client.osu_api_client.rate_limit", lambda *args, **kwargs: lambda func: func
+    ):
         yield
 
 
@@ -25,6 +27,7 @@ def api_client():
     class MockLockCtx:
         async def __aenter__(self):
             return None
+
         async def __aexit__(self, *args):
             pass
 
@@ -36,12 +39,13 @@ def api_client():
     mock_http_client.post = AsyncMock()
 
     # Patch httpx.AsyncClient to return our mock before creating OsuAPIClient
-    with patch('httpx.AsyncClient', return_value=mock_http_client):
+    with patch("httpx.AsyncClient", return_value=mock_http_client):
         client = OsuAPIClient(mock_redis)
 
         # Patch OAuth's fetch_token to avoid real API calls
         async def mock_fetch_token(*args, **kwargs):
             import time
+
             return {
                 "access_token": "test-token",
                 "token_type": "Bearer",
@@ -49,7 +53,7 @@ def api_client():
                 "expires_at": int(time.time()) + 3600,
             }
 
-        with patch.object(OAuth, 'fetch_token', mock_fetch_token):
+        with patch.object(OAuth, "fetch_token", mock_fetch_token):
             yield client, mock_redis
 
 

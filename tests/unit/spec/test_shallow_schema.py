@@ -1,4 +1,3 @@
-
 from app.spec.shallow import (
     SCHEMAS_WITH_SHALLOW_REFS,
     disabled_nested_obj,
@@ -35,21 +34,12 @@ class TestShallowSchema:
         """Test that disabled_nested_obj has correct structure."""
         assert disabled_nested_obj["type"] == "boolean"
         assert disabled_nested_obj["enum"] == [False]
-        assert disabled_nested_obj["default"] == False
+        assert not disabled_nested_obj["default"]
         assert "description" in disabled_nested_obj
 
     def test_populate_shallow_refs_mutates_spec(self):
         """Test that populate_shallow_refs mutates the spec."""
-        spec = {
-            "components": {
-                "schemas": {
-                    "Beatmap": {
-                        "type": "object",
-                        "properties": {}
-                    }
-                }
-            }
-        }
+        spec = {"components": {"schemas": {"Beatmap": {"type": "object", "properties": {}}}}}
 
         populate_shallow_refs(spec)
 
@@ -64,25 +54,18 @@ class TestShallowSchema:
                     "Beatmap": {
                         "type": "object",
                         "title": "Beatmap",
-                        "properties": {
-                            "id": {"type": "integer"}
-                        }
+                        "properties": {"id": {"type": "integer"}},
                     },
                     "BeatmapShallow": {
                         "type": "object",
                         "title": "BeatmapShallow",
-                        "properties": {
-                            "user": {"type": "object", "title": "UserShallow"}
-                        }
+                        "properties": {"user": {"type": "object", "title": "UserShallow"}},
                     },
                     "User": {
                         "type": "object",
                         "title": "User",
-                        "properties": {
-                            "id": {"type": "integer"},
-                            "username": {"type": "string"}
-                        }
-                    }
+                        "properties": {"id": {"type": "integer"}, "username": {"type": "string"}},
+                    },
                 }
             }
         }
@@ -94,11 +77,7 @@ class TestShallowSchema:
 
     def test_populate_shallow_refs_handles_missing_schemas(self):
         """Test that missing schemas are handled gracefully."""
-        spec = {
-            "components": {
-                "schemas": {}
-            }
-        }
+        spec = {"components": {"schemas": {}}}
 
         # Should not raise
         populate_shallow_refs(spec)
@@ -118,11 +97,11 @@ class TestShallowSchema:
                                 "properties": {
                                     "beatmaps": {
                                         "type": "array",
-                                        "items": {"type": "object", "title": "BeatmapShallow"}
+                                        "items": {"type": "object", "title": "BeatmapShallow"},
                                     }
-                                }
+                                },
                             }
-                        }
+                        },
                     },
                     "User": {
                         "type": "object",
@@ -131,10 +110,10 @@ class TestShallowSchema:
                             "id": {"type": "integer"},
                             "beatmaps": {
                                 "type": "array",
-                                "items": {"type": "object", "title": "BeatmapShallow"}
-                            }
-                        }
-                    }
+                                "items": {"type": "object", "title": "BeatmapShallow"},
+                            },
+                        },
+                    },
                 }
             }
         }
@@ -153,16 +132,16 @@ class TestShallowSchema:
                             "user": {
                                 "oneOf": [
                                     {"type": "boolean"},
-                                    {"type": "object", "title": "UserInclude"}
+                                    {"type": "object", "title": "UserInclude"},
                                 ]
                             },
                             "beatmaps": {
                                 "oneOf": [
                                     {"type": "boolean"},
-                                    {"type": "object", "title": "BeatmapShallow"}
+                                    {"type": "object", "title": "BeatmapShallow"},
                                 ]
-                            }
-                        }
+                            },
+                        },
                     },
                     "UserInclude": {
                         "type": "object",
@@ -171,11 +150,11 @@ class TestShallowSchema:
                             "beatmaps": {
                                 "oneOf": [
                                     {"type": "boolean"},
-                                    {"type": "object", "title": "BeatmapShallow"}
+                                    {"type": "object", "title": "BeatmapShallow"},
                                 ]
                             }
-                        }
-                    }
+                        },
+                    },
                 }
             }
         }
@@ -212,37 +191,24 @@ class TestShallowSchema:
                             "user": {
                                 "type": "object",
                                 "title": "User",
-                                "properties": {
-                                    "profile": {
-                                        "type": "object",
-                                        "title": "Profile"
-                                    }
-                                }
+                                "properties": {"profile": {"type": "object", "title": "Profile"}},
                             },
                             "beatmaps": {
                                 "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "title": "BeatmapShallow"
-                                }
-                            }
-                        }
+                                "items": {"type": "object", "title": "BeatmapShallow"},
+                            },
+                        },
                     },
                     "User": {
                         "type": "object",
                         "title": "User",
-                        "properties": {
-                            "id": {"type": "integer"},
-                            "username": {"type": "string"}
-                        }
+                        "properties": {"id": {"type": "integer"}, "username": {"type": "string"}},
                     },
                     "Profile": {
                         "type": "object",
                         "title": "Profile",
-                        "properties": {
-                            "osu_id": {"type": "integer"}
-                        }
-                    }
+                        "properties": {"osu_id": {"type": "integer"}},
+                    },
                 }
             }
         }
@@ -260,20 +226,15 @@ class TestShallowSchema:
                         "properties": {
                             "beatmaps": {
                                 "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "title": "BeatmapShallow"
-                                }
+                                "items": {"type": "object", "title": "BeatmapShallow"},
                             }
-                        }
+                        },
                     },
                     "Beatmap": {
                         "type": "object",
                         "title": "Beatmap",
-                        "properties": {
-                            "id": {"type": "integer"}
-                        }
-                    }
+                        "properties": {"id": {"type": "integer"}},
+                    },
                 }
             }
         }
@@ -292,10 +253,10 @@ class TestShallowSchema:
                             "user": {
                                 "oneOf": [
                                     {"type": "boolean"},
-                                    {"type": "object", "title": "UserInclude"}
+                                    {"type": "object", "title": "UserInclude"},
                                 ]
                             }
-                        }
+                        },
                     },
                     "UserInclude": {
                         "type": "object",
@@ -304,11 +265,11 @@ class TestShallowSchema:
                             "beatmaps": {
                                 "oneOf": [
                                     {"type": "boolean"},
-                                    {"type": "object", "title": "BeatmapShallow"}
+                                    {"type": "object", "title": "BeatmapShallow"},
                                 ]
                             }
-                        }
-                    }
+                        },
+                    },
                 }
             }
         }
@@ -327,8 +288,8 @@ class TestShallowSchema:
                             "id": {"type": "integer"},
                             "version": {"type": "string"},
                             "difficulty": {"type": "number"},
-                            "visible": {"type": "boolean"}
-                        }
+                            "visible": {"type": "boolean"},
+                        },
                     }
                 }
             }
@@ -359,13 +320,13 @@ class TestShallowSchema:
                                             "level4": {
                                                 "type": "object",
                                                 "title": "Level4",
-                                                "properties": {}
+                                                "properties": {},
                                             }
-                                        }
+                                        },
                                     }
-                                }
+                                },
                             }
-                        }
+                        },
                     }
                 }
             }
@@ -383,9 +344,7 @@ class TestShallowSchema:
                         "title": "Beatmap",
                         "description": "A beatmap",
                         "required": ["id"],
-                        "properties": {
-                            "id": {"type": "integer"}
-                        }
+                        "properties": {"id": {"type": "integer"}},
                     }
                 }
             }

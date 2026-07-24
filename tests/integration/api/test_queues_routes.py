@@ -9,28 +9,20 @@ from app.database.models import Queue
 @pytest.mark.asyncio
 async def test_queue_model_creation():
     queue = Queue(
-        user_id=12345678,
-        name="Test Queue",
-        description="A test queue",
-        visibility=0,
-        is_open=True
+        user_id=12345678, name="Test Queue", description="A test queue", visibility=0, is_open=True
     )
 
     assert queue.user_id == 12345678
     assert queue.name == "Test Queue"
     assert queue.description == "A test queue"
     assert queue.visibility == 0
-    assert queue.is_open == True
+    assert queue.is_open
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_queue_visibility_enum():
-    queue = Queue(
-        user_id=12345678,
-        name="Test Queue",
-        visibility=0
-    )
+    queue = Queue(user_id=12345678, name="Test Queue", visibility=0)
     assert queue.visibility == 0
 
     queue.visibility = 1
@@ -40,44 +32,31 @@ async def test_queue_visibility_enum():
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_queue_open_close():
-    queue = Queue(
-        user_id=12345678,
-        name="Test Queue",
-        is_open=True
-    )
+    queue = Queue(user_id=12345678, name="Test Queue", is_open=True)
 
-    assert queue.is_open == True
+    assert queue.is_open
 
     queue.is_open = False
-    assert queue.is_open == False
+    assert not queue.is_open
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_queue_relationships():
-    queue = Queue(
-        user_id=12345678,
-        name="Test Queue"
-    )
+    queue = Queue(user_id=12345678, name="Test Queue")
 
-    assert hasattr(queue, 'requests')
-    assert hasattr(queue, 'managers')
-    assert hasattr(queue, 'user_profile')
-    assert hasattr(queue, 'manager_profiles')
+    assert hasattr(queue, "requests")
+    assert hasattr(queue, "managers")
+    assert hasattr(queue, "user_profile")
+    assert hasattr(queue, "manager_profiles")
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_queue_unique_constraint():
-    queue1 = Queue(
-        user_id=12345678,
-        name="Test Queue"
-    )
+    queue1 = Queue(user_id=12345678, name="Test Queue")
 
-    queue2 = Queue(
-        user_id=12345678,
-        name="Different Queue"
-    )
+    queue2 = Queue(user_id=12345678, name="Different Queue")
 
     assert queue1.user_id == queue2.user_id
     assert queue1.name != queue2.name
@@ -86,13 +65,10 @@ async def test_queue_unique_constraint():
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_queue_timestamp_fields():
-    queue = Queue(
-        user_id=12345678,
-        name="Test Queue"
-    )
+    queue = Queue(user_id=12345678, name="Test Queue")
 
-    assert hasattr(queue, 'created_at')
-    assert hasattr(queue, 'updated_at')
+    assert hasattr(queue, "created_at")
+    assert hasattr(queue, "updated_at")
 
 
 class TestQueuesPatchIntegration:
@@ -108,14 +84,6 @@ class TestQueuesPatchIntegration:
 
         mock_db = AsyncMock()
 
-        queue_data = {
-            "id": self.TEST_QUEUE_ID,
-            "user_id": 12345678,
-            "name": "Test Queue",
-            "description": "Original description",
-            "visibility": 0,
-            "is_open": True,
-        }
 
         mock_queue = MagicMock()
         mock_queue.id = self.TEST_QUEUE_ID
@@ -141,17 +109,38 @@ class TestQueuesPatchIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.role_authorization.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.auth_context.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.ownership_authorization.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.ownership_filter.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.utils.get_authenticated_user_id', return_value=11111111):
+        with (
+            patch(
+                "app.security.decorators.role_authorization.get_authenticated_user_id",
+                return_value=11111111,
+            ),
+            patch(
+                "app.security.decorators.auth_context.get_authenticated_user_id",
+                return_value=11111111,
+            ),
+            patch(
+                "app.security.decorators.ownership_authorization.get_authenticated_user_id",
+                return_value=11111111,
+            ),
+            patch(
+                "app.security.decorators.ownership_filter.get_authenticated_user_id",
+                return_value=11111111,
+            ),
+            patch("app.security.decorators.utils.get_authenticated_user_id", return_value=11111111),
+        ):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.patch(
                 f"/api/v1/queues/{self.TEST_QUEUE_ID}",
                 json={"name": "Updated Queue"},
-                headers=headers
+                headers=headers,
             )
 
         assert response.status_code == 200
         data = response.json()
-        assert "updated successfully" in data["message"].lower() or "no changes" in data["message"].lower()
+        assert (
+            "updated successfully" in data["message"].lower()
+            or "no changes" in data["message"].lower()
+        )
         mock_db.update.assert_called_once()
 
     @pytest.mark.integration
@@ -162,14 +151,6 @@ class TestQueuesPatchIntegration:
 
         mock_db = AsyncMock()
 
-        queue_data = {
-            "id": self.TEST_QUEUE_ID,
-            "user_id": 99999999,
-            "name": "Test Queue",
-            "description": "Original description",
-            "visibility": 0,
-            "is_open": True,
-        }
 
         mock_queue = MagicMock()
         mock_queue.id = self.TEST_QUEUE_ID
@@ -193,21 +174,44 @@ class TestQueuesPatchIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.role_authorization.get_authenticated_user_id', return_value=99999999), patch('app.security.decorators.auth_context.get_authenticated_user_id', return_value=99999999), patch('app.security.decorators.ownership_authorization.get_authenticated_user_id', return_value=99999999), patch('app.security.decorators.ownership_filter.get_authenticated_user_id', return_value=99999999), patch('app.security.decorators.utils.get_authenticated_user_id', return_value=99999999):
+        with (
+            patch(
+                "app.security.decorators.role_authorization.get_authenticated_user_id",
+                return_value=99999999,
+            ),
+            patch(
+                "app.security.decorators.auth_context.get_authenticated_user_id",
+                return_value=99999999,
+            ),
+            patch(
+                "app.security.decorators.ownership_authorization.get_authenticated_user_id",
+                return_value=99999999,
+            ),
+            patch(
+                "app.security.decorators.ownership_filter.get_authenticated_user_id",
+                return_value=99999999,
+            ),
+            patch("app.security.decorators.utils.get_authenticated_user_id", return_value=99999999),
+        ):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.patch(
                 f"/api/v1/queues/{self.TEST_QUEUE_ID}",
                 json={"description": "Updated description"},
-                headers=headers
+                headers=headers,
             )
 
         assert response.status_code == 200
         data = response.json()
-        assert "updated successfully" in data["message"].lower() or "no changes" in data["message"].lower()
+        assert (
+            "updated successfully" in data["message"].lower()
+            or "no changes" in data["message"].lower()
+        )
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_non_admin_gets_forbidden_on_queue_patch(self, TestClientWithMocks, admin_user_token):
+    async def test_non_admin_gets_forbidden_on_queue_patch(
+        self, TestClientWithMocks, admin_user_token
+    ):
         """Test non-admin user gets 403 Forbidden on queue patch."""
         from app.security import generate_token
 
@@ -224,17 +228,38 @@ class TestQueuesPatchIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.role_authorization.get_authenticated_user_id', return_value=88888888), patch('app.security.decorators.auth_context.get_authenticated_user_id', return_value=88888888), patch('app.security.decorators.ownership_authorization.get_authenticated_user_id', return_value=88888888), patch('app.security.decorators.ownership_filter.get_authenticated_user_id', return_value=88888888), patch('app.security.decorators.utils.get_authenticated_user_id', return_value=88888888):
+        with (
+            patch(
+                "app.security.decorators.role_authorization.get_authenticated_user_id",
+                return_value=88888888,
+            ),
+            patch(
+                "app.security.decorators.auth_context.get_authenticated_user_id",
+                return_value=88888888,
+            ),
+            patch(
+                "app.security.decorators.ownership_authorization.get_authenticated_user_id",
+                return_value=88888888,
+            ),
+            patch(
+                "app.security.decorators.ownership_filter.get_authenticated_user_id",
+                return_value=88888888,
+            ),
+            patch("app.security.decorators.utils.get_authenticated_user_id", return_value=88888888),
+        ):
             headers = {"Authorization": f"Bearer {generate_token(88888888)}"}
             response = test_client.patch(
                 f"/api/v1/queues/{self.TEST_QUEUE_ID}",
                 json={"name": "Hacked Queue"},
-                headers=headers
+                headers=headers,
             )
 
         assert response.status_code == 403
         data = response.json()
-        assert "forbidden" in data.get("detail", "").lower() or "not authorized" in data.get("detail", "").lower()
+        assert (
+            "forbidden" in data.get("detail", "").lower()
+            or "not authorized" in data.get("detail", "").lower()
+        )
 
 
 class TestQueuesPostIntegration:
@@ -263,12 +288,28 @@ class TestQueuesPostIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.role_authorization.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.auth_context.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.ownership_authorization.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.ownership_filter.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.utils.get_authenticated_user_id', return_value=11111111):
+        with (
+            patch(
+                "app.security.decorators.role_authorization.get_authenticated_user_id",
+                return_value=11111111,
+            ),
+            patch(
+                "app.security.decorators.auth_context.get_authenticated_user_id",
+                return_value=11111111,
+            ),
+            patch(
+                "app.security.decorators.ownership_authorization.get_authenticated_user_id",
+                return_value=11111111,
+            ),
+            patch(
+                "app.security.decorators.ownership_filter.get_authenticated_user_id",
+                return_value=11111111,
+            ),
+            patch("app.security.decorators.utils.get_authenticated_user_id", return_value=11111111),
+        ):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.post(
-                "/api/v1/queues",
-                json={"name": "New Queue", "user_id": 12345678},
-                headers=headers
+                "/api/v1/queues", json={"name": "New Queue", "user_id": 12345678}, headers=headers
             )
 
         assert response.status_code == 201
@@ -295,17 +336,38 @@ class TestQueuesPostIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.role_authorization.get_authenticated_user_id', return_value=88888888), patch('app.security.decorators.auth_context.get_authenticated_user_id', return_value=88888888), patch('app.security.decorators.ownership_authorization.get_authenticated_user_id', return_value=88888888), patch('app.security.decorators.ownership_filter.get_authenticated_user_id', return_value=88888888), patch('app.security.decorators.utils.get_authenticated_user_id', return_value=88888888):
+        with (
+            patch(
+                "app.security.decorators.role_authorization.get_authenticated_user_id",
+                return_value=88888888,
+            ),
+            patch(
+                "app.security.decorators.auth_context.get_authenticated_user_id",
+                return_value=88888888,
+            ),
+            patch(
+                "app.security.decorators.ownership_authorization.get_authenticated_user_id",
+                return_value=88888888,
+            ),
+            patch(
+                "app.security.decorators.ownership_filter.get_authenticated_user_id",
+                return_value=88888888,
+            ),
+            patch("app.security.decorators.utils.get_authenticated_user_id", return_value=88888888),
+        ):
             headers = {"Authorization": f"Bearer {generate_token(88888888)}"}
             response = test_client.post(
                 "/api/v1/queues",
                 json={"name": "Hacked Queue", "user_id": 12345678},
-                headers=headers
+                headers=headers,
             )
 
         assert response.status_code == 403
         data = response.json()
-        assert "forbidden" in data.get("detail", "").lower() or "not authorized" in data.get("detail", "").lower()
+        assert (
+            "forbidden" in data.get("detail", "").lower()
+            or "not authorized" in data.get("detail", "").lower()
+        )
 
     @pytest.mark.integration
     @pytest.mark.asyncio
@@ -330,7 +392,25 @@ class TestQueuesPostIntegration:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.role_authorization.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.auth_context.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.ownership_authorization.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.ownership_filter.get_authenticated_user_id', return_value=11111111), patch('app.security.decorators.utils.get_authenticated_user_id', return_value=11111111):
+        with (
+            patch(
+                "app.security.decorators.role_authorization.get_authenticated_user_id",
+                return_value=11111111,
+            ),
+            patch(
+                "app.security.decorators.auth_context.get_authenticated_user_id",
+                return_value=11111111,
+            ),
+            patch(
+                "app.security.decorators.ownership_authorization.get_authenticated_user_id",
+                return_value=11111111,
+            ),
+            patch(
+                "app.security.decorators.ownership_filter.get_authenticated_user_id",
+                return_value=11111111,
+            ),
+            patch("app.security.decorators.utils.get_authenticated_user_id", return_value=11111111),
+        ):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.post(
                 "/api/v1/queues",
@@ -340,7 +420,7 @@ class TestQueuesPostIntegration:
                     "description": "A queue with all fields",
                     "visibility": 1,
                 },
-                headers=headers
+                headers=headers,
             )
 
         assert response.status_code == 201

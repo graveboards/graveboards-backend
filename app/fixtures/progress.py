@@ -1,4 +1,5 @@
 """Progress bar handler for fixture fetch operations."""
+
 import contextlib
 
 

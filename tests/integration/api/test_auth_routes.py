@@ -55,6 +55,7 @@ async def test_jwt_token_validation():
     token = encode_token(payload)
 
     from app.security import validate_token
+
     decoded = validate_token(token)
 
     assert decoded["sub"] == 12345678

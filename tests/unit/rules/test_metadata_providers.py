@@ -21,7 +21,16 @@ def _make_context(beatmapset=None, beatmaps=None):
     )
 
 
-def _make_beatmap(difficulty_rating=5.0, ar=5.0, accuracy=10.0, drain=5.0, hit_length=5.0, bpm=150.0, mode="osu", owners=None):
+def _make_beatmap(
+    difficulty_rating=5.0,
+    ar=5.0,
+    accuracy=10.0,
+    drain=5.0,
+    hit_length=5.0,
+    bpm=150.0,
+    mode="osu",
+    owners=None,
+):
     bm = MagicMock()
     bm.difficulty_rating = difficulty_rating
     bm.ar = ar

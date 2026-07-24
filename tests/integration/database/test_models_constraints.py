@@ -17,14 +17,16 @@ async def test_cascade_delete_request_on_user(db_session):
     """Test that deleting User cascades to Requests."""
     db = PostgresqlDB()
 
-    user = await db.add(User, session=db_session, id=1014)
-    queue = await db.add(Queue, session=db_session, user_id=1014, name="Test Queue", description="Test")
+    await db.add(User, session=db_session, id=1014)
+    queue = await db.add(
+        Queue, session=db_session, user_id=1014, name="Test Queue", description="Test"
+    )
 
     beatmapset_data = {
         "id": 10014,
         "user_id": 1014,
     }
-    beatmapset = await db.add(Beatmapset, session=db_session, **beatmapset_data)
+    await db.add(Beatmapset, session=db_session, **beatmapset_data)
 
     snapshot_data = {
         "beatmapset_id": 10014,
@@ -48,7 +50,10 @@ async def test_cascade_delete_request_on_user(db_session):
         "is_scoreable": True,
         "language": None,
         "last_updated": "2024-01-01T00:00:00+00:00",
-        "nominations_summary": {"current": 0, "required_meta": {"main_ruleset": 0, "non_main_ruleset": 0}},
+        "nominations_summary": {
+            "current": 0,
+            "required_meta": {"main_ruleset": 0, "non_main_ruleset": 0},
+        },
         "nsfw": False,
         "offset": 0,
         "pack_tags": [],
@@ -84,15 +89,11 @@ async def test_cascade_delete_request_on_user(db_session):
     fetched_request = await db.get(Request, session=db_session, id=request.id)
     assert fetched_request is None
 
-    result = await db_session.execute(
-        select(Queue).where(Queue.user_id == 1014)
-    )
+    result = await db_session.execute(select(Queue).where(Queue.user_id == 1014))
     fetched_queue = result.scalars().first()
     assert fetched_queue is None
 
-    result = await db_session.execute(
-        select(Beatmapset).where(Beatmapset.user_id == 1014)
-    )
+    result = await db_session.execute(select(Beatmapset).where(Beatmapset.user_id == 1014))
     fetched_beatmapset = result.scalars().first()
     assert fetched_beatmapset is None
 

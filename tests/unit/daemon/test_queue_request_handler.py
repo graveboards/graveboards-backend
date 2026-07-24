@@ -54,8 +54,10 @@ class TestQueueRequestHandler:
         mock_request.queue_id = 789
         service._db.add.return_value = mock_request
 
-        with patch("app.daemon.services.queue_request_handler.BeatmapManager", return_value=mock_bm), \
-             patch("app.daemon.services.queue_request_handler.aware_utcnow") as mock_utcnow:
+        with (
+            patch("app.daemon.services.queue_request_handler.BeatmapManager", return_value=mock_bm),
+            patch("app.daemon.services.queue_request_handler.aware_utcnow") as mock_utcnow,
+        ):
             mock_utcnow.return_value = datetime(2026, 1, 1)
             await service._execute_job(123)
 
@@ -78,14 +80,17 @@ class TestQueueRequestHandler:
         mock_bm.archive = AsyncMock()
         service._db.add.return_value = MagicMock()
 
-        with patch("app.daemon.services.queue_request_handler.BeatmapManager", return_value=mock_bm), \
-             patch("app.daemon.services.queue_request_handler.aware_utcnow") as mock_utcnow:
+        with (
+            patch("app.daemon.services.queue_request_handler.BeatmapManager", return_value=mock_bm),
+            patch("app.daemon.services.queue_request_handler.aware_utcnow") as mock_utcnow,
+        ):
             mock_utcnow.return_value = datetime(2026, 1, 1)
             await service._execute_job(123)
 
         assert service._rc.hset.call_count >= 1
         completed_calls = [
-            c for c in service._rc.hset.call_args_list
+            c
+            for c in service._rc.hset.call_args_list
             if len(c[0]) > 1 and c[0][1] == "completed_at"
         ]
         assert len(completed_calls) >= 1
@@ -102,13 +107,15 @@ class TestQueueRequestHandler:
         service._rc.hgetall.return_value = serialized_task
 
         mock_bm = MagicMock()
-        mock_bm.archive = AsyncMock(side_effect=Exception("Test error"))
+        mock_bm.archive = AsyncMock(side_effect=RuntimeError("Test error"))
         service._db.add.return_value = MagicMock()
 
-        with patch("app.daemon.services.queue_request_handler.BeatmapManager", return_value=mock_bm), \
-             patch("app.daemon.services.queue_request_handler.aware_utcnow") as mock_utcnow:
+        with (
+            patch("app.daemon.services.queue_request_handler.BeatmapManager", return_value=mock_bm),
+            patch("app.daemon.services.queue_request_handler.aware_utcnow") as mock_utcnow,
+        ):
             mock_utcnow.return_value = datetime(2026, 1, 1)
-            with pytest.raises(Exception):
+            with pytest.raises(RuntimeError):
                 await service._execute_job(123)
 
         assert service._rc.hset.call_count >= 1
@@ -130,10 +137,14 @@ class TestQueueRequestHandler:
         mock_bm.archive = AsyncMock()
         service._db.add.return_value = MagicMock()
 
-        with patch("app.daemon.services.queue_request_handler.BeatmapManager", return_value=mock_bm), \
-             patch("app.daemon.services.queue_request_handler.QueueRequestHandlerTask.deserialize") as mock_deserialize, \
-             patch("app.daemon.services.queue_request_handler.aware_utcnow"), \
-             patch("app.daemon.services.queue_request_handler.RequestSchema"):
+        with (
+            patch("app.daemon.services.queue_request_handler.BeatmapManager", return_value=mock_bm),
+            patch(
+                "app.daemon.services.queue_request_handler.QueueRequestHandlerTask.deserialize"
+            ) as mock_deserialize,
+            patch("app.daemon.services.queue_request_handler.aware_utcnow"),
+            patch("app.daemon.services.queue_request_handler.RequestSchema"),
+        ):
             mock_deserialize.return_value = QueueRequestHandlerTask(
                 user_id=123,
                 beatmapset_id=456,
@@ -169,9 +180,11 @@ class TestQueueRequestHandler:
             "mv_checked": False,
         }
 
-        with patch("app.daemon.services.queue_request_handler.BeatmapManager", return_value=mock_bm), \
-             patch("app.daemon.services.queue_request_handler.aware_utcnow"), \
-             patch("app.daemon.services.queue_request_handler.RequestSchema") as mock_schema_class:
+        with (
+            patch("app.daemon.services.queue_request_handler.BeatmapManager", return_value=mock_bm),
+            patch("app.daemon.services.queue_request_handler.aware_utcnow"),
+            patch("app.daemon.services.queue_request_handler.RequestSchema") as mock_schema_class,
+        ):
             mock_schema_class.model_validate.return_value = mock_schema_instance
             service._db.add.return_value = MagicMock()
             await service._execute_job(123)
@@ -183,13 +196,13 @@ class TestQueueRequestHandler:
     async def test_auto_retry_decorator_applied(self, service):
         """Test that _execute_job has auto_retry decorator."""
 
-        assert hasattr(service._execute_job, "__wrapped__") or hasattr(service._execute_job, "__call__")
+        assert hasattr(service._execute_job, "__wrapped__") or callable(service._execute_job)
 
     async def test_auto_retry_configured_with_connect_timeout(self, service):
         """Test that auto_retry is configured to catch ConnectTimeout."""
         import inspect
 
-        sig = inspect.signature(service._execute_job)
+        inspect.signature(service._execute_job)
         wrapped = getattr(service._execute_job, "__wrapped__", service._execute_job)
 
         assert wrapped is not None

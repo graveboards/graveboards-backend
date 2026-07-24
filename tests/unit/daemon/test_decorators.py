@@ -108,6 +108,7 @@ class TestAutoRetryDecorator:
 
     async def test_auto_retry_logs_final_failure(self):
         """Test that final failure is logged."""
+
         @auto_retry(max_attempts=2, retry_exceptions=(ValueError,))
         async def always_fails():
             raise ValueError()
@@ -145,6 +146,7 @@ class TestAutoRetryDecorator:
 
     async def test_auto_retry_preserves_function_name(self):
         """Test that function name is preserved."""
+
         @auto_retry()
         async def my_custom_function():
             return "result"
@@ -155,11 +157,7 @@ class TestAutoRetryDecorator:
         """Test that zero delay backoff works."""
         call_count = 0
 
-        @auto_retry(
-            max_attempts=3,
-            retry_exceptions=(ValueError,),
-            backoff_strategy=lambda n: 0
-        )
+        @auto_retry(max_attempts=3, retry_exceptions=(ValueError,), backoff_strategy=lambda n: 0)
         async def fails_twice():
             nonlocal call_count
             call_count += 1
@@ -176,10 +174,7 @@ class TestAutoRetryDecorator:
         """Test with custom exception types tuple."""
         call_count = 0
 
-        @auto_retry(
-            max_attempts=3,
-            retry_exceptions=(ValueError, TypeError)
-        )
+        @auto_retry(max_attempts=3, retry_exceptions=(ValueError, TypeError))
         async def raises_type_error():
             nonlocal call_count
             call_count += 1
@@ -196,10 +191,7 @@ class TestAutoRetryDecorator:
         """Test that unspecified exceptions are not retried."""
         call_count = 0
 
-        @auto_retry(
-            max_attempts=5,
-            retry_exceptions=(TimeoutError,)
-        )
+        @auto_retry(max_attempts=5, retry_exceptions=(TimeoutError,))
         async def raises_key_error():
             nonlocal call_count
             call_count += 1

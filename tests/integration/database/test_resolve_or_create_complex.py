@@ -75,8 +75,18 @@ async def test_beatmap_snapshot_with_tags_and_owners(db, db_session):
         url="https://osu.ppy.sh/beatmaps/10000101",
         version="Normal",
         beatmap_tags=[
-            {"id": 1, "name": "style/symmetrical", "ruleset_id": 0, "description": "Symmetrical design"},
-            {"id": 2, "name": "genre/electronic", "ruleset_id": 0, "description": "Electronic music"},
+            {
+                "id": 1,
+                "name": "style/symmetrical",
+                "ruleset_id": 0,
+                "description": "Symmetrical design",
+            },
+            {
+                "id": 2,
+                "name": "genre/electronic",
+                "ruleset_id": 0,
+                "description": "Electronic music",
+            },
         ],
         owner_profiles=[
             {
@@ -695,7 +705,9 @@ async def test_add_many_beatmapset_snapshots(db, db_session):
     checksums = {s.checksum for s in created}
     assert checksums == {"add_many_bms_unique_10000008_1", "add_many_bms_unique_10000008_2"}
 
-    snapshots = await db.get_many(BeatmapsetSnapshot, session=db_session, beatmapset_id=beatmapset_id)
+    snapshots = await db.get_many(
+        BeatmapsetSnapshot, session=db_session, beatmapset_id=beatmapset_id
+    )
     assert len(snapshots) == 2
 
 

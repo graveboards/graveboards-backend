@@ -31,6 +31,7 @@ def test_search_engine_initialization():
     engine = SearchEngine(scope=Scope.BEATMAPSETS)
     assert engine.scope == Scope.BEATMAPSETS
     from app.search.mappings import SCOPE_MODEL_MAPPING, SCOPE_SCHEMA_MAPPING
+
     assert engine.model_class == SCOPE_MODEL_MAPPING[Scope.BEATMAPSETS]
     assert engine.schema_class == SCOPE_SCHEMA_MAPPING[Scope.BEATMAPSETS]
 
@@ -86,9 +87,7 @@ def test_search_engine_with_sorting():
 @pytest.mark.integration
 def test_search_engine_with_filters():
     """Test SearchEngine initialization with filter parameters."""
-    filters = FiltersSchema(
-        beatmapset={"status": "ranked"}
-    )
+    filters = FiltersSchema(beatmapset={"status": "ranked"})
 
     engine = SearchEngine(
         scope=Scope.BEATMAPSETS,

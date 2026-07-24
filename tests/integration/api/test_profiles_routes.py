@@ -3,6 +3,7 @@ Integration tests for GET /api/v1/profiles endpoints.
 
 Tests the profiles retrieval via full HTTP stack.
 """
+
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest

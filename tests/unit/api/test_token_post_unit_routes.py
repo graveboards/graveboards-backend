@@ -3,6 +3,7 @@ Unit tests for POST /api/v1/token endpoint.
 
 Tests token exchange logic with mocked dependencies.
 """
+
 from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
 
@@ -42,11 +43,14 @@ class TestTokenPostEndpoint:
     async def _create_mock_oauth(self, token_response=None):
         """Create a mock OAuth instance for testing."""
         mock_oauth = MagicMock()
-        mock_oauth.fetch_token = AsyncMock(return_value=token_response or {
-            "access_token": self.TEST_ACCESS_TOKEN,
-            "refresh_token": self.TEST_REFRESH_TOKEN,
-            "expires_at": self.TEST_EXPIRES_AT,
-        })
+        mock_oauth.fetch_token = AsyncMock(
+            return_value=token_response
+            or {
+                "access_token": self.TEST_ACCESS_TOKEN,
+                "refresh_token": self.TEST_REFRESH_TOKEN,
+                "expires_at": self.TEST_EXPIRES_AT,
+            }
+        )
         return mock_oauth
 
     async def _create_mock_osu_api_client(self, user_data=None):
@@ -54,11 +58,14 @@ class TestTokenPostEndpoint:
         mock_rc = MagicMock(spec=RedisClient)
         mock_client = MagicMock(spec=OsuAPIClient)
         mock_client.rc = mock_rc
-        mock_client.get_own_data = AsyncMock(return_value=user_data or {
-            "id": self.TEST_USER_ID,
-            "username": "test_user",
-            "avatar_url": "https://example.com/avatar.png",
-        })
+        mock_client.get_own_data = AsyncMock(
+            return_value=user_data
+            or {
+                "id": self.TEST_USER_ID,
+                "username": "test_user",
+                "avatar_url": "https://example.com/avatar.png",
+            }
+        )
         return mock_client
 
     async def _create_mock_redis(self):
@@ -78,6 +85,7 @@ class TestTokenPostEndpoint:
     async def _call_post_token(self, body, **kwargs):
         """Call the post token function with dependencies."""
         from api.v1.token import post
+
         return await post(body=body, **kwargs)
 
     @pytest.mark.unit
@@ -125,7 +133,7 @@ class TestTokenPostEndpoint:
                 rc=mock_rc,
                 db=mock_db,
             )
-            assert False, "Expected BadRequest exception"
+            raise AssertionError("Expected BadRequest exception")
         except BadRequest as e:
             assert "Missing code" in str(e)
 
@@ -149,7 +157,7 @@ class TestTokenPostEndpoint:
                 rc=mock_rc,
                 db=mock_db,
             )
-            assert False, "Expected BadRequest exception"
+            raise AssertionError("Expected BadRequest exception")
         except BadRequest as e:
             assert "Missing state" in str(e)
 
@@ -174,7 +182,7 @@ class TestTokenPostEndpoint:
                 rc=mock_rc,
                 db=mock_db,
             )
-            assert False, "Expected BadRequest exception"
+            raise AssertionError("Expected BadRequest exception")
         except BadRequest as e:
             assert "Invalid or expired state" in str(e)
 
@@ -204,9 +212,6 @@ class TestTokenPostEndpoint:
                 rc=mock_rc,
                 db=mock_db,
             )
-            assert False, "Expected OsuOAuthError exception"
+            raise AssertionError("Expected OsuOAuthError exception")
         except OsuOAuthError:
             pass
-
-
-

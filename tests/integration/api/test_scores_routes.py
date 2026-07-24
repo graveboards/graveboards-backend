@@ -3,6 +3,7 @@ Integration tests for POST /api/v1/scores endpoint (admin-only).
 
 Tests the score submission via full HTTP stack.
 """
+
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -49,7 +50,9 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_submission_creates_score(self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled):
+    async def test_admin_submission_creates_score(
+        self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled
+    ):
         """Test successful score submission that creates new score."""
         from app.database.models import Beatmap, BeatmapSnapshot, Leaderboard, Score, User
 
@@ -94,7 +97,9 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_user_not_found(self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled):
+    async def test_admin_user_not_found(
+        self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled
+    ):
         """Test score submission fails when user doesn't exist."""
         from app.database.models import User
 
@@ -120,7 +125,9 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_beatmap_not_found(self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled):
+    async def test_admin_beatmap_not_found(
+        self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled
+    ):
         """Test score submission fails when beatmap doesn't exist."""
         from app.database.models import Beatmap, User
 
@@ -152,7 +159,9 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_beatmap_snapshot_not_found(self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled):
+    async def test_admin_beatmap_snapshot_not_found(
+        self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled
+    ):
         """Test score submission fails when beatmap snapshot doesn't exist."""
         from app.database.models import Beatmap, BeatmapSnapshot, User
 
@@ -188,7 +197,9 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_leaderboard_not_found(self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled):
+    async def test_admin_leaderboard_not_found(
+        self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled
+    ):
         """Test score submission fails when leaderboard doesn't exist."""
         from app.database.models import Beatmap, BeatmapSnapshot, Leaderboard, User
 
@@ -229,7 +240,9 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_duplicate_score(self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled):
+    async def test_admin_duplicate_score(
+        self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled
+    ):
         """Test score submission fails when duplicate exists."""
         from app.database.models import Beatmap, BeatmapSnapshot, Leaderboard, Score, User
 
@@ -275,7 +288,9 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_non_admin_user_gets_forbidden(self, TestClientWithMocks, valid_score_body, authenticated_user_id):
+    async def test_non_admin_user_gets_forbidden(
+        self, TestClientWithMocks, valid_score_body, authenticated_user_id
+    ):
         """Test that non-admin user gets 403 Forbidden."""
         from app.security import generate_token
 
@@ -295,11 +310,16 @@ class TestScoresPostIntegration:
 
         assert response.status_code == 403
         data = response.json()
-        assert "forbidden" in data.get("detail", "").lower() or "not authorized" in data.get("detail", "").lower()
+        assert (
+            "forbidden" in data.get("detail", "").lower()
+            or "not authorized" in data.get("detail", "").lower()
+        )
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_access_succeeds_with_token(self, TestClientWithMocks, valid_score_body, admin_user_token, authenticated_user_id):
+    async def test_admin_access_succeeds_with_token(
+        self, TestClientWithMocks, valid_score_body, admin_user_token, authenticated_user_id
+    ):
         """Test that admin user can successfully post score with valid token."""
         from app.database.enums import RoleName
         from app.database.models import Beatmap, BeatmapSnapshot, Leaderboard, Score, User
@@ -355,7 +375,9 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_success_with_auth(self, TestClientWithMocks, valid_score_body, admin_user_token):
+    async def test_admin_success_with_auth(
+        self, TestClientWithMocks, valid_score_body, admin_user_token
+    ):
         """Test that admin user can successfully post score with valid token."""
         from app.database.models import Beatmap, BeatmapSnapshot, Leaderboard, Score, User
 
@@ -401,7 +423,9 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_bypass_security_with_flag(self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled):
+    async def test_bypass_security_with_flag(
+        self, TestClientWithMocks, valid_score_body, admin_role_user, security_disabled
+    ):
         """Test that disabling security resolves an admin dev identity (rather than
         skipping the check outright), letting the request through.
         """

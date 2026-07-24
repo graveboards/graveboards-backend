@@ -5,6 +5,7 @@ This module contains tests for the sorting CTE factory.
 """
 
 import pytest
+from pydantic import ValidationError
 
 pytestmark = [pytest.mark.integration]
 
@@ -18,7 +19,9 @@ def test_sorting_schema_structure():
 
     sorting_schema = SortingSchema(
         [
-            SortingOption(field=ModelField.BEATMAPSETSNAPSHOT__RANKED, order=SortingOrder.DESCENDING),
+            SortingOption(
+                field=ModelField.BEATMAPSETSNAPSHOT__RANKED, order=SortingOrder.DESCENDING
+            ),
             SortingOption(field=ModelField.BEATMAPSETSNAPSHOT__TITLE, order=SortingOrder.ASCENDING),
         ]
     )
@@ -71,11 +74,13 @@ def test_sorting_schema_validation():
     from app.search.datastructures.sorting import SortingOption
     from app.search.enums import ModelField
 
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         SortingSchema([{"invalid": "schema"}])
 
-    with pytest.raises(Exception):
-        SortingSchema([SortingOption(field=ModelField.BEATMAPSNAPSHOT__RANKED, order="invalid_order")])
+    with pytest.raises(ValidationError):
+        SortingSchema(
+            [SortingOption(field=ModelField.BEATMAPSNAPSHOT__RANKED, order="invalid_order")]
+        )
 
 
 @pytest.mark.integration
@@ -87,7 +92,9 @@ def test_sorting_schema_multiple_fields():
 
     sorting_schema = SortingSchema(
         [
-            SortingOption(field=ModelField.BEATMAPSETSNAPSHOT__RANKED, order=SortingOrder.DESCENDING),
+            SortingOption(
+                field=ModelField.BEATMAPSETSNAPSHOT__RANKED, order=SortingOrder.DESCENDING
+            ),
             SortingOption(field=ModelField.BEATMAPSETSNAPSHOT__TITLE, order=SortingOrder.ASCENDING),
             SortingOption(field=ModelField.BEATMAPSNAPSHOT__RANKED, order=SortingOrder.ASCENDING),
         ]

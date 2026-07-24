@@ -50,7 +50,9 @@ async def seed_beatmapset(
             failtimes=beatmap_data.get("failtimes", {}),
             hit_length=beatmap_data.get("hit_length", 180),
             is_scoreable=beatmap_data.get("is_scoreable", True),
-            last_updated=datetime.fromisoformat(beatmap_data.get("last_updated", "2024-01-01T00:00:00+00:00").replace("Z", "+00:00")),
+            last_updated=datetime.fromisoformat(
+                beatmap_data.get("last_updated", "2024-01-01T00:00:00+00:00").replace("Z", "+00:00")
+            ),
             max_combo=beatmap_data.get("max_combo", 1000),
             mode=beatmap_data.get("mode", "osu"),
             mode_int=beatmap_data.get("mode_int", 0),
@@ -74,12 +76,22 @@ async def seed_beatmapset(
         checksum=f"dummy_checksum_{beatmapset_id}",
         artist=beatmapset_data.get("artist", "Test Artist"),
         artist_unicode=beatmapset_data.get("artist_unicode", "Test Artist"),
-        availability=beatmapset_data.get("availability", {"download_disabled": False, "more_information": None}),
+        availability=beatmapset_data.get(
+            "availability", {"download_disabled": False, "more_information": None}
+        ),
         bpm=beatmapset_data.get("bpm", 120.0),
         can_be_hyped=beatmapset_data.get("can_be_hyped", True),
-        covers=beatmapset_data.get("covers", {"cover": "https://example.com/cover.jpg", "cover@2x": "https://example.com/cover@2x.jpg"}),
+        covers=beatmapset_data.get(
+            "covers",
+            {
+                "cover": "https://example.com/cover.jpg",
+                "cover@2x": "https://example.com/cover@2x.jpg",
+            },
+        ),
         creator=beatmapset_data.get("creator", "testuser"),
-        current_nominations=beatmapset_data.get("current_nominations", {"nominators": [], "required": 2}),
+        current_nominations=beatmapset_data.get(
+            "current_nominations", {"nominators": [], "required": 2}
+        ),
         description=beatmapset_data.get("description", {"description": ""}),
         discussion_enabled=beatmapset_data.get("discussion_enabled", True),
         discussion_locked=beatmapset_data.get("discussion_locked", False),
@@ -88,23 +100,42 @@ async def seed_beatmapset(
         hype=beatmapset_data.get("hype", None),
         is_scoreable=beatmapset_data.get("is_scoreable", True),
         language=beatmapset_data.get("language", {"id": 1, "name": "Any"}),
-        last_updated=datetime.fromisoformat(beatmapset_data.get("last_updated", "2024-01-01T00:00:00+00:00").replace("Z", "+00:00")),
+        last_updated=datetime.fromisoformat(
+            beatmapset_data.get("last_updated", "2024-01-01T00:00:00+00:00").replace("Z", "+00:00")
+        ),
         legacy_thread_url=beatmapset_data.get("legacy_thread_url", None),
-        nominations_summary=beatmapset_data.get("nominations_summary", {"current": 2, "required": 2, "required_meta": {"main_ruleset": 2, "non_main_ruleset": 1}}),
+        nominations_summary=beatmapset_data.get(
+            "nominations_summary",
+            {
+                "current": 2,
+                "required": 2,
+                "required_meta": {"main_ruleset": 2, "non_main_ruleset": 1},
+            },
+        ),
         nsfw=beatmapset_data.get("nsfw", False),
         offset=beatmapset_data.get("offset", 0),
         pack_tags=beatmapset_data.get("pack_tags", []),
         play_count=beatmapset_data.get("play_count", 0),
         preview_url=beatmapset_data.get("preview_url", "https://example.com/preview.mp3"),
         ranked=beatmapset_data.get("ranked", 1),
-        ranked_date=datetime.fromisoformat(beatmapset_data.get("ranked_date", "2024-01-01T00:00:00+00:00").replace("Z", "+00:00")) if beatmapset_data.get("ranked_date") else None,
+        ranked_date=datetime.fromisoformat(
+            beatmapset_data.get("ranked_date", "2024-01-01T00:00:00+00:00").replace("Z", "+00:00")
+        )
+        if beatmapset_data.get("ranked_date")
+        else None,
         rating=beatmapset_data.get("rating", 5.0),
         ratings=beatmapset_data.get("ratings", [5]),
         source=beatmapset_data.get("source", ""),
         spotlight=beatmapset_data.get("spotlight", False),
         status=beatmapset_data.get("status", "ranked"),
         storyboard=beatmapset_data.get("storyboard", False),
-        submitted_date=datetime.fromisoformat(beatmapset_data.get("submitted_date", "2024-01-01T00:00:00+00:00").replace("Z", "+00:00")) if beatmapset_data.get("submitted_date") else None,
+        submitted_date=datetime.fromisoformat(
+            beatmapset_data.get("submitted_date", "2024-01-01T00:00:00+00:00").replace(
+                "Z", "+00:00"
+            )
+        )
+        if beatmapset_data.get("submitted_date")
+        else None,
         tags=beatmapset_data.get("tags", "test tags"),
         title=beatmapset_data.get("title", "Test Song"),
         title_unicode=beatmapset_data.get("title_unicode", "Test Song"),

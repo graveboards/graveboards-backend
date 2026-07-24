@@ -14,10 +14,9 @@ from app.search.enums import Scope
 
 def _compile_postgres(cte):
     """Compile a CTE with PostgreSQL dialect for accurate SQL inspection."""
-    return str(cte.compile(
-        dialect=postgresql.dialect(),
-        compile_kwargs={"literal_binds": True}
-    )).lower()
+    return str(
+        cte.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True})
+    ).lower()
 
 
 @pytest.mark.integration

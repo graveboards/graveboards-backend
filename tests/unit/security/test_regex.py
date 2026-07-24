@@ -1,4 +1,3 @@
-
 import pytest
 
 from app.security.regex import safe_compile_regex

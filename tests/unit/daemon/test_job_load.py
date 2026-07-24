@@ -1,3 +1,4 @@
+from dataclasses import FrozenInstanceError
 from datetime import UTC, datetime
 
 import pytest
@@ -36,7 +37,7 @@ class TestJobLoadInstruction:
             execution_time=execution_time,
             last_execution=last_execution,
             interval_hours=24.0,
-            skip=True
+            skip=True,
         )
 
         assert instruction.execution_time == execution_time
@@ -71,7 +72,7 @@ class TestJobLoadInstruction:
         """Test that instruction is immutable."""
         instruction = JobLoadInstruction()
 
-        with pytest.raises(Exception):
+        with pytest.raises(FrozenInstanceError):
             instruction.execution_time = datetime.now(UTC)
 
     def test_slots_for_memory_efficiency(self):
@@ -91,12 +92,8 @@ class TestJobLoadInstruction:
 
     def test_inequality_with_different_values(self):
         """Test inequality comparison with different values."""
-        instruction1 = JobLoadInstruction(
-            execution_time=datetime(2026, 1, 1, tzinfo=UTC)
-        )
-        instruction2 = JobLoadInstruction(
-            execution_time=datetime(2026, 1, 2, tzinfo=UTC)
-        )
+        instruction1 = JobLoadInstruction(execution_time=datetime(2026, 1, 1, tzinfo=UTC))
+        instruction2 = JobLoadInstruction(execution_time=datetime(2026, 1, 2, tzinfo=UTC))
 
         assert instruction1 != instruction2
 
@@ -121,9 +118,7 @@ class TestJobLoadInstruction:
 
     def test_hashability(self):
         """Test that instruction is hashable."""
-        instruction = JobLoadInstruction(
-            execution_time=datetime(2026, 1, 1, tzinfo=UTC)
-        )
+        instruction = JobLoadInstruction(execution_time=datetime(2026, 1, 1, tzinfo=UTC))
 
         instruction_set = {instruction}
         assert instruction in instruction_set

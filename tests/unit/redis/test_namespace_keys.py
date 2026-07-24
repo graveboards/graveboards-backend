@@ -1,4 +1,3 @@
-
 from app.redis_client.enums import Namespace
 
 

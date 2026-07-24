@@ -77,7 +77,7 @@ class TestGetFilterStmt:
             category=SearchableFieldCategory.BEATMAP,
             target=BeatmapSnapshot.version,
             like_operator="ilike",
-            pattern="%test%"
+            pattern="%test%",
         )
 
         assert stmt is not None
@@ -93,7 +93,7 @@ class TestGetFilterStmt:
             category=SearchableFieldCategory.BEATMAPSET,
             target=BeatmapsetSnapshot.title,
             like_operator="ilike",
-            pattern="%test%"
+            pattern="%test%",
         )
 
         assert stmt is not None
@@ -109,7 +109,7 @@ class TestGetFilterStmt:
             category=SearchableFieldCategory.BEATMAP,
             target=BeatmapSnapshot.version,
             like_operator="ilike",
-            pattern="%test%"
+            pattern="%test%",
         )
 
         assert stmt is not None
@@ -123,7 +123,7 @@ class TestGetFilterStmt:
             category=SearchableFieldCategory.BEATMAPSET,
             target=BeatmapsetSnapshot.title,
             like_operator="ilike",
-            pattern="%test%"
+            pattern="%test%",
         )
 
         assert stmt is not None
@@ -137,7 +137,7 @@ class TestGetFilterStmt:
             category=SearchableFieldCategory.BEATMAP,
             target=Queue.name,
             like_operator="ilike",
-            pattern="%test%"
+            pattern="%test%",
         )
 
         assert stmt is not None
@@ -151,7 +151,7 @@ class TestGetFilterStmt:
             category=SearchableFieldCategory.BEATMAPSET,
             target=Queue.name,
             like_operator="ilike",
-            pattern="%test%"
+            pattern="%test%",
         )
 
         assert stmt is not None
@@ -165,7 +165,7 @@ class TestGetFilterStmt:
             category=SearchableFieldCategory.QUEUE,
             target=Queue.name,
             like_operator="ilike",
-            pattern="%test%"
+            pattern="%test%",
         )
 
         assert stmt is not None
@@ -179,7 +179,7 @@ class TestGetFilterStmt:
             category=SearchableFieldCategory.REQUEST,
             target=Queue.name,
             like_operator="ilike",
-            pattern="%test%"
+            pattern="%test%",
         )
 
         assert stmt is not None
@@ -193,7 +193,7 @@ class TestGetFilterStmt:
             category=SearchableFieldCategory.BEATMAP,
             target=Request.comment,
             like_operator="ilike",
-            pattern="%test%"
+            pattern="%test%",
         )
 
         assert stmt is not None
@@ -207,7 +207,7 @@ class TestGetFilterStmt:
             category=SearchableFieldCategory.BEATMAPSET,
             target=Request.comment,
             like_operator="ilike",
-            pattern="%test%"
+            pattern="%test%",
         )
 
         assert stmt is not None
@@ -221,7 +221,7 @@ class TestGetFilterStmt:
             category=SearchableFieldCategory.REQUEST,
             target=Request.comment,
             like_operator="ilike",
-            pattern="%test%"
+            pattern="%test%",
         )
 
         assert stmt is not None
@@ -236,7 +236,7 @@ class TestGetFilterStmt:
                 category=SearchableFieldCategory.PROFILE,
                 target=Queue.name,
                 like_operator="ilike",
-                pattern="%test%"
+                pattern="%test%",
             )
 
     def test_get_filter_stmt_unsupported_scope_raises(self):
@@ -249,5 +249,5 @@ class TestGetFilterStmt:
                 category=SearchableFieldCategory.BEATMAP,
                 target=BeatmapSnapshot.version,
                 like_operator="ilike",
-                pattern="%test%"
+                pattern="%test%",
             )

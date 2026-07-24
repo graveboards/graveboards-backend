@@ -18,7 +18,20 @@ from .protocol import DatabaseProtocol
 from .r import R
 from .u import U
 
-__all__ = ["CRUD", "C", "D", "SessionResolver", "db_session_resolver", "ensure_required", "session_manager", "session_manager_stream", "Misc", "DatabaseProtocol", "R", "U"]
+__all__ = [
+    "CRUD",
+    "C",
+    "D",
+    "SessionResolver",
+    "db_session_resolver",
+    "ensure_required",
+    "session_manager",
+    "session_manager_stream",
+    "Misc",
+    "DatabaseProtocol",
+    "R",
+    "U",
+]
 
 logger = get_logger(__name__)
 

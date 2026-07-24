@@ -4,6 +4,7 @@ Integration tests for security decorator edge cases.
 Tests the role_authorization and ownership_authorization decorators
 using the actual API endpoints that employ these decorators.
 """
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -33,16 +34,22 @@ class TestRoleAuthorizationWithOneOf:
         mock_request.user_id = 87654321
         mock_request.queue = MagicMock()
         mock_request.queue.user_id = 87654321
-        mock_db.get = AsyncMock(side_effect=lambda model, **kwargs: mock_request if model.__name__ == "Request" else mock_user)
+        mock_db.get = AsyncMock(
+            side_effect=lambda model, **kwargs: (
+                mock_request if model.__name__ == "Request" else mock_user
+            )
+        )
         mock_db.update = AsyncMock()
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.utils.get_authenticated_user_id', return_value=12345678):
+        with patch(
+            "app.security.decorators.utils.get_authenticated_user_id", return_value=12345678
+        ):
             response = test_client.patch(
                 "/api/v1/requests/1",
                 json={"status": 1},
-                headers={"Authorization": f"Bearer {generate_token(12345678)}"}
+                headers={"Authorization": f"Bearer {generate_token(12345678)}"},
             )
 
         assert response.status_code == 200
@@ -51,7 +58,9 @@ class TestRoleAuthorizationWithOneOf:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_user_with_none_of_required_roles_fails(self, TestClientWithMocks, authenticated_user_id):
+    async def test_user_with_none_of_required_roles_fails(
+        self, TestClientWithMocks, authenticated_user_id
+    ):
         """Test user with none of the required roles fails."""
         from app.database.models import Queue, Request
 
@@ -82,12 +91,15 @@ class TestRoleAuthorizationWithOneOf:
             response = test_client.patch(
                 "/api/v1/requests/1",
                 json={"status": 1},
-                headers={"Authorization": f"Bearer {generate_token(12345678)}"}
+                headers={"Authorization": f"Bearer {generate_token(12345678)}"},
             )
 
         assert response.status_code == 403
         data = response.json()
-        assert "forbidden" in data.get("detail", "").lower() or "not authorized" in data.get("detail", "").lower()
+        assert (
+            "forbidden" in data.get("detail", "").lower()
+            or "not authorized" in data.get("detail", "").lower()
+        )
 
 
 class TestRoleAuthorizationWithCustomOverride:
@@ -122,11 +134,13 @@ class TestRoleAuthorizationWithCustomOverride:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.utils.get_authenticated_user_id', return_value=99999999):
+        with patch(
+            "app.security.decorators.utils.get_authenticated_user_id", return_value=99999999
+        ):
             response = test_client.patch(
                 "/api/v1/queues/1",
                 json={"name": "Updated"},
-                headers={"Authorization": f"Bearer {generate_token(99999999)}"}
+                headers={"Authorization": f"Bearer {generate_token(99999999)}"},
             )
 
         assert response.status_code == 200
@@ -161,16 +175,21 @@ class TestRoleAuthorizationWithCustomOverride:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.utils.get_authenticated_user_id', return_value=99999999):
+        with patch(
+            "app.security.decorators.utils.get_authenticated_user_id", return_value=99999999
+        ):
             response = test_client.patch(
                 "/api/v1/queues/1",
                 json={"name": "Hacked"},
-                headers={"Authorization": f"Bearer {generate_token(99999999)}"}
+                headers={"Authorization": f"Bearer {generate_token(99999999)}"},
             )
 
         assert response.status_code == 403
         data = response.json()
-        assert "forbidden" in data.get("detail", "").lower() or "not authorized" in data.get("detail", "").lower()
+        assert (
+            "forbidden" in data.get("detail", "").lower()
+            or "not authorized" in data.get("detail", "").lower()
+        )
 
 
 class TestOwnershipAuthorizationSuccess:
@@ -201,11 +220,15 @@ class TestOwnershipAuthorizationSuccess:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.utils.get_authenticated_user_id', return_value=12345678), \
-             patch('app.security.decorators.ownership_authorization', lambda *args, **kwargs: lambda f: f):
+        with (
+            patch("app.security.decorators.utils.get_authenticated_user_id", return_value=12345678),
+            patch(
+                "app.security.decorators.ownership_authorization",
+                lambda *args, **kwargs: lambda f: f,
+            ),
+        ):
             response = test_client.get(
-                "/api/v1/requests",
-                headers={"Authorization": f"Bearer {generate_token(12345678)}"}
+                "/api/v1/requests", headers={"Authorization": f"Bearer {generate_token(12345678)}"}
             )
 
         assert response.status_code == 200
@@ -243,11 +266,16 @@ class TestOwnershipAuthorizationSuccess:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.utils.get_authenticated_user_id', return_value=12345678), \
-             patch('app.security.decorators.ownership_authorization', lambda *args, **kwargs: lambda f: f):
+        with (
+            patch("app.security.decorators.utils.get_authenticated_user_id", return_value=12345678),
+            patch(
+                "app.security.decorators.ownership_authorization",
+                lambda *args, **kwargs: lambda f: f,
+            ),
+        ):
             response = test_client.get(
                 "/api/v1/requests/1",
-                headers={"Authorization": f"Bearer {generate_token(12345678)}"}
+                headers={"Authorization": f"Bearer {generate_token(12345678)}"},
             )
 
         assert response.status_code == 200
@@ -290,10 +318,11 @@ class TestOwnershipAuthorizationFailure:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.utils.get_authenticated_user_id', return_value=12345678):
+        with patch(
+            "app.security.decorators.utils.get_authenticated_user_id", return_value=12345678
+        ):
             response = test_client.get(
-                "/api/v1/requests",
-                headers={"Authorization": f"Bearer {generate_token(12345678)}"}
+                "/api/v1/requests", headers={"Authorization": f"Bearer {generate_token(12345678)}"}
             )
 
         assert response.status_code == 200
@@ -332,15 +361,20 @@ class TestOwnershipAuthorizationFailure:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.utils.get_authenticated_user_id', return_value=12345678):
+        with patch(
+            "app.security.decorators.utils.get_authenticated_user_id", return_value=12345678
+        ):
             response = test_client.get(
                 "/api/v1/requests/1",
-                headers={"Authorization": f"Bearer {generate_token(12345678)}"}
+                headers={"Authorization": f"Bearer {generate_token(12345678)}"},
             )
 
         assert response.status_code == 403
         data = response.json()
-        assert "forbidden" in data.get("detail", "").lower() or "not authorized" in data.get("detail", "").lower()
+        assert (
+            "forbidden" in data.get("detail", "").lower()
+            or "not authorized" in data.get("detail", "").lower()
+        )
 
 
 class TestOwnershipAuthorizationAdminOverride:
@@ -348,7 +382,9 @@ class TestOwnershipAuthorizationAdminOverride:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_can_get_all_requests_including_others(self, TestClientWithMocks, admin_user_token):
+    async def test_admin_can_get_all_requests_including_others(
+        self, TestClientWithMocks, admin_user_token
+    ):
         """Test that admin (like any authenticated caller) sees every matching request.
 
         GET /api/v1/requests has no ownership scoping, so this is really just
@@ -389,7 +425,9 @@ class TestOwnershipAuthorizationAdminOverride:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.utils.get_authenticated_user_id', return_value=11111111):
+        with patch(
+            "app.security.decorators.utils.get_authenticated_user_id", return_value=11111111
+        ):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.get("/api/v1/requests", headers=headers)
 
@@ -401,7 +439,9 @@ class TestOwnershipAuthorizationAdminOverride:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_can_get_request_by_id_despite_ownership(self, TestClientWithMocks, admin_user_token):
+    async def test_admin_can_get_request_by_id_despite_ownership(
+        self, TestClientWithMocks, admin_user_token
+    ):
         """Test that admin can get specific request regardless of ownership."""
 
         mock_db = AsyncMock()
@@ -431,8 +471,13 @@ class TestOwnershipAuthorizationAdminOverride:
 
         test_client = TestClientWithMocks(mock_db=mock_db)
 
-        with patch('app.security.decorators.utils.get_authenticated_user_id', return_value=11111111), \
-             patch('app.security.decorators.ownership_authorization', lambda *args, **kwargs: lambda f: f):
+        with (
+            patch("app.security.decorators.utils.get_authenticated_user_id", return_value=11111111),
+            patch(
+                "app.security.decorators.ownership_authorization",
+                lambda *args, **kwargs: lambda f: f,
+            ),
+        ):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.get("/api/v1/requests/1", headers=headers)
 

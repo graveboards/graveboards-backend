@@ -267,7 +267,9 @@ class DbSessionResolver(SessionResolver):
     named `db` rather than exposed directly via `session()`.
     """
 
-    def __call__(self, obj: Any, *, autoflush: bool = True) -> AbstractAsyncContextManager[AsyncSession]:
+    def __call__(
+        self, obj: Any, *, autoflush: bool = True
+    ) -> AbstractAsyncContextManager[AsyncSession]:
         return obj.db.session(autoflush=autoflush)
 
 

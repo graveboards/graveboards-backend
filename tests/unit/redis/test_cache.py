@@ -79,10 +79,14 @@ def _full_beatmapset_dict():
         "beatmaps": [_full_beatmap_dict()],
         "availability": {"download_disabled": False, "more_information": None},
         "covers": {
-            "cover": "x100", "cover_2x": "x200",
-            "card": "x100", "card_2x": "x200",
-            "list": "x100", "list_2x": "x200",
-            "slimcover": "x100", "slimcover_2x": "x200",
+            "cover": "x100",
+            "cover_2x": "x200",
+            "card": "x100",
+            "card_2x": "x200",
+            "list": "x100",
+            "list_2x": "x200",
+            "slimcover": "x100",
+            "slimcover_2x": "x200",
         },
         "current_nominations": [],
         "description": {"description": ""},
@@ -90,7 +94,8 @@ def _full_beatmapset_dict():
         "hype": {"current": 0, "required": 2},
         "language": None,
         "nominations_summary": {
-            "current": 0, "eligible_main_rulesets": None,
+            "current": 0,
+            "eligible_main_rulesets": None,
             "required_meta": {"main_ruleset": 0, "non_main_ruleset": 0},
         },
         "ratings": [],
@@ -224,10 +229,14 @@ class TestOAuthTokenSerialization:
 
     def test_deserialize_converts_expires_to_int(self):
         """Test token deserialization converts expires_in/expires_at to int."""
-        restored = OsuClientOAuthToken.deserialize({
-            "access_token": "tok", "token_type": "bearer",
-            "expires_in": "5184000", "expires_at": "1735689600",
-        })
+        restored = OsuClientOAuthToken.deserialize(
+            {
+                "access_token": "tok",
+                "token_type": "bearer",
+                "expires_in": "5184000",
+                "expires_at": "1735689600",
+            }
+        )
         assert isinstance(restored.expires_in, int)
         assert isinstance(restored.expires_at, int)
 
@@ -281,8 +290,13 @@ class TestQueueRequestHandlerTaskSerialization:
     def test_deserialize_converts_ids_to_int(self):
         """Test task deserialization converts id fields to int."""
         serialized = {
-            "user_id": "12345678", "beatmapset_id": "35965", "queue_id": "1",
-            "comment": "test", "mv_checked": "False", "completed_at": "", "failed_at": "",
+            "user_id": "12345678",
+            "beatmapset_id": "35965",
+            "queue_id": "1",
+            "comment": "test",
+            "mv_checked": "False",
+            "completed_at": "",
+            "failed_at": "",
         }
         restored = QueueRequestHandlerTask.deserialize(serialized)
         assert isinstance(restored.user_id, int)
@@ -292,8 +306,13 @@ class TestQueueRequestHandlerTaskSerialization:
     def test_deserialize_null_datetimes_to_none(self):
         """Test task deserialization converts empty datetime strings to None."""
         serialized = {
-            "user_id": "1", "beatmapset_id": "2", "queue_id": "3",
-            "comment": "test", "mv_checked": "False", "completed_at": "", "failed_at": "",
+            "user_id": "1",
+            "beatmapset_id": "2",
+            "queue_id": "3",
+            "comment": "test",
+            "mv_checked": "False",
+            "completed_at": "",
+            "failed_at": "",
         }
         restored = QueueRequestHandlerTask.deserialize(serialized)
         assert restored.completed_at is None
@@ -302,9 +321,13 @@ class TestQueueRequestHandlerTaskSerialization:
     def test_deserialize_with_set_datetimes(self):
         """Test task deserialization parses datetime strings."""
         serialized = {
-            "user_id": "1", "beatmapset_id": "2", "queue_id": "3",
-            "comment": "test", "mv_checked": "True",
-            "completed_at": "2024-06-15T12:00:00+00:00", "failed_at": "",
+            "user_id": "1",
+            "beatmapset_id": "2",
+            "queue_id": "3",
+            "comment": "test",
+            "mv_checked": "True",
+            "completed_at": "2024-06-15T12:00:00+00:00",
+            "failed_at": "",
         }
         restored = QueueRequestHandlerTask.deserialize(serialized)
         assert isinstance(restored.completed_at, datetime)
@@ -313,11 +336,17 @@ class TestQueueRequestHandlerTaskSerialization:
 
     def test_hashed_id_is_deterministic(self):
         """Test hashed_id is deterministic for same inputs."""
-        t1 = QueueRequestHandlerTask(user_id=1, beatmapset_id=2, queue_id=3, comment="a", mv_checked=False)
-        t2 = QueueRequestHandlerTask(user_id=1, beatmapset_id=2, queue_id=3, comment="b", mv_checked=False)
+        t1 = QueueRequestHandlerTask(
+            user_id=1, beatmapset_id=2, queue_id=3, comment="a", mv_checked=False
+        )
+        t2 = QueueRequestHandlerTask(
+            user_id=1, beatmapset_id=2, queue_id=3, comment="b", mv_checked=False
+        )
         assert t1.hashed_id == t2.hashed_id
 
     def test_hashed_id_is_positive(self):
         """Test hashed_id is always a positive integer."""
-        task = QueueRequestHandlerTask(user_id=1, beatmapset_id=2, queue_id=3, comment="a", mv_checked=False)
+        task = QueueRequestHandlerTask(
+            user_id=1, beatmapset_id=2, queue_id=3, comment="a", mv_checked=False
+        )
         assert task.hashed_id > 0

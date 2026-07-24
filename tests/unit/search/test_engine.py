@@ -20,10 +20,7 @@ class TestSearchEngineCTEs:
         """Test that engine applies filtered CTE."""
         terms = SearchTermsSchema(terms=["beatmap"])
 
-        engine = SearchEngine(
-            scope=Scope.BEATMAPS,
-            search_terms=terms
-        )
+        engine = SearchEngine(scope=Scope.BEATMAPS, search_terms=terms)
 
         compiled = engine.compiled_query.lower()
         assert "beatmap_snapshot" in compiled
@@ -33,15 +30,9 @@ class TestSearchEngineCTEs:
 
     def test_engine_applies_scored_ctes(self):
         """Test that engine applies scored CTEs."""
-        terms = SearchTermsSchema(
-            terms=["beatmap"],
-            field_weights=FieldWeights()
-        )
+        terms = SearchTermsSchema(terms=["beatmap"], field_weights=FieldWeights())
 
-        engine = SearchEngine(
-            scope=Scope.BEATMAPS,
-            search_terms=terms
-        )
+        engine = SearchEngine(scope=Scope.BEATMAPS, search_terms=terms)
 
         compiled = engine.compiled_query.lower()
         assert "beatmap_snapshot" in compiled
@@ -53,10 +44,7 @@ class TestSearchEngineCTEs:
         """Test CTE composition for beatmaps scope."""
         terms = SearchTermsSchema(terms=["beatmap"])
 
-        engine = SearchEngine(
-            scope=Scope.BEATMAPS,
-            search_terms=terms
-        )
+        engine = SearchEngine(scope=Scope.BEATMAPS, search_terms=terms)
 
         compiled = engine.compiled_query.lower()
         assert "beatmap_snapshot" in compiled
@@ -68,10 +56,7 @@ class TestSearchEngineCTEs:
         """Test CTE composition for beatmapsets scope."""
         terms = SearchTermsSchema(terms=["beatmapset"])
 
-        engine = SearchEngine(
-            scope=Scope.BEATMAPSETS,
-            search_terms=terms
-        )
+        engine = SearchEngine(scope=Scope.BEATMAPSETS, search_terms=terms)
 
         compiled = engine.compiled_query.lower()
         assert "beatmapset_snapshot" in compiled
@@ -83,10 +68,7 @@ class TestSearchEngineCTEs:
         """Test CTE composition for queues scope."""
         terms = SearchTermsSchema(terms=["queue"])
 
-        engine = SearchEngine(
-            scope=Scope.QUEUES,
-            search_terms=terms
-        )
+        engine = SearchEngine(scope=Scope.QUEUES, search_terms=terms)
 
         compiled = engine.compiled_query.lower()
         assert "queue" in compiled
@@ -98,10 +80,7 @@ class TestSearchEngineCTEs:
         """Test CTE composition for requests scope."""
         terms = SearchTermsSchema(terms=["request"])
 
-        engine = SearchEngine(
-            scope=Scope.REQUESTS,
-            search_terms=terms
-        )
+        engine = SearchEngine(scope=Scope.REQUESTS, search_terms=terms)
 
         compiled = engine.compiled_query.lower()
         assert "request" in compiled
@@ -117,10 +96,7 @@ class TestSearchEngineScoreAggregation:
         """Test engine aggregates beatmap scores."""
         terms = SearchTermsSchema(terms=["beatmap"])
 
-        engine = SearchEngine(
-            scope=Scope.BEATMAPS,
-            search_terms=terms
-        )
+        engine = SearchEngine(scope=Scope.BEATMAPS, search_terms=terms)
 
         compiled = engine.compiled_query.lower()
         assert "beatmap_snapshot" in compiled
@@ -132,10 +108,7 @@ class TestSearchEngineScoreAggregation:
         """Test engine aggregates beatmapset scores."""
         terms = SearchTermsSchema(terms=["beatmapset"])
 
-        engine = SearchEngine(
-            scope=Scope.BEATMAPSETS,
-            search_terms=terms
-        )
+        engine = SearchEngine(scope=Scope.BEATMAPSETS, search_terms=terms)
 
         compiled = engine.compiled_query.lower()
         assert "beatmapset_snapshot" in compiled
@@ -147,10 +120,7 @@ class TestSearchEngineScoreAggregation:
         """Test engine aggregates child scores to parent."""
         terms = SearchTermsSchema(terms=["beatmap"])
 
-        engine = SearchEngine(
-            scope=Scope.BEATMAPSETS,
-            search_terms=terms
-        )
+        engine = SearchEngine(scope=Scope.BEATMAPSETS, search_terms=terms)
 
         compiled = engine.compiled_query.lower()
         assert "aggregated_beatmap_scores_cte" in compiled
@@ -162,12 +132,15 @@ class TestSearchEngineScoreAggregation:
 class TestSearchEngineQueryCompilation:
     """Test SearchEngine query compilation."""
 
-    @pytest.mark.parametrize("scope,expected_table", [
-        (Scope.BEATMAPS, "beatmap_snapshot"),
-        (Scope.BEATMAPSETS, "beatmapset_snapshot"),
-        (Scope.QUEUES, "queue"),
-        (Scope.REQUESTS, "request"),
-    ])
+    @pytest.mark.parametrize(
+        "scope,expected_table",
+        [
+            (Scope.BEATMAPS, "beatmap_snapshot"),
+            (Scope.BEATMAPSETS, "beatmapset_snapshot"),
+            (Scope.QUEUES, "queue"),
+            (Scope.REQUESTS, "request"),
+        ],
+    )
     def test_engine_compiles_for_scope(self, scope, expected_table):
         """Test engine compiles correct table reference for each scope."""
         terms = SearchTermsSchema(terms=["test"])
@@ -182,10 +155,7 @@ class TestSearchEngineQueryCompilation:
         """Test engine compiles beatmaps query."""
         terms = SearchTermsSchema(terms=["beatmap"])
 
-        engine = SearchEngine(
-            scope=Scope.BEATMAPS,
-            search_terms=terms
-        )
+        engine = SearchEngine(scope=Scope.BEATMAPS, search_terms=terms)
 
         compiled = engine.compiled_query.lower()
         assert "beatmap_snapshot" in compiled
@@ -197,10 +167,7 @@ class TestSearchEngineQueryCompilation:
         """Test engine compiles beatmapsets query."""
         terms = SearchTermsSchema(terms=["beatmapset"])
 
-        engine = SearchEngine(
-            scope=Scope.BEATMAPSETS,
-            search_terms=terms
-        )
+        engine = SearchEngine(scope=Scope.BEATMAPSETS, search_terms=terms)
 
         compiled = engine.compiled_query.lower()
         assert "beatmapset_snapshot" in compiled
@@ -212,10 +179,7 @@ class TestSearchEngineQueryCompilation:
         """Test engine compiles queues query."""
         terms = SearchTermsSchema(terms=["queue"])
 
-        engine = SearchEngine(
-            scope=Scope.QUEUES,
-            search_terms=terms
-        )
+        engine = SearchEngine(scope=Scope.QUEUES, search_terms=terms)
 
         compiled = engine.compiled_query.lower()
         assert "queue" in compiled
@@ -227,10 +191,7 @@ class TestSearchEngineQueryCompilation:
         """Test engine compiles requests query."""
         terms = SearchTermsSchema(terms=["request"])
 
-        engine = SearchEngine(
-            scope=Scope.REQUESTS,
-            search_terms=terms
-        )
+        engine = SearchEngine(scope=Scope.REQUESTS, search_terms=terms)
 
         compiled = engine.compiled_query.lower()
         assert "request" in compiled
@@ -277,7 +238,7 @@ class TestSearchEngineValidation:
         """Test SearchEngine creation with search terms dict."""
         engine = SearchEngine(
             scope=Scope.BEATMAPS,
-            search_terms={"terms": ["test"], "categories": ["beatmap"], "exact": False}
+            search_terms={"terms": ["test"], "categories": ["beatmap"], "exact": False},
         )
         assert engine.search_terms is not None
 
@@ -285,15 +246,14 @@ class TestSearchEngineValidation:
         """Test SearchEngine creation with sorting list."""
         engine = SearchEngine(
             scope=Scope.BEATMAPS,
-            sorting=[{"field": "BeatmapsetSnapshot.beatmapset_id", "order": "asc"}]
+            sorting=[{"field": "BeatmapsetSnapshot.beatmapset_id", "order": "asc"}],
         )
         assert engine.sorting is not None
 
     def test_engine_creation_with_filters_dict(self, mock_session):
         """Test SearchEngine creation with filters dict."""
         engine = SearchEngine(
-            scope=Scope.BEATMAPS,
-            filters={"beatmap": {"beatmap_id": {"eq": 123}}}
+            scope=Scope.BEATMAPS, filters={"beatmap": {"beatmap_id": {"eq": 123}}}
         )
         assert engine.filters is not None
 
@@ -401,8 +361,7 @@ class TestSearchEngineValidation:
     def test_engine_sorting_default_order(self):
         """Test engine sorting with default order."""
         engine = SearchEngine(
-            scope=Scope.BEATMAPS,
-            sorting=[{"field": "BeatmapsetSnapshot.beatmapset_id"}]
+            scope=Scope.BEATMAPS, sorting=[{"field": "BeatmapsetSnapshot.beatmapset_id"}]
         )
         options = list(engine.sorting)
         assert len(options) == 1
@@ -415,6 +374,7 @@ class TestSearchEngineValidation:
     def test_engine_search_terms_validation(self):
         """Test engine validates search terms against scope."""
         from app.search.datastructures import SearchTermsSchema
+
         terms = SearchTermsSchema.model_validate({"terms": ["test"]})
         terms.validate_against_scope(Scope.BEATMAPS)
 
@@ -424,7 +384,7 @@ class TestSearchEngineValidation:
             scope=Scope.BEATMAPS,
             search_terms={"terms": ["test", "beatmap"], "categories": ["beatmap"]},
             sorting=[{"field": "BeatmapSnapshot.beatmap_id", "order": "desc"}],
-            filters={"beatmap": {"beatmap_id": {"gt": 100, "lt": 200}}}
+            filters={"beatmap": {"beatmap_id": {"gt": 100, "lt": 200}}},
         )
         assert engine.search_terms is not None
         assert engine.sorting is not None
@@ -456,6 +416,7 @@ class TestSearchEngineValidation:
     def test_engine_default_limit_offset(self):
         """Test engine uses default limit and offset."""
         from app.search.engine import DEFAULT_LIMIT, DEFAULT_OFFSET
-        engine = SearchEngine(scope=Scope.BEATMAPS)
+
+        SearchEngine(scope=Scope.BEATMAPS)
         assert DEFAULT_LIMIT == 50
         assert DEFAULT_OFFSET == 0

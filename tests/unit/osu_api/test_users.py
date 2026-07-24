@@ -41,7 +41,9 @@ async def test_get_user_scores(api_client):
     mock_response = MockResponse(mock_data)
     api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
 
-    result = await api_client_obj.get_user_scores(mock_data[0]["user_id"], ScoreType.BEST, mode=Ruleset.OSU, limit=50)
+    result = await api_client_obj.get_user_scores(
+        mock_data[0]["user_id"], ScoreType.BEST, mode=Ruleset.OSU, limit=50
+    )
 
     assert len(result) >= 1
 
@@ -61,7 +63,9 @@ async def test_get_user_scores_recent(api_client):
     mock_response = MockResponse(mock_data)
     api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
 
-    result = await api_client_obj.get_user_scores(mock_data[0]["user_id"], ScoreType.RECENT, mode=Ruleset.OSU)
+    result = await api_client_obj.get_user_scores(
+        mock_data[0]["user_id"], ScoreType.RECENT, mode=Ruleset.OSU
+    )
 
     assert len(result) >= 1
     assert "type" in result[0]
@@ -82,7 +86,9 @@ async def test_get_user_scores_firsts(api_client):
     mock_response = MockResponse(mock_data)
     api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
 
-    result = await api_client_obj.get_user_scores(mock_data[0]["user_id"], ScoreType.FIRSTS, mode=Ruleset.OSU)
+    result = await api_client_obj.get_user_scores(
+        mock_data[0]["user_id"], ScoreType.FIRSTS, mode=Ruleset.OSU
+    )
 
     assert len(result) >= 1
     assert "perfect" in result[0]

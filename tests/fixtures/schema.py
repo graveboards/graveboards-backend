@@ -9,6 +9,7 @@ from pathlib import Path
 
 try:
     from jsonschema import ValidationError, validate
+
     HAS_JSONSCHEMA = True
 except ImportError:
     HAS_JSONSCHEMA = False
@@ -22,14 +23,17 @@ BEATMAP_SCHEMA = {
     "properties": {
         "id": {"type": "integer", "minimum": 1},
         "beatmapset_id": {"type": "integer", "minimum": 1},
-        "status": {"type": "string", "enum": ["ranked", "loved", "qualified", "graveyard", "pending", "approved"]},
+        "status": {
+            "type": "string",
+            "enum": ["ranked", "loved", "qualified", "graveyard", "pending", "approved"],
+        },
         "mode": {"type": "integer", "minimum": 0, "maximum": 3},
         "version": {"type": "string", "minLength": 1},
         "difficulty_rating": {"type": "number", "minimum": 0},
         "playcount": {"type": "integer", "minimum": 0},
         "passcount": {"type": "integer", "minimum": 0},
         "mode_int": {"type": "integer", "minimum": 0, "maximum": 3},
-    }
+    },
 }
 
 
@@ -42,10 +46,13 @@ BEATMAPSET_SCHEMA = {
         "title": {"type": "string", "minLength": 1},
         "artist": {"type": "string", "minLength": 1},
         "creator": {"type": "string", "minLength": 1},
-        "status": {"type": "string", "enum": ["ranked", "loved", "qualified", "graveyard", "pending", "approved"]},
+        "status": {
+            "type": "string",
+            "enum": ["ranked", "loved", "qualified", "graveyard", "pending", "approved"],
+        },
         "bpm": {"type": "number", "minimum": 0},
         "difficulty_rating": {"type": "number", "minimum": 0},
-    }
+    },
 }
 
 
@@ -63,9 +70,9 @@ USER_SCHEMA = {
             "properties": {
                 "pp": {"type": "number", "minimum": 0},
                 "play_count": {"type": "integer", "minimum": 0},
-            }
+            },
         },
-    }
+    },
 }
 
 
@@ -82,7 +89,7 @@ SCORE_SCHEMA = {
         "max_combo": {"type": "integer", "minimum": 0},
         "passed": {"type": "boolean"},
         "accuracy": {"type": "number", "minimum": 0, "maximum": 100},
-    }
+    },
 }
 
 
@@ -95,7 +102,7 @@ BEATMAP_ATTRIBUTE_SCHEMA = {
         "difficulty": {"type": "number", "minimum": 0},
         "aim": {"type": "number", "minimum": 0},
         "speed": {"type": "number", "minimum": 0},
-    }
+    },
 }
 
 
@@ -111,11 +118,11 @@ SCHEMA_MAP = {
 
 def validate_fixture_file(filepath: Path, category: str | None = None) -> tuple[bool, str | None]:
     """Validate a fixture file against its schema.
-    
+
     Args:
         filepath: Path to the JSON fixture file
         category: Optional category name (if None, inferred from path)
-    
+
     Returns:
         Tuple of (is_valid, error_message)
     """
@@ -148,10 +155,10 @@ def validate_fixture_file(filepath: Path, category: str | None = None) -> tuple[
 
 def validate_all_fixtures(fixtures_dir: Path) -> dict[str, list]:
     """Validate all fixture files in a directory.
-    
+
     Args:
         fixtures_dir: Directory containing fixture subdirectories
-    
+
     Returns:
         Dictionary mapping categories to list of (filename, is_valid, error) tuples
     """
@@ -185,7 +192,6 @@ def validate_fixtures_command(fixtures_path: str = "tests/fixtures/osu"):
     """CLI entry point for fixture validation."""
     fixtures_dir = Path(fixtures_path)
     if not fixtures_dir.exists():
-        print(f"Error: Fixtures directory not found: {fixtures_dir}")
         return 1
 
     results = validate_all_fixtures(fixtures_dir)
@@ -193,24 +199,18 @@ def validate_fixtures_command(fixtures_path: str = "tests/fixtures/osu"):
     total_valid = 0
     total_invalid = 0
 
-    for category, category_results in results.items():
-        print(f"\n{category}:")
-        for filename, is_valid, error in category_results:
-            status = "✓" if is_valid else "✗"
-            print(f"  {status} {filename}")
+    for _category, category_results in results.items():
+        for _filename, _is_valid, error in category_results:
             if error:
-                print(f"      Error: {error}")
                 total_invalid += 1
             else:
                 total_valid += 1
 
-    print(f"\n{'=' * 40}")
-    print(f"Total valid: {total_valid}")
-    print(f"Total invalid: {total_invalid}")
 
     return 0 if total_invalid == 0 else 1
 
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(validate_fixtures_command())

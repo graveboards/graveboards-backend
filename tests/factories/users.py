@@ -1,4 +1,3 @@
-
 from app.database.models import Profile
 from app.database.schemas import ProfileSchema
 from tests.fixtures.osu import load_user
@@ -24,6 +23,7 @@ def create_profile_from_user_id(user_id: int, mode: str = "mania") -> Profile:
 def create_profile_from_user_best(user_id: int, index: int = 0) -> Profile:
     """Create a Profile model from a user's best scores fixture (user data embedded in score)."""
     from tests.fixtures.osu import load_user_scores_best
+
     scores_data = load_user_scores_best(f"scores_{user_id}_best")
     if index >= len(scores_data):
         raise ValueError(f"Index {index} out of range for user {user_id}")

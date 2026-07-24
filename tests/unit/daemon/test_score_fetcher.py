@@ -19,7 +19,7 @@ class TestScoreFetcher:
     @pytest.mark.asyncio
     async def test_preload_jobs_schedules_enabled_tasks(self, service):
         """Test that preload_jobs schedules enabled score fetch tasks."""
-        with patch('app.database.events.score_fetcher_task.redis_connection') as mock_redis:
+        with patch("app.database.events.score_fetcher_task.redis_connection") as mock_redis:
             mock_redis_ctx = MagicMock()
             mock_redis.return_value = mock_redis_ctx
             mock_redis_ctx.__enter__ = MagicMock()
@@ -51,11 +51,7 @@ class TestScoreFetcher:
 
     async def test_score_is_submittable_checks_leaderboard(self, service):
         """Test that _score_is_submittable checks for active leaderboard."""
-        score = {
-            "beatmap": {
-                "id": 456
-            }
-        }
+        score = {"beatmap": {"id": 456}}
         service._db.get = AsyncMock(return_value=MagicMock())
 
         result = await service._score_is_submittable(score)
@@ -65,11 +61,7 @@ class TestScoreFetcher:
 
     async def test_score_is_submittable_returns_false_without_leaderboard(self, service):
         """Test that _score_is_submittable returns False without leaderboard."""
-        score = {
-            "beatmap": {
-                "id": 456
-            }
-        }
+        score = {"beatmap": {"id": 456}}
         service._db.get = AsyncMock(return_value=None)
 
         result = await service._score_is_submittable(score)

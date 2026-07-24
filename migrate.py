@@ -40,14 +40,15 @@ async def migrate(input_path: str = "requests.json"):
                     logger.debug(f"Added user: {user_id}")
 
             async with db.session() as session:
-                beatmapset_exists = bool(await db.get(Beatmapset, id=beatmapset_id, session=session))
+                beatmapset_exists = bool(
+                    await db.get(Beatmapset, id=beatmapset_id, session=session)
+                )
 
             if not beatmapset_exists:
                 try:
                     bm = BeatmapManager(rc, db)
                     changelog = await asyncio.wait_for(
-                        bm.archive(beatmapset_id),
-                        timeout=TIMEOUT_SECS
+                        bm.archive(beatmapset_id), timeout=TIMEOUT_SECS
                     )
                     row["beatmapset_snapshot_id"] = changelog["snapshotted_beatmapset"]["id"]
                 except (TimeoutError, HTTPStatusError) as e:
@@ -63,7 +64,7 @@ async def migrate(input_path: str = "requests.json"):
                         BeatmapsetSnapshot,
                         beatmapset_id=beatmapset_id,
                         _sorting=[{"field": "BeatmapsetSnapshot.id", "order": "desc"}],
-                        session=session
+                        session=session,
                     )
 
                 if beatmapset_snapshot is None:

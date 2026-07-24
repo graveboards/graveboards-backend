@@ -1,10 +1,15 @@
-
 from app.database.models import Profile, Score
 from app.database.schemas import ProfileSchema, ScoreSchema
 from tests.fixtures.osu import load_user, load_user_scores_best
 
 
-def create_score_from_best(score_data: dict, user_id: int | None = None, beatmap_id: int | None = None, beatmapset_id: int | None = None, leaderboard_id: int = 1) -> Score:
+def create_score_from_best(
+    score_data: dict,
+    user_id: int | None = None,
+    beatmap_id: int | None = None,
+    beatmapset_id: int | None = None,
+    leaderboard_id: int = 1,
+) -> Score:
     """Create a Score model instance from osu! API score data."""
     schema_data = ScoreSchema.model_validate(score_data)
     return Score(
@@ -23,7 +28,9 @@ def create_score_from_best(score_data: dict, user_id: int | None = None, beatmap
         pp=schema_data.pp,
         rank=schema_data.rank,
         score=schema_data.score,
-        statistics=schema_data.statistics.model_dump() if hasattr(schema_data.statistics, "model_dump") else schema_data.statistics,
+        statistics=schema_data.statistics.model_dump()
+        if hasattr(schema_data.statistics, "model_dump")
+        else schema_data.statistics,
         type=schema_data.type,
         playtime=schema_data.playtime if hasattr(schema_data, "playtime") else 0,
     )

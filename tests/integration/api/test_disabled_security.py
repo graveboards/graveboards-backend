@@ -7,6 +7,7 @@ skips authorization entirely - it resolves a dev identity (DEV_ADMIN_USER_ID
 by default, or whatever the X-Debug-User-Id header requests) and runs the
 same role/ownership checks against it that a real request would go through.
 """
+
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -17,7 +18,9 @@ class TestSecurityConfiguration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_security_enabled_by_default(self, TestClientWithMocks, admin_user_token, authenticated_user_id):
+    async def test_security_enabled_by_default(
+        self, TestClientWithMocks, admin_user_token, authenticated_user_id
+    ):
         """Verify security is enabled by default in test environment."""
         from app.database.models import Queue
 
@@ -46,7 +49,7 @@ class TestSecurityConfiguration:
             response = test_client.patch(
                 "/api/v1/queues/1",
                 json={"name": "Hacked"},
-                headers={"Authorization": f"Bearer {admin_user_token}"}
+                headers={"Authorization": f"Bearer {admin_user_token}"},
             )
 
         assert response.status_code == 403
@@ -88,7 +91,9 @@ class TestSecurityConfiguration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_security_disabled_allows_admin_dev_identity(self, TestClientWithMocks, security_disabled):
+    async def test_security_disabled_allows_admin_dev_identity(
+        self, TestClientWithMocks, security_disabled
+    ):
         """The default dev identity (DEV_ADMIN_USER_ID) is admin-roled in a real
         seeded dev DB, so role-gated endpoints succeed with no auth header at all -
         the "just works" dev experience DISABLE_SECURITY exists for. Here we
@@ -168,7 +173,9 @@ class TestSecurityConfiguration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_security_enabled_enforces_auth(self, TestClientWithMocks, admin_user_token, security_enabled, authenticated_user_id):
+    async def test_security_enabled_enforces_auth(
+        self, TestClientWithMocks, admin_user_token, security_enabled, authenticated_user_id
+    ):
         """Verify security enforcement when explicitly enabled."""
         from app.database.models import Queue
 
@@ -195,7 +202,7 @@ class TestSecurityConfiguration:
             response = test_client.patch(
                 "/api/v1/queues/1",
                 json={"name": "Hacked"},
-                headers={"Authorization": f"Bearer {admin_user_token}"}
+                headers={"Authorization": f"Bearer {admin_user_token}"},
             )
 
         assert response.status_code == 403

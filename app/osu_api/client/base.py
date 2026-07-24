@@ -5,8 +5,8 @@ import httpx
 from pydantic import ValidationError
 
 from app.exceptions import RedisLockTimeoutError
-from app.observability.logging import get_logger
 from app.oauth import OAuth
+from app.observability.logging import get_logger
 from app.observability.metrics.osu import (
     osu_api_errors_total,
     osu_api_request_duration_seconds,

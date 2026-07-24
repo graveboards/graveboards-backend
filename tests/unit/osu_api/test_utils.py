@@ -1,6 +1,3 @@
-
-
-
 def _create_mock_beatmap(**overrides):
     mock_data = {
         "id": 100001,
@@ -69,7 +66,11 @@ def _create_mock_beatmapset(**overrides):
         "genre": {"id": 1, "name": "Unspecified"},
         "hype": {"current": 5, "required": 10},
         "language": {"id": 1, "name": "Any"},
-        "nominations_summary": {"current": 2, "eligible_main_rulesets": [], "required_meta": {"main_ruleset": 0, "non_main_ruleset": 1}},
+        "nominations_summary": {
+            "current": 2,
+            "eligible_main_rulesets": [],
+            "required_meta": {"main_ruleset": 0, "non_main_ruleset": 1},
+        },
         "play_count": 100,
         "preview_url": "//b.ppy.sh/preview/10000.mp3",
         "ranked": 1,
@@ -77,7 +78,6 @@ def _create_mock_beatmapset(**overrides):
         "ratings": [5, 5, 5, 5, 5],
         "source": "Test Source",
         "tags": "test osu",
-        "title": "Test Song",
         "title_unicode": "Test Song",
         "video": False,
         "availability": {"download_disabled": False, "more_information": ""},
@@ -97,7 +97,13 @@ def _create_mock_beatmapset(**overrides):
         "rating": 0.0,
         "track_id": None,
         "deleted_at": None,
-        "user": {"id": 1000, "username": "Test Creator", "country": "US", "country_code": "US", "avatar_url": "https://example.com/avatar.png"},
+        "user": {
+            "id": 1000,
+            "username": "Test Creator",
+            "country": "US",
+            "country_code": "US",
+            "avatar_url": "https://example.com/avatar.png",
+        },
         "beatmaps": [],
     }
     mock_data.update(overrides)
@@ -142,9 +148,6 @@ def _create_mock_user(ruleset="osu", **overrides):
                 "ss": 10,
                 "s": 50,
                 "a": 100,
-            },
-            "rank": {
-                "country": 100,
             },
         },
         "rank_highest": {
@@ -291,15 +294,12 @@ def _create_mock_beatmap_attributes(beatmap_id=None, **overrides):
             "allow UserModel_beta": True,
             "allow UserModel_alpha": True,
             "allow UserModel_dev": True,
-            "allow UserModel_admin": True,
             "allow UserModel_sys": True,
             "allow UserModel_don": True,
             "allow UserModel_sup": True,
             "allow UserModel_pat": True,
             "allow UserModel_vet": True,
             "allow UserModel_con": True,
-            "allow UserModel_dev": True,
-            "allow UserModel_mod": True,
             "allow UserModel_ed": True,
             "allow UserModel_bet": True,
             "allow UserModel_alp": True,

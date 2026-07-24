@@ -32,10 +32,10 @@ def _make_genre(id: int, name: str):
 
 
 def _make_language(id: int, name: str):
-    l = MagicMock()
-    l.id = id
-    l.name = name
-    return l
+    lang = MagicMock()
+    lang.id = id
+    lang.name = name
+    return lang
 
 
 class TestBPMRestriction:
@@ -87,7 +87,10 @@ class TestBPMRestriction:
     @pytest.mark.asyncio
     async def test_all_logic_raises_on_specific_beatmap(self):
         validator = BPMRestriction()
-        beatmaps = [_make_beatmap(bpm=140.0, version="Normal"), _make_beatmap(bpm=300.0, version="Insane")]
+        beatmaps = [
+            _make_beatmap(bpm=140.0, version="Normal"),
+            _make_beatmap(bpm=300.0, version="Insane"),
+        ]
         context = ExecutionContext(
             queue_id=1,
             user_id=12345678,

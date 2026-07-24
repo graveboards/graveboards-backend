@@ -22,14 +22,22 @@ class TestRegistryAllValidators:
     @pytest.mark.unit
     def test_tier2_validators_registered(self):
         tier2_types = [
-            "beatmap_duration", "beatmap_star_rating",
-            "beatmap_ar_range", "beatmap_od_range",
-            "beatmap_hp_range", "beatmap_cs_range",
-            "beatmap_drain_range", "beatmap_bpm",
-            "beatmap_genre", "beatmap_language",
-            "beatmap_mode", "beatmap_difficulty_count",
-            "beatmap_storyboard", "beatmap_video",
-            "beatmap_tags", "beatmap_length",
+            "beatmap_duration",
+            "beatmap_star_rating",
+            "beatmap_ar_range",
+            "beatmap_od_range",
+            "beatmap_hp_range",
+            "beatmap_cs_range",
+            "beatmap_drain_range",
+            "beatmap_bpm",
+            "beatmap_genre",
+            "beatmap_language",
+            "beatmap_mode",
+            "beatmap_difficulty_count",
+            "beatmap_storyboard",
+            "beatmap_video",
+            "beatmap_tags",
+            "beatmap_length",
             "beatmap_combination",
         ]
         for t in tier2_types:

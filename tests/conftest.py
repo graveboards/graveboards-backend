@@ -74,6 +74,7 @@ def authenticated_user_id():
             with authenticated_user_id(99999999):
                 ...
     """
+
     def _patch(user_id: int):
         stack = ExitStack()
         for module in (
@@ -83,9 +84,7 @@ def authenticated_user_id():
             "app.security.decorators.ownership_filter",
             "app.security.decorators.utils",
         ):
-            stack.enter_context(
-                patch(f"{module}.get_authenticated_user_id", return_value=user_id)
-            )
+            stack.enter_context(patch(f"{module}.get_authenticated_user_id", return_value=user_id))
         return stack
 
     return _patch
@@ -110,19 +109,17 @@ def _patch_all_auth_modules(user_id: int):
         "app.security.decorators.ownership_filter",
         "app.security.decorators.utils",
     ):
-        stack.enter_context(
-            patch(f"{module}.get_authenticated_user_id", return_value=user_id)
-        )
+        stack.enter_context(patch(f"{module}.get_authenticated_user_id", return_value=user_id))
     return stack
 
 
 def TestClientWithMocksFactory(request, mock_rc=None, mock_db=None):
     """Create a TestClient with configurable mocks.
-    
+
     Args:
         mock_rc: Optional custom Redis mock
         mock_db: Optional custom database mock
-    
+
     Returns:
         TestClient configured with the provided mocks
     """
@@ -137,10 +134,10 @@ def TestClientWithMocksFactory(request, mock_rc=None, mock_db=None):
 @pytest.fixture
 def TestClientWithMocks(request):
     """Fixture that returns a callable for creating TestClient with mocks.
-    
+
     This fixture provides a factory function that can be used to create
     TestClient instances with custom mocks.
-    
+
     Returns:
         A callable that accepts mock_rc and mock_db parameters
     """
@@ -150,7 +147,7 @@ def TestClientWithMocks(request):
 @pytest.fixture
 def TestClient():
     """Create a basic TestClient without mocks for HTTP endpoint testing.
-    
+
     Returns:
         TestClient instance with real app configuration
     """
@@ -165,21 +162,22 @@ def TestClient():
 @pytest.fixture
 def admin_user_token():
     """Generate a JWT token for admin user.
-    
+
     Returns:
         Signed JWT string for user ID 11111111 (admin)
     """
     from app.security import generate_token
+
     return generate_token(11111111)
 
 
 @pytest.fixture(scope="function")
 async def db_session():
     """Create a database session for CRUD operations.
-    
+
     Uses PostgresqlDB with automatic transaction rollback between tests
     to ensure test isolation.
-    
+
     Yields:
         AsyncSession: Database session for the test
     """
@@ -203,10 +201,10 @@ async def db_session():
 @pytest.fixture(scope="function")
 async def db_transaction():
     """Create a database session that commits changes.
-    
+
     Unlike db_session, this fixture commits changes so seeded data
     is visible to search queries within the test.
-    
+
     Yields:
         AsyncSession: Database session for the test
     """

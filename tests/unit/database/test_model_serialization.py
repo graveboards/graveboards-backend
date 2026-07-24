@@ -8,15 +8,11 @@ from app.exceptions import TypeValidationError
 
 class TestExtractInnerTypes:
     def test_unwraps_optional_type(self):
-        from typing import Optional
-
-        result = extract_inner_types(Optional[int])
+        result = extract_inner_types(int | None)
         assert result is int
 
     def test_unwraps_union_type(self):
-        from typing import Union
-
-        result = extract_inner_types(Union[int, str])
+        result = extract_inner_types(int | str)
         assert result is int
 
     def test_unwraps_list_type(self):
@@ -30,9 +26,7 @@ class TestExtractInnerTypes:
         assert result is int
 
     def test_unwraps_nested_optional(self):
-        from typing import Optional
-
-        result = extract_inner_types(Optional[list[int]])
+        result = extract_inner_types(list[int] | None)
         assert result is list[int]
 
     def test_returns_plain_type_unmodified(self):
@@ -40,9 +34,7 @@ class TestExtractInnerTypes:
         assert result is int
 
     def test_returns_tuple_when_multiple_union_types(self):
-        from typing import Union
-
-        result = extract_inner_types(Union[int, str, float])
+        result = extract_inner_types(int | str | float)
         assert result == (int, str, float)
 
 
@@ -105,141 +97,89 @@ class TestValidateType:
             validate_type(dict[str, int], {"a": "string"})
 
     def test_validates_union_type_int(self):
-        from typing import Union
-        validate_type(Union[int, str], 42)
+        validate_type(int | str, 42)
 
     def test_validates_union_type_str(self):
-        from typing import Union
-        validate_type(Union[int, str], "hello")
+        validate_type(int | str, "hello")
 
     def test_validates_optional_int(self):
-        from typing import Optional
-        validate_type(Optional[int], 42)
+        validate_type(int | None, 42)
 
     def test_validates_optional_none(self):
-        from typing import Optional
-        validate_type(Optional[int], None)
+        validate_type(int | None, None)
 
     def test_rejects_unsupported_type_in_union(self):
-        from typing import Union
         with pytest.raises(TypeValidationError):
-            validate_type(Union[int, str], 3.14)
+            validate_type(int | str, 3.14)
 
 
 class TestGetFilterCondition:
     def test_eq_operator_on_column(self, db_session):
         from app.database.models import User
 
-        condition = get_filter_condition(
-            FilterOperator.EQ,
-            User.id,
-            123
-        )
+        condition = get_filter_condition(FilterOperator.EQ, User.id, 123)
 
         assert condition is not None
 
     def test_eq_operator_on_clause(self, db_session):
-        condition = get_filter_condition(
-            FilterOperator.EQ,
-            column("test_column"),
-            123
-        )
+        condition = get_filter_condition(FilterOperator.EQ, column("test_column"), 123)
 
         assert condition is not None
 
     def test_neq_operator(self, db_session):
-        condition = get_filter_condition(
-            FilterOperator.NEQ,
-            column("test_column"),
-            123
-        )
+        condition = get_filter_condition(FilterOperator.NEQ, column("test_column"), 123)
 
         assert condition is not None
 
     def test_gt_operator(self, db_session):
-        condition = get_filter_condition(
-            FilterOperator.GT,
-            column("test_column"),
-            100
-        )
+        condition = get_filter_condition(FilterOperator.GT, column("test_column"), 100)
 
         assert condition is not None
 
     def test_lt_operator(self, db_session):
-        condition = get_filter_condition(
-            FilterOperator.LT,
-            column("test_column"),
-            100
-        )
+        condition = get_filter_condition(FilterOperator.LT, column("test_column"), 100)
 
         assert condition is not None
 
     def test_gte_operator(self, db_session):
-        condition = get_filter_condition(
-            FilterOperator.GTE,
-            column("test_column"),
-            100
-        )
+        condition = get_filter_condition(FilterOperator.GTE, column("test_column"), 100)
 
         assert condition is not None
 
     def test_lte_operator(self, db_session):
-        condition = get_filter_condition(
-            FilterOperator.LTE,
-            column("test_column"),
-            100
-        )
+        condition = get_filter_condition(FilterOperator.LTE, column("test_column"), 100)
 
         assert condition is not None
 
     def test_in_operator(self, db_session):
-        condition = get_filter_condition(
-            FilterOperator.IN,
-            column("test_column"),
-            [1, 2, 3]
-        )
+        condition = get_filter_condition(FilterOperator.IN, column("test_column"), [1, 2, 3])
 
         assert condition is not None
 
     def test_not_in_operator(self, db_session):
-        condition = get_filter_condition(
-            FilterOperator.NOT_IN,
-            column("test_column"),
-            [1, 2, 3]
-        )
+        condition = get_filter_condition(FilterOperator.NOT_IN, column("test_column"), [1, 2, 3])
 
         assert condition is not None
 
     def test_is_null_operator(self, db_session):
-        condition = get_filter_condition(
-            FilterOperator.IS_NULL,
-            column("test_column"),
-            None
-        )
+        condition = get_filter_condition(FilterOperator.IS_NULL, column("test_column"), None)
 
         assert condition is not None
 
     def test_regex_operator(self, db_session):
-        condition = get_filter_condition(
-            FilterOperator.REGEX,
-            column("test_column"),
-            "pattern"
-        )
+        condition = get_filter_condition(FilterOperator.REGEX, column("test_column"), "pattern")
 
         assert condition is not None
 
     def test_not_regex_operator(self, db_session):
-        condition = get_filter_condition(
-            FilterOperator.NOT_REGEX,
-            column("test_column"),
-            "pattern"
-        )
+        condition = get_filter_condition(FilterOperator.NOT_REGEX, column("test_column"), "pattern")
 
         assert condition is not None
 
     def test_invalid_operator_raises_value_error(self, db_session):
 
         with pytest.raises(ValueError):
+
             class FakeOperator:
                 pass
 
@@ -249,110 +189,77 @@ class TestGetFilterCondition:
 
     def test_aggregated_eq_operator(self, db_session):
         condition = get_filter_condition(
-            FilterOperator.EQ,
-            column("test_column"),
-            123,
-            is_aggregated=True
+            FilterOperator.EQ, column("test_column"), 123, is_aggregated=True
         )
 
         assert condition is not None
 
     def test_aggregated_neq_operator(self, db_session):
         condition = get_filter_condition(
-            FilterOperator.NEQ,
-            column("test_column"),
-            123,
-            is_aggregated=True
+            FilterOperator.NEQ, column("test_column"), 123, is_aggregated=True
         )
 
         assert condition is not None
 
     def test_aggregated_gt_operator(self, db_session):
         condition = get_filter_condition(
-            FilterOperator.GT,
-            column("test_column"),
-            100,
-            is_aggregated=True
+            FilterOperator.GT, column("test_column"), 100, is_aggregated=True
         )
 
         assert condition is not None
 
     def test_aggregated_lt_operator(self, db_session):
         condition = get_filter_condition(
-            FilterOperator.LT,
-            column("test_column"),
-            100,
-            is_aggregated=True
+            FilterOperator.LT, column("test_column"), 100, is_aggregated=True
         )
 
         assert condition is not None
 
     def test_aggregated_gte_operator(self, db_session):
         condition = get_filter_condition(
-            FilterOperator.GTE,
-            column("test_column"),
-            100,
-            is_aggregated=True
+            FilterOperator.GTE, column("test_column"), 100, is_aggregated=True
         )
 
         assert condition is not None
 
     def test_aggregated_lte_operator(self, db_session):
         condition = get_filter_condition(
-            FilterOperator.LTE,
-            column("test_column"),
-            100,
-            is_aggregated=True
+            FilterOperator.LTE, column("test_column"), 100, is_aggregated=True
         )
 
         assert condition is not None
 
     def test_aggregated_in_operator(self, db_session):
         condition = get_filter_condition(
-            FilterOperator.IN,
-            column("test_column"),
-            [1, 2, 3],
-            is_aggregated=True
+            FilterOperator.IN, column("test_column"), [1, 2, 3], is_aggregated=True
         )
 
         assert condition is not None
 
     def test_aggregated_not_in_operator(self, db_session):
         condition = get_filter_condition(
-            FilterOperator.NOT_IN,
-            column("test_column"),
-            [1, 2, 3],
-            is_aggregated=True
+            FilterOperator.NOT_IN, column("test_column"), [1, 2, 3], is_aggregated=True
         )
 
         assert condition is not None
 
     def test_aggregated_is_null_operator(self, db_session):
         condition = get_filter_condition(
-            FilterOperator.IS_NULL,
-            column("test_column"),
-            None,
-            is_aggregated=True
+            FilterOperator.IS_NULL, column("test_column"), None, is_aggregated=True
         )
 
         assert condition is not None
 
     def test_aggregated_regex_operator(self, db_session):
         condition = get_filter_condition(
-            FilterOperator.REGEX,
-            column("test_column"),
-            "pattern",
-            is_aggregated=True
+            FilterOperator.REGEX, column("test_column"), "pattern", is_aggregated=True
         )
 
         assert condition is not None
 
     def test_aggregated_not_regex_operator(self, db_session):
         condition = get_filter_condition(
-            FilterOperator.NOT_REGEX,
-            column("test_column"),
-            "pattern",
-            is_aggregated=True
+            FilterOperator.NOT_REGEX, column("test_column"), "pattern", is_aggregated=True
         )
 
         assert condition is not None

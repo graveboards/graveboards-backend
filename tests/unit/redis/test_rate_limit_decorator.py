@@ -70,7 +70,7 @@ class TestRateLimitDecorator:
         mock_redis_client.incr = AsyncMock(return_value=1)
         mock_redis_client.expire = AsyncMock(return_value=True)
 
-        for i in range(5):
+        for _i in range(5):
             await test_func(mock_redis_client)
 
         assert mock_redis_client.incr.call_count == 5

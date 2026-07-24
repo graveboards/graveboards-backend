@@ -21,33 +21,28 @@ class BeatmapFactory(factory.Factory):
 
     id = Sequence(lambda n: 100000 + n)
     beatmapset_id = LazyAttribute(lambda o: o.id // 2)
-    version = LazyAttribute(lambda o: f'Factory {o.id}')
-    creator = LazyAttribute(lambda o: f'FactoryCreator{o.id}')
+    version = LazyAttribute(lambda o: f"Factory {o.id}")
+    creator = LazyAttribute(lambda o: f"FactoryCreator{o.id}")
     bpm = Sequence(lambda n: 60.0 + (n % 140))
     total_length = Sequence(lambda n: 60 + (n % 240))
     hit_length = LazyAttribute(lambda o: int(o.total_length * 0.9))
-    status = Sequence(lambda n: ['ranked', 'loved', 'qualified', 'graveyard', 'pending', 'approved'][n % 6])
+    status = Sequence(
+        lambda n: ["ranked", "loved", "qualified", "graveyard", "pending", "approved"][n % 6]
+    )
     difficulty_rating = LazyAttribute(lambda o: round(0.5 + (o.id % 900) / 100.0, 2))
     playcount = LazyAttribute(lambda o: o.id * 100 + 50)
     passcount = LazyAttribute(lambda o: int(o.playcount * 0.3 + (o.id % 100)))
     mode = Sequence(lambda n: n % 4)
-    created_at = LazyAttribute(lambda o: datetime.utcnow().isoformat() + '+00:00')
-    updated_at = LazyAttribute(lambda o: datetime.utcnow().isoformat() + '+00:00')
+    created_at = LazyAttribute(lambda o: datetime.utcnow().isoformat() + "+00:00")
+    updated_at = LazyAttribute(lambda o: datetime.utcnow().isoformat() + "+00:00")
 
 
-def generate_beatmap_data(
-    count: int = 1,
-    **overrides
-) -> list[dict[str, Any]]:
+def generate_beatmap_data(count: int = 1, **overrides) -> list[dict[str, Any]]:
     """Generate beatmap test data with optional overrides."""
     return [BeatmapFactory.build(**overrides) for _ in range(count)]
 
 
-def generate_user_data(
-    count: int = 1,
-    ruleset: str = "osu",
-    **overrides
-) -> list[dict[str, Any]]:
+def generate_user_data(count: int = 1, ruleset: str = "osu", **overrides) -> list[dict[str, Any]]:
     """Generate user/tester data with optional overrides."""
     data = []
     for i in range(count):
@@ -57,7 +52,10 @@ def generate_user_data(
             "username": f"FactoryUser{user_id}",
             "avatar_url": f"https://example.com/avatar{user_id}.png",
             "country_code": "US",
-            "join_date": (datetime.utcnow().replace(year=2020) + __import__('datetime').timedelta(days=i*30)).isoformat() + "+00:00",
+            "join_date": (
+                datetime.utcnow().replace(year=2020) + __import__("datetime").timedelta(days=i * 30)
+            ).isoformat()
+            + "+00:00",
             "is_active": True,
             "statistics": {
                 "pp": float(user_id * 10),
@@ -65,17 +63,13 @@ def generate_user_data(
                 "ranked_score": user_id * 100000,
                 "total_score": user_id * 500000,
             },
-            **overrides
+            **overrides,
         }
         data.append(user_data)
     return data
 
 
-def generate_score_data(
-    count: int = 1,
-    ruleset: str = "osu",
-    **overrides
-) -> list[dict[str, Any]]:
+def generate_score_data(count: int = 1, ruleset: str = "osu", **overrides) -> list[dict[str, Any]]:
     """Generate score test data with optional overrides."""
     data = []
     for i in range(count):
@@ -86,7 +80,7 @@ def generate_score_data(
             "id": score_id,
             "user_id": user_id,
             "beatmap_id": beatmap_id,
-            "rank": ['SS', 'S', 'A', 'B', 'C', 'D'][i % 6],
+            "rank": ["SS", "S", "A", "B", "C", "D"][i % 6],
             "score": 50000 + (i % 950000),
             "max_combo": 50 + (i % 950),
             "count_300": int((50 + (i % 950)) * 2.5),
@@ -94,16 +88,13 @@ def generate_score_data(
             "count_50": int((50 + (i % 950)) * 0.1),
             "count_miss": int((50 + (i % 950)) * 0.05),
             "passed": True,
-            **overrides
+            **overrides,
         }
         data.append(score_data)
     return data
 
 
-def generate_beatmapset_data(
-    count: int = 1,
-    **overrides
-) -> list[dict[str, Any]]:
+def generate_beatmapset_data(count: int = 1, **overrides) -> list[dict[str, Any]]:
     """Generate beatmapset test data with optional overrides."""
     data = []
     for i in range(count):
@@ -113,19 +104,16 @@ def generate_beatmapset_data(
             "title": f"Factory Beatmapset {beatmapset_id}",
             "artist": f"Factory Artist {beatmapset_id}",
             "creator": f"FactoryCreator{beatmapset_id}",
-            "status": ['ranked', 'loved', 'qualified', 'graveyard', 'pending', 'approved'][i % 6],
+            "status": ["ranked", "loved", "qualified", "graveyard", "pending", "approved"][i % 6],
             "bpm": 120.0 + (i % 100),
             "difficulty_rating": round(0.5 + (beatmapset_id % 900) / 100.0, 2),
-            **overrides
+            **overrides,
         }
         data.append(beatmapset_data)
     return data
 
 
-def generate_beatmap_attributes_data(
-    count: int = 1,
-    **overrides
-) -> list[dict[str, Any]]:
+def generate_beatmap_attributes_data(count: int = 1, **overrides) -> list[dict[str, Any]]:
     """Generate beatmap attributes test data with optional overrides."""
     data = []
     for i in range(count):
@@ -139,7 +127,7 @@ def generate_beatmap_attributes_data(
             "circle_size": round(3.0 + (i % 4), 2),
             "drain": round(3.0 + (i % 7), 2),
             "overall": round(3.0 + (i % 7), 2),
-            **overrides
+            **overrides,
         }
         data.append(attrs_data)
     return data

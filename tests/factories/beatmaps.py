@@ -1,9 +1,10 @@
-
 from app.database.models import Beatmap
 from tests.fixtures.osu import load_beatmap
 
 
-def create_beatmap_from_api(beatmap_data: dict, beatmapset_id: int | None = None, beatmap_user_id: int | None = None) -> Beatmap:
+def create_beatmap_from_api(
+    beatmap_data: dict, beatmapset_id: int | None = None, beatmap_user_id: int | None = None
+) -> Beatmap:
     """Create a Beatmap model instance from osu! API beatmap data."""
     bs_id = beatmapset_id or beatmap_data.get("beatmapset_id")
     beatmapset_user_id = beatmap_user_id or beatmap_data.get("user_id")

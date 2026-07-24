@@ -68,9 +68,7 @@ class ParameterValidatorPatched(ParameterValidator):
                 raise bad_request_factory(e) from e
         elif param_name == "filters" and value:
             try:
-                resolved_schema = get_filter_schema(
-                    schema_name=param["schema"]["title"]
-                )
+                resolved_schema = get_filter_schema(schema_name=param["schema"]["title"])
                 return validate_filters(value, resolved_schema)
             except DeepObjectValidationError as e:
                 raise bad_request_factory(e) from e
@@ -84,9 +82,7 @@ class ParameterValidatorPatched(ParameterValidator):
                     # Delegate this validation to be run by the operation function where the context is available
                     return None
 
-                resolved_schema = get_include_schema(
-                    schema_name=param["schema"]["title"]
-                )
+                resolved_schema = get_include_schema(schema_name=param["schema"]["title"])
                 return validate_include(value, resolved_schema)
             except DeepObjectValidationError as e:
                 raise bad_request_factory(e) from e

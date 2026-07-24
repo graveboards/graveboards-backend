@@ -1,18 +1,19 @@
 """Tests for conftest fixtures: security_disabled, security_enabled, admin_user_token."""
 
 
-
 class TestConftestFixtures:
     """Test conftest fixture behavior."""
 
     def test_security_disabled_fixture(self, security_disabled):
         """Test security_disabled temporarily disables security."""
         from app.config import get_security_enabled
+
         assert get_security_enabled() is False
 
     def test_security_enabled_fixture(self, security_enabled):
         """Test security_enabled temporarily enables security."""
         from app.config import get_security_enabled
+
         assert get_security_enabled() is True
 
     def test_admin_user_token_returns_string(self, admin_user_token):

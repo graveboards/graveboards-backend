@@ -124,7 +124,7 @@ def fixture_manager(temp_fixture_dir, mock_beatmap_file, mock_user_file):
                         "difficulty_rating": 4.5,
                         "playcount": 1500,
                     }
-                }
+                },
             },
             "beatmapsets": {
                 "by_status": {},
@@ -139,13 +139,13 @@ def fixture_manager(temp_fixture_dir, mock_beatmap_file, mock_user_file):
                         "activity_level": "active",
                         "ruleset": "osu",
                     }
-                }
+                },
             },
             "scores": {
                 "by_rank": {},
                 "by_mods": {},
                 "file_metadata": {},
-            }
+            },
         }
     }
 
@@ -163,10 +163,7 @@ class TestFixtureManager:
 
     def test_get_beatmaps_by_status(self, fixture_manager, mock_beatmap_file):
         """Test getting beatmaps by status preference."""
-        beatmaps = fixture_manager.get_beatmaps(
-            count=1,
-            by_status=["ranked"]
-        )
+        beatmaps = fixture_manager.get_beatmaps(count=1, by_status=["ranked"])
 
         assert len(beatmaps) >= 1
         assert beatmaps[0]["id"] == 12345
@@ -174,19 +171,13 @@ class TestFixtureManager:
 
     def test_get_beatmaps_by_difficulty(self, fixture_manager):
         """Test getting beatmaps by difficulty preference."""
-        beatmaps = fixture_manager.get_beatmaps(
-            count=1,
-            by_difficulty="medium"
-        )
+        beatmaps = fixture_manager.get_beatmaps(count=1, by_difficulty="medium")
 
         assert len(beatmaps) >= 1
 
     def test_get_beatmaps_by_ruleset(self, fixture_manager):
         """Test getting beatmaps by ruleset preference."""
-        beatmaps = fixture_manager.get_beatmaps(
-            count=1,
-            by_ruleset="osu"
-        )
+        beatmaps = fixture_manager.get_beatmaps(count=1, by_ruleset="osu")
 
         assert len(beatmaps) >= 1
 
@@ -218,7 +209,7 @@ class TestFixtureManager:
                             "activity_level": "active",
                             "ruleset": "osu",
                         }
-                    }
+                    },
                 },
                 "beatmaps": {"file_metadata": {}},
                 "beatmapsets": {"file_metadata": {}},
@@ -227,11 +218,7 @@ class TestFixtureManager:
         }
 
         manager = FixtureReader(temp_fixture_dir, metadata)
-        users = manager.get_users(
-            ruleset="osu",
-            count=1,
-            activity_level="active"
-        )
+        users = manager.get_users(ruleset="osu", count=1, activity_level="active")
 
         assert len(users) >= 1
         assert users[0]["id"] == 111111
@@ -252,10 +239,7 @@ class TestFixtureManager:
         }
 
         manager = FixtureReader(temp_fixture_dir, metadata)
-        beatmapsets = manager.get_beatmapsets(
-            count=1,
-            by_status=["ranked"]
-        )
+        beatmapsets = manager.get_beatmapsets(count=1, by_status=["ranked"])
 
         assert len(beatmapsets) >= 1
         assert beatmapsets[0]["id"] == 67890
@@ -291,7 +275,7 @@ class TestFixtureManager:
                             "rank": "S",
                             "mods": [4, 16],
                         }
-                    }
+                    },
                 },
                 "beatmaps": {"file_metadata": {}},
                 "beatmapsets": {"file_metadata": {}},
@@ -300,11 +284,7 @@ class TestFixtureManager:
         }
 
         manager = FixtureReader(temp_fixture_dir, metadata)
-        scores = manager.get_scores(
-            score_type="best",
-            count=1,
-            rank_coverage=["S"]
-        )
+        scores = manager.get_scores(score_type="best", count=1, rank_coverage=["S"])
 
         assert len(scores) >= 1
         assert scores[0][0]["rank"] == "S"
@@ -343,10 +323,7 @@ class TestFixtureManager:
         """Test resolving preferences when no metadata exists."""
         manager = FixtureReader(temp_fixture_dir)
 
-        beatmaps = manager.get_beatmaps(
-            count=1,
-            by_status=["ranked"]
-        )
+        beatmaps = manager.get_beatmaps(count=1, by_status=["ranked"])
 
         assert len(beatmaps) == 0
 

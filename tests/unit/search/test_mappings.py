@@ -1,4 +1,3 @@
-
 from app.search.enums import Scope, SearchableFieldCategory
 from app.search.mappings import (
     CATEGORY_FIELD_GROUPS_MAPPING,

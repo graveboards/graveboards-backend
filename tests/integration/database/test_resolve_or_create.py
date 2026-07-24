@@ -31,7 +31,7 @@ async def test_resolve_or_create_pk_lookup_new(db, db_session):
 @pytest.mark.asyncio
 async def test_resolve_or_create_unique_column_existing(db, db_session):
     """Unique column lookup: existing profile by unique user_id should resolve."""
-    user = await db.add(User, session=db_session, id=100003)
+    await db.add(User, session=db_session, id=100003)
     profile = await db.add(Profile, session=db_session, user_id=100003, username="original")
 
     resolved = await db.add(Profile, session=db_session, user_id=100003, username="different")
@@ -44,7 +44,7 @@ async def test_resolve_or_create_unique_column_existing(db, db_session):
 @pytest.mark.asyncio
 async def test_resolve_or_create_unique_column_new(db, db_session):
     """Unique column lookup: new profile by unique user_id should create."""
-    user = await db.add(User, session=db_session, id=100004)
+    await db.add(User, session=db_session, id=100004)
 
     created = await db.add(Profile, session=db_session, user_id=100004, username="newprofile")
 
@@ -55,10 +55,14 @@ async def test_resolve_or_create_unique_column_new(db, db_session):
 @pytest.mark.asyncio
 async def test_resolve_or_create_composite_unique_existing(db, db_session):
     """Composite unique constraint: existing queue by (user_id, name) should resolve."""
-    user = await db.add(User, session=db_session, id=100005)
-    queue = await db.add(Queue, session=db_session, user_id=100005, name="MyQueue", description="desc")
+    await db.add(User, session=db_session, id=100005)
+    queue = await db.add(
+        Queue, session=db_session, user_id=100005, name="MyQueue", description="desc"
+    )
 
-    resolved = await db.add(Queue, session=db_session, user_id=100005, name="MyQueue", description="different desc")
+    resolved = await db.add(
+        Queue, session=db_session, user_id=100005, name="MyQueue", description="different desc"
+    )
 
     assert resolved.id == queue.id
     assert resolved.description == "desc"
@@ -68,7 +72,7 @@ async def test_resolve_or_create_composite_unique_existing(db, db_session):
 @pytest.mark.asyncio
 async def test_resolve_or_create_composite_unique_new_same_user(db, db_session):
     """Composite unique constraint: new queue with same user_id but different name should create."""
-    user = await db.add(User, session=db_session, id=100006)
+    await db.add(User, session=db_session, id=100006)
 
     q1 = await db.add(Queue, session=db_session, user_id=100006, name="QueueA", description="desc")
     q2 = await db.add(Queue, session=db_session, user_id=100006, name="QueueB", description="desc")
@@ -92,7 +96,9 @@ async def test_resolve_or_create_cross_session_resolve(db, db_session):
         await db.add(Profile, session=session1, user_id=100007, username="crosssession")
 
     async with db.session() as session2:
-        resolved = await db.add(Profile, session=session2, user_id=100007, username="should_resolve")
+        resolved = await db.add(
+            Profile, session=session2, user_id=100007, username="should_resolve"
+        )
 
         assert resolved.user_id == 100007
         assert resolved.username == "crosssession"
@@ -124,10 +130,10 @@ async def test_resolve_or_create_relationship_scalar(db, db_session):
 @pytest.mark.asyncio
 async def test_resolve_or_create_relationship_scalar_resolve_existing(db, db_session):
     """Relationship: existing profile should be resolved, not duplicated."""
-    user = await db.add(User, session=db_session, id=100010)
+    await db.add(User, session=db_session, id=100010)
     await db.add(Profile, session=db_session, user_id=100010, username="existing")
 
-    created = await db.add(
+    await db.add(
         User,
         session=db_session,
         id=100010,
@@ -162,9 +168,9 @@ async def test_resolve_or_create_relationship_list(db, db_session):
 @pytest.mark.asyncio
 async def test_resolve_or_create_relationship_list_resolve_existing(db, db_session):
     """Relationship: existing queue with same (user_id, name) should be resolved, new one created."""
-    user = await db.add(User, session=db_session, id=100012)
+    await db.add(User, session=db_session, id=100012)
 
-    created = await db.add(
+    await db.add(
         User,
         session=db_session,
         id=100012,
@@ -179,7 +185,7 @@ async def test_resolve_or_create_relationship_list_resolve_existing(db, db_sessi
     names = {q.name for q in queues}
     assert names == {"QueueA", "QueueB"}
 
-    resolved = await db.add(
+    await db.add(
         User,
         session=db_session,
         id=100012,
@@ -206,7 +212,7 @@ async def test_resolve_or_create_no_match_creates(db, db_session):
 @pytest.mark.asyncio
 async def test_resolve_or_create_multiple_unique_columns(db, db_session):
     """Model with multiple unique constraints: all should be checked."""
-    user = await db.add(User, session=db_session, id=100014)
+    await db.add(User, session=db_session, id=100014)
 
     p1 = await db.add(Profile, session=db_session, user_id=100014, username="unique1")
 
@@ -238,7 +244,7 @@ async def test_resolve_or_create_add_many_resolves(db, db_session):
 @pytest.mark.asyncio
 async def test_resolve_or_create_unique_constraint_then_different(db, db_session):
     """Composite unique: same user_id but different name creates separate queues."""
-    user = await db.add(User, session=db_session, id=100018)
+    await db.add(User, session=db_session, id=100018)
 
     queues = await db.add_many(
         Queue,

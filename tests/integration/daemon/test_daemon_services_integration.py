@@ -51,7 +51,7 @@ class TestDaemonLifecycle:
         daemon = Daemon(rc=mock_rc, db=mock_db)
         await daemon._on_start()
 
-        for name, service in daemon._services.items():
+        for _name, service in daemon._services.items():
             assert isinstance(service, Service)
 
 
@@ -76,6 +76,7 @@ class TestServiceSupervisor:
     def supervisor(self):
         """Create a ServiceSupervisor with a valid LOGGER."""
         from app.observability.logging import get_logger
+
         ServiceSupervisor.LOGGER = get_logger("test.supervisor")
         supervisor = ServiceSupervisor()
         return supervisor
@@ -115,6 +116,7 @@ class TestServiceSupervisor:
     async def test_supervisor_init_has_empty_services(self):
         """Test ServiceSupervisor starts with empty services dict."""
         from app.observability.logging import get_logger
+
         ServiceSupervisor.LOGGER = get_logger("test.supervisor")
         supervisor = ServiceSupervisor()
         assert supervisor._services == {}
@@ -127,8 +129,10 @@ class TestScheduledService:
     async def test_service_requires_logger(self):
         """Test Service subclass without LOGGER raises TypeError."""
         with pytest.raises(TypeError, match="LOGGER"):
+
             class BadService(Service):
                 pass
+
             BadService()
 
     @pytest.mark.asyncio

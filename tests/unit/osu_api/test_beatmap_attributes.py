@@ -38,7 +38,9 @@ async def test_get_beatmap_attributes_all_mods(api_client):
     mock_response = MockResponse(mock_data)
     api_client_obj._http_client.post = AsyncMock(return_value=mock_response)
 
-    test_attributes = await api_client_obj.get_beatmap_attributes(mock_data["attributes"]["beatmap_id"], [16, 64, 128, 256, 512, 1024, 2048, 4096])
+    test_attributes = await api_client_obj.get_beatmap_attributes(
+        mock_data["attributes"]["beatmap_id"], [16, 64, 128, 256, 512, 1024, 2048, 4096]
+    )
 
     assert "attributes" in test_attributes
 

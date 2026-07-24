@@ -71,10 +71,12 @@ class TestProfileFetcher:
     async def test_execute_job_creates_new_profile_when_not_exists(self, service):
         """Test that new profile is created when user has no profile."""
         task = ProfileFetcherTask(id=1, user_id=123, enabled=True)
-        service._db.get = AsyncMock(side_effect=[
-            task,
-            None,
-        ])
+        service._db.get = AsyncMock(
+            side_effect=[
+                task,
+                None,
+            ]
+        )
         service._rc.set = AsyncMock(return_value=True)
         service._respect_rate_limit = AsyncMock()
         service._oac.get_user = AsyncMock(return_value={"id": 123, "username": "test"})

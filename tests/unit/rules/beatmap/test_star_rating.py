@@ -108,7 +108,11 @@ class TestStarRatingRestriction:
     @pytest.mark.asyncio
     async def test_all_logic_passes(self):
         validator = StarRatingRestriction()
-        beatmaps = [_make_beatmap(4.0, "Easy"), _make_beatmap(5.0, "Normal"), _make_beatmap(6.0, "Hard")]
+        beatmaps = [
+            _make_beatmap(4.0, "Easy"),
+            _make_beatmap(5.0, "Normal"),
+            _make_beatmap(6.0, "Hard"),
+        ]
         context = _make_context(
             beatmaps=beatmaps,
             config={"min": 3.0, "max": 7.0, "logic": "all"},

@@ -18,12 +18,12 @@ async def test_get_beatmap_parses_response(api_client):
     mock_response = MockResponse(mock_data)
     api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
 
-    with patch('app.osu_api.client.osu_api_client.Beatmap') as mock_beatmap:
-            mock_beatmap.model_validate.return_value = MagicMock()
-            mock_beatmap.model_validate.return_value.serialize.return_value = mock_data
-            mock_beatmap.model_validate.return_value.model_dump.return_value = {"mode": "json"}
+    with patch("app.osu_api.client.osu_api_client.Beatmap") as mock_beatmap:
+        mock_beatmap.model_validate.return_value = MagicMock()
+        mock_beatmap.model_validate.return_value.serialize.return_value = mock_data
+        mock_beatmap.model_validate.return_value.model_dump.return_value = {"mode": "json"}
 
-            result = await api_client_obj.get_beatmap(mock_data["id"])
+        result = await api_client_obj.get_beatmap(mock_data["id"])
 
     assert result["id"] == mock_data["id"]
     assert result["version"] == mock_data["version"]
@@ -38,7 +38,7 @@ async def test_get_beatmap_handles_404(api_client):
     api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
 
     with pytest.raises(Exception, match="HTTP 404"):
-            await api_client_obj.get_beatmap(999999)
+        await api_client_obj.get_beatmap(999999)
 
 
 @pytest.mark.asyncio
@@ -50,7 +50,7 @@ async def test_get_beatmap_handles_rate_limit(api_client):
     api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
 
     with pytest.raises(Exception, match="HTTP 429"):
-            await api_client_obj.get_beatmap(116383)
+        await api_client_obj.get_beatmap(116383)
 
 
 @pytest.mark.asyncio
@@ -62,4 +62,4 @@ async def test_get_beatmap_handles_server_error(api_client):
     api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
 
     with pytest.raises(Exception, match="HTTP 500"):
-            await api_client_obj.get_beatmap(116383)
+        await api_client_obj.get_beatmap(116383)

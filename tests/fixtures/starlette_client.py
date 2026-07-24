@@ -30,19 +30,17 @@ from app.oauth import OAuth
 
 
 @pytest.fixture(scope="function")
-def StarletteTestClient():
+def starlette_test_client():
     """Create a TestClient for API route testing.
-    
+
     Use this fixture when you need more control over the Starlette app
     configuration than what the conftest.TestClient provides.
     """
+
     async def login_endpoint(request):
         oauth = OAuth()
         authorization_url, state = oauth.create_authorization_url()
-        return JSONResponse({
-            "authorization_url": authorization_url,
-            "state": state
-        })
+        return JSONResponse({"authorization_url": authorization_url, "state": state})
 
     middleware = [
         Middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]),

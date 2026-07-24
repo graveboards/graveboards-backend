@@ -73,7 +73,10 @@ class TestARRangeRestriction:
     @pytest.mark.asyncio
     async def test_all_logic_raises_on_specific_beatmap(self):
         validator = ARRangeRestriction()
-        beatmaps = [_make_beatmap(ar=5.0, version="Normal"), _make_beatmap(ar=8.0, version="Insane")]
+        beatmaps = [
+            _make_beatmap(ar=5.0, version="Normal"),
+            _make_beatmap(ar=8.0, version="Insane"),
+        ]
         context = _make_context(
             beatmaps=beatmaps,
             config={"max": 7.0, "logic": "all"},

@@ -9,6 +9,7 @@ results match expected behavior.
 
 Run with: pytest tests/integration/search/test_search_integration.py -m integration
 """
+
 import json
 from datetime import UTC, datetime
 
@@ -29,6 +30,7 @@ from app.search.enums import ModelField, Scope, SortingOrder
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 async def search_test_fetcher():
@@ -137,7 +139,9 @@ class SearchFixtureSeeder:
                 is_scoreable=bm_data.get("is_scoreable", True),
                 last_updated=datetime.fromisoformat(
                     bm_data.get("last_updated", "2024-01-01T00:00:00+00:00").replace("Z", "+00:00")
-                ) if bm_data.get("last_updated") else datetime.now(UTC),
+                )
+                if bm_data.get("last_updated")
+                else datetime.now(UTC),
                 max_combo=bm_data.get("max_combo", 1000),
                 mode=bm_data.get("mode", "osu"),
                 mode_int=bm_data.get("mode_int", 0),
@@ -160,10 +164,14 @@ class SearchFixtureSeeder:
             description = {"description": description}
 
         current_nominations = bs_data.get("current_nominations", {"nominators": [], "required": 2})
-        nominations_summary = bs_data.get("nominations_summary", {
-            "current": 2, "required": 2,
-            "required_meta": {"main_ruleset": 2, "non_main_ruleset": 1}
-        })
+        nominations_summary = bs_data.get(
+            "nominations_summary",
+            {
+                "current": 2,
+                "required": 2,
+                "required_meta": {"main_ruleset": 2, "non_main_ruleset": 1},
+            },
+        )
         hype = bs_data.get("hype")
         ratings = bs_data.get("ratings", [5])
         if isinstance(ratings, dict):
@@ -177,7 +185,9 @@ class SearchFixtureSeeder:
             checksum=f"dummy_bs_{bs_id}",
             artist=bs_data.get("artist", "Test Artist"),
             artist_unicode=bs_data.get("artist_unicode", bs_data.get("artist", "Test Artist")),
-            availability=bs_data.get("availability", {"download_disabled": False, "more_information": None}),
+            availability=bs_data.get(
+                "availability", {"download_disabled": False, "more_information": None}
+            ),
             bpm=bs_data.get("bpm", 120.0),
             can_be_hyped=bs_data.get("can_be_hyped", True),
             covers=bs_data.get("covers"),
@@ -193,7 +203,9 @@ class SearchFixtureSeeder:
             language=language,
             last_updated=datetime.fromisoformat(
                 bs_data.get("last_updated", "2024-01-01T00:00:00+00:00").replace("Z", "+00:00")
-            ) if bs_data.get("last_updated") else now,
+            )
+            if bs_data.get("last_updated")
+            else now,
             nominations_summary=nominations_summary,
             nsfw=bs_data.get("nsfw", False),
             offset=bs_data.get("offset", 0),
@@ -203,7 +215,9 @@ class SearchFixtureSeeder:
             ranked=bs_data.get("ranked", 1),
             ranked_date=datetime.fromisoformat(
                 bs_data.get("ranked_date", "2024-01-01T00:00:00+00:00").replace("Z", "+00:00")
-            ) if bs_data.get("ranked_date") else None,
+            )
+            if bs_data.get("ranked_date")
+            else None,
             rating=bs_data.get("rating", 5.0),
             ratings=ratings,
             source=bs_data.get("source", ""),
@@ -212,7 +226,9 @@ class SearchFixtureSeeder:
             storyboard=bs_data.get("storyboard", False),
             submitted_date=datetime.fromisoformat(
                 bs_data.get("submitted_date", "2024-01-01T00:00:00+00:00").replace("Z", "+00:00")
-            ) if bs_data.get("submitted_date") else None,
+            )
+            if bs_data.get("submitted_date")
+            else None,
             tags=bs_data.get("tags", ""),
             title=bs_data.get("title", "Test Song"),
             title_unicode=bs_data.get("title_unicode", bs_data.get("title", "Test Song")),
@@ -225,10 +241,10 @@ class SearchFixtureSeeder:
         from app.database.models.associations import (
             beatmap_snapshot_beatmapset_snapshot_association,
         )
+
         for bm_snapshot in beatmap_snapshots:
             assoc = beatmap_snapshot_beatmapset_snapshot_association.insert().values(
-                beatmap_snapshot_id=bm_snapshot.id,
-                beatmapset_snapshot_id=bs_snapshot.id
+                beatmap_snapshot_id=bm_snapshot.id, beatmapset_snapshot_id=bs_snapshot.id
             )
             await self.session.execute(assoc)
 
@@ -300,6 +316,7 @@ async def search_fixture_seeder(db_transaction, search_test_fetcher):
 # Helper: check if coverage data is available
 # ---------------------------------------------------------------------------
 
+
 def _has_coverage(coverage: dict, bucket: str, category: str | None = None) -> bool:
     """Check if a coverage bucket has data available."""
     if bucket not in coverage:
@@ -310,10 +327,7 @@ def _has_coverage(coverage: dict, bucket: str, category: str | None = None) -> b
             return category in data and bool(data[category].get("ids", []))
         return False
     if isinstance(data, dict):
-        for v in data.values():
-            if isinstance(v, dict) and v.get("ids"):
-                return True
-        return False
+        return any(isinstance(v, dict) and v.get("ids") for v in data.values())
     return bool(data)
 
 
@@ -337,9 +351,9 @@ def _get_ids(coverage: dict, bucket: str, category: str | None = None) -> list[i
 # Test: SearchBeatmapsets
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.integration
 class TestSearchBeatmapsets:
-
     @pytest.mark.asyncio
     async def test_filter_by_genre(self, db_transaction, search_test_fetcher):
         """Test filtering beatmapsets by genre."""
@@ -485,8 +499,7 @@ class TestSearchBeatmapsets:
         coverage = search_test_fetcher.get_coverage_report()
         ratings = coverage.get("beatmapset_ratings", {})
         has_data = any(
-            ratings.get(cat, {}).get("count", 0) > 0
-            for cat in ("low", "medium", "high")
+            ratings.get(cat, {}).get("count", 0) > 0 for cat in ("low", "medium", "high")
         )
         if not has_data:
             pytest.skip("No beatmapset rating coverage available")
@@ -498,9 +511,12 @@ class TestSearchBeatmapsets:
             await db_transaction.commit()
 
         from app.search.datastructures import SortingSchema
-        sorting = SortingSchema([
-            {"field": ModelField.BEATMAPSETSNAPSHOT__RATING, "order": SortingOrder.DESCENDING},
-        ])
+
+        sorting = SortingSchema(
+            [
+                {"field": ModelField.BEATMAPSETSNAPSHOT__RATING, "order": SortingOrder.DESCENDING},
+            ]
+        )
         engine = SearchEngine(
             scope=Scope.BEATMAPSETS,
             sorting=sorting,
@@ -513,10 +529,7 @@ class TestSearchBeatmapsets:
         """Test sorting beatmapsets by favourite count descending."""
         coverage = search_test_fetcher.get_coverage_report()
         favs = coverage.get("beatmapset_favourite_counts", {})
-        has_data = any(
-            favs.get(cat, {}).get("count", 0) > 0
-            for cat in ("low", "medium", "high")
-        )
+        has_data = any(favs.get(cat, {}).get("count", 0) > 0 for cat in ("low", "medium", "high"))
         if not has_data:
             pytest.skip("No beatmapset favourite count coverage available")
 
@@ -527,9 +540,15 @@ class TestSearchBeatmapsets:
             await db_transaction.commit()
 
         from app.search.datastructures import SortingSchema
-        sorting = SortingSchema([
-            {"field": ModelField.BEATMAPSETSNAPSHOT__FAVOURITE_COUNT, "order": SortingOrder.DESCENDING},
-        ])
+
+        sorting = SortingSchema(
+            [
+                {
+                    "field": ModelField.BEATMAPSETSNAPSHOT__FAVOURITE_COUNT,
+                    "order": SortingOrder.DESCENDING,
+                },
+            ]
+        )
         engine = SearchEngine(
             scope=Scope.BEATMAPSETS,
             sorting=sorting,
@@ -542,9 +561,9 @@ class TestSearchBeatmapsets:
 # Test: SearchBeatmaps
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.integration
 class TestSearchBeatmaps:
-
     @pytest.mark.asyncio
     async def test_filter_by_mode(self, db_transaction, search_test_fetcher):
         """Test filtering beatmaps by game mode."""
@@ -577,8 +596,7 @@ class TestSearchBeatmaps:
         coverage = search_test_fetcher.get_coverage_report()
         diffs = coverage.get("beatmap_difficulties", {})
         has_data = any(
-            diffs.get(cat, {}).get("count", 0) > 0
-            for cat in ("easy", "medium", "hard", "expert")
+            diffs.get(cat, {}).get("count", 0) > 0 for cat in ("easy", "medium", "hard", "expert")
         )
         if not has_data:
             pytest.skip("No beatmap difficulty coverage available")
@@ -601,10 +619,7 @@ class TestSearchBeatmaps:
         """Test filtering beatmaps by playcount."""
         coverage = search_test_fetcher.get_coverage_report()
         pcs = coverage.get("beatmap_playcounts", {})
-        has_data = any(
-            pcs.get(cat, {}).get("count", 0) > 0
-            for cat in ("low", "medium", "high")
-        )
+        has_data = any(pcs.get(cat, {}).get("count", 0) > 0 for cat in ("low", "medium", "high"))
         if not has_data:
             pytest.skip("No beatmap playcount coverage available")
 
@@ -646,9 +661,9 @@ class TestSearchBeatmaps:
 # Test: SearchUsers
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.integration
 class TestSearchUsers:
-
     @pytest.mark.asyncio
     async def test_filter_by_country(self, db_transaction, search_test_fetcher):
         """Test filtering users by country code."""

@@ -185,8 +185,14 @@ class TestEndToEndComposite:
                         "config": {
                             "operator": "or",
                             "rules": [
-                                {"type": "beatmap_duration", "config": {"max_seconds": 100, "logic": "max"}},
-                                {"type": "beatmap_duration", "config": {"max_seconds": 200, "logic": "max"}},
+                                {
+                                    "type": "beatmap_duration",
+                                    "config": {"max_seconds": 100, "logic": "max"},
+                                },
+                                {
+                                    "type": "beatmap_duration",
+                                    "config": {"max_seconds": 200, "logic": "max"},
+                                },
                             ],
                         },
                     },

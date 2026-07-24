@@ -541,7 +541,9 @@ class SearchEngine:
         uses category-specific CTEs to resolve aggregated or relational fields.
         """
 
-        def clause_generator(conditions, is_aggregated: bool = False) -> Generator[BinaryExpression]:
+        def clause_generator(
+            conditions, is_aggregated: bool = False
+        ) -> Generator[BinaryExpression]:
             for op_str, value in conditions.model_dump(exclude_unset=True, by_alias=True).items():
                 filter_operator = FilterOperator.from_name(op_str)
                 yield get_filter_condition(

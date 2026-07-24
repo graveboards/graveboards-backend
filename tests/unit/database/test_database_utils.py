@@ -11,12 +11,16 @@ class TestGetFilterCondition:
         assert condition is not None
 
     def test_eq_operator_aggregated(self, mock_column_clause):
-        condition = get_filter_condition(FilterOperator.EQ, mock_column_clause, 42, is_aggregated=True)
+        condition = get_filter_condition(
+            FilterOperator.EQ, mock_column_clause, 42, is_aggregated=True
+        )
 
         assert condition is not None
 
     def test_in_operator_aggregated(self, mock_column_clause):
-        condition = get_filter_condition(FilterOperator.IN, mock_column_clause, [1, 2, 3], is_aggregated=True)
+        condition = get_filter_condition(
+            FilterOperator.IN, mock_column_clause, [1, 2, 3], is_aggregated=True
+        )
 
         assert condition is not None
 

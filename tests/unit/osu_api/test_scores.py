@@ -37,6 +37,8 @@ async def test_get_beatmap_scores_with_offset(api_client):
     mock_response = MockResponse(mock_data)
     api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
 
-    await api_client_obj.get_beatmap_scores(mock_data["scores"][0]["beatmap_id"], limit=50, offset=10)
+    await api_client_obj.get_beatmap_scores(
+        mock_data["scores"][0]["beatmap_id"], limit=50, offset=10
+    )
     called_url = str(api_client_obj._http_client.get.call_args[0][0])
     assert "offset=10" in called_url

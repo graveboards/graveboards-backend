@@ -17,9 +17,10 @@ pytestmark = pytest.mark.integration
 def require_redis(func):
     """Skip test if REDIS_TEST_URL environment variable is not set."""
     import os
+
     return pytest.mark.skipif(
         not os.environ.get("REDIS_TEST_URL"),
-        reason="REDIS_TEST_URL not set — skipping Redis integration test"
+        reason="REDIS_TEST_URL not set — skipping Redis integration test",
     )(func)
 
 
@@ -49,17 +50,37 @@ class TestRedisCacheIntegration:
         rc = get_redis_client()
         try:
             beatmap = Beatmap(
-                id=999999, user_id=67890, beatmapset_id=11111,
-                version="Test", creator="Test", bpm=180.0,
-                total_length=240, hit_length=216, status="ranked",
-                difficulty_rating=7.5, playcount=5000, passcount=3000,
-                mode="osu", mode_int=0, accuracy=95.5, ar=8.0, cs=4.0,
-                drain=6.0, count_circles=200, count_sliders=100,
-                count_spinners=5, max_combo=1500, is_scoreable=True,
-                ranked=1, url="https://example.com", checksum="abc",
+                id=999999,
+                user_id=67890,
+                beatmapset_id=11111,
+                version="Test",
+                creator="Test",
+                bpm=180.0,
+                total_length=240,
+                hit_length=216,
+                status="ranked",
+                difficulty_rating=7.5,
+                playcount=5000,
+                passcount=3000,
+                mode="osu",
+                mode_int=0,
+                accuracy=95.5,
+                ar=8.0,
+                cs=4.0,
+                drain=6.0,
+                count_circles=200,
+                count_sliders=100,
+                count_spinners=5,
+                max_combo=1500,
+                is_scoreable=True,
+                ranked=1,
+                url="https://example.com",
+                checksum="abc",
                 failtimes={"exit": [], "fail": []},
                 last_updated="2024-06-15T12:00:00+00:00",
-                deleted_at=None, owners=[], top_tag_ids=[],
+                deleted_at=None,
+                owners=[],
+                top_tag_ids=[],
             )
             serialized = beatmap.serialize()
             key = f"test:beatmap:{beatmap.id}"
@@ -120,8 +141,10 @@ class TestRedisCacheIntegration:
         rc = get_redis_client()
         try:
             token = OsuClientOAuthToken(
-                access_token="test_token_abc", token_type="bearer",
-                expires_in=5184000, expires_at=1735689600,
+                access_token="test_token_abc",
+                token_type="bearer",
+                expires_in=5184000,
+                expires_at=1735689600,
             )
             serialized = token.serialize()
             key = "test:oauth:test_user"
@@ -131,6 +154,7 @@ class TestRedisCacheIntegration:
             assert stored_raw is not None
 
             import ast
+
             stored = ast.literal_eval(stored_raw)
             restored = OsuClientOAuthToken.deserialize(stored)
             assert restored.access_token == "test_token_abc"
@@ -147,8 +171,12 @@ class TestRedisCacheIntegration:
         rc = get_redis_client()
         try:
             task = QueueRequestHandlerTask(
-                user_id=12345678, beatmapset_id=35965, queue_id=1,
-                comment="Test comment", mv_checked=False, http_request_id="",
+                user_id=12345678,
+                beatmapset_id=35965,
+                queue_id=1,
+                comment="Test comment",
+                mv_checked=False,
+                http_request_id="",
             )
             serialized = task.serialize()
             key = f"test:task:{task.hashed_id}"

@@ -12,12 +12,14 @@ class TestCreateTestApp:
     def test_creates_async_app(self):
         """Test create_test_app returns an AsyncApp instance."""
         from app.test_app import create_test_app
+
         app = create_test_app()
         assert isinstance(app, AsyncApp)
 
     def test_creates_with_custom_mock_rc(self):
         """Test custom mock_rc is passed through."""
         from app.test_app import create_test_app
+
         custom_rc = AsyncMock()
         app = create_test_app(mock_rc=custom_rc)
         assert isinstance(app, AsyncApp)
@@ -25,6 +27,7 @@ class TestCreateTestApp:
     def test_creates_with_custom_mock_db(self):
         """Test custom mock_db is passed through."""
         from app.test_app import create_test_app
+
         custom_db = AsyncMock()
         app = create_test_app(mock_db=custom_db)
         assert isinstance(app, AsyncApp)
@@ -53,6 +56,7 @@ class TestMockRedisMiddleware:
             pass
 
         import asyncio
+
         asyncio.run(middleware({"type": "http", "state": {}}, dummy_receive, dummy_send))
 
         assert captured == [True]
@@ -78,6 +82,7 @@ class TestMockRedisMiddleware:
             pass
 
         import asyncio
+
         asyncio.run(middleware({"type": "http", "state": {}}, dummy_receive, dummy_send))
 
         assert captured[0] is custom_rc
@@ -102,6 +107,7 @@ class TestMockRedisMiddleware:
             pass
 
         import asyncio
+
         asyncio.run(middleware({"type": "http", "state": {}}, dummy_receive, dummy_send))
 
         rc = captured[0]
@@ -135,6 +141,7 @@ class TestMockDatabaseMiddleware:
             pass
 
         import asyncio
+
         asyncio.run(middleware({"type": "http", "state": {}}, dummy_receive, dummy_send))
 
         assert captured == [True]
@@ -159,6 +166,7 @@ class TestMockDatabaseMiddleware:
             pass
 
         import asyncio
+
         asyncio.run(middleware({"type": "http", "state": {}}, dummy_receive, dummy_send))
 
         db = captured[0]
@@ -187,6 +195,7 @@ class TestMockDatabaseMiddleware:
             pass
 
         import asyncio
+
         asyncio.run(middleware({"type": "http", "state": {}}, dummy_receive, dummy_send))
 
         db = captured[0]
@@ -214,6 +223,7 @@ class TestMockDatabaseMiddleware:
             pass
 
         import asyncio
+
         asyncio.run(middleware({"type": "http", "state": {}}, dummy_receive, dummy_send))
 
         assert captured[0] is custom_db
@@ -225,5 +235,6 @@ class TestCreateTestClient:
     def test_creates_test_client(self):
         """Test create_test_client returns a TestClient."""
         from app.test_app import create_test_client
+
         client = create_test_client()
         assert isinstance(client, TestClient)

@@ -14,7 +14,9 @@ def create_request_from_beatmapset_id(beatmapset_id: int, queue_id: int = 1, **k
     )
 
 
-def create_request_from_user_and_beatmapset(user_id: int, beatmapset_id: int, queue_id: int = 1, **kwargs) -> Request:
+def create_request_from_user_and_beatmapset(
+    user_id: int, beatmapset_id: int, queue_id: int = 1, **kwargs
+) -> Request:
     """Create a Request model from user and beatmapset fixtures."""
     return Request(
         user_id=user_id,

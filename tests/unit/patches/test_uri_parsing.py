@@ -86,8 +86,6 @@ def test_resolve_query_coerces_include_booleans_and_json_sorting():
     assert parser.resolve_query({"include[beatmapset][creator]": ["yes"]}) == {
         "include": {"beatmapset": {"creator": True}}
     }
-    assert parser.resolve_query(
-        {"sorting": ['{"field":"beatmapset.title","order":"desc"}']}
-    ) == {
+    assert parser.resolve_query({"sorting": ['{"field":"beatmapset.title","order":"desc"}']}) == {
         "sorting": [{"field": "beatmapset.title", "order": "desc"}]
     }

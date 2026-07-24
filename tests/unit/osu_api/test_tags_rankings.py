@@ -32,8 +32,8 @@ async def test_get_rankings(api_client):
 
     api_client_obj, mock_redis = api_client
     mock_data = {
-    "rankings": [_create_mock_rankings_user()],
-    "score_count": 1,
+        "rankings": [_create_mock_rankings_user()],
+        "score_count": 1,
     }
 
     mock_redis.hgetall.return_value = None
@@ -56,7 +56,7 @@ async def test_get_rankings_with_country_mode(api_client):
 
     api_client_obj, mock_redis = api_client
     mock_data = {
-    "ranking": [_create_mock_rankings_user()],
+        "ranking": [_create_mock_rankings_user()],
     }
 
     mock_redis.hgetall.return_value = None

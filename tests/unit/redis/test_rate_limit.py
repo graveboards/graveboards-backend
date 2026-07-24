@@ -11,6 +11,7 @@ from app.redis_client.decorators import rate_limit
 
 class MockRedisClient:
     """A non-Mock Redis client stub for rate_limit tests."""
+
     def __init__(self):
         self.incr = None
         self.expire = None
@@ -21,6 +22,7 @@ class MockRedisClient:
 def _make_mock_rc():
     """Create a properly configured mock Redis client."""
     from unittest.mock import AsyncMock
+
     rc = MockRedisClient()
     rc.incr = AsyncMock(return_value=1)
     rc.expire = AsyncMock(return_value=True)
@@ -63,6 +65,7 @@ class TestRateLimitModule:
 
         rc.incr = mock_incr
         from unittest.mock import AsyncMock as AM
+
         rc.expire = AM(return_value=True)
         rc.get = AM(return_value=None)
         rc.set = AM(return_value=True)
@@ -99,6 +102,7 @@ class TestRateLimitModule:
     async def test_rate_limit_skips_window_check_when_limit_zero(self, mock_rc):
         """Test rate_limit skips window counter when limit_per_window=0."""
         from unittest.mock import AsyncMock as AM
+
         mock_rc.incr = AM()
 
         @rate_limit(limit_per_window=0, auto_retry=False)
@@ -113,6 +117,7 @@ class TestRateLimitModule:
     async def test_rate_limit_no_min_interval_no_get(self, mock_rc):
         """Test rate_limit with min_interval=0 does not read last_call_key."""
         from unittest.mock import AsyncMock as AM
+
         mock_rc.get = AM()
 
         @rate_limit(limit_per_window=10, min_interval=0.0, auto_retry=False)
@@ -127,6 +132,7 @@ class TestRateLimitModule:
     async def test_rate_limit_min_interval_sleeps_when_needed(self, mock_rc):
         """Test min_interval causes sleep when previous call was too recent."""
         from unittest.mock import AsyncMock as AM
+
         mock_rc.get = AM(return_value=str(time.time() - 0.001))
 
         @rate_limit(limit_per_window=10, min_interval=0.001, auto_retry=False)

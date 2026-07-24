@@ -108,7 +108,11 @@ class TestUpsertRestrictionsDuplicateDetection:
     async def test_allows_similar_but_different_configs(self):
         crud = RuleCRUD()
         mock_session = AsyncMock()
-        mock_session.execute = AsyncMock(return_value=MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[])))))
+        mock_session.execute = AsyncMock(
+            return_value=MagicMock(
+                scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[])))
+            )
+        )
         mock_session.delete = AsyncMock()
         mock_session.flush = AsyncMock()
         mock_session.refresh = AsyncMock()
@@ -140,7 +144,11 @@ class TestUpsertRestrictionsDuplicateDetection:
     async def test_allows_same_type_different_configs(self):
         crud = RuleCRUD()
         mock_session = AsyncMock()
-        mock_session.execute = AsyncMock(return_value=MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[])))))
+        mock_session.execute = AsyncMock(
+            return_value=MagicMock(
+                scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[])))
+            )
+        )
         mock_session.delete = AsyncMock()
         mock_session.flush = AsyncMock()
         mock_session.refresh = AsyncMock()
@@ -172,7 +180,11 @@ class TestUpsertRestrictionsDuplicateDetection:
     async def test_allows_different_types_with_same_config(self):
         crud = RuleCRUD()
         mock_session = AsyncMock()
-        mock_session.execute = AsyncMock(return_value=MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[])))))
+        mock_session.execute = AsyncMock(
+            return_value=MagicMock(
+                scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[])))
+            )
+        )
         mock_session.delete = AsyncMock()
         mock_session.flush = AsyncMock()
         mock_session.refresh = AsyncMock()
@@ -209,7 +221,11 @@ class TestVersionDuplicateDetection:
 
         crud = RuleCRUD()
         mock_session = AsyncMock()
-        mock_session.execute = AsyncMock(return_value=MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[])))))
+        mock_session.execute = AsyncMock(
+            return_value=MagicMock(
+                scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[])))
+            )
+        )
         mock_session.delete = AsyncMock()
         mock_session.flush = AsyncMock()
         mock_session.refresh = AsyncMock()

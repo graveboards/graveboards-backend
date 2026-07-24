@@ -8,10 +8,7 @@ from app.database.models import Beatmap, Beatmapset
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_beatmap_model_creation():
-    beatmap = Beatmap(
-        id=116383,
-        beatmapset_id=35965
-    )
+    beatmap = Beatmap(id=116383, beatmapset_id=35965)
 
     assert beatmap.id == 116383
     assert beatmap.beatmapset_id == 35965
@@ -20,33 +17,24 @@ async def test_beatmap_model_creation():
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_beatmap_relationships():
-    beatmap = Beatmap(
-        id=116383,
-        beatmapset_id=35965
-    )
+    beatmap = Beatmap(id=116383, beatmapset_id=35965)
 
-    assert hasattr(beatmap, 'beatmapset')
-    assert hasattr(beatmap, 'snapshots')
+    assert hasattr(beatmap, "beatmapset")
+    assert hasattr(beatmap, "snapshots")
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_beatmap_num_snapshots():
-    beatmap = Beatmap(
-        id=116383,
-        beatmapset_id=35965
-    )
+    beatmap = Beatmap(id=116383, beatmapset_id=35965)
 
-    assert hasattr(beatmap, 'num_snapshots')
+    assert hasattr(beatmap, "num_snapshots")
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_beatmapset_model_creation():
-    beatmapset = Beatmapset(
-        id=35965,
-        user_id=12345678
-    )
+    beatmapset = Beatmapset(id=35965, user_id=12345678)
 
     assert beatmapset.id == 35965
     assert beatmapset.user_id == 12345678
@@ -55,38 +43,26 @@ async def test_beatmapset_model_creation():
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_beatmapset_relationships():
-    beatmapset = Beatmapset(
-        id=35965,
-        user_id=12345678
-    )
+    beatmapset = Beatmapset(id=35965, user_id=12345678)
 
-    assert hasattr(beatmapset, 'beatmaps')
-    assert hasattr(beatmapset, 'snapshots')
+    assert hasattr(beatmapset, "beatmaps")
+    assert hasattr(beatmapset, "snapshots")
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_beatmapset_num_snapshots():
-    beatmapset = Beatmapset(
-        id=35965,
-        user_id=12345678
-    )
+    beatmapset = Beatmapset(id=35965, user_id=12345678)
 
-    assert hasattr(beatmapset, 'num_snapshots')
+    assert hasattr(beatmapset, "num_snapshots")
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_beatmap_beatmapset_relationship():
-    beatmapset = Beatmapset(
-        id=35965,
-        user_id=12345678
-    )
+    beatmapset = Beatmapset(id=35965, user_id=12345678)
 
-    beatmap = Beatmap(
-        id=116383,
-        beatmapset_id=beatmapset.id
-    )
+    beatmap = Beatmap(id=116383, beatmapset_id=beatmapset.id)
 
     assert beatmap.beatmapset_id == beatmapset.id
 
@@ -94,20 +70,11 @@ async def test_beatmap_beatmapset_relationship():
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_beatmapset_beatmap_relationship():
-    beatmapset = Beatmapset(
-        id=35965,
-        user_id=12345678
-    )
+    beatmapset = Beatmapset(id=35965, user_id=12345678)
 
-    beatmap1 = Beatmap(
-        id=116383,
-        beatmapset_id=beatmapset.id
-    )
+    beatmap1 = Beatmap(id=116383, beatmapset_id=beatmapset.id)
 
-    beatmap2 = Beatmap(
-        id=116384,
-        beatmapset_id=beatmapset.id
-    )
+    beatmap2 = Beatmap(id=116384, beatmapset_id=beatmapset.id)
 
     assert beatmap1.beatmapset_id == beatmap2.beatmapset_id
 
@@ -176,29 +143,20 @@ class TestLeaderboardPatchIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_can_update_leaderboard(self, TestClientWithMocks, admin_user_token, authenticated_user_id):
+    async def test_admin_can_update_leaderboard(
+        self, TestClientWithMocks, admin_user_token, authenticated_user_id
+    ):
         """Test admin can update leaderboard (e.g., freeze/unfreeze)."""
         from app.database.models import BeatmapSnapshot, Leaderboard
 
         mock_db = AsyncMock()
 
-        beatmap_snapshot_data = {
-            "id": 1,
-            "beatmap_id": self.TEST_BEATMAP_ID,
-            "snapshot_number": self.TEST_SNAPSHOT_NUMBER,
-        }
 
         mock_beatmap_snapshot = MagicMock()
         mock_beatmap_snapshot.id = 1
         mock_beatmap_snapshot.beatmap_id = self.TEST_BEATMAP_ID
         mock_beatmap_snapshot.snapshot_number = self.TEST_SNAPSHOT_NUMBER
 
-        leaderboard_data = {
-            "id": 1,
-            "beatmap_id": self.TEST_BEATMAP_ID,
-            "beatmap_snapshot_id": 1,
-            "frozen": False,
-        }
 
         mock_leaderboard = MagicMock()
         mock_leaderboard.id = 1
@@ -229,7 +187,7 @@ class TestLeaderboardPatchIntegration:
             response = test_client.patch(
                 f"/api/v1/beatmaps/{self.TEST_BEATMAP_ID}/snapshots/{self.TEST_SNAPSHOT_NUMBER}/leaderboard",
                 json={"frozen": True},
-                headers=headers
+                headers=headers,
             )
 
         assert response.status_code == 200
@@ -239,17 +197,14 @@ class TestLeaderboardPatchIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_non_admin_gets_forbidden_on_leaderboard_patch(self, TestClientWithMocks, admin_user_token, authenticated_user_id):
+    async def test_non_admin_gets_forbidden_on_leaderboard_patch(
+        self, TestClientWithMocks, admin_user_token, authenticated_user_id
+    ):
         """Test non-admin user gets 403 Forbidden on leaderboard patch."""
         from app.security import generate_token
 
         mock_db = AsyncMock()
 
-        beatmap_snapshot_data = {
-            "id": 1,
-            "beatmap_id": self.TEST_BEATMAP_ID,
-            "snapshot_number": self.TEST_SNAPSHOT_NUMBER,
-        }
 
         mock_beatmap_snapshot = MagicMock()
         mock_beatmap_snapshot.id = 1
@@ -277,12 +232,15 @@ class TestLeaderboardPatchIntegration:
             response = test_client.patch(
                 f"/api/v1/beatmaps/{self.TEST_BEATMAP_ID}/snapshots/{self.TEST_SNAPSHOT_NUMBER}/leaderboard",
                 json={"frozen": True},
-                headers=headers
+                headers=headers,
             )
 
         assert response.status_code == 403
         data = response.json()
-        assert "forbidden" in data.get("detail", "").lower() or "not authorized" in data.get("detail", "").lower()
+        assert (
+            "forbidden" in data.get("detail", "").lower()
+            or "not authorized" in data.get("detail", "").lower()
+        )
 
 
 @pytest.mark.integration
@@ -315,8 +273,10 @@ async def test_get_beatmap_osu_file(TestClientWithMocks):
 
     mock_file = AsyncFileMock()
 
-    with patch('api.v1.beatmaps.snapshots.osu.BeatmapManager', return_value=mock_bm), \
-         patch('api.v1.beatmaps.snapshots.osu.aiofiles.open', return_value=mock_file):
+    with (
+        patch("api.v1.beatmaps.snapshots.osu.BeatmapManager", return_value=mock_bm),
+        patch("api.v1.beatmaps.snapshots.osu.aiofiles.open", return_value=mock_file),
+    ):
         response = test_client.get("/api/v1/beatmaps/116383/snapshots/1/osu")
 
     assert response.status_code == 200
@@ -345,8 +305,10 @@ async def test_get_beatmap_osu_file_not_found(TestClientWithMocks):
     mock_file.__aenter__ = MagicMock(side_effect=FileNotFoundError("File not found"))
     mock_file.__aexit__ = MagicMock(return_value=None)
 
-    with patch('api.v1.beatmaps.snapshots.osu.BeatmapManager', return_value=mock_bm), \
-         patch('api.v1.beatmaps.snapshots.osu.aiofiles.open', return_value=mock_file):
+    with (
+        patch("api.v1.beatmaps.snapshots.osu.BeatmapManager", return_value=mock_bm),
+        patch("api.v1.beatmaps.snapshots.osu.aiofiles.open", return_value=mock_file),
+    ):
         response = test_client.get("/api/v1/beatmaps/116383/snapshots/1/osu")
 
     assert response.status_code == 404
@@ -375,14 +337,18 @@ async def test_get_leaderboard(TestClientWithMocks):
 
     test_client = TestClientWithMocks(mock_db=mock_db)
 
-    with patch('api.v1.beatmaps.snapshots.leaderboard.LeaderboardSchema.model_validate') as mock_validate:
+    with patch(
+        "api.v1.beatmaps.snapshots.leaderboard.LeaderboardSchema.model_validate"
+    ) as mock_validate:
         mock_validate.return_value = MagicMock(
-            model_dump=MagicMock(return_value={
-                "id": 1,
-                "beatmap_id": 116383,
-                "beatmap_snapshot_id": 1,
-                "frozen": False
-            })
+            model_dump=MagicMock(
+                return_value={
+                    "id": 1,
+                    "beatmap_id": 116383,
+                    "beatmap_snapshot_id": 1,
+                    "frozen": False,
+                }
+            )
         )
         response = test_client.get("/api/v1/beatmaps/116383/snapshots/1/leaderboard")
 
@@ -435,9 +401,7 @@ async def test_admin_create_leaderboard(TestClientWithMocks, admin_user_token):
 
     headers = {"Authorization": f"Bearer {admin_user_token}"}
     response = test_client.post(
-        "/api/v1/beatmaps/116383/snapshots/1/leaderboard",
-        json={"frozen": False},
-        headers=headers
+        "/api/v1/beatmaps/116383/snapshots/1/leaderboard", json={"frozen": False}, headers=headers
     )
 
     assert response.status_code == 201
@@ -488,9 +452,7 @@ async def test_admin_patch_leaderboard(TestClientWithMocks, admin_user_token):
 
     headers = {"Authorization": f"Bearer {admin_user_token}"}
     response = test_client.patch(
-        "/api/v1/beatmaps/116383/snapshots/1/leaderboard",
-        json={"frozen": True},
-        headers=headers
+        "/api/v1/beatmaps/116383/snapshots/1/leaderboard", json={"frozen": True}, headers=headers
     )
 
     assert response.status_code == 200
@@ -534,15 +496,19 @@ async def test_get_leaderboard_scores(TestClientWithMocks):
 
     def mock_validate(obj):
         m = MagicMock()
-        m.model_dump = MagicMock(return_value={
-            "id": obj.id,
-            "user_id": obj.user_id,
-            "rank": obj.rank,
-            "score": obj.score
-        })
+        m.model_dump = MagicMock(
+            return_value={
+                "id": obj.id,
+                "user_id": obj.user_id,
+                "rank": obj.rank,
+                "score": obj.score,
+            }
+        )
         return m
 
-    with patch('api.v1.beatmaps.snapshots.scores.ScoreSchema.model_validate', side_effect=mock_validate):
+    with patch(
+        "api.v1.beatmaps.snapshots.scores.ScoreSchema.model_validate", side_effect=mock_validate
+    ):
         response = test_client.get("/api/v1/beatmaps/116383/snapshots/1/scores")
 
     assert response.status_code == 200

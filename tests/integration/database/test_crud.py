@@ -19,7 +19,7 @@ async def test_crud_create_profile(db_session):
     """Test creating a Profile instance."""
     db = PostgresqlDB()
 
-    user = await db.add(User, session=db_session, id=88888)
+    await db.add(User, session=db_session, id=88888)
 
     profile_data = {
         "user_id": 88888,
@@ -39,7 +39,7 @@ async def test_crud_create_queue(db_session):
     """Test creating a Queue instance."""
     db = PostgresqlDB()
 
-    user = await db.add(User, session=db_session, id=77777)
+    await db.add(User, session=db_session, id=77777)
 
     queue_data = {
         "user_id": 77777,
@@ -65,7 +65,7 @@ async def test_crud_add_many_users(db_session):
         {"id": 10003},
     ]
 
-    created = await db.add_many(User, session=db_session, *users_data)
+    created = await db.add_many(User, *users_data, session=db_session)
 
     assert len(created) == 3
     assert created[0].id == 10001
@@ -78,7 +78,7 @@ async def test_crud_read_user(db_session):
     """Test reading a User instance."""
     db = PostgresqlDB()
 
-    created = await db.add(User, session=db_session, id=55555)
+    await db.add(User, session=db_session, id=55555)
 
     fetched = await db.get(User, session=db_session, id=55555)
 
@@ -91,7 +91,7 @@ async def test_crud_read_profile(db_session):
     """Test reading a Profile instance."""
     db = PostgresqlDB()
 
-    user = await db.add(User, session=db_session, id=44444)
+    await db.add(User, session=db_session, id=44444)
     await db.add(Profile, session=db_session, user_id=44444, username="readtest")
 
     fetched = await db.get(Profile, session=db_session, user_id=44444)
@@ -105,7 +105,7 @@ async def test_crud_update_profile(db_session):
     """Test updating a Profile instance."""
     db = PostgresqlDB()
 
-    user = await db.add(User, session=db_session, id=33333)
+    await db.add(User, session=db_session, id=33333)
     created = await db.add(Profile, session=db_session, user_id=33333, username="oldname")
 
     updated = await db.update(Profile, created.id, session=db_session, username="newname")
@@ -131,8 +131,8 @@ async def test_crud_delete_profile(db_session):
     """Test deleting a Profile instance."""
     db = PostgresqlDB()
 
-    user = await db.add(User, session=db_session, id=9999)
-    created = await db.add(Profile, session=db_session, user_id=9999)
+    await db.add(User, session=db_session, id=9999)
+    await db.add(Profile, session=db_session, user_id=9999)
 
     await db.delete(Profile, session=db_session, user_id=9999)
 
@@ -145,9 +145,9 @@ async def test_crud_relationship_user_to_profile(db_session):
     """Test User to Profile relationship - verify FK is set correctly."""
     db = PostgresqlDB()
 
-    user = await db.add(User, session=db_session, id=87654)
+    await db.add(User, session=db_session, id=87654)
     profile_data = {"user_id": 87654, "username": "reltest", "country_code": "CA"}
-    profile = await db.add(Profile, session=db_session, **profile_data)
+    await db.add(Profile, session=db_session, **profile_data)
 
     fetched_user = await db.get(User, session=db_session, id=87654)
 
@@ -160,16 +160,13 @@ async def test_crud_relationship_queue_to_user(db_session):
     """Test Queue to User relationship - verify FK is set correctly."""
     db = PostgresqlDB()
 
-    user = await db.add(User, session=db_session, id=54321)
+    await db.add(User, session=db_session, id=54321)
     queue_data = {"user_id": 54321, "name": "User Queue", "description": "Test"}
     queue = await db.add(Queue, session=db_session, **queue_data)
 
     fetched = await db.get(Queue, session=db_session, id=queue.id)
 
     assert fetched.user_id == 54321
-
-
-
 
 
 @pytest.mark.asyncio
@@ -182,7 +179,7 @@ async def test_crud_get_many(db_session):
         {"id": 11102},
         {"id": 11103},
     ]
-    await db.add_many(User, session=db_session, *users_data)
+    await db.add_many(User, *users_data, session=db_session)
 
     fetched = await db.get_many(User, session=db_session)
 
@@ -194,13 +191,13 @@ async def test_crud_add_many_with_relationships(db_session):
     """Test adding multiple instances with relationships."""
     db = PostgresqlDB()
 
-    user = await db.add(User, session=db_session, id=33300)
+    await db.add(User, session=db_session, id=33300)
 
     queues_data = [
         {"user_id": 33300, "name": "Queue One", "description": "Test"},
         {"user_id": 33300, "name": "Queue Two", "description": "Test"},
     ]
-    created = await db.add_many(Queue, session=db_session, *queues_data)
+    created = await db.add_many(Queue, *queues_data, session=db_session)
 
     assert len(created) == 2
     assert created[0].user_id == 33300
