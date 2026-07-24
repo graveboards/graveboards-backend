@@ -288,21 +288,21 @@ class FixtureDataFetcher:
                 mode = getattr(Ruleset, r.upper()).value
                 return self.oac.get_user(id, Ruleset(mode))
 
-            def path_builder(id, r=ruleset):
-                return ruleset_path / f"user_{id}_{r}.json"
+            def path_builder(id, r=ruleset, _ruleset_path=ruleset_path):
+                return _ruleset_path / f"user_{id}_{r}.json"
 
-            def success_handler(beatmap_id: int, data: dict):
+            def success_handler(beatmap_id: int, data: dict, _category=category, _ruleset=ruleset):
                 self._seen_ids.add(beatmap_id)
-                self._add_fetched_id(category, beatmap_id)
+                self._add_fetched_id(_category, beatmap_id)
                 self._record_success()
-                self.logger.debug(f"Fetched user {beatmap_id} ({ruleset})")
+                self.logger.debug(f"Fetched user {beatmap_id} ({_ruleset})")
 
-            async def failure_handler(beatmap_id: int, error: Exception):
-                await self._add_failed_id(category, beatmap_id)
+            async def failure_handler(beatmap_id: int, error: Exception, _category=category):
+                await self._add_failed_id(_category, beatmap_id)
 
             config = FetchConfig(
                 api_call=api_call_factory,
-                id_generator=lambda: self._get_random_id(category),
+                id_generator=lambda _category=category: self._get_random_id(_category),
                 path_builder=path_builder,
                 data_type="user",
                 success_handler=success_handler,
@@ -435,17 +435,17 @@ class FixtureDataFetcher:
             def api_call_factory(id, st=score_type_enum, m=Ruleset.OSU):
                 return self.oac.get_user_scores(id, st, mode=m)
 
-            def path_builder(id, st=score_type):
-                return type_path / f"scores_{id}_{st}.json"
+            def path_builder(id, st=score_type, _type_path=type_path):
+                return _type_path / f"scores_{id}_{st}.json"
 
-            def id_generator():
-                return self._get_random_id("users", use_top_players=use_top_players)
+            def id_generator(_use_top_players=use_top_players):
+                return self._get_random_id("users", use_top_players=_use_top_players)
 
-            def success_handler(beatmap_id: int, data: dict):
+            def success_handler(beatmap_id: int, data: dict, _score_type=score_type):
                 self._seen_ids.add(beatmap_id)
                 self._add_fetched_id("users", beatmap_id)
                 self._record_success()
-                self.logger.debug(f"Fetched scores for user {beatmap_id} ({score_type})")
+                self.logger.debug(f"Fetched scores for user {beatmap_id} ({_score_type})")
 
             async def failure_handler(beatmap_id: int, error: Exception):
                 await self._add_failed_id("users", beatmap_id)

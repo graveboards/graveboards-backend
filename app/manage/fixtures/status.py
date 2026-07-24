@@ -28,9 +28,9 @@ from app.fixtures.metadata_io import load_metadata, save_metadata
 from app.fixtures.paths import (
     FIXTURES_DIR,
     QUEUE_TEST_FIXTURES_DIR,
-    get_test_fixture_path,
     REQUEST_TEST_FIXTURES_DIR,
     TEST_FIXTURES_DIR,
+    get_test_fixture_path,
 )
 
 console = Console()
