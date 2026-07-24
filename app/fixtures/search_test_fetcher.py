@@ -106,20 +106,10 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
                 [k for k in self.coverage._data.get("fetched_beatmapset_languages", {})]
             )[:MAX_COVERAGE_LIST_SIZE],
             "beatmapset_nsfw_true_ids": sorted(
-                [
-                    i
-                    for ids in self.coverage._data.get("fetched_beatmapset_nsfw", {}).get(
-                        True, set()
-                    )
-                ]
+                self.coverage._data.get("fetched_beatmapset_nsfw", {}).get(True, set())
             )[:MAX_COVERAGE_LIST_SIZE],
             "beatmapset_nsfw_false_ids": sorted(
-                [
-                    i
-                    for ids in self.coverage._data.get("fetched_beatmapset_nsfw", {}).get(
-                        False, set()
-                    )
-                ]
+                self.coverage._data.get("fetched_beatmapset_nsfw", {}).get(False, set())
             )[:MAX_COVERAGE_LIST_SIZE],
             "beatmapset_statuses": sorted(
                 self.coverage._data.get("fetched_beatmapset_statuses", set())
@@ -186,20 +176,10 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
             )[:MAX_COVERAGE_LIST_SIZE],
             "restricted_users": {
                 "true_ids": sorted(
-                    [
-                        i
-                        for ids in self.coverage._data.get("fetched_restricted_users", {}).get(
-                            True, set()
-                        )
-                    ]
+                    self.coverage._data.get("fetched_restricted_users", {}).get(True, set())
                 ),
                 "false_ids": sorted(
-                    [
-                        i
-                        for ids in self.coverage._data.get("fetched_restricted_users", {}).get(
-                            False, set()
-                        )
-                    ]
+                    self.coverage._data.get("fetched_restricted_users", {}).get(False, set())
                 ),
             },
             "last_updated": datetime.now(UTC).isoformat(),

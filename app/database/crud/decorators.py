@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import AsyncIterator, Awaitable, Callable
+from contextlib import AbstractAsyncContextManager
 from contextvars import ContextVar
 from functools import wraps
 from typing import (
     Any,
-    AsyncContextManager,
     ParamSpec,
     Protocol,
     TypeVar,
@@ -112,7 +112,7 @@ def session_manager(
 
 
 def session_manager_stream(
-    session_resolver: Callable[[Any], AsyncContextManager[Any]] = None,
+    session_resolver: Callable[[Any], AbstractAsyncContextManager[Any]] = None,
     autoflush_allowed: bool = True,
 ) -> Callable[[Callable[P, AsyncIterator[T]]], Callable[P, AsyncIterator[T]]]:
     """Manage ``AsyncSession`` lifecycle for async generator methods.
@@ -257,7 +257,7 @@ class SessionResolver(Protocol):
         obj: Any,
         *,
         autoflush: bool = True,
-    ) -> AsyncContextManager[AsyncSession]: ...
+    ) -> AbstractAsyncContextManager[AsyncSession]: ...
 
 
 class DbSessionResolver(SessionResolver):
@@ -267,7 +267,7 @@ class DbSessionResolver(SessionResolver):
     named `db` rather than exposed directly via `session()`.
     """
 
-    def __call__(self, obj: Any, *, autoflush: bool = True) -> AsyncContextManager[AsyncSession]:
+    def __call__(self, obj: Any, *, autoflush: bool = True) -> AbstractAsyncContextManager[AsyncSession]:
         return obj.db.session(autoflush=autoflush)
 
 
@@ -276,7 +276,7 @@ db_session_resolver = DbSessionResolver()
 
 def _default_session_resolver(
     obj: DatabaseProtocol, *, autoflush: bool = True
-) -> AsyncContextManager[AsyncSession]:
+) -> AbstractAsyncContextManager[AsyncSession]:
     """Default strategy for resolving a session from a ``DatabaseProtocol``.
 
     Delegates to `obj.session()`.

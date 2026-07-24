@@ -9,6 +9,7 @@ from app.osu_api.enums import Ruleset
 from app.redis import RedisClient
 
 from .constants import RULESETS, SCORE_TYPES
+from .failed_id_store import FailedIdStore
 from .fetcher import FetchEvent, FixtureDataFetcher
 from .id_source import IDSource
 from .metadata_io import (

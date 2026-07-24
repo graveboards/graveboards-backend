@@ -1,7 +1,12 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from app.logging import get_logger
 from app.utils import aware_utcnow
+
+if TYPE_CHECKING:
+    from app.database import PostgresqlDB
 
 logger = get_logger(__name__)
 

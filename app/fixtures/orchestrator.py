@@ -10,6 +10,10 @@ Usage:
     report = await orchestrator.execute()
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from app.fixtures.criteria import (
     FetchCriteria,
     FetchReport,
@@ -22,6 +26,9 @@ from app.fixtures.search_test_fetcher import SearchTestFixtureFetcher
 from app.fixtures.targeted_fetcher import TargetedFixtureFetcher
 from app.logging import get_logger
 from app.redis import RedisClient
+
+if TYPE_CHECKING:
+    from app.fixtures.progress import ProgressBar
 
 logger = get_logger(__name__)
 
@@ -221,7 +228,6 @@ class FixtureOrchestrator:
             st.max_total = 20
 
         if st.gaps:
-            _print_coverage_gaps(self.fetcher)
             return FetchReport(criteria=self.criteria.criteria)
 
         if st.full:
@@ -232,7 +238,6 @@ class FixtureOrchestrator:
                 skip_covered=False,
             )
         else:
-            _print_coverage_gaps(self.fetcher)
             self.fetcher.logger.info(
                 f"Starting search test fetch: max {st.max_total} API calls, "
                 f"min {st.min_per_category} per category (skip covered)"
