@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any, Literal, cast as typing_cast
 
 from pydantic import BaseModel, field_validator, model_validator
 from pydantic.config import ConfigDict
@@ -490,7 +490,7 @@ def validate_rule_config(rule_type: str, config: dict[str, Any]) -> dict[str, An
     """
     schema_cls = RULE_CONFIG_SCHEMA_MAP.get(rule_type)
     if schema_cls:
-        return schema_cls(**config).model_dump(exclude_none=True)
+        return typing_cast(dict[str, Any], schema_cls(**config).model_dump(exclude_none=True))
     return config
 
 
@@ -502,7 +502,7 @@ class RuleCreateSchema(BaseModel):
 
     @field_validator("config")
     @classmethod
-    def validate_config_by_type(cls, v: dict[str, Any], info) -> dict[str, Any]:
+    def validate_config_by_type(cls, v: dict[str, Any], info: ValidationInfo) -> dict[str, Any]:
         type = info.data.get("type")
         if not type:
             return v

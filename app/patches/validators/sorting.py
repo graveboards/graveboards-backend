@@ -1,7 +1,9 @@
+from typing import Any
+
 from app.exceptions import ArrayValidationError
 
 
-def validate_sorting(sorting: list, schema: dict):
+def validate_sorting(sorting: list[dict[str, str]], schema: dict[str, Any]) -> None:
     """Validate structured sorting directives.
 
     Ensures each sorting entry:

@@ -28,7 +28,7 @@ class SortingOption(BaseModel):
         Returns:
             The string value of the field.
         """
-        return field.value
+        return str(field.value)
 
     @field_serializer("order", return_type=str)
     def serialize_order(self, order: SortingOrder) -> str:

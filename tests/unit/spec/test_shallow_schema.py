@@ -1,3 +1,5 @@
+from typing import Any
+
 from app.spec.shallow import (
     SCHEMAS_WITH_SHALLOW_REFS,
     disabled_nested_obj,
@@ -8,7 +10,7 @@ from app.spec.shallow import (
 class TestShallowSchema:
     """Test shallow schema operations."""
 
-    def test_schemas_with_shallow_refs_contains_expected_schemas(self):
+    def test_schemas_with_shallow_refs_contains_expected_schemas(self) -> None:
         """Test that SCHEMAS_WITH_SHALLOW_REFS contains expected schemas."""
         expected = {
             "Beatmap",
@@ -30,14 +32,14 @@ class TestShallowSchema:
 
         assert expected == SCHEMAS_WITH_SHALLOW_REFS
 
-    def test_disabled_nested_obj_structure(self):
+    def test_disabled_nested_obj_structure(self) -> None:
         """Test that disabled_nested_obj has correct structure."""
         assert disabled_nested_obj["type"] == "boolean"
         assert disabled_nested_obj["enum"] == [False]
         assert not disabled_nested_obj["default"]
         assert "description" in disabled_nested_obj
 
-    def test_populate_shallow_refs_mutates_spec(self):
+    def test_populate_shallow_refs_mutates_spec(self) -> None:
         """Test that populate_shallow_refs mutates the spec."""
         spec = {"components": {"schemas": {"Beatmap": {"type": "object", "properties": {}}}}}
 
@@ -46,7 +48,7 @@ class TestShallowSchema:
         # Spec should be modified correctly (implementation now uses deepcopy)
         assert spec["components"]["schemas"]["Beatmap"]["type"] == "object"
 
-    def test_populate_shallow_refs_resolves_shallow_refs(self):
+    def test_populate_shallow_refs_resolves_shallow_refs(self) -> None:
         """Test that shallow refs are resolved."""
         spec = {
             "components": {
@@ -75,14 +77,14 @@ class TestShallowSchema:
         # Shallow refs should be resolved
         assert "Beatmap" in spec["components"]["schemas"]
 
-    def test_populate_shallow_refs_handles_missing_schemas(self):
+    def test_populate_shallow_refs_handles_missing_schemas(self) -> None:
         """Test that missing schemas are handled gracefully."""
-        spec = {"components": {"schemas": {}}}
+        spec: dict[str, Any] = {"components": {"schemas": {}}}
 
         # Should not raise
         populate_shallow_refs(spec)
 
-    def test_populate_shallow_refs_prevents_recursive_cycles(self):
+    def test_populate_shallow_refs_prevents_recursive_cycles(self) -> None:
         """Test that recursive cycles are prevented."""
         spec = {
             "components": {
@@ -120,7 +122,7 @@ class TestShallowSchema:
 
         populate_shallow_refs(spec)
 
-    def test_populate_shallow_refs_disables_nested_includes(self):
+    def test_populate_shallow_refs_disables_nested_includes(self) -> None:
         """Test that nested includes are disabled to prevent cycles."""
         spec = {
             "components": {
@@ -161,7 +163,7 @@ class TestShallowSchema:
 
         populate_shallow_refs(spec)
 
-    def test_populate_shallow_refs_processes_multiple_schemas(self):
+    def test_populate_shallow_refs_processes_multiple_schemas(self) -> None:
         """Test that multiple schemas are processed."""
         spec = {
             "components": {
@@ -179,7 +181,7 @@ class TestShallowSchema:
         assert "Beatmapset" in spec["components"]["schemas"]
         assert "Leaderboard" in spec["components"]["schemas"]
 
-    def test_populate_shallow_refs_handles_nested_objects(self):
+    def test_populate_shallow_refs_handles_nested_objects(self) -> None:
         """Test that nested objects are processed."""
         spec = {
             "components": {
@@ -215,7 +217,7 @@ class TestShallowSchema:
 
         populate_shallow_refs(spec)
 
-    def test_populate_shallow_refs_handles_arrays(self):
+    def test_populate_shallow_refs_handles_arrays(self) -> None:
         """Test that arrays are processed."""
         spec = {
             "components": {
@@ -241,7 +243,7 @@ class TestShallowSchema:
 
         populate_shallow_refs(spec)
 
-    def test_populate_shallow_refs_processes_include_schemas(self):
+    def test_populate_shallow_refs_processes_include_schemas(self) -> None:
         """Test that include schemas are processed."""
         spec = {
             "components": {
@@ -276,7 +278,7 @@ class TestShallowSchema:
 
         populate_shallow_refs(spec)
 
-    def test_populate_shallow_refs_handles_primitive_properties(self):
+    def test_populate_shallow_refs_handles_primitive_properties(self) -> None:
         """Test that primitive properties are not modified."""
         spec = {
             "components": {
@@ -298,9 +300,9 @@ class TestShallowSchema:
         populate_shallow_refs(spec)
 
         # Primitive properties should remain unchanged
-        assert spec["components"]["schemas"]["Beatmap"]["properties"]["id"]["type"] == "integer"
+        assert spec["components"]["schemas"]["Beatmap"]["properties"]["id"]["type"] == "integer"  # type: ignore[index]
 
-    def test_populate_shallow_refs_handles_deep_nesting(self):
+    def test_populate_shallow_refs_handles_deep_nesting(self) -> None:
         """Test that deeply nested structures are processed."""
         spec = {
             "components": {
@@ -334,7 +336,7 @@ class TestShallowSchema:
 
         populate_shallow_refs(spec)
 
-    def test_populate_shallow_refs_preserves_other_schema_properties(self):
+    def test_populate_shallow_refs_preserves_other_schema_properties(self) -> None:
         """Test that other schema properties are preserved."""
         spec = {
             "components": {

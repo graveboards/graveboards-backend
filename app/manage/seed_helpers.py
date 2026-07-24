@@ -10,7 +10,7 @@ from app.fixtures.paths import get_fixture_path
 from app.redis_client import RedisClient
 
 
-async def ensure_fixtures_async(logger, profile: SeedProfile) -> bool:
+async def ensure_fixtures_async(logger: Any, profile: SeedProfile) -> bool:
     """Ensure required fixtures exist by fetching/generating as needed.
 
     Args:

@@ -8,6 +8,7 @@ This module provides app creation functions that:
 """
 
 import os
+from typing import cast as typing_cast
 from unittest.mock import AsyncMock
 
 from connexion import AsyncApp
@@ -41,11 +42,11 @@ class MockRedisMiddleware:
     Accepts optional mock_rc parameter for custom Redis mock objects.
     """
 
-    def __init__(self, app, mock_rc=None):
+    def __init__(self, app: Starlette, mock_rc: Any = None) -> None:
         self.app = app
         self.mock_rc = mock_rc
 
-    async def __call__(self, scope, receive, send):
+    async def __call__(self, scope: dict[str, Any], receive: Receive, send: Send) -> None:
         from unittest.mock import MagicMock
 
         if self.mock_rc is not None:
@@ -63,10 +64,10 @@ class MockRedisMiddleware:
             rc.delete = AsyncMock(return_value=0)
 
             class MockLockCtx:
-                async def __aenter__(self):
+                async def __aenter__(self) -> None:
                     return None
 
-                async def __aexit__(self, *args):
+                async def __aexit__(self, *args: Any) -> bool | None:
                     pass
 
             rc.lock_ctx = MagicMock(return_value=MockLockCtx())
@@ -84,11 +85,11 @@ class MockDatabaseMiddleware:
     Accepts optional mock_db parameter for custom database mock objects.
     """
 
-    def __init__(self, app, mock_db=None):
+    def __init__(self, app: Starlette, mock_db: Any = None) -> None:
         self.app = app
         self.mock_db = mock_db
 
-    async def __call__(self, scope, receive, send):
+    async def __call__(self, scope: dict[str, Any], receive: Receive, send: Send) -> None:
         from unittest.mock import MagicMock
 
         if self.mock_db is not None:
@@ -105,13 +106,13 @@ class MockDatabaseMiddleware:
             db.update = AsyncMock()
 
             class MockSession:
-                def __init__(self, autoflush=True):
+                def __init__(self, autoflush: bool = True) -> None:
                     self.autoflush = autoflush
 
-                async def __aenter__(self):
+                async def __aenter__(self) -> MagicMock:
                     return MagicMock()
 
-                async def __aexit__(self, *args):
+                async def __aexit__(self, *args: Any) -> bool | None:
                     pass
 
             db.session = MockSession
@@ -128,7 +129,7 @@ def get_debug_api_key() -> str:
     bootstrap = CONFIG.bootstrap
     primary_user_id = bootstrap.initial_users[0].user_id if bootstrap.initial_users else 0
     seed = f"{JWT_SECRET_KEY}:{primary_user_id}:debug-api-key"
-    return __import__("hashlib").sha256(seed.encode()).hexdigest()[:32]
+    return str(__import__("hashlib").sha256(seed.encode()).hexdigest()[:32])
 
 
 class TestBearerSecurityHandler(BearerSecurityHandler):
@@ -137,8 +138,8 @@ class TestBearerSecurityHandler(BearerSecurityHandler):
     Accepts any Bearer token without validation.
     """
 
-    def _get_verify_func(self, token_info_func):
-        def wrapper(request):
+    def _get_verify_func(self, token_info_func: Any) -> Callable[[Any], dict[str, str | bool]]:
+        def wrapper(request: Any) -> dict[str, str | bool]:
             return {"sub": "0", "test": True}
 
         return wrapper
@@ -150,14 +151,14 @@ class TestApiKeySecurityHandler(ApiKeySecurityHandler):
     Accepts any API key without validation.
     """
 
-    def _get_verify_func(self, api_key_info_func, loc, name, required_scopes):
-        def wrapper(request):
+    def _get_verify_func(self, api_key_info_func: Any, loc: str, name: str, required_scopes: list[str]) -> Callable[[Any], bool]:
+        def wrapper(request: Any) -> bool:
             return True
 
         return wrapper
 
 
-def create_test_app(mock_rc=None, mock_db=None) -> AsyncApp:
+def create_test_app(mock_rc: Any = None, mock_db: Any = None) -> AsyncApp:
     """Create a minimal Connexion app for testing.
 
     This creates an app without:
@@ -195,7 +196,7 @@ def create_test_app(mock_rc=None, mock_db=None) -> AsyncApp:
     class NoopRequestBodyValidator:
         """No-op validator that accepts all request bodies."""
 
-        async def validate(self, request):
+        async def validate(self, request: Any) -> None:
             return None
 
     validator_map = {"parameter": ParameterValidatorPatched}

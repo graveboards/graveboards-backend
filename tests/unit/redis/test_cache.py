@@ -8,7 +8,7 @@ from app.redis_client.models.osu_client_oauth_token import OsuClientOAuthToken
 from app.redis_client.models.queue_request_handler_task import QueueRequestHandlerTask
 
 
-def _full_beatmap_dict():
+def _full_beatmap_dict() -> dict:
     return {
         "id": 12345,
         "user_id": 67890,
@@ -44,7 +44,7 @@ def _full_beatmap_dict():
     }
 
 
-def _full_beatmapset_dict():
+def _full_beatmapset_dict() -> dict:
     return {
         "id": 11111,
         "user_id": 67890,
@@ -107,10 +107,10 @@ def _full_beatmapset_dict():
 class TestBeatmapSerialization:
     """Test Beatmap model serialization round-trips."""
 
-    def _make_beatmap(self):
+    def _make_beatmap(self) -> Beatmap:
         return Beatmap.model_validate(_full_beatmap_dict())
 
-    def test_serialize_returns_string_dict(self):
+    def test_serialize_returns_string_dict(self) -> None:
         """Test Beatmap.serialize() returns dict with all string values."""
         beatmap = self._make_beatmap()
         serialized = beatmap.serialize()
@@ -118,32 +118,32 @@ class TestBeatmapSerialization:
         for value in serialized.values():
             assert isinstance(value, str)
 
-    def test_serialize_id_as_string(self):
+    def test_serialize_id_as_string(self) -> None:
         """Test Beatmap ID is serialized as string."""
         beatmap = self._make_beatmap()
         assert beatmap.serialize()["id"] == "12345"
 
-    def test_serialize_preserves_nested_failtimes(self):
+    def test_serialize_preserves_nested_failtimes(self) -> None:
         """Test failtimes serialization preserves structure."""
         beatmap = self._make_beatmap()
         serialized = beatmap.serialize()
         assert "failtimes" in serialized
         assert "exit" in serialized["failtimes"]
 
-    def test_deserialize_roundtrip_preserves_id(self):
+    def test_deserialize_roundtrip_preserves_id(self) -> None:
         """Test Beatmap round-trip preserves the ID field."""
         beatmap = self._make_beatmap()
         restored = Beatmap.deserialize(beatmap.serialize())
         assert restored.id == 12345
 
-    def test_deserialize_roundtrip_preserves_floats(self):
+    def test_deserialize_roundtrip_preserves_floats(self) -> None:
         """Test Beatmap round-trip preserves float fields."""
         beatmap = self._make_beatmap()
         restored = Beatmap.deserialize(beatmap.serialize())
         assert restored.bpm == 180.0
         assert restored.difficulty_rating == 7.5
 
-    def test_deserialize_roundtrip_preserves_ints(self):
+    def test_deserialize_roundtrip_preserves_ints(self) -> None:
         """Test Beatmap round-trip preserves integer fields."""
         beatmap = self._make_beatmap()
         restored = Beatmap.deserialize(beatmap.serialize())
@@ -151,7 +151,7 @@ class TestBeatmapSerialization:
         assert restored.playcount == 5000
         assert restored.passcount == 3000
 
-    def test_serialize_excludes_none_values_as_empty_string(self):
+    def test_serialize_excludes_none_values_as_empty_string(self) -> None:
         """Test Beatmap serializes None values as empty strings."""
         d = _full_beatmap_dict()
         d["deleted_at"] = None
@@ -162,10 +162,10 @@ class TestBeatmapSerialization:
 class TestBeatmapsetSerialization:
     """Test Beatmapset model serialization round-trips."""
 
-    def _make_beatmapset(self):
+    def _make_beatmapset(self) -> Beatmapset:
         return Beatmapset.model_validate(_full_beatmapset_dict())
 
-    def test_serialize_returns_string_dict(self):
+    def test_serialize_returns_string_dict(self) -> None:
         """Test Beatmapset.serialize() returns dict with all string values."""
         bs = self._make_beatmapset()
         serialized = bs.serialize()
@@ -173,20 +173,20 @@ class TestBeatmapsetSerialization:
         for value in serialized.values():
             assert isinstance(value, str)
 
-    def test_serialize_nested_beatmaps(self):
+    def test_serialize_nested_beatmaps(self) -> None:
         """Test Beatmapset serializes nested beatmaps as string."""
         bs = self._make_beatmapset()
         serialized = bs.serialize()
         assert isinstance(serialized["beatmaps"], str)
         assert "12345" in serialized["beatmaps"]
 
-    def test_deserialize_roundtrip_preserves_id(self):
+    def test_deserialize_roundtrip_preserves_id(self) -> None:
         """Test Beatmapset round-trip preserves the ID."""
         bs = self._make_beatmapset()
         restored = Beatmapset.deserialize(bs.serialize())
         assert restored.id == 11111
 
-    def test_deserialize_roundtrip_preserves_nested_beatmaps(self):
+    def test_deserialize_roundtrip_preserves_nested_beatmaps(self) -> None:
         """Test Beatmapset round-trip preserves nested beatmaps."""
         bs = self._make_beatmapset()
         restored = Beatmapset.deserialize(bs.serialize())
@@ -197,7 +197,7 @@ class TestBeatmapsetSerialization:
 class TestOAuthTokenSerialization:
     """Test OsuClientOAuthToken serialization round-trips."""
 
-    def _make_token(self):
+    def _make_token(self) -> OsuClientOAuthToken:
         return OsuClientOAuthToken(
             access_token="test_access_token_abc123",
             token_type="bearer",
@@ -205,7 +205,7 @@ class TestOAuthTokenSerialization:
             expires_at=1735689600,
         )
 
-    def test_serialize_returns_string_dict(self):
+    def test_serialize_returns_string_dict(self) -> None:
         """Test token serializes to all-string dict."""
         token = self._make_token()
         serialized = token.serialize()
@@ -213,12 +213,12 @@ class TestOAuthTokenSerialization:
         for value in serialized.values():
             assert isinstance(value, str)
 
-    def test_serialize_preserves_access_token(self):
+    def test_serialize_preserves_access_token(self) -> None:
         """Test token serialization preserves access_token."""
         token = self._make_token()
         assert token.serialize()["access_token"] == "test_access_token_abc123"
 
-    def test_deserialize_roundtrip_preserves_all_fields(self):
+    def test_deserialize_roundtrip_preserves_all_fields(self) -> None:
         """Test token round-trip preserves all fields."""
         token = self._make_token()
         restored = OsuClientOAuthToken.deserialize(token.serialize())
@@ -227,7 +227,7 @@ class TestOAuthTokenSerialization:
         assert restored.expires_in == 5184000
         assert restored.expires_at == 1735689600
 
-    def test_deserialize_converts_expires_to_int(self):
+    def test_deserialize_converts_expires_to_int(self) -> None:
         """Test token deserialization converts expires_in/expires_at to int."""
         restored = OsuClientOAuthToken.deserialize(
             {
@@ -244,7 +244,7 @@ class TestOAuthTokenSerialization:
 class TestQueueRequestHandlerTaskSerialization:
     """Test QueueRequestHandlerTask serialization round-trips."""
 
-    def _make_task(self):
+    def _make_task(self) -> QueueRequestHandlerTask:
         return QueueRequestHandlerTask(
             user_id=12345678,
             beatmapset_id=35965,
@@ -253,7 +253,7 @@ class TestQueueRequestHandlerTaskSerialization:
             mv_checked=False,
         )
 
-    def test_serialize_returns_string_dict(self):
+    def test_serialize_returns_string_dict(self) -> None:
         """Test task serializes to all-string dict."""
         task = self._make_task()
         serialized = task.serialize()
@@ -261,23 +261,23 @@ class TestQueueRequestHandlerTaskSerialization:
         for value in serialized.values():
             assert isinstance(value, str)
 
-    def test_serialize_preserves_user_id(self):
+    def test_serialize_preserves_user_id(self) -> None:
         """Test task serialization preserves user_id."""
         task = self._make_task()
         assert task.serialize()["user_id"] == "12345678"
 
-    def test_serialize_preserves_bool_as_string(self):
+    def test_serialize_preserves_bool_as_string(self) -> None:
         """Test task serialization converts bool to string."""
         task = self._make_task()
         assert task.serialize()["mv_checked"] == "False"
 
-    def test_serialize_null_datetimes_as_empty_string(self):
+    def test_serialize_null_datetimes_as_empty_string(self) -> None:
         """Test task serializes None datetimes as empty strings."""
         task = self._make_task()
         assert task.serialize()["completed_at"] == ""
         assert task.serialize()["failed_at"] == ""
 
-    def test_deserialize_roundtrip_preserves_all_fields(self):
+    def test_deserialize_roundtrip_preserves_all_fields(self) -> None:
         """Test task round-trip preserves all fields."""
         task = self._make_task()
         restored = QueueRequestHandlerTask.deserialize(task.serialize())
@@ -287,7 +287,7 @@ class TestQueueRequestHandlerTaskSerialization:
         assert restored.comment == "Please rank this!"
         assert restored.mv_checked is False
 
-    def test_deserialize_converts_ids_to_int(self):
+    def test_deserialize_converts_ids_to_int(self) -> None:
         """Test task deserialization converts id fields to int."""
         serialized = {
             "user_id": "12345678",
@@ -303,7 +303,7 @@ class TestQueueRequestHandlerTaskSerialization:
         assert isinstance(restored.beatmapset_id, int)
         assert isinstance(restored.queue_id, int)
 
-    def test_deserialize_null_datetimes_to_none(self):
+    def test_deserialize_null_datetimes_to_none(self) -> None:
         """Test task deserialization converts empty datetime strings to None."""
         serialized = {
             "user_id": "1",
@@ -318,7 +318,7 @@ class TestQueueRequestHandlerTaskSerialization:
         assert restored.completed_at is None
         assert restored.failed_at is None
 
-    def test_deserialize_with_set_datetimes(self):
+    def test_deserialize_with_set_datetimes(self) -> None:
         """Test task deserialization parses datetime strings."""
         serialized = {
             "user_id": "1",
@@ -334,7 +334,7 @@ class TestQueueRequestHandlerTaskSerialization:
         assert restored.completed_at.year == 2024
         assert restored.mv_checked is True
 
-    def test_hashed_id_is_deterministic(self):
+    def test_hashed_id_is_deterministic(self) -> None:
         """Test hashed_id is deterministic for same inputs."""
         t1 = QueueRequestHandlerTask(
             user_id=1, beatmapset_id=2, queue_id=3, comment="a", mv_checked=False
@@ -344,7 +344,7 @@ class TestQueueRequestHandlerTaskSerialization:
         )
         assert t1.hashed_id == t2.hashed_id
 
-    def test_hashed_id_is_positive(self):
+    def test_hashed_id_is_positive(self) -> None:
         """Test hashed_id is always a positive integer."""
         task = QueueRequestHandlerTask(
             user_id=1, beatmapset_id=2, queue_id=3, comment="a", mv_checked=False

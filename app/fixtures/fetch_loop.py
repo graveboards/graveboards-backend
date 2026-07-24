@@ -28,7 +28,7 @@ class FetchConfig:
     """Configuration for a single fetch operation."""
 
     api_call: Callable[[int], Coroutine]
-    id_generator: Callable[[], Coroutine[int]]
+    id_generator: Callable[[], Coroutine[Any, Any, int]]
     path_builder: Callable[[int], Path]
     data_type: str
     success_handler: Callable[..., Any]

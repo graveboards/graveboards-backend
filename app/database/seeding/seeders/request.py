@@ -1,4 +1,5 @@
 import asyncio
+from typing import Any
 
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
@@ -12,7 +13,9 @@ from .base import Seeder
 
 class RequestSeeder(Seeder):
     @session_manager(session_resolver=db_session_resolver, autoflush_allowed=False)
-    async def seed(self, queue: asyncio.Queue[SeedEvent | None], session: AsyncSession = None):
+    async def seed(
+        self, queue: asyncio.Queue[SeedEvent | None], session: AsyncSession = None
+    ) -> None:
         self.session = session
         await queue.put(SeedEvent(SeederTarget.REQUEST, self.progress, self.total))
 
@@ -21,7 +24,7 @@ class RequestSeeder(Seeder):
             self.progress += 1
             await queue.put(SeedEvent(SeederTarget.REQUEST, self.progress, self.total))
 
-    async def _seed_request(self, request_entry: dict):
+    async def _seed_request(self, request_entry: dict[str, Any]) -> None:
         beatmapset_id = request_entry["beatmapset_id"]
 
         if not await self.db.get(

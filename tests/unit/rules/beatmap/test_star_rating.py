@@ -1,3 +1,5 @@
+from typing import Any
+
 from unittest.mock import MagicMock
 
 import pytest
@@ -8,14 +10,14 @@ from app.database.rules.validators.beatmap.star_rating import StarRatingRestrict
 from app.database.schemas.rule import StarRatingConfig
 
 
-def _make_beatmap(sr: float, version: str = "Normal"):
+def _make_beatmap(sr: float, version: str = "Normal") -> MagicMock:
     bm = MagicMock()
     bm.difficulty_rating = sr
     bm.version = version
     return bm
 
 
-def _make_context(beatmaps=None, config=None):
+def _make_context(beatmaps: list[Any] | None = None, config: dict[str, Any] | None = None) -> ExecutionContext:
     return ExecutionContext(
         queue_id=1,
         user_id=12345678,
@@ -28,7 +30,7 @@ def _make_context(beatmaps=None, config=None):
 class TestStarRatingRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_any_logic_passes_when_all_in_range(self):
+    async def test_any_logic_passes_when_all_in_range(self) -> None:
         validator = StarRatingRestriction()
         beatmaps = [_make_beatmap(4.0), _make_beatmap(5.0), _make_beatmap(6.0)]
         context = _make_context(
@@ -39,7 +41,7 @@ class TestStarRatingRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_any_logic_passes_when_at_least_one_in_range(self):
+    async def test_any_logic_passes_when_at_least_one_in_range(self) -> None:
         validator = StarRatingRestriction()
         beatmaps = [_make_beatmap(2.0), _make_beatmap(5.0)]
         context = _make_context(
@@ -50,7 +52,7 @@ class TestStarRatingRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_any_logic_raises_when_none_in_range(self):
+    async def test_any_logic_raises_when_none_in_range(self) -> None:
         validator = StarRatingRestriction()
         beatmaps = [_make_beatmap(8.0), _make_beatmap(9.0)]
         context = _make_context(
@@ -65,7 +67,7 @@ class TestStarRatingRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_max_logic_passes(self):
+    async def test_max_logic_passes(self) -> None:
         validator = StarRatingRestriction()
         beatmaps = [_make_beatmap(4.0), _make_beatmap(6.0)]
         context = _make_context(
@@ -76,7 +78,7 @@ class TestStarRatingRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_max_logic_raises(self):
+    async def test_max_logic_raises(self) -> None:
         validator = StarRatingRestriction()
         beatmaps = [_make_beatmap(4.0), _make_beatmap(8.0)]
         context = _make_context(
@@ -91,7 +93,7 @@ class TestStarRatingRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_min_logic_raises(self):
+    async def test_min_logic_raises(self) -> None:
         validator = StarRatingRestriction()
         beatmaps = [_make_beatmap(2.0), _make_beatmap(5.0)]
         context = _make_context(
@@ -106,7 +108,7 @@ class TestStarRatingRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_all_logic_passes(self):
+    async def test_all_logic_passes(self) -> None:
         validator = StarRatingRestriction()
         beatmaps = [
             _make_beatmap(4.0, "Easy"),
@@ -121,7 +123,7 @@ class TestStarRatingRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_all_logic_raises_on_specific_beatmap(self):
+    async def test_all_logic_raises_on_specific_beatmap(self) -> None:
         validator = StarRatingRestriction()
         beatmaps = [_make_beatmap(4.0, "Normal"), _make_beatmap(8.0, "Extra")]
         context = _make_context(
@@ -135,9 +137,9 @@ class TestStarRatingRestriction:
         assert "Extra" in str(exc_info.value.detail)
 
     @pytest.mark.unit
-    def test_config_schema_is_set(self):
+    def test_config_schema_is_set(self) -> None:
         assert StarRatingRestriction.config_schema is StarRatingConfig
 
     @pytest.mark.unit
-    def test_type(self):
+    def test_type(self) -> None:
         assert StarRatingRestriction.type == "beatmap_star_rating"

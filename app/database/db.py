@@ -1,5 +1,7 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from types import TracebackType
+from typing import Any
 
 from asyncpg.connection import Connection
 from sqlalchemy import event
@@ -44,7 +46,7 @@ class PostgresqlDB(CRUD):
     Designed to centralize database concerns behind a thin, composable abstraction.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the async engine and register connection hooks."""
         self.engine: AsyncEngine = create_async_engine(
             DATABASE_URI, pool_size=20, max_overflow=10, pool_recycle=300, pool_pre_ping=True
@@ -54,37 +56,49 @@ class PostgresqlDB(CRUD):
         self._setup_query_metrics()
 
         @event.listens_for(self.engine.sync_engine, "first_connect")
-        def on_connect(dbapi_connection: Connection, connection_record: ConnectionPoolEntry):
+        def on_connect(
+            dbapi_connection: Connection, connection_record: ConnectionPoolEntry
+        ) -> None:
             logger.debug(f"Connected to PostgreSQL at '{DATABASE_URI}'")
 
-    def _setup_pool_metrics(self):
+    def _setup_pool_metrics(self) -> None:
         @event.listens_for(self.engine.sync_engine.pool, "checkin")
-        def on_checkin(dbapi_connection, connection_record):
+        def on_checkin(
+            dbapi_connection: Connection, connection_record: ConnectionPoolEntry
+        ) -> None:
             db_pool_checked_out.dec()
             db_pool_checked_in.inc()
 
         @event.listens_for(self.engine.sync_engine.pool, "checkout")
-        def on_checkout(dbapi_connection, pid, connection_proxy):
+        def on_checkout(
+            dbapi_connection: Connection, pid: int, connection_proxy: Connection
+        ) -> None:
             db_pool_checked_out.inc()
             db_pool_checked_in.dec()
 
         @event.listens_for(self.engine.sync_engine.pool, "connect")
-        def on_connect_pool(dbapi_connection, connection_record):
-            db_pool_size.set(self.engine.pool.size())
-            db_pool_overflow.set(max(0, self.engine.sync_engine.pool.overflow()))
+        def on_connect_pool(
+            dbapi_connection: Connection, connection_record: ConnectionPoolEntry
+        ) -> None:
+            db_pool_size.set(self.engine.pool.size())  # type: ignore[func-returns-value]
+            db_pool_overflow.set(max(0, self.engine.sync_engine.pool.overflow()))  # type: ignore[func-returns-value]
 
-        db_pool_size.set(self.engine.pool.size())
+        db_pool_size.set(self.engine.pool.size())  # type: ignore[func-returns-value]
 
-    def _setup_query_metrics(self):
+    def _setup_query_metrics(self) -> None:
         import time as _time
 
         @event.listens_for(self.engine.sync_engine, "before_cursor_execute")
-        def on_before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+        def on_before_cursor_execute(
+            conn: Any, cursor: Any, statement: str, parameters: Any, context: Any, executemany: bool
+        ) -> None:
             context._query_start_time = _time.perf_counter()
 
         @event.listens_for(self.engine.sync_engine, "after_cursor_execute")
-        def on_after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
-            start = getattr(context, "_query_start_time", None)
+        def on_after_cursor_execute(
+            conn: Any, cursor: Any, statement: str, parameters: Any, context: Any, executemany: bool
+        ) -> None:
+            start: float | int | None = getattr(context, "_query_start_time", None)
             if start is not None:
                 duration = _time.perf_counter() - start
                 query_type = classify_query(statement)
@@ -101,7 +115,7 @@ class PostgresqlDB(CRUD):
         """
         return async_sessionmaker(self.engine, expire_on_commit=False)
 
-    async def test_connection(self):
+    async def test_connection(self) -> None:
         """Verify database connectivity.
 
         Executes a lightweight `SELECT 1` to ensure the database is reachable and
@@ -114,15 +128,20 @@ class PostgresqlDB(CRUD):
         async with self.engine.connect() as conn:
             await conn.execute(select(1))
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> PostgresqlDB:
         """Context manager entry."""
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Context manager exit - dispose engine."""
         await self.close()
 
-    async def close(self):
+    async def close(self) -> None:
         """Close the engine."""
         await self.engine.dispose()
 

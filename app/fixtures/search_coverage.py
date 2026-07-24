@@ -11,7 +11,7 @@ adaptive loop that stops as soon as all buckets are satisfied.
 import heapq
 from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast as typing_cast
 
 # Rarity weights: how hard each bucket is to fill via random fetching.
 # Higher = rarer = should be prioritized when uncovered.
@@ -235,7 +235,7 @@ class CoverageTracker:
     def all_covered(self) -> bool:
         """Check if all buckets meet minimum coverage."""
         count, _ = self.total_uncovered()
-        return count == 0
+        return bool(count == 0)
 
 
 class SearchTestFetchAction:
@@ -525,11 +525,11 @@ def build_actions(fetcher: Any) -> list[FetchAction]:
 
 
 def _make_action(
-    fetcher: Any, name: str, execute, affected_buckets: list[str], cost: int
+    fetcher: Any, name: str, execute: Callable[[], Awaitable[Any]], affected_buckets: list[str], cost: int
 ) -> FetchAction:
     """Create a fetch action with the required interface."""
 
-    async def executor():
+    async def executor() -> Any:
         return await execute()
 
     return FetchAction(
@@ -591,7 +591,7 @@ async def adaptive_fetch_loop(
         f"min {min_per_category} per category"
     )
 
-    def _reheap():
+    def _reheap() -> None:
         nonlocal sequence
         heap.clear()
         for action in actions:
@@ -702,4 +702,4 @@ async def adaptive_fetch_loop(
         )
 
     fetcher._save_search_test_coverage_metadata()
-    return fetcher.get_coverage_report()
+    return typing_cast(dict[str, Any], fetcher.get_coverage_report())

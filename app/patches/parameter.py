@@ -1,4 +1,5 @@
 import os
+from typing import cast as typing_cast
 
 from connexion.lifecycle import ConnexionRequest
 from connexion.validators import ParameterValidator
@@ -22,7 +23,7 @@ class ParameterValidatorPatched(ParameterValidator):
     Addresses Connexion limitations around complex query schemas.
     """
 
-    def __init__(self, parameters, uri_parser, strict_validation=False, security_query_params=None):
+    def __init__(self, parameters: list[dict], uri_parser: Any, strict_validation: bool = False, security_query_params: list[str] | None = None):
         super().__init__(
             parameters,
             uri_parser,
@@ -31,7 +32,7 @@ class ParameterValidatorPatched(ParameterValidator):
         )
         self.request_scopes: dict[ConnexionRequest, dict] = {}
 
-    def validate_query_parameter(self, param: dict, request: ConnexionRequest):
+    def validate_query_parameter(self, param: dict[str, Any], request: ConnexionRequest) -> None:
         """Validate query parameters with custom include/sorting logic.
 
         Special handling:
@@ -87,9 +88,9 @@ class ParameterValidatorPatched(ParameterValidator):
             except DeepObjectValidationError as e:
                 raise bad_request_factory(e) from e
 
-        return self.validate_parameter("query", value, param, param_name=param_name)
+        return typing_cast(None, self.validate_parameter("query", value, param, param_name=param_name))
 
-    def validate(self, scope: dict):
+    def validate(self, scope: dict[str, Any]) -> None:
         """Validate request scope while tracking context.
 
         Temporarily stores request scope to allow context-aware validation (e.g.,

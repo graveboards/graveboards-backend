@@ -24,7 +24,7 @@ logger = get_logger(__name__)
 FIXTURES_DIR = PROJECT_ROOT / "instance" / "fixtures"
 
 
-async def cmd_fetch_users_from_beatmapsets():
+async def cmd_fetch_users_from_beatmapsets() -> None:
     """Extract user IDs from beatmapset fixtures and fetch those users."""
     bms_path = FIXTURES_DIR / "beatmapsets"
 

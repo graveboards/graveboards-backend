@@ -19,7 +19,7 @@ async def cmd_demote_fixtures(
     queues: bool = False,
     requests: bool = False,
     force: bool = False,
-):
+) -> None:
     if not force:
         response = Confirm.ask(
             "This will move fixture files back to instance fixtures. Continue?", default=False

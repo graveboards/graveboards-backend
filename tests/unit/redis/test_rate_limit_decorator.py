@@ -1,3 +1,5 @@
+from typing import Any
+
 from unittest.mock import AsyncMock
 
 import pytest
@@ -10,21 +12,21 @@ class TestRateLimitDecorator:
     """Test rate_limit decorator behavior."""
 
     @pytest.fixture
-    def mock_redis_client(self):
+    def mock_redis_client(self) -> Any:
         """Create a mock Redis client with async methods."""
 
         class MockRedis:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.incr = AsyncMock(return_value=1)
                 self.expire = AsyncMock(return_value=True)
 
         return MockRedis()
 
     @pytest.fixture
-    def mock_redis_with_count(self, mock_redis_client):
+    def mock_redis_with_count(self, mock_redis_client: Any) -> tuple[Any, Any]:
         """Create mock Redis client with configurable count."""
 
-        def set_incr_count(count):
+        def set_incr_count(count: int) -> AsyncMock:
             mock_client = AsyncMock()
             mock_client.incr = AsyncMock(return_value=count)
             mock_client.expire = AsyncMock(return_value=True)
@@ -32,11 +34,11 @@ class TestRateLimitDecorator:
 
         return mock_redis_client, set_incr_count
 
-    async def test_rate_limit_allows_under_limit(self, mock_redis_client):
+    async def test_rate_limit_allows_under_limit(self, mock_redis_client: Any) -> None:
         """Test that requests under the limit are allowed."""
 
         @rate_limit(limit_per_window=5, auto_retry=False)
-        async def test_func(self):
+        async def test_func(self: Any) -> Any:
             return "success"
 
         mock_redis_client.incr = AsyncMock(return_value=1)
@@ -47,11 +49,11 @@ class TestRateLimitDecorator:
         assert result == "success"
         mock_redis_client.incr.assert_called_once()
 
-    async def test_rate_limit_blocks_over_limit(self, mock_redis_client):
+    async def test_rate_limit_blocks_over_limit(self, mock_redis_client: Any) -> None:
         """Test that requests over the limit are blocked."""
 
         @rate_limit(limit_per_window=2, auto_retry=False)
-        async def test_func(self):
+        async def test_func(self: Any) -> Any:
             return "success"
 
         mock_redis_client.incr = AsyncMock(return_value=3)
@@ -60,11 +62,11 @@ class TestRateLimitDecorator:
         with pytest.raises(RateLimitExceededError):
             await test_func(mock_redis_client)
 
-    async def test_rate_limit_increments_counter(self, mock_redis_client):
+    async def test_rate_limit_increments_counter(self, mock_redis_client: Any) -> None:
         """Test that counter is incremented on each call."""
 
         @rate_limit(limit_per_window=10, auto_retry=False)
-        async def test_func(self):
+        async def test_func(self: Any) -> Any:
             return "success"
 
         mock_redis_client.incr = AsyncMock(return_value=1)
@@ -75,11 +77,11 @@ class TestRateLimitDecorator:
 
         assert mock_redis_client.incr.call_count == 5
 
-    async def test_rate_limit_sets_expiry_on_first_call(self, mock_redis_client):
+    async def test_rate_limit_sets_expiry_on_first_call(self, mock_redis_client: Any) -> None:
         """Test that expiry is set on first request."""
 
         @rate_limit(limit_per_window=10, auto_retry=False)
-        async def test_func(self):
+        async def test_func(self: Any) -> Any:
             return "success"
 
         mock_redis_client.incr = AsyncMock(return_value=1)
@@ -89,11 +91,11 @@ class TestRateLimitDecorator:
 
         mock_redis_client.expire.assert_called_once()
 
-    async def test_rate_limit_doesnt_set_expiry_on_subsequent_calls(self, mock_redis_client):
+    async def test_rate_limit_doesnt_set_expiry_on_subsequent_calls(self, mock_redis_client: Any) -> None:
         """Test that expiry is not set on subsequent calls."""
 
         @rate_limit(limit_per_window=10, auto_retry=False)
-        async def test_func(self):
+        async def test_func(self: Any) -> Any:
             return "success"
 
         mock_redis_client.incr = AsyncMock(side_effect=[1, 2, 3])
@@ -105,15 +107,15 @@ class TestRateLimitDecorator:
 
         assert mock_redis_client.expire.call_count == 1
 
-    async def test_rate_limit_with_object_containing_rc(self):
+    async def test_rate_limit_with_object_containing_rc(self) -> None:
         """Test rate limit with object containing rc attribute."""
 
         class Service:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.rc = AsyncMock()
 
             @rate_limit(limit_per_window=5, auto_retry=False)
-            async def test_method(self):
+            async def test_method(self: Any) -> Any:
                 return "success"
 
         service = Service()
@@ -124,11 +126,11 @@ class TestRateLimitDecorator:
 
         assert result == "success"
 
-    async def test_rate_limit_auto_retry_disabled(self, mock_redis_client):
+    async def test_rate_limit_auto_retry_disabled(self, mock_redis_client: Any) -> None:
         """Test auto_retry=False raises error immediately."""
 
         @rate_limit(limit_per_window=1, auto_retry=False)
-        async def test_func(self):
+        async def test_func(self: Any) -> Any:
             return "success"
 
         mock_redis_client.incr = AsyncMock(return_value=2)
@@ -137,11 +139,11 @@ class TestRateLimitDecorator:
         with pytest.raises(RateLimitExceededError):
             await test_func(mock_redis_client)
 
-    async def test_rate_limit_with_custom_limit(self, mock_redis_client):
+    async def test_rate_limit_with_custom_limit(self, mock_redis_client: Any) -> None:
         """Test rate limit with custom limit value."""
 
         @rate_limit(limit_per_window=100, auto_retry=False)
-        async def test_func(self):
+        async def test_func(self: Any) -> Any:
             return "success"
 
         mock_redis_client.incr = AsyncMock(return_value=50)
@@ -151,80 +153,80 @@ class TestRateLimitDecorator:
 
         assert result == "success"
 
-    async def test_rate_limit_rejects_non_async_function(self):
+    async def test_rate_limit_rejects_non_async_function(self) -> None:
         """Test that non-async functions raise error."""
 
         with pytest.raises(ValueError):
 
             @rate_limit(limit_per_window=5)
-            def sync_func():
+            def sync_func() -> Any:
                 return "success"
 
-    async def test_rate_limit_rejects_no_redis_client(self):
+    async def test_rate_limit_rejects_no_redis_client(self) -> None:
         """Test that calls without Redis client raise error."""
 
         @rate_limit(limit_per_window=5, auto_retry=False)
-        async def test_func():
+        async def test_func() -> Any:
             return "success"
 
         with pytest.raises(ValueError):
             await test_func()
 
-    async def test_rate_limit_rejects_invalid_first_arg(self):
+    async def test_rate_limit_rejects_invalid_first_arg(self) -> None:
         """Test that invalid first argument raises error."""
 
         @rate_limit(limit_per_window=5, auto_retry=False)
-        async def test_func(invalid_arg):
+        async def test_func(invalid_arg: Any) -> Any:
             return "success"
 
         with pytest.raises(ValueError):
             await test_func("not_a_redis_client")
 
-    async def test_rate_limit_wraps_function_metadata(self):
+    async def test_rate_limit_wraps_function_metadata(self) -> None:
         """Test that decorator preserves function metadata."""
 
         @rate_limit(limit_per_window=5, auto_retry=False)
-        async def my_test_function(self):
+        async def my_test_function(self: Any) -> Any:
             """My test docstring."""
             return "success"
 
         assert my_test_function.__name__ == "my_test_function"
         assert my_test_function.__doc__ == "My test docstring."
 
-    async def test_rate_limit_different_limits_independent(self):
+    async def test_rate_limit_different_limits_independent(self) -> None:
         """Test that different functions have independent limits."""
 
         @rate_limit(limit_per_window=2, auto_retry=False)
-        async def func_a(self):
+        async def func_a(self: Any) -> Any:
             return "a"
 
         @rate_limit(limit_per_window=3, auto_retry=False)
-        async def func_b(self):
+        async def func_b(self: Any) -> Any:
             return "b"
 
         class MockRedisA:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.incr_calls = 0
                 self.expire_calls = 0
 
-            async def incr(self, name):
+            async def incr(self, name: Any) -> int:
                 self.incr_calls += 1
                 return self.incr_calls
 
-            async def expire(self, name, time):
+            async def expire(self, name: Any, time: Any) -> bool:
                 self.expire_calls += 1
                 return True
 
         class MockRedisB:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.incr_calls = 0
                 self.expire_calls = 0
 
-            async def incr(self, name):
+            async def incr(self, name: Any) -> int:
                 self.incr_calls += 1
                 return self.incr_calls
 
-            async def expire(self, name, time):
+            async def expire(self, name: Any, time: Any) -> bool:
                 self.expire_calls += 1
                 return True
 

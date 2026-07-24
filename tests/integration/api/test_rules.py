@@ -5,6 +5,7 @@ Tests rule checks during request submission and rule management via queue PATCH.
 """
 
 from datetime import UTC
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -18,7 +19,7 @@ class TestRestrictionsOnRequestSubmission:
     TEST_QUEUE_ID = 1
 
     @pytest.fixture
-    def valid_request_body(self):
+    def valid_request_body(self) -> dict[str, Any]:
         return {
             "user_id": self.TEST_USER_ID,
             "beatmapset_id": self.TEST_BEATMAPSET_ID,
@@ -30,8 +31,8 @@ class TestRestrictionsOnRequestSubmission:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_request_submits_when_no_rules(
-        self, TestClientWithMocks, valid_request_body, security_disabled
-    ):
+        self, TestClientWithMocks: Any, valid_request_body: dict[str, Any], security_disabled: Any
+    ) -> None:
         """Test request succeeds when queue has no rules."""
 
         mock_queue = MagicMock()
@@ -40,12 +41,12 @@ class TestRestrictionsOnRequestSubmission:
         mock_queue.is_open = True
 
         class MockSession:
-            async def __aenter__(self):
+            async def __aenter__(self) -> MockSession:
                 sess = AsyncMock()
                 sess.execute = AsyncMock(return_value=MagicMock())
                 return sess
 
-            async def __aexit__(self, *args):
+            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
                 pass
 
         from app.database.enums import RoleName
@@ -79,15 +80,15 @@ class TestRestrictionsOnRequestSubmission:
         mock_rc.set = AsyncMock(return_value=True)
 
         class MockLockCtx:
-            async def __aenter__(self):
+            async def __aenter__(self) -> None:
                 return None
 
-            async def __aexit__(self, *args):
+            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
                 pass
 
         mock_rc.lock_ctx = MagicMock(return_value=MockLockCtx())
 
-        async def mock_get_beatmapset_wip(*args, **kwargs):
+        async def mock_get_beatmapset_wip(*args: Any, **kwargs: Any) -> dict[str, Any]:
             return {
                 "id": self.TEST_BEATMAPSET_ID,
                 "status": "wip",
@@ -182,8 +183,8 @@ class TestRestrictionsOnRequestSubmission:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_request_blocked_by_rate_limit(
-        self, TestClientWithMocks, valid_request_body, security_disabled
-    ):
+        self, TestClientWithMocks: Any, valid_request_body: dict[str, Any], security_disabled: Any
+    ) -> None:
         """Test request is blocked when rate limit is exceeded."""
 
         mock_queue = MagicMock()
@@ -207,12 +208,12 @@ class TestRestrictionsOnRequestSubmission:
         mock_result.scalars.return_value.all.return_value = [mock_rule]
 
         class MockSession:
-            async def __aenter__(self):
+            async def __aenter__(self) -> MockSession:
                 sess = AsyncMock()
                 sess.execute = AsyncMock(return_value=mock_result)
                 return sess
 
-            async def __aexit__(self, *args):
+            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
                 pass
 
         from app.database.enums import RoleName
@@ -244,15 +245,15 @@ class TestRestrictionsOnRequestSubmission:
         mock_rc.hgetall = AsyncMock(return_value=None)
 
         class MockLockCtx:
-            async def __aenter__(self):
+            async def __aenter__(self) -> None:
                 return None
 
-            async def __aexit__(self, *args):
+            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
                 pass
 
         mock_rc.lock_ctx = MagicMock(return_value=MockLockCtx())
 
-        async def mock_get_beatmapset_wip(*args, **kwargs):
+        async def mock_get_beatmapset_wip(*args: Any, **kwargs: Any) -> dict[str, Any]:
             return {
                 "id": self.TEST_BEATMAPSET_ID,
                 "status": "wip",
@@ -327,8 +328,8 @@ class TestRestrictionsOnRequestSubmission:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_request_blocked_by_cooldown(
-        self, TestClientWithMocks, valid_request_body, security_disabled
-    ):
+        self, TestClientWithMocks: Any, valid_request_body: dict[str, Any], security_disabled: Any
+    ) -> None:
         """Test request is blocked when cooldown period is active."""
         from datetime import datetime, timedelta
 
@@ -352,12 +353,12 @@ class TestRestrictionsOnRequestSubmission:
         mock_result.scalars.return_value.all.return_value = [mock_rule]
 
         class MockSession:
-            async def __aenter__(self):
+            async def __aenter__(self) -> MockSession:
                 sess = AsyncMock()
                 sess.execute = AsyncMock(return_value=mock_result)
                 return sess
 
-            async def __aexit__(self, *args):
+            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
                 pass
 
         from app.database.enums import RoleName
@@ -394,15 +395,15 @@ class TestRestrictionsOnRequestSubmission:
         mock_rc.set = AsyncMock(return_value=True)
 
         class MockLockCtx:
-            async def __aenter__(self):
+            async def __aenter__(self) -> None:
                 return None
 
-            async def __aexit__(self, *args):
+            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
                 pass
 
         mock_rc.lock_ctx = MagicMock(return_value=MockLockCtx())
 
-        async def mock_get_beatmapset_wip(*args, **kwargs):
+        async def mock_get_beatmapset_wip(*args: Any, **kwargs: Any) -> dict[str, Any]:
             return {
                 "id": self.TEST_BEATMAPSET_ID,
                 "status": "wip",
@@ -477,8 +478,8 @@ class TestRestrictionsOnRequestSubmission:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_request_blocked_by_blacklist(
-        self, TestClientWithMocks, valid_request_body, security_disabled
-    ):
+        self, TestClientWithMocks: Any, valid_request_body: dict[str, Any], security_disabled: Any
+    ) -> None:
         """Test request is blocked when user is blacklisted."""
 
         mock_queue = MagicMock()
@@ -501,12 +502,12 @@ class TestRestrictionsOnRequestSubmission:
         mock_result.scalars.return_value.all.return_value = [mock_rule]
 
         class MockSession:
-            async def __aenter__(self):
+            async def __aenter__(self) -> MockSession:
                 sess = AsyncMock()
                 sess.execute = AsyncMock(return_value=mock_result)
                 return sess
 
-            async def __aexit__(self, *args):
+            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
                 pass
 
         from app.database.enums import RoleName
@@ -538,15 +539,15 @@ class TestRestrictionsOnRequestSubmission:
         mock_rc.hgetall = AsyncMock(return_value=None)
 
         class MockLockCtx:
-            async def __aenter__(self):
+            async def __aenter__(self) -> None:
                 return None
 
-            async def __aexit__(self, *args):
+            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
                 pass
 
         mock_rc.lock_ctx = MagicMock(return_value=MockLockCtx())
 
-        async def mock_get_beatmapset_wip(*args, **kwargs):
+        async def mock_get_beatmapset_wip(*args: Any, **kwargs: Any) -> dict[str, Any]:
             return {
                 "id": self.TEST_BEATMAPSET_ID,
                 "status": "wip",
@@ -621,8 +622,8 @@ class TestRestrictionsOnRequestSubmission:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_request_passes_when_inactive_rule(
-        self, TestClientWithMocks, valid_request_body, security_disabled
-    ):
+        self, TestClientWithMocks: Any, valid_request_body: dict[str, Any], security_disabled: Any
+    ) -> None:
         """Test request succeeds when rule exists but is inactive."""
 
         mock_queue = MagicMock()
@@ -631,12 +632,12 @@ class TestRestrictionsOnRequestSubmission:
         mock_queue.is_open = True
 
         class MockSession:
-            async def __aenter__(self):
+            async def __aenter__(self) -> MockSession:
                 sess = AsyncMock()
                 sess.execute = AsyncMock(return_value=MagicMock())
                 return sess
 
-            async def __aexit__(self, *args):
+            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
                 pass
 
         from app.database.enums import RoleName
@@ -670,15 +671,15 @@ class TestRestrictionsOnRequestSubmission:
         mock_rc.set = AsyncMock(return_value=True)
 
         class MockLockCtx:
-            async def __aenter__(self):
+            async def __aenter__(self) -> None:
                 return None
 
-            async def __aexit__(self, *args):
+            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
                 pass
 
         mock_rc.lock_ctx = MagicMock(return_value=MockLockCtx())
 
-        async def mock_get_beatmapset_wip(*args, **kwargs):
+        async def mock_get_beatmapset_wip(*args: Any, **kwargs: Any) -> dict[str, Any]:
             return {
                 "id": self.TEST_BEATMAPSET_ID,
                 "status": "wip",
@@ -773,8 +774,8 @@ class TestRestrictionsOnRequestSubmission:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_request_passes_when_user_not_in_target(
-        self, TestClientWithMocks, security_disabled
-    ):
+        self, TestClientWithMocks: Any, security_disabled: Any
+    ) -> None:
         """Test request succeeds when user is not in rule target list."""
 
         different_user = 99999999
@@ -792,12 +793,12 @@ class TestRestrictionsOnRequestSubmission:
         mock_queue.is_open = True
 
         class MockSession:
-            async def __aenter__(self):
+            async def __aenter__(self) -> MockSession:
                 sess = AsyncMock()
                 sess.execute = AsyncMock(return_value=MagicMock())
                 return sess
 
-            async def __aexit__(self, *args):
+            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
                 pass
 
         from app.database.enums import RoleName
@@ -839,15 +840,15 @@ class TestRestrictionsOnRequestSubmission:
         mock_rc.hgetall = AsyncMock(return_value=None)
 
         class MockLockCtx:
-            async def __aenter__(self):
+            async def __aenter__(self) -> None:
                 return None
 
-            async def __aexit__(self, *args):
+            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
                 pass
 
         mock_rc.lock_ctx = MagicMock(return_value=MockLockCtx())
 
-        async def mock_get_beatmapset_wip(*args, **kwargs):
+        async def mock_get_beatmapset_wip(*args: Any, **kwargs: Any) -> dict[str, Any]:
             return {
                 "id": self.TEST_BEATMAPSET_ID,
                 "status": "wip",
@@ -947,7 +948,7 @@ class TestQueueRulesPatch:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_can_set_rules(self, TestClientWithMocks, admin_user_token):
+    async def test_admin_can_set_rules(self, TestClientWithMocks: Any, admin_user_token: str) -> None:
         """Test admin can set rules via PATCH."""
         from app.database.models import Queue
 
@@ -965,18 +966,18 @@ class TestQueueRulesPatch:
         admin_role.name = "admin"
         mock_user.roles = [admin_role]
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model == Queue:
                 return mock_queue
             return mock_user
 
         class MockSession:
-            async def __aenter__(self):
+            async def __aenter__(self) -> MockSession:
                 sess = AsyncMock()
                 sess.execute = AsyncMock(return_value=MagicMock())
                 return sess
 
-            async def __aexit__(self, *args):
+            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
                 pass
 
         mock_db = AsyncMock()
@@ -1029,7 +1030,7 @@ class TestQueueRulesPatch:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_queue_owner_can_set_rules(self, TestClientWithMocks, admin_user_token):
+    async def test_queue_owner_can_set_rules(self, TestClientWithMocks: Any, admin_user_token: str) -> None:
         """Test queue owner can set rules via PATCH."""
         from app.database.models import Queue
 
@@ -1047,18 +1048,18 @@ class TestQueueRulesPatch:
         mock_user.id = owner_id
         mock_user.roles = []
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model == Queue:
                 return mock_queue
             return mock_user
 
         class MockSession:
-            async def __aenter__(self):
+            async def __aenter__(self) -> MockSession:
                 sess = AsyncMock()
                 sess.execute = AsyncMock(return_value=MagicMock())
                 return sess
 
-            async def __aexit__(self, *args):
+            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
                 pass
 
         mock_db = AsyncMock()
@@ -1110,7 +1111,7 @@ class TestQueueRulesPatch:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_non_admin_cannot_set_rules(self, TestClientWithMocks, admin_user_token):
+    async def test_non_admin_cannot_set_rules(self, TestClientWithMocks: Any, admin_user_token: str) -> None:
         """Test non-admin non-owner gets 403 when trying to set rules."""
         from app.security import generate_token
 
@@ -1123,7 +1124,7 @@ class TestQueueRulesPatch:
         mock_user.id = 88888888
         mock_user.roles = []
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             return mock_user
 
         mock_db = AsyncMock()

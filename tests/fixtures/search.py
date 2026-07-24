@@ -1,13 +1,15 @@
 from datetime import datetime
+from typing import Any
 
 import pytest
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import Beatmap, Beatmapset, BeatmapsetSnapshot, BeatmapSnapshot
 from tests.fixtures.osu import load_beatmap, load_beatmapset
 
 
 async def seed_beatmapset(
-    session,
+    session: AsyncSession,
     beatmapset_id: int,
     beatmap_ids: list[int],
     user_id: int = 12345,
@@ -152,7 +154,7 @@ async def seed_beatmapset(
 
 
 @pytest.fixture
-async def seeded_beatmapsets(db_transaction):
+async def seeded_beatmapsets(db_transaction: Any) -> list[Beatmapset]:
     """Fixture to seed multiple beatmapsets for testing."""
     beatmapsets = []
     for beatmapset_id in [35965, 54321]:
@@ -167,7 +169,7 @@ async def seeded_beatmapsets(db_transaction):
 
 
 @pytest.fixture
-async def seeded_beatmaps(db_transaction):
+async def seeded_beatmaps(db_transaction: Any) -> list[Beatmap]:
     """Fixture to seed multiple beatmaps for testing."""
     beatmaps = []
     beatmap_ids = [116383, 234567, 345678]

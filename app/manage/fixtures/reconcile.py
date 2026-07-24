@@ -84,7 +84,7 @@ async def cmd_reconcile(category: str | None = None, dry_run: bool = False) -> N
     console.print(table)
 
 
-def main():
+def main() -> None:
     """CLI entry point."""
     parser = argparse.ArgumentParser(description="Reconcile fixture metadata with disk state")
     parser.add_argument(

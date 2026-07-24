@@ -1,5 +1,7 @@
 """Unit tests for Redis distributed lock (lock_ctx)."""
 
+from typing import Any
+
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -12,7 +14,7 @@ class TestLockCtx:
     """Test distributed lock acquisition and release."""
 
     @pytest.fixture
-    def mock_rc(self):
+    def mock_rc(self) -> MagicMock:
         """Create a mock RedisClient with configurable set/eval behavior."""
         rc = MagicMock(spec=RedisClient)
         rc.set = AsyncMock()
@@ -20,7 +22,7 @@ class TestLockCtx:
         return rc
 
     @pytest.mark.asyncio
-    async def test_lock_acquired_on_first_set(self, mock_rc):
+    async def test_lock_acquired_on_first_set(self, mock_rc: MagicMock) -> None:
         """Test lock acquires successfully when SET NX returns True."""
         mock_rc.set.return_value = True
 
@@ -31,7 +33,7 @@ class TestLockCtx:
             assert call_kwargs[1]["ex"] == 10
 
     @pytest.mark.asyncio
-    async def test_lock_released_with_lua_script(self, mock_rc):
+    async def test_lock_released_with_lua_script(self, mock_rc: MagicMock) -> None:
         """Test lock release uses atomic Lua script (GET + DEL conditional)."""
         mock_rc.set.return_value = True
 
@@ -44,7 +46,7 @@ class TestLockCtx:
         assert 'redis.call("del"' in lua_script
 
     @pytest.mark.asyncio
-    async def test_lock_releases_only_if_token_matches(self, mock_rc):
+    async def test_lock_releases_only_if_token_matches(self, mock_rc: MagicMock) -> None:
         """Test Lua script only deletes the key if the token still matches."""
         mock_rc.set.return_value = True
         mock_rc.eval.return_value = 0
@@ -58,7 +60,7 @@ class TestLockCtx:
         assert call_args[0][2] == "test_lock"
 
     @pytest.mark.asyncio
-    async def test_lock_retries_until_acquired(self, mock_rc):
+    async def test_lock_retries_until_acquired(self, mock_rc: MagicMock) -> None:
         """Test lock retries SET NX until it succeeds."""
         mock_rc.set.side_effect = [None, None, True]
 
@@ -68,7 +70,7 @@ class TestLockCtx:
         assert mock_rc.set.call_count == 3
 
     @pytest.mark.asyncio
-    async def test_lock_timeout_raises_error(self, mock_rc):
+    async def test_lock_timeout_raises_error(self, mock_rc: MagicMock) -> None:
         """Test lock timeout raises RedisLockTimeoutError when key never available."""
         mock_rc.set.return_value = None
 
@@ -79,7 +81,7 @@ class TestLockCtx:
         assert exc_info.value.key == "stuck_lock"
 
     @pytest.mark.asyncio
-    async def test_lock_generates_random_token(self, mock_rc):
+    async def test_lock_generates_random_token(self, mock_rc: MagicMock) -> None:
         """Test lock generates a unique random token passed to SET."""
         mock_rc.set.return_value = True
 
@@ -92,7 +94,7 @@ class TestLockCtx:
         assert len(token) > 0
 
     @pytest.mark.asyncio
-    async def test_lock_passes_expiry_to_set(self, mock_rc):
+    async def test_lock_passes_expiry_to_set(self, mock_rc: MagicMock) -> None:
         """Test lock passes the configured expiry to SET."""
         mock_rc.set.return_value = True
 
@@ -103,7 +105,7 @@ class TestLockCtx:
         assert call_kwargs["ex"] == 30
 
     @pytest.mark.asyncio
-    async def test_lock_yields_control_to_context(self, mock_rc):
+    async def test_lock_yields_control_to_context(self, mock_rc: MagicMock) -> None:
         """Test that code inside the lock context executes."""
         mock_rc.set.return_value = True
         executed = []

@@ -175,7 +175,7 @@ def _propagate_to_parameters(openapi_spec: dict, schemas: dict) -> None:
     """
     http_methods = {"get", "put", "post", "delete", "options", "head", "patch", "trace"}
 
-    def fix_params(params) -> None:
+    def fix_params(params: list[dict[str, Any]]) -> None:
         if not isinstance(params, list):
             return
 

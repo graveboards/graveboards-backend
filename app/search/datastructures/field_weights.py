@@ -86,7 +86,7 @@ class FieldWeights(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def handle_disable_shorthand(cls, values):
+    def handle_disable_shorthand(cls, values: dict[str, Any]) -> dict[str, Any]:
         """Expand shorthand ``None`` category values into explicit null fields.
 
         If a category is explicitly set to ``None``, all of its fields are expanded into
@@ -106,7 +106,7 @@ class FieldWeights(BaseModel):
 
         return values
 
-    def validate_against_scope(self, scope: Scope):
+    def validate_against_scope(self, scope: Scope) -> None:
         """Ensure at least one applicable field weight is enabled for the scope.
 
         Only categories mapped to the provided scope are considered. At least one field

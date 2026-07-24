@@ -3,13 +3,14 @@ Test fixtures for token endpoint testing.
 """
 
 from datetime import UTC, datetime, timedelta
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 from app.osu_api import OsuAPIClient
 from app.redis_client import RedisClient
 
 
-def create_mock_oauth(fetch_token_response: dict = None):
+def create_mock_oauth(fetch_token_response: dict[str, Any] | None = None) -> MagicMock:
     """Create a mock OAuth instance for testing.
 
     Args:
@@ -31,7 +32,7 @@ def create_mock_oauth(fetch_token_response: dict = None):
     return mock_oauth
 
 
-def create_mock_osu_api_client(user_data: dict = None):
+def create_mock_osu_api_client(user_data: dict[str, Any] | None = None) -> MagicMock:
     """Create a mock OsuAPIClient for testing.
 
     Args:
@@ -51,7 +52,7 @@ def create_mock_osu_api_client(user_data: dict = None):
     return mock_client
 
 
-def create_valid_token_payload(user_id: int = 12345678):
+def create_valid_token_payload(user_id: int = 12345678) -> Any:
     """Create a valid JWT payload for testing.
 
     Args:
@@ -65,7 +66,7 @@ def create_valid_token_payload(user_id: int = 12345678):
     return create_token_payload(user_id)
 
 
-def create_expired_token_payload(user_id: int = 12345678):
+def create_expired_token_payload(user_id: int = 12345678) -> Any:
     """Create an expired JWT payload for testing.
 
     Args:

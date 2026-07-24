@@ -10,7 +10,7 @@ __all__ = ["request_before_insert"]
 
 
 @event.listens_for(Request, "before_insert")
-def request_before_insert(mapper: Mapper[Request], connection: Connection, target: Request):
+def request_before_insert(mapper: Mapper[Request], connection: Connection, target: Request) -> None:
     """Bind a ``Request`` to the latest ``BeatmapsetSnapshot``.
 
     Ensures referential consistency by resolving and attaching the most recent snapshot

@@ -5,6 +5,8 @@ Tests the role_authorization and ownership_authorization decorators
 using the actual API endpoints that employ these decorators.
 """
 
+from typing import Any
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -18,7 +20,7 @@ class TestRoleAuthorizationWithOneOf:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_user_with_one_of_required_roles_succeeds(self, TestClientWithMocks):
+    async def test_user_with_one_of_required_roles_succeeds(self, TestClientWithMocks: Any) -> None:
         """Test user with one of the required roles succeeds."""
         mock_db = AsyncMock()
 
@@ -59,8 +61,10 @@ class TestRoleAuthorizationWithOneOf:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_user_with_none_of_required_roles_fails(
-        self, TestClientWithMocks, authenticated_user_id
-    ):
+        self,
+        TestClientWithMocks: Any,
+        authenticated_user_id: Any,
+    ) -> None:
         """Test user with none of the required roles fails."""
         from app.database.models import Queue, Request
 
@@ -76,7 +80,7 @@ class TestRoleAuthorizationWithOneOf:
         mock_request.queue = MagicMock()
         mock_request.queue.user_id = 99999999
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model == Request:
                 return mock_request
             if model == Queue:
@@ -107,7 +111,7 @@ class TestRoleAuthorizationWithCustomOverride:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_override_callback_success(self, TestClientWithMocks):
+    async def test_override_callback_success(self, TestClientWithMocks: Any) -> None:
         """Test that custom override callback allows access."""
 
         mock_db = AsyncMock()
@@ -124,7 +128,7 @@ class TestRoleAuthorizationWithCustomOverride:
         mock_user.id = 99999999
         mock_user.roles = []
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model.__name__ == "Queue":
                 return mock_queue
             return mock_user
@@ -149,7 +153,7 @@ class TestRoleAuthorizationWithCustomOverride:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_override_callback_failure(self, TestClientWithMocks):
+    async def test_override_callback_failure(self, TestClientWithMocks: Any) -> None:
         """Test that custom override callback denies access when it returns False."""
 
         mock_db = AsyncMock()
@@ -166,7 +170,7 @@ class TestRoleAuthorizationWithCustomOverride:
         mock_user.id = 99999999
         mock_user.roles = []
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model.__name__ == "Queue":
                 return mock_queue
             return mock_user
@@ -197,7 +201,7 @@ class TestOwnershipAuthorizationSuccess:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_user_can_get_own_requests(self, TestClientWithMocks):
+    async def test_user_can_get_own_requests(self, TestClientWithMocks: Any) -> None:
         """Test that user can get their own requests via ownership."""
 
         mock_db = AsyncMock()
@@ -238,7 +242,7 @@ class TestOwnershipAuthorizationSuccess:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_user_can_get_request_by_id_with_ownership(self, TestClientWithMocks):
+    async def test_user_can_get_request_by_id_with_ownership(self, TestClientWithMocks: Any) -> None:
         """Test that user can get specific request they own via ownership."""
 
         mock_db = AsyncMock()
@@ -257,7 +261,7 @@ class TestOwnershipAuthorizationSuccess:
         mock_user.id = 12345678
         mock_user.roles = []
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model.__name__ == "Request":
                 return mock_request
             return mock_user
@@ -288,7 +292,7 @@ class TestOwnershipAuthorizationFailure:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_user_can_see_other_users_requests(self, TestClientWithMocks):
+    async def test_user_can_see_other_users_requests(self, TestClientWithMocks: Any) -> None:
         """Test that a non-owner user still sees other users' requests in the list.
 
         GET /api/v1/requests is not an ownership-scoped "my requests" listing - it
@@ -333,7 +337,7 @@ class TestOwnershipAuthorizationFailure:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_user_cannot_get_request_by_id_without_ownership(self, TestClientWithMocks):
+    async def test_user_cannot_get_request_by_id_without_ownership(self, TestClientWithMocks: Any) -> None:
         """Test that user gets 403 when trying to access request they don't own."""
 
         mock_db = AsyncMock()
@@ -352,7 +356,7 @@ class TestOwnershipAuthorizationFailure:
         mock_user.id = 12345678
         mock_user.roles = []
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model.__name__ == "Request":
                 return mock_request
             return mock_user
@@ -383,8 +387,10 @@ class TestOwnershipAuthorizationAdminOverride:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_can_get_all_requests_including_others(
-        self, TestClientWithMocks, admin_user_token
-    ):
+        self,
+        TestClientWithMocks: Any,
+        admin_user_token: Any,
+    ) -> None:
         """Test that admin (like any authenticated caller) sees every matching request.
 
         GET /api/v1/requests has no ownership scoping, so this is really just
@@ -440,8 +446,10 @@ class TestOwnershipAuthorizationAdminOverride:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_can_get_request_by_id_despite_ownership(
-        self, TestClientWithMocks, admin_user_token
-    ):
+        self,
+        TestClientWithMocks: Any,
+        admin_user_token: Any,
+    ) -> None:
         """Test that admin can get specific request regardless of ownership."""
 
         mock_db = AsyncMock()
@@ -462,7 +470,7 @@ class TestOwnershipAuthorizationAdminOverride:
         admin_role.name = "admin"
         mock_admin_user.roles = [admin_role]
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model.__name__ == "Request":
                 return mock_request
             return mock_admin_user

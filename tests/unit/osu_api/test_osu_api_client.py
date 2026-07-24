@@ -1,8 +1,11 @@
+from typing import Any, Generator
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from app.fixtures.reader import FixtureReader
+from app.osu_api.client.osu_api_client import OsuAPIClient
 from app.osu_api.enums import Ruleset, ScoreType
 from tests.unit.osu_api.conftest import MockResponse
 from tests.unit.osu_api.test_helpers import (
@@ -12,7 +15,7 @@ from tests.unit.osu_api.test_helpers import (
 
 
 @pytest.fixture(autouse=True)
-def mock_rate_limit_decorator():
+def mock_rate_limit_decorator() -> Generator[None, None, None]:
     from app.osu_api.client import osu_api_client
 
     with patch.object(osu_api_client, "rate_limit", lambda *args, **kwargs: lambda func: func):
@@ -20,7 +23,7 @@ def mock_rate_limit_decorator():
 
 
 @pytest.mark.asyncio
-async def test_get_beatmap_from_redis_cache(api_client):
+async def test_get_beatmap_from_redis_cache(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     api_client_obj, mock_redis = api_client
     fixture_manager = FixtureReader()
     mock_data = _get_beatmap_with_fallback(fixture_manager)
@@ -30,7 +33,7 @@ async def test_get_beatmap_from_redis_cache(api_client):
     beatmap_obj = Beatmap.model_validate(mock_data)
     serialized_beatmap = beatmap_obj.serialize()
 
-    async def mock_hgetall(key: str):
+    async def mock_hgetall(key: str) -> Any:
         if key == f"cached_beatmap:{mock_data['id']}":
             return serialized_beatmap
         return None
@@ -46,7 +49,7 @@ async def test_get_beatmap_from_redis_cache(api_client):
 
 
 @pytest.mark.asyncio
-async def test_get_beatmap_from_api(api_client):
+async def test_get_beatmap_from_api(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     api_client_obj, mock_redis = api_client
     fixture_manager = FixtureReader()
     mock_data = _get_beatmap_with_fallback(fixture_manager)
@@ -68,7 +71,7 @@ async def test_get_beatmap_from_api(api_client):
 
 
 @pytest.mark.asyncio
-async def test_get_beatmap_caches_response(api_client):
+async def test_get_beatmap_caches_response(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     api_client_obj, mock_redis = api_client
     fixture_manager = FixtureReader()
     mock_data = _get_beatmap_with_fallback(fixture_manager)
@@ -92,7 +95,7 @@ async def test_get_beatmap_caches_response(api_client):
 
 
 @pytest.mark.asyncio
-async def test_get_beatmap_scores(api_client):
+async def test_get_beatmap_scores(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     api_client_obj, mock_redis = api_client
 
     mock_data = {
@@ -112,7 +115,7 @@ async def test_get_beatmap_scores(api_client):
 
 
 @pytest.mark.asyncio
-async def test_get_beatmap_attributes(api_client):
+async def test_get_beatmap_attributes(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     api_client_obj, mock_redis = api_client
 
     mock_data = {"attributes": {"difficulty": 5.5, "max_combo": 100}}
@@ -128,7 +131,7 @@ async def test_get_beatmap_attributes(api_client):
 
 
 @pytest.mark.asyncio
-async def test_get_beatmapset_from_redis_cache(api_client):
+async def test_get_beatmapset_from_redis_cache(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     api_client_obj, mock_redis = api_client
     fixture_manager = FixtureReader()
     mock_data = _get_beatmapset_with_fallback(fixture_manager)
@@ -138,7 +141,7 @@ async def test_get_beatmapset_from_redis_cache(api_client):
     beatmapset_obj = Beatmapset.model_validate(mock_data)
     serialized_beatmapset = beatmapset_obj.serialize()
 
-    async def mock_hgetall(key: str):
+    async def mock_hgetall(key: str) -> Any:
         if key == "osu_client_oauth_token":
             return None
         if key == f"cached_beatmapset:{mock_data['id']}":
@@ -157,7 +160,7 @@ async def test_get_beatmapset_from_redis_cache(api_client):
 
 
 @pytest.mark.asyncio
-async def test_get_beatmapset_from_api(api_client):
+async def test_get_beatmapset_from_api(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     api_client_obj, mock_redis = api_client
     fixture_manager = FixtureReader()
     mock_data = _get_beatmapset_with_fallback(fixture_manager)
@@ -180,7 +183,7 @@ async def test_get_beatmapset_from_api(api_client):
 
 
 @pytest.mark.asyncio
-async def test_get_user(api_client):
+async def test_get_user(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     api_client_obj, mock_redis = api_client
 
     mock_data = {
@@ -202,7 +205,7 @@ async def test_get_user(api_client):
 
 
 @pytest.mark.asyncio
-async def test_get_user_scores(api_client):
+async def test_get_user_scores(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     api_client_obj, mock_redis = api_client
 
     mock_data = {
@@ -221,7 +224,7 @@ async def test_get_user_scores(api_client):
 
 
 @pytest.mark.asyncio
-async def test_get_tags(api_client):
+async def test_get_tags(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     api_client_obj, mock_redis = api_client
 
     mock_data = {"tags": [{"tag": "hard", "count": 100}, {"tag": "easy", "count": 50}]}
@@ -238,7 +241,7 @@ async def test_get_tags(api_client):
 
 
 @pytest.mark.asyncio
-async def test_get_rankings(api_client):
+async def test_get_rankings(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     api_client_obj, mock_redis = api_client
 
     mock_data = {
@@ -264,7 +267,7 @@ async def test_get_rankings(api_client):
 
 
 @pytest.mark.asyncio
-async def test_get_beatmapset_discussions(api_client):
+async def test_get_beatmapset_discussions(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     api_client_obj, mock_redis = api_client
 
     mock_data = {

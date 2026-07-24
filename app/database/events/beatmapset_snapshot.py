@@ -14,7 +14,7 @@ logger = get_logger(__name__)
 @event.listens_for(BeatmapsetSnapshot, "before_insert")
 def beatmapset_snapshot_before_insert(
     mapper: Mapper[BeatmapsetSnapshot], connection: Connection, target: BeatmapsetSnapshot
-):
+) -> None:
     """Assign the next sequential snapshot number for a ``BeatmapsetSnapshot``.
 
     Determines the maximum ``snapshot_number`` for the associated ``beatmapset_id`` and
@@ -51,7 +51,7 @@ def beatmapset_snapshot_before_insert(
 @event.listens_for(BeatmapsetSnapshot, "after_insert")
 def beatmapset_snapshot_after_insert(
     mapper: Mapper[BeatmapsetSnapshot], connection: Connection, target: BeatmapsetSnapshot
-):
+) -> None:
     """Propagate a new ``BeatmapsetSnapshot`` to dependent tables.
 
     After insertion:

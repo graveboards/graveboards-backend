@@ -1,6 +1,7 @@
 import argparse
 import logging
 import traceback
+from typing import cast as typing_cast
 
 from rich.console import Console
 
@@ -24,7 +25,7 @@ from .seed import cmd_seed
 from .status import cmd_status
 
 
-def build_status_parser(subparsers):
+def build_status_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     p = subparsers.add_parser("status", help="View database status")
     p.add_argument(
         "target",
@@ -33,10 +34,10 @@ def build_status_parser(subparsers):
         choices=["summary", "users", "beatmaps", "beatmapsets", "queues", "requests"],
         help="Status target (default: summary)",
     )
-    return p
+    return typing_cast(argparse.ArgumentParser, p)
 
 
-def build_reset_parser(subparsers):
+def build_reset_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     p = subparsers.add_parser("reset", help="Reset database")
     p.add_argument(
         "seed_target",
@@ -45,30 +46,34 @@ def build_reset_parser(subparsers):
         help="Optional seed target after reset (all, users, beatmaps, queues, requests)",
     )
     p.add_argument("--force", "-f", action="store_true", help="Skip confirmation prompt")
-    return p
+    return typing_cast(argparse.ArgumentParser, p)
 
 
-def build_seed_parser(subparsers):
+def build_seed_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     p = subparsers.add_parser("seed", help="Seed database")
     p.add_argument("target", help="Seed target (all, users, beatmaps, queues, requests)")
     p.add_argument(
         "--ensure-fixtures", action="store_true", help="Auto-fetch/generate missing fixtures"
     )
     p.add_argument("--profile", default="default", help="Profile name for fixture counts")
-    return p
+    return typing_cast(argparse.ArgumentParser, p)
 
 
-def build_generate_api_key_parser(subparsers):
+def build_generate_api_key_parser(
+    subparsers: argparse._SubParsersAction,
+) -> argparse.ArgumentParser:
     p = subparsers.add_parser("generate-api-key", help="Generate a new API key for a user")
     p.add_argument("user_id", type=int, help="osu! user ID")
     p.add_argument(
         "--expires-days", type=int, default=90, help="Days until key expires (default: 90)"
     )
-    return p
+    return typing_cast(argparse.ArgumentParser, p)
 
 
-def build_migrate_parser(subparsers):
-    p = subparsers.add_parser("migrate", help="Database migration commands")
+def build_migrate_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+    p: argparse.ArgumentParser = subparsers.add_parser(
+        "migrate", help="Database migration commands"
+    )
     migrate_subparsers = p.add_subparsers(dest="migrate_command", required=True)
 
     # migrate run
@@ -99,7 +104,7 @@ def build_migrate_parser(subparsers):
     return p
 
 
-def build_fixtures_parser(subparsers):
+def build_fixtures_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     p = subparsers.add_parser("fixtures", help="Manage test fixtures")
     fixture_subparsers = p.add_subparsers(dest="fixture_command", required=True)
 
@@ -276,11 +281,11 @@ def build_fixtures_parser(subparsers):
     status_p.add_argument("--detailed", action="store_true", help="Include detailed file lists")
     status_p.add_argument("--gaps", action="store_true", help="Show missing fixture gaps")
 
-    return p
+    return typing_cast(argparse.ArgumentParser, p)
 
 
 # ruff: noqa: C901 PLC0415 F401
-async def main():
+async def main() -> None:
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command", required=True)
 

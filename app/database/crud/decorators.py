@@ -10,6 +10,7 @@ from typing import (
     ParamSpec,
     Protocol,
     TypeVar,
+    cast as typing_cast,
 )
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -39,7 +40,7 @@ _active_session: ContextVar[AsyncSession | None] = ContextVar(
 
 
 def session_manager(
-    session_resolver: SessionResolver = None, autoflush_allowed: bool = True
+    session_resolver: SessionResolver | None = None, autoflush_allowed: bool = True
 ) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Manage ``AsyncSession`` lifecycle for coroutine-based CRUD operations.
 
@@ -72,7 +73,7 @@ def session_manager(
 
     def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
         @wraps(func)
-        async def wrapper(self, *args: P.args, **kwargs: P.kwargs) -> T:
+        async def wrapper(self: Any, *args: P.args, **kwargs: P.kwargs) -> T:
             passed_session = kwargs.get("session")
             current_session = _active_session.get()
 
@@ -112,7 +113,7 @@ def session_manager(
 
 
 def session_manager_stream(
-    session_resolver: Callable[[Any], AbstractAsyncContextManager[Any]] = None,
+    session_resolver: Callable[[Any], AbstractAsyncContextManager[Any]] | None = None,
     autoflush_allowed: bool = True,
 ) -> Callable[[Callable[P, AsyncIterator[T]]], Callable[P, AsyncIterator[T]]]:
     """Manage ``AsyncSession`` lifecycle for async generator methods.
@@ -144,7 +145,7 @@ def session_manager_stream(
 
     def decorator(func: Callable[P, AsyncIterator[T]]) -> Callable[P, AsyncIterator[T]]:
         @wraps(func)
-        async def wrapper(self, *args: P.args, **kwargs: P.kwargs) -> AsyncIterator[T]:
+        async def wrapper(self: Any, *args: P.args, **kwargs: P.kwargs) -> AsyncIterator[T]:
             passed_session = kwargs.get("session")
             current_session = _active_session.get()
 
@@ -270,7 +271,7 @@ class DbSessionResolver(SessionResolver):
     def __call__(
         self, obj: Any, *, autoflush: bool = True
     ) -> AbstractAsyncContextManager[AsyncSession]:
-        return obj.db.session(autoflush=autoflush)
+        return typing_cast(AbstractAsyncContextManager[Any, bool | None], obj.db.session(autoflush=autoflush))
 
 
 db_session_resolver = DbSessionResolver()
@@ -299,7 +300,7 @@ def _enforce_autoflush[**P, T](
     session: AsyncSession,
     autoflush_allowed: bool,
     func: Callable[P, Awaitable[T] | AsyncIterator[T]],
-):
+) -> None:
     """Enforce autoflush policy for a wrapped CRUD operation.
 
     Args:

@@ -6,7 +6,7 @@ from rich.table import Table
 console = Console()
 
 
-def print_coverage_gaps(fetcher) -> None:
+def print_coverage_gaps(fetcher: "FixtureFetcher") -> None:
     """Print coverage gaps from metadata.json."""
     console.print("[bold]Coverage status from metadata.json:[/bold]")
 
@@ -381,7 +381,7 @@ def print_coverage_report(coverage: dict) -> None:
     )
 
 
-def _add_row(table, category: str, status: str, details: str) -> None:
+def _add_row(table: Table, category: str, status: str, details: str) -> None:
     if status == "OK":
         style = "green"
     elif status == "PARTIAL":

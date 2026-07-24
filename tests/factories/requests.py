@@ -1,9 +1,11 @@
+from typing import Any, Callable
+
 import pytest
 
 from app.database.models import Request
 
 
-def create_request_from_beatmapset_id(beatmapset_id: int, queue_id: int = 1, **kwargs) -> Request:
+def create_request_from_beatmapset_id(beatmapset_id: int, queue_id: int = 1, **kwargs: Any) -> Request:
     """Create a Request model from a beatmapset fixture."""
     return Request(
         beatmapset_id=beatmapset_id,
@@ -15,7 +17,7 @@ def create_request_from_beatmapset_id(beatmapset_id: int, queue_id: int = 1, **k
 
 
 def create_request_from_user_and_beatmapset(
-    user_id: int, beatmapset_id: int, queue_id: int = 1, **kwargs
+    user_id: int, beatmapset_id: int, queue_id: int = 1, **kwargs: Any
 ) -> Request:
     """Create a Request model from user and beatmapset fixtures."""
     return Request(
@@ -29,6 +31,6 @@ def create_request_from_user_and_beatmapset(
 
 
 @pytest.fixture
-def request_factory():
+def request_factory() -> Callable[..., Request]:
     """Factory fixture for creating request instances."""
     return create_request_from_beatmapset_id

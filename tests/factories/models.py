@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import Any, Callable
 
 import pytest
 
@@ -16,7 +17,7 @@ from app.database.models import (
 )
 
 
-def create_user(**kwargs) -> User:
+def create_user(**kwargs: Any) -> User:
     """Create a user model instance with defaults."""
     return User(
         id=kwargs.get("id", 12345),
@@ -33,7 +34,7 @@ def create_user(**kwargs) -> User:
     )
 
 
-def create_profile(user_id: int | None = None, **kwargs) -> Profile:
+def create_profile(user_id: int | None = None, **kwargs: Any) -> Profile:
     """Create a profile model instance with defaults."""
     return Profile(
         id=kwargs.get("id"),
@@ -53,7 +54,7 @@ def create_profile(user_id: int | None = None, **kwargs) -> Profile:
     )
 
 
-def create_queue(user_id: int | None = None, **kwargs) -> Queue:
+def create_queue(user_id: int | None = None, **kwargs: Any) -> Queue:
     """Create a queue model instance with defaults."""
     return Queue(
         id=kwargs.get("id"),
@@ -72,7 +73,7 @@ def create_queue(user_id: int | None = None, **kwargs) -> Queue:
 
 
 def create_request(
-    queue_id: int | None = None, beatmapset_id: int | None = None, **kwargs
+    queue_id: int | None = None, beatmapset_id: int | None = None, **kwargs: Any
 ) -> Request:
     """Create a request model instance with defaults."""
     return Request(
@@ -93,30 +94,30 @@ def create_request(
 
 
 @pytest.fixture
-def user_factory():
+def user_factory() -> Callable[..., User]:
     """Factory fixture for creating user instances."""
     return create_user
 
 
 @pytest.fixture
-def profile_factory():
+def profile_factory() -> Callable[..., Profile]:
     """Factory fixture for creating profile instances."""
     return create_profile
 
 
 @pytest.fixture
-def queue_factory():
+def queue_factory() -> Callable[..., Queue]:
     """Factory fixture for creating queue instances."""
     return create_queue
 
 
 @pytest.fixture
-def request_factory():
+def request_factory() -> Callable[..., Request]:
     """Factory fixture for creating request instances."""
     return create_request
 
 
-def create_beatmap(beatmapset_id: int | None = None, **kwargs) -> Beatmap:
+def create_beatmap(beatmapset_id: int | None = None, **kwargs: Any) -> Beatmap:
     """Create a beatmap model instance with defaults."""
     return Beatmap(
         id=kwargs.get("id", 116383),
@@ -124,7 +125,7 @@ def create_beatmap(beatmapset_id: int | None = None, **kwargs) -> Beatmap:
     )
 
 
-def create_beatmapset(user_id: int | None = None, **kwargs) -> Beatmapset:
+def create_beatmapset(user_id: int | None = None, **kwargs: Any) -> Beatmapset:
     """Create a beatmapset model instance with defaults."""
     return Beatmapset(
         id=kwargs.get("id", 35965),
@@ -133,19 +134,19 @@ def create_beatmapset(user_id: int | None = None, **kwargs) -> Beatmapset:
 
 
 @pytest.fixture
-def beatmap_factory():
+def beatmap_factory() -> Callable[..., Beatmap]:
     """Factory fixture for creating beatmap instances."""
     return create_beatmap
 
 
 @pytest.fixture
-def beatmapset_factory():
+def beatmapset_factory() -> Callable[..., Beatmapset]:
     """Factory fixture for creating beatmapset instances."""
     return create_beatmapset
 
 
 def create_beatmap_listing(
-    beatmap_id: int | None = None, beatmap_snapshot_id: int | None = None, **kwargs
+    beatmap_id: int | None = None, beatmap_snapshot_id: int | None = None, **kwargs: Any
 ) -> BeatmapListing:
     """Create a beatmap listing model instance with defaults."""
     return BeatmapListing(
@@ -156,7 +157,7 @@ def create_beatmap_listing(
     )
 
 
-def create_beatmap_tag(**kwargs) -> BeatmapTag:
+def create_beatmap_tag(**kwargs: Any) -> BeatmapTag:
     """Create a beatmap tag model instance with defaults."""
     return BeatmapTag(
         id=kwargs.get("id", 1),
@@ -169,7 +170,7 @@ def create_beatmap_tag(**kwargs) -> BeatmapTag:
 
 
 def create_beatmapset_listing(
-    beatmapset_id: int | None = None, beatmapset_snapshot_id: int | None = None, **kwargs
+    beatmapset_id: int | None = None, beatmapset_snapshot_id: int | None = None, **kwargs: Any
 ) -> BeatmapsetListing:
     """Create a beatmapset listing model instance with defaults."""
     return BeatmapsetListing(
@@ -180,7 +181,7 @@ def create_beatmapset_listing(
     )
 
 
-def create_beatmapset_tag(**kwargs) -> BeatmapsetTag:
+def create_beatmapset_tag(**kwargs: Any) -> BeatmapsetTag:
     """Create a beatmapset tag model instance with defaults."""
     return BeatmapsetTag(
         id=kwargs.get("id", 1),
@@ -189,24 +190,24 @@ def create_beatmapset_tag(**kwargs) -> BeatmapsetTag:
 
 
 @pytest.fixture
-def beatmap_listing_factory():
+def beatmap_listing_factory() -> Callable[..., BeatmapListing]:
     """Factory fixture for creating beatmap listing instances."""
     return create_beatmap_listing
 
 
 @pytest.fixture
-def beatmap_tag_factory():
+def beatmap_tag_factory() -> Callable[..., BeatmapTag]:
     """Factory fixture for creating beatmap tag instances."""
     return create_beatmap_tag
 
 
 @pytest.fixture
-def beatmapset_listing_factory():
+def beatmapset_listing_factory() -> Callable[..., BeatmapsetListing]:
     """Factory fixture for creating beatmapset listing instances."""
     return create_beatmapset_listing
 
 
 @pytest.fixture
-def beatmapset_tag_factory():
+def beatmapset_tag_factory() -> Callable[..., BeatmapsetTag]:
     """Factory fixture for creating beatmapset tag instances."""
     return create_beatmapset_tag

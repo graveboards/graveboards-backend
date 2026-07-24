@@ -24,6 +24,7 @@ import asyncio
 import os
 from copy import copy
 from io import BytesIO
+from typing import cast as typing_cast
 from zipfile import ZipFile
 
 import aiofiles
@@ -458,7 +459,7 @@ class BeatmapManager:
         except HTTPError:
             raise RestrictedUserError(user_id) from None
 
-        return user
+        return typing_cast(User, user)
 
     async def _populate_profile(
         self, user_id: int, restricted_user_dict: dict = None, is_restricted: bool = False
@@ -491,7 +492,7 @@ class BeatmapManager:
                 if (
                     profile := await self.db.get(Profile, user_id=user_id, session=self._session)
                 ) and not is_restricted:
-                    return profile
+                    return typing_cast(Profile, profile)
 
                 if not is_restricted:
                     user_dict = await self.oac.get_user(user_id)
@@ -538,7 +539,7 @@ class BeatmapManager:
                         session=self._session,
                     )
 
-                return profile
+                return typing_cast(Profile, profile)
         except RedisLockTimeoutError:
             raise
 
@@ -602,7 +603,7 @@ class BeatmapManager:
             List of beatmap tag instances.
         """
 
-        async def fetch_beatmap_tag(_recursed=False) -> BeatmapTag | None:
+        async def fetch_beatmap_tag(_recursed: bool = False) -> BeatmapTag | None:
             if not (
                 beatmap_tag_ := await self.db.get(BeatmapTag, id=tag_id, session=self._session)
             ):
@@ -615,7 +616,7 @@ class BeatmapManager:
                 await self._update_beatmap_tags_from_osu()
                 return await fetch_beatmap_tag(_recursed=True)
 
-            return beatmap_tag_
+            return typing_cast(BeatmapTag | None, beatmap_tag_)
 
         beatmap_tags = []
 
@@ -684,7 +685,7 @@ class BeatmapManager:
             )
 
         async with aiofiles.open(file_path, "rb") as file:
-            return await file.read()
+            return bytes(await file.read())
 
     @staticmethod
     def get_path(beatmap_id: int, snapshot_number: int) -> str:

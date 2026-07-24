@@ -1,4 +1,5 @@
 import json
+from typing import cast as typing_cast
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -38,7 +39,7 @@ def _normalize_config(config: dict) -> str:
     data produce identical strings regardless of key order.
     """
 
-    def _sort(obj):
+    def _sort(obj: Any) -> Any:
         if isinstance(obj, dict):
             return {k: _sort(v) for k, v in sorted(obj.items())}
         if isinstance(obj, list):
@@ -212,7 +213,7 @@ class RuleCRUD:
         await session.flush()
         await session.refresh(rule)
 
-        return rule
+        return typing_cast(QueueRule, rule)
 
     @session_manager()
     async def get_rule(
@@ -227,7 +228,7 @@ class RuleCRUD:
             QueueRule.queue_id == queue_id,
         )
         result = await session.execute(stmt)
-        return result.scalars().first()
+        return typing_cast(QueueRule | None, result.scalars().first())
 
     @session_manager()
     async def create_rule(
@@ -290,7 +291,7 @@ class RuleCRUD:
 
         await session.delete(rule)
         await session.flush()
-        return rule
+        return typing_cast(QueueRule | None, rule)
 
     async def _delete_all_for_rule(
         self,

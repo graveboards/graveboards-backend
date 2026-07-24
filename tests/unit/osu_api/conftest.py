@@ -1,10 +1,14 @@
+from typing import Any, Generator
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from app.osu_api.client.osu_api_client import OsuAPIClient
+
 
 @pytest.fixture(autouse=True)
-def mock_rate_limit_decorator():
+def mock_rate_limit_decorator() -> Generator[None, None, None]:
     with patch(
         "app.osu_api.client.osu_api_client.rate_limit", lambda *args, **kwargs: lambda func: func
     ):
@@ -12,9 +16,8 @@ def mock_rate_limit_decorator():
 
 
 @pytest.fixture
-def api_client():
+def api_client() -> Generator[tuple[OsuAPIClient, MagicMock], None, None]:
     from app.oauth import OAuth
-    from app.osu_api.client.osu_api_client import OsuAPIClient
 
     mock_redis = AsyncMock()
 
@@ -25,10 +28,10 @@ def api_client():
     mock_redis.incr = AsyncMock(return_value=1)
 
     class MockLockCtx:
-        async def __aenter__(self):
+        async def __aenter__(self) -> None:
             return None
 
-        async def __aexit__(self, *args):
+        async def __aexit__(self, *args: Any) -> None:
             pass
 
     mock_redis.lock_ctx = MagicMock(return_value=MockLockCtx())
@@ -43,7 +46,7 @@ def api_client():
         client = OsuAPIClient(mock_redis)
 
         # Patch OAuth's fetch_token to avoid real API calls
-        async def mock_fetch_token(*args, **kwargs):
+        async def mock_fetch_token(*args: Any, **kwargs: Any) -> dict[str, Any]:
             import time
 
             return {
@@ -58,13 +61,13 @@ def api_client():
 
 
 class MockResponse:
-    def __init__(self, data, status_code=200):
+    def __init__(self, data: dict, status_code: int = 200) -> None:
         self._data = data
         self._status_code = status_code
 
-    def json(self):
+    def json(self) -> dict:
         return self._data
 
-    def raise_for_status(self):
+    def raise_for_status(self) -> None:
         if self._status_code >= 400:
             raise Exception(f"HTTP {self._status_code}")

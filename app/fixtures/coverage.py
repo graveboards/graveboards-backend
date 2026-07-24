@@ -51,7 +51,7 @@ class CoverageRegistry:
         registry.is_covered("fetched_beatmapset_genres", 1)  # True
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._buckets: dict[str, Bucket] = {}
         self._data: dict[str, Any] = {}
         self._initialize_default_buckets()

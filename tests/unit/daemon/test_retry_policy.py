@@ -12,7 +12,7 @@ from app.daemon.services.service.task.backoff import ConstantBackoff
 class TestTaskRetryPolicy:
     """Test TaskRetryPolicy dataclass."""
 
-    def test_create_policy_with_all_options(self):
+    def test_create_policy_with_all_options(self) -> None:
         """Test creating a policy with all options."""
         from app.daemon.services.service.task.backoff import (
             ConstantBackoff,
@@ -34,7 +34,7 @@ class TestTaskRetryPolicy:
         assert policy.on_failure is on_failure
         assert policy.on_max_retries_exceeded is on_max_retries_exceeded
 
-    def test_create_policy_with_none_options(self):
+    def test_create_policy_with_none_options(self) -> None:
         """Test creating a policy with None options."""
         policy = TaskRetryPolicy()
 
@@ -43,7 +43,7 @@ class TestTaskRetryPolicy:
         assert policy.on_failure is None
         assert policy.on_max_retries_exceeded is None
 
-    def test_create_policy_with_minimal_options(self):
+    def test_create_policy_with_minimal_options(self) -> None:
         """Test creating a policy with minimal options."""
         from app.daemon.services.service.task.backoff import (
             LinearBackoff,
@@ -56,7 +56,7 @@ class TestTaskRetryPolicy:
         assert policy.on_failure is None
         assert policy.on_max_retries_exceeded is None
 
-    def test_policy_is_frozen(self):
+    def test_policy_is_frozen(self) -> None:
         """Test that policy is immutable (frozen dataclass)."""
         from app.daemon.services.service.task.backoff import (
             ConstantBackoff,
@@ -68,7 +68,7 @@ class TestTaskRetryPolicy:
         with pytest.raises(FrozenInstanceError):
             policy.max_retries = 10
 
-    def test_policy_is_slotted(self):
+    def test_policy_is_slotted(self) -> None:
         """Test that policy uses slots for memory efficiency."""
         from app.daemon.services.service.task.backoff import (
             ConstantBackoff,
@@ -80,7 +80,7 @@ class TestTaskRetryPolicy:
         with pytest.raises(AttributeError):
             policy.new_attr = "value"
 
-    def test_policy_with_only_max_retries(self):
+    def test_policy_with_only_max_retries(self) -> None:
         """Test policy with only max_retries set."""
         policy = TaskRetryPolicy(max_retries=10)
 
@@ -89,7 +89,7 @@ class TestTaskRetryPolicy:
         assert policy.on_failure is None
         assert policy.on_max_retries_exceeded is None
 
-    def test_policy_with_failure_hook_only(self):
+    def test_policy_with_failure_hook_only(self) -> None:
         """Test policy with only failure hook."""
         on_failure = MagicMock()
         policy = TaskRetryPolicy(on_failure=on_failure)
@@ -99,7 +99,7 @@ class TestTaskRetryPolicy:
         assert policy.on_failure is on_failure
         assert policy.on_max_retries_exceeded is None
 
-    def test_policy_equality(self):
+    def test_policy_equality(self) -> None:
         """Test policy equality comparison."""
         from app.daemon.services.service.task.backoff import (
             ConstantBackoff,
@@ -126,7 +126,7 @@ class TestTaskRetryPolicy:
         # Dataclasses with same values should be equal
         assert policy1 == policy2
 
-    def test_policy_inequality(self):
+    def test_policy_inequality(self) -> None:
         """Test policy inequality comparison."""
         from app.daemon.services.service.task.backoff import (
             ConstantBackoff,
@@ -137,7 +137,7 @@ class TestTaskRetryPolicy:
 
         assert policy1 != policy2
 
-    def test_policy_string_representation(self):
+    def test_policy_string_representation(self) -> None:
         """Test policy string representation."""
         from app.daemon.services.service.task.backoff import (
             ConstantBackoff,
@@ -152,7 +152,7 @@ class TestTaskRetryPolicy:
         assert "5.0" in repr_str
         assert "3" in repr_str
 
-    def test_policy_hashability(self):
+    def test_policy_hashability(self) -> None:
         """Test that policy is hashable (due to frozen=True)."""
         from app.daemon.services.service.task.backoff import (
             ConstantBackoff,
@@ -165,7 +165,7 @@ class TestTaskRetryPolicy:
         policy_set = {policy}
         assert policy in policy_set
 
-    def test_policy_none_backoff_vs_zero_delay(self):
+    def test_policy_none_backoff_vs_zero_delay(self) -> None:
         """Test difference between None backoff and zero delay."""
         policy1 = TaskRetryPolicy(backoff=None, max_retries=5)
         policy2 = TaskRetryPolicy(backoff=ConstantBackoff(delay=0.0), max_retries=5)

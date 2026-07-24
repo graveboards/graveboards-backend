@@ -18,7 +18,7 @@ class ServiceSupervisor(Service):
 
     LOGGER: ClassVar[Logger | None] = None
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the supervisor."""
         super().__init__()
         self._services: dict[str, Service] = {}
@@ -116,7 +116,7 @@ class ServiceSupervisor(Service):
         async with self._service_lock:
             self._services.pop(name, None)
 
-    async def register_task(self, *args, **kwargs) -> Never:
+    async def register_task(self, *args: Any, **kwargs: Any) -> Never:
         """Not supported by ``ServiceSupervisor``.
 
         Raises:
@@ -127,7 +127,7 @@ class ServiceSupervisor(Service):
             f"Use {self.register_service.__name__}() instead."
         )
 
-    async def create_ephemeral_task(self, *args, **kwargs) -> Never:
+    async def create_ephemeral_task(self, *args: Any, **kwargs: Any) -> Never:
         """Not supported by ``ServiceSupervisor``.
 
         Raises:

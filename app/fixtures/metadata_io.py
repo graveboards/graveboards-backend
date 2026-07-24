@@ -4,6 +4,8 @@ import json
 import shutil
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
+from typing import cast as typing_cast
 
 from app.observability.logging import get_logger
 
@@ -21,7 +23,7 @@ def _metadata_path(fixtures_dir: Path | None = None) -> Path:
     return base / "metadata.json"
 
 
-def load_metadata(fixtures_dir: Path | None = None) -> dict:
+def load_metadata(fixtures_dir: Path | None = None) -> dict[str, Any]:
     """Load metadata from disk.
 
     Args:
@@ -33,7 +35,8 @@ def load_metadata(fixtures_dir: Path | None = None) -> dict:
     metadata_file = _metadata_path(fixtures_dir)
     if metadata_file.exists():
         with open(metadata_file) as f:
-            return json.load(f)
+            data: dict[str, Any] = json.load(f)
+        return data
     return create_empty_metadata()
 
 
@@ -160,7 +163,9 @@ def load_top_player_ids(fixtures_dir: Path | None = None) -> dict[str, list[int]
         Dictionary mapping rulesets to lists of player IDs
     """
     metadata = load_metadata(fixtures_dir=fixtures_dir)
-    return metadata.get("top_player_ids", {r: [] for r in RULESETS})
+    return typing_cast(
+        dict[str, list[int]], metadata.get("top_player_ids", {r: [] for r in RULESETS})
+    )
 
 
 def save_top_player_ids(

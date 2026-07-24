@@ -60,7 +60,7 @@ def make_parser() -> OpenAPIURIParserPatched:
     )
 
 
-def test_resolve_query_preserves_deep_object_arrays_and_coerces_filters():
+def test_resolve_query_preserves_deep_object_arrays_and_coerces_filters() -> None:
     query = {
         "filters[beatmap][ids]": ["1", "2"],
         "filters[beatmap][ranked]": ["true"],
@@ -80,7 +80,7 @@ def test_resolve_query_preserves_deep_object_arrays_and_coerces_filters():
     }
 
 
-def test_resolve_query_coerces_include_booleans_and_json_sorting():
+def test_resolve_query_coerces_include_booleans_and_json_sorting() -> None:
     parser = make_parser()
 
     assert parser.resolve_query({"include[beatmapset][creator]": ["yes"]}) == {

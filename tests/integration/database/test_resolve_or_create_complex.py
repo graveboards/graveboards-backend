@@ -12,6 +12,8 @@ These tests exercise the full cascade of nested relationships:
 - BeatmapSnapshot -> Profile (M2M via owner_profiles)
 """
 
+from typing import Any
+
 import pytest
 
 from app.database.db import PostgresqlDB
@@ -27,12 +29,12 @@ from app.database.models import (
 
 
 @pytest.fixture
-def db():
+def db() -> PostgresqlDB:
     return PostgresqlDB()
 
 
 @pytest.mark.asyncio
-async def test_beatmap_snapshot_with_tags_and_owners(db, db_session):
+async def test_beatmap_snapshot_with_tags_and_owners(db: PostgresqlDB, db_session: Any) -> None:
     """BeatmapSnapshot should resolve nested beatmap_tags and owner_profiles."""
     user_id = 10000001
     beatmapset_id = 1000001
@@ -110,7 +112,7 @@ async def test_beatmap_snapshot_with_tags_and_owners(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_beatmapset_snapshot_with_beatmap_snapshots(db, db_session):
+async def test_beatmapset_snapshot_with_beatmap_snapshots(db: PostgresqlDB, db_session: Any) -> None:
     """BeatmapsetSnapshot should resolve nested beatmap_snapshots via M2M."""
     user_id = 10000002
     beatmapset_id = 1000002
@@ -211,7 +213,7 @@ async def test_beatmapset_snapshot_with_beatmap_snapshots(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_resolve_beatmapset_snapshot_by_checksum(db, db_session):
+async def test_resolve_beatmapset_snapshot_by_checksum(db: PostgresqlDB, db_session: Any) -> None:
     """BeatmapsetSnapshot should be resolved by unique checksum."""
     user_id = 10000003
     beatmapset_id = 1000003
@@ -317,7 +319,7 @@ async def test_resolve_beatmapset_snapshot_by_checksum(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_resolve_beatmap_snapshot_by_checksum(db, db_session):
+async def test_resolve_beatmap_snapshot_by_checksum(db: PostgresqlDB, db_session: Any) -> None:
     """BeatmapSnapshot should be resolved by unique checksum."""
     user_id = 10000004
     beatmapset_id = 1000004
@@ -401,7 +403,7 @@ async def test_resolve_beatmap_snapshot_by_checksum(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_resolve_beatmapset_cross_session(db, db_session):
+async def test_resolve_beatmapset_cross_session(db: PostgresqlDB, db_session: Any) -> None:
     """Beatmapset from one session should be resolvable in another session."""
     user_id = 10000005
     beatmapset_id = 1000005
@@ -418,7 +420,7 @@ async def test_resolve_beatmapset_cross_session(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_multiple_beatmap_snapshots_same_beatmap(db, db_session):
+async def test_multiple_beatmap_snapshots_same_beatmap(db: PostgresqlDB, db_session: Any) -> None:
     """Multiple BeatmapSnapshots with same beatmap_id but different snapshot_number."""
     user_id = 10000006
     beatmapset_id = 1000006
@@ -541,7 +543,7 @@ async def test_multiple_beatmap_snapshots_same_beatmap(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_add_many_beatmapsets(db, db_session):
+async def test_add_many_beatmapsets(db: PostgresqlDB, db_session: Any) -> None:
     """add_many should handle multiple beatmapsets with nested data."""
     user_id = 10000007
 
@@ -564,7 +566,7 @@ async def test_add_many_beatmapsets(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_add_many_beatmapset_snapshots(db, db_session):
+async def test_add_many_beatmapset_snapshots(db: PostgresqlDB, db_session: Any) -> None:
     """add_many should handle multiple beatmapset snapshots with nested beatmap snapshots."""
     user_id = 10000008
     beatmapset_id = 1000008
@@ -712,7 +714,7 @@ async def test_add_many_beatmapset_snapshots(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_resolve_bms_by_composite_unique_constraint(db, db_session):
+async def test_resolve_bms_by_composite_unique_constraint(db: PostgresqlDB, db_session: Any) -> None:
     """BeatmapsetSnapshot should be resolved by composite unique constraint (beatmapset_id, snapshot_number)."""
     user_id = 10000009
     beatmapset_id = 1000009
@@ -818,7 +820,7 @@ async def test_resolve_bms_by_composite_unique_constraint(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_resolve_bmsnap_by_composite_unique_constraint(db, db_session):
+async def test_resolve_bmsnap_by_composite_unique_constraint(db: PostgresqlDB, db_session: Any) -> None:
     """BeatmapSnapshot should be resolved by composite unique constraint (beatmap_id, snapshot_number)."""
     user_id = 10000010
     beatmapset_id = 1000010
@@ -902,7 +904,7 @@ async def test_resolve_bmsnap_by_composite_unique_constraint(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_resolve_bms_cross_session(db, db_session):
+async def test_resolve_bms_cross_session(db: PostgresqlDB, db_session: Any) -> None:
     """BeatmapsetSnapshot created in one session should be resolvable in another session."""
     user_id = 10000013
     beatmapset_id = 1000013
@@ -1013,7 +1015,7 @@ async def test_resolve_bms_cross_session(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_resolve_bmsnap_cross_session(db, db_session):
+async def test_resolve_bmsnap_cross_session(db: PostgresqlDB, db_session: Any) -> None:
     """BeatmapSnapshot created in one session should be resolvable in another session."""
     user_id = 10000014
     beatmapset_id = 1000014
@@ -1098,7 +1100,7 @@ async def test_resolve_bmsnap_cross_session(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_bms_with_beatmapset_tags(db, db_session):
+async def test_bms_with_beatmapset_tags(db: PostgresqlDB, db_session: Any) -> None:
     """BeatmapsetSnapshot should resolve nested beatmapset_tags."""
     user_id = 10000015
     beatmapset_id = 1000015
@@ -1164,7 +1166,7 @@ async def test_bms_with_beatmapset_tags(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_bms_with_user_profile(db, db_session):
+async def test_bms_with_user_profile(db: PostgresqlDB, db_session: Any) -> None:
     """BeatmapsetSnapshot should resolve nested user_profile (scalar relationship to Profile)."""
     user_id = 10000016
     beatmapset_id = 1000016
@@ -1230,7 +1232,7 @@ async def test_bms_with_user_profile(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_add_many_beatmap_snapshots(db, db_session):
+async def test_add_many_beatmap_snapshots(db: PostgresqlDB, db_session: Any) -> None:
     """add_many should handle multiple BeatmapSnapshots."""
     user_id = 10000017
     beatmapset_id = 1000017
@@ -1316,7 +1318,7 @@ async def test_add_many_beatmap_snapshots(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_resolve_existing_bmsnap_via_bms_creation(db, db_session):
+async def test_resolve_existing_bmsnap_via_bms_creation(db: PostgresqlDB, db_session: Any) -> None:
     """When creating a BeatmapsetSnapshot with nested BeatmapSnapshot dicts, existing BeatmapSnapshots should be resolved not re-created."""
     user_id = 10000018
     beatmapset_id = 1000018

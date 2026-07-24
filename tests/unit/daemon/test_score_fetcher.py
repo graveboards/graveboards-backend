@@ -10,14 +10,14 @@ class TestScoreFetcher:
     """Test ScoreFetcher service (incomplete implementation)."""
 
     @pytest.fixture
-    def service(self):
+    def service(self) -> ScoreFetcher:
         """Create a test ScoreFetcher instance."""
         rc = MagicMock()
         db = MagicMock()
         return ScoreFetcher(rc, db)
 
     @pytest.mark.asyncio
-    async def test_preload_jobs_schedules_enabled_tasks(self, service):
+    async def test_preload_jobs_schedules_enabled_tasks(self, service: ScoreFetcher) -> None:
         """Test that preload_jobs schedules enabled score fetch tasks."""
         with patch("app.database.events.score_fetcher_task.redis_connection") as mock_redis:
             mock_redis_ctx = MagicMock()
@@ -34,7 +34,7 @@ class TestScoreFetcher:
 
             assert service._load_job.call_count == 1
 
-    async def test_preload_jobs_skips_disabled_tasks(self, service):
+    async def test_preload_jobs_skips_disabled_tasks(self, service: ScoreFetcher) -> None:
         """Test that disabled score fetch tasks are skipped."""
         task = ScoreFetcherTask(id=1, user_id=123, enabled=False)
         service._db.get_many = AsyncMock(return_value=[task])
@@ -44,12 +44,12 @@ class TestScoreFetcher:
 
         service._load_job.assert_not_called()
 
-    async def test_auto_retry_decorator_applied(self, service):
+    async def test_auto_retry_decorator_applied(self, service: ScoreFetcher) -> None:
         """Test that _execute_job has auto_retry decorator."""
 
         assert hasattr(service._execute_job, "__wrapped__")
 
-    async def test_score_is_submittable_checks_leaderboard(self, service):
+    async def test_score_is_submittable_checks_leaderboard(self, service: ScoreFetcher) -> None:
         """Test that _score_is_submittable checks for active leaderboard."""
         score = {"beatmap": {"id": 456}}
         service._db.get = AsyncMock(return_value=MagicMock())
@@ -59,7 +59,7 @@ class TestScoreFetcher:
         service._db.get.assert_awaited_once_with(Leaderboard, beatmap_id=456)
         assert result is True
 
-    async def test_score_is_submittable_returns_false_without_leaderboard(self, service):
+    async def test_score_is_submittable_returns_false_without_leaderboard(self, service: ScoreFetcher) -> None:
         """Test that _score_is_submittable returns False without leaderboard."""
         score = {"beatmap": {"id": 456}}
         service._db.get = AsyncMock(return_value=None)

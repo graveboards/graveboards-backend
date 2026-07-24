@@ -19,7 +19,7 @@ from app.database.rules.validators.rate_limit import (
 )
 
 
-def _make_context(queue_id: int = 1, user_id: int = 12345678, config: dict | None = None):
+def _make_context(queue_id: int = 1, user_id: int = 12345678, config: dict | None = None) -> ExecutionContext:
     return ExecutionContext(
         queue_id=queue_id,
         user_id=user_id,
@@ -31,7 +31,7 @@ def _make_context(queue_id: int = 1, user_id: int = 12345678, config: dict | Non
 
 class TestTruncateToPeriod:
     @pytest.mark.unit
-    def test_truncate_to_day(self):
+    def test_truncate_to_day(self) -> None:
         from datetime import datetime
 
         dt = datetime(2024, 6, 15, 14, 30, 45, 123456, tzinfo=UTC)
@@ -40,7 +40,7 @@ class TestTruncateToPeriod:
         assert result == int(expected)
 
     @pytest.mark.unit
-    def test_truncate_to_week(self):
+    def test_truncate_to_week(self) -> None:
         from datetime import datetime
 
         dt = datetime(2024, 6, 15, 14, 30, 0, tzinfo=UTC)
@@ -49,7 +49,7 @@ class TestTruncateToPeriod:
         assert result == int(expected)
 
     @pytest.mark.unit
-    def test_truncate_to_month(self):
+    def test_truncate_to_month(self) -> None:
         from datetime import datetime
 
         dt = datetime(2024, 6, 15, 14, 30, 0, tzinfo=UTC)
@@ -58,7 +58,7 @@ class TestTruncateToPeriod:
         assert result == int(expected)
 
     @pytest.mark.unit
-    def test_truncate_to_year(self):
+    def test_truncate_to_year(self) -> None:
         from datetime import datetime
 
         dt = datetime(2024, 6, 15, 14, 30, 0, tzinfo=UTC)
@@ -67,7 +67,7 @@ class TestTruncateToPeriod:
         assert result == int(expected)
 
     @pytest.mark.unit
-    def test_truncate_to_custom_seconds(self):
+    def test_truncate_to_custom_seconds(self) -> None:
         from datetime import datetime
 
         dt = datetime(2024, 6, 15, 14, 30, 45, tzinfo=UTC)
@@ -76,7 +76,7 @@ class TestTruncateToPeriod:
         assert result == expected
 
     @pytest.mark.unit
-    def test_truncate_to_invalid_period_raises(self):
+    def test_truncate_to_invalid_period_raises(self) -> None:
         from datetime import datetime
 
         dt = datetime(2024, 6, 15, 14, 30, 0, tzinfo=UTC)
@@ -86,30 +86,30 @@ class TestTruncateToPeriod:
 
 class TestPeriodDurationSeconds:
     @pytest.mark.unit
-    def test_day(self):
+    def test_day(self) -> None:
         assert _period_duration_seconds("day") == 86400
 
     @pytest.mark.unit
-    def test_week(self):
+    def test_week(self) -> None:
         assert _period_duration_seconds("week") == 604800
 
     @pytest.mark.unit
-    def test_month(self):
+    def test_month(self) -> None:
         assert _period_duration_seconds("month") == 2592000
 
     @pytest.mark.unit
-    def test_year(self):
+    def test_year(self) -> None:
         assert _period_duration_seconds("year") == 31536000
 
     @pytest.mark.unit
-    def test_custom_seconds(self):
+    def test_custom_seconds(self) -> None:
         assert _period_duration_seconds("3600") == 3600
 
 
 class TestRateLimitRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_check_passes_under_limit_without_mutating(self):
+    async def test_check_passes_under_limit_without_mutating(self) -> None:
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
         mock_redis.get = AsyncMock(return_value="0")
@@ -131,7 +131,7 @@ class TestRateLimitRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_check_raises_when_at_limit(self):
+    async def test_check_raises_when_at_limit(self) -> None:
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
         mock_redis.get = AsyncMock(return_value="2")
@@ -154,7 +154,7 @@ class TestRateLimitRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_check_skips_non_target_user(self):
+    async def test_check_skips_non_target_user(self) -> None:
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
 
@@ -179,7 +179,7 @@ class TestRateLimitRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_check_skips_non_user_scope(self):
+    async def test_check_skips_non_user_scope(self) -> None:
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
 
@@ -199,7 +199,7 @@ class TestRateLimitRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_reserve_under_limit_consumes_and_returns_token(self):
+    async def test_reserve_under_limit_consumes_and_returns_token(self) -> None:
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
         mock_redis.incr = AsyncMock(return_value=1)
@@ -218,7 +218,7 @@ class TestRateLimitRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_reserve_over_limit_rejects_without_consuming(self):
+    async def test_reserve_over_limit_rejects_without_consuming(self) -> None:
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
         mock_redis.incr = AsyncMock(return_value=3)
@@ -235,7 +235,7 @@ class TestRateLimitRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_reserve_skips_non_user_scope(self):
+    async def test_reserve_skips_non_user_scope(self) -> None:
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
 
@@ -250,7 +250,7 @@ class TestRateLimitRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_rollback_decrements(self):
+    async def test_rollback_decrements(self) -> None:
         mock_redis = AsyncMock()
         validator = RateLimitRestriction()
         context = ExecutionContext(queue_id=1, user_id=12345678, db=AsyncMock(), redis=mock_redis)
@@ -260,26 +260,26 @@ class TestRateLimitRestriction:
         mock_redis.decr.assert_called_once_with("some-key")
 
     @pytest.mark.unit
-    def test_config_schema_is_set(self):
+    def test_config_schema_is_set(self) -> None:
         from app.database.schemas.rule import RateLimitConfig
 
         assert RateLimitRestriction.config_schema is RateLimitConfig
 
     @pytest.mark.unit
-    def test_supported_versions(self):
+    def test_supported_versions(self) -> None:
         assert RateLimitRestriction.type == "rate_limit"
         assert "1.0" in RateLimitRestriction.supported_versions
 
 
 class TestRegistry:
     @pytest.mark.unit
-    def test_rate_limit_registered(self):
+    def test_rate_limit_registered(self) -> None:
         validator_cls = get_validator("rate_limit")
         assert validator_cls is not None
         assert validator_cls.type == "rate_limit"
 
     @pytest.mark.unit
-    def test_cooldown_registered(self):
+    def test_cooldown_registered(self) -> None:
         from app.database.rules.validators.cooldown import CooldownRestriction
 
         validator_cls = get_validator("cooldown")
@@ -287,7 +287,7 @@ class TestRegistry:
         assert validator_cls is CooldownRestriction
 
     @pytest.mark.unit
-    def test_blacklist_registered(self):
+    def test_blacklist_registered(self) -> None:
         from app.database.rules.validators.blacklist import BlacklistRestriction
 
         validator_cls = get_validator("blacklist")
@@ -295,23 +295,23 @@ class TestRegistry:
         assert validator_cls is BlacklistRestriction
 
     @pytest.mark.unit
-    def test_unknown_type_returns_none(self):
+    def test_unknown_type_returns_none(self) -> None:
         assert get_validator("nonexistent_type") is None
 
     @pytest.mark.unit
-    def test_all_types_in_registry(self):
+    def test_all_types_in_registry(self) -> None:
         assert "rate_limit" in RULE_REGISTRY
         assert "cooldown" in RULE_REGISTRY
         assert "blacklist" in RULE_REGISTRY
 
     @pytest.mark.unit
-    def test_tier_assignment(self):
+    def test_tier_assignment(self) -> None:
         assert RULE_TIERS.get("rate_limit") == 1
         assert RULE_TIERS.get("cooldown") == 1
         assert RULE_TIERS.get("blacklist") == 1
 
     @pytest.mark.unit
-    def test_get_validators_for_tier(self):
+    def test_get_validators_for_tier(self) -> None:
         from app.database.rules.registry import get_validators_for_tier
 
         tier1 = get_validators_for_tier(1)
@@ -320,18 +320,18 @@ class TestRegistry:
         assert "blacklist" in tier1
 
     @pytest.mark.unit
-    def test_get_validator_tier(self):
+    def test_get_validator_tier(self) -> None:
         assert get_validator_tier("rate_limit") == 1
         assert get_validator_tier("cooldown") == 1
         assert get_validator_tier("blacklist") == 1
         assert get_validator_tier("nonexistent") is None
 
     @pytest.mark.unit
-    def test_get_supported_versions(self):
+    def test_get_supported_versions(self) -> None:
         versions = get_supported_versions("rate_limit")
         assert versions is not None
         assert "1.0" in versions
 
     @pytest.mark.unit
-    def test_get_supported_versions_unknown_type(self):
+    def test_get_supported_versions_unknown_type(self) -> None:
         assert get_supported_versions("nonexistent") is None

@@ -4,7 +4,9 @@ from typing import Any
 from app.exceptions import DeepObjectValidationError
 
 
-def validate_filters(filters: dict, schema: dict, path: list[str] = None):
+def validate_filters(
+    filters: dict[str, Any], schema: dict[str, Any], path: list[str] | None = None
+) -> None:
     """Recursively validate a deep-object filter structure.
 
     Supports both canonical condition objects and shorthand scalar filters.

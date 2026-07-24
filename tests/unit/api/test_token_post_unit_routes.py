@@ -5,6 +5,7 @@ Tests token exchange logic with mocked dependencies.
 """
 
 from datetime import UTC, datetime, timedelta
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -23,7 +24,7 @@ class TestTokenPostEndpoint:
     TEST_EXPIRES_AT = int((datetime.now(UTC) + timedelta(hours=1)).timestamp())
 
     @pytest.fixture
-    def valid_oauth_token(self):
+    def valid_oauth_token(self) -> dict[str, Any]:
         """Return a valid OAuth token response."""
         return {
             "access_token": self.TEST_ACCESS_TOKEN,
@@ -32,7 +33,7 @@ class TestTokenPostEndpoint:
         }
 
     @pytest.fixture
-    def valid_user_data(self):
+    def valid_user_data(self) -> dict[str, Any]:
         """Return valid osu! user data."""
         return {
             "id": self.TEST_USER_ID,
@@ -40,7 +41,7 @@ class TestTokenPostEndpoint:
             "avatar_url": "https://example.com/avatar.png",
         }
 
-    async def _create_mock_oauth(self, token_response=None):
+    async def _create_mock_oauth(self, token_response: dict[str, Any] | None = None) -> MagicMock:
         """Create a mock OAuth instance for testing."""
         mock_oauth = MagicMock()
         mock_oauth.fetch_token = AsyncMock(
@@ -53,7 +54,7 @@ class TestTokenPostEndpoint:
         )
         return mock_oauth
 
-    async def _create_mock_osu_api_client(self, user_data=None):
+    async def _create_mock_osu_api_client(self, user_data: dict[str, Any] | None = None) -> MagicMock:
         """Create a mock OsuAPIClient for testing."""
         mock_rc = MagicMock(spec=RedisClient)
         mock_client = MagicMock(spec=OsuAPIClient)
@@ -68,13 +69,13 @@ class TestTokenPostEndpoint:
         )
         return mock_client
 
-    async def _create_mock_redis(self):
+    async def _create_mock_redis(self) -> AsyncMock:
         """Create a mock Redis client."""
         mock_rc = AsyncMock(spec=RedisClient)
         mock_rc.getdel = AsyncMock(return_value="valid")
         return mock_rc
 
-    async def _create_mock_db(self):
+    async def _create_mock_db(self) -> AsyncMock:
         """Create a mock database session."""
         mock_db = AsyncMock()
         mock_db.get = AsyncMock()
@@ -82,7 +83,7 @@ class TestTokenPostEndpoint:
         mock_db.update = AsyncMock()
         return mock_db
 
-    async def _call_post_token(self, body, **kwargs):
+    async def _call_post_token(self, body: dict[str, Any], **kwargs: Any) -> Any:
         """Call the post token function with dependencies."""
         from api.v1.token import post
 
@@ -92,9 +93,9 @@ class TestTokenPostEndpoint:
     @pytest.mark.asyncio
     async def test_post_token_success(
         self,
-        valid_oauth_token,
-        valid_user_data,
-    ):
+        valid_oauth_token: dict[str, Any],
+        valid_user_data: dict[str, Any],
+    ) -> None:
         """Test successful token exchange with mocked OAuth and osu! API."""
         mock_oauth = await self._create_mock_oauth(valid_oauth_token)
         mock_osu_client = await self._create_mock_osu_api_client(valid_user_data)
@@ -115,7 +116,7 @@ class TestTokenPostEndpoint:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_post_token_missing_code(self):
+    async def test_post_token_missing_code(self) -> None:
         """Test POST /api/v1/token with missing code."""
         from api.v1.token import post
         from app.exceptions import BadRequest
@@ -139,7 +140,7 @@ class TestTokenPostEndpoint:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_post_token_missing_state(self):
+    async def test_post_token_missing_state(self) -> None:
         """Test POST /api/v1/token with missing state."""
         from api.v1.token import post
         from app.exceptions import BadRequest
@@ -163,7 +164,7 @@ class TestTokenPostEndpoint:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_post_token_invalid_state(self):
+    async def test_post_token_invalid_state(self) -> None:
         """Test POST /api/v1/token with invalid state."""
         from api.v1.token import post
         from app.exceptions import BadRequest
@@ -188,7 +189,7 @@ class TestTokenPostEndpoint:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_post_token_oauth_error(self, valid_user_data):
+    async def test_post_token_oauth_error(self, valid_user_data: dict[str, Any]) -> None:
         """Test POST /api/v1/token with OAuth error."""
         from authlib.integrations.base_client.errors import OAuthError
 

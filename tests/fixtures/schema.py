@@ -138,6 +138,9 @@ def validate_fixture_file(filepath: Path, category: str | None = None) -> tuple[
     if category is None:
         category = _infer_category_from_path(filepath)
 
+    if category is None:
+        return True, None
+
     schema = SCHEMA_MAP.get(category)
     if schema is None:
         return True, None
@@ -188,7 +191,7 @@ def _infer_category_from_path(filepath: Path) -> str | None:
     return None
 
 
-def validate_fixtures_command(fixtures_path: str = "tests/fixtures/osu"):
+def validate_fixtures_command(fixtures_path: str = "tests/fixtures/osu") -> int:
     """CLI entry point for fixture validation."""
     fixtures_dir = Path(fixtures_path)
     if not fixtures_dir.exists():

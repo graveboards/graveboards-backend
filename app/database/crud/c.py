@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast as typing_cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.inspection import inspect
@@ -14,7 +14,7 @@ from .decorators import ensure_required, session_manager
 class _C:
     @staticmethod
     @ensure_required()
-    async def _add_instance(model_class: ModelClass, session: AsyncSession, **kwargs) -> BaseType:
+    async def _add_instance(model_class: ModelClass, session: AsyncSession, **kwargs: Any) -> BaseType:
         """Create or resolve a single model instance.
 
         Validates input attributes against the model schema, then processed through
@@ -55,7 +55,7 @@ class _C:
         await session.flush()
         await session.refresh(instance)
 
-        return instance
+        return typing_cast(BaseType, instance)
 
     @staticmethod
     @ensure_required(many=True)
@@ -309,7 +309,7 @@ class _C:
 
 class C(_C):
     @session_manager()
-    async def add(self, model: type[BaseType], session: AsyncSession = None, **kwargs) -> BaseType:
+    async def add(self, model: type[BaseType], session: AsyncSession | None = None, **kwargs: Any) -> BaseType:
         """Public API for creating or resolving a single model instance.
 
         Wraps ``_add_instance`` and manages session lifecycle via the

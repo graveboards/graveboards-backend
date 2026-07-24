@@ -1,3 +1,5 @@
+from typing import Any
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -7,7 +9,7 @@ from app.database.models import Queue
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_queue_model_creation():
+async def test_queue_model_creation() -> None:
     queue = Queue(
         user_id=12345678, name="Test Queue", description="A test queue", visibility=0, is_open=True
     )
@@ -21,7 +23,7 @@ async def test_queue_model_creation():
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_queue_visibility_enum():
+async def test_queue_visibility_enum() -> None:
     queue = Queue(user_id=12345678, name="Test Queue", visibility=0)
     assert queue.visibility == 0
 
@@ -31,7 +33,7 @@ async def test_queue_visibility_enum():
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_queue_open_close():
+async def test_queue_open_close() -> None:
     queue = Queue(user_id=12345678, name="Test Queue", is_open=True)
 
     assert queue.is_open
@@ -42,7 +44,7 @@ async def test_queue_open_close():
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_queue_relationships():
+async def test_queue_relationships() -> None:
     queue = Queue(user_id=12345678, name="Test Queue")
 
     assert hasattr(queue, "requests")
@@ -53,7 +55,7 @@ async def test_queue_relationships():
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_queue_unique_constraint():
+async def test_queue_unique_constraint() -> None:
     queue1 = Queue(user_id=12345678, name="Test Queue")
 
     queue2 = Queue(user_id=12345678, name="Different Queue")
@@ -64,7 +66,7 @@ async def test_queue_unique_constraint():
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_queue_timestamp_fields():
+async def test_queue_timestamp_fields() -> None:
     queue = Queue(user_id=12345678, name="Test Queue")
 
     assert hasattr(queue, "created_at")
@@ -78,7 +80,7 @@ class TestQueuesPatchIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_can_update_queue(self, TestClientWithMocks, admin_user_token):
+    async def test_admin_can_update_queue(self, TestClientWithMocks: Any, admin_user_token: Any) -> None:
         """Test admin can update queue."""
         from app.database.models import Queue
 
@@ -99,7 +101,7 @@ class TestQueuesPatchIntegration:
         admin_role.name = "admin"
         mock_user.roles = [admin_role]
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model == Queue:
                 return mock_queue
             return mock_user
@@ -145,7 +147,7 @@ class TestQueuesPatchIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_queue_owner_can_update_queue(self, TestClientWithMocks, admin_user_token):
+    async def test_queue_owner_can_update_queue(self, TestClientWithMocks: Any, admin_user_token: Any) -> None:
         """Test queue owner can update queue."""
         from app.database.models import Queue
 
@@ -164,7 +166,7 @@ class TestQueuesPatchIntegration:
         mock_user.id = 99999999
         mock_user.roles = []
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model == Queue:
                 return mock_queue
             return mock_user
@@ -210,8 +212,10 @@ class TestQueuesPatchIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_non_admin_gets_forbidden_on_queue_patch(
-        self, TestClientWithMocks, admin_user_token
-    ):
+        self,
+        TestClientWithMocks: Any,
+        admin_user_token: Any,
+    ) -> None:
         """Test non-admin user gets 403 Forbidden on queue patch."""
         from app.security import generate_token
 
@@ -221,7 +225,7 @@ class TestQueuesPatchIntegration:
         mock_user.id = 88888888
         mock_user.roles = []
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             return mock_user
 
         mock_db.get = AsyncMock(side_effect=mock_get)
@@ -267,13 +271,13 @@ class TestQueuesPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_can_create_queue(self, TestClientWithMocks, admin_user_token):
+    async def test_admin_can_create_queue(self, TestClientWithMocks: Any, admin_user_token: Any) -> None:
         """Test admin can create a new queue."""
         from app.database.models import Queue
 
         mock_db = AsyncMock()
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model == Queue:
                 return None
             mock_user = MagicMock()
@@ -319,7 +323,7 @@ class TestQueuesPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_non_admin_cannot_create_queue(self, TestClientWithMocks):
+    async def test_non_admin_cannot_create_queue(self, TestClientWithMocks: Any) -> None:
         """Test non-admin gets 403 on queue creation."""
         from app.security import generate_token
 
@@ -329,7 +333,7 @@ class TestQueuesPostIntegration:
         mock_user.id = 88888888
         mock_user.roles = []
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             return mock_user
 
         mock_db.get = AsyncMock(side_effect=mock_get)
@@ -371,13 +375,13 @@ class TestQueuesPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_create_queue_with_all_fields(self, TestClientWithMocks, admin_user_token):
+    async def test_create_queue_with_all_fields(self, TestClientWithMocks: Any, admin_user_token: Any) -> None:
         """Test queue creation with all optional fields."""
         from app.database.models import Queue
 
         mock_db = AsyncMock()
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model == Queue:
                 return None
             mock_user = MagicMock()
@@ -435,7 +439,7 @@ class TestQueuesGetIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_get_queue_by_id(self, TestClientWithMocks, admin_user_token):
+    async def test_get_queue_by_id(self, TestClientWithMocks: Any, admin_user_token: Any) -> None:
         """Test GET /api/v1/queues/{id} returns specific queue."""
         from app.database.models import Queue
         from app.database.schemas import QueueSchema
@@ -453,7 +457,7 @@ class TestQueuesGetIntegration:
 
         mock_queue = QueueSchema.model_validate(queue_data)
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model == Queue:
                 return mock_queue
             mock_user = MagicMock()
@@ -476,13 +480,13 @@ class TestQueuesGetIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_queue_not_found(self, TestClientWithMocks, admin_user_token):
+    async def test_queue_not_found(self, TestClientWithMocks: Any, admin_user_token: Any) -> None:
         """Test GET /api/v1/queues/{id} returns 404 for non-existent queue."""
         from app.database.models import Queue
 
         mock_db = AsyncMock()
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model == Queue:
                 return None
             mock_user = MagicMock()

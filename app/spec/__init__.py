@@ -1,7 +1,7 @@
 __all__ = ["load_spec", "get_filter_schema", "get_include_schema"]
 
 
-def __getattr__(name):
+def __getattr__(name: str) -> Any:
     if name == "load_spec":
         from .load import load_spec
 

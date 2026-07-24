@@ -10,7 +10,7 @@ pytestmark = [pytest.mark.integration]
 
 
 @pytest.mark.integration
-def test_scoring_schema_not_implemented():
+def test_scoring_schema_not_implemented() -> None:
     """Test that ScoringSchema is not yet implemented."""
     try:
         import app.search.datastructures  # noqa: F401
@@ -21,7 +21,7 @@ def test_scoring_schema_not_implemented():
 
 
 @pytest.mark.integration
-def test_scoring_mode_not_implemented():
+def test_scoring_mode_not_implemented() -> None:
     """Test that ScoringMode enum is not yet implemented."""
     try:
         import app.search.enums  # noqa: F401
@@ -32,7 +32,7 @@ def test_scoring_mode_not_implemented():
 
 
 @pytest.mark.integration
-def test_search_terms_scored_cte_exists():
+def test_search_terms_scored_cte_exists() -> None:
     """Test that search_terms_scored CTE exists (for future use)."""
     try:
         from app.database.ctes import search_terms_scored

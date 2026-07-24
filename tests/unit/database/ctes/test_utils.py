@@ -8,7 +8,7 @@ from app.database.models import BeatmapSnapshot, ModelClass
 class TestCTEUtils:
     """Test CTE utility functions."""
 
-    def test_extract_cte_target_scalar_basic(self):
+    def test_extract_cte_target_scalar_basic(self) -> None:
         """Test basic CTE target scalar extraction."""
         stmt: Select = select(
             BeatmapSnapshot.id.label("id"), BeatmapSnapshot.beatmap_id.label("target")
@@ -17,7 +17,7 @@ class TestCTEUtils:
 
         assert result is not None
 
-    def test_extract_cte_target_scalar_with_alias(self):
+    def test_extract_cte_target_scalar_with_alias(self) -> None:
         """Test CTE target scalar extraction with alias."""
         stmt: Select = select(
             BeatmapSnapshot.id.label("id"), BeatmapSnapshot.beatmap_id.label("target")
@@ -26,7 +26,7 @@ class TestCTEUtils:
 
         assert result is not None
 
-    def test_extract_cte_target_scalar_custom_id_label(self):
+    def test_extract_cte_target_scalar_custom_id_label(self) -> None:
         """Test CTE target scalar extraction with custom ID label."""
         stmt: Select = select(
             BeatmapSnapshot.id.label("beatmap_id"), BeatmapSnapshot.beatmap_id.label("target")

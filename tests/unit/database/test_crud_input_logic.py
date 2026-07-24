@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 from pydantic import ValidationError
 
@@ -8,7 +10,7 @@ from app.exceptions import DeepObjectValidationError
 class TestCreateInputValidation:
     """Test CRUD create operation input validation."""
 
-    def test_create_with_required_fields_beatmapset(self):
+    def test_create_with_required_fields_beatmapset(self) -> None:
         """Test create with all required fields."""
         from app.database.schemas import BeatmapsetCreateSchema
 
@@ -19,7 +21,7 @@ class TestCreateInputValidation:
         schema = BeatmapsetCreateSchema.model_validate(data)
         assert schema.user_id == 456
 
-    def test_create_with_required_fields_beatmap(self):
+    def test_create_with_required_fields_beatmap(self) -> None:
         """Test create with all required fields."""
         from app.database.schemas import BeatmapCreateSchema
 
@@ -30,7 +32,7 @@ class TestCreateInputValidation:
         schema = BeatmapCreateSchema.model_validate(data)
         assert schema.beatmapset_id == 456
 
-    def test_create_rejects_extra_fields_beatmapset(self):
+    def test_create_rejects_extra_fields_beatmapset(self) -> None:
         """Test create rejects unknown fields."""
         from app.database.schemas import BeatmapsetCreateSchema
 
@@ -39,7 +41,7 @@ class TestCreateInputValidation:
         with pytest.raises(ValidationError):
             BeatmapsetCreateSchema.model_validate(data)
 
-    def test_create_validates_types_beatmapset(self):
+    def test_create_validates_types_beatmapset(self) -> None:
         """Test create validates field types."""
         from app.database.schemas import BeatmapsetCreateSchema
 
@@ -50,7 +52,7 @@ class TestCreateInputValidation:
         with pytest.raises(ValidationError):
             BeatmapsetCreateSchema.model_validate(data)
 
-    def test_create_validates_types_beatmap(self):
+    def test_create_validates_types_beatmap(self) -> None:
         """Test create validates field types."""
         from app.database.schemas import BeatmapCreateSchema
 
@@ -65,7 +67,7 @@ class TestCreateInputValidation:
 class TestBeatmapCreateInputValidation:
     """Test CRUD create operation input validation for beatmap."""
 
-    def test_create_with_required_fields(self):
+    def test_create_with_required_fields(self) -> None:
         """Test create with all required fields."""
         from app.database.schemas import BeatmapCreateSchema
 
@@ -76,7 +78,7 @@ class TestBeatmapCreateInputValidation:
         schema = BeatmapCreateSchema.model_validate(data)
         assert schema.beatmapset_id == 456
 
-    def test_create_rejects_extra_fields(self):
+    def test_create_rejects_extra_fields(self) -> None:
         """Test create rejects unknown fields."""
         from app.database.schemas import BeatmapCreateSchema
 
@@ -89,7 +91,7 @@ class TestBeatmapCreateInputValidation:
 class TestReadInputValidation:
     """Test CRUD read operation input validation."""
 
-    def test_valid_sorting_structure(self):
+    def test_valid_sorting_structure(self) -> None:
         """Test valid sorting configuration."""
         sorting: Sorting = [
             {"field": "Beatmapset.id", "order": "asc"},
@@ -97,32 +99,32 @@ class TestReadInputValidation:
         ]
         assert len(sorting) == 2
 
-    def test_sorting_default_order(self):
+    def test_sorting_default_order(self) -> None:
         """Test sorting with default order."""
         sorting: Sorting = [{"field": "Beatmapset.id"}]
         assert sorting[0]["field"] == "Beatmapset.id"
 
-    def test_valid_filter_structure(self):
+    def test_valid_filter_structure(self) -> None:
         """Test valid filter configuration."""
         filters: Filters = {"id": {"eq": 123}, "user": {"username": {"eq": "test_user"}}}
         assert filters["id"]["eq"] == 123
 
-    def test_filter_with_null_check(self):
+    def test_filter_with_null_check(self) -> None:
         """Test filter with null condition."""
         filters: Filters = {"deleted_at": {"is_null": True}}
         assert filters["deleted_at"]["is_null"] is True
 
-    def test_valid_include_structure(self):
+    def test_valid_include_structure(self) -> None:
         """Test valid include configuration."""
         include: Include = {"user": True, "beatmaps": {"owner_profiles": True}}
         assert include["user"] is True
 
-    def test_include_with_explicit_false(self):
+    def test_include_with_explicit_false(self) -> None:
         """Test include with explicit false."""
         include: Include = {"user": True, "Beatmapset.user": False}
         assert include["Beatmapset.user"] is False
 
-    def test_invalid_include_type(self):
+    def test_invalid_include_type(self) -> None:
         """Test include validates boolean or nested object."""
         from app.patches.validators.include import validate_include
 
@@ -136,7 +138,7 @@ class TestReadInputValidation:
 class TestUpdateInputValidation:
     """Test CRUD update operation input validation."""
 
-    def test_update_with_valid_data(self):
+    def test_update_with_valid_data(self) -> None:
         """Test update with valid data."""
         from app.database.schemas import BeatmapsetUpdateSchema
 
@@ -147,7 +149,7 @@ class TestUpdateInputValidation:
         schema = BeatmapsetUpdateSchema.model_validate(data)
         assert schema.user_id == 789
 
-    def test_update_allows_none_fields(self):
+    def test_update_allows_none_fields(self) -> None:
         """Test update allows None fields for partial updates."""
         from app.database.schemas import BeatmapsetUpdateSchema
 
@@ -156,7 +158,7 @@ class TestUpdateInputValidation:
         schema = BeatmapsetUpdateSchema.model_validate(data)
         assert schema.user_id is None
 
-    def test_update_partial_fields(self):
+    def test_update_partial_fields(self) -> None:
         """Test update with partial fields."""
         from app.database.schemas import BeatmapsetUpdateSchema
 
@@ -165,7 +167,7 @@ class TestUpdateInputValidation:
         schema = BeatmapsetUpdateSchema.model_validate(data)
         assert schema.user_id == 789
 
-    def test_update_with_beatmap_schema(self):
+    def test_update_with_beatmap_schema(self) -> None:
         """Test update with beatmap schema."""
         from app.database.schemas import BeatmapUpdateSchema
 
@@ -179,7 +181,7 @@ class TestDeleteInputValidation:
     """Test CRUD delete operation input validation."""
 
     @pytest.mark.asyncio
-    async def test_delete_with_valid_id(self, db_session):
+    async def test_delete_with_valid_id(self, db_session: Any) -> None:
         """Test delete with valid primary key."""
         from app.database.db import PostgresqlDB
         from app.database.models import Beatmapset, User
@@ -199,7 +201,7 @@ class TestDeleteInputValidation:
         assert fetched is None
 
     @pytest.mark.asyncio
-    async def test_delete_rejects_invalid_id_type(self, db_session):
+    async def test_delete_rejects_invalid_id_type(self, db_session: Any) -> None:
         """Test delete raises ValueError for non-existent record."""
         from app.database.db import PostgresqlDB
         from app.database.models import Beatmapset, User
@@ -221,7 +223,7 @@ class TestDeleteInputValidation:
 class TestComplexValidationScenarios:
     """Test complex validation scenarios."""
 
-    def test_nested_filters_validation(self):
+    def test_nested_filters_validation(self) -> None:
         """Test nested filter validation."""
         filters: Filters = {
             "beatmaps": {"checksum": {"eq": "abc123"}},
@@ -231,7 +233,7 @@ class TestComplexValidationScenarios:
         assert filters["beatmaps"]["checksum"]["eq"] == "abc123"
         assert filters["user"]["username"]["regex"] == "test.*"
 
-    def test_complex_sorting_with_multiple_fields(self):
+    def test_complex_sorting_with_multiple_fields(self) -> None:
         """Test sorting with multiple fields and orders."""
         sorting: Sorting = [
             {"field": "Beatmapset.created_at", "order": "desc"},
@@ -242,7 +244,7 @@ class TestComplexValidationScenarios:
         assert len(sorting) == 3
         assert sorting[0]["order"] == "desc"
 
-    def test_mixed_include_boolean_and_nested(self):
+    def test_mixed_include_boolean_and_nested(self) -> None:
         """Test include with both boolean and nested structures."""
         include: Include = {
             "user": True,
@@ -253,7 +255,7 @@ class TestComplexValidationScenarios:
         assert include["user"] is True
         assert include["beatmaps"]["owner_profiles"] is True
 
-    def test_filter_with_range_conditions(self):
+    def test_filter_with_range_conditions(self) -> None:
         """Test filter with range conditions."""
         filters: Filters = {
             "id": {"gt": 100, "lt": 200},
@@ -263,14 +265,14 @@ class TestComplexValidationScenarios:
         assert filters["id"]["gt"] == 100
         assert filters["id"]["lt"] == 200
 
-    def test_multiple_filter_operators(self):
+    def test_multiple_filter_operators(self) -> None:
         """Test filter with multiple operators on same field."""
         filters: Filters = {"id": {"eq": 123, "neq": 456, "in": [1, 2, 3, 4, 5]}}
 
         assert filters["id"]["eq"] == 123
         assert filters["id"]["in"] == [1, 2, 3, 4, 5]
 
-    def test_null_conditions(self):
+    def test_null_conditions(self) -> None:
         """Test null condition handling."""
         filters: Filters = {"deleted_at": {"is_null": True}, "scheduled_end": {"is_null": False}}
 

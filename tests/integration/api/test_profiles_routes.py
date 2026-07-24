@@ -4,6 +4,8 @@ Integration tests for GET /api/v1/profiles endpoints.
 Tests the profiles retrieval via full HTTP stack.
 """
 
+from typing import Any
+
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -17,7 +19,7 @@ class TestProfilesGetIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_can_get_profiles_list(self, TestClientWithMocks, security_disabled):
+    async def test_admin_can_get_profiles_list(self, TestClientWithMocks: Any, security_disabled: Any) -> None:
         """Test admin can get profiles list."""
         from app.database.models import Profile
 
@@ -45,7 +47,7 @@ class TestProfilesGetIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_can_get_profile_by_user_id(self, TestClientWithMocks, security_disabled):
+    async def test_admin_can_get_profile_by_user_id(self, TestClientWithMocks: Any, security_disabled: Any) -> None:
         """Test admin can get profile by user id."""
         from app.database.enums import RoleName
         from app.database.models import Profile, User
@@ -64,7 +66,7 @@ class TestProfilesGetIntegration:
         # GET /profiles/{user_id} is ownership_authorization-gated: with security
         # disabled, the resolved dev identity needs to be admin-roled (or match
         # TEST_USER_ID) to pass the ownership check before the handler's own lookup.
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model == User and kwargs.get("_include", {}).get("roles"):
                 return mock_admin_user
             return profile
@@ -82,7 +84,7 @@ class TestProfilesGetIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_profile_not_found(self, TestClientWithMocks, security_disabled):
+    async def test_admin_profile_not_found(self, TestClientWithMocks: Any, security_disabled: Any) -> None:
         """Test admin gets 404 when profile doesn't exist."""
         from app.database.enums import RoleName
         from app.database.models import User
@@ -94,7 +96,7 @@ class TestProfilesGetIntegration:
         mock_admin_user = MagicMock()
         mock_admin_user.roles = [admin_role]
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model == User and kwargs.get("_include", {}).get("roles"):
                 return mock_admin_user
             return None
@@ -112,7 +114,7 @@ class TestProfilesGetIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_bypass_security_with_flag(self, TestClientWithMocks, security_disabled):
+    async def test_bypass_security_with_flag(self, TestClientWithMocks: Any, security_disabled: Any) -> None:
         """Test security disabled bypasses authorization on profiles."""
         from app.database.models import Profile
 

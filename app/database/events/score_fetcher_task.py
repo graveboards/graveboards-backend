@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 @event.listens_for(ScoreFetcherTask.enabled, "set")
 def score_fetcher_task_enabled_set(
     target: ScoreFetcherTask, value: bool, oldvalue: bool, initiator: AttributeEventToken
-):
+) -> None:
     """Publish ``ScoreFetcherTask`` activation events to Redis.
 
     When the ``enabled`` attribute transitions to True, the task ID is published to a

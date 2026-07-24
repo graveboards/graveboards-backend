@@ -57,7 +57,7 @@ class RuleValidationService(ScheduledService):
         return JobLoadInstruction(execution_time=aware_utcnow())
 
     @auto_retry(retry_exceptions=(ConnectTimeout, RetryableValidationError))
-    async def _execute_job(self, record_id: int):
+    async def _execute_job(self, record_id: int) -> None:
         hash_name = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(record_id)
         self.logger.debug(f"Executing RuleValidation job {record_id}, looking up hash={hash_name}")
 
@@ -171,7 +171,7 @@ class RuleValidationService(ScheduledService):
             )
             logger.info(f"Request {request_id} rejected by Phase 2 validators: {rejected}")
 
-    async def _get_active_rules(self, queue_id: int, session) -> list:
+    async def _get_active_rules(self, queue_id: int, session: AsyncSession | None) -> list[QueueRule]:
         from app.database.crud.rules import RuleCRUD
 
         crud = RuleCRUD()

@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import jwt
 import pytest
@@ -10,7 +11,7 @@ class TestTokenEndpoint:
     """Integration tests for /api/v1/token endpoint (GET only via minimal TestClient)."""
 
     @pytest.mark.integration
-    def test_token_get_valid_token(self, TestClient):
+    def test_token_get_valid_token(self, TestClient: Any) -> None:
         """Test token GET with valid token."""
         now = datetime.now(UTC)
         payload = {
@@ -29,7 +30,7 @@ class TestTokenEndpoint:
         assert data["iss"] == FRONTEND_BASE_URL
 
     @pytest.mark.integration
-    def test_token_get_invalid_token(self, TestClient):
+    def test_token_get_invalid_token(self, TestClient: Any) -> None:
         """Test token GET with invalid token."""
         response = TestClient.get("/api/v1/token", params={"token": "invalid.token.here"})
 
@@ -37,7 +38,7 @@ class TestTokenEndpoint:
         assert "Invalid or expired JWT" in response.json()["detail"]
 
     @pytest.mark.integration
-    def test_token_get_expired_token(self, TestClient):
+    def test_token_get_expired_token(self, TestClient: Any) -> None:
         """Test token GET with expired token."""
         now = datetime.now(UTC)
         payload = {
@@ -54,7 +55,7 @@ class TestTokenEndpoint:
         assert "Invalid or expired JWT" in response.json()["detail"]
 
     @pytest.mark.integration
-    def test_token_get_wrong_issuer(self, TestClient):
+    def test_token_get_wrong_issuer(self, TestClient: Any) -> None:
         """Test token GET with wrong issuer."""
         now = datetime.now(UTC)
         payload = {
@@ -71,7 +72,7 @@ class TestTokenEndpoint:
         assert "Invalid or expired JWT" in response.json()["detail"]
 
     @pytest.mark.integration
-    def test_token_get_missing_token(self, TestClient):
+    def test_token_get_missing_token(self, TestClient: Any) -> None:
         """Test token GET with missing token parameter."""
         response = TestClient.get("/api/v1/token")
 
@@ -79,7 +80,7 @@ class TestTokenEndpoint:
         assert "missing" in response.json()["detail"].lower()
 
     @pytest.mark.integration
-    def test_token_get_string_subject(self, TestClient):
+    def test_token_get_string_subject(self, TestClient: Any) -> None:
         """Test token GET with string subject (should fail validation)."""
         now = datetime.now(UTC)
         payload = {

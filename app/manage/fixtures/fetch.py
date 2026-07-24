@@ -26,7 +26,7 @@ console = Console()
 logger = get_logger(__name__)
 
 
-async def cmd_fetch_fixtures(config: FetchConfig):
+async def cmd_fetch_fixtures(config: FetchConfig) -> None:
     """Fetch fixture data using the orchestrator with composable criteria."""
     rc = RedisClient()
     try:
@@ -140,7 +140,7 @@ def _print_report(report: FetchReport) -> None:
     console.print()
 
 
-def _print_coverage_gaps(fetcher) -> None:
+def _print_coverage_gaps(fetcher: Any) -> None:
     """Print coverage gaps from metadata.json (delegated to display module)."""
     from app.fixtures.display import print_coverage_gaps
 

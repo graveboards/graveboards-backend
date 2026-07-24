@@ -27,7 +27,7 @@ class PatternMultipliers(BaseModel):
     substring: Annotated[int, Field(ge=-128, le=127)] | None = 2
 
     @model_validator(mode="after")
-    def at_least_one_not_null(self):
+    def at_least_one_not_null(self) -> Self:
         """Ensure at least one multiplier is enabled.
 
         Returns:

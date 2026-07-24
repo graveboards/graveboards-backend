@@ -21,7 +21,7 @@ async def cmd_promote_fixtures(
     queues: bool = False,
     requests: bool = False,
     force: bool = False,
-):
+) -> None:
     if not force:
         response = Prompt.ask(
             "This will move fixture files and delete the originals. Continue?",

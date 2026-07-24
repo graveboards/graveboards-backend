@@ -1,6 +1,5 @@
 from collections.abc import Iterable
-from typing import Any, Union, get_args, get_origin
-from typing import cast as typing_cast
+from typing import Any, Union, cast as typing_cast, get_args, get_origin
 
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm.attributes import InstrumentedAttribute
@@ -43,16 +42,16 @@ def extract_inner_types(annotated_type: Any) -> type | tuple[type, ...]:
         if origin is Union:
             non_none_args = [arg for arg in args if arg is not type(None)]
             if len(non_none_args) == 1 or len(non_none_args) == 2:
-                return non_none_args[0]
+                return typing_cast(type, non_none_args[0])
             else:
                 return tuple(non_none_args)
         else:
             current = args[0] if args else current
 
-    return current
+    return typing_cast(type, current)
 
 
-def validate_type(expected_type: Any, value: Any):
+def validate_type(expected_type: Any, value: Any) -> None:
     """Recursively validate a value against a typing annotation.
 
     Supports:

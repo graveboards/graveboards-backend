@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import Any
+from typing import cast as typing_cast
 
 from sqlalchemy.ext.hybrid import HybridExtensionType
 from sqlalchemy.inspection import inspect
@@ -53,7 +54,7 @@ class ModelClass(Enum):
 
     @property
     def value(self) -> type[BaseType]:
-        return self._value_
+        return typing_cast(type[BaseType], self._value_)
 
     @property
     def mapper(self) -> Mapper[BaseType]:
@@ -97,4 +98,4 @@ class ModelClass(Enum):
 
     @property
     def primary_keys(self) -> tuple[ColumnElement[Any], ...]:
-        return self.mapper.primary_key
+        return typing_cast(tuple[Any, ...], self.mapper.primary_key)

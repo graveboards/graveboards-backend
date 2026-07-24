@@ -7,7 +7,7 @@ from app.database.rules.context import ExecutionContext
 from app.database.rules.validators.blacklist import BlacklistRestriction
 
 
-def _make_context(queue_id: int = 1, user_id: int = 12345678, config: dict | None = None):
+def _make_context(queue_id: int = 1, user_id: int = 12345678, config: dict | None = None) -> ExecutionContext:
     return ExecutionContext(
         queue_id=queue_id,
         user_id=user_id,
@@ -20,7 +20,7 @@ def _make_context(queue_id: int = 1, user_id: int = 12345678, config: dict | Non
 class TestBlacklistRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_user_not_blacklisted(self):
+    async def test_passes_when_user_not_blacklisted(self) -> None:
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
 
@@ -38,7 +38,7 @@ class TestBlacklistRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_user_blacklisted(self):
+    async def test_raises_when_user_blacklisted(self) -> None:
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
 
@@ -59,7 +59,7 @@ class TestBlacklistRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_no_target(self):
+    async def test_passes_when_no_target(self) -> None:
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
 
@@ -77,7 +77,7 @@ class TestBlacklistRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_no_target_key(self):
+    async def test_passes_when_no_target_key(self) -> None:
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
 
@@ -95,7 +95,7 @@ class TestBlacklistRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_forbidden_on_violation(self):
+    async def test_raises_forbidden_on_violation(self) -> None:
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
 
@@ -113,14 +113,14 @@ class TestBlacklistRestriction:
             await validator.check(context)
 
     @pytest.mark.unit
-    def test_config_schema_is_set(self):
+    def test_config_schema_is_set(self) -> None:
         from app.database.schemas.rule import BlacklistConfig
 
         assert BlacklistRestriction.config_schema is BlacklistConfig
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_includes_queue_id_in_error_message(self):
+    async def test_includes_queue_id_in_error_message(self) -> None:
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
 

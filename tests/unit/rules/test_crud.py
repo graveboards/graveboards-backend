@@ -8,35 +8,35 @@ from app.exceptions import Conflict
 
 class TestNormalizeConfig:
     @pytest.mark.unit
-    def test_identical_configs_produce_same_key(self):
+    def test_identical_configs_produce_same_key(self) -> None:
         a = {"max_requests": 5, "period": "week", "scope": "user"}
         b = {"scope": "user", "period": "week", "max_requests": 5}
         assert _normalize_config(a) == _normalize_config(b)
 
     @pytest.mark.unit
-    def test_different_configs_produce_different_keys(self):
+    def test_different_configs_produce_different_keys(self) -> None:
         a = {"max_requests": 5, "period": "week"}
         b = {"max_requests": 10, "period": "week"}
         assert _normalize_config(a) != _normalize_config(b)
 
     @pytest.mark.unit
-    def test_sorted_list_values(self):
+    def test_sorted_list_values(self) -> None:
         a = {"target": [3, 1, 2]}
         b = {"target": [1, 2, 3]}
         assert _normalize_config(a) == _normalize_config(b)
 
     @pytest.mark.unit
-    def test_nested_dicts_are_sorted(self):
+    def test_nested_dicts_are_sorted(self) -> None:
         a = {"outer": {"z": 1, "a": 2}}
         b = {"outer": {"a": 2, "z": 1}}
         assert _normalize_config(a) == _normalize_config(b)
 
     @pytest.mark.unit
-    def test_empty_configs_match(self):
+    def test_empty_configs_match(self) -> None:
         assert _normalize_config({}) == _normalize_config({})
 
     @pytest.mark.unit
-    def test_missing_keys_produce_different_keys_than_explicit_none(self):
+    def test_missing_keys_produce_different_keys_than_explicit_none(self) -> None:
         a = {"scope": "user"}
         b = {"scope": "user", "target": None}
         assert _normalize_config(a) != _normalize_config(b)
@@ -45,7 +45,7 @@ class TestNormalizeConfig:
 class TestUpsertRestrictionsDuplicateDetection:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_on_duplicate_blacklist_entries(self):
+    async def test_raises_on_duplicate_blacklist_entries(self) -> None:
         crud = RuleCRUD()
         mock_session = AsyncMock()
         mock_session.execute = AsyncMock()
@@ -75,7 +75,7 @@ class TestUpsertRestrictionsDuplicateDetection:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_on_duplicate_rate_limit_entries(self):
+    async def test_raises_on_duplicate_rate_limit_entries(self) -> None:
         crud = RuleCRUD()
         mock_session = AsyncMock()
         mock_session.execute = AsyncMock()
@@ -105,7 +105,7 @@ class TestUpsertRestrictionsDuplicateDetection:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_allows_similar_but_different_configs(self):
+    async def test_allows_similar_but_different_configs(self) -> None:
         crud = RuleCRUD()
         mock_session = AsyncMock()
         mock_session.execute = AsyncMock(
@@ -141,7 +141,7 @@ class TestUpsertRestrictionsDuplicateDetection:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_allows_same_type_different_configs(self):
+    async def test_allows_same_type_different_configs(self) -> None:
         crud = RuleCRUD()
         mock_session = AsyncMock()
         mock_session.execute = AsyncMock(
@@ -177,7 +177,7 @@ class TestUpsertRestrictionsDuplicateDetection:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_allows_different_types_with_same_config(self):
+    async def test_allows_different_types_with_same_config(self) -> None:
         crud = RuleCRUD()
         mock_session = AsyncMock()
         mock_session.execute = AsyncMock(
@@ -215,7 +215,7 @@ class TestUpsertRestrictionsDuplicateDetection:
 class TestVersionDuplicateDetection:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_allows_same_type_config_different_version(self):
+    async def test_allows_same_type_config_different_version(self) -> None:
         """Test that rules with same type and config but different versions are rejected as duplicates."""
         from app.exceptions import Conflict
 
@@ -253,7 +253,7 @@ class TestVersionDuplicateDetection:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_on_same_type_config_same_version(self):
+    async def test_raises_on_same_type_config_same_version(self) -> None:
         crud = RuleCRUD()
         mock_session = AsyncMock()
         mock_session.execute = AsyncMock()

@@ -3,6 +3,7 @@ import logging.handlers
 import sys
 from inspect import FrameInfo
 from pathlib import Path
+from typing import Any
 
 import structlog
 from structlog.contextvars import bind_contextvars, clear_contextvars
@@ -18,6 +19,7 @@ from structlog.stdlib import ProcessorFormatter
 from app.config import DEBUG, LOGS_DIR, PROJECT_ROOT
 
 SERVICE_NAME = "backend"
+Logger = structlog.stdlib.BoundLogger
 
 # Structured JSON sink for the monitoring stack (promtail tails this file).
 # Kept separate from stdout so stdout can stay human-readable in every
@@ -37,7 +39,9 @@ def _get_level_overrides() -> dict[str, int]:
     return overrides
 
 
-def _drop_color_message(logger, method_name, event_dict):
+def _drop_color_message(
+    logger: Any, method_name: str, event_dict: dict[str, Any]
+) -> dict[str, Any]:
     """Discard uvicorn's ``color_message`` extra so it never leaks into output."""
     event_dict.pop("color_message", None)
     return event_dict
@@ -66,11 +70,11 @@ def _build_shared_processors() -> list:
 
 
 def setup_logging(
-    enabled_loggers=None,
-    disabled_loggers=None,
-    level_overrides=None,
-    no_debug=False,
-    global_level=None,
+    enabled_loggers: list[str] | None = None,
+    disabled_loggers: list[str] | None = None,
+    level_overrides: dict[str, int] | None = None,
+    no_debug: bool = False,
+    global_level: int | None = None,
 ) -> None:
     level = logging.INFO if no_debug else logging.DEBUG if DEBUG else logging.INFO
     level_overrides = {**_get_level_overrides(), **(level_overrides or {})}
@@ -153,7 +157,7 @@ def _configure_stdlib_bridge(shared_processors: list) -> None:
         logger.propagate = False
 
 
-def get_logger(name: str, **kwargs) -> structlog.stdlib.BoundLogger:
+def get_logger(name: str, **kwargs: Any) -> structlog.stdlib.BoundLogger:
     return structlog.get_logger(name, service=SERVICE_NAME, **kwargs)
 
 

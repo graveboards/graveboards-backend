@@ -44,7 +44,7 @@ class AuthRateLimiter:
         auth_rate_limit_checks_total.labels(result="allowed").inc()
         return True, None
 
-    async def record_failure(self, ip: str):
+    async def record_failure(self, ip: str) -> None:
         """Record a failed auth attempt. Locks out after MAX_FAILURES."""
         fail_key = f"auth_failures:{ip}"
         failures = await self.rc.incr(fail_key)
@@ -56,6 +56,6 @@ class AuthRateLimiter:
             await self.rc.set(lockout_key, "1", ex=self.FAILURE_LOCKOUT)
             auth_lockouts_total.inc()
 
-    async def record_success(self, ip: str):
+    async def record_success(self, ip: str) -> None:
         """Record a successful auth. Clears failure counter."""
         await self.rc.delete(f"auth_failures:{ip}")

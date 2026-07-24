@@ -1,14 +1,16 @@
+from typing import Any
+
 import pytest
 
 
 @pytest.mark.e2e
-def test_e2e_marker_enabled():
+def test_e2e_marker_enabled() -> None:
     """Verify that e2e marker works for test categorization."""
     assert True
 
 
 @pytest.mark.e2e
-def test_app_has_openapi_spec(TestClient):
+def test_app_has_openapi_spec(TestClient: Any) -> None:
     """Test that OpenAPI spec is available."""
     response = TestClient.get("/api/v1/openapi.json")
 
@@ -20,7 +22,7 @@ def test_app_has_openapi_spec(TestClient):
 
 
 @pytest.mark.e2e
-def test_cors_middleware_enabled(TestClient):
+def test_cors_middleware_enabled(TestClient: Any) -> None:
     """Test that CORS middleware is properly configured."""
     response = TestClient.options(
         "/api/v1/health",
@@ -34,7 +36,7 @@ def test_cors_middleware_enabled(TestClient):
 
 
 @pytest.mark.e2e
-def test_gzip_middleware_enabled(TestClient):
+def test_gzip_middleware_enabled(TestClient: Any) -> None:
     """Test that GZip middleware is properly configured."""
     response = TestClient.get(
         "/api/v1/openapi.json",

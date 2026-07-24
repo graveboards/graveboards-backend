@@ -1,3 +1,5 @@
+from typing import Any, Optional
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -14,7 +16,11 @@ from app.database.rules.validators.database.unique_artist_title import (
 )
 
 
-def _make_context(beatmapset=None, osu_client=None, session=None):
+def _make_context(
+    beatmapset: Any = None,
+    osu_client: Any = None,
+    session: Any = None,
+) -> ExecutionContext:
     return ExecutionContext(
         queue_id=1,
         user_id=12345678,
@@ -29,18 +35,21 @@ def _make_context(beatmapset=None, osu_client=None, session=None):
     )
 
 
-def _make_mock_osu_client(search_results=None):
+def _make_mock_osu_client(search_results: Optional[dict[str, Any]] = None) -> AsyncMock:
     client = AsyncMock()
     client.search_beatmapsets = AsyncMock(return_value=search_results or {"beatmapsets": []})
     return client
 
 
-def _make_mock_osu_client_pageable(initial_results=None, subsequent_results=None):
+def _make_mock_osu_client_pageable(
+    initial_results: Optional[dict[str, Any]] = None,
+    subsequent_results: Optional[dict[str, Any]] = None,
+) -> AsyncMock:
     """Create a mock osu client where search_beatmapsets returns different results per call."""
     client = AsyncMock()
     call_count = [0]
 
-    async def searchable(*args, **kwargs):
+    async def searchable(*args: Any, **kwargs: Any) -> dict[str, Any]:
         call_count[0] += 1
         if call_count[0] == 1:
             return initial_results or {"beatmapsets": []}
@@ -50,7 +59,7 @@ def _make_mock_osu_client_pageable(initial_results=None, subsequent_results=None
     return client
 
 
-def _make_session(rows):
+def _make_session(rows: list[tuple[str, str, str, str, int]]) -> AsyncMock:
     """Mock an AsyncSession whose execute(...).all() yields the given rows.
 
     Each row is (artist, title, artist_unicode, title_unicode, beatmapset_id).
@@ -64,19 +73,19 @@ def _make_session(rows):
 
 class TestNeverRankedConfig:
     @pytest.mark.unit
-    def test_default_ruleset(self):
+    def test_default_ruleset(self) -> None:
         config = NeverRankedConfig()
         assert config.ruleset == "osu"
         assert config.normalize_versions is True
 
     @pytest.mark.unit
-    def test_valid_rulesets(self):
+    def test_valid_rulesets(self) -> None:
         for ruleset in ["osu", "taiko", "fruits", "mania"]:
             config = NeverRankedConfig(ruleset=ruleset)
             assert config.ruleset == ruleset
 
     @pytest.mark.unit
-    def test_invalid_ruleset(self):
+    def test_invalid_ruleset(self) -> None:
         with pytest.raises(ValueError):
             NeverRankedConfig(ruleset="invalid")
 
@@ -84,7 +93,7 @@ class TestNeverRankedConfig:
 class TestNeverRankedRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_no_ranked_matches(self):
+    async def test_passes_when_no_ranked_matches(self) -> None:
         rule = NeverRankedRestriction()
         osu_client = _make_mock_osu_client_pageable(
             initial_results={
@@ -128,7 +137,7 @@ class TestNeverRankedRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_ranked_match_found(self):
+    async def test_raises_when_ranked_match_found(self) -> None:
         rule = NeverRankedRestriction()
         osu_client = _make_mock_osu_client(
             {
@@ -167,7 +176,7 @@ class TestNeverRankedRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_normalizes_version_markers_in_search(self):
+    async def test_normalizes_version_markers_in_search(self) -> None:
         rule = NeverRankedRestriction()
         osu_client = _make_mock_osu_client(
             {
@@ -206,7 +215,7 @@ class TestNeverRankedRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_uses_correct_ruleset_mapping(self):
+    async def test_uses_correct_ruleset_mapping(self) -> None:
         rule = NeverRankedRestriction()
         osu_client = _make_mock_osu_client({"beatmapsets": []})
         beatmapset = MagicMock()
@@ -241,7 +250,7 @@ class TestNeverRankedRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_on_missing_identity(self):
+    async def test_raises_on_missing_identity(self) -> None:
         rule = NeverRankedRestriction()
         osu_client = AsyncMock()
         beatmapset = MagicMock()
@@ -275,12 +284,12 @@ class TestNeverRankedRestriction:
 
 class TestUniqueArtistTitleConfig:
     @pytest.mark.unit
-    def test_defaults(self):
+    def test_defaults(self) -> None:
         config = UniqueArtistTitleConfig()
         assert config.normalize_versions is True
 
 
-def _unique_context(session):
+def _unique_context(session: Any) -> ExecutionContext:
     beatmapset = MagicMock()
     beatmapset.id = 999
     beatmapset.artist = "Test Artist"
@@ -306,7 +315,7 @@ _UNIQUE_IDENTITY = {
 class TestUniqueArtistTitleRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_no_duplicate(self):
+    async def test_passes_when_no_duplicate(self) -> None:
         rule = UniqueArtistTitleRestriction()
         session = _make_session(
             [
@@ -324,7 +333,7 @@ class TestUniqueArtistTitleRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_duplicate_found(self):
+    async def test_raises_when_duplicate_found(self) -> None:
         rule = UniqueArtistTitleRestriction()
         session = _make_session(
             [
@@ -343,7 +352,7 @@ class TestUniqueArtistTitleRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_excludes_current_beatmapset(self):
+    async def test_excludes_current_beatmapset(self) -> None:
         # A duplicate row that IS the submitted beatmapset must not trip the rule.
         rule = UniqueArtistTitleRestriction()
         session = _make_session(
@@ -362,7 +371,7 @@ class TestUniqueArtistTitleRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_handles_empty_queue(self):
+    async def test_handles_empty_queue(self) -> None:
         rule = UniqueArtistTitleRestriction()
         session = _make_session([])
         context = _unique_context(session)

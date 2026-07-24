@@ -33,7 +33,7 @@ async def cmd_seed(
     target: SeedTarget,
     ensure_fixtures: bool = False,
     profile_name: str = "default",
-):
+) -> None:
     """Seed the database with fixtures.
 
     Args:

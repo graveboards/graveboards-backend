@@ -53,16 +53,16 @@ class CRUD(C, R, U, D, Misc, DatabaseProtocol):
     bulk SQL shortcuts.
     """
 
-    async def create_database(self):
+    async def create_database(self) -> None:
         async with self.engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
-    async def recreate_database(self):
+    async def recreate_database(self) -> None:
         async with self.engine.begin() as conn:
             await conn.run_sync(Base.metadata.drop_all)
             await conn.run_sync(Base.metadata.create_all)
 
-    async def force_clear_database(self):
+    async def force_clear_database(self) -> None:
         async with self.engine.begin() as conn:
             await conn.execute(text("DROP SCHEMA public CASCADE"))
             await conn.execute(text("CREATE SCHEMA public"))
@@ -78,7 +78,7 @@ class CRUD(C, R, U, D, Misc, DatabaseProtocol):
 
         return True
 
-    async def reset_sequences(self):
+    async def reset_sequences(self) -> None:
         """Realign all owned sequences with the current max id of their table.
 
         After bulk-inserting rows with explicit primary keys (e.g. during a data

@@ -155,7 +155,7 @@ class FixtureOrchestrator:
 
         semaphore = asyncio.Semaphore(self.criteria.concurrency)
 
-        async def limited_fetch(coroutine):
+        async def limited_fetch(coroutine: Any) -> None:
             async with semaphore:
                 async for event in coroutine:
                     progress.update(event.category, event.current, event.total)

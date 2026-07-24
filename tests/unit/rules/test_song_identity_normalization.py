@@ -11,143 +11,143 @@ from app.database.rules.validators.metadata.song_identity import (
 
 class TestNormalizeTextComprehensive:
     @pytest.mark.unit
-    def test_tv_size(self):
+    def test_tv_size(self) -> None:
         result = _normalize_text("Artist - Song (TV Size)")
         assert "tv size" not in result
         assert "artist" in result
         assert "song" in result
 
     @pytest.mark.unit
-    def test_extended_ver_with_period(self):
+    def test_extended_ver_with_period(self) -> None:
         result = _normalize_text("Artist - Song (Extended ver.)")
         assert "extended" not in result
         assert "artist" in result
         assert "song" in result
 
     @pytest.mark.unit
-    def test_extended_ver_without_period(self):
+    def test_extended_ver_without_period(self) -> None:
         result = _normalize_text("Artist - Song (Extended ver)")
         assert "extended" not in result
         assert "song" in result
 
     @pytest.mark.unit
-    def test_remix(self):
+    def test_remix(self) -> None:
         result = _normalize_text("Artist - Song (Remix)")
         assert "remix" not in result
         assert "song" in result
 
     @pytest.mark.unit
-    def test_radio_edit(self):
+    def test_radio_edit(self) -> None:
         result = _normalize_text("Artist - Song (Radio Edit)")
         assert "radio" not in result
         assert "edit" not in result
         assert "song" in result
 
     @pytest.mark.unit
-    def test_album_edit(self):
+    def test_album_edit(self) -> None:
         result = _normalize_text("Artist - Song (Album Edit)")
         assert "album" not in result
         assert "edit" not in result
         assert "song" in result
 
     @pytest.mark.unit
-    def test_full_ver(self):
+    def test_full_ver(self) -> None:
         result = _normalize_text("Artist - Song (Full ver.)")
         assert "full" not in result
         assert "song" in result
 
     @pytest.mark.unit
-    def test_instrumental(self):
+    def test_instrumental(self) -> None:
         result = _normalize_text("Artist - Song (Instrumental)")
         assert "instrumental" not in result
         assert "song" in result
 
     @pytest.mark.unit
-    def test_single_version(self):
+    def test_single_version(self) -> None:
         result = _normalize_text("Artist - Song (Single Version)")
         assert "single" not in result
         assert "version" not in result
         assert "song" in result
 
     @pytest.mark.unit
-    def test_radio_version(self):
+    def test_radio_version(self) -> None:
         result = _normalize_text("Artist - Song (Radio Version)")
         assert "radio" not in result
         assert "version" not in result
         assert "song" in result
 
     @pytest.mark.unit
-    def test_nightcore_ver(self):
+    def test_nightcore_ver(self) -> None:
         result = _normalize_text("Artist - Song (Nightcore Ver.)")
         assert "nightcore" not in result
         assert "song" in result
 
     @pytest.mark.unit
-    def test_cut_version(self):
+    def test_cut_version(self) -> None:
         result = _normalize_text("Artist - Song (Cut version)")
         assert "cut" not in result
         assert "version" not in result
         assert "song" in result
 
     @pytest.mark.unit
-    def test_club_mix(self):
+    def test_club_mix(self) -> None:
         result = _normalize_text("Artist - Song (Club Mix)")
         assert "club" not in result
         assert "mix" not in result
         assert "song" in result
 
     @pytest.mark.unit
-    def test_dub_mix(self):
+    def test_dub_mix(self) -> None:
         result = _normalize_text("Artist - Song (Dub Mix)")
         assert "dub" not in result
         assert "mix" not in result
         assert "song" in result
 
     @pytest.mark.unit
-    def test_acoustic_version(self):
+    def test_acoustic_version(self) -> None:
         result = _normalize_text("Artist - Song (Acoustic Version)")
         assert "acoustic" not in result
         assert "version" not in result
         assert "song" in result
 
     @pytest.mark.unit
-    def test_live_version(self):
+    def test_live_version(self) -> None:
         result = _normalize_text("Artist - Song (Live Version)")
         assert "live" not in result
         assert "version" not in result
         assert "song" in result
 
     @pytest.mark.unit
-    def test_strips_punctuation(self):
+    def test_strips_punctuation(self) -> None:
         result = _normalize_text("Artist - Song (feat. Someone)")
         assert "(" not in result
         assert ")" not in result
         assert "." not in result
 
     @pytest.mark.unit
-    def test_collapses_whitespace(self):
+    def test_collapses_whitespace(self) -> None:
         result = _normalize_text("Artist   -   Song")
         assert "  " not in result
         assert result == "artist - song"
 
     @pytest.mark.unit
-    def test_plain_text_unchanged(self):
+    def test_plain_text_unchanged(self) -> None:
         result = _normalize_text("Artist - Song")
         assert result == "artist - song"
 
     @pytest.mark.unit
-    def test_bilingual_artist(self):
+    def test_bilingual_artist(self) -> None:
         result = _normalize_text("Artist_unicode - Song_unicode")
         assert result == "artist_unicode - song_unicode"
 
     @pytest.mark.unit
-    def test_combined_normalization(self):
+    def test_combined_normalization(self) -> None:
         result = _normalize_text("Artist - Song (TV Size) (feat. Someone)")
         assert "artist" in result
         assert "song" in result
 
     @pytest.mark.unit
-    def test_case_insensitive_matching(self):
+    def test_case_insensitive_matching(self) -> None:
         result = _normalize_text("Artist - Song (tv size)")
         assert "tv" not in result
         assert "size" not in result
@@ -157,7 +157,7 @@ class TestNormalizeTextComprehensive:
 class TestSongIdentityProviderComprehensive:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_normalizes_tv_size_title(self):
+    async def test_normalizes_tv_size_title(self) -> None:
         provider = SongIdentityProvider()
         beatmapset = MagicMock(
             artist="Artist",
@@ -178,7 +178,7 @@ class TestSongIdentityProviderComprehensive:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_normalizes_extended_ver_title(self):
+    async def test_normalizes_extended_ver_title(self) -> None:
         provider = SongIdentityProvider()
         beatmapset = MagicMock(
             artist="Artist",
@@ -198,7 +198,7 @@ class TestSongIdentityProviderComprehensive:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_normalizes_remix_title(self):
+    async def test_normalizes_remix_title(self) -> None:
         provider = SongIdentityProvider()
         beatmapset = MagicMock(
             artist="Artist",
@@ -218,7 +218,7 @@ class TestSongIdentityProviderComprehensive:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_normalizes_radio_edit_title(self):
+    async def test_normalizes_radio_edit_title(self) -> None:
         provider = SongIdentityProvider()
         beatmapset = MagicMock(
             artist="Artist",
@@ -239,7 +239,7 @@ class TestSongIdentityProviderComprehensive:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_plain_title_unchanged(self):
+    async def test_plain_title_unchanged(self) -> None:
         provider = SongIdentityProvider()
         beatmapset = MagicMock(
             artist="Artist",
@@ -260,7 +260,7 @@ class TestSongIdentityProviderComprehensive:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_bilingual_matching(self):
+    async def test_bilingual_matching(self) -> None:
         provider = SongIdentityProvider()
         beatmapset = MagicMock(
             artist="Romaji Artist",
@@ -283,7 +283,7 @@ class TestSongIdentityProviderComprehensive:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_strips_punctuation_from_title(self):
+    async def test_strips_punctuation_from_title(self) -> None:
         provider = SongIdentityProvider()
         beatmapset = MagicMock(
             artist="Artist",
@@ -305,7 +305,7 @@ class TestSongIdentityProviderComprehensive:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_returns_empty_when_no_beatmapset(self):
+    async def test_returns_empty_when_no_beatmapset(self) -> None:
         provider = SongIdentityProvider()
         context = ExecutionContext(
             queue_id=1,
@@ -322,7 +322,7 @@ class TestSongIdentityProviderComprehensive:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_handles_missing_bpm_attribute(self):
+    async def test_handles_missing_bpm_attribute(self) -> None:
         provider = SongIdentityProvider()
         beatmapset = MagicMock()
         beatmapset.artist = "Artist"

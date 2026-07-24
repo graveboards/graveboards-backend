@@ -38,7 +38,7 @@ class RedisClient(AsyncRedis):
         super().__init__(**REDIS_CONFIGURATION)
         logger.debug(f"Redis client initialized at '{REDIS_BASE_URL}'")
 
-    async def execute_command(self, *args, **kwargs):
+    async def execute_command(self, *args: Any, **kwargs: Any) -> Any:
         command_name = args[0].upper() if args else "UNKNOWN"
         start = time.perf_counter()
 

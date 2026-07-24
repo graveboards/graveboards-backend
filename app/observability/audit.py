@@ -32,10 +32,10 @@ async def audit_log(
     user_id: int | None = None,
     entity_type: str | None = None,
     entity_id: str | None = None,
-    details: dict | None = None,
+    details: dict[str, Any] | None = None,
     ip_address: str | None = None,
     user_agent: str | None = None,
-):
+) -> None:
     """Record an audit event.
 
     Events are buffered and flushed in batches for performance.
@@ -65,7 +65,7 @@ async def audit_log(
         await _flush_buffer()
 
 
-async def _flush_buffer():
+async def _flush_buffer() -> None:
     """Flush buffered audit events to database."""
     global _audit_buffer
     if not _audit_buffer:

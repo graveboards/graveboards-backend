@@ -45,11 +45,11 @@ class SetupRunner:
         self.db = db or PostgresqlDB()
         self.rc = rc or RedisClient()
 
-    async def create_database(self):
+    async def create_database(self) -> None:
         """Create the database if it does not exist."""
         await self.db.create_database()
 
-    async def seed_roles(self):
+    async def seed_roles(self) -> None:
         """Create roles defined in config.initial_roles."""
         logger = get_logger(__name__)
         roles_to_create = []
@@ -65,7 +65,7 @@ class SetupRunner:
                 await self.db.add_many(Role, *roles_to_create, session=session)
                 logger.debug(f"Created {len(roles_to_create)} role(s)")
 
-    async def seed_users(self):
+    async def seed_users(self) -> None:
         """Create initial users with their roles and optional score fetcher tasks."""
         logger = get_logger(__name__)
 
@@ -98,7 +98,7 @@ class SetupRunner:
                     )
                     logger.debug(f"Enabled score fetcher for user: {user_cfg.user_id}")
 
-    async def seed_dev_identities(self):
+    async def seed_dev_identities(self) -> None:
         """Create the seeded users a dev server impersonates when security is disabled.
 
         No-op whenever security is enabled, so this never runs against prod - unlike
@@ -125,7 +125,7 @@ class SetupRunner:
                     await self.db.add(User, id=user_id, roles=roles, session=session)
                     logger.debug(f"Created dev identity: {user_id}")
 
-    async def seed_api_keys(self):
+    async def seed_api_keys(self) -> None:
         """Generate API keys for users with generate_api_key=True."""
         logger = get_logger(__name__)
 
@@ -150,7 +150,7 @@ class SetupRunner:
                 )
                 logger.debug(f"Generated API key for user: {user_cfg.user_id}")
 
-    async def seed_queues(self):
+    async def seed_queues(self) -> None:
         """Create the master queue and any extra queues from config."""
         logger = get_logger(__name__)
         queue_data = []
@@ -209,7 +209,7 @@ class SetupRunner:
 
         return cleaned
 
-    async def run(self, steps: list[str] = None):
+    async def run(self, steps: list[str] | None = None) -> None:
         """Run specified setup steps (or all from config if none given).
 
         Args:
@@ -224,13 +224,15 @@ class SetupRunner:
 
             await method()
 
-    async def close(self):
+    async def close(self) -> None:
         """Close database and Redis connections."""
         await self.rc.aclose()
         await self.db.close()
 
 
-async def _setup_debug_api_key(rc: RedisClient = None, db: PostgresqlDB = None):
+async def _setup_debug_api_key(
+    rc: RedisClient | None = None, db: PostgresqlDB | None = None
+) -> None:
     """Set up debug API key for development mode."""
     logger = get_logger(__name__)
     rc = rc or RedisClient()

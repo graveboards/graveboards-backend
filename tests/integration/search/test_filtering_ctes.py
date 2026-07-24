@@ -4,6 +4,8 @@ These tests verify the search term filtering functionality that ensures all sear
 must match (AND logic) across the appropriate field categories.
 """
 
+from typing import Any
+
 import pytest
 from sqlalchemy.dialects import postgresql
 
@@ -12,7 +14,7 @@ from app.search.datastructures import SearchTermsSchema
 from app.search.enums import Scope
 
 
-def _compile_postgres(cte):
+def _compile_postgres(cte: Any) -> str:
     """Compile a CTE with PostgreSQL dialect for accurate SQL inspection."""
     return str(
         cte.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True})
@@ -20,7 +22,7 @@ def _compile_postgres(cte):
 
 
 @pytest.mark.integration
-def test_search_terms_filtered_cte_creation():
+def test_search_terms_filtered_cte_creation() -> None:
     """Test filtering CTE factory creates valid CTE structure."""
     search_terms = SearchTermsSchema(
         terms=["artist", "title"],
@@ -38,7 +40,7 @@ def test_search_terms_filtered_cte_creation():
 
 
 @pytest.mark.integration
-def test_search_terms_filtered_single_term():
+def test_search_terms_filtered_single_term() -> None:
     """Test filtering CTE with a single search term."""
     search_terms = SearchTermsSchema(
         terms=["test"],
@@ -54,7 +56,7 @@ def test_search_terms_filtered_single_term():
 
 
 @pytest.mark.integration
-def test_search_terms_filtered_beatmaps_scope():
+def test_search_terms_filtered_beatmaps_scope() -> None:
     """Test filtering CTE with BEATMAPS scope."""
     search_terms = SearchTermsSchema(
         terms=["version"],
@@ -71,7 +73,7 @@ def test_search_terms_filtered_beatmaps_scope():
 
 
 @pytest.mark.integration
-def test_search_terms_filtered_case_sensitive():
+def test_search_terms_filtered_case_sensitive() -> None:
     """Test filtering CTE with case sensitive flag."""
     search_terms = SearchTermsSchema(
         terms=["ARTIST"],
@@ -89,7 +91,7 @@ def test_search_terms_filtered_case_sensitive():
 
 
 @pytest.mark.integration
-def test_search_terms_filtered_no_match():
+def test_search_terms_filtered_no_match() -> None:
     """Test filtering CTE with term that won't match."""
     search_terms = SearchTermsSchema(
         terms=["nonexistent_xyz_123"],

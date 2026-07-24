@@ -26,7 +26,7 @@ logger = get_logger(__name__)
 async def cmd_generate(
     queue_count: int = 10,
     request_count: int = 100,
-):
+) -> None:
     """Generate diverse queue and request fixtures for search testing."""
     users_path = PROJECT_ROOT / "instance" / "fixtures" / "users"
     beatmapsets_path = PROJECT_ROOT / "instance" / "fixtures" / "beatmapsets"

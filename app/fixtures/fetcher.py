@@ -6,6 +6,7 @@ import random
 from collections.abc import AsyncIterator, Callable
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import cast as typing_cast
 
 import httpx
 
@@ -160,23 +161,23 @@ class FixtureDataFetcher:
     ) -> FetchConfig:
         """Create a FetchConfig for the given category."""
 
-        def id_generator():
+        def id_generator() -> int:
             return self._get_random_id(category, avoid_failed=True)
 
-        def success_handler(beatmap_id: int, data: dict):
+        def success_handler(beatmap_id: int, data: dict[str, Any]) -> None:
             self._valid_beatmap_ids.append(beatmap_id)
             self._seen_ids.add(beatmap_id)
             self._add_fetched_id(category, beatmap_id)
             self._record_success()
             self.logger.debug(f"Fetched {data_type} {beatmap_id}")
 
-        async def failure_handler(beatmap_id: int, error: Exception):
+        async def failure_handler(beatmap_id: int, error: Exception) -> None:
             await self._add_failed_id(category, beatmap_id)
 
         def skip_checker(id_: int) -> bool:
             return self._should_skip_id(id_)
 
-        def on_error(error: Exception):
+        def on_error(error: Exception) -> None:
             self._check_connection_stability(error)
 
         retries = (
@@ -284,20 +285,20 @@ class FixtureDataFetcher:
 
             category = f"users.{ruleset}"
 
-            def api_call_factory(id, r=ruleset):
+            def api_call_factory(id: int, r: str = ruleset) -> Any:
                 mode = getattr(Ruleset, r.upper()).value
                 return self.oac.get_user(id, Ruleset(mode))
 
-            def path_builder(id, r=ruleset, _ruleset_path=ruleset_path):
+            def path_builder(id: int, r: str = ruleset, _ruleset_path: Path = ruleset_path) -> Path:
                 return _ruleset_path / f"user_{id}_{r}.json"
 
-            def success_handler(beatmap_id: int, data: dict, _category=category, _ruleset=ruleset):
+            def success_handler(beatmap_id: int, data: dict[str, Any], _category: str = category, _ruleset: str = ruleset) -> None:
                 self._seen_ids.add(beatmap_id)
                 self._add_fetched_id(_category, beatmap_id)
                 self._record_success()
                 self.logger.debug(f"Fetched user {beatmap_id} ({_ruleset})")
 
-            async def failure_handler(beatmap_id: int, error: Exception, _category=category):
+            async def failure_handler(beatmap_id: int, error: Exception, _category: str = category) -> None:
                 await self._add_failed_id(_category, beatmap_id)
 
             config = FetchConfig(
@@ -432,28 +433,28 @@ class FixtureDataFetcher:
             use_top_players = score_type in ["firsts", "recent"]
             score_type_enum = getattr(ScoreType, score_type.upper())
 
-            def api_call_factory(id, st=score_type_enum, m=Ruleset.OSU):
+            def api_call_factory(id: int, st: ScoreType = score_type_enum, m: Ruleset = Ruleset.OSU) -> Any:
                 return self.oac.get_user_scores(id, st, mode=m)
 
-            def path_builder(id, st=score_type, _type_path=type_path):
+            def path_builder(id: int, st: str = score_type, _type_path: Path = type_path) -> Path:
                 return _type_path / f"scores_{id}_{st}.json"
 
-            def id_generator(_use_top_players=use_top_players):
+            def id_generator(_use_top_players: bool = use_top_players) -> int:
                 return self._get_random_id("users", use_top_players=_use_top_players)
 
-            def success_handler(beatmap_id: int, data: dict, _score_type=score_type):
+            def success_handler(beatmap_id: int, data: dict[str, Any], _score_type: str = score_type) -> None:
                 self._seen_ids.add(beatmap_id)
                 self._add_fetched_id("users", beatmap_id)
                 self._record_success()
                 self.logger.debug(f"Fetched scores for user {beatmap_id} ({_score_type})")
 
-            async def failure_handler(beatmap_id: int, error: Exception):
+            async def failure_handler(beatmap_id: int, error: Exception) -> None:
                 await self._add_failed_id("users", beatmap_id)
 
-            def data_validator(data):
+            def data_validator(data: Any) -> bool:
                 return isinstance(data, list) and bool(data)
 
-            def on_empty_data(beatmap_id):
+            def on_empty_data(beatmap_id: int) -> None:
                 pass
 
             config = FetchConfig(
@@ -782,9 +783,9 @@ class FixtureDataFetcher:
                             if not await self.failed_id_store.is_failed(
                                 "users", candidate, ruleset
                             ):
-                                return candidate
+                                return int(candidate)
                     else:
-                        return random.choice(top_ids)
+                        return int(random.choice(top_ids))
 
         range_config = self.id_ranges.get(
             category, self.id_ranges.get(category.split(".")[0], {"min": 1, "max": 1000000})

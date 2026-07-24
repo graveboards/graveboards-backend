@@ -5,7 +5,7 @@ import pytest
 
 
 @pytest.fixture
-def mock_redis_client():
+def mock_redis_client() -> MagicMock:
     mock_redis = MagicMock()
     mock_redis.hgetall = AsyncMock(return_value=None)
     mock_redis.hset = AsyncMock(return_value=None)
@@ -18,7 +18,7 @@ def mock_redis_client():
 
 
 @pytest.mark.asyncio
-async def test_initialization(mock_redis_client):
+async def test_initialization(mock_redis_client: MagicMock) -> None:
     from app.osu_api.client.base import OsuAPIClientBase
 
     client = OsuAPIClientBase(mock_redis_client)
@@ -28,7 +28,7 @@ async def test_initialization(mock_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_get_token_from_cache(mock_redis_client):
+async def test_get_token_from_cache(mock_redis_client: MagicMock) -> None:
     from app.osu_api.client.base import OsuAPIClientBase
     from app.redis_client.models import OsuClientOAuthToken
 
@@ -47,7 +47,7 @@ async def test_get_token_from_cache(mock_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_get_token_fetches_from_redis(mock_redis_client):
+async def test_get_token_fetches_from_redis(mock_redis_client: MagicMock) -> None:
     from app.osu_api.client.base import OsuAPIClientBase
 
     client = OsuAPIClientBase(mock_redis_client)
@@ -85,7 +85,7 @@ async def test_get_token_fetches_from_redis(mock_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_get_token_refreshes_when_expired(mock_redis_client):
+async def test_get_token_refreshes_when_expired(mock_redis_client: MagicMock) -> None:
     from app.osu_api.client.base import OsuAPIClientBase
 
     client = OsuAPIClientBase(mock_redis_client)
@@ -129,7 +129,7 @@ async def test_get_token_refreshes_when_expired(mock_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_refresh_token_success(mock_redis_client):
+async def test_refresh_token_success(mock_redis_client: MagicMock) -> None:
     from app.osu_api.client.base import OsuAPIClientBase
 
     client = OsuAPIClientBase(mock_redis_client)
@@ -167,7 +167,7 @@ async def test_refresh_token_success(mock_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_get_auth_headers(mock_redis_client):
+async def test_get_auth_headers(mock_redis_client: MagicMock) -> None:
     from app.osu_api.client.base import OsuAPIClientBase
 
     client = OsuAPIClientBase(mock_redis_client)
@@ -178,7 +178,7 @@ async def test_get_auth_headers(mock_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_get_auth_headers_with_custom_token(mock_redis_client):
+async def test_get_auth_headers_with_custom_token(mock_redis_client: MagicMock) -> None:
     from app.osu_api.client.base import OsuAPIClientBase
 
     client = OsuAPIClientBase(mock_redis_client)
@@ -189,7 +189,7 @@ async def test_get_auth_headers_with_custom_token(mock_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_format_query_parameters(mock_redis_client):
+async def test_format_query_parameters(mock_redis_client: MagicMock) -> None:
     from app.osu_api.client.base import OsuAPIClientBase
 
     client = OsuAPIClientBase(mock_redis_client)

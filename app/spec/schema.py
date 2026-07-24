@@ -1,11 +1,12 @@
 from functools import lru_cache
+from typing import cast as typing_cast
 
 from app.database.models import ModelClass
 from app.spec import load_spec
 
 
 @lru_cache(maxsize=1)
-def _get_spec_cached() -> dict:
+def _get_spec_cached() -> dict[str, Any]:
     """Return a cached in-memory instance of the OpenAPI specification.
 
     Wraps ``load_spec`` with an LRU cache to avoid repeated disk I/O and rebuild checks
@@ -14,7 +15,7 @@ def _get_spec_cached() -> dict:
     Returns:
         dict: The OpenAPI specification.
     """
-    return load_spec()
+    return typing_cast(dict[str, Any], load_spec())
 
 
 def get_filter_schema(

@@ -1,7 +1,7 @@
 import base64
 import binascii
 import json
-from typing import Any
+from typing import Any, cast as typing_cast
 
 import brotli
 
@@ -73,6 +73,6 @@ def decompress_query(q: str, serialized: bool = True) -> bytes | dict[str, Any]:
             json_str = brotli.decompress(compressed).decode()
             decompressed = json.loads(json_str)
 
-        return decompressed
+        return typing_cast(bytes | dict[str, Any], decompressed)
     except (binascii.Error, brotli.error, json.JSONDecodeError) as e:
         raise ValueError("Could not decompress query, ensure it's valid and complete") from e

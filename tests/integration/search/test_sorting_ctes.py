@@ -11,7 +11,7 @@ pytestmark = [pytest.mark.integration]
 
 
 @pytest.mark.integration
-def test_sorting_schema_structure():
+def test_sorting_schema_structure() -> None:
     """Test sorting schema structure."""
     from app.search.datastructures import SortingSchema
     from app.search.datastructures.sorting import SortingOption
@@ -34,7 +34,7 @@ def test_sorting_schema_structure():
 
 
 @pytest.mark.integration
-def test_sorting_schema_empty():
+def test_sorting_schema_empty() -> None:
     """Test empty sorting schema."""
     from app.search.datastructures import SortingSchema
 
@@ -43,7 +43,7 @@ def test_sorting_schema_empty():
 
 
 @pytest.mark.integration
-def test_sorting_schema_single_field():
+def test_sorting_schema_single_field() -> None:
     """Test sorting schema with single field."""
     from app.search.datastructures import SortingSchema
     from app.search.datastructures.sorting import SortingOption
@@ -59,7 +59,7 @@ def test_sorting_schema_single_field():
 
 
 @pytest.mark.integration
-def test_sorting_order_enum():
+def test_sorting_order_enum() -> None:
     """Test sorting order enum values."""
     from app.search.enums import SortingOrder
 
@@ -68,7 +68,7 @@ def test_sorting_order_enum():
 
 
 @pytest.mark.integration
-def test_sorting_schema_validation():
+def test_sorting_schema_validation() -> None:
     """Test sorting schema validation."""
     from app.search.datastructures import SortingSchema
     from app.search.datastructures.sorting import SortingOption
@@ -84,7 +84,7 @@ def test_sorting_schema_validation():
 
 
 @pytest.mark.integration
-def test_sorting_schema_multiple_fields():
+def test_sorting_schema_multiple_fields() -> None:
     """Test sorting schema with multiple fields."""
     from app.search.datastructures import SortingSchema
     from app.search.datastructures.sorting import SortingOption

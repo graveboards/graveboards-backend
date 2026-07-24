@@ -1,7 +1,6 @@
-from typing import Any
-
-from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
+from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.sql import select
+from sqlalchemy.sql.elements import ColumnClause
 from sqlalchemy.sql.selectable import CTE
 
 from app.database.models import (
@@ -14,9 +13,7 @@ from app.database.models import (
 from app.search.enums import Scope
 
 
-def queue_filtering_cte_factory(
-    scope: Scope, target: InstrumentedAttribute | QueryableAttribute[Any]
-) -> CTE:
+def queue_filtering_cte_factory(scope: Scope, target: InstrumentedAttribute | ColumnClause) -> CTE:
     """Build a queue-derived filtering CTE for the given scope.
 
     Projects queue-level attributes into the active scope, traversing request

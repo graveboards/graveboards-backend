@@ -7,7 +7,7 @@ from app.security import create_token_payload, encode_token
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_login_flow_returns_authorization_url():
+async def test_login_flow_returns_authorization_url() -> None:
     oauth = OAuth()
     authorization_url, state = oauth.create_authorization_url()
 
@@ -18,7 +18,7 @@ async def test_login_flow_returns_authorization_url():
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_csrf_state_is_validated():
+async def test_csrf_state_is_validated() -> None:
     from unittest.mock import AsyncMock
 
     rc = AsyncMock(spec=RedisClient)
@@ -40,7 +40,7 @@ async def test_csrf_state_is_validated():
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_jwt_token_generation():
+async def test_jwt_token_generation() -> None:
     payload = create_token_payload(12345678)
     token = encode_token(payload)
 
@@ -50,7 +50,7 @@ async def test_jwt_token_generation():
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_jwt_token_validation():
+async def test_jwt_token_validation() -> None:
     payload = create_token_payload(12345678)
     token = encode_token(payload)
 
@@ -63,7 +63,7 @@ async def test_jwt_token_validation():
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_invalid_token_raises_error():
+async def test_invalid_token_raises_error() -> None:
     from jwt.exceptions import InvalidTokenError
 
     from app.security import validate_token
@@ -74,7 +74,7 @@ async def test_invalid_token_raises_error():
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_expired_token_raises_error():
+async def test_expired_token_raises_error() -> None:
     import time
 
     from jwt.exceptions import ExpiredSignatureError

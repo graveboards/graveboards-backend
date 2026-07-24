@@ -12,7 +12,7 @@ def _get_endpoint(request: ConnexionRequest) -> str:
     if route is not None:
         path = getattr(route, "path", None)
         if path is not None:
-            return path
+            return str(path)
     return "<unmatched>"
 
 

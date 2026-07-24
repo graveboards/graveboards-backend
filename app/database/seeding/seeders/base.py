@@ -1,6 +1,7 @@
 import asyncio
 from abc import ABC, abstractmethod
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
@@ -25,10 +26,12 @@ class Seeder(ABC):
         self.total = len(self.data)
 
     @abstractmethod
-    async def seed(self, queue: asyncio.Queue[SeedEvent | None], session: AsyncSession = None): ...
+    async def seed(
+        self, queue: asyncio.Queue[SeedEvent | None], session: AsyncSession = None
+    ) -> None: ...
 
     @staticmethod
-    def _normalize_datetimes(obj):
+    def _normalize_datetimes(obj: Any) -> Any:
         """Recursively convert ISO datetime strings to datetime objects.
 
         Safety net for any fixture data that still contains string dates.

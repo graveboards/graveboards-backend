@@ -14,13 +14,13 @@ def auto_retry(
     max_attempts: int = MAX_ATTEMPTS,
     retry_exceptions: tuple[type[Exception]] = (TimeoutError,),
     backoff_strategy: Callable[[int], float] = lambda attempt_no: attempt_no**2,
-):
-    def decorator(func: Callable[..., Awaitable[Any]]):
+) -> Callable[[Callable[..., Awaitable[Any]]], Callable[..., Awaitable[Any]]]:
+    def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
         if not inspect.iscoroutinefunction(func):
             raise ValueError(f"Function '{func.__name__}' must be async to use @auto_retry")
 
         @wraps(func)
-        async def wrapper(*args, **kwargs) -> Awaitable[Any]:
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
             result: Any = None
             last_exception: Exception | None = None
 

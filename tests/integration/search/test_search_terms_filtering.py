@@ -10,7 +10,7 @@ pytestmark = [pytest.mark.integration]
 
 
 @pytest.mark.integration
-def test_search_terms_filtered_cte_structure():
+def test_search_terms_filtered_cte_structure() -> None:
     """Test search terms filtered CTE structure."""
     from app.database.models import BeatmapsetSnapshot
 
@@ -18,7 +18,7 @@ def test_search_terms_filtered_cte_structure():
 
 
 @pytest.mark.integration
-def test_search_terms_filtered_cte_factory():
+def test_search_terms_filtered_cte_factory() -> None:
     """Test search terms filtered CTE factory function."""
     try:
         from app.database.ctes.search_terms_filtered import build_search_terms_filtered_cte
@@ -29,7 +29,7 @@ def test_search_terms_filtered_cte_factory():
 
 
 @pytest.mark.integration
-def test_search_terms_filtered_cte_with_beatmaps_scope():
+def test_search_terms_filtered_cte_with_beatmaps_scope() -> None:
     """Test search terms filtered CTE with beatmaps scope."""
     try:
         from app.database.ctes.search_terms_filtered import build_search_terms_filtered_cte
@@ -44,7 +44,7 @@ def test_search_terms_filtered_cte_with_beatmaps_scope():
 
 
 @pytest.mark.integration
-def test_search_terms_filtered_cte_with_queues_scope():
+def test_search_terms_filtered_cte_with_queues_scope() -> None:
     """Test search terms filtered CTE with queues scope."""
     try:
         from app.database.ctes.search_terms_filtered import build_search_terms_filtered_cte
@@ -59,7 +59,7 @@ def test_search_terms_filtered_cte_with_queues_scope():
 
 
 @pytest.mark.integration
-def test_search_terms_filtered_cte_with_requests_scope():
+def test_search_terms_filtered_cte_with_requests_scope() -> None:
     """Test search terms filtered CTE with requests scope."""
     try:
         from app.database.ctes.search_terms_filtered import build_search_terms_filtered_cte
@@ -74,7 +74,7 @@ def test_search_terms_filtered_cte_with_requests_scope():
 
 
 @pytest.mark.integration
-def test_search_terms_filtered_cte_filter_validation():
+def test_search_terms_filtered_cte_filter_validation() -> None:
     """Test search terms filtered CTE filter validation."""
     try:
         from app.database.ctes.search_terms_filtered import build_search_terms_filtered_cte
@@ -89,7 +89,7 @@ def test_search_terms_filtered_cte_filter_validation():
 
 
 @pytest.mark.integration
-def test_search_terms_filtered_cte_case_sensitivity():
+def test_search_terms_filtered_cte_case_sensitivity() -> None:
     """Test search terms filtered CTE case sensitivity."""
     try:
         from app.database.ctes.search_terms_filtered import build_search_terms_filtered_cte
@@ -104,7 +104,7 @@ def test_search_terms_filtered_cte_case_sensitivity():
 
 
 @pytest.mark.integration
-def test_search_terms_filtered_cte_debug_mode():
+def test_search_terms_filtered_cte_debug_mode() -> None:
     """Test search terms filtered CTE debug mode."""
     try:
         from app.database.ctes.search_terms_filtered import build_search_terms_filtered_cte

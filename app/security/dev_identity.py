@@ -27,4 +27,4 @@ def resolve_dev_caller_id() -> int:
         except ValueError:
             pass
 
-    return DEV_ADMIN_USER_ID
+    return int(DEV_ADMIN_USER_ID)

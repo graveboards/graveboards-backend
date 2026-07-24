@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, cast as typing_cast
 
 from connexion.exceptions import Forbidden
 
@@ -151,6 +151,6 @@ def build_rule_node(
             )
 
         children = [build_rule_node(r) for r in child_rules]
-        return node_cls(children)
+        return typing_cast(RuleNode, node_cls(children))
 
     return AtomicRuleNode(rule_type, config)

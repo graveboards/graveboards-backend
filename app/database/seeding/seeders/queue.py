@@ -12,7 +12,9 @@ from .base import Seeder
 
 class QueueSeeder(Seeder):
     @session_manager(session_resolver=db_session_resolver, autoflush_allowed=False)
-    async def seed(self, queue: asyncio.Queue[SeedEvent | None], session: AsyncSession = None):
+    async def seed(
+        self, queue: asyncio.Queue[SeedEvent | None], session: AsyncSession = None
+    ) -> None:
         self.session = session
         await queue.put(SeedEvent(SeederTarget.QUEUE, self.progress, self.total))
 
@@ -21,7 +23,7 @@ class QueueSeeder(Seeder):
             self.progress += 1
             await queue.put(SeedEvent(SeederTarget.QUEUE, self.progress, self.total))
 
-    async def _seed_queue(self, queue_entry: dict):
+    async def _seed_queue(self, queue_entry: dict[str, Any]) -> None:
         if not await self.db.get(
             Queue, user_id=queue_entry["user_id"], name=queue_entry["name"], session=self.session
         ):

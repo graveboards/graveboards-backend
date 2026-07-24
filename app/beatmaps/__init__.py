@@ -1,7 +1,7 @@
 __all__ = ["BeatmapManager"]
 
 
-def __getattr__(name):
+def __getattr__(name: str) -> type:
     if name == "BeatmapManager":
         from .manager import BeatmapManager
 

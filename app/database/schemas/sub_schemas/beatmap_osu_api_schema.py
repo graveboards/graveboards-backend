@@ -62,7 +62,7 @@ class BeatmapOsuApiSchema(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def from_snapshot(cls, data: Any):
+    def from_snapshot(cls, data: Any) -> Any:
         if isinstance(data, dict):
             return data
 
@@ -84,7 +84,7 @@ class BeatmapOsuApiSchema(BaseModel):
 
     @field_validator("top_tag_ids", mode="before")
     @classmethod
-    def filter_tag_keys(cls, value: Any):
+    def filter_tag_keys(cls, value: Any) -> Any:
         if value is None:
             return None
         return [{"tag_id": item["tag_id"]} for item in value]

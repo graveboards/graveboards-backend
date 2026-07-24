@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 
 from app.database.db import PostgresqlDB
@@ -5,7 +7,7 @@ from app.database.models import Profile, Queue, User
 
 
 @pytest.mark.asyncio
-async def test_crud_create_user(db_session):
+async def test_crud_create_user(db_session: Any) -> None:
     """Test creating a User instance."""
     db = PostgresqlDB()
 
@@ -15,7 +17,7 @@ async def test_crud_create_user(db_session):
 
 
 @pytest.mark.asyncio
-async def test_crud_create_profile(db_session):
+async def test_crud_create_profile(db_session: Any) -> None:
     """Test creating a Profile instance."""
     db = PostgresqlDB()
 
@@ -35,7 +37,7 @@ async def test_crud_create_profile(db_session):
 
 
 @pytest.mark.asyncio
-async def test_crud_create_queue(db_session):
+async def test_crud_create_queue(db_session: Any) -> None:
     """Test creating a Queue instance."""
     db = PostgresqlDB()
 
@@ -55,7 +57,7 @@ async def test_crud_create_queue(db_session):
 
 
 @pytest.mark.asyncio
-async def test_crud_add_many_users(db_session):
+async def test_crud_add_many_users(db_session: Any) -> None:
     """Test creating multiple User instances at once."""
     db = PostgresqlDB()
 
@@ -74,7 +76,7 @@ async def test_crud_add_many_users(db_session):
 
 
 @pytest.mark.asyncio
-async def test_crud_read_user(db_session):
+async def test_crud_read_user(db_session: Any) -> None:
     """Test reading a User instance."""
     db = PostgresqlDB()
 
@@ -87,7 +89,7 @@ async def test_crud_read_user(db_session):
 
 
 @pytest.mark.asyncio
-async def test_crud_read_profile(db_session):
+async def test_crud_read_profile(db_session: Any) -> None:
     """Test reading a Profile instance."""
     db = PostgresqlDB()
 
@@ -101,7 +103,7 @@ async def test_crud_read_profile(db_session):
 
 
 @pytest.mark.asyncio
-async def test_crud_update_profile(db_session):
+async def test_crud_update_profile(db_session: Any) -> None:
     """Test updating a Profile instance."""
     db = PostgresqlDB()
 
@@ -114,7 +116,7 @@ async def test_crud_update_profile(db_session):
 
 
 @pytest.mark.asyncio
-async def test_crud_delete_user(db_session):
+async def test_crud_delete_user(db_session: Any) -> None:
     """Test deleting a User instance."""
     db = PostgresqlDB()
 
@@ -127,7 +129,7 @@ async def test_crud_delete_user(db_session):
 
 
 @pytest.mark.asyncio
-async def test_crud_delete_profile(db_session):
+async def test_crud_delete_profile(db_session: Any) -> None:
     """Test deleting a Profile instance."""
     db = PostgresqlDB()
 
@@ -141,7 +143,7 @@ async def test_crud_delete_profile(db_session):
 
 
 @pytest.mark.asyncio
-async def test_crud_relationship_user_to_profile(db_session):
+async def test_crud_relationship_user_to_profile(db_session: Any) -> None:
     """Test User to Profile relationship - verify FK is set correctly."""
     db = PostgresqlDB()
 
@@ -156,7 +158,7 @@ async def test_crud_relationship_user_to_profile(db_session):
 
 
 @pytest.mark.asyncio
-async def test_crud_relationship_queue_to_user(db_session):
+async def test_crud_relationship_queue_to_user(db_session: Any) -> None:
     """Test Queue to User relationship - verify FK is set correctly."""
     db = PostgresqlDB()
 
@@ -170,7 +172,7 @@ async def test_crud_relationship_queue_to_user(db_session):
 
 
 @pytest.mark.asyncio
-async def test_crud_get_many(db_session):
+async def test_crud_get_many(db_session: Any) -> None:
     """Test getting multiple instances."""
     db = PostgresqlDB()
 
@@ -187,7 +189,7 @@ async def test_crud_get_many(db_session):
 
 
 @pytest.mark.asyncio
-async def test_crud_add_many_with_relationships(db_session):
+async def test_crud_add_many_with_relationships(db_session: Any) -> None:
     """Test adding multiple instances with relationships."""
     db = PostgresqlDB()
 

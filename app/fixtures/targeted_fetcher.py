@@ -432,7 +432,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
 
         self.last_fetch_results = results
 
-    def _update_beatmap_metadata(self, beatmap_data: dict):
+    def _update_beatmap_metadata(self, beatmap_data: dict[str, Any]) -> None:
         """Update targeted metadata for a beatmap."""
         beatmap_id = beatmap_data.get("id")
         if not beatmap_id:
@@ -471,7 +471,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
 
         save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
 
-    def _update_beatmapset_metadata(self, beatmapset_data: dict):
+    def _update_beatmapset_metadata(self, beatmapset_data: dict[str, Any]) -> None:
         """Update targeted metadata for a beatmapset."""
         beatmapset_id = beatmapset_data.get("id")
         if not beatmapset_id:
@@ -504,10 +504,10 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
 
     def _update_user_metadata(
         self,
-        user_data: dict,
+        user_data: dict[str, Any],
         ruleset: str,
         activity_level: str = "active",
-    ):
+    ) -> None:
         """Update targeted metadata for a user."""
         user_id = user_data.get("id")
         if not user_id:
@@ -549,7 +549,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
 
         save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
 
-    def _update_status_metadata(self, category_meta: dict, data: dict):
+    def _update_status_metadata(self, category_meta: dict[str, Any], data: dict[str, Any]) -> None:
         """Update status counts in metadata."""
         status = data.get("status")
         if not status:
@@ -558,7 +558,9 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         by_status = category_meta.setdefault("by_status", {})
         by_status[status] = by_status.get(status, 0) + 1
 
-    def _update_difficulty_metadata(self, category_meta: dict, data: dict):
+    def _update_difficulty_metadata(
+        self, category_meta: dict[str, Any], data: dict[str, Any]
+    ) -> None:
         """Update difficulty counts in metadata."""
         diff = data.get("difficulty_rating", 0)
         if diff is None:
@@ -568,7 +570,9 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         by_difficulty = category_meta.setdefault("by_difficulty", {})
         by_difficulty[difficulty] = by_difficulty.get(difficulty, 0) + 1
 
-    def _update_playcount_metadata(self, category_meta: dict, data: dict):
+    def _update_playcount_metadata(
+        self, category_meta: dict[str, Any], data: dict[str, Any]
+    ) -> None:
         """Update playcount counts in metadata."""
         playcount = data.get("playcount", 0)
         if playcount is None:
@@ -590,7 +594,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
 
         return PLAYCOUNT_CATEGORIZER.categorize(playcount) or "high"
 
-    def _init_metadata(self):
+    def _init_metadata(self) -> None:
         """Initialize targeted metadata structure."""
         if "targeted" not in self.metadata:
             self.metadata["targeted"] = create_targeted_metadata()
@@ -602,7 +606,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         playcount_range: str | None = None,
         activity_tier: str | None = None,
         rulesets: list[str] | None = None,
-    ):
+    ) -> None:
         """Configure targeted fetching parameters."""
         self.targeted_statuses = statuses
         self.targeted_difficulty_range = difficulty_range
@@ -648,7 +652,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
 
         return results
 
-    async def fetch_targeted(self):
+    async def fetch_targeted(self) -> dict[str, Any]:
         """Execute targeted fetch based on configured parameters."""
         counts = {
             "beatmapsets": {},

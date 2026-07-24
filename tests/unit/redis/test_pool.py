@@ -6,14 +6,14 @@ from redis import ConnectionPool
 class TestConnectionPool:
     """Test connection_pool module-level singleton."""
 
-    def test_pool_is_singleton(self):
+    def test_pool_is_singleton(self) -> None:
         """Test connection_pool is a module-level singleton instance."""
         from app.redis_client.pool import connection_pool
 
         assert connection_pool is not None
         assert isinstance(connection_pool, ConnectionPool)
 
-    def test_pool_uses_redis_configuration(self):
+    def test_pool_uses_redis_configuration(self) -> None:
         """Test pool is initialized with REDIS_CONFIGURATION values."""
         from app.config import REDIS_CONFIGURATION
         from app.redis_client.pool import connection_pool
@@ -21,7 +21,7 @@ class TestConnectionPool:
         assert connection_pool.connection_kwargs.get("host") == REDIS_CONFIGURATION["host"]
         assert connection_pool.connection_kwargs.get("port") == REDIS_CONFIGURATION["port"]
 
-    def test_pool_max_connections_is_default(self):
+    def test_pool_max_connections_is_default(self) -> None:
         """Test pool uses default max connections when not configured."""
         from app.redis_client.pool import connection_pool
 
@@ -29,7 +29,7 @@ class TestConnectionPool:
             connection_pool.max_connections, int
         )
 
-    def test_pool_can_release_and_acquire_connections(self):
+    def test_pool_can_release_and_acquire_connections(self) -> None:
         """Test pool can release and re-acquire connections."""
         from app.redis_client.pool import connection_pool
 

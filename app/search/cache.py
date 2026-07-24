@@ -1,6 +1,7 @@
 import hashlib
 import json
 from enum import Enum
+from typing import Any, cast as typing_cast
 
 from app.redis_client import RedisClient
 from app.search.enums import Scope
@@ -48,7 +49,7 @@ class SearchCache:
         key = self._make_key(scope, search_terms, sorting, filters, limit, offset)
         data = await self.rc.get(key)
         if data:
-            return json.loads(data)
+            return typing_cast(dict[Any, Any], json.loads(data))
         return None
 
     async def set(
@@ -59,8 +60,8 @@ class SearchCache:
         filters: str,
         limit: int,
         offset: int,
-        page_data: dict,
-    ):
+        page_data: dict[str, Any],
+    ) -> None:
         serialized = json.dumps(page_data)
         if len(serialized) > self.MAX_VALUE_SIZE:
             return
@@ -69,7 +70,7 @@ class SearchCache:
         ttl = self._get_ttl(scope)
         await self.rc.set(key, serialized, ex=ttl)
 
-    async def invalidate_scope(self, scope: Scope):
+    async def invalidate_scope(self, scope: Scope) -> None:
         """Invalidate all cached results for a scope (on data changes)."""
         pattern = f"{self.CACHE_PREFIX}:{scope.value}:*"
         async for key in self.rc.scan(pattern):

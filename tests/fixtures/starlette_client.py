@@ -17,6 +17,8 @@ This module is kept for backwards compatibility but most tests should use
 tests.conftest.TestClient instead.
 """
 
+from typing import Any
+
 import pytest
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
@@ -30,14 +32,14 @@ from app.oauth import OAuth
 
 
 @pytest.fixture(scope="function")
-def starlette_test_client():
+def starlette_test_client() -> Any:
     """Create a TestClient for API route testing.
 
     Use this fixture when you need more control over the Starlette app
     configuration than what the conftest.TestClient provides.
     """
 
-    async def login_endpoint(request):
+    async def login_endpoint(request: Any) -> Any:
         oauth = OAuth()
         authorization_url, state = oauth.create_authorization_url()
         return JSONResponse({"authorization_url": authorization_url, "state": state})

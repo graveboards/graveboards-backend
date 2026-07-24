@@ -37,7 +37,7 @@ async def cmd_clean_fixtures(
     clear_top_player_ids: bool = False,
     clear_promoted: bool = False,
     force: bool = False,
-):
+) -> None:
     if not force:
         from rich.prompt import Prompt
 

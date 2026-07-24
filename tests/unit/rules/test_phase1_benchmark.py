@@ -1,3 +1,5 @@
+from typing import Any
+
 import time
 from unittest.mock import AsyncMock, MagicMock
 
@@ -7,7 +9,9 @@ from app.database.rules.context import ExecutionContext
 from app.database.rules.engine.phase1_runner import Phase1Runner
 
 
-def _make_mock_rule(type, config, is_active=True):
+def _make_mock_rule(
+    type: str, config: dict[str, Any], is_active: bool = True
+) -> MagicMock:
     r = MagicMock()
     r.type = type
     r.config = config
@@ -16,7 +20,7 @@ def _make_mock_rule(type, config, is_active=True):
     return r
 
 
-def _make_mock_context():
+def _make_mock_context() -> ExecutionContext:
     return ExecutionContext(
         queue_id=1,
         user_id=12345678,
@@ -31,7 +35,7 @@ def _make_mock_context():
 class TestPhase1Benchmark:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_10_rules_under_10ms(self):
+    async def test_10_rules_under_10ms(self) -> None:
         runner = Phase1Runner()
         rules = [
             _make_mock_rule("beatmap_duration", {"max_seconds": 200, "logic": "max"}),
@@ -55,7 +59,7 @@ class TestPhase1Benchmark:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_50_rules_under_500ms(self):
+    async def test_50_rules_under_500ms(self) -> None:
         runner = Phase1Runner()
         rules = []
         for i in range(50):
@@ -83,7 +87,7 @@ class TestPhase1Benchmark:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_single_rule_under_5ms(self):
+    async def test_single_rule_under_5ms(self) -> None:
         runner = Phase1Runner()
         rules = [
             _make_mock_rule("beatmap_duration", {"max_seconds": 200, "logic": "max"}),

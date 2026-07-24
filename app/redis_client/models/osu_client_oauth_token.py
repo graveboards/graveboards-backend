@@ -1,3 +1,5 @@
+from typing import cast as typing_cast
+
 from pydantic.main import BaseModel
 
 
@@ -42,4 +44,4 @@ class OsuClientOAuthToken(BaseModel):
 
             deserialized_dict[key] = value
 
-        return cls.model_validate(deserialized_dict)
+        return typing_cast(OsuClientOAuthToken, cls.model_validate(deserialized_dict))

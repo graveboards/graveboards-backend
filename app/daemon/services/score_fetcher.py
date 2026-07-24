@@ -31,7 +31,7 @@ class ScoreFetcher(ScheduledFetcherService):
     CHANNEL: ClassVar[str] = ChannelName.SCORE_FETCHER_TASKS
     JOB_NAME: ClassVar[str] = "score-fetch"
 
-    async def _preload_jobs(self):
+    async def _preload_jobs(self) -> None:
         """Load enabled score fetch jobs into the scheduler at startup."""
         records = await self._db.get_many(ScoreFetcherTask, enabled=True)
         num_loaded = 0

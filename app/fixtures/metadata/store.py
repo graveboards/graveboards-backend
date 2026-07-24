@@ -3,6 +3,7 @@
 import json
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import cast as typing_cast
 
 from app.observability.logging import get_logger
 
@@ -63,37 +64,37 @@ class MetadataStore:
         self._dirty_sections.add(section)
 
     @property
-    def samples(self):
+    def samples(self) -> dict[str, Any]:
         """Access samples section."""
         return self.data.samples
 
     @property
-    def promoted_fixtures(self):
+    def promoted_fixtures(self) -> dict[str, Any]:
         """Access promoted fixtures section."""
         return self.data.promoted_fixtures
 
     @property
-    def targeted(self):
+    def targeted(self) -> dict[str, Any]:
         """Access targeted metadata section."""
         return self.data.targeted
 
     @property
-    def search_test_coverage(self):
+    def search_test_coverage(self) -> dict[str, Any]:
         """Access search test coverage section."""
         return self.data.search_test_coverage
 
     @property
-    def failed_ids(self):
+    def failed_ids(self) -> dict[str, Any]:
         """Access failed IDs section."""
         return self.data.failed_ids
 
     @property
-    def top_player_ids(self):
+    def top_player_ids(self) -> dict[str, Any]:
         """Access top player IDs section."""
         return self.data.top_player_ids
 
     @property
-    def id_ranges(self):
+    def id_ranges(self) -> dict[str, Any]:
         """Access ID ranges section."""
         return self.data.id_ranges
 
@@ -121,7 +122,7 @@ class FixtureMetadataManager:
             self.metadata = self._store.data.to_dict()
         self.fixture_dir = fixture_dir or FIXTURES_DIR
 
-    def init_metadata(self):
+    def init_metadata(self) -> None:
         """Initialize metadata structure for targeted fixtures."""
         from ..metadata_io import create_targeted_metadata
 
@@ -201,10 +202,10 @@ class FixtureMetadataManager:
 
         return changes
 
-    def get_coverage_report(self) -> dict:
+    def get_coverage_report(self) -> dict[str, Any]:
         """Get current fixture coverage."""
-        targeted_metadata = self.metadata.get("targeted", {})
-        return targeted_metadata
+        targeted: dict[str, Any] = self.metadata.get("targeted", {})
+        return targeted
 
     def ensure_coverage(
         self,

@@ -91,7 +91,7 @@ async def cmd_refresh_archives(force: bool = False) -> None:
         await rc.aclose()
 
 
-def main():
+def main() -> None:
     """CLI entry point."""
     parser = argparse.ArgumentParser(description="Refresh fixture archive index from osu.sh")
     parser.add_argument(

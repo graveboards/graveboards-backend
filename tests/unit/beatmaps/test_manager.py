@@ -1,4 +1,6 @@
 from io import BytesIO
+from typing import Any
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -13,21 +15,21 @@ class TestBeatmapManager:
     """Test beatmap archival/versioning."""
 
     @pytest.fixture
-    def mock_rc(self):
+    def mock_rc(self) -> MagicMock:
         """Create a mock Redis client."""
         return MagicMock(spec=RedisClient)
 
     @pytest.fixture
-    def mock_db(self):
+    def mock_db(self) -> MagicMock:
         """Create a mock database."""
         return MagicMock(spec=PostgresqlDB)
 
     @pytest.fixture
-    def manager(self, mock_rc, mock_db):
+    def manager(self, mock_rc: MagicMock, mock_db: MagicMock) -> BeatmapManager:
         """Create a BeatmapManager instance."""
         return BeatmapManager(rc=mock_rc, db=mock_db)
 
-    def test_initialization(self, mock_rc, mock_db):
+    def test_initialization(self, mock_rc: MagicMock, mock_db: MagicMock) -> None:
         """Test manager initialization."""
         manager = BeatmapManager(rc=mock_rc, db=mock_db)
 
@@ -35,7 +37,7 @@ class TestBeatmapManager:
         assert manager.db is mock_db
         assert manager.oac is not None
 
-    async def test_archive_creates_snapshot(self, manager):
+    async def test_archive_creates_snapshot(self, manager: BeatmapManager) -> None:
         """Test archive creates snapshot."""
         manager._session = MagicMock()
 
@@ -56,7 +58,7 @@ class TestBeatmapManager:
                         with patch.object(manager, "_download"):
                             await manager.archive(123)
 
-    async def test_archive_updates_existing(self, manager):
+    async def test_archive_updates_existing(self, manager: BeatmapManager) -> None:
         """Test archive updates existing snapshot."""
         manager._session = MagicMock()
 
@@ -76,7 +78,7 @@ class TestBeatmapManager:
                     with patch.object(manager, "_update_beatmapset"):
                         await manager.archive(123)
 
-    async def test_archive_no_download(self, manager):
+    async def test_archive_no_download(self, manager: BeatmapManager) -> None:
         """Test archive without download."""
         manager._session = MagicMock()
 
@@ -99,7 +101,7 @@ class TestBeatmapManager:
 
                             mock_download.assert_not_called()
 
-    async def test_snapshot_beatmapset(self, manager):
+    async def test_snapshot_beatmapset(self, manager: BeatmapManager) -> None:
         """Test snapshot beatmapset."""
         manager._session = MagicMock()
         manager._changelog = {"snapshotted_beatmaps": []}
@@ -123,7 +125,7 @@ class TestBeatmapManager:
                     with patch.object(manager, "_populate_beatmapset_tags"):
                         await manager._snapshot_beatmapset(mock_beatmapset_dict)
 
-    async def test_snapshot_beatmaps_reuses_existing(self, manager):
+    async def test_snapshot_beatmaps_reuses_existing(self, manager: BeatmapManager) -> None:
         """Test snapshot beatmaps reuses existing."""
         manager._session = MagicMock()
 
@@ -139,7 +141,7 @@ class TestBeatmapManager:
                     # Should reuse existing, not create new
                     assert result is not None
 
-    async def test_update_beatmapset(self, manager):
+    async def test_update_beatmapset(self, manager: BeatmapManager) -> None:
         """Test update beatmapset."""
         manager._session = MagicMock()
 
@@ -160,7 +162,7 @@ class TestBeatmapManager:
                 with patch.object(manager.db, "update"):
                     await manager._update_beatmapset(mock_beatmapset_dict)
 
-    async def test_update_beatmaps(self, manager):
+    async def test_update_beatmaps(self, manager: BeatmapManager) -> None:
         """Test update beatmaps."""
         manager._session = MagicMock()
 
@@ -176,7 +178,7 @@ class TestBeatmapManager:
 
                 await manager._update_beatmaps(mock_beatmaps)
 
-    async def test_populate_beatmapset(self, manager):
+    async def test_populate_beatmapset(self, manager: BeatmapManager) -> None:
         """Test populate beatmapset."""
         manager._session = MagicMock()
 
@@ -190,7 +192,7 @@ class TestBeatmapManager:
             with patch.object(manager, "_populate_beatmap"):
                 await manager._populate_beatmapset(mock_beatmapset_dict)
 
-    async def test_populate_user(self, manager):
+    async def test_populate_user(self, manager: BeatmapManager) -> None:
         """Test populate user."""
         manager._session = MagicMock()
 
@@ -207,7 +209,7 @@ class TestBeatmapManager:
 
                         assert user is not None
 
-    async def test_populate_profile(self, manager):
+    async def test_populate_profile(self, manager: BeatmapManager) -> None:
         """Test populate profile."""
         manager._session = MagicMock()
 
@@ -234,7 +236,7 @@ class TestBeatmapManager:
 
                                 assert profile is not None
 
-    async def test_populate_owner_profiles(self, manager):
+    async def test_populate_owner_profiles(self, manager: BeatmapManager) -> None:
         """Test populate owner profiles."""
         manager._session = MagicMock()
 
@@ -246,7 +248,7 @@ class TestBeatmapManager:
 
                 assert profiles is not None
 
-    async def test_populate_beatmapset_tags(self, manager):
+    async def test_populate_beatmapset_tags(self, manager: BeatmapManager) -> None:
         """Test populate beatmapset tags."""
         manager._session = MagicMock()
 
@@ -262,7 +264,7 @@ class TestBeatmapManager:
 
                 assert tags is not None
 
-    async def test_populate_beatmap_tags(self, manager):
+    async def test_populate_beatmap_tags(self, manager: BeatmapManager) -> None:
         """Test populate beatmap tags."""
         manager._session = MagicMock()
 
@@ -276,7 +278,7 @@ class TestBeatmapManager:
 
                 assert tags is not None
 
-    async def test_populate_beatmap_tags_creates_missing(self, manager):
+    async def test_populate_beatmap_tags_creates_missing(self, manager: BeatmapManager) -> None:
         """Test populate beatmap tags creates new records when tags don't exist locally."""
         manager._session = MagicMock()
 
@@ -284,7 +286,7 @@ class TestBeatmapManager:
         mock_new_tag.id = 1
         mock_new_tag.name = "metal"
 
-        async def mock_update_and_add():
+        async def mock_update_and_add() -> Any:
             manager.db.add(
                 BeatmapTag,
                 id=1,
@@ -310,7 +312,7 @@ class TestBeatmapManager:
                     assert len(tags) == 1
                     assert tags[0].id == 1
 
-    async def test_populate_beatmap_tags_empty_input(self, manager):
+    async def test_populate_beatmap_tags_empty_input(self, manager: BeatmapManager) -> None:
         """Test populate beatmap tags returns empty list for empty input."""
         manager._session = MagicMock()
 
@@ -318,7 +320,7 @@ class TestBeatmapManager:
 
         assert tags == []
 
-    async def test_populate_beatmap_tags_none_input(self, manager):
+    async def test_populate_beatmap_tags_none_input(self, manager: BeatmapManager) -> None:
         """Test populate beatmap tags returns empty list for None input."""
         manager._session = MagicMock()
 
@@ -326,7 +328,7 @@ class TestBeatmapManager:
 
         assert tags == []
 
-    async def test_snapshot_beatmaps_populates_tags(self, manager):
+    async def test_snapshot_beatmaps_populates_tags(self, manager: BeatmapManager) -> None:
         """Test snapshot beatmaps creates BeatmapTag records and associates them."""
         manager._session = MagicMock()
         manager._changelog = {"snapshotted_beatmaps": []}
@@ -372,7 +374,7 @@ class TestBeatmapManager:
                             mock_add.assert_called_once()
                             assert len(result) == 1
 
-    async def test_archive_populates_beatmap_tags_on_first_snapshot(self, manager):
+    async def test_archive_populates_beatmap_tags_on_first_snapshot(self, manager: BeatmapManager) -> None:
         """Test that archiving a beatmapset for the first time populates BeatmapTag records."""
         manager._session = MagicMock()
 
@@ -449,7 +451,7 @@ class TestBeatmapManager:
                                                     [{"tag_id": 5}]
                                                 )
 
-    async def test_download_beatmaps(self, manager):
+    async def test_download_beatmaps(self, manager: BeatmapManager) -> None:
         """Test download beatmaps."""
         manager._session = MagicMock()
 
@@ -472,7 +474,7 @@ class TestBeatmapManager:
 
                     await manager._download(beatmap_ids)
 
-    async def test_get_beatmap_snapshot(self, manager):
+    async def test_get_beatmap_snapshot(self, manager: BeatmapManager) -> None:
         """Test get beatmap snapshot."""
         manager._session = MagicMock()
 
@@ -490,7 +492,7 @@ class TestBeatmapManager:
 
             assert result == b"test data"
 
-    async def test_get_beatmap_path(self, manager):
+    async def test_get_beatmap_path(self, manager: BeatmapManager) -> None:
         """Test get beatmap path."""
         with patch("app.beatmaps.manager.os.path.exists") as mock_exists:
             mock_exists.return_value = True
@@ -499,7 +501,7 @@ class TestBeatmapManager:
 
             assert isinstance(result, str)
 
-    async def test_get_zip(self, manager):
+    async def test_get_zip(self, manager: BeatmapManager) -> None:
         """Test get zip archive."""
         manager._session = MagicMock()
 
@@ -511,7 +513,7 @@ class TestBeatmapManager:
 
             assert isinstance(result, BytesIO)
 
-    def test_reset_changelog(self, manager):
+    def test_reset_changelog(self, manager: BeatmapManager) -> None:
         """Test reset changelog."""
         manager._changelog = {
             "snapshotted_beatmapset": {"id": 1},
@@ -529,7 +531,7 @@ class TestBeatmapManager:
             "updated_beatmaps": [],
         }
 
-    def test_get_changelog_structure(self, manager):
+    def test_get_changelog_structure(self, manager: BeatmapManager) -> None:
         """Test changelog structure."""
         manager._reset_changelog()
 

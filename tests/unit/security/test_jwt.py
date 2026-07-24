@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
@@ -8,7 +8,7 @@ class TestDecodeToken:
     @patch("app.security.jwt.jwt.decode")
     @patch("app.security.jwt.JWT_SECRET_KEY", "test-secret")
     @patch("app.security.jwt.FRONTEND_BASE_URL", "https://example.com")
-    def test_decoding_calls_jwt_decode(self, mock_decode):
+    def test_decoding_calls_jwt_decode(self, mock_decode: MagicMock) -> None:
         from app.security.jwt import decode_token
 
         mock_decode.return_value = {
@@ -31,7 +31,7 @@ class TestDecodeToken:
         assert result == {"sub": "123", "iss": "https://example.com", "iat": 1000, "exp": 2000}
 
     @patch("app.security.jwt.jwt.decode")
-    def test_invalid_token_raises_invalid_token_error(self, mock_decode):
+    def test_invalid_token_raises_invalid_token_error(self, mock_decode: MagicMock) -> None:
         from app.security.jwt import decode_token
 
         mock_decode.side_effect = InvalidTokenError("Invalid token")
@@ -40,7 +40,7 @@ class TestDecodeToken:
             decode_token("invalid.token")
 
     @patch("app.security.jwt.jwt.decode")
-    def test_expired_token_raises_expired_signature_error(self, mock_decode):
+    def test_expired_token_raises_expired_signature_error(self, mock_decode: MagicMock) -> None:
         from app.security.jwt import decode_token
 
         mock_decode.side_effect = ExpiredSignatureError("Token expired")
@@ -51,7 +51,7 @@ class TestDecodeToken:
 
 class TestValidateToken:
     @patch("app.security.jwt.decode_token")
-    def test_validates_and_returns_normalized_payload(self, mock_decode):
+    def test_validates_and_returns_normalized_payload(self, mock_decode: MagicMock) -> None:
         from app.security.jwt import validate_token
 
         mock_decode.return_value = {
@@ -69,7 +69,7 @@ class TestValidateToken:
         assert result["exp"] == 2000
 
     @patch("app.security.jwt.decode_token")
-    def test_subject_not_digit_raises_invalid_token_error(self, mock_decode):
+    def test_subject_not_digit_raises_invalid_token_error(self, mock_decode: MagicMock) -> None:
         from app.security.jwt import validate_token
 
         mock_decode.return_value = {
@@ -83,7 +83,7 @@ class TestValidateToken:
             validate_token("invalid-subject.token")
 
     @patch("app.security.jwt.decode_token")
-    def test_float_timestamps_converted_to_int(self, mock_decode):
+    def test_float_timestamps_converted_to_int(self, mock_decode: MagicMock) -> None:
         from app.security.jwt import validate_token
 
         mock_decode.return_value = {

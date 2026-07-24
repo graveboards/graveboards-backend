@@ -14,13 +14,13 @@ from app.database.rules.registry import (
 
 class TestRegistryAllValidators:
     @pytest.mark.unit
-    def test_tier1_validators_registered(self):
+    def test_tier1_validators_registered(self) -> None:
         assert "rate_limit" in RULE_REGISTRY
         assert "cooldown" in RULE_REGISTRY
         assert "blacklist" in RULE_REGISTRY
 
     @pytest.mark.unit
-    def test_tier2_validators_registered(self):
+    def test_tier2_validators_registered(self) -> None:
         tier2_types = [
             "beatmap_duration",
             "beatmap_star_rating",
@@ -44,7 +44,7 @@ class TestRegistryAllValidators:
             assert t in RULE_REGISTRY, f"{t} not in registry"
 
     @pytest.mark.unit
-    def test_tier_assignments_correct(self):
+    def test_tier_assignments_correct(self) -> None:
         assert RULE_TIERS["rate_limit"] == 1
         assert RULE_TIERS["cooldown"] == 1
         assert RULE_TIERS["blacklist"] == 1
@@ -55,23 +55,23 @@ class TestRegistryAllValidators:
         assert RULE_TIERS["beatmap_mode"] == 2
 
     @pytest.mark.unit
-    def test_get_validator_returns_correct_class(self):
+    def test_get_validator_returns_correct_class(self) -> None:
         cls = get_validator("beatmap_duration")
         assert cls is not None
         assert cls.type == "beatmap_duration"
 
     @pytest.mark.unit
-    def test_get_validator_returns_none_for_unknown(self):
+    def test_get_validator_returns_none_for_unknown(self) -> None:
         assert get_validator("nonexistent") is None
 
     @pytest.mark.unit
-    def test_get_validator_tier(self):
+    def test_get_validator_tier(self) -> None:
         assert get_validator_tier("rate_limit") == 1
         assert get_validator_tier("beatmap_duration") == 2
         assert get_validator_tier("nonexistent") is None
 
     @pytest.mark.unit
-    def test_get_validators_for_tier(self):
+    def test_get_validators_for_tier(self) -> None:
         tier1 = get_validators_for_tier(1)
         assert "rate_limit" in tier1
         assert "cooldown" in tier1
@@ -83,7 +83,7 @@ class TestRegistryAllValidators:
         assert "rate_limit" not in tier2
 
     @pytest.mark.unit
-    def test_register_validator(self):
+    def test_register_validator(self) -> None:
         class FakeValidator(RestrictionBase):
             type = "fake_test_type"
 
@@ -96,17 +96,17 @@ class TestRegistryAllValidators:
         RULE_TIERS.pop("fake_test_type", None)
 
     @pytest.mark.unit
-    def test_get_supported_versions(self):
+    def test_get_supported_versions(self) -> None:
         versions = get_supported_versions("rate_limit")
         assert versions is not None
         assert "1.0" in versions
 
     @pytest.mark.unit
-    def test_get_supported_versions_unknown(self):
+    def test_get_supported_versions_unknown(self) -> None:
         assert get_supported_versions("nonexistent") is None
 
     @pytest.mark.unit
-    def test_all_validators_have_supported_versions(self):
+    def test_all_validators_have_supported_versions(self) -> None:
         for type_name in RULE_REGISTRY:
             versions = get_supported_versions(type_name)
             assert versions is not None, f"{type_name} has no supported versions"

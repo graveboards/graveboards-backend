@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 
 from app.database.db import PostgresqlDB
@@ -5,12 +7,12 @@ from app.database.models import Profile, Queue, User
 
 
 @pytest.fixture
-def db():
+def db() -> PostgresqlDB:
     return PostgresqlDB()
 
 
 @pytest.mark.asyncio
-async def test_resolve_or_create_pk_lookup_existing(db, db_session):
+async def test_resolve_or_create_pk_lookup_existing(db: PostgresqlDB, db_session: Any) -> None:
     """PK lookup: existing user by id should resolve to same instance."""
     user = await db.add(User, session=db_session, id=100001)
 
@@ -21,7 +23,7 @@ async def test_resolve_or_create_pk_lookup_existing(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_resolve_or_create_pk_lookup_new(db, db_session):
+async def test_resolve_or_create_pk_lookup_new(db: PostgresqlDB, db_session: Any) -> None:
     """PK lookup: new user with given id should create."""
     created = await db.add(User, session=db_session, id=100002)
 
@@ -29,7 +31,7 @@ async def test_resolve_or_create_pk_lookup_new(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_resolve_or_create_unique_column_existing(db, db_session):
+async def test_resolve_or_create_unique_column_existing(db: PostgresqlDB, db_session: Any) -> None:
     """Unique column lookup: existing profile by unique user_id should resolve."""
     await db.add(User, session=db_session, id=100003)
     profile = await db.add(Profile, session=db_session, user_id=100003, username="original")
@@ -42,7 +44,7 @@ async def test_resolve_or_create_unique_column_existing(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_resolve_or_create_unique_column_new(db, db_session):
+async def test_resolve_or_create_unique_column_new(db: PostgresqlDB, db_session: Any) -> None:
     """Unique column lookup: new profile by unique user_id should create."""
     await db.add(User, session=db_session, id=100004)
 
@@ -53,7 +55,7 @@ async def test_resolve_or_create_unique_column_new(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_resolve_or_create_composite_unique_existing(db, db_session):
+async def test_resolve_or_create_composite_unique_existing(db: PostgresqlDB, db_session: Any) -> None:
     """Composite unique constraint: existing queue by (user_id, name) should resolve."""
     await db.add(User, session=db_session, id=100005)
     queue = await db.add(
@@ -70,7 +72,7 @@ async def test_resolve_or_create_composite_unique_existing(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_resolve_or_create_composite_unique_new_same_user(db, db_session):
+async def test_resolve_or_create_composite_unique_new_same_user(db: PostgresqlDB, db_session: Any) -> None:
     """Composite unique constraint: new queue with same user_id but different name should create."""
     await db.add(User, session=db_session, id=100006)
 
@@ -83,7 +85,7 @@ async def test_resolve_or_create_composite_unique_new_same_user(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_resolve_or_create_cross_session_resolve(db, db_session):
+async def test_resolve_or_create_cross_session_resolve(db: PostgresqlDB, db_session: Any) -> None:
     """Cross-session: object exists in DB but not in identity map should still resolve via DB query.
 
     This is the key scenario that the identity map scan was handling but is now handled
@@ -110,7 +112,7 @@ async def test_resolve_or_create_cross_session_resolve(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_resolve_or_create_relationship_scalar(db, db_session):
+async def test_resolve_or_create_relationship_scalar(db: PostgresqlDB, db_session: Any) -> None:
     """Relationship: creating user with nested profile should resolve profile by unique user_id."""
     created = await db.add(
         User,
@@ -128,7 +130,7 @@ async def test_resolve_or_create_relationship_scalar(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_resolve_or_create_relationship_scalar_resolve_existing(db, db_session):
+async def test_resolve_or_create_relationship_scalar_resolve_existing(db: PostgresqlDB, db_session: Any) -> None:
     """Relationship: existing profile should be resolved, not duplicated."""
     await db.add(User, session=db_session, id=100010)
     await db.add(Profile, session=db_session, user_id=100010, username="existing")
@@ -145,7 +147,7 @@ async def test_resolve_or_create_relationship_scalar_resolve_existing(db, db_ses
 
 
 @pytest.mark.asyncio
-async def test_resolve_or_create_relationship_list(db, db_session):
+async def test_resolve_or_create_relationship_list(db: PostgresqlDB, db_session: Any) -> None:
     """Relationship: creating user with multiple queues should create all."""
     created = await db.add(
         User,
@@ -166,7 +168,7 @@ async def test_resolve_or_create_relationship_list(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_resolve_or_create_relationship_list_resolve_existing(db, db_session):
+async def test_resolve_or_create_relationship_list_resolve_existing(db: PostgresqlDB, db_session: Any) -> None:
     """Relationship: existing queue with same (user_id, name) should be resolved, new one created."""
     await db.add(User, session=db_session, id=100012)
 
@@ -202,7 +204,7 @@ async def test_resolve_or_create_relationship_list_resolve_existing(db, db_sessi
 
 
 @pytest.mark.asyncio
-async def test_resolve_or_create_no_match_creates(db, db_session):
+async def test_resolve_or_create_no_match_creates(db: PostgresqlDB, db_session: Any) -> None:
     """No unique match: should create a new instance."""
     created = await db.add(User, session=db_session, id=100013)
 
@@ -210,7 +212,7 @@ async def test_resolve_or_create_no_match_creates(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_resolve_or_create_multiple_unique_columns(db, db_session):
+async def test_resolve_or_create_multiple_unique_columns(db: PostgresqlDB, db_session: Any) -> None:
     """Model with multiple unique constraints: all should be checked."""
     await db.add(User, session=db_session, id=100014)
 
@@ -223,7 +225,7 @@ async def test_resolve_or_create_multiple_unique_columns(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_resolve_or_create_add_many_resolves(db, db_session):
+async def test_resolve_or_create_add_many_resolves(db: PostgresqlDB, db_session: Any) -> None:
     """add_many: existing users should be resolved, not duplicated."""
     await db.add(User, session=db_session, id=100015)
     await db.add(User, session=db_session, id=100016)
@@ -242,7 +244,7 @@ async def test_resolve_or_create_add_many_resolves(db, db_session):
 
 
 @pytest.mark.asyncio
-async def test_resolve_or_create_unique_constraint_then_different(db, db_session):
+async def test_resolve_or_create_unique_constraint_then_different(db: PostgresqlDB, db_session: Any) -> None:
     """Composite unique: same user_id but different name creates separate queues."""
     await db.add(User, session=db_session, id=100018)
 

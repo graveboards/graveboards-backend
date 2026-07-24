@@ -1,9 +1,11 @@
+from typing import Any, Callable
+
 import pytest
 
 from app.database.models import Queue
 
 
-def create_queue_from_user_id(user_id: int, name: str = "Test Queue", **kwargs) -> Queue:
+def create_queue_from_user_id(user_id: int, name: str = "Test Queue", **kwargs: Any) -> Queue:
     """Create a Queue model from a user fixture."""
     return Queue(
         user_id=user_id,
@@ -15,6 +17,6 @@ def create_queue_from_user_id(user_id: int, name: str = "Test Queue", **kwargs) 
 
 
 @pytest.fixture
-def queue_factory():
+def queue_factory() -> Callable[..., Queue]:
     """Factory fixture for creating queue instances."""
     return create_queue_from_user_id

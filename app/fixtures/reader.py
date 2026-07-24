@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import Any, cast as typing_cast
 
 from app.config import PROJECT_ROOT
 from app.observability.logging import get_logger
@@ -362,7 +363,7 @@ class FixtureReader:
         try:
             with open(file_path) as f:
                 data = json.load(f)
-            return data
+            return typing_cast(dict[Any, Any], data)
         except (json.JSONDecodeError, FileNotFoundError) as e:
             logger.warning(f"Failed to load fixture {file_path}: {e}")
             return None

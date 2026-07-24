@@ -1,3 +1,5 @@
+from typing import Any
+
 from unittest.mock import MagicMock
 
 import pytest
@@ -8,7 +10,7 @@ from app.database.rules.validators.beatmap.length import LengthRestriction
 from app.database.rules.validators.beatmap.tags import TagsRestriction
 
 
-def _make_beatmap(hit_length=180, total_length=200, top_tag_ids=None, version="Normal"):
+def _make_beatmap(hit_length: float = 180, total_length: float = 200, top_tag_ids: list[dict[str, int]] | None = None, version: str = "Normal") -> MagicMock:
     bm = MagicMock()
     bm.hit_length = hit_length
     bm.total_length = total_length
@@ -20,7 +22,7 @@ def _make_beatmap(hit_length=180, total_length=200, top_tag_ids=None, version="N
 class TestTagsRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_any_required_tag_present(self):
+    async def test_passes_when_any_required_tag_present(self) -> None:
         validator = TagsRestriction()
         beatmaps = [_make_beatmap(top_tag_ids=[{"tag_id": 1}, {"tag_id": 2}])]
         context = ExecutionContext(
@@ -34,7 +36,7 @@ class TestTagsRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_all_required_tags_present(self):
+    async def test_passes_when_all_required_tags_present(self) -> None:
         validator = TagsRestriction()
         beatmaps = [_make_beatmap(top_tag_ids=[{"tag_id": 1}, {"tag_id": 2}, {"tag_id": 3}])]
         context = ExecutionContext(
@@ -48,7 +50,7 @@ class TestTagsRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_no_tags_match_any(self):
+    async def test_raises_when_no_tags_match_any(self) -> None:
         validator = TagsRestriction()
         beatmaps = [_make_beatmap(top_tag_ids=[{"tag_id": 4}])]
         context = ExecutionContext(
@@ -64,7 +66,7 @@ class TestTagsRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_tag_metadata_unavailable(self):
+    async def test_raises_when_tag_metadata_unavailable(self) -> None:
         validator = TagsRestriction()
         beatmaps = [_make_beatmap(top_tag_ids=[])]
         context = ExecutionContext(
@@ -82,7 +84,7 @@ class TestTagsRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_skips_when_no_required_tags(self):
+    async def test_skips_when_no_required_tags(self) -> None:
         validator = TagsRestriction()
         beatmaps = [_make_beatmap()]
         context = ExecutionContext(
@@ -98,7 +100,7 @@ class TestTagsRestriction:
 class TestLengthRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_all_in_range(self):
+    async def test_passes_when_all_in_range(self) -> None:
         validator = LengthRestriction()
         beatmaps = [_make_beatmap(hit_length=150, total_length=180)]
         context = ExecutionContext(
@@ -117,7 +119,7 @@ class TestLengthRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_hit_length_below_min(self):
+    async def test_raises_when_hit_length_below_min(self) -> None:
         validator = LengthRestriction()
         beatmaps = [_make_beatmap(hit_length=50, total_length=180)]
         context = ExecutionContext(
@@ -133,7 +135,7 @@ class TestLengthRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_total_length_above_max(self):
+    async def test_raises_when_total_length_above_max(self) -> None:
         validator = LengthRestriction()
         beatmaps = [_make_beatmap(hit_length=150, total_length=400)]
         context = ExecutionContext(
@@ -149,7 +151,7 @@ class TestLengthRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_all_logic_raises_on_specific_beatmap(self):
+    async def test_all_logic_raises_on_specific_beatmap(self) -> None:
         validator = LengthRestriction()
         beatmaps = [
             _make_beatmap(hit_length=150, total_length=180, version="Normal"),

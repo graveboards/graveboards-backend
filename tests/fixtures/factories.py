@@ -37,12 +37,12 @@ class BeatmapFactory(factory.Factory):
     updated_at = LazyAttribute(lambda o: datetime.utcnow().isoformat() + "+00:00")
 
 
-def generate_beatmap_data(count: int = 1, **overrides) -> list[dict[str, Any]]:
+def generate_beatmap_data(count: int = 1, **overrides: Any) -> list[dict[str, Any]]:
     """Generate beatmap test data with optional overrides."""
     return [BeatmapFactory.build(**overrides) for _ in range(count)]
 
 
-def generate_user_data(count: int = 1, ruleset: str = "osu", **overrides) -> list[dict[str, Any]]:
+def generate_user_data(count: int = 1, ruleset: str = "osu", **overrides: Any) -> list[dict[str, Any]]:
     """Generate user/tester data with optional overrides."""
     data = []
     for i in range(count):
@@ -69,7 +69,7 @@ def generate_user_data(count: int = 1, ruleset: str = "osu", **overrides) -> lis
     return data
 
 
-def generate_score_data(count: int = 1, ruleset: str = "osu", **overrides) -> list[dict[str, Any]]:
+def generate_score_data(count: int = 1, ruleset: str = "osu", **overrides: Any) -> list[dict[str, Any]]:
     """Generate score test data with optional overrides."""
     data = []
     for i in range(count):
@@ -94,7 +94,7 @@ def generate_score_data(count: int = 1, ruleset: str = "osu", **overrides) -> li
     return data
 
 
-def generate_beatmapset_data(count: int = 1, **overrides) -> list[dict[str, Any]]:
+def generate_beatmapset_data(count: int = 1, **overrides: Any) -> list[dict[str, Any]]:
     """Generate beatmapset test data with optional overrides."""
     data = []
     for i in range(count):
@@ -113,7 +113,7 @@ def generate_beatmapset_data(count: int = 1, **overrides) -> list[dict[str, Any]
     return data
 
 
-def generate_beatmap_attributes_data(count: int = 1, **overrides) -> list[dict[str, Any]]:
+def generate_beatmap_attributes_data(count: int = 1, **overrides: Any) -> list[dict[str, Any]]:
     """Generate beatmap attributes test data with optional overrides."""
     data = []
     for i in range(count):

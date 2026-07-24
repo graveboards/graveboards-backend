@@ -18,13 +18,13 @@ from app.search.enums import Scope
 class TestDatastructures:
     """Test search data structures."""
 
-    def test_conditions_creation(self):
+    def test_conditions_creation(self) -> None:
         """Test Conditions creation."""
         conditions = Conditions(eq=123)
 
         assert conditions.eq == 123
 
-    def test_conditions_multiple_fields(self):
+    def test_conditions_multiple_fields(self) -> None:
         """Test Conditions with multiple fields."""
         conditions = Conditions(eq=123, gt=100, lt=200)
 
@@ -32,66 +32,66 @@ class TestDatastructures:
         assert conditions.gt == 100
         assert conditions.lte is None
 
-    def test_conditions_shorthand_normalization(self):
+    def test_conditions_shorthand_normalization(self) -> None:
         """Test Conditions shorthand normalization."""
         conditions = Conditions.model_validate(42)
 
         assert conditions.eq == 42
 
-    def test_conditions_none_normalization(self):
+    def test_conditions_none_normalization(self) -> None:
         """Test Conditions None normalization."""
         conditions = Conditions.model_validate(None)
 
         assert conditions.is_null is True
 
-    def test_conditions_validate_keys(self):
+    def test_conditions_validate_keys(self) -> None:
         """Test Conditions validates keys."""
         with pytest.raises(ValueError):
             Conditions.model_validate({"invalid": 123})
 
-    def test_sorting_option_creation(self):
+    def test_sorting_option_creation(self) -> None:
         """Test SortingOption creation."""
         option = SortingOption(field="BeatmapSnapshot.beatmap_id", order="asc")
 
         assert option.order.value == "asc"
 
-    def test_sorting_schema_creation(self):
+    def test_sorting_schema_creation(self) -> None:
         """Test SortingSchema creation."""
         schema = SortingSchema(root=[SortingOption(field="BeatmapSnapshot.beatmap_id")])
 
         assert len(schema.root) == 1
 
-    def test_field_filters_creation(self):
+    def test_field_filters_creation(self) -> None:
         """Test FieldFilters creation."""
         filters = FieldFilters(root={"id": Conditions(eq=123)})
 
         assert "id" in filters
 
-    def test_filters_schema_creation(self):
+    def test_filters_schema_creation(self) -> None:
         """Test FiltersSchema creation."""
         schema = FiltersSchema(profile=FieldFilters(root={}))
 
         assert schema.profile is not None
 
-    def test_search_schema_creation(self):
+    def test_search_schema_creation(self) -> None:
         """Test SearchSchema creation."""
         schema = SearchSchema(scope=Scope.BEATMAPS)
 
         assert schema.scope == Scope.BEATMAPS
 
-    def test_search_schema_with_sorting(self):
+    def test_search_schema_with_sorting(self) -> None:
         """Test SearchSchema with sorting."""
         schema = SearchSchema(scope=Scope.BEATMAPS, sorting=SortingSchema(root=[]))
 
         assert schema.sorting is not None
 
-    def test_search_schema_with_filters(self):
+    def test_search_schema_with_filters(self) -> None:
         """Test SearchSchema with filters."""
         schema = SearchSchema(scope=Scope.BEATMAPS, filters=FiltersSchema())
 
         assert schema.filters is not None
 
-    def test_search_schema_with_search_terms(self):
+    def test_search_schema_with_search_terms(self) -> None:
         """Test SearchSchema with search terms."""
         schema = SearchSchema(
             scope=Scope.BEATMAPS, search_terms=SearchTermsSchema(terms=["beatmap"])
@@ -99,31 +99,31 @@ class TestDatastructures:
 
         assert schema.search_terms is not None
 
-    def test_search_schema_extra_forbidden(self):
+    def test_search_schema_extra_forbidden(self) -> None:
         """Test SearchSchema forbids extra fields."""
         with pytest.raises(ValidationError):
             SearchSchema(scope=Scope.BEATMAPS, extra_field="value")
 
-    def test_conditions_max_regex_length(self):
+    def test_conditions_max_regex_length(self) -> None:
         """Test Conditions validates regex length."""
         long_pattern = "a" * 150
 
         with pytest.raises(ValueError):
             Conditions(regex=long_pattern)
 
-    def test_conditions_empty_regex(self):
+    def test_conditions_empty_regex(self) -> None:
         """Test Conditions rejects empty regex."""
         with pytest.raises(ValueError):
             Conditions(regex="")
 
-    def test_conditions_dangerous_regex(self):
+    def test_conditions_dangerous_regex(self) -> None:
         """Test Conditions rejects dangerous regex."""
         dangerous_pattern = "(a+)+b"
 
         with pytest.raises(ValueError):
             Conditions(regex=dangerous_pattern)
 
-    def test_conditions_valid_regex(self):
+    def test_conditions_valid_regex(self) -> None:
         """Test Conditions accepts valid regex."""
         pattern = "test.*pattern"
 
@@ -131,32 +131,32 @@ class TestDatastructures:
 
         assert conditions.regex == pattern
 
-    def test_conditions_max_groups(self):
+    def test_conditions_max_groups(self) -> None:
         """Test Conditions validates capture groups."""
         pattern = "((a)(b)(c)(d)(e)(f)(g)(h)(i)(j))"
 
         with pytest.raises(ValueError):
             Conditions(regex=pattern)
 
-    def test_field_weights_creation(self):
+    def test_field_weights_creation(self) -> None:
         """Test FieldWeights creation."""
         weights = FieldWeights()
 
         assert weights is not None
 
-    def test_pattern_multipliers_creation(self):
+    def test_pattern_multipliers_creation(self) -> None:
         """Test PatternMultipliers creation."""
         multipliers = PatternMultipliers()
 
         assert multipliers is not None
 
-    def test_search_terms_creation(self):
+    def test_search_terms_creation(self) -> None:
         """Test SearchTerms creation."""
         terms = SearchTermsSchema(terms=["beatmap"])
 
         assert terms is not None
 
-    def test_conditions_values_for_validation(self):
+    def test_conditions_values_for_validation(self) -> None:
         """Test conditions values for validation."""
         conditions = Conditions.model_validate({"gt": 100, "in": [123, 2, 3]})
 
@@ -165,7 +165,7 @@ class TestDatastructures:
         assert 123 in values
         assert 100 in values
 
-    def test_field_filters_items(self):
+    def test_field_filters_items(self) -> None:
         """Test FieldFilters items method."""
         filters = FieldFilters(root={"id": Conditions(eq=123), "name": Conditions(eq="test")})
 
@@ -173,7 +173,7 @@ class TestDatastructures:
 
         assert len(list(items)) == 2
 
-    def test_sorting_schema_iteration(self):
+    def test_sorting_schema_iteration(self) -> None:
         """Test SortingSchema iteration."""
         schema = SortingSchema(
             root=[
@@ -186,40 +186,40 @@ class TestDatastructures:
 
         assert len(options) == 2
 
-    def test_field_filters_len(self):
+    def test_field_filters_len(self) -> None:
         """Test FieldFilters __len__."""
         filters = FieldFilters(root={"id": Conditions(eq=123)})
 
         assert len(filters) == 1
 
-    def test_search_terms_validate_against_scope(self):
+    def test_search_terms_validate_against_scope(self) -> None:
         """Test SearchTerms validate against scope."""
         terms = SearchTermsSchema(terms=["beatmap"])
 
         # Should not raise
         terms.validate_against_scope(Scope.BEATMAPS)
 
-    def test_conditions_is_null_exclusive(self):
+    def test_conditions_is_null_exclusive(self) -> None:
         """Test Conditions is_null is exclusive."""
         with pytest.raises(ValueError):
             Conditions(is_null=True, eq=123)
 
-    def test_conditions_range_validation(self):
+    def test_conditions_range_validation(self) -> None:
         """Test Conditions range validation."""
         with pytest.raises(ValueError):
             Conditions(gt=200, lt=100)
 
-    def test_conditions_range_lte_validation(self):
+    def test_conditions_range_lte_validation(self) -> None:
         """Test Conditions lte range validation."""
         with pytest.raises(ValueError):
             Conditions(gte=200, lt=100)
 
-    def test_conditions_in_contains_eq(self):
+    def test_conditions_in_contains_eq(self) -> None:
         """Test Conditions in contains eq."""
         with pytest.raises(ValueError):
             Conditions(eq=10, in_=[1, 2, 3])
 
-    def test_conditions_eq_not_in_not_in(self):
+    def test_conditions_eq_not_in_not_in(self) -> None:
         """Test Conditions eq not in not_in."""
         with pytest.raises(ValueError):
             Conditions(eq=2, not_in_=[1, 2, 3])

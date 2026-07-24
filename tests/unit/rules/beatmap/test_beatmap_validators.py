@@ -1,3 +1,5 @@
+from typing import Any
+
 from unittest.mock import MagicMock
 
 import pytest
@@ -13,7 +15,7 @@ from app.database.rules.validators.beatmap.storyboard import StoryboardRestricti
 from app.database.rules.validators.beatmap.video import VideoRestriction
 
 
-def _make_beatmap(bpm=150.0, mode="osu", version="Normal"):
+def _make_beatmap(bpm: float = 150.0, mode: str = "osu", version: str = "Normal") -> MagicMock:
     bm = MagicMock()
     bm.bpm = bpm
     bm.mode = mode
@@ -24,14 +26,14 @@ def _make_beatmap(bpm=150.0, mode="osu", version="Normal"):
     return bm
 
 
-def _make_genre(id: int, name: str):
+def _make_genre(id: int, name: str) -> MagicMock:
     g = MagicMock()
     g.id = id
     g.name = name
     return g
 
 
-def _make_language(id: int, name: str):
+def _make_language(id: int, name: str) -> MagicMock:
     lang = MagicMock()
     lang.id = id
     lang.name = name
@@ -41,7 +43,7 @@ def _make_language(id: int, name: str):
 class TestBPMRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_in_range(self):
+    async def test_passes_when_in_range(self) -> None:
         validator = BPMRestriction()
         beatmaps = [_make_beatmap(bpm=140.0), _make_beatmap(bpm=160.0)]
         context = ExecutionContext(
@@ -55,7 +57,7 @@ class TestBPMRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_below_min(self):
+    async def test_raises_when_below_min(self) -> None:
         validator = BPMRestriction()
         beatmaps = [_make_beatmap(bpm=50.0)]
         context = ExecutionContext(
@@ -71,7 +73,7 @@ class TestBPMRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_avg_logic_passes(self):
+    async def test_avg_logic_passes(self) -> None:
         validator = BPMRestriction()
         beatmaps = [_make_beatmap(bpm=140.0), _make_beatmap(bpm=160.0)]
         context = ExecutionContext(
@@ -85,7 +87,7 @@ class TestBPMRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_all_logic_raises_on_specific_beatmap(self):
+    async def test_all_logic_raises_on_specific_beatmap(self) -> None:
         validator = BPMRestriction()
         beatmaps = [
             _make_beatmap(bpm=140.0, version="Normal"),
@@ -108,7 +110,7 @@ class TestBPMRestriction:
 class TestGenreRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_genre_matches(self):
+    async def test_passes_when_genre_matches(self) -> None:
         validator = GenreRestriction()
         genre = _make_genre(2, "Video Game")
         beatmapset = MagicMock(genre=genre)
@@ -123,7 +125,7 @@ class TestGenreRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_genre_not_in_list(self):
+    async def test_raises_when_genre_not_in_list(self) -> None:
         validator = GenreRestriction()
         genre = _make_genre(5, "Pop")
         beatmapset = MagicMock(genre=genre)
@@ -140,7 +142,7 @@ class TestGenreRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_genre_is_none(self):
+    async def test_raises_when_genre_is_none(self) -> None:
         validator = GenreRestriction()
         beatmapset = MagicMock(genre=None)
         context = ExecutionContext(
@@ -158,7 +160,7 @@ class TestGenreRestriction:
 class TestLanguageRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_language_matches(self):
+    async def test_passes_when_language_matches(self) -> None:
         validator = LanguageRestriction()
         lang = _make_language(2, "English")
         beatmapset = MagicMock(language=lang)
@@ -173,7 +175,7 @@ class TestLanguageRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_language_not_in_list(self):
+    async def test_raises_when_language_not_in_list(self) -> None:
         validator = LanguageRestriction()
         lang = _make_language(4, "Chinese")
         beatmapset = MagicMock(language=lang)
@@ -192,7 +194,7 @@ class TestLanguageRestriction:
 class TestModeRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_modes_allowed(self):
+    async def test_passes_when_modes_allowed(self) -> None:
         validator = ModeRestriction()
         beatmaps = [_make_beatmap(mode="osu"), _make_beatmap(mode="osu")]
         context = ExecutionContext(
@@ -206,7 +208,7 @@ class TestModeRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_unsupported_mode(self):
+    async def test_raises_when_unsupported_mode(self) -> None:
         validator = ModeRestriction()
         beatmaps = [_make_beatmap(mode="osu"), _make_beatmap(mode="taiko")]
         context = ExecutionContext(
@@ -226,7 +228,7 @@ class TestModeRestriction:
 class TestDifficultyCountRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_count_in_range(self):
+    async def test_passes_when_count_in_range(self) -> None:
         validator = DifficultyCountRestriction()
         beatmaps = [_make_beatmap(), _make_beatmap(), _make_beatmap()]
         context = ExecutionContext(
@@ -240,7 +242,7 @@ class TestDifficultyCountRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_too_few(self):
+    async def test_raises_when_too_few(self) -> None:
         validator = DifficultyCountRestriction()
         beatmaps = [_make_beatmap()]
         context = ExecutionContext(
@@ -256,7 +258,7 @@ class TestDifficultyCountRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_too_many(self):
+    async def test_raises_when_too_many(self) -> None:
         validator = DifficultyCountRestriction()
         beatmaps = [_make_beatmap() for _ in range(6)]
         context = ExecutionContext(
@@ -274,7 +276,7 @@ class TestDifficultyCountRestriction:
 class TestStoryboardRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_storyboard_present_and_allowed(self):
+    async def test_passes_when_storyboard_present_and_allowed(self) -> None:
         validator = StoryboardRestriction()
         beatmapset = MagicMock(storyboard=True)
         context = ExecutionContext(
@@ -288,7 +290,7 @@ class TestStoryboardRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_storyboard_absent_and_allowed(self):
+    async def test_passes_when_storyboard_absent_and_allowed(self) -> None:
         validator = StoryboardRestriction()
         beatmapset = MagicMock(storyboard=False)
         context = ExecutionContext(
@@ -302,7 +304,7 @@ class TestStoryboardRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_storyboard_present_but_disallowed(self):
+    async def test_raises_when_storyboard_present_but_disallowed(self) -> None:
         validator = StoryboardRestriction()
         beatmapset = MagicMock(storyboard=True)
         context = ExecutionContext(
@@ -320,7 +322,7 @@ class TestStoryboardRestriction:
 class TestVideoRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_video_present_and_allowed(self):
+    async def test_passes_when_video_present_and_allowed(self) -> None:
         validator = VideoRestriction()
         beatmapset = MagicMock(video=True)
         context = ExecutionContext(
@@ -334,7 +336,7 @@ class TestVideoRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_video_absent_and_allowed(self):
+    async def test_passes_when_video_absent_and_allowed(self) -> None:
         validator = VideoRestriction()
         beatmapset = MagicMock(video=False)
         context = ExecutionContext(
@@ -348,7 +350,7 @@ class TestVideoRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_video_present_but_disallowed(self):
+    async def test_raises_when_video_present_but_disallowed(self) -> None:
         validator = VideoRestriction()
         beatmapset = MagicMock(video=True)
         context = ExecutionContext(

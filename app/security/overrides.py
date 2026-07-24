@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast as typing_cast
 
 from app.database.models import Queue, Request
 from app.database.queue_access import is_queue_owner_or_manager
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 async def matching_user_id_override(
-    authenticated_user_id_lookup: str = "user", resource_user_id_lookup: str = "user_id", **kwargs
+    authenticated_user_id_lookup: str = "user", resource_user_id_lookup: str = "user_id", **kwargs: Any
 ) -> bool:
     """Override authorization when authenticated and resource user IDs match.
 
@@ -35,7 +35,7 @@ async def queue_owner_override(
     db: PostgresqlDB,
     authenticated_user_id_lookup: str = "user",
     from_request: bool = False,
-    **kwargs,
+    **kwargs: Any,
 ) -> bool:
     """Override authorization if the authenticated user owns the queue.
 
@@ -66,14 +66,14 @@ async def queue_owner_override(
     if queue is None:
         return False
 
-    return authenticated_user_id == queue.user_id
+    return bool(authenticated_user_id == queue.user_id)
 
 
 async def queue_manager_override(
     db: PostgresqlDB,
     authenticated_user_id_lookup: str = "user",
     from_request: bool = False,
-    **kwargs,
+    **kwargs: Any,
 ) -> bool:
     """Override authorization if the authenticated user owns or manages the queue.
 

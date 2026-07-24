@@ -39,7 +39,7 @@ class TypeValidationError(TypeError):
         self.value_type = value_type
         self.target_types = target_types
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
     @property
@@ -59,7 +59,7 @@ class FieldValidationError(TypeValidationError):
 
         super().__init__(type(self.value), *target_types)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
     @property
@@ -75,7 +75,7 @@ class FieldNotSupportedError(Exception):
         self.model = model
         self.field = field
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
     @property
@@ -89,7 +89,7 @@ class FieldConditionValidationError(Exception):
         self.field = field
         self.detail = detail
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
     @property
@@ -101,7 +101,7 @@ class UnknownFieldCategoryError(Exception):
     def __init__(self, category: str):
         self.category = category
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
     @property
@@ -113,7 +113,7 @@ class AllValuesNullError(Exception):
     def __init__(self, origin: str):
         self.origin = origin
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
     @property
@@ -125,7 +125,7 @@ class RestrictedUserError(ValueError):
     def __init__(self, user_id: int):
         self.user_id = user_id
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
     @property
@@ -140,7 +140,7 @@ class RateLimitExceededError(Exception):
         self.next_window = next_window
         self.last_call_timestamp = last_call_timestamp
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
     @property
@@ -164,7 +164,7 @@ class RedisLockTimeoutError(TimeoutError):
         self.key = key
         self.timeout = timeout
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
     @property
@@ -178,7 +178,7 @@ class ArrayValidationError(ValueError):
         self._message = message
         super().__init__(self.message)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
     @property
@@ -192,7 +192,7 @@ class DeepObjectValidationError(ValueError):
         self._message = message
         super().__init__(self.message)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
     @property

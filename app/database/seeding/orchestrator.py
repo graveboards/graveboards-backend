@@ -85,7 +85,7 @@ class SeederOrchestrator:
 
         for layer in self.execution_order:
 
-            async def wrap(target: SeederTarget):
+            async def wrap(target: SeederTarget) -> None:
                 try:
                     await self.seeders[target].seed(queue=queue)
                 finally:

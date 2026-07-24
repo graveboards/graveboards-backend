@@ -1,3 +1,5 @@
+from typing import Any
+
 from unittest.mock import MagicMock
 
 import pytest
@@ -16,7 +18,7 @@ from app.database.rules.engine.evaluator import (
 from app.database.rules.exceptions import RuleViolationError
 
 
-def _make_context(config=None):
+def _make_context(config: dict[str, Any] | None = None) -> ExecutionContext:
     return ExecutionContext(
         queue_id=1,
         user_id=12345678,
@@ -29,11 +31,11 @@ def _make_context(config=None):
 class TestAndNode:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_all_pass(self):
+    async def test_all_pass(self) -> None:
         call_log = []
 
         class AlwaysPass(RuleNode):
-            async def evaluate(self, context, depth=0):
+            async def evaluate(self, context: ExecutionContext, depth: int = 0) -> bool:
                 call_log.append("pass")
                 return True
 
@@ -45,16 +47,16 @@ class TestAndNode:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_first_fails_short_circuits(self):
+    async def test_first_fails_short_circuits(self) -> None:
         call_log = []
 
         class FailingNode(RuleNode):
-            async def evaluate(self, context, depth=0):
+            async def evaluate(self, context: ExecutionContext, depth: int = 0) -> bool:
                 call_log.append("failing")
                 return False
 
         class PassingNode(RuleNode):
-            async def evaluate(self, context, depth=0):
+            async def evaluate(self, context: ExecutionContext, depth: int = 0) -> bool:
                 call_log.append("passing")
                 return True
 
@@ -67,13 +69,13 @@ class TestAndNode:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_second_fails(self):
+    async def test_second_fails(self) -> None:
         class AlwaysPass(RuleNode):
-            async def evaluate(self, context, depth=0):
+            async def evaluate(self, context: ExecutionContext, depth: int = 0) -> bool:
                 return True
 
         class AlwaysFail(RuleNode):
-            async def evaluate(self, context, depth=0):
+            async def evaluate(self, context: ExecutionContext, depth: int = 0) -> bool:
                 return False
 
         node = AndNode([AlwaysPass("dummy", {}), AlwaysFail("dummy", {})])
@@ -85,16 +87,16 @@ class TestAndNode:
 class TestOrNode:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_first_pass_short_circuits(self):
+    async def test_first_pass_short_circuits(self) -> None:
         call_log = []
 
         class AlwaysPass(RuleNode):
-            async def evaluate(self, context, depth=0):
+            async def evaluate(self, context: ExecutionContext, depth: int = 0) -> bool:
                 call_log.append("pass")
                 return True
 
         class AlwaysFail(RuleNode):
-            async def evaluate(self, context, depth=0):
+            async def evaluate(self, context: ExecutionContext, depth: int = 0) -> bool:
                 call_log.append("fail")
                 return False
 
@@ -107,9 +109,9 @@ class TestOrNode:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_all_fail(self):
+    async def test_all_fail(self) -> None:
         class AlwaysFail(RuleNode):
-            async def evaluate(self, context, depth=0):
+            async def evaluate(self, context: ExecutionContext, depth: int = 0) -> bool:
                 return False
 
         node = OrNode([AlwaysFail("dummy", {}), AlwaysFail("dummy", {})])
@@ -119,13 +121,13 @@ class TestOrNode:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_second_passes(self):
+    async def test_second_passes(self) -> None:
         class AlwaysFail(RuleNode):
-            async def evaluate(self, context, depth=0):
+            async def evaluate(self, context: ExecutionContext, depth: int = 0) -> bool:
                 return False
 
         class AlwaysPass(RuleNode):
-            async def evaluate(self, context, depth=0):
+            async def evaluate(self, context: ExecutionContext, depth: int = 0) -> bool:
                 return True
 
         node = OrNode([AlwaysFail("dummy", {}), AlwaysPass("dummy", {})])
@@ -137,9 +139,9 @@ class TestOrNode:
 class TestNotNode:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_negates_true(self):
+    async def test_negates_true(self) -> None:
         class AlwaysPass(RuleNode):
-            async def evaluate(self, context, depth=0):
+            async def evaluate(self, context: ExecutionContext, depth: int = 0) -> bool:
                 return True
 
         node = NotNode(AlwaysPass("dummy", {}))
@@ -149,9 +151,9 @@ class TestNotNode:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_negates_false(self):
+    async def test_negates_false(self) -> None:
         class AlwaysFail(RuleNode):
-            async def evaluate(self, context, depth=0):
+            async def evaluate(self, context: ExecutionContext, depth: int = 0) -> bool:
                 return False
 
         node = NotNode(AlwaysFail("dummy", {}))
@@ -163,7 +165,7 @@ class TestNotNode:
 class TestDepthLimit:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_exceeds_max_depth(self):
+    async def test_exceeds_max_depth(self) -> None:
         inner = AndNode([AtomicRuleNode("beatmap_duration", {"max_seconds": 180})])
         node = AndNode([inner])
         beatmaps = [MagicMock(total_length=150, version="Normal")]
@@ -183,7 +185,7 @@ class TestDepthLimit:
 
 class TestBuildRuleNode:
     @pytest.mark.unit
-    def test_build_atomic_rule(self):
+    def test_build_atomic_rule(self) -> None:
         rule_data = {"type": "beatmap_duration", "config": {"max_seconds": 180}}
         node = build_rule_node(rule_data)
         assert isinstance(node, AtomicRuleNode)
@@ -191,7 +193,7 @@ class TestBuildRuleNode:
         assert node.config == {"max_seconds": 180}
 
     @pytest.mark.unit
-    def test_build_and_composite(self):
+    def test_build_and_composite(self) -> None:
         rule_data = {
             "type": "composite",
             "config": {
@@ -209,7 +211,7 @@ class TestBuildRuleNode:
         assert isinstance(node.rules[1], AtomicRuleNode)
 
     @pytest.mark.unit
-    def test_build_or_composite(self):
+    def test_build_or_composite(self) -> None:
         rule_data = {
             "type": "composite",
             "config": {
@@ -224,7 +226,7 @@ class TestBuildRuleNode:
         assert isinstance(node, OrNode)
 
     @pytest.mark.unit
-    def test_build_not_composite(self):
+    def test_build_not_composite(self) -> None:
         rule_data = {
             "type": "composite",
             "config": {
@@ -238,7 +240,7 @@ class TestBuildRuleNode:
         assert isinstance(node, NotNode)
 
     @pytest.mark.unit
-    def test_build_nested_composite(self):
+    def test_build_nested_composite(self) -> None:
         rule_data = {
             "type": "composite",
             "config": {
@@ -263,7 +265,7 @@ class TestBuildRuleNode:
         assert isinstance(node.rules[0], OrNode)
 
     @pytest.mark.unit
-    def test_build_not_with_multiple_rules_raises(self):
+    def test_build_not_with_multiple_rules_raises(self) -> None:
         rule_data = {
             "type": "composite",
             "config": {
@@ -279,7 +281,7 @@ class TestBuildRuleNode:
             build_rule_node(rule_data)
 
     @pytest.mark.unit
-    def test_build_unknown_operator_raises(self):
+    def test_build_unknown_operator_raises(self) -> None:
         rule_data = {
             "type": "composite",
             "config": {
@@ -297,9 +299,9 @@ class TestBuildRuleNode:
 class TestCompositeEvaluator:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_evaluate_delegates_to_node(self):
+    async def test_evaluate_delegates_to_node(self) -> None:
         class AlwaysTrue(RuleNode):
-            async def evaluate(self, context, depth=0):
+            async def evaluate(self, context: ExecutionContext, depth: int = 0) -> bool:
                 return True
 
         node = AlwaysTrue("dummy", {})
@@ -311,7 +313,7 @@ class TestCompositeEvaluator:
 class TestAtomicRuleNodeWithValidator:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_validator_passes(self):
+    async def test_passes_when_validator_passes(self) -> None:
         node = AtomicRuleNode("beatmap_duration", {"max_seconds": 180, "logic": "max"})
         beatmaps = [MagicMock(total_length=150, version="Normal")]
         context = ExecutionContext(
@@ -326,7 +328,7 @@ class TestAtomicRuleNodeWithValidator:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_fails_when_validator_raises(self):
+    async def test_fails_when_validator_raises(self) -> None:
         node = AtomicRuleNode("beatmap_duration", {"max_seconds": 100, "logic": "max"})
         beatmaps = [MagicMock(total_length=150, version="Normal")]
         context = ExecutionContext(
@@ -342,9 +344,9 @@ class TestAtomicRuleNodeWithValidator:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_restores_config_after_evaluation(self):
+    async def test_restores_config_after_evaluation(self) -> None:
         class AlwaysPass(RuleNode):
-            async def evaluate(self, context, depth=0):
+            async def evaluate(self, context: ExecutionContext, depth: int = 0) -> bool:
                 return True
 
         node = AlwaysPass("dummy", {})
@@ -360,7 +362,7 @@ class TestAtomicRuleNodeWithValidator:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_returns_false_for_unknown_type(self):
+    async def test_returns_false_for_unknown_type(self) -> None:
         node = AtomicRuleNode("nonexistent_type_xyz", {})
         context = _make_context()
         result = await node.evaluate(context)

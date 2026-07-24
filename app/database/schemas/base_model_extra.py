@@ -1,5 +1,6 @@
 from collections.abc import Iterable
 from typing import Any
+from typing import cast as typing_cast
 
 from pydantic.functional_serializers import model_serializer
 from pydantic_core import to_jsonable_python
@@ -25,7 +26,7 @@ class BaseModelExtra:
                 if isinstance(value, Iterable) and not isinstance(value, (str, bytes)):
                     serialized[key] = to_jsonable_python(value)
 
-        return serialized
+        return typing_cast(dict[str, Any], serialized)
 
     @classmethod
     def get_blank_slate(cls) -> dict[str, None]:

@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 
 
 @event.listens_for(User, "after_insert")
-def user_after_insert(mapper: Mapper[User], connection: Connection, target: User):
+def user_after_insert(mapper: Mapper[User], connection: Connection, target: User) -> None:
     """Initialize background tasks for a newly created ``User``.
 
     Automatically creates:

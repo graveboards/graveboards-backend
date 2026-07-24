@@ -6,12 +6,12 @@ from app.text import align_center, justify
 
 
 @db_lifespan
-async def cmd_status(db: PostgresqlDB, target: StatusTarget):
+async def cmd_status(db: PostgresqlDB, target: StatusTarget) -> None:
     status = await db.status(target)
     print_status(status)
 
 
-def _format_value(v, width: int, prefix: str = "") -> str:
+def _format_value(v: Any, width: int, prefix: str = "") -> str:
     if isinstance(v, dict):
         return f"{prefix}[dict with {len(v)} items]"
     elif isinstance(v, Iterable) and not isinstance(v, (str, bytes)):
@@ -20,7 +20,7 @@ def _format_value(v, width: int, prefix: str = "") -> str:
         return f"{prefix}{v}"
 
 
-def print_status(status: dict):
+def print_status(status: dict[str, Any]) -> None:
     target = status.pop("target").upper()
     row_width = 30
 

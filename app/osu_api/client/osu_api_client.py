@@ -1,3 +1,5 @@
+from typing import Any, cast as typing_cast
+
 from pydantic_core import ValidationError
 
 from app.observability.logging import get_logger
@@ -12,7 +14,7 @@ logger = get_logger(__name__)
 
 class OsuAPIClient(OsuAPIClientBase):
     @rate_limit(min_interval=0.5, limit_per_window=120, window_size=60)
-    async def get_beatmap(self, beatmap_id: int) -> dict:
+    async def get_beatmap(self, beatmap_id: int) -> dict[str, Any]:
         """Fetch a beatmap from the osu! API with Redis caching.
 
         Retrieves beatmap data from Redis cache or the osu! API, caching
@@ -36,7 +38,8 @@ class OsuAPIClient(OsuAPIClientBase):
             return None
 
         if cached_beatmap := await get_cached_beatmap_from_redis():
-            return cached_beatmap.model_dump(mode="json")
+            beatmap_result: dict[str, Any] = cached_beatmap.model_dump(mode="json")
+            return beatmap_result
 
         url = APIEndpoint.BEATMAP.format(beatmap=beatmap_id)
 
@@ -49,7 +52,7 @@ class OsuAPIClient(OsuAPIClientBase):
         response = await self._http_client.get(url, headers=headers)
 
         response.raise_for_status()
-        beatmap_data = response.json()
+        beatmap_data: dict[str, Any] = response.json()
 
         cached_beatmap = Beatmap.model_validate(beatmap_data)
         await self.rc.hset(cached_beatmap_hash_name, mapping=cached_beatmap.serialize())
@@ -60,7 +63,7 @@ class OsuAPIClient(OsuAPIClientBase):
     @rate_limit(min_interval=0.5, limit_per_window=120, window_size=60)
     async def get_beatmap_scores(
         self, beatmap_id: int, limit: int | None = None, offset: int | None = None
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Fetch scores for a beatmap from the osu! API.
 
         Args:
@@ -92,10 +95,11 @@ class OsuAPIClient(OsuAPIClientBase):
         response = await self._http_client.get(url, headers=headers)
 
         response.raise_for_status()
-        return response.json()
+        result: dict[str, Any] = response.json()
+        return result
 
     @rate_limit(min_interval=0.5, limit_per_window=120, window_size=60)
-    async def get_beatmap_attributes(self, beatmap_id: int, mods: list[int]) -> dict:
+    async def get_beatmap_attributes(self, beatmap_id: int, mods: list[int]) -> dict[str, Any]:
         """Fetch beatmap attributes (difficulty) from the osu! API.
 
         Args:
@@ -117,10 +121,11 @@ class OsuAPIClient(OsuAPIClientBase):
         response = await self._http_client.post(url, headers=headers, json=body)
 
         response.raise_for_status()
-        return response.json()
+        result: dict[str, Any] = response.json()
+        return result
 
     @rate_limit(min_interval=0.5, limit_per_window=120, window_size=60)
-    async def get_beatmapset(self, beatmapset_id: int) -> dict:
+    async def get_beatmapset(self, beatmapset_id: int) -> dict[str, Any]:
         """Fetch a beatmapset from the osu! API with Redis caching.
 
         Retrieves beatmapset data from Redis cache or the osu! API, caching
@@ -146,7 +151,8 @@ class OsuAPIClient(OsuAPIClientBase):
             return None
 
         if cached_beatmapset := await get_cached_beatmapset_from_redis():
-            return cached_beatmapset.model_dump(mode="json")
+            bs_result: dict[str, Any] = cached_beatmapset.model_dump(mode="json")
+            return bs_result
 
         url = APIEndpoint.BEATMAPSET.format(beatmapset=beatmapset_id)
 
@@ -159,7 +165,7 @@ class OsuAPIClient(OsuAPIClientBase):
         response = await self._http_client.get(url, headers=headers)
 
         response.raise_for_status()
-        beatmapset_data = response.json()
+        beatmapset_data: dict[str, Any] = response.json()
 
         cached_beatmapset = Beatmapset.model_validate(beatmapset_data)
         await self.rc.hset(cached_beatmapset_hash_name, mapping=cached_beatmapset.serialize())
@@ -173,7 +179,7 @@ class OsuAPIClient(OsuAPIClientBase):
         beatmapset_status: str = "all",
         page: int = 1,
         limit: int = 50,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Fetch beatmapsets by status using the discussions endpoint.
 
         Args:
@@ -203,7 +209,8 @@ class OsuAPIClient(OsuAPIClientBase):
         response = await self._http_client.get(url, headers=headers)
 
         response.raise_for_status()
-        return response.json()
+        result: dict[str, Any] = response.json()
+        return result
 
     @rate_limit(min_interval=0.5, limit_per_window=120, window_size=60)
     async def search_beatmapsets(
@@ -216,7 +223,7 @@ class OsuAPIClient(OsuAPIClientBase):
         page: int = 1,
         sort: str | None = None,
         query: str | None = None,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Search beatmapsets with server-side filters.
 
         `query` maps to the osu! `q` free-text parameter, letting callers narrow
@@ -254,10 +261,11 @@ class OsuAPIClient(OsuAPIClientBase):
         response = await self._http_client.get(url, headers=headers)
 
         response.raise_for_status()
-        return response.json()
+        result: dict[str, Any] = response.json()
+        return result
 
     @rate_limit(min_interval=0.5, limit_per_window=120, window_size=60)
-    async def get_own_data(self, access_token: str) -> dict:
+    async def get_own_data(self, access_token: str) -> dict[str, Any]:
         """Fetch the authenticated user's data from the osu! API.
 
         Args:
@@ -277,7 +285,8 @@ class OsuAPIClient(OsuAPIClientBase):
         response = await self._http_client.get(url, headers=headers)
 
         response.raise_for_status()
-        return response.json()
+        result: dict[str, Any] = response.json()
+        return result
 
     @rate_limit(min_interval=0.5, limit_per_window=120, window_size=60)
     async def get_user_scores(
@@ -289,7 +298,7 @@ class OsuAPIClient(OsuAPIClientBase):
         mode: Ruleset | None = None,
         limit: int | None = None,
         offset: int | None = None,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Fetch scores for a user from the osu! API.
 
         Args:
@@ -331,10 +340,11 @@ class OsuAPIClient(OsuAPIClientBase):
         response = await self._http_client.get(url, headers=headers)
 
         response.raise_for_status()
-        return response.json()
+        result: dict[str, Any] = response.json()
+        return result
 
     @rate_limit(min_interval=0.5, limit_per_window=120, window_size=60)
-    async def get_user(self, user_id: int, mode: Ruleset | None = None) -> dict:
+    async def get_user(self, user_id: int, mode: Ruleset | None = None) -> dict[str, Any]:
         """Fetch a user from the osu! API.
 
         Args:
@@ -356,7 +366,8 @@ class OsuAPIClient(OsuAPIClientBase):
         response = await self._http_client.get(url, headers=headers)
 
         response.raise_for_status()
-        return response.json()
+        user_data: dict[str, Any] = response.json()
+        return user_data
 
     @rate_limit(min_interval=0.5, limit_per_window=120, window_size=60)
     async def get_tags(self) -> dict[str, list[dict[str, int | str]]]:
@@ -376,7 +387,8 @@ class OsuAPIClient(OsuAPIClientBase):
         response = await self._http_client.get(url, headers=headers)
 
         response.raise_for_status()
-        return response.json()
+        result: dict[str, list[dict[str, int | str]]] = typing.cast(dict[str, list[dict[str, int | str]]], response.json())
+        return result
 
     @rate_limit(min_interval=0.5, limit_per_window=120, window_size=60)
     async def get_rankings(
@@ -386,7 +398,7 @@ class OsuAPIClient(OsuAPIClientBase):
         limit: int | None = None,
         offset: int | None = None,
         cursor_page: int | None = None,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Fetch rankings from the osu! API.
 
         Args:
@@ -423,4 +435,5 @@ class OsuAPIClient(OsuAPIClientBase):
         response = await self._http_client.get(url, headers=headers)
 
         response.raise_for_status()
-        return response.json()
+        result: dict[str, Any] = response.json()
+        return result

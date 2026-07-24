@@ -10,7 +10,7 @@ from app.database.rules.validators.cooldown import (
 )
 
 
-def _make_context(queue_id: int = 1, user_id: int = 12345678, config: dict | None = None):
+def _make_context(queue_id: int = 1, user_id: int = 12345678, config: dict | None = None) -> ExecutionContext:
     return ExecutionContext(
         queue_id=queue_id,
         user_id=user_id,
@@ -23,7 +23,7 @@ def _make_context(queue_id: int = 1, user_id: int = 12345678, config: dict | Non
 class TestCooldownRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_check_passes_on_first_request_without_mutating(self):
+    async def test_check_passes_on_first_request_without_mutating(self) -> None:
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
         mock_redis.get = AsyncMock(return_value=None)
@@ -45,7 +45,7 @@ class TestCooldownRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_cooldown_active(self):
+    async def test_raises_when_cooldown_active(self) -> None:
         from datetime import datetime, timedelta
 
         mock_db = AsyncMock()
@@ -73,7 +73,7 @@ class TestCooldownRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_check_passes_when_cooldown_expired(self):
+    async def test_check_passes_when_cooldown_expired(self) -> None:
         from datetime import datetime, timedelta
 
         mock_db = AsyncMock()
@@ -99,7 +99,7 @@ class TestCooldownRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_skips_non_target_user(self):
+    async def test_skips_non_target_user(self) -> None:
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
 
@@ -124,7 +124,7 @@ class TestCooldownRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_skips_non_user_scope(self):
+    async def test_skips_non_user_scope(self) -> None:
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
 
@@ -143,7 +143,7 @@ class TestCooldownRestriction:
         mock_redis.get.assert_not_called()
 
     @pytest.mark.unit
-    def test_config_schema_is_set(self):
+    def test_config_schema_is_set(self) -> None:
         from app.database.schemas.rule import CooldownConfig
 
         assert CooldownRestriction.config_schema is CooldownConfig
@@ -152,7 +152,7 @@ class TestCooldownRestriction:
 class TestCooldownReserve:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_reserve_first_request_sets_and_returns_token(self):
+    async def test_reserve_first_request_sets_and_returns_token(self) -> None:
         mock_redis = AsyncMock()
         mock_redis.set = AsyncMock(return_value=True)  # SET NX succeeded
 
@@ -170,7 +170,7 @@ class TestCooldownReserve:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_reserve_when_active_rejects(self):
+    async def test_reserve_when_active_rejects(self) -> None:
         from datetime import datetime, timedelta
 
         mock_redis = AsyncMock()
@@ -187,7 +187,7 @@ class TestCooldownReserve:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_reserve_skips_non_user_scope(self):
+    async def test_reserve_skips_non_user_scope(self) -> None:
         mock_redis = AsyncMock()
         validator = CooldownRestriction()
         config = {"cooldown_seconds": 3600, "scope": "beatmapset_type"}
@@ -200,7 +200,7 @@ class TestCooldownReserve:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_rollback_deletes(self):
+    async def test_rollback_deletes(self) -> None:
         mock_redis = AsyncMock()
         validator = CooldownRestriction()
         context = ExecutionContext(queue_id=1, user_id=12345678, db=AsyncMock(), redis=mock_redis)
@@ -213,7 +213,7 @@ class TestCooldownReserve:
 class TestCooldownRestrictionDetailMessage:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_includes_remaining_time_in_hours_and_minutes(self):
+    async def test_includes_remaining_time_in_hours_and_minutes(self) -> None:
         from datetime import datetime, timedelta
 
         mock_db = AsyncMock()

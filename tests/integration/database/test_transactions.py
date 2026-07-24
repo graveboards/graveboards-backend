@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 
 from app.database.db import PostgresqlDB
@@ -5,7 +7,7 @@ from app.database.models import Profile, User
 
 
 @pytest.mark.asyncio
-async def test_transaction_rollback(db_session):
+async def test_transaction_rollback(db_session: Any) -> None:
     """Test that rollback properly undoes changes."""
     db = PostgresqlDB()
 
@@ -21,7 +23,7 @@ async def test_transaction_rollback(db_session):
 
 
 @pytest.mark.asyncio
-async def test_transaction_isolation_separate_transactions(db_session):
+async def test_transaction_isolation_separate_transactions(db_session: Any) -> None:
     """Test that changes in one transaction are not visible to another."""
     db = PostgresqlDB()
 
@@ -36,7 +38,7 @@ async def test_transaction_isolation_separate_transactions(db_session):
 
 
 @pytest.mark.asyncio
-async def test_concurrent_insert_same_table(db_session):
+async def test_concurrent_insert_same_table(db_session: Any) -> None:
     """Test concurrent inserts don't interfere."""
     db = PostgresqlDB()
 
@@ -52,7 +54,7 @@ async def test_concurrent_insert_same_table(db_session):
 
 
 @pytest.mark.asyncio
-async def test_concurrent_update_same_row(db_session):
+async def test_concurrent_update_same_row(db_session: Any) -> None:
     """Test concurrent updates to same row - last write wins."""
     db = PostgresqlDB()
 
@@ -73,7 +75,7 @@ async def test_concurrent_update_same_row(db_session):
 
 
 @pytest.mark.asyncio
-async def test_transaction_nested_rollbacks(db_session):
+async def test_transaction_nested_rollbacks(db_session: Any) -> None:
     """Test nested transaction scenarios."""
     db = PostgresqlDB()
 
@@ -89,7 +91,7 @@ async def test_transaction_nested_rollbacks(db_session):
 
 
 @pytest.mark.asyncio
-async def test_transaction_consistency_after_rollback(db_session):
+async def test_transaction_consistency_after_rollback(db_session: Any) -> None:
     """Test that database is in consistent state after rollback."""
     db = PostgresqlDB()
 
@@ -108,7 +110,7 @@ async def test_transaction_consistency_after_rollback(db_session):
 
 
 @pytest.mark.asyncio
-async def test_transaction_deadlock_scenario(db_session):
+async def test_transaction_deadlock_scenario(db_session: Any) -> None:
     """Test that concurrent access doesn't cause deadlocks."""
     db = PostgresqlDB()
 
@@ -122,7 +124,7 @@ async def test_transaction_deadlock_scenario(db_session):
 
 
 @pytest.mark.asyncio
-async def test_transaction_constraint_violation_rollback(db_session):
+async def test_transaction_constraint_violation_rollback(db_session: Any) -> None:
     """Test that constraint violations properly rollback."""
     db = PostgresqlDB()
 

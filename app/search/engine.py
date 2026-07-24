@@ -542,8 +542,8 @@ class SearchEngine:
         """
 
         def clause_generator(
-            conditions, is_aggregated: bool = False
-        ) -> Generator[BinaryExpression]:
+            conditions: Any, is_aggregated: bool = False
+        ) -> Generator[BinaryExpression, None, None]:
             for op_str, value in conditions.model_dump(exclude_unset=True, by_alias=True).items():
                 filter_operator = FilterOperator.from_name(op_str)
                 yield get_filter_condition(

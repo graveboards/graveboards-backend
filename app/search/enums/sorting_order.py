@@ -1,5 +1,7 @@
 from collections.abc import Callable
 from enum import Enum, IntEnum, auto
+from typing import Any
+from typing import cast as typing_cast
 
 from sqlalchemy import asc, desc
 
@@ -14,9 +16,9 @@ class SortingOrder(Enum):
     DESCENDING = "desc"
 
     @property
-    def sort_func(self) -> Callable:
+    def sort_func(self) -> Callable[..., Any]:
         """Return the ORM sort function corresponding to the order."""
-        return asc if self is SortingOrder.ASCENDING else desc
+        return typing_cast(Callable[..., Any], asc if self is SortingOrder.ASCENDING else desc)
 
     @classmethod
     def from_name(cls, name: str) -> SortingOrder:

@@ -1,7 +1,7 @@
 __all__ = ["OsuAPIClient"]
 
 
-def __getattr__(name):
+def __getattr__(name: str) -> Any:
     if name == "OsuAPIClient":
         from .osu_api_client import OsuAPIClient
 

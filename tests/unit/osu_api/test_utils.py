@@ -1,4 +1,7 @@
-def _create_mock_beatmap(**overrides):
+from typing import Any
+
+
+def _create_mock_beatmap(**overrides: Any) -> dict[str, Any]:
     mock_data = {
         "id": 100001,
         "beatmapset_id": 10000,
@@ -34,7 +37,7 @@ def _create_mock_beatmap(**overrides):
     return mock_data
 
 
-def _create_mock_beatmapset(**overrides):
+def _create_mock_beatmapset(**overrides: Any) -> dict[str, Any]:
     mock_data = {
         "id": 10000,
         "status": "ranked",
@@ -110,7 +113,7 @@ def _create_mock_beatmapset(**overrides):
     return mock_data
 
 
-def _create_mock_user(ruleset="osu", **overrides):
+def _create_mock_user(ruleset: str = "osu", **overrides: Any) -> dict[str, Any]:
     mock_data = {
         "id": 200001,
         "username": "test_user",
@@ -174,7 +177,7 @@ def _create_mock_user(ruleset="osu", **overrides):
     return mock_data
 
 
-def _create_mock_score(**overrides):
+def _create_mock_score(**overrides: Any) -> dict[str, Any]:
     mock_data = {
         "id": 300001,
         "user_id": 200001,
@@ -208,7 +211,7 @@ def _create_mock_score(**overrides):
     return mock_data
 
 
-def _create_mock_beatmap_scores(beatmap_id=None, **overrides):
+def _create_mock_beatmap_scores(beatmap_id: int | None = None, **overrides: Any) -> dict[str, Any]:
     if beatmap_id is None:
         beatmap_id = 100001
     mock_data = {
@@ -248,7 +251,7 @@ def _create_mock_beatmap_scores(beatmap_id=None, **overrides):
     return mock_data
 
 
-def _create_mock_beatmap_attributes(beatmap_id=None, **overrides):
+def _create_mock_beatmap_attributes(beatmap_id: int | None = None, **overrides: Any) -> dict[str, Any]:
     if beatmap_id is None:
         beatmap_id = 100001
     mock_data = {
@@ -313,7 +316,7 @@ def _create_mock_beatmap_attributes(beatmap_id=None, **overrides):
     return mock_data
 
 
-def _create_mock_tags(**overrides):
+def _create_mock_tags(**overrides: Any) -> dict[str, Any]:
     mock_data = {
         "tags": ["test", "osu", "easy", "mapped"],
     }
@@ -321,7 +324,7 @@ def _create_mock_tags(**overrides):
     return mock_data
 
 
-def _create_mock_rankings_user(**overrides):
+def _create_mock_rankings_user(**overrides: Any) -> dict[str, Any]:
     mock_data = {
         "user_id": 200001,
         "username": "test_user",

@@ -5,6 +5,7 @@ Provides a simple API for checking and adding failed IDs across categories.
 """
 
 from collections.abc import Iterable
+from typing import cast as typing_cast
 
 from app.redis_client import Namespace, RedisClient
 
@@ -30,7 +31,7 @@ class FailedIdStore:
     async def is_failed(self, category: str, id_: int, subcategory: str | None = None) -> bool:
         """Check if an ID has failed in the given category. O(1)."""
         key = self._key(category, subcategory)
-        return await self.rc.sismember(key, id_)
+        return bool(await self.rc.sismember(key, id_))
 
     async def add_failed(self, category: str, id_: int, subcategory: str | None = None) -> None:
         """Add an ID to the failed set for the given category."""
@@ -58,7 +59,7 @@ class FailedIdStore:
     async def clear_category(self, category: str, subcategory: str | None = None) -> int:
         """Delete all failed IDs for a category. Returns number of keys deleted."""
         key = self._key(category, subcategory)
-        return await self.rc.delete(key)
+        return int(await self.rc.delete(key))
 
     async def clear_all(self) -> int:
         """Delete all failed ID sets. Returns number of keys deleted."""
@@ -67,5 +68,5 @@ class FailedIdStore:
         async for key in self.rc.scan_iter(match=pattern):
             keys.append(key)
         if keys:
-            return await self.rc.delete(*keys)
+            return int(await self.rc.delete(*keys))
         return 0

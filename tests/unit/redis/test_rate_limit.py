@@ -1,5 +1,7 @@
 """Unit tests for rate_limit decorator edge cases not covered by test_rate_limit_decorator.py."""
 
+from typing import Any
+
 import time
 from datetime import UTC, datetime
 
@@ -12,14 +14,19 @@ from app.redis_client.decorators import rate_limit
 class MockRedisClient:
     """A non-Mock Redis client stub for rate_limit tests."""
 
-    def __init__(self):
+    incr: Any
+    expire: Any
+    get: Any
+    set: Any
+
+    def __init__(self) -> None:
         self.incr = None
         self.expire = None
         self.get = None
         self.set = None
 
 
-def _make_mock_rc():
+def _make_mock_rc() -> MockRedisClient:
     """Create a properly configured mock Redis client."""
     from unittest.mock import AsyncMock
 
@@ -35,12 +42,12 @@ class TestRateLimitModule:
     """Test rate_limit decorator edge cases."""
 
     @pytest.fixture
-    def mock_rc(self):
+    def mock_rc(self) -> MockRedisClient:
         """Create a mock Redis client with async methods."""
         return _make_mock_rc()
 
     @pytest.mark.asyncio
-    async def test_rate_limit_error_contains_timing_info(self):
+    async def test_rate_limit_error_contains_timing_info(self) -> None:
         """Test RateLimitExceededError has next_window and last_call_timestamp."""
         next_win = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
         exc = RateLimitExceededError(
@@ -54,12 +61,12 @@ class TestRateLimitModule:
         assert "1704110400.0" in str(exc)
 
     @pytest.mark.asyncio
-    async def test_rate_limit_auto_retry_retries(self):
+    async def test_rate_limit_auto_retry_retries(self) -> None:
         """Test auto_retry=True retries after window expires."""
         rc = _make_mock_rc()
         call_count = [0]
 
-        async def mock_incr(key):
+        async def mock_incr(key: str) -> int:
             call_count[0] += 1
             return 2 if call_count[0] == 1 else 1
 
@@ -71,7 +78,7 @@ class TestRateLimitModule:
         rc.set = AM(return_value=True)
 
         @rate_limit(limit_per_window=1, window_size=1, auto_retry=True)
-        async def test_func(self):
+        async def test_func(self: Any) -> Any:
             return "ok"
 
         result = await test_func(rc)
@@ -79,34 +86,34 @@ class TestRateLimitModule:
         assert call_count[0] == 2
 
     @pytest.mark.asyncio
-    async def test_rate_limit_rejects_non_async_function(self):
+    async def test_rate_limit_rejects_non_async_function(self) -> None:
         """Test rate_limit raises ValueError for sync functions."""
         with pytest.raises(ValueError, match="must be async"):
 
             @rate_limit(limit_per_window=5)
-            def sync_func(self):
+            def sync_func(self: Any) -> Any:
                 return "ok"
 
     @pytest.mark.asyncio
-    async def test_rate_limit_uses_default_limit_when_none(self, mock_rc):
+    async def test_rate_limit_uses_default_limit_when_none(self, mock_rc: MockRedisClient) -> None:
         """Test rate_limit defaults to 60 when limit_per_window is None."""
 
         @rate_limit(limit_per_window=None, auto_retry=False)
-        async def test_func(self):
+        async def test_func(self: Any) -> Any:
             return "ok"
 
         result = await test_func(mock_rc)
         assert result == "ok"
 
     @pytest.mark.asyncio
-    async def test_rate_limit_skips_window_check_when_limit_zero(self, mock_rc):
+    async def test_rate_limit_skips_window_check_when_limit_zero(self, mock_rc: MockRedisClient) -> None:
         """Test rate_limit skips window counter when limit_per_window=0."""
         from unittest.mock import AsyncMock as AM
 
         mock_rc.incr = AM()
 
         @rate_limit(limit_per_window=0, auto_retry=False)
-        async def test_func(self):
+        async def test_func(self: Any) -> Any:
             return "ok"
 
         result = await test_func(mock_rc)
@@ -114,14 +121,14 @@ class TestRateLimitModule:
         mock_rc.incr.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_rate_limit_no_min_interval_no_get(self, mock_rc):
+    async def test_rate_limit_no_min_interval_no_get(self, mock_rc: MockRedisClient) -> None:
         """Test rate_limit with min_interval=0 does not read last_call_key."""
         from unittest.mock import AsyncMock as AM
 
         mock_rc.get = AM()
 
         @rate_limit(limit_per_window=10, min_interval=0.0, auto_retry=False)
-        async def test_func(self):
+        async def test_func(self: Any) -> Any:
             return "ok"
 
         result = await test_func(mock_rc)
@@ -129,14 +136,14 @@ class TestRateLimitModule:
         mock_rc.get.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_rate_limit_min_interval_sleeps_when_needed(self, mock_rc):
+    async def test_rate_limit_min_interval_sleeps_when_needed(self, mock_rc: MockRedisClient) -> None:
         """Test min_interval causes sleep when previous call was too recent."""
         from unittest.mock import AsyncMock as AM
 
         mock_rc.get = AM(return_value=str(time.time() - 0.001))
 
         @rate_limit(limit_per_window=10, min_interval=0.001, auto_retry=False)
-        async def test_func(self):
+        async def test_func(self: Any) -> Any:
             return "ok"
 
         result = await test_func(mock_rc)

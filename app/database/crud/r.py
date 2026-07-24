@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from typing import Any, Literal
+from typing import Any, cast as typing_cast, Literal
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import QueryableAttribute
@@ -47,17 +47,17 @@ class _R:
     async def _get_instance(
         model_class: ModelClass,
         session: AsyncSession,
-        _select: str | Iterable[str] = None,
-        _join: Any | Iterable[Any] = None,
-        _where: Any | Iterable[Any] = None,
-        _sorting: Sorting = None,
-        _filters: Filters = None,
-        _search: str = None,
+        _select: str | Iterable[str] | None = None,
+        _join: Any | Iterable[Any] | None = None,
+        _where: Any | Iterable[Any] | None = None,
+        _sorting: Sorting | None = None,
+        _filters: Filters | None = None,
+        _search: str | None = None,
         _search_mode: SearchMode = "simple",
         _search_relevance: bool = False,
-        _include: Include = None,
+        _include: Include | None = None,
         _offset: int = 0,
-        **kwargs,
+        **kwargs: Any,
     ) -> BaseType:
         """Fetch a single instance using a dynamically constructed query.
 
@@ -112,26 +112,26 @@ class _R:
         )
         select_stmt = select_stmt.offset(_offset)
 
-        return await session.scalar(select_stmt)
+        return typing_cast(BaseType, await session.scalar(select_stmt))
 
     @staticmethod
     async def _get_instances(
         model_class: ModelClass,
         session: AsyncSession,
-        _select: str | Iterable[str] = None,
-        _join: Any | Iterable[Any] = None,
-        _where: Any | Iterable[Any] = None,
-        _sorting: Sorting = None,
-        _filters: Filters = None,
-        _search: str = None,
+        _select: str | Iterable[str] | None = None,
+        _join: Any | Iterable[Any] | None = None,
+        _where: Any | Iterable[Any] | None = None,
+        _sorting: Sorting | None = None,
+        _filters: Filters | None = None,
+        _search: str | None = None,
         _search_mode: SearchMode = "simple",
         _search_relevance: bool = False,
-        _include: Include = None,
+        _include: Include | None = None,
         _limit: int = QUERY_DEFAULT_LIMIT,
         _offset: int = 0,
         _reversed: bool = False,
         _count: bool = False,
-        **kwargs,
+        **kwargs: Any,
     ) -> list[BaseType] | tuple[list[BaseType], int | None]:
         """Fetch multiple instances using a dynamically constructed query.
 
@@ -212,16 +212,16 @@ class _R:
     @staticmethod
     def _construct_stmt(
         model_class: ModelClass,
-        _select: str | Iterable[str] = None,
-        _join: Any | Iterable[Any] = None,
-        _where: Any | Iterable[Any] = None,
-        _sorting: Any | Iterable[Any] = None,
-        _filters: Filters = None,
-        _search: str = None,
+        _select: str | Iterable[str] | None = None,
+        _join: Any | Iterable[Any] | None = None,
+        _where: Any | Iterable[Any] | None = None,
+        _sorting: Any | Iterable[Any] | None = None,
+        _filters: Filters | None = None,
+        _search: str | None = None,
         _search_mode: SearchMode = "simple",
         _search_relevance: bool = False,
-        _include: Include = None,
-        **kwargs,
+        _include: Include | None = None,
+        **kwargs: Any,
     ) -> Select:
         """Construct a SQLAlchemy ``Select`` statement from query parameters.
 
@@ -814,7 +814,7 @@ class _R:
         def is_lazy(rel: Relationship) -> bool:
             return rel.lazy in {True, "select", "dynamic"}
 
-        def exclude_unincluded(parent_model_class, includes: Include, base_loader: Load = None):
+        def exclude_unincluded(parent_model_class: type[BaseType], includes: Include, base_loader: Load | None = None) -> list[LoaderOption]:
             options: list[LoaderOption] = []
 
             for rel in parent_model_class.mapper.relationships:
@@ -862,18 +862,18 @@ class R(_R):
     async def get(
         self,
         model: type[BaseType],
-        session: AsyncSession = None,
-        _select: str | Iterable[str] = None,
-        _join: Any | Iterable[Any] = None,
-        _where: Any | Iterable[Any] = None,
-        _sorting: Sorting = None,
-        _filters: Filters = None,
-        _search: str = None,
+        session: AsyncSession | None = None,
+        _select: str | Iterable[str] | None = None,
+        _join: Any | Iterable[Any] | None = None,
+        _where: Any | Iterable[Any] | None = None,
+        _sorting: Sorting | None = None,
+        _filters: Filters | None = None,
+        _search: str | None = None,
         _search_mode: SearchMode = "simple",
         _search_relevance: bool = False,
-        _include: Include = None,
+        _include: Include | None = None,
         _offset: int = 0,
-        **kwargs,
+        **kwargs: Any,
     ) -> BaseType | None:
         """Public API for fetching a single model instance.
 
@@ -936,21 +936,21 @@ class R(_R):
     async def get_many(
         self,
         model: type[BaseType],
-        session: AsyncSession = None,
-        _select: str | Iterable[str] = None,
-        _join: Any | Iterable[Any] = None,
-        _where: Any | Iterable[Any] = None,
-        _sorting: Sorting = None,
-        _filters: Filters = None,
-        _search: str = None,
+        session: AsyncSession | None = None,
+        _select: str | Iterable[str] | None = None,
+        _join: Any | Iterable[Any] | None = None,
+        _where: Any | Iterable[Any] | None = None,
+        _sorting: Sorting | None = None,
+        _filters: Filters | None = None,
+        _search: str | None = None,
         _search_mode: SearchMode = "simple",
         _search_relevance: bool = False,
-        _include: Include = None,
+        _include: Include | None = None,
         _limit: int = QUERY_DEFAULT_LIMIT,
         _offset: int = 0,
         _reversed: bool = False,
         _count: bool = False,
-        **kwargs,
+        **kwargs: Any,
     ) -> list[BaseType] | tuple[list[BaseType], int | None]:
         """Public API for fetching multiple model instances.
 

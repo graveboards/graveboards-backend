@@ -1,4 +1,5 @@
 from typing import Any
+from typing import cast as typing_cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,7 +11,7 @@ from .decorators import session_manager
 class _U:
     @staticmethod
     async def _update_instance(
-        model_class: ModelClass, session: AsyncSession, primary_key: int, **kwargs
+        model_class: ModelClass, session: AsyncSession, primary_key: int, **kwargs: Any
     ) -> BaseType:
         """Update a single model instance by primary key.
 
@@ -63,7 +64,7 @@ class _U:
         await session.flush()
         await session.refresh(instance)
 
-        return instance
+        return typing_cast(BaseType, instance)
 
     @staticmethod
     async def _update_instances(
@@ -141,7 +142,11 @@ class _U:
 class U(_U):
     @session_manager()
     async def update(
-        self, model: type[BaseType], primary_key: int, session: AsyncSession = None, **kwargs
+        self,
+        model: type[BaseType],
+        primary_key: int,
+        session: AsyncSession | None = None,
+        **kwargs: Any,
     ) -> BaseType:
         """Public API for updating a single model instance.
 

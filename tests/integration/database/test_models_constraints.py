@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 from sqlalchemy.sql import select
 
@@ -13,7 +15,7 @@ from app.database.models import (
 
 
 @pytest.mark.asyncio
-async def test_cascade_delete_request_on_user(db_session):
+async def test_cascade_delete_request_on_user(db_session: Any) -> None:
     """Test that deleting User cascades to Requests."""
     db = PostgresqlDB()
 

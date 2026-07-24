@@ -1,3 +1,5 @@
+from typing import Any
+
 from unittest.mock import MagicMock
 
 import pytest
@@ -11,7 +13,7 @@ from app.database.rules.validators.beatmap.hp_range import HPRangeRestriction
 from app.database.rules.validators.beatmap.od_range import ODRangeRestriction
 
 
-def _make_beatmap(ar=5.0, accuracy=10.0, drain=5.0, cs=4.0, hit_length=180, version="Normal"):
+def _make_beatmap(ar: float = 5.0, accuracy: float = 10.0, drain: float = 5.0, cs: float = 4.0, hit_length: int = 180, version: str = "Normal") -> MagicMock:
     bm = MagicMock()
     bm.ar = ar
     bm.accuracy = accuracy
@@ -22,7 +24,7 @@ def _make_beatmap(ar=5.0, accuracy=10.0, drain=5.0, cs=4.0, hit_length=180, vers
     return bm
 
 
-def _make_context(beatmaps=None, config=None, type="beatmap_ar_range"):
+def _make_context(beatmaps: list[Any] | None = None, config: dict[str, Any] | None = None, type: str = "beatmap_ar_range") -> ExecutionContext:
     ctx = ExecutionContext(
         queue_id=1,
         user_id=12345678,
@@ -36,7 +38,7 @@ def _make_context(beatmaps=None, config=None, type="beatmap_ar_range"):
 class TestARRangeRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_in_range(self):
+    async def test_passes_when_in_range(self) -> None:
         validator = ARRangeRestriction()
         beatmaps = [_make_beatmap(ar=5.0), _make_beatmap(ar=6.0)]
         context = _make_context(
@@ -47,7 +49,7 @@ class TestARRangeRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_any_passes_when_at_least_one_in_range(self):
+    async def test_any_passes_when_at_least_one_in_range(self) -> None:
         validator = ARRangeRestriction()
         beatmaps = [_make_beatmap(ar=3.0), _make_beatmap(ar=6.0)]
         context = _make_context(
@@ -58,7 +60,7 @@ class TestARRangeRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_any_raises_when_none_in_range(self):
+    async def test_any_raises_when_none_in_range(self) -> None:
         validator = ARRangeRestriction()
         beatmaps = [_make_beatmap(ar=8.0), _make_beatmap(ar=9.0)]
         context = _make_context(
@@ -71,7 +73,7 @@ class TestARRangeRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_all_logic_raises_on_specific_beatmap(self):
+    async def test_all_logic_raises_on_specific_beatmap(self) -> None:
         validator = ARRangeRestriction()
         beatmaps = [
             _make_beatmap(ar=5.0, version="Normal"),
@@ -91,7 +93,7 @@ class TestARRangeRestriction:
 class TestODRangeRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_in_range(self):
+    async def test_passes_when_in_range(self) -> None:
         validator = ODRangeRestriction()
         beatmaps = [_make_beatmap(accuracy=9.0), _make_beatmap(accuracy=10.0)]
         context = _make_context(
@@ -103,7 +105,7 @@ class TestODRangeRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_below_min(self):
+    async def test_raises_when_below_min(self) -> None:
         validator = ODRangeRestriction()
         beatmaps = [_make_beatmap(accuracy=7.0)]
         context = _make_context(
@@ -119,7 +121,7 @@ class TestODRangeRestriction:
 class TestHPRangeRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_in_range(self):
+    async def test_passes_when_in_range(self) -> None:
         validator = HPRangeRestriction()
         beatmaps = [_make_beatmap(drain=4.0)]
         context = _make_context(
@@ -131,7 +133,7 @@ class TestHPRangeRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_above_max(self):
+    async def test_raises_when_above_max(self) -> None:
         validator = HPRangeRestriction()
         beatmaps = [_make_beatmap(drain=6.0)]
         context = _make_context(
@@ -147,7 +149,7 @@ class TestHPRangeRestriction:
 class TestCSRangeRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_in_range(self):
+    async def test_passes_when_in_range(self) -> None:
         validator = CSRangeRestriction()
         beatmaps = [_make_beatmap(cs=3.0)]
         context = _make_context(
@@ -159,7 +161,7 @@ class TestCSRangeRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_outside_range(self):
+    async def test_raises_when_outside_range(self) -> None:
         validator = CSRangeRestriction()
         beatmaps = [_make_beatmap(cs=5.0)]
         context = _make_context(
@@ -175,7 +177,7 @@ class TestCSRangeRestriction:
 class TestDrainRangeRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_in_range(self):
+    async def test_passes_when_in_range(self) -> None:
         validator = DrainRangeRestriction()
         beatmaps = [_make_beatmap(hit_length=120)]
         context = _make_context(
@@ -187,7 +189,7 @@ class TestDrainRangeRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_below_min(self):
+    async def test_raises_when_below_min(self) -> None:
         validator = DrainRangeRestriction()
         beatmaps = [_make_beatmap(hit_length=30)]
         context = _make_context(

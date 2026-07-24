@@ -1,5 +1,7 @@
 import asyncio
 import time
+from types import TracebackType
+from typing import Self
 
 import httpx
 from pydantic import ValidationError
@@ -117,7 +119,7 @@ class OsuAPIClientBase:
 
         return self._token.access_token
 
-    async def refresh_token(self):
+    async def refresh_token(self) -> None:
         for attempt in range(MAX_TOKEN_FETCH_RETRIES):
             try:
                 token_dict = await self._oauth.fetch_token(
@@ -138,16 +140,21 @@ class OsuAPIClientBase:
                     f"Failed to fetch token after {MAX_TOKEN_FETCH_RETRIES} retries due to ReadTimeout"
                 ) from None
 
-    async def get_auth_headers(self, access_token: str = None) -> dict:
+    async def get_auth_headers(self, access_token: str | None = None) -> dict[str, str]:
         return {"Authorization": f"Bearer {access_token or await self.get_token()}"}
 
     async def close(self) -> None:
         await self._http_client.aclose()
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> Self:
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         await self.close()
 
     @staticmethod

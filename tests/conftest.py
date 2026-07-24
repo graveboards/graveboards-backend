@@ -31,7 +31,10 @@ def _clear_spec_cache() -> None:
             cache_file.unlink()
 
 
-def pytest_configure(config):
+from typing import Any, Callable, Generator
+
+
+def pytest_configure(config: Any) -> None:
     """Configure test environment before test modules are collected."""
     os.environ["DISABLE_SECURITY"] = "false"
     os.environ.setdefault("ENV", "test")
@@ -39,7 +42,7 @@ def pytest_configure(config):
 
 
 @pytest.fixture
-def security_disabled():
+def security_disabled() -> Any:
     """Temporarily disable runtime security checks for a test."""
     from app.config import override_security_enabled
 
@@ -48,7 +51,7 @@ def security_disabled():
 
 
 @pytest.fixture
-def security_enabled():
+def security_enabled() -> Any:
     """Temporarily enable runtime security checks for a test."""
     from app.config import override_security_enabled
 
@@ -57,7 +60,7 @@ def security_enabled():
 
 
 @pytest.fixture
-def authenticated_user_id():
+def authenticated_user_id() -> Callable[[int], Any]:
     """Fixture that returns a context-manager factory to patch
     ``get_authenticated_user_id`` in every decorator module.
 
@@ -70,12 +73,12 @@ def authenticated_user_id():
 
     Usage::
 
-        def test_something(self, authenticated_user_id):
+        def test_something(self, authenticated_user_id) -> None:
             with authenticated_user_id(99999999):
                 ...
     """
 
-    def _patch(user_id: int):
+    def _patch(user_id: int) -> Any:
         stack = ExitStack()
         for module in (
             "app.security.decorators.role_authorization",
@@ -90,7 +93,7 @@ def authenticated_user_id():
     return _patch
 
 
-def _patch_all_auth_modules(user_id: int):
+def _patch_all_auth_modules(user_id: int) -> ExitStack:
     """Return a context manager that patches ``get_authenticated_user_id`` in every
     decorator module that imports it.
 
@@ -113,7 +116,7 @@ def _patch_all_auth_modules(user_id: int):
     return stack
 
 
-def TestClientWithMocksFactory(request, mock_rc=None, mock_db=None):
+def TestClientWithMocksFactory(request: Any, mock_rc: Any = None, mock_db: Any = None) -> Any:
     """Create a TestClient with configurable mocks.
 
     Args:
@@ -132,7 +135,7 @@ def TestClientWithMocksFactory(request, mock_rc=None, mock_db=None):
 
 
 @pytest.fixture
-def TestClientWithMocks(request):
+def TestClientWithMocks(request: Any) -> Any:
     """Fixture that returns a callable for creating TestClient with mocks.
 
     This fixture provides a factory function that can be used to create
@@ -145,7 +148,7 @@ def TestClientWithMocks(request):
 
 
 @pytest.fixture
-def TestClient():
+def TestClient() -> Any:
     """Create a basic TestClient without mocks for HTTP endpoint testing.
 
     Returns:
@@ -160,7 +163,7 @@ def TestClient():
 
 
 @pytest.fixture
-def admin_user_token():
+def admin_user_token() -> str:
     """Generate a JWT token for admin user.
 
     Returns:
@@ -168,11 +171,11 @@ def admin_user_token():
     """
     from app.security import generate_token
 
-    return generate_token(11111111)
+    return str(generate_token(11111111))
 
 
 @pytest.fixture(scope="function")
-async def db_session():
+async def db_session() -> Any:
     """Create a database session for CRUD operations.
 
     Uses PostgresqlDB with automatic transaction rollback between tests
@@ -199,7 +202,7 @@ async def db_session():
 
 
 @pytest.fixture(scope="function")
-async def db_transaction():
+async def db_transaction() -> Any:
     """Create a database session that commits changes.
 
     Unlike db_session, this fixture commits changes so seeded data

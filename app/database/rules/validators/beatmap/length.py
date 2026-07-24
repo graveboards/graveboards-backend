@@ -58,7 +58,7 @@ class LengthRestriction(BeatmapRestrictionBase):
                     )
         else:
             # logic == "any": at least one beatmap must satisfy every configured bound.
-            def within_bounds(beatmap) -> bool:
+            def within_bounds(beatmap: Beatmap) -> bool:
                 if min_hit_length is not None and beatmap.hit_length < min_hit_length:
                     return False
                 if max_hit_length is not None and beatmap.hit_length > max_hit_length:

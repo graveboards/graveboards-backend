@@ -1,8 +1,10 @@
+from typing import Any
+
 import pytest
 
 
 @pytest.mark.integration
-def test_login_endpoint(TestClient):
+def test_login_endpoint(TestClient: Any) -> None:
     """Test login endpoint via HTTP using minimal TestClient fixture."""
     response = TestClient.get("/api/v1/login")
 
@@ -14,7 +16,7 @@ def test_login_endpoint(TestClient):
 
 
 @pytest.mark.integration
-def test_health_endpoint(TestClient):
+def test_health_endpoint(TestClient: Any) -> None:
     """Test GET /api/v1/health returns 200 with status field."""
     response = TestClient.get("/api/v1/health")
 

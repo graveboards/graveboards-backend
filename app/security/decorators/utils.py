@@ -11,13 +11,13 @@ def get_authenticated_user_id(kwargs: dict[str, Any], user_lookup: str = "user")
 
     # First, try to get from kwargs (most common case)
     try:
-        return get_nested_value(kwargs, user_lookup)
+        return int(get_nested_value(kwargs, user_lookup))
     except KeyError:
         pass
 
     # Try to get from token_info
     try:
-        return kwargs["token_info"]["sub"]
+        return int(kwargs["token_info"]["sub"])
     except KeyError:
         pass
 

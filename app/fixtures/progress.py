@@ -2,22 +2,22 @@
 
 import contextlib
 
+from rich.progress import BarColumn, Progress, TextColumn, TimeRemainingColumn
+
 
 class ProgressBar:
     """Simple progress bar handler for fetch operations."""
 
-    def __init__(self, no_progress: bool = False):
+    def __init__(self, no_progress: bool = False) -> None:
         self.no_progress = no_progress
-        self._progress = None
-        self._task_ids = {}
+        self._progress: Progress | None = None
+        self._task_ids: dict[str, int] = {}
 
-    def start(self):
+    def start(self) -> None:
         """Start the progress display."""
         if self.no_progress:
             return
         try:
-            from rich.progress import BarColumn, Progress, TextColumn, TimeRemainingColumn
-
             self._progress = Progress(
                 TextColumn("[bold blue]{task.description}"),
                 BarColumn(),
@@ -29,7 +29,7 @@ class ProgressBar:
         except ImportError:
             pass
 
-    def update(self, category: str, current: int, total: int):
+    def update(self, category: str, current: int, total: int) -> None:
         """Update progress for a category."""
         if self.no_progress or not self._progress:
             return
@@ -45,7 +45,7 @@ class ProgressBar:
         except Exception:
             pass
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the progress display."""
         if self._progress:
             with contextlib.suppress(Exception):

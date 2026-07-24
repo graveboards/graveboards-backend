@@ -1,5 +1,6 @@
 from ast import literal_eval
 from datetime import datetime
+from typing import cast as typing_cast
 
 from app.database.schemas.sub_schemas import BeatmapOsuApiSchema
 
@@ -73,4 +74,4 @@ class Beatmap(BeatmapOsuApiSchema):
 
             deserialized_dict[key] = value
 
-        return cls.model_validate(deserialized_dict)
+        return typing_cast(Beatmap, cls.model_validate(deserialized_dict))

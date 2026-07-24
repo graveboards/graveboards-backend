@@ -18,7 +18,7 @@ class CoversSchema(BaseModel):
     slimcover_2x: str = Field(alias="slimcover@2x")
 
     @model_serializer
-    def serialize_with_aliases(self, info: SerializationInfo):
+    def serialize_with_aliases(self, info: SerializationInfo) -> dict[str, str]:
         included = info.include
 
         return {

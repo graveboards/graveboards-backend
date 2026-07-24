@@ -10,7 +10,7 @@ class TestProfileFetcher:
     """Test ProfileFetcher service."""
 
     @pytest.fixture
-    def service(self):
+    def service(self) -> ProfileFetcher:
         """Create a test ProfileFetcher instance."""
         rc = MagicMock()
         db = MagicMock()
@@ -18,7 +18,7 @@ class TestProfileFetcher:
         service._load_job = AsyncMock()
         return service
 
-    async def test_preload_jobs_skips_disabled_tasks(self, service):
+    async def test_preload_jobs_skips_disabled_tasks(self, service: ProfileFetcher) -> None:
         """Test that disabled tasks are skipped during preload."""
         task1 = ProfileFetcherTask(id=1, user_id=123, enabled=True)
         task2 = ProfileFetcherTask(id=2, user_id=456, enabled=False)
@@ -29,14 +29,14 @@ class TestProfileFetcher:
 
         assert service._load_job.call_count == 1
 
-    async def test_execute_job_raises_value_error_when_record_not_found(self, service):
+    async def test_execute_job_raises_value_error_when_record_not_found(self, service: ProfileFetcher) -> None:
         """Test that _execute_job raises ValueError when task not found."""
         service._db.get = AsyncMock(return_value=None)
 
         with pytest.raises(ValueError, match="not found"):
             await service._execute_job(123)
 
-    async def test_execute_job_skips_when_lock_not_acquired(self, service):
+    async def test_execute_job_skips_when_lock_not_acquired(self, service: ProfileFetcher) -> None:
         """Test that execution is skipped when Redis lock is already held."""
         task = ProfileFetcherTask(id=1, user_id=123, enabled=True)
         service._db.get = AsyncMock(return_value=task)
@@ -46,7 +46,7 @@ class TestProfileFetcher:
 
         service._db.get.assert_awaited_once_with(ProfileFetcherTask, id=123)
 
-    async def test_execute_job_fetches_user_profile_when_lock_acquired(self, service):
+    async def test_execute_job_fetches_user_profile_when_lock_acquired(self, service: ProfileFetcher) -> None:
         """Test that profile is fetched when Redis lock is acquired."""
         task = ProfileFetcherTask(id=1, user_id=123, enabled=True)
         service._db.get = AsyncMock(return_value=task)
@@ -68,7 +68,7 @@ class TestProfileFetcher:
 
         service._oac.get_user.assert_awaited_once_with(123)
 
-    async def test_execute_job_creates_new_profile_when_not_exists(self, service):
+    async def test_execute_job_creates_new_profile_when_not_exists(self, service: ProfileFetcher) -> None:
         """Test that new profile is created when user has no profile."""
         task = ProfileFetcherTask(id=1, user_id=123, enabled=True)
         service._db.get = AsyncMock(
@@ -92,7 +92,7 @@ class TestProfileFetcher:
 
         service._db.add.assert_awaited_once()
 
-    async def test_auto_retry_decorator_applied(self, service):
+    async def test_auto_retry_decorator_applied(self, service: ProfileFetcher) -> None:
         """Test that _execute_job has auto_retry decorator."""
 
         assert hasattr(service._execute_job, "__wrapped__")

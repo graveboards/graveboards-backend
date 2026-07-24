@@ -29,7 +29,7 @@ def resolve_dependencies(targets: set[SeederTarget]) -> list[list[SeederTarget]]
     """
     resolved: set[SeederTarget] = set()
 
-    def visit(target: SeederTarget):
+    def visit(target: SeederTarget) -> None:
         if target in resolved:
             return
 

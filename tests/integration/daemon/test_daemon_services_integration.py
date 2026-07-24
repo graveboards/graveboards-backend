@@ -4,6 +4,8 @@ These tests use mocked Redis and database objects to test daemon behavior
 without requiring real infrastructure.
 """
 
+from typing import Any
+
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -17,7 +19,7 @@ class TestDaemonLifecycle:
     """Integration tests for Daemon lifecycle."""
 
     @pytest.fixture
-    def mock_rc(self):
+    def mock_rc(self) -> AsyncMock:
         """Create a mock Redis client."""
         rc = AsyncMock()
         rc.pubsub = MagicMock()
@@ -28,14 +30,14 @@ class TestDaemonLifecycle:
         return rc
 
     @pytest.fixture
-    def mock_db(self):
+    def mock_db(self) -> AsyncMock:
         """Create a mock database."""
         db = AsyncMock()
         db.close = AsyncMock()
         return db
 
     @pytest.mark.asyncio
-    async def test_daemon_registers_all_services(self, mock_rc, mock_db):
+    async def test_daemon_registers_all_services(self, mock_rc: AsyncMock, mock_db: Any) -> None:
         """Test Daemon registers ProfileFetcher, QueueRequestHandler, ScoreFetcher."""
         daemon = Daemon(rc=mock_rc, db=mock_db)
         await daemon._on_start()
@@ -46,7 +48,7 @@ class TestDaemonLifecycle:
         assert len(daemon._services) == 4
 
     @pytest.mark.asyncio
-    async def test_daemon_service_factories_are_lazy(self, mock_rc, mock_db):
+    async def test_daemon_service_factories_are_lazy(self, mock_rc: AsyncMock, mock_db: Any) -> None:
         """Test that registered services are instances of Service."""
         daemon = Daemon(rc=mock_rc, db=mock_db)
         await daemon._on_start()
@@ -59,21 +61,21 @@ class TestServiceSupervisor:
     """Integration tests for ServiceSupervisor."""
 
     @pytest.fixture
-    def mock_rc(self):
+    def mock_rc(self) -> AsyncMock:
         """Create a mock Redis client."""
         rc = AsyncMock()
         rc.close = AsyncMock()
         return rc
 
     @pytest.fixture
-    def mock_db(self):
+    def mock_db(self) -> AsyncMock:
         """Create a mock database."""
         db = AsyncMock()
         db.close = AsyncMock()
         return db
 
     @pytest.fixture
-    def supervisor(self):
+    def supervisor(self) -> ServiceSupervisor:
         """Create a ServiceSupervisor with a valid LOGGER."""
         from app.observability.logging import get_logger
 
@@ -82,14 +84,14 @@ class TestServiceSupervisor:
         return supervisor
 
     @pytest.mark.asyncio
-    async def test_register_service_stores_factory(self, supervisor):
+    async def test_register_service_stores_factory(self, supervisor: ServiceSupervisor) -> None:
         """Test registering a service stores the factory under the given name."""
         from app.observability.logging import get_logger
 
         class TestService(Service):
             LOGGER = get_logger("test.service")
 
-        def factory():
+        def factory() -> Service:
             return TestService()
 
         await supervisor.register_service("test_service", factory)
@@ -97,14 +99,14 @@ class TestServiceSupervisor:
         assert "test_service" in supervisor._services
 
     @pytest.mark.asyncio
-    async def test_register_duplicate_service_raises(self, supervisor):
+    async def test_register_duplicate_service_raises(self, supervisor: ServiceSupervisor) -> None:
         """Test registering a service with a duplicate name raises ValueError."""
         from app.observability.logging import get_logger
 
         class TestService(Service):
             LOGGER = get_logger("test.service")
 
-        def factory():
+        def factory() -> Service:
             return TestService()
 
         await supervisor.register_service("test_service", factory)
@@ -113,7 +115,7 @@ class TestServiceSupervisor:
             await supervisor.register_service("test_service", factory)
 
     @pytest.mark.asyncio
-    async def test_supervisor_init_has_empty_services(self):
+    async def test_supervisor_init_has_empty_services(self) -> None:
         """Test ServiceSupervisor starts with empty services dict."""
         from app.observability.logging import get_logger
 
@@ -126,7 +128,7 @@ class TestScheduledService:
     """Integration tests for scheduled service job behavior."""
 
     @pytest.mark.asyncio
-    async def test_service_requires_logger(self):
+    async def test_service_requires_logger(self) -> None:
         """Test Service subclass without LOGGER raises TypeError."""
         with pytest.raises(TypeError, match="LOGGER"):
 
@@ -136,7 +138,7 @@ class TestScheduledService:
             BadService()
 
     @pytest.mark.asyncio
-    async def test_service_with_logger_initializes(self):
+    async def test_service_with_logger_initializes(self) -> None:
         """Test Service subclass with LOGGER initializes correctly."""
         from app.observability.logging import get_logger
 

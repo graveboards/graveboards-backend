@@ -5,7 +5,7 @@ from app.search.compression import compress_query, decompress_query
 pytestmark = pytest.mark.unit
 
 
-def test_compress_query_round_trips_structured_search_payload():
+def test_compress_query_round_trips_structured_search_payload() -> None:
     payload = {
         "scope": "beatmaps",
         "search_terms": {
@@ -28,7 +28,7 @@ def test_compress_query_round_trips_structured_search_payload():
     assert decompress_query(compressed, serialized=False) == payload
 
 
-def test_decompress_query_rejects_truncated_or_non_query_data():
+def test_decompress_query_rejects_truncated_or_non_query_data() -> None:
     compressed = compress_query(b'{"scope":"beatmaps"}')
 
     with pytest.raises(ValueError, match="Could not decompress query"):

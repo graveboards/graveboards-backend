@@ -4,6 +4,8 @@ Integration tests for POST /api/v1/beatmapsets endpoint (admin-only).
 Tests the beatmap archival via full HTTP stack.
 """
 
+from typing import Any, Callable
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -15,11 +17,11 @@ class TestBeatmapsetsPostIntegration:
     TEST_BEATMAPSET_ID = 35965
 
     @pytest.fixture
-    def mock_beatmap_manager(self):
+    def mock_beatmap_manager(self) -> Callable[[Any], MagicMock]:
         """Create a mock beatmap manager with proper archive behavior."""
         from unittest.mock import AsyncMock, MagicMock
 
-        def create_manager(result):
+        def create_manager(result: Any) -> MagicMock:
             mock_bm = MagicMock()
             mock_bm.archive = AsyncMock(return_value=result)
             return mock_bm
@@ -27,7 +29,7 @@ class TestBeatmapsetsPostIntegration:
         return create_manager
 
     @pytest.fixture
-    def mock_rc(self):
+    def mock_rc(self) -> AsyncMock:
         """Create a mock Redis client."""
         from unittest.mock import AsyncMock
 
@@ -39,7 +41,7 @@ class TestBeatmapsetsPostIntegration:
         return mock_rc
 
     @pytest.fixture
-    def mock_osu_client(self, mock_rc):
+    def mock_osu_client(self, mock_rc: AsyncMock) -> MagicMock:
         """Create a mock osu client."""
         from unittest.mock import MagicMock
 
@@ -48,7 +50,7 @@ class TestBeatmapsetsPostIntegration:
         return mock_client
 
     @pytest.fixture
-    def mock_admin_db(self):
+    def mock_admin_db(self) -> AsyncMock:
         """A db mock whose role check resolves to an admin - needed since, with
         security disabled, role_authorization now runs a real role check against
         the resolved dev identity instead of skipping it outright.
@@ -69,12 +71,12 @@ class TestBeatmapsetsPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_archival_creates_snapshot(
         self,
-        TestClientWithMocks,
-        mock_beatmap_manager,
-        mock_osu_client,
-        mock_admin_db,
-        security_disabled,
-    ):
+        TestClientWithMocks: Any,
+        mock_beatmap_manager: Callable[[Any], MagicMock],
+        mock_osu_client: MagicMock,
+        mock_admin_db: AsyncMock,
+        security_disabled: Any,
+    ) -> None:
         """Test successful beatmap archival that creates new snapshot."""
         mock_bm = mock_beatmap_manager(
             {
@@ -112,12 +114,12 @@ class TestBeatmapsetsPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_archival_updates_existing(
         self,
-        TestClientWithMocks,
-        mock_beatmap_manager,
-        mock_osu_client,
-        mock_admin_db,
-        security_disabled,
-    ):
+        TestClientWithMocks: Any,
+        mock_beatmap_manager: Callable[[Any], MagicMock],
+        mock_osu_client: MagicMock,
+        mock_admin_db: AsyncMock,
+        security_disabled: Any,
+    ) -> None:
         """Test successful beatmap archival that updates existing data."""
         mock_bm = mock_beatmap_manager(
             {
@@ -152,12 +154,12 @@ class TestBeatmapsetsPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_archival_up_to_date(
         self,
-        TestClientWithMocks,
-        mock_beatmap_manager,
-        mock_osu_client,
-        mock_admin_db,
-        security_disabled,
-    ):
+        TestClientWithMocks: Any,
+        mock_beatmap_manager: Callable[[Any], MagicMock],
+        mock_osu_client: MagicMock,
+        mock_admin_db: AsyncMock,
+        security_disabled: Any,
+    ) -> None:
         """Test successful beatmap archival that detects up-to-date data."""
         mock_bm = mock_beatmap_manager(
             {
@@ -188,12 +190,12 @@ class TestBeatmapsetsPostIntegration:
     @pytest.mark.asyncio
     async def test_osu_api_error_handling(
         self,
-        TestClientWithMocks,
-        mock_beatmap_manager,
-        mock_osu_client,
-        mock_admin_db,
-        security_disabled,
-    ):
+        TestClientWithMocks: Any,
+        mock_beatmap_manager: Callable[[Any], MagicMock],
+        mock_osu_client: MagicMock,
+        mock_admin_db: AsyncMock,
+        security_disabled: Any,
+    ) -> None:
         """Test that osu! API errors are properly handled."""
         import httpx
         from httpx import Request
@@ -231,8 +233,12 @@ class TestBeatmapsetsPostIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_non_admin_user_gets_forbidden(
-        self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, authenticated_user_id
-    ):
+        self,
+        TestClientWithMocks: Any,
+        mock_beatmap_manager: Callable[[Any], MagicMock],
+        mock_osu_client: MagicMock,
+        authenticated_user_id: Any,
+    ) -> None:
         """Test that non-admin user gets 403 Forbidden."""
         from app.security import generate_token
 
@@ -284,12 +290,12 @@ class TestBeatmapsetsPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_access_succeeds_with_token(
         self,
-        TestClientWithMocks,
-        mock_beatmap_manager,
-        mock_osu_client,
-        admin_user_token,
-        authenticated_user_id,
-    ):
+        TestClientWithMocks: Any,
+        mock_beatmap_manager: Callable[[Any], MagicMock],
+        mock_osu_client: MagicMock,
+        admin_user_token: Any,
+        authenticated_user_id: Any,
+    ) -> None:
         """Test that admin user can successfully post beatmapset with valid token."""
         from app.database.enums import RoleName
         from app.security import decode_token
@@ -344,8 +350,12 @@ class TestBeatmapsetsPostIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_success_with_auth(
-        self, TestClientWithMocks, mock_beatmap_manager, mock_osu_client, admin_user_token
-    ):
+        self,
+        TestClientWithMocks: Any,
+        mock_beatmap_manager: Callable[[Any], MagicMock],
+        mock_osu_client: MagicMock,
+        admin_user_token: Any,
+    ) -> None:
         """Test that admin user can successfully post beatmapset with valid token."""
         from app.database.enums import RoleName
 
@@ -394,12 +404,12 @@ class TestBeatmapsetsPostIntegration:
     @pytest.mark.asyncio
     async def test_bypass_security_with_flag(
         self,
-        TestClientWithMocks,
-        mock_beatmap_manager,
-        mock_osu_client,
-        mock_admin_db,
-        security_disabled,
-    ):
+        TestClientWithMocks: Any,
+        mock_beatmap_manager: Callable[[Any], MagicMock],
+        mock_osu_client: MagicMock,
+        mock_admin_db: AsyncMock,
+        security_disabled: Any,
+    ) -> None:
         """Test that disabling security resolves an admin dev identity (rather than
         skipping the check outright), letting the request through.
         """
@@ -437,7 +447,7 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_get_beatmapset_list(self, TestClientWithMocks):
+    async def test_get_beatmapset_list(self, TestClientWithMocks: Any) -> None:
         """Test GET /api/v1/beatmapsets returns list of beatmapsets."""
         mock_db = AsyncMock()
         mock_beatmapset1 = MagicMock()
@@ -457,7 +467,7 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_get_beatmapset_by_id(self, TestClientWithMocks):
+    async def test_get_beatmapset_by_id(self, TestClientWithMocks: Any) -> None:
         """Test GET /api/v1/beatmapsets/{id} returns specific beatmapset."""
         mock_db = AsyncMock()
         mock_beatmapset = MagicMock()
@@ -475,7 +485,7 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_get_beatmapset_not_found(self, TestClientWithMocks):
+    async def test_get_beatmapset_not_found(self, TestClientWithMocks: Any) -> None:
         """Test GET /api/v1/beatmapsets/{id} returns 404 for non-existent beatmapset."""
         mock_db = AsyncMock()
         mock_db.get = AsyncMock(return_value=None)
@@ -491,7 +501,7 @@ class TestBeatmapsetsPostIntegration:
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_get_beatmapset_zip(TestClientWithMocks):
+async def test_get_beatmapset_zip(TestClientWithMocks: Any) -> None:
     """Test GET /api/v1/beatmapsets/{id}/snapshots/{n}/zip returns zip file."""
     from io import BytesIO
 
@@ -529,7 +539,7 @@ async def test_get_beatmapset_zip(TestClientWithMocks):
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_get_beatmapset_zip_not_found(TestClientWithMocks):
+async def test_get_beatmapset_zip_not_found(TestClientWithMocks: Any) -> None:
     """Test 404 when zip file doesn't exist."""
     mock_db = AsyncMock()
     mock_db.get = AsyncMock(return_value=None)
@@ -550,7 +560,7 @@ async def test_get_beatmapset_zip_not_found(TestClientWithMocks):
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_get_snapshot(TestClientWithMocks):
+async def test_get_snapshot(TestClientWithMocks: Any) -> None:
     """Test GET /api/v1/beatmapsets/{id}/snapshots/{n} returns snapshot."""
     mock_db = AsyncMock()
     mock_beatmapset_snapshot = MagicMock()

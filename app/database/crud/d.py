@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import select
@@ -11,7 +12,9 @@ from .decorators import session_manager
 
 class _D:
     @staticmethod
-    async def _delete_instance(model_class: ModelClass, session: AsyncSession, **kwargs):
+    async def _delete_instance(
+        model_class: ModelClass, session: AsyncSession, **kwargs: Any
+    ) -> None:
         """Delete a single model instance matching strict filter criteria.
 
         Performs attribute validation, executes a filtered SELECT to resolve matching
@@ -65,7 +68,9 @@ class _D:
         await session.flush()
 
     @staticmethod
-    async def _delete_instances(model_class: ModelClass, session: AsyncSession, **kwargs) -> int:
+    async def _delete_instances(
+        model_class: ModelClass, session: AsyncSession, **kwargs: Any
+    ) -> int:
         """Delete multiple model instances matching filter criteria.
 
         Supports equality filters and iterable-based membership filters (translated into
@@ -126,7 +131,9 @@ class _D:
 
 class D(_D):
     @session_manager()
-    async def delete(self, model: type[BaseType], session: AsyncSession = None, **kwargs):
+    async def delete(
+        self, model: type[BaseType], session: AsyncSession | None = None, **kwargs: Any
+    ) -> None:
         """Public API for deleting a single model instance.
 
         Wraps ``_delete_instance`` and manages session lifecycle via the
@@ -146,7 +153,7 @@ class D(_D):
 
     @session_manager()
     async def delete_many(
-        self, model: type[BaseType], session: AsyncSession = None, **kwargs
+        self, model: type[BaseType], session: AsyncSession | None = None, **kwargs: Any
     ) -> int:
         """Public API for deleting multiple model instances.
 

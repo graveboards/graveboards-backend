@@ -1,7 +1,7 @@
 __all__ = ["PostgresqlDB", "db_lifespan"]
 
 
-def __getattr__(name):
+def __getattr__(name: str) -> Any:
     if name == "PostgresqlDB":
         from .db import PostgresqlDB
 

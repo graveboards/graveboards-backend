@@ -4,6 +4,7 @@ Integration tests for /queues/{queue_id}/rules endpoint.
 Tests full CRUD operations for queue rules via the dedicated endpoint.
 """
 
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -18,7 +19,7 @@ class TestQueueRulesCRUD:
     ADMIN_USER_ID = 11111111
 
     @pytest.fixture
-    def valid_rule_data(self):
+    def valid_rule_data(self) -> dict[str, Any]:
         return {
             "type": "rate_limit",
             "config": {
@@ -29,7 +30,7 @@ class TestQueueRulesCRUD:
         }
 
     @pytest.fixture
-    def another_valid_rule_data(self):
+    def another_valid_rule_data(self) -> dict[str, Any]:
         return {
             "type": "cooldown",
             "config": {
@@ -38,7 +39,7 @@ class TestQueueRulesCRUD:
             },
         }
 
-    def _make_mock_queue(self, queue_id=None, user_id=None):
+    def _make_mock_queue(self, queue_id: int | None = None, user_id: int | None = None) -> MagicMock:
         mock_queue = MagicMock()
         mock_queue.id = queue_id or self.TEST_QUEUE_ID
         mock_queue.user_id = user_id or self.TEST_USER_ID
@@ -46,7 +47,7 @@ class TestQueueRulesCRUD:
         mock_queue.is_open = True
         return mock_queue
 
-    def _make_mock_rule(self, rule_id=None, queue_id=None, rule_type="rate_limit"):
+    def _make_mock_rule(self, rule_id: int | None = None, queue_id: int | None = None, rule_type: str = "rate_limit") -> Any:
         """Create a mock rule with proper attribute values (not MagicMock)."""
         from dataclasses import dataclass, field
         from datetime import datetime
@@ -73,7 +74,7 @@ class TestQueueRulesCRUD:
             is_public=True,
         )
 
-    def _make_mock_user(self, user_id, roles=None):
+    def _make_mock_user(self, user_id: int, roles: list[Any] | None = None) -> MagicMock:
         """Create a mock user with the given roles."""
         mock_user = MagicMock()
         mock_user.id = user_id
@@ -83,13 +84,13 @@ class TestQueueRulesCRUD:
             mock_user.roles = roles
         return mock_user
 
-    def _make_role(self, role_name):
+    def _make_role(self, role_name: str) -> MagicMock:
         """Create a mock role with the given name string."""
         role = MagicMock()
         role.name = role_name
         return role
 
-    def _make_mock_db(self, queue=None, user=None):
+    def _make_mock_db(self, queue: MagicMock | None = None, user: MagicMock | None = None) -> AsyncMock:
         """Create a mock DB with proper session mocking."""
         # Create a proper async context manager for the session
         mock_session_instance = MagicMock()
@@ -127,8 +128,8 @@ class TestQueueRulesCRUD:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_lists_rules(
-        self, TestClientWithMocks, admin_user_token, valid_rule_data, authenticated_user_id
-    ):
+        self, TestClientWithMocks: Any, admin_user_token: str, valid_rule_data: dict[str, Any], authenticated_user_id: Any
+    ) -> None:
         """Test admin can list all rules for a queue."""
         from app.database.crud.rules import RuleCRUD
 
@@ -159,8 +160,8 @@ class TestQueueRulesCRUD:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_gets_single_rule(
-        self, TestClientWithMocks, admin_user_token, authenticated_user_id
-    ):
+        self, TestClientWithMocks: Any, admin_user_token: str, authenticated_user_id: Any
+    ) -> None:
         """Test admin can get a single rule by ID."""
         from app.database.crud.rules import RuleCRUD
 
@@ -190,8 +191,8 @@ class TestQueueRulesCRUD:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_creates_rule(
-        self, TestClientWithMocks, admin_user_token, valid_rule_data, authenticated_user_id
-    ):
+        self, TestClientWithMocks: Any, admin_user_token: str, valid_rule_data: dict[str, Any], authenticated_user_id: Any
+    ) -> None:
         """Test admin can create a new rule."""
         from app.database.crud.rules import RuleCRUD
 
@@ -221,8 +222,8 @@ class TestQueueRulesCRUD:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_updates_rule(
-        self, TestClientWithMocks, admin_user_token, authenticated_user_id
-    ):
+        self, TestClientWithMocks: Any, admin_user_token: str, authenticated_user_id: Any
+    ) -> None:
         """Test admin can update an existing rule."""
         from app.database.crud.rules import RuleCRUD
 
@@ -251,8 +252,8 @@ class TestQueueRulesCRUD:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_deletes_rule(
-        self, TestClientWithMocks, admin_user_token, authenticated_user_id
-    ):
+        self, TestClientWithMocks: Any, admin_user_token: str, authenticated_user_id: Any
+    ) -> None:
         """Test admin can delete a rule."""
         from app.database.crud.rules import RuleCRUD
 
@@ -280,8 +281,8 @@ class TestQueueRulesCRUD:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_replaces_all_rules(
-        self, TestClientWithMocks, admin_user_token, valid_rule_data, authenticated_user_id
-    ):
+        self, TestClientWithMocks: Any, admin_user_token: str, valid_rule_data: dict[str, Any], authenticated_user_id: Any
+    ) -> None:
         """Test admin can replace all rules for a queue."""
         from app.database.crud.rules import RuleCRUD
 
@@ -309,8 +310,8 @@ class TestQueueRulesCRUD:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_owner_manages_rules(
-        self, TestClientWithMocks, admin_user_token, valid_rule_data, authenticated_user_id
-    ):
+        self, TestClientWithMocks: Any, admin_user_token: str, valid_rule_data: dict[str, Any], authenticated_user_id: Any
+    ) -> None:
         """Test queue owner can manage rules."""
         from app.database.crud.rules import RuleCRUD
 
@@ -340,8 +341,8 @@ class TestQueueRulesCRUD:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_non_owner_gets_forbidden(
-        self, TestClientWithMocks, admin_user_token, valid_rule_data, authenticated_user_id
-    ):
+        self, TestClientWithMocks: Any, admin_user_token: str, valid_rule_data: dict[str, Any], authenticated_user_id: Any
+    ) -> None:
         """Test non-owner non-admin gets 403."""
         mock_queue = self._make_mock_queue(user_id=self.TEST_USER_ID)
         mock_other_user = self._make_mock_user(99999999, roles=[])
@@ -363,8 +364,8 @@ class TestQueueRulesCRUD:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_missing_queue_returns_404(
-        self, TestClientWithMocks, admin_user_token, authenticated_user_id
-    ):
+        self, TestClientWithMocks: Any, admin_user_token: str, authenticated_user_id: Any
+    ) -> None:
         """Test 404 when queue doesn't exist."""
         mock_admin_user = self._make_mock_user(self.ADMIN_USER_ID, roles=[self._make_role("admin")])
 
@@ -384,8 +385,8 @@ class TestQueueRulesCRUD:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_missing_rule_returns_404(
-        self, TestClientWithMocks, admin_user_token, authenticated_user_id
-    ):
+        self, TestClientWithMocks: Any, admin_user_token: str, authenticated_user_id: Any
+    ) -> None:
         """Test 404 when rule doesn't exist."""
         from app.database.crud.rules import RuleCRUD
 
@@ -412,8 +413,8 @@ class TestQueueRulesCRUD:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_duplicate_rule_returns_409(
-        self, TestClientWithMocks, admin_user_token, valid_rule_data, authenticated_user_id
-    ):
+        self, TestClientWithMocks: Any, admin_user_token: str, valid_rule_data: dict[str, Any], authenticated_user_id: Any
+    ) -> None:
         """Test 409 when duplicate rule exists."""
         from app.database.crud.rules import RuleCRUD
 
@@ -428,7 +429,7 @@ class TestQueueRulesCRUD:
         # Make create_rule raise Conflict to simulate duplicate detection
         from app.exceptions import Conflict
 
-        async def mock_create_rule(*args, **kwargs):
+        async def mock_create_rule(*args: Any, **kwargs: Any) -> Any:
             raise Conflict("Duplicate rule")
 
         mock_crud.create_rule = mock_create_rule
@@ -451,8 +452,8 @@ class TestQueueRulesCRUD:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_invalid_rule_config_returns_400(
-        self, TestClientWithMocks, admin_user_token, authenticated_user_id
-    ):
+        self, TestClientWithMocks: Any, admin_user_token: str, authenticated_user_id: Any
+    ) -> None:
         """Test 400 when rule config is invalid."""
         mock_queue = self._make_mock_queue()
         mock_admin_user = self._make_mock_user(self.ADMIN_USER_ID, roles=[self._make_role("admin")])
@@ -476,8 +477,8 @@ class TestQueueRulesCRUD:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_patch_queue_no_longer_affects_rules(
-        self, TestClientWithMocks, admin_user_token, authenticated_user_id
-    ):
+        self, TestClientWithMocks: Any, admin_user_token: str, authenticated_user_id: Any
+    ) -> None:
         """Test that patching queue doesn't affect rules."""
         mock_queue = self._make_mock_queue()
         mock_admin_user = self._make_mock_user(self.ADMIN_USER_ID, roles=[self._make_role("admin")])

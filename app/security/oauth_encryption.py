@@ -11,9 +11,9 @@ _fernet = Fernet(_fernet_key)
 
 def encrypt_token(plaintext: str) -> bytes:
     """Encrypt a token string using Fernet."""
-    return _fernet.encrypt(plaintext.encode())
+    return bytes(_fernet.encrypt(plaintext.encode()))
 
 
 def decrypt_token(ciphertext: bytes) -> str:
     """Decrypt a Fernet-encrypted token string."""
-    return _fernet.decrypt(ciphertext).decode()
+    return str(_fernet.decrypt(ciphertext).decode())

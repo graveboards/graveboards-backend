@@ -1,3 +1,5 @@
+from typing import Any
+
 from unittest.mock import MagicMock
 
 import pytest
@@ -8,14 +10,18 @@ from app.database.rules.validators.beatmap.duration import DurationRestriction
 from app.database.schemas.rule import DurationConfig
 
 
-def _make_beatmap(total_length: int, version: str = "Easy"):
+def _make_beatmap(total_length: int, version: str = "Easy") -> MagicMock:
     bm = MagicMock()
     bm.total_length = total_length
     bm.version = version
     return bm
 
 
-def _make_context(beatmaps=None, beatmapset=None, config=None):
+def _make_context(
+    beatmaps: list[Any] | None = None,
+    beatmapset: Any = None,
+    config: dict[str, Any] | None = None,
+) -> ExecutionContext:
     return ExecutionContext(
         queue_id=1,
         user_id=12345678,
@@ -28,7 +34,7 @@ def _make_context(beatmaps=None, beatmapset=None, config=None):
 class TestDurationRestriction:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_max_not_exceeded(self):
+    async def test_passes_when_max_not_exceeded(self) -> None:
         validator = DurationRestriction()
         beatmaps = [_make_beatmap(150), _make_beatmap(170)]
         context = _make_context(
@@ -39,7 +45,7 @@ class TestDurationRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_max_exceeded(self):
+    async def test_raises_when_max_exceeded(self) -> None:
         validator = DurationRestriction()
         beatmaps = [_make_beatmap(150), _make_beatmap(200)]
         context = _make_context(
@@ -54,7 +60,7 @@ class TestDurationRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_passes_when_min_not_below(self):
+    async def test_passes_when_min_not_below(self) -> None:
         validator = DurationRestriction()
         beatmaps = [_make_beatmap(40), _make_beatmap(50)]
         context = _make_context(
@@ -65,7 +71,7 @@ class TestDurationRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_min_below(self):
+    async def test_raises_when_min_below(self) -> None:
         validator = DurationRestriction()
         beatmaps = [_make_beatmap(20), _make_beatmap(50)]
         context = _make_context(
@@ -80,7 +86,7 @@ class TestDurationRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_all_logic_passes_when_all_within_range(self):
+    async def test_all_logic_passes_when_all_within_range(self) -> None:
         validator = DurationRestriction()
         beatmaps = [_make_beatmap(100), _make_beatmap(150), _make_beatmap(170)]
         context = _make_context(
@@ -91,7 +97,7 @@ class TestDurationRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_all_logic_raises_on_too_short(self):
+    async def test_all_logic_raises_on_too_short(self) -> None:
         validator = DurationRestriction()
         beatmaps = [_make_beatmap(100, "Normal"), _make_beatmap(20, "Easy")]
         context = _make_context(
@@ -106,7 +112,7 @@ class TestDurationRestriction:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_all_logic_raises_on_too_long(self):
+    async def test_all_logic_raises_on_too_long(self) -> None:
         validator = DurationRestriction()
         beatmaps = [_make_beatmap(100, "Normal"), _make_beatmap(250, "Extra")]
         context = _make_context(
@@ -120,9 +126,9 @@ class TestDurationRestriction:
         assert "Extra" in str(exc_info.value.detail)
 
     @pytest.mark.unit
-    def test_config_schema_is_set(self):
+    def test_config_schema_is_set(self) -> None:
         assert DurationRestriction.config_schema is DurationConfig
 
     @pytest.mark.unit
-    def test_type(self):
+    def test_type(self) -> None:
         assert DurationRestriction.type == "beatmap_duration"

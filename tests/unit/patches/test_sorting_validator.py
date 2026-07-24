@@ -7,7 +7,7 @@ from app.patches.validators.sorting import validate_sorting
 class TestSortingValidator:
     """Test sorting parameter validation."""
 
-    def test_validate_sorting_valid_entry(self):
+    def test_validate_sorting_valid_entry(self) -> None:
         """Test validation of valid sorting entry."""
         schema = {
             "items": {
@@ -23,7 +23,7 @@ class TestSortingValidator:
 
         assert result is None
 
-    def test_validate_sorting_missing_order_uses_default(self):
+    def test_validate_sorting_missing_order_uses_default(self) -> None:
         """Test that missing order defaults to asc."""
         schema = {
             "items": {"properties": {"field": {"enum": ["id"]}, "order": {"enum": ["asc", "desc"]}}}
@@ -34,7 +34,7 @@ class TestSortingValidator:
 
         assert result is None
 
-    def test_validate_sorting_multiple_entries(self):
+    def test_validate_sorting_multiple_entries(self) -> None:
         """Test validation of multiple sorting entries."""
         schema = {
             "items": {
@@ -50,7 +50,7 @@ class TestSortingValidator:
 
         assert result is None
 
-    def test_validate_sorting_invalid_field_raises(self):
+    def test_validate_sorting_invalid_field_raises(self) -> None:
         """Test that invalid field raises error."""
         schema = {
             "items": {
@@ -65,7 +65,7 @@ class TestSortingValidator:
         with pytest.raises(ArrayValidationError):
             validate_sorting(sorting, schema)
 
-    def test_validate_sorting_invalid_order_raises(self):
+    def test_validate_sorting_invalid_order_raises(self) -> None:
         """Test that invalid order raises error."""
         schema = {
             "items": {"properties": {"field": {"enum": ["id"]}, "order": {"enum": ["asc", "desc"]}}}
@@ -75,7 +75,7 @@ class TestSortingValidator:
         with pytest.raises(ArrayValidationError):
             validate_sorting(sorting, schema)
 
-    def test_validate_sorting_unknown_order_raises(self):
+    def test_validate_sorting_unknown_order_raises(self) -> None:
         """Test that unknown order raises error."""
         schema = {
             "items": {"properties": {"field": {"enum": ["id"]}, "order": {"enum": ["asc", "desc"]}}}
@@ -85,7 +85,7 @@ class TestSortingValidator:
         with pytest.raises(ArrayValidationError):
             validate_sorting(sorting, schema)
 
-    def test_validate_sorting_extra_keys_raises(self):
+    def test_validate_sorting_extra_keys_raises(self) -> None:
         """Test that extra keys raise error."""
         schema = {
             "items": {"properties": {"field": {"enum": ["id"]}, "order": {"enum": ["asc", "desc"]}}}
@@ -95,18 +95,18 @@ class TestSortingValidator:
         with pytest.raises(ArrayValidationError):
             validate_sorting(sorting, schema)
 
-    def test_validate_sorting_empty_list(self):
+    def test_validate_sorting_empty_list(self) -> None:
         """Test validation of empty list."""
         schema = {
             "items": {"properties": {"field": {"enum": ["id"]}, "order": {"enum": ["asc", "desc"]}}}
         }
-        sorting = []
+        sorting: list[dict[str, str | None]] = []
 
         result = validate_sorting(sorting, schema)
 
         assert result is None
 
-    def test_validate_sorting_default_order_asc(self):
+    def test_validate_sorting_default_order_asc(self) -> None:
         """Test that default order is asc."""
         schema = {
             "items": {"properties": {"field": {"enum": ["id"]}, "order": {"enum": ["asc", "desc"]}}}
@@ -118,7 +118,7 @@ class TestSortingValidator:
 
         assert result is None
 
-    def test_validate_sorting_case_sensitive_enum(self):
+    def test_validate_sorting_case_sensitive_enum(self) -> None:
         """Test that enum validation is case-sensitive."""
         schema = {
             "items": {"properties": {"field": {"enum": ["id"]}, "order": {"enum": ["asc", "desc"]}}}
@@ -128,7 +128,7 @@ class TestSortingValidator:
         with pytest.raises(ArrayValidationError):
             validate_sorting(sorting, schema)
 
-    def test_validate_sorting_no_field_raises(self):
+    def test_validate_sorting_no_field_raises(self) -> None:
         """Test that missing field raises error."""
         schema = {
             "items": {"properties": {"field": {"enum": ["id"]}, "order": {"enum": ["asc", "desc"]}}}
@@ -138,7 +138,7 @@ class TestSortingValidator:
         with pytest.raises(ArrayValidationError):
             validate_sorting(sorting, schema)
 
-    def test_validate_sorting_field_not_in_enum_raises(self):
+    def test_validate_sorting_field_not_in_enum_raises(self) -> None:
         """Test that field not in enum raises error."""
         schema = {
             "items": {
@@ -153,7 +153,7 @@ class TestSortingValidator:
         with pytest.raises(ArrayValidationError):
             validate_sorting(sorting, schema)
 
-    def test_validate_sorting_multiple_extra_keys_raises(self):
+    def test_validate_sorting_multiple_extra_keys_raises(self) -> None:
         """Test that multiple extra keys raise error."""
         schema = {
             "items": {"properties": {"field": {"enum": ["id"]}, "order": {"enum": ["asc", "desc"]}}}
@@ -163,7 +163,7 @@ class TestSortingValidator:
         with pytest.raises(ArrayValidationError):
             validate_sorting(sorting, schema)
 
-    def test_validate_sorting_null_field_raises(self):
+    def test_validate_sorting_null_field_raises(self) -> None:
         """Test that null field raises error."""
         schema = {
             "items": {"properties": {"field": {"enum": ["id"]}, "order": {"enum": ["asc", "desc"]}}}
@@ -173,7 +173,7 @@ class TestSortingValidator:
         with pytest.raises(ArrayValidationError):
             validate_sorting(sorting, schema)
 
-    def test_validate_sorting_empty_field_raises(self):
+    def test_validate_sorting_empty_field_raises(self) -> None:
         """Test that empty field raises error."""
         schema = {
             "items": {"properties": {"field": {"enum": ["id"]}, "order": {"enum": ["asc", "desc"]}}}
@@ -183,7 +183,7 @@ class TestSortingValidator:
         with pytest.raises(ArrayValidationError):
             validate_sorting(sorting, schema)
 
-    def test_validate_sorting_invalid_index_in_array(self):
+    def test_validate_sorting_invalid_index_in_array(self) -> None:
         """Test that invalid sorting entry raises with correct index."""
         schema = {
             "items": {"properties": {"field": {"enum": ["id"]}, "order": {"enum": ["asc", "desc"]}}}
@@ -193,9 +193,9 @@ class TestSortingValidator:
         with pytest.raises(ArrayValidationError):
             validate_sorting(sorting, schema)
 
-    def test_validate_sorting_with_schema_no_items(self):
+    def test_validate_sorting_with_schema_no_items(self) -> None:
         """Test that schema without items raises error."""
-        schema = {"properties": {}}
+        schema: dict[str, dict[str, object]] = {"properties": {}}
         sorting = [{"field": "id", "order": "asc"}]
 
         # Should fail because we can't get allowed fields from schema

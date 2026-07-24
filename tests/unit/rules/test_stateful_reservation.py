@@ -12,7 +12,7 @@ from app.database.rules.engine.stateful import (
 )
 
 
-def _rule(type_, config, is_active=True, version="1.0"):
+def _rule(type_: str, config: dict, is_active: bool = True, version: str = "1.0") -> MagicMock:
     rule = MagicMock()
     rule.type = type_
     rule.config = config
@@ -23,12 +23,12 @@ def _rule(type_, config, is_active=True, version="1.0"):
 
 class TestReserveStatefulRules:
     @pytest.mark.unit
-    def test_stateful_types(self):
+    def test_stateful_types(self) -> None:
         assert frozenset({"rate_limit", "cooldown"}) == STATEFUL_RULE_TYPES
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_reserves_stateful_rules_and_skips_others(self):
+    async def test_reserves_stateful_rules_and_skips_others(self) -> None:
         redis = AsyncMock()
         redis.incr = AsyncMock(return_value=1)
         redis.set = AsyncMock(return_value=True)
@@ -47,7 +47,7 @@ class TestReserveStatefulRules:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_rejection_rolls_back_prior_reservations(self):
+    async def test_rejection_rolls_back_prior_reservations(self) -> None:
         redis = AsyncMock()
         redis.incr = AsyncMock(return_value=1)  # rate_limit reserves successfully
         redis.set = AsyncMock(return_value=None)  # cooldown SET NX fails -> Forbidden
@@ -67,7 +67,7 @@ class TestReserveStatefulRules:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_skips_inactive_and_unsupported_version(self):
+    async def test_skips_inactive_and_unsupported_version(self) -> None:
         redis = AsyncMock()
         redis.incr = AsyncMock(return_value=1)
         context = ExecutionContext(queue_id=1, user_id=42, db=AsyncMock(), redis=redis)
@@ -89,7 +89,7 @@ class TestReserveStatefulRules:
 class TestRollbackReservations:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_calls_rollback_on_each(self):
+    async def test_calls_rollback_on_each(self) -> None:
         context = ExecutionContext(queue_id=1, user_id=42, db=AsyncMock(), redis=AsyncMock())
         v1 = AsyncMock()
         v2 = AsyncMock()

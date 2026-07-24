@@ -36,7 +36,7 @@ class ConcreteDatabaseRestriction(DatabaseRestrictionBase):
 class TestRestrictionBase:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_validate_config_with_schema(self):
+    async def test_validate_config_with_schema(self) -> None:
         class TestSchema(RateLimitConfig):
             pass
 
@@ -55,7 +55,7 @@ class TestRestrictionBase:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_validate_config_without_schema(self):
+    async def test_validate_config_without_schema(self) -> None:
         class TestRestriction(ConcreteRestriction):
             type = "test_without_schema"
 
@@ -68,7 +68,7 @@ class TestRestrictionBase:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_check_raises_when_no_config(self):
+    async def test_check_raises_when_no_config(self) -> None:
         rule = ConcreteRestriction()
         context = ExecutionContext(queue_id=1, user_id=1)
 
@@ -80,7 +80,7 @@ class TestRestrictionBase:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_check_delegates_to_check_method(self):
+    async def test_check_delegates_to_check_method(self) -> None:
         call_log = []
 
         class LoggingRestriction(RestrictionBase):
@@ -104,7 +104,7 @@ class TestRestrictionBase:
 class TestBeatmapRestrictionBase:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_no_beatmapset(self):
+    async def test_raises_when_no_beatmapset(self) -> None:
         rule = ConcreteBeatmapRestriction()
         context = ExecutionContext(
             queue_id=1,
@@ -120,7 +120,7 @@ class TestBeatmapRestrictionBase:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_delegates_to_check_beatmap_when_beatmapset_present(self):
+    async def test_delegates_to_check_beatmap_when_beatmapset_present(self) -> None:
         call_log = []
         mock_beatmapset = MagicMock()
 
@@ -146,7 +146,7 @@ class TestBeatmapRestrictionBase:
 class TestDatabaseRestrictionBase:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_when_no_osu_client(self):
+    async def test_raises_when_no_osu_client(self) -> None:
         rule = ConcreteDatabaseRestriction()
         context = ExecutionContext(
             queue_id=1,
@@ -162,7 +162,7 @@ class TestDatabaseRestrictionBase:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_delegates_to_check_database_when_osu_client_present(self):
+    async def test_delegates_to_check_database_when_osu_client_present(self) -> None:
         call_log = []
         mock_osu = AsyncMock()
 
@@ -187,20 +187,20 @@ class TestDatabaseRestrictionBase:
 
 class TestConfigSchema:
     @pytest.mark.unit
-    def test_rate_limit_config_schema(self):
+    def test_rate_limit_config_schema(self) -> None:
         from app.database.rules.validators.rate_limit import RateLimitRestriction
 
         assert RateLimitRestriction.config_schema is RateLimitConfig
 
     @pytest.mark.unit
-    def test_cooldown_config_schema(self):
+    def test_cooldown_config_schema(self) -> None:
         from app.database.rules.validators.cooldown import CooldownRestriction
         from app.database.schemas.rule import CooldownConfig
 
         assert CooldownRestriction.config_schema is CooldownConfig
 
     @pytest.mark.unit
-    def test_blacklist_config_schema(self):
+    def test_blacklist_config_schema(self) -> None:
         from app.database.rules.validators.blacklist import BlacklistRestriction
         from app.database.schemas.rule import BlacklistConfig
 

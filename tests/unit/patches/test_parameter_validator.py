@@ -1,3 +1,5 @@
+from typing import Any
+
 import contextlib
 
 import pytest
@@ -10,7 +12,7 @@ from app.patches.uri_parsing import OpenAPIURIParserPatched
 pytestmark = pytest.mark.unit
 
 
-def make_validator(parameters=None, strict_validation=False, security_query_params=None):
+def make_validator(parameters: list[dict[str, Any]] | None = None, strict_validation: bool = False, security_query_params: list[str] | None = None) -> ParameterValidatorPatched:
     """Create a parameter validator with real parameter definitions."""
     if parameters is None:
         parameters = [
@@ -86,7 +88,7 @@ def make_validator(parameters=None, strict_validation=False, security_query_para
     )
 
 
-def setup_request_scope(validator, request, scope_path="/api/v1/test"):
+def setup_request_scope(validator: ParameterValidatorPatched, request: ConnexionRequest, scope_path: str = "/api/v1/test") -> ConnexionRequest:
     """Set up request scope for testing."""
     scope = {"type": "http", "path": scope_path}
     connexion_request = ConnexionRequest(scope, uri_parser=validator.uri_parser)
@@ -94,7 +96,7 @@ def setup_request_scope(validator, request, scope_path="/api/v1/test"):
     return connexion_request
 
 
-def make_request(query_params=None, scope_path="/api/v1/test", validator=None):
+def make_request(query_params: dict[str, Any] | None = None, scope_path: str = "/api/v1/test", validator: ParameterValidatorPatched | None = None) -> ConnexionRequest:
     """Create a ConnexionRequest with query parameters.
 
     Query params are passed as-is and will be parsed by the uri_parser.
@@ -107,7 +109,7 @@ def make_request(query_params=None, scope_path="/api/v1/test", validator=None):
         # For filters/include: values should be deepObject format
         from urllib.parse import urlencode
 
-        flat_query = {}
+        flat_query: dict[str, Any] = {}
         for k, v in query_params.items():
             if isinstance(v, list):
                 flat_query[k] = [str(x) if not isinstance(x, str) else x for x in v]
@@ -130,7 +132,7 @@ def make_request(query_params=None, scope_path="/api/v1/test", validator=None):
         "headers": [],
     }
 
-    uri_parser = None
+    uri_parser: Any = None
     if validator:
         uri_parser = validator.uri_parser
 
@@ -140,12 +142,12 @@ def make_request(query_params=None, scope_path="/api/v1/test", validator=None):
 class TestParameterValidator:
     """Test parameter validation with Connexion integration."""
 
-    def test_init_sets_request_scopes(self):
+    def test_init_sets_request_scopes(self) -> None:
         """Test that init sets request_scopes."""
         validator = make_validator()
         assert validator.request_scopes == {}
 
-    def test_validate_query_parameter_sorting(self):
+    def test_validate_query_parameter_sorting(self) -> None:
         """Test validation of sorting parameter."""
         validator = make_validator()
 
@@ -180,7 +182,7 @@ class TestParameterValidator:
 
         assert result is None
 
-    def test_validate_query_parameter_filters(self):
+    def test_validate_query_parameter_filters(self) -> None:
         """Test validation of filters parameter."""
         validator = make_validator()
 
@@ -205,7 +207,7 @@ class TestParameterValidator:
 
         assert result is None
 
-    def test_validate_query_parameter_include(self):
+    def test_validate_query_parameter_include(self) -> None:
         """Test validation of include parameter."""
         validator = make_validator()
 
@@ -239,7 +241,7 @@ class TestParameterValidator:
 
         assert result is None
 
-    def test_validate_query_parameter_include_search_defers_validation(self):
+    def test_validate_query_parameter_include_search_defers_validation(self) -> None:
         """Test that include validation is deferred for /search endpoint."""
         validator = make_validator()
 
@@ -264,7 +266,7 @@ class TestParameterValidator:
 
         assert result is None
 
-    def test_validate_query_parameter_default_validation(self):
+    def test_validate_query_parameter_default_validation(self) -> None:
         """Test that parameters with default values are handled correctly."""
         validator = make_validator()
 
@@ -280,7 +282,7 @@ class TestParameterValidator:
         # The result should be None since there's no value and it's not required
         assert result is None
 
-    def test_validate_query_parameter_missing_parameter(self):
+    def test_validate_query_parameter_missing_parameter(self) -> None:
         """Test handling of missing parameter."""
         validator = make_validator()
 
@@ -292,7 +294,7 @@ class TestParameterValidator:
 
         assert result is None
 
-    def test_validate_sets_and_clears_request_scopes(self):
+    def test_validate_sets_and_clears_request_scopes(self) -> None:
         """Test that request_scopes is set and cleared during validation."""
         validator = make_validator()
 
@@ -302,7 +304,7 @@ class TestParameterValidator:
 
         assert validator.request_scopes == {}
 
-    def test_validate_calls_validate_request(self):
+    def test_validate_calls_validate_request(self) -> None:
         """Test that validate calls validate_request."""
         validator = make_validator()
 
@@ -315,7 +317,7 @@ class TestParameterValidator:
 
         assert validator.request_scopes == {}
 
-    def test_validate_preserves_scope(self):
+    def test_validate_preserves_scope(self) -> None:
         """Test that scope is preserved through validation."""
         validator = make_validator()
 
@@ -324,9 +326,9 @@ class TestParameterValidator:
         with pytest.raises(BadRequest):
             validator.validate(scope)
 
-    def test_parameter_validator_with_security_params(self):
+    def test_parameter_validator_with_security_params(self) -> None:
         """Test validator with security query params."""
-        parameters = []
+        parameters: list[dict[str, Any]] = []
 
         uri_parser = OpenAPIURIParserPatched(parameters, {})
 
@@ -340,7 +342,7 @@ class TestParameterValidator:
         assert validator is not None
         assert "api_key" in validator.security_query_params
 
-    def test_parameter_validator_strict_validation(self):
+    def test_parameter_validator_strict_validation(self) -> None:
         """Test validator with strict validation."""
         parameters = [{"name": "limit", "in": "query", "required": True}]
 
@@ -352,7 +354,7 @@ class TestParameterValidator:
 
         assert validator is not None
 
-    def test_validate_sorting_with_api_validation(self):
+    def test_validate_sorting_with_api_validation(self) -> None:
         """Test that sorting validation uses API validation."""
         validator = make_validator()
 
@@ -387,7 +389,7 @@ class TestParameterValidator:
 
         assert result is None
 
-    def test_validate_filters_with_api_validation(self):
+    def test_validate_filters_with_api_validation(self) -> None:
         """Test that filters validation uses API validation."""
         validator = make_validator()
 
@@ -412,7 +414,7 @@ class TestParameterValidator:
 
         assert result is None
 
-    def test_validate_include_with_api_validation(self):
+    def test_validate_include_with_api_validation(self) -> None:
         """Test that include validation uses API validation."""
         validator = make_validator()
 

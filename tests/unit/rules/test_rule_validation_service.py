@@ -6,7 +6,7 @@ from app.redis_client.models import QueueRequestValidationTask
 
 class TestQueueRequestValidationTask:
     @pytest.mark.unit
-    def test_serialization(self):
+    def test_serialization(self) -> None:
         task = QueueRequestValidationTask(
             request_id=42,
             queue_id=1,
@@ -21,7 +21,7 @@ class TestQueueRequestValidationTask:
         assert serialized["http_request_id"] == "abc123def456"
 
     @pytest.mark.unit
-    def test_deserialization(self):
+    def test_deserialization(self) -> None:
         serialized = {
             "request_id": "42",
             "queue_id": "1",
@@ -40,7 +40,7 @@ class TestQueueRequestValidationTask:
         assert task.failed_at is None
 
     @pytest.mark.unit
-    def test_hashed_id_is_deterministic(self):
+    def test_hashed_id_is_deterministic(self) -> None:
         task1 = QueueRequestValidationTask(
             request_id=42,
             queue_id=1,
@@ -55,7 +55,7 @@ class TestQueueRequestValidationTask:
         assert task1.hashed_id == task2.hashed_id
 
     @pytest.mark.unit
-    def test_roundtrip_serialization(self):
+    def test_roundtrip_serialization(self) -> None:
         task = QueueRequestValidationTask(
             request_id=42,
             queue_id=1,
@@ -73,9 +73,9 @@ class TestQueueRequestValidationTask:
 
 class TestValidationChannel:
     @pytest.mark.unit
-    def test_channel_name_exists(self):
+    def test_channel_name_exists(self) -> None:
         assert hasattr(ChannelName, "QUEUE_REQUEST_VALIDATION_TASKS")
 
     @pytest.mark.unit
-    def test_channel_name_value(self):
+    def test_channel_name_value(self) -> None:
         assert ChannelName.QUEUE_REQUEST_VALIDATION_TASKS == "queue_request_validation_tasks"

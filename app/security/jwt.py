@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import cast as typing_cast
 
 import jwt
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
@@ -56,7 +57,7 @@ def encode_token(payload: dict[str, str | int]) -> str:
     Returns:
         Signed JWT string.
     """
-    return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+    return str(jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM))
 
 
 def decode_token(token: str) -> dict[str, str | int]:
@@ -75,12 +76,15 @@ def decode_token(token: str) -> dict[str, str | int]:
         ExpiredSignatureError:
             If token has expired.
     """
-    return jwt.decode(
-        token,
-        key=JWT_SECRET_KEY,
-        algorithms=[JWT_ALGORITHM],
-        issuer=FRONTEND_BASE_URL,
-        options={"require": ["sub", "iss", "iat", "exp"]},
+    return typing_cast(
+        dict[str, str | int],
+        jwt.decode(
+            token,
+            key=JWT_SECRET_KEY,
+            algorithms=[JWT_ALGORITHM],
+            issuer=FRONTEND_BASE_URL,
+            options={"require": ["sub", "iss", "iat", "exp"]},
+        ),
     )
 
 

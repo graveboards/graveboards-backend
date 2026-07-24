@@ -1,3 +1,5 @@
+from typing import Any
+
 from unittest.mock import MagicMock
 
 import pytest
@@ -12,7 +14,10 @@ from app.database.rules.validators.metadata.song_identity import (
 )
 
 
-def _make_context(beatmapset=None, beatmaps=None):
+def _make_context(
+    beatmapset: Any = None,
+    beatmaps: list[Any] | None = None,
+) -> ExecutionContext:
     return ExecutionContext(
         queue_id=1,
         user_id=12345678,
@@ -22,15 +27,15 @@ def _make_context(beatmapset=None, beatmaps=None):
 
 
 def _make_beatmap(
-    difficulty_rating=5.0,
-    ar=5.0,
-    accuracy=10.0,
-    drain=5.0,
-    hit_length=5.0,
-    bpm=150.0,
-    mode="osu",
-    owners=None,
-):
+    difficulty_rating: float = 5.0,
+    ar: float = 5.0,
+    accuracy: float = 10.0,
+    drain: float = 5.0,
+    hit_length: float = 5.0,
+    bpm: float = 150.0,
+    mode: str = "osu",
+    owners: list[dict[str, Any]] | None = None,
+) -> MagicMock:
     bm = MagicMock()
     bm.difficulty_rating = difficulty_rating
     bm.ar = ar
@@ -45,45 +50,45 @@ def _make_beatmap(
 
 class TestNormalizeText:
     @pytest.mark.unit
-    def test_strips_tv_size(self):
+    def test_strips_tv_size(self) -> None:
         result = _normalize_text("Artist - Song (TV Size)")
         assert "tv size" not in result
         assert "artist" in result
 
     @pytest.mark.unit
-    def test_strips_extended_ver(self):
+    def test_strips_extended_ver(self) -> None:
         result = _normalize_text("Artist - Song (Extended ver.)")
         assert "Extended" not in result
 
     @pytest.mark.unit
-    def test_strips_remix(self):
+    def test_strips_remix(self) -> None:
         result = _normalize_text("Artist - Song (Remix)")
         assert "Remix" not in result
 
     @pytest.mark.unit
-    def test_strips_radio_edit(self):
+    def test_strips_radio_edit(self) -> None:
         result = _normalize_text("Artist - Song (Radio Edit)")
         assert "Radio" not in result
 
     @pytest.mark.unit
-    def test_strips_instrumental(self):
+    def test_strips_instrumental(self) -> None:
         result = _normalize_text("Artist - Song (Instrumental)")
         assert "Instrumental" not in result
 
     @pytest.mark.unit
-    def test_strips_punctuation(self):
+    def test_strips_punctuation(self) -> None:
         result = _normalize_text("Artist - Song (feat. Someone)")
         assert "(" not in result
         assert ")" not in result
         assert "." not in result
 
     @pytest.mark.unit
-    def test_collapses_whitespace(self):
+    def test_collapses_whitespace(self) -> None:
         result = _normalize_text("Artist   -   Song")
         assert "  " not in result
 
     @pytest.mark.unit
-    def test_plain_text_unchanged(self):
+    def test_plain_text_unchanged(self) -> None:
         result = _normalize_text("Artist - Song")
         assert result == "artist - song"
 
@@ -91,7 +96,7 @@ class TestNormalizeText:
 class TestSongIdentityProvider:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_resolves_identity(self):
+    async def test_resolves_identity(self) -> None:
         provider = SongIdentityProvider()
         beatmapset = MagicMock(
             artist="Test Artist",
@@ -113,7 +118,7 @@ class TestSongIdentityProvider:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_normalizes_version_markers(self):
+    async def test_normalizes_version_markers(self) -> None:
         provider = SongIdentityProvider()
         beatmapset = MagicMock(
             artist="Artist",
@@ -129,7 +134,7 @@ class TestSongIdentityProvider:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_returns_empty_when_no_beatmapset(self):
+    async def test_returns_empty_when_no_beatmapset(self) -> None:
         provider = SongIdentityProvider()
         context = _make_context(beatmapset=None)
         result = await provider.resolve(context)
@@ -139,7 +144,7 @@ class TestSongIdentityProvider:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_handles_beatmapset_with_empty_fields(self):
+    async def test_handles_beatmapset_with_empty_fields(self) -> None:
         provider = SongIdentityProvider()
         beatmapset = MagicMock()
         beatmapset.artist = ""
@@ -157,7 +162,7 @@ class TestSongIdentityProvider:
 class TestBeatmapStatsProvider:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_computes_aggregate_stats(self):
+    async def test_computes_aggregate_stats(self) -> None:
         provider = BeatmapStatsProvider()
         beatmaps = [
             _make_beatmap(difficulty_rating=4.0, ar=4.0, bpm=140.0),
@@ -176,7 +181,7 @@ class TestBeatmapStatsProvider:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_returns_zeros_when_no_beatmaps(self):
+    async def test_returns_zeros_when_no_beatmaps(self) -> None:
         provider = BeatmapStatsProvider()
         context = _make_context()
         result = await provider.resolve(context)
@@ -188,7 +193,7 @@ class TestBeatmapStatsProvider:
 class TestCreatorIdentityProvider:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_resolves_creator(self):
+    async def test_resolves_creator(self) -> None:
         provider = CreatorIdentityProvider()
         beatmapset = MagicMock(user_id=111, creator="MainCreator")
         beatmaps = [
@@ -207,7 +212,7 @@ class TestCreatorIdentityProvider:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_handles_no_owners(self):
+    async def test_handles_no_owners(self) -> None:
         provider = CreatorIdentityProvider()
         beatmapset = MagicMock(user_id=111, creator="MainCreator")
         beatmaps = [_make_beatmap(owners=[])]
@@ -220,7 +225,7 @@ class TestCreatorIdentityProvider:
 class TestDurationProvider:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_resolves_duration(self):
+    async def test_resolves_duration(self) -> None:
         provider = DurationProvider()
         beatmapset = MagicMock(bpm=150.0, title="Song", title_unicode="Song")
         beatmaps = [_make_beatmap(), _make_beatmap()]
@@ -235,7 +240,7 @@ class TestDurationProvider:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_detects_version_marker(self):
+    async def test_detects_version_marker(self) -> None:
         provider = DurationProvider()
         beatmapset = MagicMock(bpm=150.0, title="Song (TV Size)", title_unicode="Song (TV Size)")
         context = _make_context(beatmapset=beatmapset, beatmaps=[])
@@ -245,7 +250,7 @@ class TestDurationProvider:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_returns_original_duration_when_no_beatmaps(self):
+    async def test_returns_original_duration_when_no_beatmaps(self) -> None:
         provider = DurationProvider()
         beatmapset = MagicMock(bpm=150.0, title="Song", title_unicode="Song")
         context = _make_context(beatmapset=beatmapset, beatmaps=[])

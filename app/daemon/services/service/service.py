@@ -1,5 +1,5 @@
 import asyncio
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Coroutine
 from typing import Any, ClassVar
 
 from app.observability.logging import Logger
@@ -66,8 +66,8 @@ class Service:
         factory: TaskFactory,
         *,
         critical: bool = False,
-        backoff: BackoffStrategy = None,
-        max_retries: int = None,
+        backoff: BackoffStrategy | None = None,
+        max_retries: int | None = None,
         on_failure: TaskFailureHook | None = None,
         on_max_retries_exceeded: TaskMaxRetriesExceededHook | None = None,
     ) -> None:
@@ -256,7 +256,9 @@ class Service:
         """
         await self._stop_event.wait()
 
-    def _wrap_factory(self, factory: TaskFactory, task_name: str):
+    def _wrap_factory(
+        self, factory: TaskFactory, task_name: str
+    ) -> Callable[[], Coroutine[Any, Any, None]]:
         async def wrapped() -> None:
             await factory()
 

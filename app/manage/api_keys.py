@@ -8,7 +8,7 @@ from app.utils import aware_utcnow
 
 
 @db_lifespan
-async def cmd_generate_api_key(db: PostgresqlDB, user_id: int, expires_days: int = 90):
+async def cmd_generate_api_key(db: PostgresqlDB, user_id: int, expires_days: int = 90) -> None:
     """Generate a new API key for an existing user.
 
     The raw key is printed ONCE to stdout and never stored.

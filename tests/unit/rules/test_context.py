@@ -7,7 +7,7 @@ from app.database.rules.context import ExecutionContext
 
 class TestExecutionContext:
     @pytest.mark.unit
-    def test_basic_construction(self):
+    def test_basic_construction(self) -> None:
         context = ExecutionContext(
             queue_id=1,
             user_id=12345678,
@@ -27,7 +27,7 @@ class TestExecutionContext:
         assert context._provider_cache == {}
 
     @pytest.mark.unit
-    def test_construction_with_all_fields(self):
+    def test_construction_with_all_fields(self) -> None:
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
         mock_osu = AsyncMock()
@@ -68,7 +68,7 @@ class TestExecutionContext:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_get_metadata_caches_result(self):
+    async def test_get_metadata_caches_result(self) -> None:
         mock_provider = AsyncMock()
         mock_provider.resolve = AsyncMock(return_value={"artist": "Test", "title": "Song"})
 
@@ -87,7 +87,7 @@ class TestExecutionContext:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_get_metadata_raises_for_unknown_provider(self):
+    async def test_get_metadata_raises_for_unknown_provider(self) -> None:
         context = ExecutionContext(
             queue_id=1,
             user_id=12345678,
@@ -99,7 +99,7 @@ class TestExecutionContext:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_get_metadata_raises_when_no_providers(self):
+    async def test_get_metadata_raises_when_no_providers(self) -> None:
         context = ExecutionContext(
             queue_id=1,
             user_id=12345678,
@@ -109,7 +109,7 @@ class TestExecutionContext:
             await context.get_metadata("any_provider")
 
     @pytest.mark.unit
-    def test_invalidate_metadata_clears_all(self):
+    def test_invalidate_metadata_clears_all(self) -> None:
         context = ExecutionContext(
             queue_id=1,
             user_id=12345678,
@@ -122,7 +122,7 @@ class TestExecutionContext:
         assert context._provider_cache == {}
 
     @pytest.mark.unit
-    def test_invalidate_metadata_clears_specific(self):
+    def test_invalidate_metadata_clears_specific(self) -> None:
         context = ExecutionContext(
             queue_id=1,
             user_id=12345678,
@@ -136,7 +136,7 @@ class TestExecutionContext:
         assert "bar" in context._provider_cache
 
     @pytest.mark.unit
-    def test_config_default_empty_dict(self):
+    def test_config_default_empty_dict(self) -> None:
         context = ExecutionContext(queue_id=1, user_id=1)
         assert context.config == {}
         context.config["key"] = "value"

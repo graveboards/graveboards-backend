@@ -2,6 +2,7 @@ import contextlib
 import json
 import re
 import time
+from typing import Any, cast as typing_cast
 from urllib.parse import parse_qsl
 
 from connexion.middleware.abstract import ROUTING_CONTEXT
@@ -68,12 +69,12 @@ def _get_endpoint(scope: Scope) -> str:
     # construction, so no path-template regex is needed here.
     operation_id = scope.get("extensions", {}).get(ROUTING_CONTEXT, {}).get("operation_id")
     if operation_id:
-        return operation_id
+        return str(operation_id)
 
     return _STATIC_ROUTE_ENDPOINTS.get(scope.get("path"), "<unmatched>")
 
 
-def _redact(value):
+def _redact(value: Any) -> Any:
     if isinstance(value, dict):
         return {
             k: (_REDACTED if k.lower() in _SENSITIVE_KEYS else _redact(v)) for k, v in value.items()
@@ -90,7 +91,7 @@ def _get_query_params(request: Request) -> dict:
         params[key] = values[0] if len(values) == 1 else values
     params = _reconstruct_nested_params(params)
     params = _try_parse_sorting(params)
-    return _redact(params)
+    return typing_cast(dict[Any, Any], _redact(params))
 
 
 def _reconstruct_nested_params(params: dict) -> dict:
@@ -165,14 +166,14 @@ def _try_parse_sorting(params: dict) -> dict:
     return params
 
 
-def _parse_body(raw: bytes, content_type: str):
+def _parse_body(raw: bytes, content_type: str) -> dict[str, Any] | str | None:
     if not raw:
         return None
     try:
         if content_type == "application/json":
-            return _redact(json.loads(raw))
+            return typing_cast(dict[str, Any] | str | None, _redact(json.loads(raw)))
         if content_type == "application/x-www-form-urlencoded":
-            return _redact(dict(parse_qsl(raw.decode())))
+            return typing_cast(dict[str, Any] | str | None, _redact(dict(parse_qsl(raw.decode()))))
     except Exception:
         return "<unparseable>"
     return None
@@ -194,10 +195,10 @@ async def _capture_body(receive: Receive) -> tuple[bytes, Receive]:
         chunks.append(message.get("body", b""))
         more_body = message.get("more_body", False)
 
-    async def replay_receive():
+    async def replay_receive() -> dict[str, Any]:
         if messages:
-            return messages.pop(0)
-        return await receive()
+            return typing_cast(dict[str, Any], messages.pop(0))
+        return typing_cast(dict[str, Any], await receive())
 
     return b"".join(chunks), replay_receive
 
@@ -240,7 +241,7 @@ class MetricsMiddleware:
         start_time = time.perf_counter()
         status_code_ref: dict = {"value": None}
 
-        async def wrapped_send(message):
+        async def wrapped_send(message: dict[str, Any]) -> None:
             if message["type"] == "http.response.start":
                 status_code_ref["value"] = message["status"]
             await send(message)

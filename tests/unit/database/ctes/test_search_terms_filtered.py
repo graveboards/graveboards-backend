@@ -12,7 +12,7 @@ from app.search.enums import Scope, SearchableFieldCategory
 class TestSearchTermsFilteredCTE:
     """Test search terms filtering CTE."""
 
-    def test_search_terms_filtered_cte_factory_single_term(self):
+    def test_search_terms_filtered_cte_factory_single_term(self) -> None:
         """Test CTE factory with single search term."""
         terms = SearchTermsSchema(terms=["beatmap"])
 
@@ -20,7 +20,7 @@ class TestSearchTermsFilteredCTE:
 
         assert cte is not None
 
-    def test_search_terms_filtered_cte_factory_multiple_terms(self):
+    def test_search_terms_filtered_cte_factory_multiple_terms(self) -> None:
         """Test CTE factory with multiple search terms."""
         terms = SearchTermsSchema(terms=["beatmap", "osu"])
 
@@ -28,7 +28,7 @@ class TestSearchTermsFilteredCTE:
 
         assert cte is not None
 
-    def test_search_terms_filtered_cte_factory_case_insensitive(self):
+    def test_search_terms_filtered_cte_factory_case_insensitive(self) -> None:
         """Test CTE factory with case insensitive search."""
         terms = SearchTermsSchema(terms=["beatmap"], case_sensitive=False)
 
@@ -36,7 +36,7 @@ class TestSearchTermsFilteredCTE:
 
         assert cte is not None
 
-    def test_search_terms_filtered_cte_factory_beatmapsets_scope(self):
+    def test_search_terms_filtered_cte_factory_beatmapsets_scope(self) -> None:
         """Test CTE factory with beatmapsets scope."""
         terms = SearchTermsSchema(terms=["beatmapset"])
 
@@ -44,7 +44,7 @@ class TestSearchTermsFilteredCTE:
 
         assert cte is not None
 
-    def test_search_terms_filtered_cte_factory_queues_scope(self):
+    def test_search_terms_filtered_cte_factory_queues_scope(self) -> None:
         """Test CTE factory with queues scope."""
         terms = SearchTermsSchema(terms=["queue"])
 
@@ -52,7 +52,7 @@ class TestSearchTermsFilteredCTE:
 
         assert cte is not None
 
-    def test_search_terms_filtered_cte_factory_requests_scope(self):
+    def test_search_terms_filtered_cte_factory_requests_scope(self) -> None:
         """Test CTE factory with requests scope."""
         terms = SearchTermsSchema(terms=["request"])
 
@@ -60,7 +60,7 @@ class TestSearchTermsFilteredCTE:
 
         assert cte is not None
 
-    def test_build_search_terms_filtered_cte_alias(self):
+    def test_build_search_terms_filtered_cte_alias(self) -> None:
         """Test build_search_terms_filtered_cte is alias."""
         assert build_search_terms_filtered_cte is search_terms_filtered_cte_factory
 
@@ -68,7 +68,7 @@ class TestSearchTermsFilteredCTE:
 class TestGetFilterStmt:
     """Test get_filter_stmt function."""
 
-    def test_get_filter_stmt_beatmaps_beatmap(self):
+    def test_get_filter_stmt_beatmaps_beatmap(self) -> None:
         """Test filter stmt for beatmaps scope with beatmap category."""
         from app.database.models import BeatmapSnapshot
 
@@ -82,7 +82,7 @@ class TestGetFilterStmt:
 
         assert stmt is not None
 
-    def test_get_filter_stmt_beatmaps_beatmapset(self):
+    def test_get_filter_stmt_beatmaps_beatmapset(self) -> None:
         """Test filter stmt for beatmaps scope with beatmapset category."""
         from app.database.models import (
             BeatmapsetSnapshot,
@@ -98,7 +98,7 @@ class TestGetFilterStmt:
 
         assert stmt is not None
 
-    def test_get_filter_stmt_beatmapsets_beatmap(self):
+    def test_get_filter_stmt_beatmapsets_beatmap(self) -> None:
         """Test filter stmt for beatmapsets scope with beatmap category."""
         from app.database.models import (
             BeatmapSnapshot,
@@ -114,7 +114,7 @@ class TestGetFilterStmt:
 
         assert stmt is not None
 
-    def test_get_filter_stmt_beatmapsets_beatmapset(self):
+    def test_get_filter_stmt_beatmapsets_beatmapset(self) -> None:
         """Test filter stmt for beatmapsets scope with beatmapset category."""
         from app.database.models import BeatmapsetSnapshot
 
@@ -128,7 +128,7 @@ class TestGetFilterStmt:
 
         assert stmt is not None
 
-    def test_get_filter_stmt_queues_beatmap(self):
+    def test_get_filter_stmt_queues_beatmap(self) -> None:
         """Test filter stmt for queues scope with beatmap category."""
         from app.database.models import Queue
 
@@ -142,7 +142,7 @@ class TestGetFilterStmt:
 
         assert stmt is not None
 
-    def test_get_filter_stmt_queues_beatmapset(self):
+    def test_get_filter_stmt_queues_beatmapset(self) -> None:
         """Test filter stmt for queues scope with beatmapset category."""
         from app.database.models import Queue
 
@@ -156,7 +156,7 @@ class TestGetFilterStmt:
 
         assert stmt is not None
 
-    def test_get_filter_stmt_queues_queue(self):
+    def test_get_filter_stmt_queues_queue(self) -> None:
         """Test filter stmt for queues scope with queue category."""
         from app.database.models import Queue
 
@@ -170,7 +170,7 @@ class TestGetFilterStmt:
 
         assert stmt is not None
 
-    def test_get_filter_stmt_queues_request(self):
+    def test_get_filter_stmt_queues_request(self) -> None:
         """Test filter stmt for queues scope with request category."""
         from app.database.models import Queue
 
@@ -184,7 +184,7 @@ class TestGetFilterStmt:
 
         assert stmt is not None
 
-    def test_get_filter_stmt_requests_beatmap(self):
+    def test_get_filter_stmt_requests_beatmap(self) -> None:
         """Test filter stmt for requests scope with beatmap category."""
         from app.database.models import Request
 
@@ -198,7 +198,7 @@ class TestGetFilterStmt:
 
         assert stmt is not None
 
-    def test_get_filter_stmt_requests_beatmapset(self):
+    def test_get_filter_stmt_requests_beatmapset(self) -> None:
         """Test filter stmt for requests scope with beatmapset category."""
         from app.database.models import Request
 
@@ -212,7 +212,7 @@ class TestGetFilterStmt:
 
         assert stmt is not None
 
-    def test_get_filter_stmt_requests_request(self):
+    def test_get_filter_stmt_requests_request(self) -> None:
         """Test filter stmt for requests scope with request category."""
         from app.database.models import Request
 
@@ -226,7 +226,7 @@ class TestGetFilterStmt:
 
         assert stmt is not None
 
-    def test_get_filter_stmt_unsupported_category_raises(self):
+    def test_get_filter_stmt_unsupported_category_raises(self) -> None:
         """Test that unsupported category raises."""
         from app.database.models import Queue
 
@@ -239,7 +239,7 @@ class TestGetFilterStmt:
                 pattern="%test%",
             )
 
-    def test_get_filter_stmt_unsupported_scope_raises(self):
+    def test_get_filter_stmt_unsupported_scope_raises(self) -> None:
         """Test that unsupported scope raises."""
         from app.database.models import BeatmapSnapshot
 

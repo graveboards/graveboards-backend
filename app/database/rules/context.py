@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
+from typing import cast as typing_cast
 
 if TYPE_CHECKING:
     from app.database import PostgresqlDB
@@ -46,7 +47,7 @@ class ExecutionContext:
         provider = provider_cls()
         result = await provider.resolve(self)
         self._provider_cache[provider_name] = result
-        return result
+        return typing_cast(dict[str, Any], result)
 
     def invalidate_metadata(self, provider_name: str | None = None) -> None:
         if provider_name is None:

@@ -40,7 +40,7 @@ class QueueRequestHandler(ScheduledService):
         return JobLoadInstruction(execution_time=aware_utcnow())
 
     @auto_retry(retry_exceptions=(ConnectTimeout,))
-    async def _execute_job(self, record_id: int):
+    async def _execute_job(self, record_id: int) -> None:
         """Post a request to a queue.
 
         Retrieves relevant beatmapset data from the osu! API, creates or updates the

@@ -1,3 +1,5 @@
+from typing import Any
+
 from unittest.mock import mock_open, patch
 
 import pytest
@@ -15,48 +17,48 @@ class TestLoadSpec:
     """Test OpenAPI spec loading."""
 
     @pytest.fixture
-    def mock_yaml_full_load(self):
+    def mock_yaml_full_load(self) -> Any:
         """Mock yaml.full_load."""
         with patch("app.spec.load.yaml.full_load") as mock:
             yield mock
 
     @pytest.fixture
-    def mock_resolve_refs(self):
+    def mock_resolve_refs(self) -> Any:
         """Mock connexion.spec.resolve_refs."""
         with patch("app.spec.load.resolve_refs") as mock:
             yield mock
 
     @pytest.fixture
-    def mock_pickle(self):
+    def mock_pickle(self) -> Any:
         """Mock pickle module."""
         with patch("app.spec.load.pickle") as mock:
             yield mock
 
     @pytest.fixture
-    def mock_env(self):
+    def mock_env(self) -> Any:
         """Mock ENV configuration."""
         with patch("app.spec.load.ENV") as mock:
             yield mock
 
     @pytest.fixture
-    def mock_os_path_exists(self):
+    def mock_os_path_exists(self) -> Any:
         """Mock os.path.exists."""
         with patch("app.spec.load.os.path.exists") as mock:
             yield mock
 
     @pytest.fixture
-    def mock_os_path_getmtime(self):
+    def mock_os_path_getmtime(self) -> Any:
         """Mock os.path.getmtime."""
         with patch("app.spec.load.os.path.getmtime") as mock:
             yield mock
 
     @pytest.fixture
-    def mock_os_walk(self):
+    def mock_os_walk(self) -> Any:
         """Mock os.walk."""
         with patch("app.spec.load.os.walk") as mock:
             yield mock
 
-    def test_load_spec_no_cache_rebuilds(self, mock_yaml_full_load, mock_resolve_refs):
+    def test_load_spec_no_cache_rebuilds(self, mock_yaml_full_load: Any, mock_resolve_refs: Any) -> None:
         """Test that load_spec rebuilds when cache doesn't exist."""
         mock_yaml_full_load.return_value = {"components": {"schemas": {}}}
         mock_resolve_refs.return_value = {"components": {"schemas": {}}}
@@ -69,7 +71,7 @@ class TestLoadSpec:
                 assert result == {"spec": "data"}
                 mock_build.assert_called_once()
 
-    def test_load_spec_prod_mode_returns_cached(self, mock_pickle):
+    def test_load_spec_prod_mode_returns_cached(self, mock_pickle: Any) -> None:
         """Test that prod mode returns cached spec."""
         from app.enums import Env
 
@@ -84,12 +86,12 @@ class TestLoadSpec:
 
     def test_load_spec_non_prod_invalidates_on_mtime(
         self,
-        mock_yaml_full_load,
-        mock_resolve_refs,
-        mock_os_path_getmtime,
-        mock_pickle,
-        mock_os_walk,
-    ):
+        mock_yaml_full_load: Any,
+        mock_resolve_refs: Any,
+        mock_os_path_getmtime: Any,
+        mock_pickle: Any,
+        mock_os_walk: Any,
+    ) -> None:
         """Test that non-prod mode invalidates cache on mtime."""
         from app.enums import Env
 
@@ -117,12 +119,12 @@ class TestLoadSpec:
 
     def test_load_spec_non_prod_invalidates_on_options(
         self,
-        mock_yaml_full_load,
-        mock_resolve_refs,
-        mock_os_path_getmtime,
-        mock_pickle,
-        mock_os_walk,
-    ):
+        mock_yaml_full_load: Any,
+        mock_resolve_refs: Any,
+        mock_os_path_getmtime: Any,
+        mock_pickle: Any,
+        mock_os_walk: Any,
+    ) -> None:
         """Test that non-prod mode invalidates cache on build options."""
         from app.enums import Env
 
@@ -152,7 +154,7 @@ class TestLoadSpec:
         assert result == {"spec": "new_spec"}
         mock_build.assert_called_once()
 
-    def test_build_spec_loads_yaml(self, mock_yaml_full_load, mock_resolve_refs):
+    def test_build_spec_loads_yaml(self, mock_yaml_full_load: Any, mock_resolve_refs: Any) -> None:
         """Test that _build_spec loads YAML spec."""
         mock_yaml_full_load.return_value = {"components": {"schemas": {}}}
         mock_resolve_refs.return_value = {"components": {"schemas": {}}}
@@ -164,7 +166,7 @@ class TestLoadSpec:
         assert "components" in result
         mock_yaml_full_load.assert_called_once()
 
-    def test_build_spec_resolves_refs(self, mock_yaml_full_load, mock_resolve_refs):
+    def test_build_spec_resolves_refs(self, mock_yaml_full_load: Any, mock_resolve_refs: Any) -> None:
         """Test that _build_spec resolves refs."""
         mock_yaml_full_load.return_value = {"components": {"schemas": {}}}
         mock_resolve_refs.return_value = {"components": {"schemas": {"resolved": True}}}
@@ -176,7 +178,7 @@ class TestLoadSpec:
         assert result == {"components": {"schemas": {"resolved": True}}}
         mock_resolve_refs.assert_called_once()
 
-    def test_build_spec_applies_mutations(self, mock_yaml_full_load, mock_resolve_refs):
+    def test_build_spec_applies_mutations(self, mock_yaml_full_load: Any, mock_resolve_refs: Any) -> None:
         """Test that _build_spec applies mutations."""
         mock_yaml_full_load.return_value = {"components": {"schemas": {}}}
         mock_resolve_refs.return_value = {"components": {"schemas": {}}}
@@ -188,7 +190,7 @@ class TestLoadSpec:
 
         mock_populate.assert_called_once()
 
-    def test_build_spec_writes_cache(self, mock_yaml_full_load, mock_resolve_refs, mock_pickle):
+    def test_build_spec_writes_cache(self, mock_yaml_full_load: Any, mock_resolve_refs: Any, mock_pickle: Any) -> None:
         """Test that _build_spec writes cache file."""
         mock_yaml_full_load.return_value = {"components": {"schemas": {}}}
         mock_resolve_refs.return_value = {"components": {"schemas": {}}}
@@ -202,12 +204,12 @@ class TestLoadSpec:
 
         assert mock_dump.called
 
-    def test_apply_mutations_populates_shallow_refs(self, mock_yaml_full_load, mock_resolve_refs):
+    def test_apply_mutations_populates_shallow_refs(self, mock_yaml_full_load: Any, mock_resolve_refs: Any) -> None:
         """Test that _apply_mutations populates shallow refs."""
         mock_yaml_full_load.return_value = {"components": {"schemas": {}}}
         mock_resolve_refs.return_value = {"components": {"schemas": {}}}
 
-        spec = {"components": {"schemas": {}}}
+        spec: dict[str, Any] = {"components": {"schemas": {}}}
 
         with patch("app.spec.load.populate_shallow_refs") as mock_populate:
             _apply_mutations(spec)
@@ -215,8 +217,8 @@ class TestLoadSpec:
         mock_populate.assert_called_once_with(spec)
 
     def test_apply_mutations_removes_security_when_disabled(
-        self, mock_yaml_full_load, mock_resolve_refs
-    ):
+        self, mock_yaml_full_load: Any, mock_resolve_refs: Any
+    ) -> None:
         """Test that security is removed when disabled."""
         from app.enums import Env
 
@@ -235,15 +237,16 @@ class TestLoadSpec:
                     _apply_mutations(spec)
 
         assert "security" not in spec
-        assert "security" not in spec["paths"]["/test"]["get"]
+        paths_get = spec["paths"]["/test"]["get"]  # type: ignore[index]
+        assert "security" not in paths_get
 
     def test_apply_mutations_keeps_security_when_enabled(
-        self, mock_yaml_full_load, mock_resolve_refs
-    ):
+        self, mock_yaml_full_load: Any, mock_resolve_refs: Any
+    ) -> None:
         """Test that security is kept when enabled."""
         from app.enums import Env
 
-        spec = {
+        spec: dict[str, Any] = {
             "components": {"schemas": {}},
             "security": [{"oauth": []}],
             "paths": {"/test": {"get": {"security": [{"oauth": []}]}}},
@@ -255,11 +258,12 @@ class TestLoadSpec:
                     _apply_mutations(spec)
 
         assert "security" in spec
-        assert "security" in spec["paths"]["/test"]["get"]
+        paths_get = spec["paths"]["/test"]["get"]
+        assert "security" in paths_get
 
     def test_current_build_options_returns_env_and_security(
-        self, mock_yaml_full_load, mock_resolve_refs
-    ):
+        self, mock_yaml_full_load: Any, mock_resolve_refs: Any
+    ) -> None:
         """Test that _current_build_options returns current options."""
         from app.enums import Env
 
@@ -270,7 +274,7 @@ class TestLoadSpec:
         assert result["env"] == Env.DEV
         assert result["disable_security"] is True
 
-    def test_get_latest_spec_mtime_scans_yaml_files(self, mock_os_walk):
+    def test_get_latest_spec_mtime_scans_yaml_files(self, mock_os_walk: Any) -> None:
         """Test that _get_latest_spec_mtime scans all YAML files."""
         mock_os_walk.return_value = [
             ("/spec", [], ["a.yaml", "b.yml", "c.txt"]),
@@ -286,7 +290,7 @@ class TestLoadSpec:
         call_args = [call[0][0] for call in mock_getmtime.call_args_list]
         assert "/spec/c.txt" not in call_args
 
-    def test_get_latest_spec_mtime_returns_zero_when_no_files(self, mock_os_walk):
+    def test_get_latest_spec_mtime_returns_zero_when_no_files(self, mock_os_walk: Any) -> None:
         """Test that _get_latest_spec_mtime returns 0 when no files."""
         mock_os_walk.return_value = []
 
@@ -294,7 +298,7 @@ class TestLoadSpec:
 
         assert result == 0.0
 
-    def test_get_latest_spec_mtime_scans_recursively(self, mock_os_walk):
+    def test_get_latest_spec_mtime_scans_recursively(self, mock_os_walk: Any) -> None:
         """Test that _get_latest_spec_mtime scans recursively."""
         mock_os_walk.return_value = [
             ("/spec", ["subdir"], []),
@@ -307,7 +311,7 @@ class TestLoadSpec:
 
         mock_getmtime.assert_any_call("/spec/subdir/nested.yaml")
 
-    def test_get_latest_spec_mtime_skips_non_yaml(self, mock_os_walk):
+    def test_get_latest_spec_mtime_skips_non_yaml(self, mock_os_walk: Any) -> None:
         """Test that _get_latest_spec_mtime skips non-YAML files."""
         mock_os_walk.return_value = [
             ("/spec", [], ["a.yaml", "b.json", "c.txt", "d.yml"]),
@@ -325,8 +329,8 @@ class TestLoadSpec:
         assert "/spec/c.txt" not in call_args
 
     def test_load_spec_with_existing_cache(
-        self, mock_yaml_full_load, mock_resolve_refs, mock_pickle
-    ):
+        self, mock_yaml_full_load: Any, mock_resolve_refs: Any, mock_pickle: Any
+    ) -> None:
         """Test that load_spec uses existing cache."""
         from app.enums import Env
 

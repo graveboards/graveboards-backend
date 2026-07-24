@@ -11,7 +11,7 @@ class TestQueueRequestHandler:
     """Test QueueRequestHandler service."""
 
     @pytest.fixture
-    def service(self):
+    def service(self) -> QueueRequestHandler:
         """Create a test QueueRequestHandler instance."""
         rc = MagicMock()
         rc.hgetall = AsyncMock()
@@ -21,21 +21,21 @@ class TestQueueRequestHandler:
         db.add = AsyncMock()
         return QueueRequestHandler(rc, db)
 
-    async def test_resolve_job_instruction_returns_execution_time(self, service):
+    async def test_resolve_job_instruction_returns_execution_time(self, service: QueueRequestHandler) -> None:
         """Test that _resolve_job_instruction returns instruction with current time."""
         instruction = await service._resolve_job_instruction(123)
 
         assert instruction is not None
         assert instruction.execution_time is not None
 
-    async def test_execute_job_raises_value_error_when_record_not_found(self, service):
+    async def test_execute_job_raises_value_error_when_record_not_found(self, service: QueueRequestHandler) -> None:
         """Test that _execute_job raises ValueError when task not found in Redis."""
         service._rc.hgetall.return_value = None
 
         with pytest.raises(ValueError, match="not found"):
             await service._execute_job(123)
 
-    async def test_execute_job_successfully_processes_task(self, service):
+    async def test_execute_job_successfully_processes_task(self, service: QueueRequestHandler) -> None:
         """Test successful task processing."""
         serialized_task = {
             "user_id": "123",
@@ -65,7 +65,7 @@ class TestQueueRequestHandler:
         mock_bm.archive.assert_awaited_once_with(456)
         service._db.add.assert_awaited_once()
 
-    async def test_execute_job_sets_completed_at_on_success(self, service):
+    async def test_execute_job_sets_completed_at_on_success(self, service: QueueRequestHandler) -> None:
         """Test that completed_at is set on successful execution."""
         serialized_task = {
             "user_id": "123",
@@ -95,7 +95,7 @@ class TestQueueRequestHandler:
         ]
         assert len(completed_calls) >= 1
 
-    async def test_execute_job_sets_failed_at_on_exception(self, service):
+    async def test_execute_job_sets_failed_at_on_exception(self, service: QueueRequestHandler) -> None:
         """Test that failed_at is set when an exception occurs."""
         serialized_task = {
             "user_id": "123",
@@ -122,7 +122,7 @@ class TestQueueRequestHandler:
         failed_calls = [c for c in service._rc.hset.call_args_list if c[0][1] == "failed_at"]
         assert len(failed_calls) >= 1
 
-    async def test_execute_job_deserializes_task_correctly(self, service):
+    async def test_execute_job_deserializes_task_correctly(self, service: QueueRequestHandler) -> None:
         """Test that task is deserialized properly."""
         serialized_task = {
             "user_id": "123",
@@ -157,7 +157,7 @@ class TestQueueRequestHandler:
 
         mock_deserialize.assert_called_once_with(serialized_task)
 
-    async def test_execute_job_excludes_correct_fields_from_schema(self, service):
+    async def test_execute_job_excludes_correct_fields_from_schema(self, service: QueueRequestHandler) -> None:
         """Test that RequestSchema excludes correct fields."""
         serialized_task = {
             "user_id": "123",
@@ -193,12 +193,12 @@ class TestQueueRequestHandler:
             exclude={"user_profile", "queue", "beatmapset_snapshot"}
         )
 
-    async def test_auto_retry_decorator_applied(self, service):
+    async def test_auto_retry_decorator_applied(self, service: QueueRequestHandler) -> None:
         """Test that _execute_job has auto_retry decorator."""
 
         assert hasattr(service._execute_job, "__wrapped__") or callable(service._execute_job)
 
-    async def test_auto_retry_configured_with_connect_timeout(self, service):
+    async def test_auto_retry_configured_with_connect_timeout(self, service: QueueRequestHandler) -> None:
         """Test that auto_retry is configured to catch ConnectTimeout."""
         import inspect
 

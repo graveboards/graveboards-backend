@@ -36,7 +36,7 @@ from app.fixtures.paths import (
 console = Console()
 
 
-def _print_file_listing(path_base, categories, users_path):
+def _print_file_listing(path_base: Path, categories: list[str], users_path: Path) -> None:
     """Print detailed file listing for a fixture directory.
 
     Args:
@@ -69,12 +69,12 @@ def _print_file_listing(path_base, categories, users_path):
                     console.print(f"    [red]{ruleset}: (empty)[/red]")
 
 
-def count_files(path):
+def count_files(path: Path) -> int:
     """Count JSON files in a path."""
     return len(list(path.glob("*.json"))) if path.exists() else 0
 
 
-def get_instance_counts():
+def get_instance_counts() -> dict[str, int | dict[str, int]]:
     """Get fixture counts for instance/ directory."""
     counts = {}
     for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
@@ -100,7 +100,7 @@ def get_instance_counts():
     return counts
 
 
-def get_promoted_counts():
+def get_promoted_counts() -> dict[str, int | dict[str, int]]:
     """Get fixture counts for tests/fixtures/ directory."""
     counts = {}
     for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
@@ -149,7 +149,9 @@ def format_coverage(count: int, expected: int) -> str:
         return f"[red]{percentage:.1f}%[/red]"
 
 
-def create_instance_table(instance_counts, metadata):
+def create_instance_table(
+    instance_counts: dict[str, int | dict[str, int]], metadata: dict[str, Any]
+) -> Table:
     """Create table for instance/ fixtures."""
     table = Table(box=box.SQUARE, padding=0)
     table.add_column("Category", style="bold cyan", width=14)
@@ -196,7 +198,9 @@ def create_instance_table(instance_counts, metadata):
     return table
 
 
-def create_promoted_table(promoted_counts, metadata):
+def create_promoted_table(
+    promoted_counts: dict[str, int | dict[str, int]], metadata: dict[str, Any]
+) -> Table:
     """Create table for promoted fixtures."""
     table = Table(box=box.SQUARE, padding=0)
     table.add_column("Category", style="bold cyan", width=14)
@@ -252,7 +256,7 @@ def create_promoted_table(promoted_counts, metadata):
     return table
 
 
-def get_category_gaps():
+def get_category_gaps() -> list[dict[str, Any]]:
     """Get detailed gap information for each category."""
     categories = [
         "beatmaps",
@@ -283,7 +287,7 @@ def get_category_gaps():
     return gaps
 
 
-def show_gaps(promoted_counts):
+def show_gaps(promoted_counts: dict[str, int | dict[str, int]]) -> None:
     """Show missing fixture gaps."""
 
     gaps = get_category_gaps()

@@ -82,7 +82,7 @@ class SearchTermsSchema(BaseModel):
 
         return terms
 
-    def validate_against_scope(self, scope: Scope):
+    def validate_against_scope(self, scope: Scope) -> None:
         """Validate field weights against a given search scope.
 
         Ensures all configured field weights are valid for the scope definition.

@@ -1,7 +1,7 @@
 __all__ = ["OpenAPIURIParserPatched", "ParameterValidatorPatched"]
 
 
-def __getattr__(name):
+def __getattr__(name: str) -> Any:
     if name == "OpenAPIURIParserPatched":
         from .uri_parsing import OpenAPIURIParserPatched
 

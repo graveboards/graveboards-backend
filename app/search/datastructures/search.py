@@ -90,7 +90,7 @@ class SearchSchema(BaseModel):
     filters: FiltersSchema | None = None
 
     @model_validator(mode="after")
-    def validate_search(self):
+    def validate_search(self) -> Self:
         """Validate search configuration against the selected scope.
 
         Ensures search terms and associated field weights are valid for the configured

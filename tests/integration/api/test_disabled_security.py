@@ -8,6 +8,8 @@ by default, or whatever the X-Debug-User-Id header requests) and runs the
 same role/ownership checks against it that a real request would go through.
 """
 
+from typing import Any
+
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -19,8 +21,11 @@ class TestSecurityConfiguration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_security_enabled_by_default(
-        self, TestClientWithMocks, admin_user_token, authenticated_user_id
-    ):
+        self,
+        TestClientWithMocks: Any,
+        admin_user_token: Any,
+        authenticated_user_id: Any,
+    ) -> None:
         """Verify security is enabled by default in test environment."""
         from app.database.models import Queue
 
@@ -35,7 +40,7 @@ class TestSecurityConfiguration:
         mock_queue.user_id = 99999999
         mock_queue.name = "Test Queue"
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model == Queue:
                 return mock_queue
             return mock_user
@@ -57,8 +62,10 @@ class TestSecurityConfiguration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_security_disabled_still_enforces_roles_for_default_identity(
-        self, TestClientWithMocks, security_disabled
-    ):
+        self,
+        TestClientWithMocks: Any,
+        security_disabled: Any,
+    ) -> None:
         """Disabling security resolves the default dev identity (DEV_ADMIN_USER_ID)
         instead of a real login, but the role check still runs for real - if that
         identity isn't admin-roled in the DB, a non-owner PATCH is still rejected.
@@ -75,7 +82,7 @@ class TestSecurityConfiguration:
         mock_queue.user_id = 99999999
         mock_queue.name = "Test Queue"
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model == Queue:
                 return mock_queue
             return mock_user
@@ -92,8 +99,10 @@ class TestSecurityConfiguration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_security_disabled_allows_admin_dev_identity(
-        self, TestClientWithMocks, security_disabled
-    ):
+        self,
+        TestClientWithMocks: Any,
+        security_disabled: Any,
+    ) -> None:
         """The default dev identity (DEV_ADMIN_USER_ID) is admin-roled in a real
         seeded dev DB, so role-gated endpoints succeed with no auth header at all -
         the "just works" dev experience DISABLE_SECURITY exists for. Here we
@@ -115,7 +124,7 @@ class TestSecurityConfiguration:
         mock_queue.user_id = 99999999
         mock_queue.name = "Test Queue"
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model == Queue:
                 return mock_queue
             return mock_user
@@ -134,13 +143,15 @@ class TestSecurityConfiguration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_security_disabled_debug_header_impersonates_non_admin(
-        self, TestClientWithMocks, security_disabled
-    ):
+        self,
+        TestClientWithMocks: Any,
+        security_disabled: Any,
+    ) -> None:
         """The X-Debug-User-Id header lets a dev impersonate a different identity
         while security is disabled, e.g. to exercise the non-admin code path
         without needing real credentials.
         """
-        from app.config import DEV_USER_ID
+        from app.config import DEV_USER_ID  # type: ignore[attr-defined]
         from app.database.models import Queue
 
         mock_db = AsyncMock()
@@ -153,7 +164,7 @@ class TestSecurityConfiguration:
         mock_queue.user_id = 99999999
         mock_queue.name = "Test Queue"
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model == Queue:
                 return mock_queue
             return mock_user
@@ -174,8 +185,12 @@ class TestSecurityConfiguration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_security_enabled_enforces_auth(
-        self, TestClientWithMocks, admin_user_token, security_enabled, authenticated_user_id
-    ):
+        self,
+        TestClientWithMocks: Any,
+        admin_user_token: Any,
+        security_enabled: Any,
+        authenticated_user_id: Any,
+    ) -> None:
         """Verify security enforcement when explicitly enabled."""
         from app.database.models import Queue
 
@@ -189,7 +204,7 @@ class TestSecurityConfiguration:
         mock_queue.id = 1
         mock_queue.user_id = 99999999
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model == Queue:
                 return mock_queue
             return mock_user

@@ -20,8 +20,8 @@ T = TypeVar("T")
 def ownership_authorization(
     authorized_user_id_lookup: str = "user",
     resource_user_id_lookup: str = "user_id",
-    resource_id_lookup: str = None,
-    resource_model: type = None,
+    resource_id_lookup: str | None = None,
+    resource_model: type | None = None,
 ) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Decorator enforcing resource ownership access control.
 
@@ -115,8 +115,8 @@ async def _resolve_resource_owner(
     db: PostgresqlDB,
     kwargs: dict[str, Any],
     resource_user_id_lookup: str,
-    resource_id_lookup: str = None,
-    resource_model: type = None,
+    resource_id_lookup: str | None = None,
+    resource_model: type | None = None,
 ) -> int:
     """Resolve the resource owner ID for ownership verification.
 
@@ -145,7 +145,7 @@ async def _resolve_resource_owner(
     """
     # Try to resolve from kwargs first
     try:
-        return get_value(kwargs, resource_user_id_lookup)
+        return int(get_value(kwargs, resource_user_id_lookup))
     except KeyError:
         pass
 
@@ -164,7 +164,7 @@ async def _resolve_resource_owner(
             raise ValueError(f"Resource with ID '{resource_id}' not found")
 
         try:
-            return get_value(resource, resource_user_id_lookup)
+            return int(get_value(resource, resource_user_id_lookup))
         except KeyError:
             raise ValueError(
                 f"Resource owner ID '{resource_user_id_lookup}' not found on fetched resource"

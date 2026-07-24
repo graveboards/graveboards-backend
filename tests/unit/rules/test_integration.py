@@ -8,7 +8,7 @@ from app.database.rules.engine.phase1_runner import Phase1Runner
 from app.database.rules.exceptions import RuleViolationError
 
 
-def _make_mock_rule(type, config, is_active=True):
+def _make_mock_rule(type: str, config: dict, is_active: bool = True) -> MagicMock:
     r = MagicMock()
     r.type = type
     r.config = config
@@ -20,7 +20,7 @@ def _make_mock_rule(type, config, is_active=True):
 class TestPhase1Runner:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_runs_tier1_and_tier2(self):
+    async def test_runs_tier1_and_tier2(self) -> None:
         runner = Phase1Runner()
         rules = [
             _make_mock_rule("beatmap_duration", {"max_seconds": 180, "logic": "max"}),
@@ -38,7 +38,7 @@ class TestPhase1Runner:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_skips_inactive(self):
+    async def test_skips_inactive(self) -> None:
         runner = Phase1Runner()
         rule = _make_mock_rule(
             "beatmap_duration",
@@ -56,7 +56,7 @@ class TestPhase1Runner:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_raises_on_violation(self):
+    async def test_raises_on_violation(self) -> None:
         runner = Phase1Runner()
         rules = [
             _make_mock_rule("beatmap_duration", {"max_seconds": 100, "logic": "max"}),
@@ -76,7 +76,7 @@ class TestPhase1Runner:
 class TestVersionChecking:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_skips_unsupported_version(self):
+    async def test_skips_unsupported_version(self) -> None:
         runner = Phase1Runner()
         rule = _make_mock_rule(
             "beatmap_duration",
@@ -99,7 +99,7 @@ class TestVersionChecking:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_runs_supported_version(self):
+    async def test_runs_supported_version(self) -> None:
         runner = Phase1Runner()
         rule = _make_mock_rule(
             "beatmap_duration",
@@ -124,7 +124,7 @@ class TestVersionChecking:
 class TestEndToEndComposite:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_and_composite_passes(self):
+    async def test_and_composite_passes(self) -> None:
         rule_data = {
             "type": "composite",
             "config": {
@@ -149,7 +149,7 @@ class TestEndToEndComposite:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_or_composite_passes_on_either(self):
+    async def test_or_composite_passes_on_either(self) -> None:
         rule_data = {
             "type": "composite",
             "config": {
@@ -174,7 +174,7 @@ class TestEndToEndComposite:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_nested_composite(self):
+    async def test_nested_composite(self) -> None:
         rule_data = {
             "type": "composite",
             "config": {

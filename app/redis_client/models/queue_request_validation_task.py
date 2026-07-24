@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import cast as typing_cast
 
 from pydantic.fields import computed_field
 from pydantic.main import BaseModel
@@ -45,4 +46,4 @@ class QueueRequestValidationTask(BaseModel):
 
             deserialized_dict[key] = value
 
-        return cls.model_validate(deserialized_dict)
+        return typing_cast(QueueRequestValidationTask, cls.model_validate(deserialized_dict))

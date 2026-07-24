@@ -1,3 +1,5 @@
+from typing import Any
+
 from unittest.mock import AsyncMock
 
 import pytest
@@ -8,7 +10,7 @@ from app.search.enums import Scope
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_search_schema_creation():
+async def test_search_schema_creation() -> None:
     search_query = SearchSchema(scope=Scope.BEATMAPS, search_terms=None, sorting=None, filters=None)
 
     assert search_query.scope == Scope.BEATMAPS
@@ -19,7 +21,7 @@ async def test_search_schema_creation():
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_search_schema_all_scopes():
+async def test_search_schema_all_scopes() -> None:
     scopes = [Scope.BEATMAPS, Scope.BEATMAPSETS, Scope.QUEUES, Scope.REQUESTS]
 
     for scope in scopes:
@@ -29,7 +31,7 @@ async def test_search_schema_all_scopes():
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_search_query_serialization():
+async def test_search_query_serialization() -> None:
     search_query = SearchSchema(
         scope=Scope.BEATMAPSETS, search_terms=None, sorting=None, filters=None
     )
@@ -43,7 +45,7 @@ async def test_search_query_serialization():
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_search_query_deserialization():
+async def test_search_query_deserialization() -> None:
     search_query = SearchSchema(
         scope=Scope.BEATMAPSETS, search_terms=None, sorting=None, filters=None
     )
@@ -56,7 +58,7 @@ async def test_search_query_deserialization():
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_compress_decompress_roundtrip():
+async def test_compress_decompress_roundtrip() -> None:
     search_query = SearchSchema(scope=Scope.BEATMAPS, search_terms=None, sorting=None, filters=None)
 
     serialized = search_query.serialize()
@@ -74,7 +76,7 @@ class TestSearchHttpIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_search_post_returns_201(self, TestClientWithMocks):
+    async def test_search_post_returns_201(self, TestClientWithMocks: Any) -> None:
         """Test POST /api/v1/search returns 201 with compressed query."""
 
         mock_rc = AsyncMock()
@@ -98,7 +100,7 @@ class TestSearchHttpIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_search_post_invalid_scope_returns_400(self, TestClientWithMocks):
+    async def test_search_post_invalid_scope_returns_400(self, TestClientWithMocks: Any) -> None:
         """Test POST /api/v1/search with invalid scope returns 400."""
         mock_rc = AsyncMock()
 

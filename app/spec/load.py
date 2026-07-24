@@ -1,5 +1,7 @@
 import os
 import pickle
+from typing import Any
+from typing import cast as typing_cast
 
 import yaml
 from connexion.spec import resolve_refs
@@ -13,7 +15,7 @@ from .shallow import populate_shallow_refs
 logger = get_logger(__name__)
 
 
-def load_spec() -> dict:
+def load_spec() -> dict[str, Any]:
     """Load the OpenAPI specification with environment-aware caching.
 
     In production, always returns the cached spec if present. In non-production
@@ -30,35 +32,24 @@ def load_spec() -> dict:
     if not cache_exists:
         return _build_spec()
 
-    if ENV == Env.PROD:
-        try:
-            with open(CACHE_FILE, "rb") as f:
-                payload = pickle.load(f)
-        except (pickle.UnpicklingError, EOFError, ValueError, OSError) as e:
-            logger.warning(f"Corrupted spec cache at {CACHE_FILE}, rebuilding: {e}")
-            return _build_spec()
+    with open(CACHE_FILE, "rb") as f:
+        payload: dict[str, Any] = pickle.load(f)
 
-        return payload["spec"]
+    if ENV == Env.PROD:
+        return typing_cast(dict[str, Any], payload["spec"])
 
     cache_mtime = os.path.getmtime(CACHE_FILE)
     latest_spec_mtime = _get_latest_spec_mtime()
-
-    try:
-        with open(CACHE_FILE, "rb") as f:
-            payload = pickle.load(f)
-    except (pickle.UnpicklingError, EOFError, ValueError, OSError) as e:
-        logger.warning(f"Corrupted spec cache at {CACHE_FILE}, rebuilding: {e}")
-        return _build_spec()
 
     cached_options = payload.get("build_options", {})
 
     if cache_mtime < latest_spec_mtime or cached_options != _current_build_options():
         return _build_spec()
 
-    return payload["spec"]
+    return typing_cast(dict[str, Any], payload["spec"])
 
 
-def _build_spec() -> dict:
+def _build_spec() -> dict[str, Any]:
     """Build the OpenAPI specification from source files.
 
     Loads the entrypoint YAML, resolves `$ref` references, applies internal mutations,
@@ -68,7 +59,7 @@ def _build_spec() -> dict:
         dict: The fully resolved and mutated OpenAPI specification.
     """
     with open(OPENAPI_ENTRYPOINT) as f:
-        spec = resolve_refs(yaml.full_load(f), base_uri=f"{SPEC_DIR}/")
+        spec: dict[str, Any] = resolve_refs(yaml.full_load(f), base_uri=f"{SPEC_DIR}/")
 
     _apply_mutations(spec)
 

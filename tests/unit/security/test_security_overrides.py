@@ -16,37 +16,37 @@ class TestMatchingUserIdOverride:
     """Test matching_user_id_override authorization check."""
 
     @pytest.mark.asyncio
-    async def test_matching_user_ids_returns_true(self):
+    async def test_matching_user_ids_returns_true(self) -> None:
         """Test that matching user IDs return True."""
         result = await matching_user_id_override(user=123, user_id=123)
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_non_matching_user_ids_returns_false(self):
+    async def test_non_matching_user_ids_returns_false(self) -> None:
         """Test that non-matching user IDs return False."""
         result = await matching_user_id_override(user={"id": 123}, user_id=456)
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_authenticated_user_id_null_returns_false(self):
+    async def test_authenticated_user_id_null_returns_false(self) -> None:
         """Test that null authenticated user ID returns False."""
         result = await matching_user_id_override(user=None, user_id=123)
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_resource_user_id_null_returns_false(self):
+    async def test_resource_user_id_null_returns_false(self) -> None:
         """Test that null resource user ID returns False."""
         result = await matching_user_id_override(user={"id": 123}, user_id=None)
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_both_user_ids_null_returns_false(self):
+    async def test_both_user_ids_null_returns_false(self) -> None:
         """Test that both null user IDs return False."""
         result = await matching_user_id_override(user=None, user_id=None)
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_custom_authenticated_lookup_path(self):
+    async def test_custom_authenticated_lookup_path(self) -> None:
         """Test with custom authenticated user lookup path."""
         result = await matching_user_id_override(
             authenticated_user_id_lookup="auth.user.id",
@@ -57,7 +57,7 @@ class TestMatchingUserIdOverride:
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_custom_resource_lookup_path(self):
+    async def test_custom_resource_lookup_path(self) -> None:
         """Test with custom resource user ID lookup path."""
         result = await matching_user_id_override(
             authenticated_user_id_lookup="user",
@@ -68,7 +68,7 @@ class TestMatchingUserIdOverride:
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_nested_user_id_lookup(self):
+    async def test_nested_user_id_lookup(self) -> None:
         """Test that nested structures are compared as dicts."""
         result = await matching_user_id_override(
             user={"profile": {"user_id": 222}}, user_id={"profile": {"user_id": 222}}
@@ -76,7 +76,7 @@ class TestMatchingUserIdOverride:
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_different_types_returns_false(self):
+    async def test_different_types_returns_false(self) -> None:
         """Test that different types (int vs string) return False."""
         result = await matching_user_id_override(user=123, user_id="123")
         assert result is False
@@ -86,7 +86,7 @@ class TestQueueOwnerOverride:
     """Test queue_owner_override authorization check."""
 
     @pytest.mark.asyncio
-    async def test_direct_queue_ownership_returns_true(self):
+    async def test_direct_queue_ownership_returns_true(self) -> None:
         """Test that authenticated user owns the queue directly."""
         mock_db = AsyncMock()
         mock_queue = MagicMock()
@@ -99,7 +99,7 @@ class TestQueueOwnerOverride:
         mock_db.get.assert_called_once_with(Queue, id=1)
 
     @pytest.mark.asyncio
-    async def test_direct_queue_non_ownership_returns_false(self):
+    async def test_direct_queue_non_ownership_returns_false(self) -> None:
         """Test that non-owner user returns False."""
         mock_db = AsyncMock()
         mock_queue = MagicMock()
@@ -111,7 +111,7 @@ class TestQueueOwnerOverride:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_request_based_ownership_returns_true(self):
+    async def test_request_based_ownership_returns_true(self) -> None:
         """Test ownership resolved via Request -> Queue."""
         mock_db = AsyncMock()
         mock_request = MagicMock()
@@ -126,7 +126,7 @@ class TestQueueOwnerOverride:
         mock_db.get.assert_called_once_with(Request, id=1, _include={"queue": True})
 
     @pytest.mark.asyncio
-    async def test_request_based_non_ownership_returns_false(self):
+    async def test_request_based_non_ownership_returns_false(self) -> None:
         """Test non-ownership via Request -> Queue."""
         mock_db = AsyncMock()
         mock_request = MagicMock()
@@ -140,7 +140,7 @@ class TestQueueOwnerOverride:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_custom_authenticated_user_lookup(self):
+    async def test_custom_authenticated_user_lookup(self) -> None:
         """Test with custom authenticated user ID lookup path."""
         mock_db = AsyncMock()
         mock_queue = MagicMock()
@@ -157,7 +157,7 @@ class TestQueueOwnerOverride:
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_different_users_returns_false(self):
+    async def test_different_users_returns_false(self) -> None:
         """Test that different users return False."""
         mock_db = AsyncMock()
         mock_queue = MagicMock()
@@ -169,7 +169,7 @@ class TestQueueOwnerOverride:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_null_authenticated_user_returns_false(self):
+    async def test_null_authenticated_user_returns_false(self) -> None:
         """Test that null authenticated user returns False."""
         mock_db = AsyncMock()
         mock_queue = MagicMock()
@@ -181,7 +181,7 @@ class TestQueueOwnerOverride:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_null_queue_user_id_returns_false(self):
+    async def test_null_queue_user_id_returns_false(self) -> None:
         """Test that null queue user_id returns False."""
         mock_db = AsyncMock()
         mock_queue = MagicMock()

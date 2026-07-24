@@ -1,15 +1,16 @@
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from app.fixtures.reader import FixtureReader
+from app.osu_api.client.osu_api_client import OsuAPIClient
 from tests.unit.osu_api.conftest import MockResponse
 from tests.unit.osu_api.test_helpers import _get_user_with_fallback
 from tests.unit.osu_api.test_utils import _create_mock_rankings_user, _create_mock_tags
 
 
 @pytest.mark.asyncio
-async def test_get_tags(api_client):
+async def test_get_tags(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     api_client_obj, mock_redis = api_client
     mock_data = _create_mock_tags()
 
@@ -27,7 +28,7 @@ async def test_get_tags(api_client):
 
 
 @pytest.mark.asyncio
-async def test_get_rankings(api_client):
+async def test_get_rankings(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     from app.osu_api.enums import Ruleset
 
     api_client_obj, mock_redis = api_client
@@ -51,7 +52,7 @@ async def test_get_rankings(api_client):
 
 
 @pytest.mark.asyncio
-async def test_get_rankings_with_country_mode(api_client):
+async def test_get_rankings_with_country_mode(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     from app.osu_api.enums import Ruleset
 
     api_client_obj, mock_redis = api_client
@@ -71,7 +72,7 @@ async def test_get_rankings_with_country_mode(api_client):
 
 
 @pytest.mark.asyncio
-async def test_get_rankings_includes_limit_and_offset(api_client):
+async def test_get_rankings_includes_limit_and_offset(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     from app.osu_api.enums import Ruleset
 
     api_client_obj, mock_redis = api_client

@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 
 from app.database.enums import FilterOperator
@@ -5,32 +7,32 @@ from app.database.utils import get_filter_condition
 
 
 class TestGetFilterCondition:
-    def test_eq_operator_non_aggregated(self, mock_column_clause):
+    def test_eq_operator_non_aggregated(self, mock_column_clause: Any) -> None:
         condition = get_filter_condition(FilterOperator.EQ, mock_column_clause, 42)
 
         assert condition is not None
 
-    def test_eq_operator_aggregated(self, mock_column_clause):
+    def test_eq_operator_aggregated(self, mock_column_clause: Any) -> None:
         condition = get_filter_condition(
             FilterOperator.EQ, mock_column_clause, 42, is_aggregated=True
         )
 
         assert condition is not None
 
-    def test_in_operator_aggregated(self, mock_column_clause):
+    def test_in_operator_aggregated(self, mock_column_clause: Any) -> None:
         condition = get_filter_condition(
             FilterOperator.IN, mock_column_clause, [1, 2, 3], is_aggregated=True
         )
 
         assert condition is not None
 
-    def test_unsupported_operator_raises_value_error(self):
+    def test_unsupported_operator_raises_value_error(self) -> None:
         with pytest.raises(ValueError):
             get_filter_condition("invalid_operator", None, 42)
 
 
 @pytest.fixture
-def mock_column_clause():
+def mock_column_clause() -> Any:
     from unittest.mock import MagicMock
 
     from sqlalchemy.sql.elements import ColumnClause

@@ -4,6 +4,8 @@ Integration tests for GET /api/v1/users endpoints.
 Tests the users retrieval via full HTTP stack.
 """
 
+from typing import Any
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -16,7 +18,7 @@ class TestUsersGetIntegration:
     TEST_USER_ID_2 = 87654321
 
     @staticmethod
-    def _mock_admin_dev_identity():
+    def _mock_admin_dev_identity() -> MagicMock:
         """A User mock role_authorization's role check resolves the (disabled-security)
         dev identity to - admin-roled, matching DEV_ADMIN_USER_ID's default behavior."""
         from app.database.enums import RoleName
@@ -29,7 +31,11 @@ class TestUsersGetIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_can_get_users_list(self, TestClientWithMocks, security_disabled):
+    async def test_admin_can_get_users_list(
+        self,
+        TestClientWithMocks: Any,
+        security_disabled: Any,
+    ) -> None:
         """Test admin can get users list."""
         from app.database.models import User
 
@@ -37,10 +43,10 @@ class TestUsersGetIntegration:
         mock_admin_user = self._mock_admin_dev_identity()
 
         # Return plain dicts that match the schema format
-        user1 = {"id": self.TEST_USER_ID, "profile": None, "roles": []}
-        user2 = {"id": self.TEST_USER_ID_2, "profile": None, "roles": []}
+        user1: dict[str, Any] = {"id": self.TEST_USER_ID, "profile": None, "roles": []}
+        user2: dict[str, Any] = {"id": self.TEST_USER_ID_2, "profile": None, "roles": []}
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model == User and kwargs.get("_include", {}).get("roles"):
                 return mock_admin_user
             return None
@@ -60,16 +66,20 @@ class TestUsersGetIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_can_get_user_by_id(self, TestClientWithMocks, security_disabled):
+    async def test_admin_can_get_user_by_id(
+        self,
+        TestClientWithMocks: Any,
+        security_disabled: Any,
+    ) -> None:
         """Test admin can get user by id."""
         from app.database.models import User
 
         mock_db = AsyncMock()
         mock_admin_user = self._mock_admin_dev_identity()
 
-        user = {"id": self.TEST_USER_ID, "profile": None, "roles": []}
+        user: dict[str, Any] = {"id": self.TEST_USER_ID, "profile": None, "roles": []}
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model == User and kwargs.get("_include", {}).get("roles"):
                 return mock_admin_user
             return user
@@ -87,14 +97,18 @@ class TestUsersGetIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_user_not_found(self, TestClientWithMocks, security_disabled):
+    async def test_admin_user_not_found(
+        self,
+        TestClientWithMocks: Any,
+        security_disabled: Any,
+    ) -> None:
         """Test admin gets 404 when user doesn't exist."""
         from app.database.models import User
 
         mock_db = AsyncMock()
         mock_admin_user = self._mock_admin_dev_identity()
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model == User and kwargs.get("_include", {}).get("roles"):
                 return mock_admin_user
             return None
@@ -113,8 +127,10 @@ class TestUsersGetIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_security_disabled_resolves_dev_identity(
-        self, TestClientWithMocks, security_disabled
-    ):
+        self,
+        TestClientWithMocks: Any,
+        security_disabled: Any,
+    ) -> None:
         """Test that disabling security resolves a real (admin) dev identity rather
         than skipping the role check outright - the endpoint still succeeds, but
         because the resolved identity is admin-roled, not because checks were skipped.
@@ -124,10 +140,10 @@ class TestUsersGetIntegration:
         mock_db = AsyncMock()
         mock_admin_user = self._mock_admin_dev_identity()
 
-        user1 = {"id": self.TEST_USER_ID, "profile": None, "roles": []}
-        user2 = {"id": self.TEST_USER_ID_2, "profile": None, "roles": []}
+        user1: dict[str, Any] = {"id": self.TEST_USER_ID, "profile": None, "roles": []}
+        user2: dict[str, Any] = {"id": self.TEST_USER_ID_2, "profile": None, "roles": []}
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model == User and kwargs.get("_include", {}).get("roles"):
                 return mock_admin_user
             return None
@@ -150,7 +166,11 @@ class TestUsersPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_create_user_success(self, TestClientWithMocks, admin_user_token):
+    async def test_create_user_success(
+        self,
+        TestClientWithMocks: Any,
+        admin_user_token: Any,
+    ) -> None:
         """Test successful user creation."""
         from app.database.enums import RoleName
         from app.database.models import User
@@ -163,7 +183,7 @@ class TestUsersPostIntegration:
         admin_role.name = RoleName.ADMIN
         mock_admin_user.roles = [admin_role]
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model == User and kwargs.get("_include", {}).get("roles"):
                 return mock_admin_user
             if model == User:
@@ -206,7 +226,11 @@ class TestUsersPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_create_user_conflict(self, TestClientWithMocks, admin_user_token):
+    async def test_create_user_conflict(
+        self,
+        TestClientWithMocks: Any,
+        admin_user_token: Any,
+    ) -> None:
         """Test 409 when user already exists."""
         from app.database.enums import RoleName
         from app.database.models import User
@@ -219,7 +243,7 @@ class TestUsersPostIntegration:
         admin_role.name = RoleName.ADMIN
         mock_admin_user.roles = [admin_role]
 
-        async def mock_get(model, **kwargs):
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model == User and kwargs.get("_include", {}).get("roles"):
                 return mock_admin_user
             if model == User:

@@ -8,6 +8,7 @@ These tests verify that the Connexion endpoint correctly:
 """
 
 from datetime import UTC, datetime, timedelta
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -20,7 +21,7 @@ class TestTokenPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_token_exchange_missing_code(self, TestClient):
+    async def test_token_exchange_missing_code(self, TestClient: Any) -> None:
         """Test POST /api/v1/token with missing code returns 400."""
         body = f"state={self.TEST_STATE}"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
@@ -32,7 +33,7 @@ class TestTokenPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_token_exchange_missing_state(self, TestClient):
+    async def test_token_exchange_missing_state(self, TestClient: Any) -> None:
         """Test POST /api/v1/token with missing state returns 400."""
         body = "code=test_code"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
@@ -44,7 +45,7 @@ class TestTokenPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_token_exchange_success(self, TestClientWithMocks):
+    async def test_token_exchange_success(self, TestClientWithMocks: Any) -> None:
         """Test successful token exchange via HTTP stack with mocked dependencies."""
         state = "test_csrf_state_12345"
         code = "test_authorization_code"
@@ -52,14 +53,14 @@ class TestTokenPostIntegration:
         body = f"code={code}&state={state}"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
-        async def async_mock_fetch_token(*args, **kwargs):
+        async def async_mock_fetch_token(*args: Any, **kwargs: Any) -> dict[str, Any]:
             return {
                 "access_token": "test_access_token_xyz",
                 "refresh_token": "test_refresh_token_abc",
                 "expires_at": int((datetime.now(UTC) + timedelta(hours=1)).timestamp()),
             }
 
-        async def async_mock_get_own_data(*args, **kwargs):
+        async def async_mock_get_own_data(*args: Any, **kwargs: Any) -> dict[str, Any]:
             return {
                 "id": 12345678,
                 "username": "test_user",

@@ -1,3 +1,5 @@
+from typing import Any
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -7,7 +9,7 @@ from app.database.rules.engine.phase2_runner import Phase2Runner
 from app.database.rules.exceptions import RetryableValidationError, RuleViolationError
 
 
-def _make_mock_rule(type, config, is_active=True):
+def _make_mock_rule(type: str, config: dict, is_active: bool = True) -> MagicMock:
     r = MagicMock()
     r.type = type
     r.config = config
@@ -19,7 +21,7 @@ def _make_mock_rule(type, config, is_active=True):
 class TestPhase2Runner:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_skips_inactive(self):
+    async def test_skips_inactive(self) -> None:
         runner = Phase2Runner()
         rule = _make_mock_rule(
             "never_ranked",
@@ -38,7 +40,7 @@ class TestPhase2Runner:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_collects_rejected_rules(self):
+    async def test_collects_rejected_rules(self) -> None:
         runner = Phase2Runner()
         rules = [
             _make_mock_rule("never_ranked", {"ruleset": "osu"}),
@@ -50,7 +52,7 @@ class TestPhase2Runner:
             osu_client=AsyncMock(),
         )
 
-        async def mock_evaluate(self, context, depth=0):
+        async def mock_evaluate(self: Any, context: Any, depth: int = 0) -> bool:
             # A genuine policy violation is signalled via context.last_violation,
             # mirroring what the real evaluator records.
             context.last_violation = RuleViolationError("never_ranked", "already ranked")
@@ -66,7 +68,7 @@ class TestPhase2Runner:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_unexpected_exception_is_retryable(self):
+    async def test_unexpected_exception_is_retryable(self) -> None:
         # An unexpected/infra error is neither an accept nor a policy rejection -
         # it raises RetryableValidationError so the job is retried and not marked
         # completed.
@@ -81,7 +83,7 @@ class TestPhase2Runner:
             osu_client=AsyncMock(),
         )
 
-        async def failing_eval(self, context, depth=0):
+        async def failing_eval(self: Any, context: Any, depth: int = 0) -> Any:
             raise ValueError("Unexpected error")
 
         with patch(
@@ -93,7 +95,7 @@ class TestPhase2Runner:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_skips_non_tier3(self):
+    async def test_skips_non_tier3(self) -> None:
         runner = Phase2Runner()
         rules = [
             _make_mock_rule("rate_limit", {"max_requests": 5, "period": "day"}),
@@ -112,7 +114,7 @@ class TestPhase2Runner:
 class TestPhase2RunnerWithComposite:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_composite_rule_in_phase2(self):
+    async def test_composite_rule_in_phase2(self) -> None:
         runner = Phase2Runner()
         rules = [
             _make_mock_rule(
@@ -134,7 +136,7 @@ class TestPhase2RunnerWithComposite:
             redis=AsyncMock(),
         )
 
-        async def mock_evaluate(self, context, depth=0):
+        async def mock_evaluate(self: Any, context: Any, depth: int = 0) -> bool:
             return True
 
         with patch(

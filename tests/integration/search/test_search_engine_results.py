@@ -26,7 +26,7 @@ from app.search.enums import Scope
 
 
 @pytest.mark.integration
-def test_search_engine_initialization():
+def test_search_engine_initialization() -> None:
     """Test SearchEngine initialization with various parameters."""
     engine = SearchEngine(scope=Scope.BEATMAPSETS)
     assert engine.scope == Scope.BEATMAPSETS
@@ -37,7 +37,7 @@ def test_search_engine_initialization():
 
 
 @pytest.mark.integration
-def test_search_engine_with_search_terms():
+def test_search_engine_with_search_terms() -> None:
     """Test SearchEngine initialization with search terms."""
     search_terms = SearchTermsSchema(
         terms=["artist", "title"],
@@ -59,7 +59,7 @@ def test_search_engine_with_search_terms():
 
 
 @pytest.mark.integration
-def test_search_engine_with_sorting():
+def test_search_engine_with_sorting() -> None:
     """Test SearchEngine initialization with sorting parameters."""
     from app.search.datastructures import SortingSchema
     from app.search.enums import ModelField, SortingOrder
@@ -85,7 +85,7 @@ def test_search_engine_with_sorting():
 
 
 @pytest.mark.integration
-def test_search_engine_with_filters():
+def test_search_engine_with_filters() -> None:
     """Test SearchEngine initialization with filter parameters."""
     filters = FiltersSchema(beatmapset={"status": "ranked"})
 
@@ -98,7 +98,7 @@ def test_search_engine_with_filters():
 
 
 @pytest.mark.integration
-def test_search_engine_query_compilation():
+def test_search_engine_query_compilation() -> None:
     """Test SearchEngine query compilation."""
     search_terms = SearchTermsSchema(
         terms=["test"],
@@ -118,7 +118,7 @@ def test_search_engine_query_compilation():
 
 
 @pytest.mark.integration
-def test_search_engine_scope_mapping():
+def test_search_engine_scope_mapping() -> None:
     """Test SearchEngine scope to model/class mapping."""
     from app.search.mappings import SCOPE_MODEL_MAPPING, SCOPE_SCHEMA_MAPPING
 

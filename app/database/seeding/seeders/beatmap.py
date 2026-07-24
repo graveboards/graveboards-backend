@@ -3,6 +3,7 @@ import hashlib
 import json
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
@@ -47,7 +48,9 @@ class BeatmapSeeder(Seeder):
         self._beatmap_tags = tags
 
     @session_manager(session_resolver=db_session_resolver, autoflush_allowed=False)
-    async def seed(self, queue: asyncio.Queue[SeedEvent | None], session: AsyncSession = None):
+    async def seed(
+        self, queue: asyncio.Queue[SeedEvent | None], session: AsyncSession = None
+    ) -> None:
         self.queue = queue
         self.session = session
         await queue.put(SeedEvent(SeederTarget.BEATMAP, self.progress, self.total))
@@ -56,7 +59,7 @@ class BeatmapSeeder(Seeder):
         for beatmapset_entry in self.data:
             await self._seed_beatmapset(beatmapset_entry)
 
-    async def _seed_beatmap_tags(self):
+    async def _seed_beatmap_tags(self) -> None:
         if self._beatmap_tags:
             tag_data = self._beatmap_tags
         elif BEATMAP_TAGS_PATH.exists():
@@ -70,7 +73,7 @@ class BeatmapSeeder(Seeder):
             if not await self.db.get(BeatmapTag, id=beatmap_tag_entry["id"], session=self.session):
                 await self.db.add(BeatmapTag, **beatmap_tag_entry, session=self.session)
 
-    async def _seed_beatmapset(self, beatmapset_entry: dict):
+    async def _seed_beatmapset(self, beatmapset_entry: dict[str, Any]) -> None:
         """Seed a beatmapset following BeatmapManager pattern."""
         beatmapset_id = beatmapset_entry["id"]
         user_id = beatmapset_entry["user_id"]
@@ -105,7 +108,7 @@ class BeatmapSeeder(Seeder):
         if self._new_beatmap_ids:
             await self._download_beatmap_files(self._new_beatmap_ids)
 
-    async def _ensure_user(self, user_id: int, user_dict: dict = None):
+    async def _ensure_user(self, user_id: int, user_dict: dict[str, Any] | None = None) -> None:
         """Ensure User and Profile exist, handling restricted users.
 
         Follows BeatmapManager._populate_user pattern.
@@ -142,8 +145,8 @@ class BeatmapSeeder(Seeder):
             await self.db.add(Profile, **profile_dict, session=self.session)
 
     async def _generate_bms_snapshot(
-        self, beatmapset_entry: dict, bms_bm_mapping: dict[int, list[dict]]
-    ):
+        self, beatmapset_entry: dict[str, Any], bms_bm_mapping: dict[int, list[dict[str, Any]]]
+    ) -> None:
         """Generate BeatmapsetSnapshot using schema validation (following BeatmapManager)."""
         beatmapset_id = beatmapset_entry["id"]
 
@@ -236,11 +239,11 @@ class BeatmapSeeder(Seeder):
 
         return {k: v for k, v in beatmapset_entry.items() if k in valid_columns}
 
-    async def _seed_beatmap(self, beatmap_entry: dict) -> list[dict]:
+    async def _seed_beatmap(self, beatmap_entry: dict[str, Any]) -> list[dict[str, Any]]:
         """Seed a beatmap and its snapshot."""
         beatmap_id = beatmap_entry["id"]
         beatmapset_id = beatmap_entry["beatmapset_id"]
-        beatmap_user_id = beatmap_entry.get("user_id")
+        beatmap_user_id: int | None = beatmap_entry.get("user_id")
 
         # Ensure beatmap owner user exists (BeatmapSnapshot has user_id FK)
         if beatmap_user_id:
@@ -272,7 +275,7 @@ class BeatmapSeeder(Seeder):
 
         return added_bm_dicts
 
-    async def _generate_bm_snapshot(self, beatmap_entry: dict) -> dict | None:
+    async def _generate_bm_snapshot(self, beatmap_entry: dict[str, Any]) -> dict[str, Any] | None:
         """Generate BeatmapSnapshot using schema validation."""
         beatmap_id = beatmap_entry["id"]
         checksum = beatmap_entry.get("checksum", hashlib.md5(str(beatmap_id).encode()).hexdigest())
@@ -315,7 +318,9 @@ class BeatmapSeeder(Seeder):
         self._new_beatmap_ids.append(beatmap_id)
         return {"id": beatmap_snapshot.id}
 
-    async def _seed_beatmap_snapshot(self, beatmap_snapshot_entry: dict) -> dict:
+    async def _seed_beatmap_snapshot(
+        self, beatmap_snapshot_entry: dict[str, Any]
+    ) -> dict[str, Any]:
         """Seed an existing beatmap snapshot from fixture data."""
         checksum = beatmap_snapshot_entry["checksum"]
 
@@ -345,8 +350,10 @@ class BeatmapSeeder(Seeder):
             )
 
     async def _seed_beatmapset_snapshot(
-        self, beatmapset_snapshot_entry: dict, bm_bms_mapping: dict[int, list[dict]]
-    ):
+        self,
+        beatmapset_snapshot_entry: dict[str, Any],
+        bm_bms_mapping: dict[int, list[dict[str, Any]]],
+    ) -> None:
         """Seed an existing beatmapset snapshot from fixture data."""
         beatmapset_snapshot_entry["beatmap_snapshots"] = bm_bms_mapping[
             beatmapset_snapshot_entry["beatmapset_id"]

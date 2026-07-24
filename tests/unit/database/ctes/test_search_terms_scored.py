@@ -14,18 +14,18 @@ class TestSearchTermsScoredCTE:
     """Test search terms scoring CTE."""
 
     @pytest.fixture
-    def mock_search_terms(self):
+    def mock_search_terms(self) -> SearchTermsSchema:
         """Create mock search terms."""
         return SearchTermsSchema(
             terms=["beatmap"], case_sensitive=False, field_weights=FieldWeights()
         )
 
     @pytest.fixture
-    def mock_multipliers(self):
+    def mock_multipliers(self) -> PatternMultipliers:
         """Create mock multipliers."""
         return PatternMultipliers()
 
-    def test_search_terms_scored_ctes_factory_beatmaps(self, mock_search_terms):
+    def test_search_terms_scored_ctes_factory_beatmaps(self, mock_search_terms: SearchTermsSchema) -> None:
         """Test scoring CTE factory for beatmaps scope."""
         ctes = search_terms_scored_ctes_factory(Scope.BEATMAPS, mock_search_terms)
 
@@ -38,7 +38,7 @@ class TestSearchTermsScoredCTE:
             assert hasattr(cte.c, "score_details")
             assert category in SearchableFieldCategory
 
-    def test_search_terms_scored_ctes_factory_beatmapsets(self, mock_search_terms):
+    def test_search_terms_scored_ctes_factory_beatmapsets(self, mock_search_terms: SearchTermsSchema) -> None:
         """Test scoring CTE factory for beatmapsets scope."""
         ctes = search_terms_scored_ctes_factory(Scope.BEATMAPSETS, mock_search_terms)
 
@@ -49,7 +49,7 @@ class TestSearchTermsScoredCTE:
             assert hasattr(cte.c, "score")
             assert category in SearchableFieldCategory
 
-    def test_search_terms_scored_ctes_factory_queues(self, mock_search_terms):
+    def test_search_terms_scored_ctes_factory_queues(self, mock_search_terms: SearchTermsSchema) -> None:
         """Test scoring CTE factory for queues scope."""
         ctes = search_terms_scored_ctes_factory(Scope.QUEUES, mock_search_terms)
 
@@ -59,7 +59,7 @@ class TestSearchTermsScoredCTE:
             assert hasattr(cte.c, "id")
             assert category in SearchableFieldCategory
 
-    def test_search_terms_scored_ctes_factory_requests(self, mock_search_terms):
+    def test_search_terms_scored_ctes_factory_requests(self, mock_search_terms: SearchTermsSchema) -> None:
         """Test scoring CTE factory for requests scope."""
         ctes = search_terms_scored_ctes_factory(Scope.REQUESTS, mock_search_terms)
 
@@ -69,7 +69,7 @@ class TestSearchTermsScoredCTE:
             assert hasattr(cte.c, "id")
             assert category in SearchableFieldCategory
 
-    def test_search_terms_scored_ctes_factory_multiple_terms(self):
+    def test_search_terms_scored_ctes_factory_multiple_terms(self) -> None:
         """Test scoring CTE factory with multiple terms."""
         terms = SearchTermsSchema(
             terms=["beatmap", "osu"], case_sensitive=False, field_weights=FieldWeights()
@@ -83,7 +83,7 @@ class TestSearchTermsScoredCTE:
             assert hasattr(cte.c, "id")
             assert hasattr(cte.c, "score")
 
-    def test_search_terms_scored_ctes_factory_case_sensitive(self):
+    def test_search_terms_scored_ctes_factory_case_sensitive(self) -> None:
         """Test scoring CTE factory with case sensitive search."""
         terms = SearchTermsSchema(
             terms=["beatmap"], case_sensitive=True, field_weights=FieldWeights()
@@ -101,7 +101,7 @@ class TestSearchTermsScoredCTE:
 class TestGenerateTermScoreStmts:
     """Test _generate_term_score_stmts function."""
 
-    def test_generate_term_score_stmts_yields_statements(self):
+    def test_generate_term_score_stmts_yields_statements(self) -> None:
         """Test that generator yields SELECT statements."""
         terms = SearchTermsSchema(
             terms=["beatmap"], case_sensitive=False, field_weights=FieldWeights()
@@ -118,7 +118,7 @@ class TestGenerateTermScoreStmts:
 class TestProcessFieldGroups:
     """Test _process_field_groups function."""
 
-    def test_process_field_groups_no_groups(self):
+    def test_process_field_groups_no_groups(self) -> None:
         """Test processing with no field groups."""
         from sqlalchemy.sql import literal, select, union_all
 
@@ -131,7 +131,7 @@ class TestProcessFieldGroups:
 
         assert result is not None
 
-    def test_process_field_groups_with_groups(self):
+    def test_process_field_groups_with_groups(self) -> None:
         """Test processing with field groups."""
         from sqlalchemy.sql import literal, select, union_all
 
@@ -166,7 +166,7 @@ class TestProcessFieldGroups:
 class TestAggregatedChildScoresToParentCTE:
     """Test aggregated_child_scores_to_parent_cte_factory function."""
 
-    def test_aggregated_child_scores_basic(self):
+    def test_aggregated_child_scores_basic(self) -> None:
         """Test basic child to parent aggregation."""
         from sqlalchemy.sql import func, literal, select
 

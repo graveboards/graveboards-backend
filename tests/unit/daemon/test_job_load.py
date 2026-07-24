@@ -9,7 +9,7 @@ from app.daemon.services.service.job.load import JobLoadInstruction
 class TestJobLoadInstruction:
     """Test JobLoadInstruction dataclass."""
 
-    def test_create_with_execution_time(self):
+    def test_create_with_execution_time(self) -> None:
         """Test creating instruction with execution_time."""
         execution_time = datetime.now(UTC)
         instruction = JobLoadInstruction(execution_time=execution_time)
@@ -19,7 +19,7 @@ class TestJobLoadInstruction:
         assert instruction.interval_hours is None
         assert instruction.skip is False
 
-    def test_create_with_last_execution(self):
+    def test_create_with_last_execution(self) -> None:
         """Test creating instruction with last_execution."""
         last_execution = datetime.now(UTC)
         instruction = JobLoadInstruction(last_execution=last_execution)
@@ -29,7 +29,7 @@ class TestJobLoadInstruction:
         assert instruction.interval_hours is None
         assert instruction.skip is False
 
-    def test_create_with_all_fields(self):
+    def test_create_with_all_fields(self) -> None:
         """Test creating instruction with all fields."""
         execution_time = datetime.now(UTC)
         last_execution = datetime.now(UTC)
@@ -45,7 +45,7 @@ class TestJobLoadInstruction:
         assert instruction.interval_hours == 24.0
         assert instruction.skip is True
 
-    def test_create_with_defaults(self):
+    def test_create_with_defaults(self) -> None:
         """Test creating instruction with default values."""
         instruction = JobLoadInstruction()
 
@@ -54,13 +54,13 @@ class TestJobLoadInstruction:
         assert instruction.interval_hours is None
         assert instruction.skip is False
 
-    def test_interval_hours_as_float(self):
+    def test_interval_hours_as_float(self) -> None:
         """Test interval_hours accepts float values."""
         instruction = JobLoadInstruction(interval_hours=12.5)
 
         assert instruction.interval_hours == 12.5
 
-    def test_skip_is_boolean(self):
+    def test_skip_is_boolean(self) -> None:
         """Test skip is boolean."""
         instruction1 = JobLoadInstruction(skip=True)
         instruction2 = JobLoadInstruction(skip=False)
@@ -68,21 +68,21 @@ class TestJobLoadInstruction:
         assert instruction1.skip is True
         assert instruction2.skip is False
 
-    def test_frozen_attribute_cannot_be_modified(self):
+    def test_frozen_attribute_cannot_be_modified(self) -> None:
         """Test that instruction is immutable."""
         instruction = JobLoadInstruction()
 
         with pytest.raises(FrozenInstanceError):
             instruction.execution_time = datetime.now(UTC)
 
-    def test_slots_for_memory_efficiency(self):
+    def test_slots_for_memory_efficiency(self) -> None:
         """Test that instruction uses slots."""
         instruction = JobLoadInstruction()
 
         with pytest.raises(AttributeError):
             instruction.new_attr = "value"
 
-    def test_equality_with_same_values(self):
+    def test_equality_with_same_values(self) -> None:
         """Test equality comparison with same values."""
         execution_time = datetime.now(UTC)
         instruction1 = JobLoadInstruction(execution_time=execution_time)
@@ -90,14 +90,14 @@ class TestJobLoadInstruction:
 
         assert instruction1 == instruction2
 
-    def test_inequality_with_different_values(self):
+    def test_inequality_with_different_values(self) -> None:
         """Test inequality comparison with different values."""
         instruction1 = JobLoadInstruction(execution_time=datetime(2026, 1, 1, tzinfo=UTC))
         instruction2 = JobLoadInstruction(execution_time=datetime(2026, 1, 2, tzinfo=UTC))
 
         assert instruction1 != instruction2
 
-    def test_none_vs_zero_delay_interval(self):
+    def test_none_vs_zero_delay_interval(self) -> None:
         """Test difference between None and zero interval_hours."""
         instruction1 = JobLoadInstruction(interval_hours=None)
         instruction2 = JobLoadInstruction(interval_hours=0.0)
@@ -106,7 +106,7 @@ class TestJobLoadInstruction:
         assert instruction2.interval_hours == 0.0
         assert instruction1 != instruction2
 
-    def test_none_execution_time_vs_zero_timestamp(self):
+    def test_none_execution_time_vs_zero_timestamp(self) -> None:
         """Test difference between None and timestamp."""
         timestamp = datetime(1970, 1, 1, tzinfo=UTC)
         instruction1 = JobLoadInstruction(execution_time=None)
@@ -116,14 +116,14 @@ class TestJobLoadInstruction:
         assert instruction2.execution_time == timestamp
         assert instruction1 != instruction2
 
-    def test_hashability(self):
+    def test_hashability(self) -> None:
         """Test that instruction is hashable."""
         instruction = JobLoadInstruction(execution_time=datetime(2026, 1, 1, tzinfo=UTC))
 
         instruction_set = {instruction}
         assert instruction in instruction_set
 
-    def test_string_representation(self):
+    def test_string_representation(self) -> None:
         """Test string representation."""
         execution_time = datetime(2026, 1, 1, tzinfo=UTC)
         instruction = JobLoadInstruction(execution_time=execution_time)
@@ -133,7 +133,7 @@ class TestJobLoadInstruction:
         assert "JobLoadInstruction" in repr_str
         assert "2026" in repr_str
 
-    def test_instruction_with_only_skip_true(self):
+    def test_instruction_with_only_skip_true(self) -> None:
         """Test instruction with only skip flag."""
         instruction = JobLoadInstruction(skip=True)
 
@@ -142,26 +142,26 @@ class TestJobLoadInstruction:
         assert instruction.last_execution is None
         assert instruction.interval_hours is None
 
-    def test_multiple_instructions_independent(self):
+    def test_multiple_instructions_independent(self) -> None:
         """Test that multiple instructions are independent."""
         instruction1 = JobLoadInstruction(execution_time=datetime(2026, 1, 1, tzinfo=UTC))
         instruction2 = JobLoadInstruction(execution_time=datetime(2026, 1, 2, tzinfo=UTC))
 
         assert instruction1.execution_time != instruction2.execution_time
 
-    def test_instruction_with_negative_interval(self):
+    def test_instruction_with_negative_interval(self) -> None:
         """Test instruction with negative interval_hours."""
         instruction = JobLoadInstruction(interval_hours=-1.0)
 
         assert instruction.interval_hours == -1.0
 
-    def test_instruction_with_very_large_interval(self):
+    def test_instruction_with_very_large_interval(self) -> None:
         """Test instruction with very large interval."""
         instruction = JobLoadInstruction(interval_hours=8760.0)
 
         assert instruction.interval_hours == 8760.0
 
-    def test_instruction_datetime_timezone_aware(self):
+    def test_instruction_datetime_timezone_aware(self) -> None:
         """Test that datetime must be timezone-aware."""
         utc_time = datetime.now(UTC)
         instruction = JobLoadInstruction(execution_time=utc_time)

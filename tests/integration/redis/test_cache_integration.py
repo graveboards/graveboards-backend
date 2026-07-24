@@ -6,15 +6,17 @@ REDIS_TEST_URL is not set or Redis is unreachable.
 """
 
 import asyncio
+from typing import Any, Callable
 
 import pytest
 
 from app.redis_client.models import Beatmap, OsuClientOAuthToken, QueueRequestHandlerTask
+from app.redis_client.rc import RedisClient
 
 pytestmark = pytest.mark.integration
 
 
-def require_redis(func):
+def require_redis(func: Callable[..., Any]) -> Any:
     """Skip test if REDIS_TEST_URL environment variable is not set."""
     import os
 
@@ -24,11 +26,9 @@ def require_redis(func):
     )(func)
 
 
-def get_redis_client():
+def get_redis_client() -> RedisClient:
     """Create a RedisClient connected to the test Redis instance."""
     import os
-
-    from app.redis_client.rc import RedisClient
 
     url = os.environ["REDIS_TEST_URL"]
     rc = RedisClient.__new__(RedisClient)
@@ -45,7 +45,7 @@ class TestRedisCacheIntegration:
 
     @require_redis
     @pytest.mark.asyncio
-    async def test_cache_beatmap_roundtrip(self):
+    async def test_cache_beatmap_roundtrip(self) -> None:
         """Test caching and retrieving a beatmap via Redis."""
         rc = get_redis_client()
         try:
@@ -102,7 +102,7 @@ class TestRedisCacheIntegration:
 
     @require_redis
     @pytest.mark.asyncio
-    async def test_cache_expiry(self):
+    async def test_cache_expiry(self) -> None:
         """Test cached items expire after TTL."""
         rc = get_redis_client()
         try:
@@ -120,7 +120,7 @@ class TestRedisCacheIntegration:
 
     @require_redis
     @pytest.mark.asyncio
-    async def test_cache_delete(self):
+    async def test_cache_delete(self) -> None:
         """Test deleting a cached item."""
         rc = get_redis_client()
         try:
@@ -136,7 +136,7 @@ class TestRedisCacheIntegration:
 
     @require_redis
     @pytest.mark.asyncio
-    async def test_oauth_token_roundtrip(self):
+    async def test_oauth_token_roundtrip(self) -> None:
         """Test OAuth token cache round-trip."""
         rc = get_redis_client()
         try:
@@ -166,7 +166,7 @@ class TestRedisCacheIntegration:
 
     @require_redis
     @pytest.mark.asyncio
-    async def test_task_roundtrip(self):
+    async def test_task_roundtrip(self) -> None:
         """Test task cache round-trip."""
         rc = get_redis_client()
         try:

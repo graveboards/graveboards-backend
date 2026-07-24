@@ -3,12 +3,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from app.fixtures.reader import FixtureReader
+from app.osu_api.client.osu_api_client import OsuAPIClient
 from tests.unit.osu_api.conftest import MockResponse
 from tests.unit.osu_api.test_helpers import _get_beatmap_with_fallback
 
 
 @pytest.mark.asyncio
-async def test_get_beatmap_parses_response(api_client):
+async def test_get_beatmap_parses_response(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     api_client_obj, mock_redis = api_client
     fixture_manager = FixtureReader()
     mock_data = _get_beatmap_with_fallback(fixture_manager)
@@ -30,7 +31,7 @@ async def test_get_beatmap_parses_response(api_client):
 
 
 @pytest.mark.asyncio
-async def test_get_beatmap_handles_404(api_client):
+async def test_get_beatmap_handles_404(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     api_client_obj, mock_redis = api_client
     mock_redis.hgetall.return_value = None
 
@@ -42,7 +43,7 @@ async def test_get_beatmap_handles_404(api_client):
 
 
 @pytest.mark.asyncio
-async def test_get_beatmap_handles_rate_limit(api_client):
+async def test_get_beatmap_handles_rate_limit(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     api_client_obj, mock_redis = api_client
     mock_redis.hgetall.return_value = None
 
@@ -54,7 +55,7 @@ async def test_get_beatmap_handles_rate_limit(api_client):
 
 
 @pytest.mark.asyncio
-async def test_get_beatmap_handles_server_error(api_client):
+async def test_get_beatmap_handles_server_error(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     api_client_obj, mock_redis = api_client
     mock_redis.hgetall.return_value = None
 

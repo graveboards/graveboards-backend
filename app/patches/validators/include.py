@@ -1,11 +1,13 @@
+from typing import Any
+
 from app.exceptions import DeepObjectValidationError
 
 
 def validate_include(
-    include: dict,
-    schema: dict,
-    path: list[str] = None,
-):
+    include: dict[str, Any],
+    schema: dict[str, Any],
+    path: list[str] | None = None,
+) -> None:
     """Recursively validate deep-object include structures.
 
     Enforces:

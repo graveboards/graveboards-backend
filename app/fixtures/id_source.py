@@ -105,7 +105,7 @@ class TopPlayerIDSource(IDSource):
 
     name = "top_players"
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.player_ids: dict[str, list[int]] = {}
         self._indices: dict[str, int] = {}
         self._loaded = False

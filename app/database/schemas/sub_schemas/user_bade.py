@@ -13,7 +13,7 @@ class UserBadgeSchema(BaseModel):
     url: str
 
     @model_serializer
-    def serialize_with_aliases(self):
+    def serialize_with_aliases(self) -> dict[str, str | datetime | None]:
         return {
             self.model_fields[field].alias or field: value for field, value in self.__dict__.items()
         }

@@ -31,7 +31,7 @@ class CooldownRestriction(RestrictionBase):
             f"{context.queue_id}:{context.user_id}:{config_fingerprint(config)}"
         )
 
-    def _remaining_seconds(self, last_request_ts, cooldown_seconds: int) -> float:
+    def _remaining_seconds(self, last_request_ts: float | int, cooldown_seconds: int) -> float:
         last_request_time = datetime.fromtimestamp(int(last_request_ts), tz=UTC)
         elapsed = (datetime.now(UTC) - last_request_time).total_seconds()
         return cooldown_seconds - elapsed
