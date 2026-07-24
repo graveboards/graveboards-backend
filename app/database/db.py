@@ -24,6 +24,7 @@ from app.observability.metrics.db import (
     db_query_duration_seconds,
 )
 
+from . import events  # noqa: F401  # register SQLAlchemy model event listeners
 from .crud import CRUD
 
 DATABASE_URI = URL.create(**POSTGRESQL_CONFIGURATION)
