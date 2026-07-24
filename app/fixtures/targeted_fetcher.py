@@ -544,7 +544,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
 
         ruleset_meta = users_meta.setdefault("per_ruleset", {})
         if ruleset not in ruleset_meta:
-            ruleset_meta[ruleset] = {l: 0 for l in self.activity_levels}
+            ruleset_meta[ruleset] = {level: 0 for level in self.activity_levels}
         ruleset_meta[ruleset][activity_level] = ruleset_meta[ruleset].get(activity_level, 0) + 1
 
         save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)

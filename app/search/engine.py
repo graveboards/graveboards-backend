@@ -541,7 +541,7 @@ class SearchEngine:
         uses category-specific CTEs to resolve aggregated or relational fields.
         """
 
-        def clause_generator(is_aggregated: bool = False) -> Generator[BinaryExpression]:
+        def clause_generator(conditions, is_aggregated: bool = False) -> Generator[BinaryExpression]:
             for op_str, value in conditions.model_dump(exclude_unset=True, by_alias=True).items():
                 filter_operator = FilterOperator.from_name(op_str)
                 yield get_filter_condition(
@@ -549,7 +549,7 @@ class SearchEngine:
                 )
 
         def apply_clauses() -> None:
-            for clause in clause_generator():
+            for clause in clause_generator(_conditions):
                 filtering_clauses.append(clause)
 
         def apply_filter_conditions() -> None:
@@ -596,7 +596,7 @@ class SearchEngine:
             if field_filters is None:
                 continue
 
-            for field_name, conditions in field_filters.root.items():
+            for field_name, _conditions in field_filters.root.items():
                 field_category = SearchableFieldCategory.from_name(category_name)
                 model_field = ModelField.from_model_field_name(
                     field_category.model_class, field_name

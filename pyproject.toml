@@ -92,6 +92,8 @@ ignore = [
     "B028",   # no explicit `stacklevel` keyword argument (not critical)
     "F403",   # star imports (intentional for re-exports)
     "F405",   # undefined names from star imports (intentional)
+    "SIM102", # nested if statements (style preference)
+    "SIM117", # nested with statements (style preference)
 ]
 
 [tool.ruff.lint.per-file-ignores]

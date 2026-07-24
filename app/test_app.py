@@ -14,6 +14,7 @@ from connexion import AsyncApp
 from connexion.exceptions import Forbidden
 from connexion.middleware import MiddlewarePosition
 from connexion.resolver import RestyResolver
+from connexion.security import ApiKeySecurityHandler, BearerSecurityHandler
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.testclient import TestClient
@@ -128,9 +129,6 @@ def get_debug_api_key() -> str:
     primary_user_id = bootstrap.initial_users[0].user_id if bootstrap.initial_users else 0
     seed = f"{JWT_SECRET_KEY}:{primary_user_id}:debug-api-key"
     return __import__("hashlib").sha256(seed.encode()).hexdigest()[:32]
-
-
-from connexion.security import ApiKeySecurityHandler, BearerSecurityHandler
 
 
 class TestBearerSecurityHandler(BearerSecurityHandler):

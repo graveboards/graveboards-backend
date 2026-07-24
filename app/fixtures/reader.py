@@ -198,7 +198,7 @@ class FixtureReader:
                 targeted_metadata[main_category]["file_metadata"] = file_metadata
 
         file_paths = []
-        for fixture_id, meta in file_metadata.items():
+        for _fixture_id, meta in file_metadata.items():
             if self._matches_preferences(meta, preferences, category=category):
                 filepath = meta.get("filepath")
                 if filepath:

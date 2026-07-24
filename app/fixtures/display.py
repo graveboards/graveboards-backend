@@ -36,7 +36,7 @@ def print_coverage_gaps(fetcher) -> None:
 
     langs = search_cov.get("beatmapset_languages", [])
     if langs:
-        sample = ", ".join(str(l) for l in langs[:5])
+        sample = ", ".join(str(lang) for lang in langs[:5])
         full_items.append(f"languages ({len(langs)} total)")
         if len(langs) > 5:
             full_items.append(f"    samples: {sample}, ...")
