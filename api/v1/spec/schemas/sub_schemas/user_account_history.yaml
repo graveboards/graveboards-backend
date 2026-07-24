@@ -16,6 +16,7 @@ UserAccountHistory:
                 - "note"
                 - "restriction"
                 - "silence"
+                - "tournament_ban"
         description:
             type: string
             nullable: true

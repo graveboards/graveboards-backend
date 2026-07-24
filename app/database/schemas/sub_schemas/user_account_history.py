@@ -9,5 +9,5 @@ class UserAccountHistorySchema(BaseModel):
     timestamp: datetime
     length: int
     permanent: bool
-    type: Literal["note", "restriction", "silence"]
+    type: Literal["note", "restriction", "silence", "tournament_ban"]
     description: str | None
