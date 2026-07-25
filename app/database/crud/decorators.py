@@ -7,9 +7,12 @@ from contextvars import ContextVar
 from functools import wraps
 from typing import (
     Any,
+    Concatenate,
     ParamSpec,
     Protocol,
     TypeVar,
+)
+from typing import (
     cast as typing_cast,
 )
 
@@ -41,7 +44,9 @@ _active_session: ContextVar[AsyncSession | None] = ContextVar(
 
 def session_manager(
     session_resolver: SessionResolver | None = None, autoflush_allowed: bool = True
-) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
+) -> Callable[
+    [Callable[Concatenate[Any, P], Awaitable[T]]], Callable[Concatenate[Any, P], Awaitable[T]]
+]:
     """Manage ``AsyncSession`` lifecycle for coroutine-based CRUD operations.
 
     This decorator ensures that a valid session is available for the wrapped method.
@@ -71,7 +76,9 @@ def session_manager(
     if session_resolver is None:
         session_resolver = _default_session_resolver
 
-    def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
+    def decorator(
+        func: Callable[Concatenate[Any, P], Awaitable[T]],
+    ) -> Callable[Concatenate[Any, P], Awaitable[T]]:
         @wraps(func)
         async def wrapper(self: Any, *args: P.args, **kwargs: P.kwargs) -> T:
             passed_session = kwargs.get("session")
@@ -115,7 +122,10 @@ def session_manager(
 def session_manager_stream(
     session_resolver: Callable[[Any], AbstractAsyncContextManager[Any]] | None = None,
     autoflush_allowed: bool = True,
-) -> Callable[[Callable[P, AsyncIterator[T]]], Callable[P, AsyncIterator[T]]]:
+) -> Callable[
+    [Callable[Concatenate[Any, P], AsyncIterator[T]]],
+    Callable[Concatenate[Any, P], AsyncIterator[T]],
+]:
     """Manage ``AsyncSession`` lifecycle for async generator methods.
 
     Mirrors ``session_manager`` but supports async iterators. Ensures that a valid
@@ -143,7 +153,9 @@ def session_manager_stream(
     if session_resolver is None:
         session_resolver = _default_session_resolver
 
-    def decorator(func: Callable[P, AsyncIterator[T]]) -> Callable[P, AsyncIterator[T]]:
+    def decorator(
+        func: Callable[Concatenate[Any, P], AsyncIterator[T]],
+    ) -> Callable[Concatenate[Any, P], AsyncIterator[T]]:
         @wraps(func)
         async def wrapper(self: Any, *args: P.args, **kwargs: P.kwargs) -> AsyncIterator[T]:
             passed_session = kwargs.get("session")
@@ -195,7 +207,10 @@ def session_manager_stream(
 
 def ensure_required(
     many: bool = False,
-) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
+) -> Callable[
+    [Callable[Concatenate[ModelClass, AsyncSession, P], Awaitable[T]]],
+    Callable[Concatenate[ModelClass, AsyncSession, P], Awaitable[T]],
+]:
     """Validate presence of required model columns before execution.
 
     This decorator checks that all required columns defined on the model are present in
@@ -214,7 +229,9 @@ def ensure_required(
             If required columns are missing.
     """
 
-    def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
+    def decorator(
+        func: Callable[Concatenate[ModelClass, AsyncSession, P], Awaitable[T]],
+    ) -> Callable[Concatenate[ModelClass, AsyncSession, P], Awaitable[T]]:
         @wraps(func)
         async def wrapper(
             model_class: ModelClass, session: AsyncSession, *args: P.args, **kwargs: P.kwargs
@@ -271,7 +288,9 @@ class DbSessionResolver(SessionResolver):
     def __call__(
         self, obj: Any, *, autoflush: bool = True
     ) -> AbstractAsyncContextManager[AsyncSession]:
-        return typing_cast(AbstractAsyncContextManager[Any, bool | None], obj.db.session(autoflush=autoflush))
+        return typing_cast(
+            AbstractAsyncContextManager[Any, bool | None], obj.db.session(autoflush=autoflush)
+        )
 
 
 db_session_resolver = DbSessionResolver()

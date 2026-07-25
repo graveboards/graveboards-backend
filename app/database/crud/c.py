@@ -1,4 +1,5 @@
-from typing import Any, cast as typing_cast
+from typing import Any
+from typing import cast as typing_cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.inspection import inspect
@@ -14,7 +15,9 @@ from .decorators import ensure_required, session_manager
 class _C:
     @staticmethod
     @ensure_required()
-    async def _add_instance(model_class: ModelClass, session: AsyncSession, **kwargs: Any) -> BaseType:
+    async def _add_instance(
+        model_class: ModelClass, session: AsyncSession, **kwargs: Any
+    ) -> BaseType:
         """Create or resolve a single model instance.
 
         Validates input attributes against the model schema, then processed through
@@ -160,7 +163,7 @@ class _C:
         """
         model = model_class.value
         mapper = model_class.mapper
-        pk_keys = [col.key for col in mapper.primary_key]
+        pk_keys = [col.key for col in mapper.primary_key if col.key is not None]
         column_keys = model_class.column_names
         relationship_keys = model_class.relationship_names
         relationship_loaders = (
@@ -168,7 +171,7 @@ class _C:
             if _load_relationships
             else []
         )
-        instance = None
+        instance: BaseType | None = None
 
         # Lookup via primary key
         if all(pk in data for pk in pk_keys):
@@ -189,7 +192,7 @@ class _C:
                 if column.unique:
                     unique_sets.append([column.key])
 
-            for constraint in mapper.local_table.constraints:
+            for constraint in mapper.local_table.constraints:  # type: ignore[attr-defined]
                 if isinstance(constraint, UniqueConstraint):
                     cols = [col.key for col in constraint.columns]
                     unique_sets.append(cols)
@@ -232,7 +235,7 @@ class _C:
                 continue
 
             relationship = mapper.relationships[key]
-            related_model = relationship.mapper.class_
+            related_model = relationship.mapper.class_  # type: ignore[attr-defined]
             related_model_class = ModelClass(related_model)
             value = data[key]
 
@@ -273,6 +276,9 @@ class _C:
                     obj = value
                     _C._ensure_same_session(obj, session)
 
+        if instance is None:
+            raise RuntimeError()
+
         return instance
 
     @staticmethod
@@ -309,7 +315,9 @@ class _C:
 
 class C(_C):
     @session_manager()
-    async def add(self, model: type[BaseType], session: AsyncSession | None = None, **kwargs: Any) -> BaseType:
+    async def add(
+        self, model: type[BaseType], session: AsyncSession | None = None, **kwargs: Any
+    ) -> BaseType:
         """Public API for creating or resolving a single model instance.
 
         Wraps ``_add_instance`` and manages session lifecycle via the
@@ -332,7 +340,7 @@ class C(_C):
 
     @session_manager()
     async def add_many(
-        self, model: type[BaseType], *data: dict, session: AsyncSession = None
+        self, model: type[BaseType], *data: dict, session: AsyncSession | None = None
     ) -> list[BaseType]:
         """Public API for creating or resolving multiple model instances.
 

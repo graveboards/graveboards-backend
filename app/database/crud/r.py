@@ -1,10 +1,11 @@
 from collections.abc import Iterable
-from typing import Any, cast as typing_cast, Literal
+from typing import Any, Literal, TypeGuard
+from typing import cast as typing_cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import QueryableAttribute
 from sqlalchemy.orm.interfaces import LoaderOption
-from sqlalchemy.orm.relationships import Relationship, RelationshipProperty
+from sqlalchemy.orm.relationships import RelationshipProperty
 from sqlalchemy.orm.strategy_options import Load, joinedload, noload, selectinload
 from sqlalchemy.sql import cast, select
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement, and_, or_
@@ -261,7 +262,7 @@ class _R:
         else:
             select_stmt = select(model_class.value)
 
-        joined_models: dict[str, type[BaseType]] = {}
+        joined_models: dict[str, type[Base]] = {}
 
         if _join is not None:
             select_stmt, joined_models = _R._apply_join(select_stmt, _join)
@@ -318,36 +319,46 @@ class _R:
         Raises:
             ValueError:
                 If an attribute does not exist or is a relationship.
+            TypeError:
+                If select_ is not a string or iterable of strings.
         """
-        if not isinstance(select_, (list, tuple, set)):
-            select_ = [select_]
-
         model = model_class.value
         targets = []
 
-        for name in select_:
-            if name not in model_class.all_names:
+        def append_target(name_: str):
+            if name_ not in model_class.all_names:
                 raise ValueError(
-                    f"Attribute '{name}' is not a valid column, relationship, nor hybrid property of {model_class.value}"
+                    f"Attribute '{name_}' is not a valid column, relationship, nor hybrid property of {model_class.value}"
                 )
 
-            if name in model_class.relationship_names:
-                raise ValueError(f"Invalid attribute '{name}': cannot select relationships")
+            if name_ in model_class.relationship_names:
+                raise ValueError(f"Invalid attribute '{name_}': cannot select relationships")
 
-            targets.append(getattr(model, name))
+            targets.append(getattr(model, name_))
+
+        if isinstance(select_, (list, tuple, set)) and all(
+            isinstance(name, str) for name in select_
+        ):
+            for name in select_:
+                append_target(name)
+        elif isinstance(select_, str):
+            append_target(select_)
+        else:
+            raise TypeError(
+                f"select_ must be string or iterable of strings, got {type(select_).__name__}"
+            )
 
         stmt = select(*targets)
-
         return stmt
 
     @staticmethod
     def _apply_join(
         select_stmt: Select,
-        join: type[BaseType]
-        | tuple[type[BaseType], BinaryExpression]
-        | Iterable[type[BaseType]]
-        | Iterable[tuple[type[BaseType], BinaryExpression]],
-    ) -> tuple[Select, dict[str, type[BaseType]]]:
+        join: type[Base]
+        | tuple[type[Base], BinaryExpression]
+        | Iterable[type[Base]]
+        | Iterable[tuple[type[Base], BinaryExpression]],
+    ) -> tuple[Select, dict[str, type[Base]]]:
         """Apply one or more JOIN clauses to a ``Select`` statement.
 
         Accepts model classes or (model, condition) tuples. Input is normalized into an
@@ -368,10 +379,10 @@ class _R:
                 If the join specification is invalid.
         """
 
-        def is_base(t: Any) -> bool:
+        def is_base(t: Any) -> TypeGuard[type[Base]]:
             return isinstance(t, type) and issubclass(t, Base)
 
-        def is_tuple(t: Any) -> bool:
+        def is_tuple(t: Any) -> TypeGuard[tuple[type[Base], BinaryExpression]]:
             return (
                 isinstance(t, tuple)
                 and len(t) == 2
@@ -379,26 +390,33 @@ class _R:
                 and isinstance(t[1], BinaryExpression)
             )
 
-        if is_base(join):
-            join = [(join,)]
-        elif is_tuple(join):
-            join = [join]
+        def normalize(
+            t: Any, index: int | None = None
+        ) -> tuple[type[Base], BinaryExpression | None]:
+            if is_base(t):
+                return t, None
+            if is_tuple(t):
+                return t[0], t[1]
+
+            location = f"index={index}, " if index is not None else ""
+            raise TypeError(f"Invalid input for join: {location}value={t}")
+
+        join_targets: list[tuple[type[Base], BinaryExpression | None]]
+
+        if is_base(join) or is_tuple(join):
+            join_targets = [normalize(join)]
         elif isinstance(join, (list, tuple, set)):
-            for i, target in enumerate(join):
-                if is_base(target):
-                    join[i] = [(target,)]
-                elif is_tuple(target):
-                    pass
-                else:
-                    raise TypeError(f"Invalid input for join: index={i}, value={target}")
+            join_targets = [normalize(target, i) for i, target in enumerate(join)]
         else:
             raise TypeError(f"Invalid input for join: {join}")
 
-        joined_models: dict[str, type[BaseType]] = {}
+        joined_models: dict[str, type[Base]] = {}
 
-        for target in join:
-            select_stmt = select_stmt.join(*target)
-            joined_models[target[0].__name__] = target[0]
+        for model, condition in join_targets:
+            select_stmt = (
+                select_stmt.join(model) if condition is None else select_stmt.join(model, condition)
+            )
+            joined_models[model.__name__] = model
 
         return select_stmt, joined_models
 
@@ -645,12 +663,12 @@ class _R:
         relevance: bool = False,
     ) -> Select | None:
         """Apply scope-aware search term filtering using the main search mappings."""
-        scope = MODEL_SCOPE_MAPPING.get(model_class)
+        scope: Scope | None = MODEL_SCOPE_MAPPING.get(model_class)
 
         if scope is None:
             return None
 
-        search_terms = SearchTermsSchema(terms=search)
+        search_terms = SearchTermsSchema.model_validate({"terms": search})
         filter_cte = search_terms_filtered_cte_factory(scope, search_terms)
 
         select_stmt = select_stmt.join(filter_cte, filter_cte.c.id == model_class.value.id)
@@ -811,10 +829,12 @@ class _R:
         if include is None:
             include = {}
 
-        def is_lazy(rel: Relationship) -> bool:
+        def is_lazy(rel: RelationshipProperty) -> bool:
             return rel.lazy in {True, "select", "dynamic"}
 
-        def exclude_unincluded(parent_model_class: type[BaseType], includes: Include, base_loader: Load | None = None) -> list[LoaderOption]:
+        def exclude_unincluded(
+            parent_model_class: ModelClass, includes: Include, base_loader: Load | None = None
+        ) -> list[LoaderOption]:
             options: list[LoaderOption] = []
 
             for rel in parent_model_class.mapper.relationships:
