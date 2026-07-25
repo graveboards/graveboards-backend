@@ -45,7 +45,7 @@ class FieldFilters(RootModel):
         """
         return iter(self.root)
 
-    def __getitem__(self, key: str) -> Conditions:
+    def __getitem__(self, key: str) -> Conditions | FieldFilters:
         """Retrieve conditions for a specific field.
 
         Args:
@@ -69,7 +69,7 @@ class FieldFilters(RootModel):
         """
         return len(self.root)
 
-    def items(self) -> ItemsView[str, Conditions]:
+    def items(self) -> ItemsView[str, Conditions | FieldFilters]:
         """Return a view of field-condition pairs.
 
         Returns:
@@ -108,7 +108,7 @@ class FieldFilters(RootModel):
                 try:
                     model_field = ModelField.from_model_field_name(model_class, field_name)
 
-                    if model_field.is_aliased:
+                    if model_field.is_aliased and model_field.alias is not None:
                         column = column_map[model_field.alias]
                     else:
                         column = column_map[field_name]
@@ -134,7 +134,7 @@ class FieldFilters(RootModel):
 
                 try:
                     relationship = model_class.mapper.relationships[field_name]
-                    related_model = relationship.mapper.class_
+                    related_model = relationship.mapper.class_  # type: ignore[attr-defined]
                     related_model_class = ModelClass(related_model)
                 except (KeyError, ValueError) as e:
                     raise FieldNotSupportedError(model_class.value, field_name) from e

@@ -1,8 +1,8 @@
 from enum import Enum, IntEnum, auto
 
 from sqlalchemy.orm import InstrumentedAttribute
+from sqlalchemy.sql.elements import ColumnClause
 
-from app.database.ctes.hashable_cte import HashableCTE
 from app.database.models import (
     BeatmapsetSnapshot,
     BeatmapSnapshot,
@@ -343,7 +343,7 @@ class ModelField(Enum):
         self,
         field_name: str,
         model_class: ModelClass,
-        target: InstrumentedAttribute | HashableCTE,
+        target: InstrumentedAttribute | ColumnClause,
         alias: str = None,
     ):
         self._value_ = f"{model_class.value.__name__}.{field_name}"

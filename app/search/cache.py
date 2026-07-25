@@ -1,7 +1,8 @@
 import hashlib
 import json
 from enum import Enum
-from typing import Any, cast as typing_cast
+from typing import Any
+from typing import cast as typing_cast
 
 from app.redis_client import RedisClient
 from app.search.enums import Scope
@@ -73,5 +74,5 @@ class SearchCache:
     async def invalidate_scope(self, scope: Scope) -> None:
         """Invalidate all cached results for a scope (on data changes)."""
         pattern = f"{self.CACHE_PREFIX}:{scope.value}:*"
-        async for key in self.rc.scan(pattern):
+        async for key in await self.rc.scan(match=pattern):
             await self.rc.delete(key)

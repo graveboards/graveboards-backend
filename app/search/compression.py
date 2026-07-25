@@ -1,7 +1,8 @@
 import base64
 import binascii
 import json
-from typing import Any, cast as typing_cast
+from typing import Any
+from typing import cast as typing_cast
 
 import brotli
 
@@ -29,8 +30,12 @@ def compress_query(q: bytes | dict[str, Any], serialized: bool = True) -> str:
         raise TypeError(f"q must be bytes or dict, got {type(q).__name__}")
 
     if serialized:
+        if not isinstance(q, bytes):
+            raise TypeError(f"q must be bytes when serialized=True, got {type(q).__name__}")
         compressed = brotli.compress(q)
     else:
+        if not isinstance(q, dict):
+            raise TypeError(f"q must be dict when serialized=False, got {type(q).__name__}")
         json_str = json.dumps(q)
         compressed = brotli.compress(json_str.encode())
 

@@ -7,7 +7,13 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.engine.row import RowMapping
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy.sql import and_, select
-from sqlalchemy.sql.elements import BinaryExpression, literal_column
+from sqlalchemy.sql.elements import (
+    BinaryExpression,
+    BindParameter,
+    CollectionAggregate,
+    ColumnElement,
+    literal_column,
+)
 from sqlalchemy.sql.functions import func
 from sqlalchemy.sql.selectable import CTE, Select
 
@@ -42,14 +48,21 @@ from app.observability.logging import get_logger
 from app.spec import get_include_schema
 from app.text import align_center
 
-from .datastructures import ConditionValue, FiltersSchema, SearchTermsSchema, SortingSchema
+from .datastructures import (
+    Conditions,
+    ConditionValue,
+    FiltersSchema,
+    SearchTermsSchema,
+    SortingSchema,
+)
 from .enums import CATEGORY_NAMES, ModelField, Scope, SearchableFieldCategory
 from .mappings import SCOPE_MODEL_MAPPING, SCOPE_OPTIONS_MAPPING, SCOPE_SCHEMA_MAPPING
 
 DEFAULT_LIMIT = 50
 DEFAULT_OFFSET = 0
 logger = get_logger(__name__)
-ResultsType = (
+
+type ResultsType = (
     Sequence[BeatmapSnapshot]
     | Sequence[BeatmapsetSnapshot]
     | ...
@@ -76,10 +89,13 @@ class SearchEngine:
     def __init__(
         self,
         scope: Scope,
-        search_terms: SearchTermsSchema | dict[str, str | list[str] | bool | dict[str, int]] = None,
-        sorting: SortingSchema | list[dict[str, str]] = None,
+        search_terms: SearchTermsSchema
+        | dict[str, str | list[str] | bool | dict[str, int]]
+        | None = None,
+        sorting: SortingSchema | list[dict[str, str]] | None = None,
         filters: FiltersSchema
-        | dict[str, dict[str, dict[str, ConditionValue] | ConditionValue | bool | None]] = None,
+        | dict[str, dict[str, dict[str, ConditionValue] | ConditionValue | bool | None]]
+        | None = None,
     ) -> None:
         """Initialize the search engine and compose the base query.
 
@@ -218,6 +234,9 @@ class SearchEngine:
         parent entities when required, computes total relevance score, and orders
         results by descending score.
         """
+        if self.search_terms is None:
+            return
+
         filter_cte = search_terms_filtered_cte_factory(self.scope, self.search_terms)
         category_score_ctes = search_terms_scored_ctes_factory(self.scope, self.search_terms)
 
@@ -302,7 +321,7 @@ class SearchEngine:
 
                 self.query = self.query.join(filter_cte, filter_cte.c.id == BeatmapsetSnapshot.id)
 
-                if beatmap_cte is not None:
+                if beatmap_cte is not None and aggregated_beatmap_cte is not None:
                     self.query = self.query.outerjoin(
                         aggregated_beatmap_cte, aggregated_beatmap_cte.c.id == BeatmapsetSnapshot.id
                     ).add_columns(
@@ -463,7 +482,7 @@ class SearchEngine:
 
                 self.query = self.query.join(filter_cte, filter_cte.c.id == Request.id)
 
-                if beatmap_cte is not None:
+                if beatmap_cte is not None and aggregated_beatmap_cte is not None:
                     self.query = self.query.outerjoin(
                         aggregated_beatmap_cte, aggregated_beatmap_cte.c.id == BeatmapsetSnapshot.id
                     ).add_columns(
@@ -492,6 +511,8 @@ class SearchEngine:
 
         Explicit sorting overrides default relevance ordering.
         """
+        if self.sorting is None:
+            return
 
         def apply_clause() -> None:
             sorting_clauses.append(sorting_option.order.sort_func(target))
@@ -541,9 +562,14 @@ class SearchEngine:
         uses category-specific CTEs to resolve aggregated or relational fields.
         """
 
+        if self.filters is None:
+            return
+
         def clause_generator(
-            conditions: Any, is_aggregated: bool = False
-        ) -> Generator[BinaryExpression, None, None]:
+            conditions: Conditions, is_aggregated: bool = False
+        ) -> Generator[
+            BinaryExpression | BindParameter | CollectionAggregate | ColumnElement[bool]
+        ]:
             for op_str, value in conditions.model_dump(exclude_unset=True, by_alias=True).items():
                 filter_operator = FilterOperator.from_name(op_str)
                 yield get_filter_condition(
@@ -554,7 +580,7 @@ class SearchEngine:
             for clause in clause_generator(_conditions):
                 filtering_clauses.append(clause)
 
-        def apply_filter_conditions() -> None:
+        def apply_filter_conditions(conditions: Conditions) -> None:
             nonlocal target
 
             match field_category:
@@ -565,7 +591,7 @@ class SearchEngine:
                     apply_clauses()
                 case SearchableFieldCategory.BEATMAP:
                     aggregated_conditions = (
-                        clause_generator(is_aggregated=True)
+                        clause_generator(conditions, is_aggregated=True)
                         if self.scope is not Scope.BEATMAPS
                         else None
                     )
@@ -604,12 +630,12 @@ class SearchEngine:
                     field_category.model_class, field_name
                 )
                 target = model_field.target
-                apply_filter_conditions()
+                apply_filter_conditions(_conditions)
 
         if filtering_clauses:
             self.query = self.query.where(and_(*filtering_clauses))
 
-    def dump(self, page: ResultsType, include: dict = None) -> list[dict[str, Any]]:
+    def dump(self, page: ResultsType, include: dict | None = None) -> list[dict[str, Any]]:
         """Serialize ORM results using the scope-specific schema.
 
         Args:
