@@ -2,13 +2,13 @@ import contextlib
 import json
 import re
 from datetime import datetime
-from typing import Any, cast as typing_cast
+from typing import Any
+from typing import cast as typing_cast
 
 from connexion.uri_parsing import OpenAPIURIParser
 from connexion.utils import TypeValidationError, coerce_type
 
 from app.observability.logging import get_logger
-
 
 affirmative_literals = {"true", "t", "yes", "y"}
 negative_literals = {"false", "f", "no", "n"}
@@ -28,7 +28,9 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
     parameters not natively handled by Connexion.
     """
 
-    def _make_deep_object(self, k: str, v: list[str] | str) -> list[Any]:
+    def _make_deep_object(
+        self, k: str, v: list[str] | str
+    ) -> tuple[str | Any, list[str] | str, bool] | tuple[str | Any, list[dict[Any, Any]], bool]:
         """Patched to preserve repeated values for deepObject arrays.
 
         Returns the root key wrapped in a list to support Connexion's parser merge
@@ -52,7 +54,7 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
         if not is_deep:
             return root_key, v if len(v) > 1 else v[0], False
 
-        key_path = re.findall(r"\[([^\[\]]*)\]", k)
+        key_path = re.findall(r"\[([^\[\]]*)]", k)
         root = prev = node = {}
         for key_part in key_path:
             node[key_part] = {}
@@ -156,7 +158,9 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
         return resolved_param
 
     @staticmethod
-    def coerce_include(param: dict, value: Any, parameter_type: str, parameter_name: str | None = None) -> dict[str, Any]:
+    def coerce_include(
+        param: dict, value: Any, parameter_type: str, parameter_name: str | None = None
+    ) -> bool | str | dict[str, Any] | list[Any]:
         """Recursively coerce deep-object include parameters.
 
         Supports:
@@ -229,7 +233,7 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
                         else:
                             new_dict[k] = cast(v, {})
 
-                    return typing_cast(bool | str, new_dict)
+                    return typing_cast(bool | str, typing_cast(object, new_dict))
 
                 return {k: cast(v, {}) for k, v in data.items()}
 
@@ -246,7 +250,9 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
         return cast(value, param_schema)
 
     @staticmethod
-    def coerce_sorting(param: dict, value: list[str], parameter_type: str, parameter_name: str | None = None) -> list[dict[str, str]]:
+    def coerce_sorting(
+        param: dict, value: list[str], parameter_type: str, parameter_name: str | None = None
+    ) -> list[dict[str, str]]:
         """Coerce sorting parameters from JSON-encoded strings.
 
         Each sorting item is parsed from JSON into a structured dict.
@@ -295,7 +301,9 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
         return coerced
 
     @staticmethod
-    def coerce_filters(param: dict, value: list[str], parameter_type: str, parameter_name: str | None = None) -> dict[str, Any]:
+    def coerce_filters(
+        param: dict, value: list[str], parameter_type: str, parameter_name: str | None = None
+    ) -> str | bool | datetime | float | int:
         """
         Recursively coerce deep-object filter parameters.
 

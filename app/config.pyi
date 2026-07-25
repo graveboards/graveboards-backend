@@ -48,6 +48,7 @@ class Config:
     OAUTH_CONFIGURATION: dict[str, Any]
     TEST_POSTGRESQL_CONFIGURATION: dict[str, Any]
     TEST_REDIS_CONFIGURATION: dict[str, Any]
+    bootstrap: property
 
 CONFIG: Config
 ENV: Env

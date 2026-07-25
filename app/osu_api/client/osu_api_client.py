@@ -1,4 +1,4 @@
-from typing import Any, cast as typing_cast
+from typing import Any
 
 from pydantic_core import ValidationError
 
@@ -41,7 +41,7 @@ class OsuAPIClient(OsuAPIClientBase):
             beatmap_result: dict[str, Any] = cached_beatmap.model_dump(mode="json")
             return beatmap_result
 
-        url = APIEndpoint.BEATMAP.format(beatmap=beatmap_id)
+        url = APIEndpoint.BEATMAP.format(beatmap=str(beatmap_id))
 
         headers = {
             "Content-Type": "application/json",
@@ -74,7 +74,7 @@ class OsuAPIClient(OsuAPIClientBase):
         Returns:
             Dictionary containing scores data.
         """
-        url = APIEndpoint.BEATMAP_SCORES.format(beatmap=beatmap_id)
+        url = APIEndpoint.BEATMAP_SCORES.format(beatmap=str(beatmap_id))
 
         headers = {
             "Content-Type": "application/json",
@@ -109,7 +109,7 @@ class OsuAPIClient(OsuAPIClientBase):
         Returns:
             Dictionary containing beatmap attributes.
         """
-        url = APIEndpoint.BEATMAP_ATTRIBUTES.format(beatmap=beatmap_id)
+        url = APIEndpoint.BEATMAP_ATTRIBUTES.format(beatmap=str(beatmap_id))
 
         headers = {
             "Content-Type": "application/json",
@@ -154,7 +154,7 @@ class OsuAPIClient(OsuAPIClientBase):
             bs_result: dict[str, Any] = cached_beatmapset.model_dump(mode="json")
             return bs_result
 
-        url = APIEndpoint.BEATMAPSET.format(beatmapset=beatmapset_id)
+        url = APIEndpoint.BEATMAPSET.format(beatmapset=str(beatmapset_id))
 
         headers = {
             "Content-Type": "application/json",
@@ -313,7 +313,7 @@ class OsuAPIClient(OsuAPIClientBase):
         Returns:
             Dictionary containing user scores data.
         """
-        url = APIEndpoint.SCORES.format(user=user_id, type=score_type.value)
+        url = APIEndpoint.SCORES.format(user=str(user_id), type=score_type.value)
 
         headers = {
             "Content-Type": "application/json",
@@ -355,7 +355,7 @@ class OsuAPIClient(OsuAPIClientBase):
             Dictionary containing user data.
         """
         mode_str = mode.value if mode is not None else ""
-        url = APIEndpoint.USER.format(user=user_id, mode=mode_str)
+        url = APIEndpoint.USER.format(user=str(user_id), mode=mode_str)
 
         headers = {
             "Content-Type": "application/json",
@@ -387,7 +387,7 @@ class OsuAPIClient(OsuAPIClientBase):
         response = await self._http_client.get(url, headers=headers)
 
         response.raise_for_status()
-        result: dict[str, list[dict[str, int | str]]] = typing.cast(dict[str, list[dict[str, int | str]]], response.json())
+        result: dict[str, list[dict[str, int | str]]] = response.json()
         return result
 
     @rate_limit(min_interval=0.5, limit_per_window=120, window_size=60)

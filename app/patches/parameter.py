@@ -1,5 +1,5 @@
 import os
-from typing import cast as typing_cast
+from typing import Any
 
 from connexion.lifecycle import ConnexionRequest
 from connexion.validators import ParameterValidator
@@ -23,7 +23,13 @@ class ParameterValidatorPatched(ParameterValidator):
     Addresses Connexion limitations around complex query schemas.
     """
 
-    def __init__(self, parameters: list[dict], uri_parser: Any, strict_validation: bool = False, security_query_params: list[str] | None = None):
+    def __init__(
+        self,
+        parameters: list[dict],
+        uri_parser: Any,
+        strict_validation: bool = False,
+        security_query_params: list[str] | None = None,
+    ):
         super().__init__(
             parameters,
             uri_parser,
@@ -32,7 +38,9 @@ class ParameterValidatorPatched(ParameterValidator):
         )
         self.request_scopes: dict[ConnexionRequest, dict] = {}
 
-    def validate_query_parameter(self, param: dict[str, Any], request: ConnexionRequest) -> None:
+    def validate_query_parameter(
+        self, param: dict[str, Any], request: ConnexionRequest
+    ) -> str | None:
         """Validate query parameters with custom include/sorting logic.
 
         Special handling:
@@ -53,42 +61,51 @@ class ParameterValidatorPatched(ParameterValidator):
                 Incoming Connexion request.
 
         Returns:
-            Validated and possibly transformed parameter value.
+            ``None`` if the parameter is valid, otherwise an error message describing
+            why validation failed (mirrors the base class' ``validate_parameter``
+            contract). Domain-specific failures (`sorting`, `filters`, `include`) are
+            raised directly as HTTP exceptions instead of being returned as a string.
 
         Raises:
             HTTPException:
-                On validation failure.
+                On `sorting`, `filters`, or `include` validation failure.
         """
         param_name = param["name"]
         value = request.query_params.get(param_name)
 
-        if param_name == "sorting" and value:
+        if param_name == "sorting" and isinstance(value, list):
             try:
-                return validate_sorting(value, param.get("schema"))
+                validate_sorting(value, param.get("schema"))
             except ArrayValidationError as e:
                 raise bad_request_factory(e) from e
-        elif param_name == "filters" and value:
+
+            return None
+        elif param_name == "filters" and isinstance(value, dict):
             try:
                 resolved_schema = get_filter_schema(schema_name=param["schema"]["title"])
-                return validate_filters(value, resolved_schema)
+                validate_filters(value, resolved_schema)
             except DeepObjectValidationError as e:
                 raise bad_request_factory(e) from e
-        elif param_name == "include" and value:
+
+            return None
+        elif param_name == "include" and isinstance(value, dict):
+            request_scope = self.request_scopes.get(request, {})
+            scope_path = request_scope.get("path", "")
+            if scope_path.endswith(os.path.join(API_BASE_PATH.rstrip("/"), "search")):
+                # The /search include schema is ambiguous due to multiple possibilities depending on the scope
+                # Neither the scope nor the respective include schema can be determined at this point
+                # Delegate this validation to be run by the operation function where the context is available
+                return None
+
             try:
-                request_scope = self.request_scopes.get(request, {})
-                scope_path = request_scope.get("path", "")
-                if scope_path.endswith(os.path.join(API_BASE_PATH.rstrip("/"), "search")):
-                    # The /search include schema is ambiguous due to multiple possibilities depending on the scope
-                    # Neither the scope nor the respective include schema can be determined at this point
-                    # Delegate this validation to be run by the operation function where the context is available
-                    return None
-
                 resolved_schema = get_include_schema(schema_name=param["schema"]["title"])
-                return validate_include(value, resolved_schema)
+                validate_include(value, resolved_schema)
             except DeepObjectValidationError as e:
                 raise bad_request_factory(e) from e
 
-        return typing_cast(None, self.validate_parameter("query", value, param, param_name=param_name))
+            return None
+
+        return self.validate_parameter("query", value, param, param_name=param_name)
 
     def validate(self, scope: dict[str, Any]) -> None:
         """Validate request scope while tracking context.

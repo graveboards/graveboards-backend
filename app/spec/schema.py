@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Any
 from typing import cast as typing_cast
 
 from app.database.models import ModelClass
@@ -19,8 +20,8 @@ def _get_spec_cached() -> dict[str, Any]:
 
 
 def get_filter_schema(
-    model_class: ModelClass = None,
-    schema_name: str = None,
+    model_class: ModelClass | None = None,
+    schema_name: str | None = None,
 ) -> dict:
     """Retrieve a Filter schema from the OpenAPI specification.
 
@@ -49,8 +50,8 @@ def get_filter_schema(
 
 
 def get_include_schema(
-    model_class: ModelClass = None,
-    schema_name: str = None,
+    model_class: ModelClass | None = None,
+    schema_name: str | None = None,
 ) -> dict:
     """Retrieve an Include schema from the OpenAPI specification.
 
@@ -81,8 +82,8 @@ def get_include_schema(
 def _get_schema_by_suffix(
     suffix: str,
     *,
-    model_class: ModelClass = None,
-    schema_name: str = None,
+    model_class: ModelClass | None = None,
+    schema_name: str | None = None,
 ) -> dict:
     """Retrieve a schema from the OpenAPI spec using a suffix convention.
 

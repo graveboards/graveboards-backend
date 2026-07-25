@@ -2,7 +2,9 @@ import contextlib
 import json
 import re
 import time
-from typing import Any, cast as typing_cast
+from collections.abc import Awaitable, MutableMapping
+from typing import Any
+from typing import cast as typing_cast
 from urllib.parse import parse_qsl
 
 from connexion.middleware.abstract import ROUTING_CONTEXT
@@ -71,7 +73,7 @@ def _get_endpoint(scope: Scope) -> str:
     if operation_id:
         return str(operation_id)
 
-    return _STATIC_ROUTE_ENDPOINTS.get(scope.get("path"), "<unmatched>")
+    return _STATIC_ROUTE_ENDPOINTS.get(scope.get("path", None), "<unmatched>")
 
 
 def _redact(value: Any) -> Any:
@@ -103,7 +105,7 @@ def _reconstruct_nested_params(params: dict) -> dict:
     paths are merged (e.g. ``include[queue][id]`` + ``include[queue][name]``
     become one ``include.queue`` object).
     """
-    bracket_re = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_]*)((?:\[[^\]]+\])+)$")
+    bracket_re = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_]*)((?:\[[^]]+])+)$")
     nested = {}
     flat_keys = []
 
@@ -241,10 +243,10 @@ class MetricsMiddleware:
         start_time = time.perf_counter()
         status_code_ref: dict = {"value": None}
 
-        async def wrapped_send(message: dict[str, Any]) -> None:
+        def wrapped_send(message: MutableMapping[str, Any]) -> Awaitable[None]:
             if message["type"] == "http.response.start":
                 status_code_ref["value"] = message["status"]
-            await send(message)
+            return send(message)
 
         body_bytes = None
         body_captured = False
@@ -317,7 +319,7 @@ class MetricsMiddleware:
             if query_params:
                 extra_fields["query_params"] = query_params
 
-            if body_captured:
+            if body_captured and body_bytes is not None:
                 content_type = request.headers.get("content-type", "").split(";")[0].strip().lower()
                 parsed_body = _parse_body(body_bytes, content_type)
                 if parsed_body is not None:

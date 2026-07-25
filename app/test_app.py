@@ -8,7 +8,8 @@ This module provides app creation functions that:
 """
 
 import os
-from typing import cast as typing_cast
+from collections.abc import Callable
+from typing import Any
 from unittest.mock import AsyncMock
 
 from connexion import AsyncApp
@@ -16,9 +17,11 @@ from connexion.exceptions import Forbidden
 from connexion.middleware import MiddlewarePosition
 from connexion.resolver import RestyResolver
 from connexion.security import ApiKeySecurityHandler, BearerSecurityHandler
+from starlette.applications import Starlette
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.testclient import TestClient
+from starlette.types import Receive, Send
 
 from app.config import (
     CONFIG,
@@ -151,7 +154,9 @@ class TestApiKeySecurityHandler(ApiKeySecurityHandler):
     Accepts any API key without validation.
     """
 
-    def _get_verify_func(self, api_key_info_func: Any, loc: str, name: str, required_scopes: list[str]) -> Callable[[Any], bool]:
+    def _get_verify_func(
+        self, api_key_info_func: Any, loc: str, name: str, required_scopes: list[str]
+    ) -> Callable[[Any], bool]:
         def wrapper(request: Any) -> bool:
             return True
 

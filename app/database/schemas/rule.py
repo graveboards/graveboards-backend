@@ -1,8 +1,10 @@
 from datetime import datetime
-from typing import Any, Literal, cast as typing_cast
+from typing import Any, Literal
+from typing import cast as typing_cast
 
 from pydantic import BaseModel, field_validator, model_validator
 from pydantic.config import ConfigDict
+from pydantic_core.core_schema import ValidationInfo
 
 from app.osu_api.literals import GenreIdLiteral, LanguageIdLiteral, RulesetLiteral
 
@@ -104,7 +106,7 @@ class BlacklistConfig(_StrictConfig):
 
     @field_validator("target")
     @classmethod
-    def validate_target(cls, v: list[int]) -> list[int]:
+    def validate_target(cls, v: list[int]) -> list[int] | None:
         if not v:
             raise ValueError("blacklist target must contain at least one user ID")
         return _validate_target_ids(v)
@@ -374,7 +376,7 @@ def _validate_composite_tree(operator: str, rules: list[dict[str, Any]], depth: 
         raise ValueError("NOT operator requires exactly one child rule")
 
     for i, child in enumerate(rules):
-        child_type = child.get("type")
+        child_type: str | None = child.get("type")
         if not child_type:
             raise ValueError(f"Rule at index {i} missing 'type' field")
 
@@ -503,11 +505,11 @@ class RuleCreateSchema(BaseModel):
     @field_validator("config")
     @classmethod
     def validate_config_by_type(cls, v: dict[str, Any], info: ValidationInfo) -> dict[str, Any]:
-        type = info.data.get("type")
-        if not type:
+        type_: str | None = info.data.get("type")
+        if not type_:
             return v
 
-        return validate_rule_config(type, v)
+        return validate_rule_config(type_, v)
 
 
 class RuleReplaceSchema(RuleCreateSchema):
