@@ -1,5 +1,5 @@
-from typing import Any, Generator
-
+from collections.abc import Generator
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -15,7 +15,7 @@ from tests.unit.osu_api.test_helpers import (
 
 
 @pytest.fixture(autouse=True)
-def mock_rate_limit_decorator() -> Generator[None, None, None]:
+def mock_rate_limit_decorator() -> Generator[None]:
     from app.osu_api.client import osu_api_client
 
     with patch.object(osu_api_client, "rate_limit", lambda *args, **kwargs: lambda func: func):

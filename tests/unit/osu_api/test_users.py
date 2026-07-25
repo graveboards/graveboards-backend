@@ -9,7 +9,7 @@ from tests.unit.osu_api.test_helpers import _get_scores_with_fallback, _get_user
 
 
 @pytest.mark.asyncio
-async def test_get_user_parses_response(api_client: tuple["OsuAPIClient", MagicMock]) -> None:
+async def test_get_user_parses_response(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     api_client_obj, mock_redis = api_client
     fixture_manager = FixtureReader()
     mock_data = _get_user_with_fallback(fixture_manager, ruleset="osu")

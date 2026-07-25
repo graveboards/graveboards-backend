@@ -39,7 +39,7 @@ class SetupRunner:
         self,
         config: BootstrapConfig,
         db: PostgresqlDB = None,
-        rc: RedisClient = None,
+        rc: RedisClient | None = None,
     ):
         self.config = config
         self.db = db or PostgresqlDB()

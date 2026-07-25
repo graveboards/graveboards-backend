@@ -12,6 +12,8 @@ Usage:
     manage fixtures fetch --criteria search-test --archive --quick
 """
 
+from typing import Any
+
 from rich.console import Console
 from rich.table import Table
 

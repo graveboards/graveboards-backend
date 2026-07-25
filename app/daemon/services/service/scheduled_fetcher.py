@@ -102,7 +102,7 @@ class ScheduledFetcherService(ScheduledService, ABC):
             return JobLoadInstruction(execution_time=fallback_time)
 
     async def _get_pending_record(
-        self, record_id: int, timeout: float = None, interval_seconds: float = 0.5
+        self, record_id: int, timeout: float | None = None, interval_seconds: float = 0.5
     ) -> Any:
         """Wait for a pending record to become available.
 

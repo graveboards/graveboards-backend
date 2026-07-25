@@ -1,5 +1,5 @@
 import asyncio
-from typing import ClassVar, Never
+from typing import Any, ClassVar, Never
 
 from app.observability.logging import Logger
 
@@ -28,8 +28,8 @@ class ServiceSupervisor(Service):
         self,
         name: str,
         factory: ServiceFactory,
-        backoff: BackoffStrategy = None,
-        max_retries: int = None,
+        backoff: BackoffStrategy | None = None,
+        max_retries: int | None = None,
         on_failure: TaskFailureHook | None = None,
         on_max_retries_exceeded: TaskMaxRetriesExceededHook | None = None,
     ) -> None:

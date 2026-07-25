@@ -1,5 +1,4 @@
 import asyncio
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -214,7 +213,9 @@ class TestService:
         async def failing_task() -> None:
             raise ValueError("Task failed")
 
-        async def on_failure(name: str, exc: BaseException, failures_list: list[tuple[str, BaseException]]) -> None:
+        async def on_failure(
+            name: str, exc: BaseException, failures_list: list[tuple[str, BaseException]]
+        ) -> None:
             failures_list.append((name, exc))
 
         with patch("asyncio.TaskGroup"):

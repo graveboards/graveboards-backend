@@ -48,7 +48,7 @@ async def search(**kwargs):
 
 
 @with_authenticated_user_id()
-async def get(hashed_id: int, _caller_user_id: int = None, **kwargs):
+async def get(hashed_id: int, _caller_user_id: int | None = None, **kwargs):
     rc = request.state.rc
 
     task_hash_name = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(hashed_id)

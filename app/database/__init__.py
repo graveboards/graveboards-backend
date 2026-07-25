@@ -1,3 +1,5 @@
+from typing import Any
+
 __all__ = ["PostgresqlDB", "db_lifespan"]
 
 

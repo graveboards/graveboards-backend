@@ -16,6 +16,9 @@ Flags:
     --gaps        Show missing fixture gaps
 """
 
+from pathlib import Path
+from typing import Any
+
 from rich import box
 from rich.columns import Columns
 from rich.console import Console, Group

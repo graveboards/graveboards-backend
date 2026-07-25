@@ -1,9 +1,8 @@
 """Unit tests for rate_limit decorator edge cases not covered by test_rate_limit_decorator.py."""
 
-from typing import Any
-
 import time
 from datetime import UTC, datetime
+from typing import Any
 
 import pytest
 
@@ -106,7 +105,9 @@ class TestRateLimitModule:
         assert result == "ok"
 
     @pytest.mark.asyncio
-    async def test_rate_limit_skips_window_check_when_limit_zero(self, mock_rc: MockRedisClient) -> None:
+    async def test_rate_limit_skips_window_check_when_limit_zero(
+        self, mock_rc: MockRedisClient
+    ) -> None:
         """Test rate_limit skips window counter when limit_per_window=0."""
         from unittest.mock import AsyncMock as AM
 
@@ -136,7 +137,9 @@ class TestRateLimitModule:
         mock_rc.get.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_rate_limit_min_interval_sleeps_when_needed(self, mock_rc: MockRedisClient) -> None:
+    async def test_rate_limit_min_interval_sleeps_when_needed(
+        self, mock_rc: MockRedisClient
+    ) -> None:
         """Test min_interval causes sleep when previous call was too recent."""
         from unittest.mock import AsyncMock as AM
 

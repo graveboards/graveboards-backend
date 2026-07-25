@@ -59,7 +59,9 @@ class TestScoreFetcher:
         service._db.get.assert_awaited_once_with(Leaderboard, beatmap_id=456)
         assert result is True
 
-    async def test_score_is_submittable_returns_false_without_leaderboard(self, service: ScoreFetcher) -> None:
+    async def test_score_is_submittable_returns_false_without_leaderboard(
+        self, service: ScoreFetcher
+    ) -> None:
         """Test that _score_is_submittable returns False without leaderboard."""
         score = {"beatmap": {"id": 456}}
         service._db.get = AsyncMock(return_value=None)

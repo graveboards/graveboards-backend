@@ -1,5 +1,4 @@
 from typing import Any
-
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -80,12 +79,13 @@ class TestQueuesPatchIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_can_update_queue(self, TestClientWithMocks: Any, admin_user_token: Any) -> None:
+    async def test_admin_can_update_queue(
+        self, TestClientWithMocks: Any, admin_user_token: Any
+    ) -> None:
         """Test admin can update queue."""
         from app.database.models import Queue
 
         mock_db = AsyncMock()
-
 
         mock_queue = MagicMock()
         mock_queue.id = self.TEST_QUEUE_ID
@@ -147,12 +147,13 @@ class TestQueuesPatchIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_queue_owner_can_update_queue(self, TestClientWithMocks: Any, admin_user_token: Any) -> None:
+    async def test_queue_owner_can_update_queue(
+        self, TestClientWithMocks: Any, admin_user_token: Any
+    ) -> None:
         """Test queue owner can update queue."""
         from app.database.models import Queue
 
         mock_db = AsyncMock()
-
 
         mock_queue = MagicMock()
         mock_queue.id = self.TEST_QUEUE_ID
@@ -271,7 +272,9 @@ class TestQueuesPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_can_create_queue(self, TestClientWithMocks: Any, admin_user_token: Any) -> None:
+    async def test_admin_can_create_queue(
+        self, TestClientWithMocks: Any, admin_user_token: Any
+    ) -> None:
         """Test admin can create a new queue."""
         from app.database.models import Queue
 
@@ -375,7 +378,9 @@ class TestQueuesPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_create_queue_with_all_fields(self, TestClientWithMocks: Any, admin_user_token: Any) -> None:
+    async def test_create_queue_with_all_fields(
+        self, TestClientWithMocks: Any, admin_user_token: Any
+    ) -> None:
         """Test queue creation with all optional fields."""
         from app.database.models import Queue
 

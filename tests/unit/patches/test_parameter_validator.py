@@ -1,6 +1,5 @@
-from typing import Any
-
 import contextlib
+from typing import Any
 
 import pytest
 from connexion.exceptions import BadRequest
@@ -12,7 +11,11 @@ from app.patches.uri_parsing import OpenAPIURIParserPatched
 pytestmark = pytest.mark.unit
 
 
-def make_validator(parameters: list[dict[str, Any]] | None = None, strict_validation: bool = False, security_query_params: list[str] | None = None) -> ParameterValidatorPatched:
+def make_validator(
+    parameters: list[dict[str, Any]] | None = None,
+    strict_validation: bool = False,
+    security_query_params: list[str] | None = None,
+) -> ParameterValidatorPatched:
     """Create a parameter validator with real parameter definitions."""
     if parameters is None:
         parameters = [
@@ -88,7 +91,11 @@ def make_validator(parameters: list[dict[str, Any]] | None = None, strict_valida
     )
 
 
-def setup_request_scope(validator: ParameterValidatorPatched, request: ConnexionRequest, scope_path: str = "/api/v1/test") -> ConnexionRequest:
+def setup_request_scope(
+    validator: ParameterValidatorPatched,
+    request: ConnexionRequest,
+    scope_path: str = "/api/v1/test",
+) -> ConnexionRequest:
     """Set up request scope for testing."""
     scope = {"type": "http", "path": scope_path}
     connexion_request = ConnexionRequest(scope, uri_parser=validator.uri_parser)
@@ -96,7 +103,11 @@ def setup_request_scope(validator: ParameterValidatorPatched, request: Connexion
     return connexion_request
 
 
-def make_request(query_params: dict[str, Any] | None = None, scope_path: str = "/api/v1/test", validator: ParameterValidatorPatched | None = None) -> ConnexionRequest:
+def make_request(
+    query_params: dict[str, Any] | None = None,
+    scope_path: str = "/api/v1/test",
+    validator: ParameterValidatorPatched | None = None,
+) -> ConnexionRequest:
     """Create a ConnexionRequest with query parameters.
 
     Query params are passed as-is and will be parsed by the uri_parser.

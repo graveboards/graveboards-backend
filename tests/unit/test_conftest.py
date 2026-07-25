@@ -1,6 +1,7 @@
 """Tests for conftest fixtures: security_disabled, security_enabled, admin_user_token."""
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 
 class TestConftestFixtures:

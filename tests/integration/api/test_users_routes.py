@@ -5,7 +5,6 @@ Tests the users retrieval via full HTTP stack.
 """
 
 from typing import Any
-
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest

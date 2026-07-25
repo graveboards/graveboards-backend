@@ -16,7 +16,7 @@ from app.utils import aware_utcnow
 __all__ = ["search", "post"]
 
 
-async def search(token: str, rc: RedisClient = None):
+async def search(token: str, rc: RedisClient | None = None):
     if rc is None:
         rc = request.state.rc
 
@@ -39,10 +39,10 @@ async def search(token: str, rc: RedisClient = None):
 
 async def post(
     body: dict,
-    oauth: OAuth = None,
-    osu_api_client: OsuAPIClient = None,
-    db: PostgresqlDB = None,
-    rc: RedisClient = None,
+    oauth: OAuth | None = None,
+    osu_api_client: OsuAPIClient | None = None,
+    db: PostgresqlDB | None = None,
+    rc: RedisClient | None = None,
 ):
     if rc is None:
         rc = request.state.rc

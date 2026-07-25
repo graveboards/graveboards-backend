@@ -1,6 +1,7 @@
 import hashlib
 import os
 import uuid
+from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
 from io import BytesIO
 from typing import Any
@@ -37,7 +38,7 @@ def combine_checksums(checksums: list[str]) -> str:
     return combined_hash.hexdigest()
 
 
-async def stream_file(file: BytesIO, chunk_size: int = 1024) -> AsyncGenerator[bytes, None]:
+async def stream_file(file: BytesIO, chunk_size: int = 1024) -> AsyncGenerator[bytes]:
     file.seek(0)
 
     while chunk := file.read(chunk_size):

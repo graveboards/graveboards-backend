@@ -4,8 +4,8 @@ Integration tests for POST /api/v1/beatmapsets endpoint (admin-only).
 Tests the beatmap archival via full HTTP stack.
 """
 
-from typing import Any, Callable
-
+from collections.abc import Callable
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest

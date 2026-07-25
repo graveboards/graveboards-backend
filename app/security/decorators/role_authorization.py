@@ -20,9 +20,9 @@ T = TypeVar("T")
 
 def role_authorization(
     *required_roles: RoleName,
-    one_of: Iterable[RoleName] = None,
-    override: Callable[..., Awaitable[bool]] = None,
-    override_kwargs: dict[str, Any] = None,
+    one_of: Iterable[RoleName] | None = None,
+    override: Callable[..., Awaitable[bool]] | None = None,
+    override_kwargs: dict[str, Any] | None = None,
 ) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Decorator enforcing role-based access control on endpoints.
 

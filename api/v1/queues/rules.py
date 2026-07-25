@@ -20,7 +20,7 @@ async def _can_view_private_rules(
 
 
 @with_authenticated_user_id()
-async def search(queue_id: int, _caller_user_id: int = None, **kwargs):
+async def search(queue_id: int, _caller_user_id: int | None = None, **kwargs):
     """List all rules for a queue.
 
     Args:
@@ -54,7 +54,7 @@ async def search(queue_id: int, _caller_user_id: int = None, **kwargs):
 
 
 @with_authenticated_user_id()
-async def get(queue_id: int, rule_id: int, _caller_user_id: int = None, **kwargs):
+async def get(queue_id: int, rule_id: int, _caller_user_id: int | None = None, **kwargs):
     """Get a single rule by ID.
 
     Args:

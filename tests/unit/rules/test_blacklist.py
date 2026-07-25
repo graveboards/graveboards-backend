@@ -7,7 +7,9 @@ from app.database.rules.context import ExecutionContext
 from app.database.rules.validators.blacklist import BlacklistRestriction
 
 
-def _make_context(queue_id: int = 1, user_id: int = 12345678, config: dict | None = None) -> ExecutionContext:
+def _make_context(
+    queue_id: int = 1, user_id: int = 12345678, config: dict | None = None
+) -> ExecutionContext:
     return ExecutionContext(
         queue_id=queue_id,
         user_id=user_id,

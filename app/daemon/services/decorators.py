@@ -2,20 +2,23 @@ import asyncio
 import inspect
 from collections.abc import Awaitable, Callable
 from functools import wraps
-from typing import Any
+from typing import Any, ParamSpec, TypeVar, Coroutine
 
 from app.observability.logging import get_logger
 
 MAX_ATTEMPTS = 5
 logger = get_logger(__name__)
 
+_P = ParamSpec("_P")
+_T = TypeVar("_T")
+
 
 def auto_retry(
     max_attempts: int = MAX_ATTEMPTS,
     retry_exceptions: tuple[type[Exception], ...] = (TimeoutError,),
     backoff_strategy: Callable[[int], float] = lambda attempt_no: attempt_no**2,
-) -> Callable[[Callable[..., Awaitable[Any]]], Callable[..., Awaitable[Any]]]:
-    def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
+) -> Callable[[Callable[_P, Awaitable[_T]]], Callable[_P, Coroutine[Any, Any, _T]]]:
+    def decorator(func: Callable[_P, Awaitable[_T]]) -> Callable[_P, Coroutine[Any, Any, _T]]:
         if not inspect.iscoroutinefunction(func):
             raise ValueError(f"Function '{func.__name__}' must be async to use @auto_retry")
 

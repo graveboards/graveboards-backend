@@ -1,6 +1,6 @@
 import struct
 from enum import IntEnum, IntFlag, auto
-from typing import cast
+from typing import Self, cast
 
 from pydantic.config import ConfigDict
 from pydantic.functional_validators import model_validator

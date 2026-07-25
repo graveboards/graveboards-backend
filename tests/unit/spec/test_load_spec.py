@@ -1,5 +1,4 @@
 from typing import Any
-
 from unittest.mock import mock_open, patch
 
 import pytest
@@ -58,7 +57,9 @@ class TestLoadSpec:
         with patch("app.spec.load.os.walk") as mock:
             yield mock
 
-    def test_load_spec_no_cache_rebuilds(self, mock_yaml_full_load: Any, mock_resolve_refs: Any) -> None:
+    def test_load_spec_no_cache_rebuilds(
+        self, mock_yaml_full_load: Any, mock_resolve_refs: Any
+    ) -> None:
         """Test that load_spec rebuilds when cache doesn't exist."""
         mock_yaml_full_load.return_value = {"components": {"schemas": {}}}
         mock_resolve_refs.return_value = {"components": {"schemas": {}}}
@@ -166,7 +167,9 @@ class TestLoadSpec:
         assert "components" in result
         mock_yaml_full_load.assert_called_once()
 
-    def test_build_spec_resolves_refs(self, mock_yaml_full_load: Any, mock_resolve_refs: Any) -> None:
+    def test_build_spec_resolves_refs(
+        self, mock_yaml_full_load: Any, mock_resolve_refs: Any
+    ) -> None:
         """Test that _build_spec resolves refs."""
         mock_yaml_full_load.return_value = {"components": {"schemas": {}}}
         mock_resolve_refs.return_value = {"components": {"schemas": {"resolved": True}}}
@@ -178,7 +181,9 @@ class TestLoadSpec:
         assert result == {"components": {"schemas": {"resolved": True}}}
         mock_resolve_refs.assert_called_once()
 
-    def test_build_spec_applies_mutations(self, mock_yaml_full_load: Any, mock_resolve_refs: Any) -> None:
+    def test_build_spec_applies_mutations(
+        self, mock_yaml_full_load: Any, mock_resolve_refs: Any
+    ) -> None:
         """Test that _build_spec applies mutations."""
         mock_yaml_full_load.return_value = {"components": {"schemas": {}}}
         mock_resolve_refs.return_value = {"components": {"schemas": {}}}
@@ -190,7 +195,9 @@ class TestLoadSpec:
 
         mock_populate.assert_called_once()
 
-    def test_build_spec_writes_cache(self, mock_yaml_full_load: Any, mock_resolve_refs: Any, mock_pickle: Any) -> None:
+    def test_build_spec_writes_cache(
+        self, mock_yaml_full_load: Any, mock_resolve_refs: Any, mock_pickle: Any
+    ) -> None:
         """Test that _build_spec writes cache file."""
         mock_yaml_full_load.return_value = {"components": {"schemas": {}}}
         mock_resolve_refs.return_value = {"components": {"schemas": {}}}
@@ -204,7 +211,9 @@ class TestLoadSpec:
 
         assert mock_dump.called
 
-    def test_apply_mutations_populates_shallow_refs(self, mock_yaml_full_load: Any, mock_resolve_refs: Any) -> None:
+    def test_apply_mutations_populates_shallow_refs(
+        self, mock_yaml_full_load: Any, mock_resolve_refs: Any
+    ) -> None:
         """Test that _apply_mutations populates shallow refs."""
         mock_yaml_full_load.return_value = {"components": {"schemas": {}}}
         mock_resolve_refs.return_value = {"components": {"schemas": {}}}

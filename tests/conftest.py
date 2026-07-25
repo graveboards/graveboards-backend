@@ -31,7 +31,8 @@ def _clear_spec_cache() -> None:
             cache_file.unlink()
 
 
-from typing import Any, Callable, Generator
+from collections.abc import Callable
+from typing import Any
 
 
 def pytest_configure(config: Any) -> None:
@@ -190,13 +191,13 @@ async def db_session() -> Any:
     db = PostgresqlDB()
 
     async with db.engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(lambda c: Base.metadata.create_all(c))
 
     async with db.session() as session:
         yield session
 
     async with db.engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(lambda c: Base.metadata.drop_all(c))
 
     await db.close()
 
@@ -217,13 +218,13 @@ async def db_transaction() -> Any:
     db = PostgresqlDB()
 
     async with db.engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(lambda c: Base.metadata.create_all(c))
 
     async with db.session() as session:
         yield session
         await session.commit()
 
     async with db.engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(lambda c: Base.metadata.drop_all(c))
 
     await db.close()

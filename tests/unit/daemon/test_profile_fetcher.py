@@ -29,7 +29,9 @@ class TestProfileFetcher:
 
         assert service._load_job.call_count == 1
 
-    async def test_execute_job_raises_value_error_when_record_not_found(self, service: ProfileFetcher) -> None:
+    async def test_execute_job_raises_value_error_when_record_not_found(
+        self, service: ProfileFetcher
+    ) -> None:
         """Test that _execute_job raises ValueError when task not found."""
         service._db.get = AsyncMock(return_value=None)
 
@@ -46,7 +48,9 @@ class TestProfileFetcher:
 
         service._db.get.assert_awaited_once_with(ProfileFetcherTask, id=123)
 
-    async def test_execute_job_fetches_user_profile_when_lock_acquired(self, service: ProfileFetcher) -> None:
+    async def test_execute_job_fetches_user_profile_when_lock_acquired(
+        self, service: ProfileFetcher
+    ) -> None:
         """Test that profile is fetched when Redis lock is acquired."""
         task = ProfileFetcherTask(id=1, user_id=123, enabled=True)
         service._db.get = AsyncMock(return_value=task)
@@ -68,7 +72,9 @@ class TestProfileFetcher:
 
         service._oac.get_user.assert_awaited_once_with(123)
 
-    async def test_execute_job_creates_new_profile_when_not_exists(self, service: ProfileFetcher) -> None:
+    async def test_execute_job_creates_new_profile_when_not_exists(
+        self, service: ProfileFetcher
+    ) -> None:
         """Test that new profile is created when user has no profile."""
         task = ProfileFetcherTask(id=1, user_id=123, enabled=True)
         service._db.get = AsyncMock(

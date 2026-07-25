@@ -3,6 +3,7 @@ import random
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from app.exceptions import clean_error_msg
 from app.osu_api.enums import Ruleset

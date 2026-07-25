@@ -2,7 +2,7 @@ import struct
 from collections import defaultdict
 from collections.abc import Generator
 from enum import IntFlag, auto
-from typing import Annotated
+from typing import Annotated, Any
 
 from pydantic.config import ConfigDict
 from pydantic.fields import Field

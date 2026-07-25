@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from typing import Any
 
 from app.database import PostgresqlDB, db_lifespan
 from app.database.status import StatusTarget

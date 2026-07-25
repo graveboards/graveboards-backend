@@ -5,7 +5,6 @@ Tests the profiles retrieval via full HTTP stack.
 """
 
 from typing import Any
-
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -19,7 +18,9 @@ class TestProfilesGetIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_can_get_profiles_list(self, TestClientWithMocks: Any, security_disabled: Any) -> None:
+    async def test_admin_can_get_profiles_list(
+        self, TestClientWithMocks: Any, security_disabled: Any
+    ) -> None:
         """Test admin can get profiles list."""
         from app.database.models import Profile
 
@@ -47,7 +48,9 @@ class TestProfilesGetIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_can_get_profile_by_user_id(self, TestClientWithMocks: Any, security_disabled: Any) -> None:
+    async def test_admin_can_get_profile_by_user_id(
+        self, TestClientWithMocks: Any, security_disabled: Any
+    ) -> None:
         """Test admin can get profile by user id."""
         from app.database.enums import RoleName
         from app.database.models import Profile, User
@@ -84,7 +87,9 @@ class TestProfilesGetIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_profile_not_found(self, TestClientWithMocks: Any, security_disabled: Any) -> None:
+    async def test_admin_profile_not_found(
+        self, TestClientWithMocks: Any, security_disabled: Any
+    ) -> None:
         """Test admin gets 404 when profile doesn't exist."""
         from app.database.enums import RoleName
         from app.database.models import User
@@ -114,7 +119,9 @@ class TestProfilesGetIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_bypass_security_with_flag(self, TestClientWithMocks: Any, security_disabled: Any) -> None:
+    async def test_bypass_security_with_flag(
+        self, TestClientWithMocks: Any, security_disabled: Any
+    ) -> None:
         """Test security disabled bypasses authorization on profiles."""
         from app.database.models import Profile
 

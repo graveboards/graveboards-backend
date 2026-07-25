@@ -1,6 +1,5 @@
-from typing import Any
-
 import time
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -9,9 +8,7 @@ from app.database.rules.context import ExecutionContext
 from app.database.rules.engine.phase1_runner import Phase1Runner
 
 
-def _make_mock_rule(
-    type: str, config: dict[str, Any], is_active: bool = True
-) -> MagicMock:
+def _make_mock_rule(type: str, config: dict[str, Any], is_active: bool = True) -> MagicMock:
     r = MagicMock()
     r.type = type
     r.config = config

@@ -1,7 +1,5 @@
 """Unit tests for Redis distributed lock (lock_ctx)."""
 
-from typing import Any
-
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest

@@ -1,11 +1,14 @@
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import pytest
 
 from app.database.models import Request
 
 
-def create_request_from_beatmapset_id(beatmapset_id: int, queue_id: int = 1, **kwargs: Any) -> Request:
+def create_request_from_beatmapset_id(
+    beatmapset_id: int, queue_id: int = 1, **kwargs: Any
+) -> Request:
     """Create a Request model from a beatmapset fixture."""
     return Request(
         beatmapset_id=beatmapset_id,

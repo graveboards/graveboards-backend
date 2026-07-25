@@ -1,6 +1,5 @@
 from io import BytesIO
 from typing import Any
-
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -374,7 +373,9 @@ class TestBeatmapManager:
                             mock_add.assert_called_once()
                             assert len(result) == 1
 
-    async def test_archive_populates_beatmap_tags_on_first_snapshot(self, manager: BeatmapManager) -> None:
+    async def test_archive_populates_beatmap_tags_on_first_snapshot(
+        self, manager: BeatmapManager
+    ) -> None:
         """Test that archiving a beatmapset for the first time populates BeatmapTag records."""
         manager._session = MagicMock()
 

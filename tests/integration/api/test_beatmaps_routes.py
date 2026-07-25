@@ -1,5 +1,4 @@
 from typing import Any
-
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -156,12 +155,10 @@ class TestLeaderboardPatchIntegration:
 
         mock_db = AsyncMock()
 
-
         mock_beatmap_snapshot = MagicMock()
         mock_beatmap_snapshot.id = 1
         mock_beatmap_snapshot.beatmap_id = self.TEST_BEATMAP_ID
         mock_beatmap_snapshot.snapshot_number = self.TEST_SNAPSHOT_NUMBER
-
 
         mock_leaderboard = MagicMock()
         mock_leaderboard.id = 1
@@ -212,7 +209,6 @@ class TestLeaderboardPatchIntegration:
         from app.security import generate_token
 
         mock_db = AsyncMock()
-
 
         mock_beatmap_snapshot = MagicMock()
         mock_beatmap_snapshot.id = 1
@@ -270,7 +266,7 @@ async def test_get_beatmap_osu_file(TestClientWithMocks: Any) -> None:
     test_client = TestClientWithMocks(mock_db=mock_db, mock_rc=mock_rc)
 
     class AsyncFileMock:
-        async def __aenter__(self) -> "AsyncFileMock":
+        async def __aenter__(self) -> AsyncFileMock:
             return self
 
         async def __aexit__(self, *args: Any) -> None:

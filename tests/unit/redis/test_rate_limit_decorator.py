@@ -1,5 +1,4 @@
 from typing import Any
-
 from unittest.mock import AsyncMock
 
 import pytest
@@ -91,7 +90,9 @@ class TestRateLimitDecorator:
 
         mock_redis_client.expire.assert_called_once()
 
-    async def test_rate_limit_doesnt_set_expiry_on_subsequent_calls(self, mock_redis_client: Any) -> None:
+    async def test_rate_limit_doesnt_set_expiry_on_subsequent_calls(
+        self, mock_redis_client: Any
+    ) -> None:
         """Test that expiry is not set on subsequent calls."""
 
         @rate_limit(limit_per_window=10, auto_retry=False)

@@ -1,5 +1,4 @@
-from typing import Any, Optional
-
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -35,15 +34,15 @@ def _make_context(
     )
 
 
-def _make_mock_osu_client(search_results: Optional[dict[str, Any]] = None) -> AsyncMock:
+def _make_mock_osu_client(search_results: dict[str, Any] | None = None) -> AsyncMock:
     client = AsyncMock()
     client.search_beatmapsets = AsyncMock(return_value=search_results or {"beatmapsets": []})
     return client
 
 
 def _make_mock_osu_client_pageable(
-    initial_results: Optional[dict[str, Any]] = None,
-    subsequent_results: Optional[dict[str, Any]] = None,
+    initial_results: dict[str, Any] | None = None,
+    subsequent_results: dict[str, Any] | None = None,
 ) -> AsyncMock:
     """Create a mock osu client where search_beatmapsets returns different results per call."""
     client = AsyncMock()

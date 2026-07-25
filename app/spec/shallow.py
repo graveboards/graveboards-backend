@@ -1,4 +1,5 @@
 import copy
+from typing import Any
 
 SCHEMAS_WITH_SHALLOW_REFS = {
     "Beatmap",

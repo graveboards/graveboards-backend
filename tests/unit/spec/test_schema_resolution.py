@@ -1,5 +1,4 @@
 from typing import Any
-
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -122,7 +121,9 @@ class TestSchemaResolution:
         with pytest.raises(ValueError):
             _get_schema_by_suffix("Filter", model_class="not_an_enum")
 
-    def test_get_schema_by_suffix_schema_name_must_end_with_suffix(self, mock_spec: dict[str, Any]) -> None:
+    def test_get_schema_by_suffix_schema_name_must_end_with_suffix(
+        self, mock_spec: dict[str, Any]
+    ) -> None:
         """Test that schema name must end with suffix."""
         with pytest.raises(ValueError):
             _get_schema_by_suffix("Filter", schema_name="Beatmap")

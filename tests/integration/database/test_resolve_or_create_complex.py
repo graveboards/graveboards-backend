@@ -112,7 +112,9 @@ async def test_beatmap_snapshot_with_tags_and_owners(db: PostgresqlDB, db_sessio
 
 
 @pytest.mark.asyncio
-async def test_beatmapset_snapshot_with_beatmap_snapshots(db: PostgresqlDB, db_session: Any) -> None:
+async def test_beatmapset_snapshot_with_beatmap_snapshots(
+    db: PostgresqlDB, db_session: Any
+) -> None:
     """BeatmapsetSnapshot should resolve nested beatmap_snapshots via M2M."""
     user_id = 10000002
     beatmapset_id = 1000002
@@ -714,7 +716,9 @@ async def test_add_many_beatmapset_snapshots(db: PostgresqlDB, db_session: Any) 
 
 
 @pytest.mark.asyncio
-async def test_resolve_bms_by_composite_unique_constraint(db: PostgresqlDB, db_session: Any) -> None:
+async def test_resolve_bms_by_composite_unique_constraint(
+    db: PostgresqlDB, db_session: Any
+) -> None:
     """BeatmapsetSnapshot should be resolved by composite unique constraint (beatmapset_id, snapshot_number)."""
     user_id = 10000009
     beatmapset_id = 1000009
@@ -820,7 +824,9 @@ async def test_resolve_bms_by_composite_unique_constraint(db: PostgresqlDB, db_s
 
 
 @pytest.mark.asyncio
-async def test_resolve_bmsnap_by_composite_unique_constraint(db: PostgresqlDB, db_session: Any) -> None:
+async def test_resolve_bmsnap_by_composite_unique_constraint(
+    db: PostgresqlDB, db_session: Any
+) -> None:
     """BeatmapSnapshot should be resolved by composite unique constraint (beatmap_id, snapshot_number)."""
     user_id = 10000010
     beatmapset_id = 1000010

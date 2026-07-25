@@ -47,7 +47,9 @@ async def test_get_beatmap_attributes_all_mods(api_client: tuple[OsuAPIClient, M
 
 
 @pytest.mark.asyncio
-async def test_get_beatmap_attributes_verifies_mods_in_body(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
+async def test_get_beatmap_attributes_verifies_mods_in_body(
+    api_client: tuple[OsuAPIClient, MagicMock],
+) -> None:
     api_client_obj, mock_redis = api_client
     fixture_manager = FixtureReader()
     mock_data = _get_beatmap_attributes_with_fallback(fixture_manager)

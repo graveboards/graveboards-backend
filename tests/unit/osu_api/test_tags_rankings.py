@@ -72,7 +72,9 @@ async def test_get_rankings_with_country_mode(api_client: tuple[OsuAPIClient, Ma
 
 
 @pytest.mark.asyncio
-async def test_get_rankings_includes_limit_and_offset(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
+async def test_get_rankings_includes_limit_and_offset(
+    api_client: tuple[OsuAPIClient, MagicMock],
+) -> None:
     from app.osu_api.enums import Ruleset
 
     api_client_obj, mock_redis = api_client

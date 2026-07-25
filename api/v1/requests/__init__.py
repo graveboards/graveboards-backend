@@ -88,7 +88,7 @@ async def get(request_id: int, **kwargs):
 
 
 @with_authenticated_user_id()
-async def post(body: dict, _caller_user_id: int = None, **kwargs):
+async def post(body: dict, _caller_user_id: int | None = None, **kwargs):
     rc: RedisClient = request.state.rc
     db: PostgresqlDB = request.state.db
 

@@ -5,7 +5,6 @@ without requiring real infrastructure.
 """
 
 from typing import Any
-
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -48,7 +47,9 @@ class TestDaemonLifecycle:
         assert len(daemon._services) == 4
 
     @pytest.mark.asyncio
-    async def test_daemon_service_factories_are_lazy(self, mock_rc: AsyncMock, mock_db: Any) -> None:
+    async def test_daemon_service_factories_are_lazy(
+        self, mock_rc: AsyncMock, mock_db: Any
+    ) -> None:
         """Test that registered services are instances of Service."""
         daemon = Daemon(rc=mock_rc, db=mock_db)
         await daemon._on_start()

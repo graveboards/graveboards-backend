@@ -6,7 +6,6 @@ using the actual API endpoints that employ these decorators.
 """
 
 from typing import Any
-
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -242,7 +241,9 @@ class TestOwnershipAuthorizationSuccess:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_user_can_get_request_by_id_with_ownership(self, TestClientWithMocks: Any) -> None:
+    async def test_user_can_get_request_by_id_with_ownership(
+        self, TestClientWithMocks: Any
+    ) -> None:
         """Test that user can get specific request they own via ownership."""
 
         mock_db = AsyncMock()
@@ -337,7 +338,9 @@ class TestOwnershipAuthorizationFailure:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_user_cannot_get_request_by_id_without_ownership(self, TestClientWithMocks: Any) -> None:
+    async def test_user_cannot_get_request_by_id_without_ownership(
+        self, TestClientWithMocks: Any
+    ) -> None:
         """Test that user gets 403 when trying to access request they don't own."""
 
         mock_db = AsyncMock()

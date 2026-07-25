@@ -1,5 +1,3 @@
-from typing import Any
-
 from unittest.mock import MagicMock
 
 import pytest
@@ -10,7 +8,12 @@ from app.database.rules.validators.beatmap.length import LengthRestriction
 from app.database.rules.validators.beatmap.tags import TagsRestriction
 
 
-def _make_beatmap(hit_length: float = 180, total_length: float = 200, top_tag_ids: list[dict[str, int]] | None = None, version: str = "Normal") -> MagicMock:
+def _make_beatmap(
+    hit_length: float = 180,
+    total_length: float = 200,
+    top_tag_ids: list[dict[str, int]] | None = None,
+    version: str = "Normal",
+) -> MagicMock:
     bm = MagicMock()
     bm.hit_length = hit_length
     bm.total_length = total_length

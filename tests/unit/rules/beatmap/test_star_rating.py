@@ -1,5 +1,4 @@
 from typing import Any
-
 from unittest.mock import MagicMock
 
 import pytest
@@ -17,7 +16,9 @@ def _make_beatmap(sr: float, version: str = "Normal") -> MagicMock:
     return bm
 
 
-def _make_context(beatmaps: list[Any] | None = None, config: dict[str, Any] | None = None) -> ExecutionContext:
+def _make_context(
+    beatmaps: list[Any] | None = None, config: dict[str, Any] | None = None
+) -> ExecutionContext:
     return ExecutionContext(
         queue_id=1,
         user_id=12345678,

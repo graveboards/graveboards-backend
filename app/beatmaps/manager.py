@@ -462,7 +462,7 @@ class BeatmapManager:
         return typing_cast(User, user)
 
     async def _populate_profile(
-        self, user_id: int, restricted_user_dict: dict = None, is_restricted: bool = False
+        self, user_id: int, restricted_user_dict: dict | None = None, is_restricted: bool = False
     ) -> Profile:
         """Create or update a Profile with distributed locking.
 

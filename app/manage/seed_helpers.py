@@ -1,6 +1,7 @@
 """Helper functions for seed command fixture assurance."""
 
 import json
+from typing import Any
 
 from app.config import PROJECT_ROOT
 from app.database.seeding.profiles import SeedProfile

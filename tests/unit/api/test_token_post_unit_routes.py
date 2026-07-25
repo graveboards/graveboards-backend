@@ -54,7 +54,9 @@ class TestTokenPostEndpoint:
         )
         return mock_oauth
 
-    async def _create_mock_osu_api_client(self, user_data: dict[str, Any] | None = None) -> MagicMock:
+    async def _create_mock_osu_api_client(
+        self, user_data: dict[str, Any] | None = None
+    ) -> MagicMock:
         """Create a mock OsuAPIClient for testing."""
         mock_rc = MagicMock(spec=RedisClient)
         mock_client = MagicMock(spec=OsuAPIClient)

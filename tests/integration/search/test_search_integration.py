@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-async def search_test_fetcher() -> "SearchTestFixtureFetcher":
+async def search_test_fetcher() -> SearchTestFixtureFetcher:
     """Create a SearchTestFixtureFetcher for reading coverage reports.
 
     This does NOT perform any API calls. It only reads the coverage state
@@ -271,7 +271,9 @@ class SearchFixtureSeeder:
 
 
 @pytest.fixture
-async def search_fixture_seeder(db_transaction: Any, search_test_fetcher: "SearchTestFixtureFetcher") -> SearchFixtureSeeder:
+async def search_fixture_seeder(
+    db_transaction: Any, search_test_fetcher: SearchTestFixtureFetcher
+) -> SearchFixtureSeeder:
     """Seed all coverage-gated fixtures into the database.
 
     Uses the fetcher's coverage report to determine what fixture data
@@ -364,7 +366,9 @@ def _get_ids(coverage: dict[str, Any], bucket: str, category: str | None = None)
 @pytest.mark.integration
 class TestSearchBeatmapsets:
     @pytest.mark.asyncio
-    async def test_filter_by_genre(self, db_transaction: Any, search_test_fetcher: "SearchTestFixtureFetcher") -> None:
+    async def test_filter_by_genre(
+        self, db_transaction: Any, search_test_fetcher: SearchTestFixtureFetcher
+    ) -> None:
         """Test filtering beatmapsets by genre."""
         coverage = search_test_fetcher.get_coverage_report()
         if not _has_coverage(coverage, "beatmapset_genres"):
@@ -387,7 +391,9 @@ class TestSearchBeatmapsets:
         assert len(results) >= 1
 
     @pytest.mark.asyncio
-    async def test_filter_by_language(self, db_transaction: Any, search_test_fetcher: "SearchTestFixtureFetcher") -> None:
+    async def test_filter_by_language(
+        self, db_transaction: Any, search_test_fetcher: SearchTestFixtureFetcher
+    ) -> None:
         """Test filtering beatmapsets by language."""
         coverage = search_test_fetcher.get_coverage_report()
         if not _has_coverage(coverage, "beatmapset_languages"):
@@ -410,7 +416,9 @@ class TestSearchBeatmapsets:
         assert len(results) >= 1
 
     @pytest.mark.asyncio
-    async def test_filter_by_nsfw(self, db_transaction: Any, search_test_fetcher: "SearchTestFixtureFetcher") -> None:
+    async def test_filter_by_nsfw(
+        self, db_transaction: Any, search_test_fetcher: SearchTestFixtureFetcher
+    ) -> None:
         """Test filtering beatmapsets by NSFW status."""
         coverage = search_test_fetcher.get_coverage_report()
         nsfw_data = coverage.get("beatmapset_nsfw", {})
@@ -441,7 +449,9 @@ class TestSearchBeatmapsets:
         assert len(results_sfw) >= 1
 
     @pytest.mark.asyncio
-    async def test_filter_by_status(self, db_transaction: Any, search_test_fetcher: "SearchTestFixtureFetcher") -> None:
+    async def test_filter_by_status(
+        self, db_transaction: Any, search_test_fetcher: SearchTestFixtureFetcher
+    ) -> None:
         """Test filtering beatmapsets by status."""
         coverage = search_test_fetcher.get_coverage_report()
         if not coverage.get("beatmapset_statuses"):
@@ -462,7 +472,9 @@ class TestSearchBeatmapsets:
         assert engine is not None
 
     @pytest.mark.asyncio
-    async def test_search_terms_title(self, db_transaction: Any, search_test_fetcher: "SearchTestFixtureFetcher") -> None:
+    async def test_search_terms_title(
+        self, db_transaction: Any, search_test_fetcher: SearchTestFixtureFetcher
+    ) -> None:
         """Test full-text search by title."""
         coverage = search_test_fetcher.get_coverage_report()
         if not coverage.get("beatmapset_titles"):
@@ -483,7 +495,9 @@ class TestSearchBeatmapsets:
         assert results is not None
 
     @pytest.mark.asyncio
-    async def test_search_terms_artist(self, db_transaction: Any, search_test_fetcher: "SearchTestFixtureFetcher") -> None:
+    async def test_search_terms_artist(
+        self, db_transaction: Any, search_test_fetcher: SearchTestFixtureFetcher
+    ) -> None:
         """Test full-text search by artist."""
         coverage = search_test_fetcher.get_coverage_report()
         if not coverage.get("beatmapset_artists"):
@@ -503,7 +517,9 @@ class TestSearchBeatmapsets:
         assert results is not None
 
     @pytest.mark.asyncio
-    async def test_sort_by_rating_desc(self, db_transaction: Any, search_test_fetcher: "SearchTestFixtureFetcher") -> None:
+    async def test_sort_by_rating_desc(
+        self, db_transaction: Any, search_test_fetcher: SearchTestFixtureFetcher
+    ) -> None:
         """Test sorting beatmapsets by rating descending."""
         coverage = search_test_fetcher.get_coverage_report()
         ratings = coverage.get("beatmapset_ratings", {})
@@ -534,7 +550,9 @@ class TestSearchBeatmapsets:
         assert results is not None
 
     @pytest.mark.asyncio
-    async def test_sort_by_favourite_count_desc(self, db_transaction: Any, search_test_fetcher: "SearchTestFixtureFetcher") -> None:
+    async def test_sort_by_favourite_count_desc(
+        self, db_transaction: Any, search_test_fetcher: SearchTestFixtureFetcher
+    ) -> None:
         """Test sorting beatmapsets by favourite count descending."""
         coverage = search_test_fetcher.get_coverage_report()
         favs = coverage.get("beatmapset_favourite_counts", {})
@@ -574,7 +592,9 @@ class TestSearchBeatmapsets:
 @pytest.mark.integration
 class TestSearchBeatmaps:
     @pytest.mark.asyncio
-    async def test_filter_by_mode(self, db_transaction: Any, search_test_fetcher: "SearchTestFixtureFetcher") -> None:
+    async def test_filter_by_mode(
+        self, db_transaction: Any, search_test_fetcher: SearchTestFixtureFetcher
+    ) -> None:
         """Test filtering beatmaps by game mode."""
         coverage = search_test_fetcher.get_coverage_report()
         if not _has_coverage(coverage, "beatmap_modes"):
@@ -600,7 +620,9 @@ class TestSearchBeatmaps:
         assert results is not None
 
     @pytest.mark.asyncio
-    async def test_filter_by_difficulty(self, db_transaction: Any, search_test_fetcher: "SearchTestFixtureFetcher") -> None:
+    async def test_filter_by_difficulty(
+        self, db_transaction: Any, search_test_fetcher: SearchTestFixtureFetcher
+    ) -> None:
         """Test filtering beatmaps by difficulty rating."""
         coverage = search_test_fetcher.get_coverage_report()
         diffs = coverage.get("beatmap_difficulties", {})
@@ -624,7 +646,9 @@ class TestSearchBeatmaps:
         assert results is not None
 
     @pytest.mark.asyncio
-    async def test_filter_by_playcount(self, db_transaction: Any, search_test_fetcher: "SearchTestFixtureFetcher") -> None:
+    async def test_filter_by_playcount(
+        self, db_transaction: Any, search_test_fetcher: SearchTestFixtureFetcher
+    ) -> None:
         """Test filtering beatmaps by playcount."""
         coverage = search_test_fetcher.get_coverage_report()
         pcs = coverage.get("beatmap_playcounts", {})
@@ -646,7 +670,9 @@ class TestSearchBeatmaps:
         assert results is not None
 
     @pytest.mark.asyncio
-    async def test_search_terms_version(self, db_transaction: Any, search_test_fetcher: "SearchTestFixtureFetcher") -> None:
+    async def test_search_terms_version(
+        self, db_transaction: Any, search_test_fetcher: SearchTestFixtureFetcher
+    ) -> None:
         """Test full-text search by beatmap version."""
         coverage = search_test_fetcher.get_coverage_report()
         if not coverage.get("beatmap_versions"):
@@ -674,7 +700,9 @@ class TestSearchBeatmaps:
 @pytest.mark.integration
 class TestSearchUsers:
     @pytest.mark.asyncio
-    async def test_filter_by_country(self, db_transaction: Any, search_test_fetcher: "SearchTestFixtureFetcher") -> None:
+    async def test_filter_by_country(
+        self, db_transaction: Any, search_test_fetcher: SearchTestFixtureFetcher
+    ) -> None:
         """Test filtering users by country code."""
         coverage = search_test_fetcher.get_coverage_report()
         if not _has_coverage(coverage, "country_codes"):
@@ -699,7 +727,9 @@ class TestSearchUsers:
         assert engine is not None
 
     @pytest.mark.asyncio
-    async def test_filter_by_restricted(self, db_transaction: Any, search_test_fetcher: "SearchTestFixtureFetcher") -> None:
+    async def test_filter_by_restricted(
+        self, db_transaction: Any, search_test_fetcher: SearchTestFixtureFetcher
+    ) -> None:
         """Test filtering users by restricted status."""
         coverage = search_test_fetcher.get_coverage_report()
         restr = coverage.get("restricted_users", {})

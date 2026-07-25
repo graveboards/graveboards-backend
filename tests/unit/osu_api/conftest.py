@@ -1,5 +1,5 @@
-from typing import Any, Generator
-
+from collections.abc import Generator
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -8,7 +8,7 @@ from app.osu_api.client.osu_api_client import OsuAPIClient
 
 
 @pytest.fixture(autouse=True)
-def mock_rate_limit_decorator() -> Generator[None, None, None]:
+def mock_rate_limit_decorator() -> Generator[None]:
     with patch(
         "app.osu_api.client.osu_api_client.rate_limit", lambda *args, **kwargs: lambda func: func
     ):
@@ -16,7 +16,7 @@ def mock_rate_limit_decorator() -> Generator[None, None, None]:
 
 
 @pytest.fixture
-def api_client() -> Generator[tuple[OsuAPIClient, MagicMock], None, None]:
+def api_client() -> Generator[tuple[OsuAPIClient, MagicMock]]:
     from app.oauth import OAuth
 
     mock_redis = AsyncMock()

@@ -251,7 +251,9 @@ def _create_mock_beatmap_scores(beatmap_id: int | None = None, **overrides: Any)
     return mock_data
 
 
-def _create_mock_beatmap_attributes(beatmap_id: int | None = None, **overrides: Any) -> dict[str, Any]:
+def _create_mock_beatmap_attributes(
+    beatmap_id: int | None = None, **overrides: Any
+) -> dict[str, Any]:
     if beatmap_id is None:
         beatmap_id = 100001
     mock_data = {

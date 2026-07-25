@@ -14,6 +14,7 @@ try:
 except ImportError:
     HAS_JSONSCHEMA = False
     ValidationError = Exception
+    validate = lambda *args, **kwargs: None
 
 
 # Beatmap schema
@@ -208,7 +209,6 @@ def validate_fixtures_command(fixtures_path: str = "tests/fixtures/osu") -> int:
                 total_invalid += 1
             else:
                 total_valid += 1
-
 
     return 0 if total_invalid == 0 else 1
 

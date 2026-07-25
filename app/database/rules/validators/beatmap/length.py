@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from app.database.models.beatmap import Beatmap
 from app.database.rules.base import BeatmapRestrictionBase
 from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError

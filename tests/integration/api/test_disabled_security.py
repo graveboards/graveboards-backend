@@ -9,7 +9,6 @@ same role/ownership checks against it that a real request would go through.
 """
 
 from typing import Any
-
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest

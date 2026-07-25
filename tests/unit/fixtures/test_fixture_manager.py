@@ -1,6 +1,5 @@
 import json
 from pathlib import Path
-from typing import Any
 
 import pytest
 
@@ -108,7 +107,9 @@ def mock_score_file(temp_fixture_dir: Path) -> Path:
 
 
 @pytest.fixture
-def fixture_manager(temp_fixture_dir: Path, mock_beatmap_file: Path, mock_user_file: Path) -> FixtureReader:
+def fixture_manager(
+    temp_fixture_dir: Path, mock_beatmap_file: Path, mock_user_file: Path
+) -> FixtureReader:
     """Create a FixtureManager with temporary fixture data."""
     metadata = {
         "targeted": {
@@ -162,7 +163,9 @@ class TestFixtureManager:
         assert manager.fixture_dir == temp_fixture_dir
         assert "targeted" in manager.metadata
 
-    def test_get_beatmaps_by_status(self, fixture_manager: FixtureReader, mock_beatmap_file: Path) -> None:
+    def test_get_beatmaps_by_status(
+        self, fixture_manager: FixtureReader, mock_beatmap_file: Path
+    ) -> None:
         """Test getting beatmaps by status preference."""
         beatmaps = fixture_manager.get_beatmaps(count=1, by_status=["ranked"])
 
@@ -224,7 +227,9 @@ class TestFixtureManager:
         assert len(users) >= 1
         assert users[0]["id"] == 111111
 
-    def test_get_beatmapsets_by_status(self, temp_fixture_dir: Path, mock_beatmapset_file: Path) -> None:
+    def test_get_beatmapsets_by_status(
+        self, temp_fixture_dir: Path, mock_beatmapset_file: Path
+    ) -> None:
         """Test getting beatmapsets by status."""
         metadata = {
             "targeted": {

@@ -1,3 +1,4 @@
+from contextlib import AbstractContextManager
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -73,8 +74,6 @@ REDIS_CONFIGURATION: dict[str, Any]
 OAUTH_CONFIGURATION: dict[str, Any]
 TEST_POSTGRESQL_CONFIGURATION: dict[str, Any]
 TEST_REDIS_CONFIGURATION: dict[str, Any]
-
-from contextlib import AbstractContextManager
 
 def get_security_enabled() -> bool: ...
 def override_security_enabled(enabled: bool) -> AbstractContextManager[None]: ...

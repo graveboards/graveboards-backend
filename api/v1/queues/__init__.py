@@ -26,7 +26,7 @@ def _filter_public_rules(queue_data: dict) -> dict:
 
 @with_authenticated_user_id()
 @api_query(ModelClass.QUEUE, many=True)
-async def search(_caller_user_id: int = None, **kwargs):
+async def search(_caller_user_id: int | None = None, **kwargs):
     db: PostgresqlDB = request.state.db
 
     queues = await db.get_many(
@@ -52,7 +52,7 @@ async def search(_caller_user_id: int = None, **kwargs):
 
 @with_authenticated_user_id()
 @api_query(ModelClass.QUEUE)
-async def get(queue_id: int, _caller_user_id: int = None, **kwargs):
+async def get(queue_id: int, _caller_user_id: int | None = None, **kwargs):
     db: PostgresqlDB = request.state.db
 
     queue = await db.get(Queue, id=queue_id, **kwargs)

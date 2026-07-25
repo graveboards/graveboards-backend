@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 class RestrictionBase(ABC):
-    type: str = ""
+    type_: str = ""
     config_schema: type[BaseModel] | None = None
     supported_versions: set[str] = {"1.0"}
 
@@ -25,8 +25,8 @@ class RestrictionBase(ABC):
     async def check(self, context: ExecutionContext) -> None:
         if not context.config:
             raise RuleViolationError(
-                self.type,
-                f"Missing configuration for rule type '{self.type}'",
+                self.type_,
+                f"Missing configuration for rule type '{self.type_}'",
             )
         await self._check(context)
 

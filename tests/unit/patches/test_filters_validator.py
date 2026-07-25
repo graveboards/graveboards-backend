@@ -239,7 +239,9 @@ class TestFiltersValidator:
 
     def test_validate_filters_oneof_no_match_raises(self) -> None:
         """Test that oneOf with no matching branch raises error."""
-        schema: dict[str, dict[str, object]] = {"properties": {"id": {"oneOf": [{"type": "string"}, {"type": "integer"}]}}}
+        schema: dict[str, dict[str, object]] = {
+            "properties": {"id": {"oneOf": [{"type": "string"}, {"type": "integer"}]}}
+        }
         filters: dict[str, object] = {"id": []}  # List doesn't match either branch
 
         with pytest.raises(DeepObjectValidationError):

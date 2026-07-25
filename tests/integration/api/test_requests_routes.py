@@ -5,7 +5,6 @@ Tests the beatmapset request submission via full HTTP stack.
 """
 
 from typing import Any
-
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -199,7 +198,11 @@ class TestRequestsPostIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_queue_not_found(
-        self, TestClientWithMocks: Any, valid_request_body: dict[str, Any], security_disabled: Any, authenticated_user_id: Any
+        self,
+        TestClientWithMocks: Any,
+        valid_request_body: dict[str, Any],
+        security_disabled: Any,
+        authenticated_user_id: Any,
     ) -> None:
         """Test request submission fails when queue doesn't exist."""
         mock_db = AsyncMock()
@@ -220,7 +223,11 @@ class TestRequestsPostIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_queue_closed(
-        self, TestClientWithMocks: Any, valid_request_body: dict[str, Any], security_disabled: Any, authenticated_user_id: Any
+        self,
+        TestClientWithMocks: Any,
+        valid_request_body: dict[str, Any],
+        security_disabled: Any,
+        authenticated_user_id: Any,
     ) -> None:
         """Test request submission fails when queue is closed."""
         mock_queue = MagicMock()
@@ -244,7 +251,11 @@ class TestRequestsPostIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_duplicate_request(
-        self, TestClientWithMocks: Any, valid_request_body: dict[str, Any], security_disabled: Any, authenticated_user_id: Any
+        self,
+        TestClientWithMocks: Any,
+        valid_request_body: dict[str, Any],
+        security_disabled: Any,
+        authenticated_user_id: Any,
     ) -> None:
         """Test request submission fails when duplicate exists."""
         mock_queue = MagicMock()
@@ -704,7 +715,9 @@ class TestRequestsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_get_request_not_found(self, TestClientWithMocks: Any, admin_user_token: Any) -> None:
+    async def test_get_request_not_found(
+        self, TestClientWithMocks: Any, admin_user_token: Any
+    ) -> None:
         """Test GET /api/v1/requests/{id} returns 404 for non-existent request."""
         from app.database.models import Request
 
@@ -1040,7 +1053,11 @@ class TestRequestsTasksIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_get_all_tasks_empty(
-        self, TestClientWithMocks: Any, admin_user_token: Any, admin_user: MagicMock, authenticated_user_id: Any
+        self,
+        TestClientWithMocks: Any,
+        admin_user_token: Any,
+        admin_user: MagicMock,
+        authenticated_user_id: Any,
     ) -> None:
         """Test GET /api/v1/requests/tasks returns empty list when no tasks exist."""
         mock_rc = AsyncMock()
@@ -1063,7 +1080,11 @@ class TestRequestsTasksIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_get_task_by_hashed_id(
-        self, TestClientWithMocks: Any, admin_user_token: Any, mock_rc_with_task: AsyncMock, authenticated_user_id: Any
+        self,
+        TestClientWithMocks: Any,
+        admin_user_token: Any,
+        mock_rc_with_task: AsyncMock,
+        authenticated_user_id: Any,
     ) -> None:
         """Test GET /api/v1/requests/tasks/{hashed_id} returns specific task."""
 
@@ -1110,7 +1131,9 @@ class TestRequestsTasksIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_non_admin_user_gets_forbidden(self, TestClientWithMocks: Any, authenticated_user_id: Any) -> None:
+    async def test_non_admin_user_gets_forbidden(
+        self, TestClientWithMocks: Any, authenticated_user_id: Any
+    ) -> None:
         """Test that non-admin user gets 403 Forbidden on task endpoints."""
         from app.security import generate_token
 

@@ -25,7 +25,9 @@ class TestSearchTermsScoredCTE:
         """Create mock multipliers."""
         return PatternMultipliers()
 
-    def test_search_terms_scored_ctes_factory_beatmaps(self, mock_search_terms: SearchTermsSchema) -> None:
+    def test_search_terms_scored_ctes_factory_beatmaps(
+        self, mock_search_terms: SearchTermsSchema
+    ) -> None:
         """Test scoring CTE factory for beatmaps scope."""
         ctes = search_terms_scored_ctes_factory(Scope.BEATMAPS, mock_search_terms)
 
@@ -38,7 +40,9 @@ class TestSearchTermsScoredCTE:
             assert hasattr(cte.c, "score_details")
             assert category in SearchableFieldCategory
 
-    def test_search_terms_scored_ctes_factory_beatmapsets(self, mock_search_terms: SearchTermsSchema) -> None:
+    def test_search_terms_scored_ctes_factory_beatmapsets(
+        self, mock_search_terms: SearchTermsSchema
+    ) -> None:
         """Test scoring CTE factory for beatmapsets scope."""
         ctes = search_terms_scored_ctes_factory(Scope.BEATMAPSETS, mock_search_terms)
 
@@ -49,7 +53,9 @@ class TestSearchTermsScoredCTE:
             assert hasattr(cte.c, "score")
             assert category in SearchableFieldCategory
 
-    def test_search_terms_scored_ctes_factory_queues(self, mock_search_terms: SearchTermsSchema) -> None:
+    def test_search_terms_scored_ctes_factory_queues(
+        self, mock_search_terms: SearchTermsSchema
+    ) -> None:
         """Test scoring CTE factory for queues scope."""
         ctes = search_terms_scored_ctes_factory(Scope.QUEUES, mock_search_terms)
 
@@ -59,7 +65,9 @@ class TestSearchTermsScoredCTE:
             assert hasattr(cte.c, "id")
             assert category in SearchableFieldCategory
 
-    def test_search_terms_scored_ctes_factory_requests(self, mock_search_terms: SearchTermsSchema) -> None:
+    def test_search_terms_scored_ctes_factory_requests(
+        self, mock_search_terms: SearchTermsSchema
+    ) -> None:
         """Test scoring CTE factory for requests scope."""
         ctes = search_terms_scored_ctes_factory(Scope.REQUESTS, mock_search_terms)
 

@@ -1,5 +1,4 @@
 from typing import Any
-
 from unittest.mock import MagicMock
 
 import pytest
@@ -13,7 +12,14 @@ from app.database.rules.validators.beatmap.hp_range import HPRangeRestriction
 from app.database.rules.validators.beatmap.od_range import ODRangeRestriction
 
 
-def _make_beatmap(ar: float = 5.0, accuracy: float = 10.0, drain: float = 5.0, cs: float = 4.0, hit_length: int = 180, version: str = "Normal") -> MagicMock:
+def _make_beatmap(
+    ar: float = 5.0,
+    accuracy: float = 10.0,
+    drain: float = 5.0,
+    cs: float = 4.0,
+    hit_length: int = 180,
+    version: str = "Normal",
+) -> MagicMock:
     bm = MagicMock()
     bm.ar = ar
     bm.accuracy = accuracy
@@ -24,7 +30,11 @@ def _make_beatmap(ar: float = 5.0, accuracy: float = 10.0, drain: float = 5.0, c
     return bm
 
 
-def _make_context(beatmaps: list[Any] | None = None, config: dict[str, Any] | None = None, type: str = "beatmap_ar_range") -> ExecutionContext:
+def _make_context(
+    beatmaps: list[Any] | None = None,
+    config: dict[str, Any] | None = None,
+    type: str = "beatmap_ar_range",
+) -> ExecutionContext:
     ctx = ExecutionContext(
         queue_id=1,
         user_id=12345678,

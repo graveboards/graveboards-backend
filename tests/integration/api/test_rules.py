@@ -948,7 +948,9 @@ class TestQueueRulesPatch:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_admin_can_set_rules(self, TestClientWithMocks: Any, admin_user_token: str) -> None:
+    async def test_admin_can_set_rules(
+        self, TestClientWithMocks: Any, admin_user_token: str
+    ) -> None:
         """Test admin can set rules via PATCH."""
         from app.database.models import Queue
 
@@ -1030,7 +1032,9 @@ class TestQueueRulesPatch:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_queue_owner_can_set_rules(self, TestClientWithMocks: Any, admin_user_token: str) -> None:
+    async def test_queue_owner_can_set_rules(
+        self, TestClientWithMocks: Any, admin_user_token: str
+    ) -> None:
         """Test queue owner can set rules via PATCH."""
         from app.database.models import Queue
 
@@ -1111,7 +1115,9 @@ class TestQueueRulesPatch:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_non_admin_cannot_set_rules(self, TestClientWithMocks: Any, admin_user_token: str) -> None:
+    async def test_non_admin_cannot_set_rules(
+        self, TestClientWithMocks: Any, admin_user_token: str
+    ) -> None:
         """Test non-admin non-owner gets 403 when trying to set rules."""
         from app.security import generate_token
 

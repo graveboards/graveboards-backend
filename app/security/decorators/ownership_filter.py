@@ -21,8 +21,8 @@ def ownership_filter(
     resource_user_id_lookup: str = "user_id",
     authorized_user_id_lookup: str = "user",
     bypass_roles: frozenset[RoleName] = frozenset(),
-    override: Callable[..., Awaitable[bool]] = None,
-    override_kwargs: dict[str, Any] = None,
+    override: Callable[..., Awaitable[bool]] | None = None,
+    override_kwargs: dict[str, Any] | None = None,
 ) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Filter handler results to only include items owned by the authenticated user.
 
