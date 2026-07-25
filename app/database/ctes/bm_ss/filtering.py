@@ -1,9 +1,14 @@
 from collections.abc import Iterable
-from typing import Any
 
-from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
+from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.sql import select
-from sqlalchemy.sql.elements import BinaryExpression
+from sqlalchemy.sql.elements import (
+    BinaryExpression,
+    BindParameter,
+    CollectionAggregate,
+    ColumnClause,
+    ColumnElement,
+)
 from sqlalchemy.sql.functions import func
 from sqlalchemy.sql.selectable import CTE
 
@@ -19,8 +24,11 @@ from app.search.enums import Scope
 
 def bm_ss_filtering_cte_factory(
     scope: Scope,
-    target: InstrumentedAttribute | QueryableAttribute[Any],
-    aggregated_conditions: Iterable[BinaryExpression] = None,
+    target: InstrumentedAttribute | ColumnClause,
+    aggregated_conditions: Iterable[
+        BinaryExpression | BindParameter | CollectionAggregate | ColumnElement[bool]
+    ]
+    | None = None,
 ) -> CTE:
     """Build a beatmap-derived filtering CTE for the given scope.
 
@@ -39,9 +47,6 @@ def bm_ss_filtering_cte_factory(
     Returns:
         A CTE yielding (id, target) for downstream filtering logic.
     """
-    if scope is not Scope.BEATMAPS and aggregated_conditions is None:
-        raise ValueError(f"Scope {scope} must be supplied with aggregated_conditions")
-
     field_name = target.key
 
     match scope:
@@ -52,6 +57,9 @@ def bm_ss_filtering_cte_factory(
                 .cte(f"beatmap_beatmap_{field_name}_filter_cte")
             )
         case Scope.BEATMAPSETS:
+            if aggregated_conditions is None:
+                raise ValueError(f"Scope {scope} must be supplied with aggregated_conditions")
+
             return (
                 select(BeatmapsetSnapshot.id.label("id"), func.array_agg(target).label("target"))
                 .select_from(BeatmapsetSnapshot)
@@ -70,6 +78,9 @@ def bm_ss_filtering_cte_factory(
                 .cte(f"beatmapset_beatmap_{field_name}_filter_cte")
             )
         case Scope.QUEUES:
+            if aggregated_conditions is None:
+                raise ValueError(f"Scope {scope} must be supplied with aggregated_conditions")
+
             return (
                 select(Queue.id.label("id"), func.array_agg(target).label("target"))
                 .select_from(Queue)
@@ -90,6 +101,9 @@ def bm_ss_filtering_cte_factory(
                 .cte(f"queue_beatmap_{field_name}_filter_cte")
             )
         case Scope.REQUESTS:
+            if aggregated_conditions is None:
+                raise ValueError(f"Scope {scope} must be supplied with aggregated_conditions")
+
             return (
                 select(Request.id.label("id"), func.array_agg(target).label("target"))
                 .select_from(Request)

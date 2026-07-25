@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 
 def auto_retry(
     max_attempts: int = MAX_ATTEMPTS,
-    retry_exceptions: tuple[type[Exception]] = (TimeoutError,),
+    retry_exceptions: tuple[type[Exception], ...] = (TimeoutError,),
     backoff_strategy: Callable[[int], float] = lambda attempt_no: attempt_no**2,
 ) -> Callable[[Callable[..., Awaitable[Any]]], Callable[..., Awaitable[Any]]]:
     def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:

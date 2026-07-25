@@ -5,10 +5,11 @@ from types import SimpleNamespace
 from typing import ClassVar
 
 from httpx import ConnectTimeout
+from sqlalchemy.ext.asyncio import AsyncSession
 from structlog.contextvars import bind_contextvars, clear_contextvars
 
 from app.database.enums import RequestStatus
-from app.database.models import Request
+from app.database.models import QueueRule, Request
 from app.database.rules.context import ExecutionContext, parse_osu_beatmapset
 from app.database.rules.engine.phase2_runner import Phase2Runner
 from app.database.rules.exceptions import RetryableValidationError
@@ -53,7 +54,7 @@ class RuleValidationService(ScheduledService):
     JOB_NAME: ClassVar[str] = "rule-validation"
     _should_reschedule: ClassVar[bool] = False
 
-    async def _resolve_job_instruction(self, record_id: int) -> JobLoadInstruction | None:
+    async def _resolve_job_instruction(self, job_id: int) -> JobLoadInstruction | None:
         return JobLoadInstruction(execution_time=aware_utcnow())
 
     @auto_retry(retry_exceptions=(ConnectTimeout, RetryableValidationError))
@@ -171,7 +172,9 @@ class RuleValidationService(ScheduledService):
             )
             logger.info(f"Request {request_id} rejected by Phase 2 validators: {rejected}")
 
-    async def _get_active_rules(self, queue_id: int, session: AsyncSession | None) -> list[QueueRule]:
+    async def _get_active_rules(
+        self, queue_id: int, session: AsyncSession | None
+    ) -> list[QueueRule]:
         from app.database.crud.rules import RuleCRUD
 
         crud = RuleCRUD()

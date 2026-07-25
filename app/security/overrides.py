@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast as typing_cast
+from typing import TYPE_CHECKING, Any
 
 from app.database.models import Queue, Request
 from app.database.queue_access import is_queue_owner_or_manager
@@ -11,7 +11,9 @@ if TYPE_CHECKING:
 
 
 async def matching_user_id_override(
-    authenticated_user_id_lookup: str = "user", resource_user_id_lookup: str = "user_id", **kwargs: Any
+    authenticated_user_id_lookup: str = "user",
+    resource_user_id_lookup: str = "user_id",
+    **kwargs: Any,
 ) -> bool:
     """Override authorization when authenticated and resource user IDs match.
 
@@ -94,8 +96,12 @@ async def queue_manager_override(
     authenticated_user_id = get_nested_value(kwargs, authenticated_user_id_lookup)
 
     if not from_request:
-        queue_id = kwargs["queue_id"]
+        if "queue_id" not in kwargs:
+            raise ValueError("queue_id must be provided in kwargs when from_request=False")
+        queue_id: int = kwargs["queue_id"]
     else:
+        if "request_id" not in kwargs:
+            raise ValueError("request_id must be provided in kwargs when from_request=True")
         request = await db.get(Request, id=kwargs["request_id"], _include={"queue": True})
         if request is None:
             return False

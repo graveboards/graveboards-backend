@@ -1,12 +1,12 @@
-import asyncio
 import contextlib
+import inspect
 import json
 import os
 import random
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator, Callable, Coroutine
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import cast as typing_cast
+from typing import Any
 
 import httpx
 
@@ -161,7 +161,7 @@ class FixtureDataFetcher:
     ) -> FetchConfig:
         """Create a FetchConfig for the given category."""
 
-        def id_generator() -> int:
+        def id_generator() -> Coroutine[Any, Any, int]:
             return self._get_random_id(category, avoid_failed=True)
 
         def success_handler(beatmap_id: int, data: dict[str, Any]) -> None:
@@ -292,13 +292,20 @@ class FixtureDataFetcher:
             def path_builder(id: int, r: str = ruleset, _ruleset_path: Path = ruleset_path) -> Path:
                 return _ruleset_path / f"user_{id}_{r}.json"
 
-            def success_handler(beatmap_id: int, data: dict[str, Any], _category: str = category, _ruleset: str = ruleset) -> None:
+            def success_handler(
+                beatmap_id: int,
+                data: dict[str, Any],
+                _category: str = category,
+                _ruleset: str = ruleset,
+            ) -> None:
                 self._seen_ids.add(beatmap_id)
                 self._add_fetched_id(_category, beatmap_id)
                 self._record_success()
                 self.logger.debug(f"Fetched user {beatmap_id} ({_ruleset})")
 
-            async def failure_handler(beatmap_id: int, error: Exception, _category: str = category) -> None:
+            async def failure_handler(
+                beatmap_id: int, error: Exception, _category: str = category
+            ) -> None:
                 await self._add_failed_id(_category, beatmap_id)
 
             config = FetchConfig(
@@ -433,16 +440,20 @@ class FixtureDataFetcher:
             use_top_players = score_type in ["firsts", "recent"]
             score_type_enum = getattr(ScoreType, score_type.upper())
 
-            def api_call_factory(id: int, st: ScoreType = score_type_enum, m: Ruleset = Ruleset.OSU) -> Any:
+            def api_call_factory(
+                id: int, st: ScoreType = score_type_enum, m: Ruleset = Ruleset.OSU
+            ) -> Any:
                 return self.oac.get_user_scores(id, st, mode=m)
 
             def path_builder(id: int, st: str = score_type, _type_path: Path = type_path) -> Path:
                 return _type_path / f"scores_{id}_{st}.json"
 
-            def id_generator(_use_top_players: bool = use_top_players) -> int:
-                return self._get_random_id("users", use_top_players=_use_top_players)
+            async def id_generator(_use_top_players: bool = use_top_players):
+                return await self._get_random_id("users", use_top_players=_use_top_players)
 
-            def success_handler(beatmap_id: int, data: dict[str, Any], _score_type: str = score_type) -> None:
+            def success_handler(
+                beatmap_id: int, data: dict[str, Any], _score_type: str = score_type
+            ) -> None:
                 self._seen_ids.add(beatmap_id)
                 self._add_fetched_id("users", beatmap_id)
                 self._record_success()
@@ -745,11 +756,10 @@ class FixtureDataFetcher:
 
                 except Exception as e:
                     error_detail = f"{type(e).__name__}: {e}"
-                    if hasattr(e, "response") and e.response is not None:
-                        with contextlib.suppress(Exception):
-                            error_detail += (
-                                f" (status={e.response.status_code}, body={e.response.text[:200]})"
-                            )
+                    if hasattr(e, "response"):
+                        if e.response is not None:
+                            with contextlib.suppress(Exception):
+                                error_detail += f" (status={e.response.status_code}, body={e.response.text[:200]})"
                     self.logger.error(f"Error fetching ranking for {ruleset_name}: {error_detail}")
                     break
 
@@ -808,7 +818,7 @@ class FixtureDataFetcher:
         await self.failed_id_store.add_failed(category, id_, subcategory)
 
         if self.id_source and hasattr(self.id_source, "add_failed"):
-            if asyncio.iscoroutinefunction(self.id_source.add_failed):
+            if inspect.iscoroutinefunction(self.id_source.add_failed):
                 await self.id_source.add_failed(category, id_, subcategory)
             else:
                 self.id_source.add_failed(category, id_, subcategory)

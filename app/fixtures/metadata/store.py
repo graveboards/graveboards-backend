@@ -3,8 +3,9 @@
 import json
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import cast as typing_cast
+from typing import Any
 
+from app.fixtures.metadata import PromotedFixtures, Samples, SearchTestCoverage, TargetedMetadata
 from app.observability.logging import get_logger
 
 from ..constants import RULESETS, SCORE_TYPES
@@ -64,22 +65,22 @@ class MetadataStore:
         self._dirty_sections.add(section)
 
     @property
-    def samples(self) -> dict[str, Any]:
+    def samples(self) -> Samples:
         """Access samples section."""
         return self.data.samples
 
     @property
-    def promoted_fixtures(self) -> dict[str, Any]:
+    def promoted_fixtures(self) -> PromotedFixtures:
         """Access promoted fixtures section."""
         return self.data.promoted_fixtures
 
     @property
-    def targeted(self) -> dict[str, Any]:
+    def targeted(self) -> TargetedMetadata:
         """Access targeted metadata section."""
         return self.data.targeted
 
     @property
-    def search_test_coverage(self) -> dict[str, Any]:
+    def search_test_coverage(self) -> SearchTestCoverage:
         """Access search test coverage section."""
         return self.data.search_test_coverage
 

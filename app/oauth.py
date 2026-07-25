@@ -1,8 +1,6 @@
-from typing import Literal, cast as typing_cast
-
 import httpx
 from authlib.integrations.httpx_client import AsyncOAuth2Client
-from authlib.oauth2.auth import OAuth2Token
+from authlib.oauth2.rfc6749.wrappers import OAuth2Token
 
 from .config import OAUTH_CONFIGURATION
 
@@ -20,8 +18,8 @@ class OAuth(AsyncOAuth2Client):
         self.authorize_url = OAUTH_CONFIGURATION["authorize_url"]
         self.token_endpoint = OAUTH_CONFIGURATION["token_endpoint"]
 
-    def create_authorization_url(self, *args: str, **kwargs: str) -> tuple[Literal[b""], str]:
-        return typing_cast(tuple[Literal[b""], str], super().create_authorization_url(self.authorize_url, *args, **kwargs))
+    def create_authorization_url(self, *args: str, **kwargs: str) -> tuple[str, str]:
+        return super().create_authorization_url(self.authorize_url, *args, **kwargs)
 
     async def fetch_token(self, *args: str, **kwargs: str) -> OAuth2Token:
         return await super().fetch_token(self.token_endpoint, *args, **kwargs)

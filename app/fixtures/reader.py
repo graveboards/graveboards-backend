@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
-from typing import Any, cast as typing_cast
+from typing import Any
+from typing import cast as typing_cast
 
 from app.config import PROJECT_ROOT
 from app.observability.logging import get_logger
@@ -14,7 +15,7 @@ logger = get_logger(__name__)
 class FixtureReader:
     """Fixture abstraction layer that decouples tests from raw fixture files."""
 
-    def __init__(self, fixture_dir: Path = None, metadata: dict = None):
+    def __init__(self, fixture_dir: Path | None = None, metadata: dict | None = None):
         self.fixture_dir = fixture_dir or PROJECT_ROOT / "tests" / "fixtures" / "osu"
         self.metadata = metadata or load_metadata()
         self.metadata_manager = FixtureMetadataManager(self.metadata, self.fixture_dir)
@@ -48,10 +49,10 @@ class FixtureReader:
     def get_beatmaps(
         self,
         count: int = 1,
-        by_status: list[str] = None,
-        by_ruleset: str = None,
-        by_difficulty: str = None,
-        by_playcount: str = None,
+        by_status: list[str] | None = None,
+        by_ruleset: str | None = None,
+        by_difficulty: str | None = None,
+        by_playcount: str | None = None,
     ) -> list[dict]:
         """Get beatmap fixtures by preference."""
         preferences = {
@@ -65,7 +66,7 @@ class FixtureReader:
     def get_beatmapsets(
         self,
         count: int = 1,
-        by_status: list[str] = None,
+        by_status: list[str] | None = None,
     ) -> list[dict]:
         """Get beatmapset fixtures by preference."""
         preferences = {"by_status": by_status}
@@ -75,7 +76,7 @@ class FixtureReader:
         self,
         ruleset: str,
         count: int = 1,
-        activity_level: str = None,
+        activity_level: str | None = None,
     ) -> list[dict]:
         """Get user fixtures by preference."""
         preferences = {"activity_level": activity_level}
@@ -85,8 +86,8 @@ class FixtureReader:
         self,
         score_type: str,
         count: int = 1,
-        rank_coverage: list[str] = None,
-        mod_coverage: list[str] = None,
+        rank_coverage: list[str] | None = None,
+        mod_coverage: list[str] | None = None,
     ) -> list[dict]:
         """Get score fixtures by preference."""
         preferences = {
@@ -97,7 +98,7 @@ class FixtureReader:
 
     def get_beatmap_scores(
         self,
-        beatmap_id: int = None,
+        beatmap_id: int | None = None,
         count: int = 1,
     ) -> list[dict]:
         """Get beatmap score fixtures."""
@@ -106,9 +107,9 @@ class FixtureReader:
 
     def get_beatmap_attributes(
         self,
-        beatmap_id: int = None,
-        mods: list[int] = None,
-    ) -> dict:
+        beatmap_id: int | None = None,
+        mods: list[int] | None = None,
+    ) -> dict | None:
         """Get beatmap attribute fixtures."""
         preferences = {"beatmap_id": beatmap_id, "mods": mods}
         fixtures = self._get_fixtures("beatmap_attributes", 1, preferences)
@@ -125,8 +126,8 @@ class FixtureReader:
     def get_queues(
         self,
         count: int = 1,
-        by_visibility: int = None,
-        by_is_open: bool = None,
+        by_visibility: int | None = None,
+        by_is_open: bool | None = None,
     ) -> list[dict]:
         """Get queue fixtures by preference."""
         preferences = {"by_visibility": by_visibility, "by_is_open": by_is_open}
@@ -135,8 +136,8 @@ class FixtureReader:
     def get_requests(
         self,
         count: int = 1,
-        by_status: int = None,
-        by_mv_checked: bool = None,
+        by_status: int | None = None,
+        by_mv_checked: bool | None = None,
     ) -> list[dict]:
         """Get request fixtures by preference."""
         preferences = {"by_status": by_status, "by_mv_checked": by_mv_checked}
@@ -229,13 +230,13 @@ class FixtureReader:
                     return False
 
             elif pref_key == "by_difficulty":
-                fixture_diff = metadata.get("difficulty_rating")
+                fixture_diff: float | int | None = metadata.get("difficulty_rating")
                 if fixture_diff is not None:
                     if not self._in_difficulty_range(fixture_diff, pref_value):
                         return False
 
             elif pref_key == "by_playcount":
-                fixture_playcount = metadata.get("playcount")
+                fixture_playcount: int | None = metadata.get("playcount")
                 if fixture_playcount is not None:
                     if not self._in_playcount_range(fixture_playcount, pref_value):
                         return False
@@ -290,7 +291,7 @@ class FixtureReader:
 
     def _in_list(
         self,
-        value: any,
+        value: Any,
         allowed_values: list,
     ) -> bool:
         """Check if value is in list of allowed values."""
@@ -335,7 +336,7 @@ class FixtureReader:
         self,
         category: str,
         fixture_id: int,
-        prefix: str = None,
+        prefix: str | None = None,
     ) -> dict | None:
         """Get a specific fixture by ID."""
         file_metadata = self.metadata.get("targeted", {}).get(category, {}).get("file_metadata", {})

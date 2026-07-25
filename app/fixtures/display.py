@@ -3,10 +3,12 @@
 from rich.console import Console
 from rich.table import Table
 
+from .fetcher import FixtureDataFetcher
+
 console = Console()
 
 
-def print_coverage_gaps(fetcher: "FixtureFetcher") -> None:
+def print_coverage_gaps(fetcher: FixtureDataFetcher) -> None:
     """Print coverage gaps from metadata.json."""
     console.print("[bold]Coverage status from metadata.json:[/bold]")
 

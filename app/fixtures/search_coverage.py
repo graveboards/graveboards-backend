@@ -9,9 +9,10 @@ adaptive loop that stops as soon as all buckets are satisfied.
 """
 
 import heapq
-from collections.abc import Callable, Coroutine
+from collections.abc import Awaitable, Callable, Coroutine
 from dataclasses import dataclass
-from typing import Any, cast as typing_cast
+from typing import Any
+from typing import cast as typing_cast
 
 # Rarity weights: how hard each bucket is to fill via random fetching.
 # Higher = rarer = should be prioritized when uncovered.
@@ -185,7 +186,7 @@ class CoverageTracker:
             return rarity * 1.0
         return 0.0
 
-    def total_uncovered(self) -> int:
+    def total_uncovered(self) -> tuple[int, int]:
         """Count total number of uncovered bucket entries."""
         count = 0
         rare_uncovered = 0
@@ -525,7 +526,11 @@ def build_actions(fetcher: Any) -> list[FetchAction]:
 
 
 def _make_action(
-    fetcher: Any, name: str, execute: Callable[[], Awaitable[Any]], affected_buckets: list[str], cost: int
+    fetcher: Any,
+    name: str,
+    execute: Callable[[], Awaitable[Any]],
+    affected_buckets: list[str],
+    cost: int,
 ) -> FetchAction:
     """Create a fetch action with the required interface."""
 

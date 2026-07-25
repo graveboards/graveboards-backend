@@ -5,7 +5,6 @@ Provides a simple API for checking and adding failed IDs across categories.
 """
 
 from collections.abc import Iterable
-from typing import cast as typing_cast
 
 from app.redis_client import Namespace, RedisClient
 
@@ -23,7 +22,8 @@ class FailedIdStore:
     def __init__(self, rc: RedisClient):
         self.rc = rc
 
-    def _key(self, category: str, subcategory: str | None = None) -> str:
+    @staticmethod
+    def _key(category: str, subcategory: str | None = None) -> str:
         if category == "users" and subcategory:
             return f"{Namespace.FAILED_IDS}:{subcategory}"
         return f"{Namespace.FAILED_IDS}:{category}"
@@ -31,7 +31,7 @@ class FailedIdStore:
     async def is_failed(self, category: str, id_: int, subcategory: str | None = None) -> bool:
         """Check if an ID has failed in the given category. O(1)."""
         key = self._key(category, subcategory)
-        return bool(await self.rc.sismember(key, id_))
+        return bool(await self.rc.sismember(key, str(id_)))
 
     async def add_failed(self, category: str, id_: int, subcategory: str | None = None) -> None:
         """Add an ID to the failed set for the given category."""

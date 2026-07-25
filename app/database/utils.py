@@ -1,5 +1,6 @@
 from collections.abc import Iterable
-from typing import Any, Union, cast as typing_cast, get_args, get_origin
+from typing import Any, Union, get_args, get_origin
+from typing import cast as typing_cast
 
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm.attributes import InstrumentedAttribute
@@ -14,6 +15,7 @@ from sqlalchemy.sql.elements import (
 )
 from sqlalchemy.sql.functions import func
 
+from app.database.ctes.hashable_cte import HashableCTE
 from app.database.enums import FilterOperator
 from app.exceptions import TypeValidationError
 
@@ -120,7 +122,7 @@ def validate_type(expected_type: Any, value: Any) -> None:
 
 def get_filter_condition(
     filter_operator: FilterOperator,
-    target: InstrumentedAttribute | ColumnClause,
+    target: InstrumentedAttribute | ColumnClause | HashableCTE,
     value: Any,
     is_aggregated: bool = False,
 ) -> BinaryExpression | BindParameter | CollectionAggregate | ColumnElement[bool]:
