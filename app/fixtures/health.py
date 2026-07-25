@@ -6,7 +6,7 @@ including completeness verification, coverage analysis, and gap detection.
 
 import json
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from app.fixtures.constants import RULESETS, SCORE_TYPES
@@ -38,7 +38,7 @@ class FixtureReport:
     coverage_percentage: float
     categories: list[FixtureHealthResult] = field(default_factory=list)
     missing_gaps: list[dict[str, Any]] = field(default_factory=list)
-    generated_at: datetime = field(default_factory=datetime.utcnow)
+    generated_at: datetime = field(default_factory=lambda: datetime.now(tz=UTC))
 
 
 def calculate_fixture_counts() -> dict[str, int]:

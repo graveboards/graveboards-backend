@@ -6,7 +6,7 @@ programmatically without relying on static fixture JSON files.
 Uses factory_boy for deterministic and customizable test data generation.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import factory
@@ -33,8 +33,8 @@ class BeatmapFactory(factory.Factory):
     playcount = LazyAttribute(lambda o: o.id * 100 + 50)
     passcount = LazyAttribute(lambda o: int(o.playcount * 0.3 + (o.id % 100)))
     mode = Sequence(lambda n: n % 4)
-    created_at = LazyAttribute(lambda o: datetime.utcnow().isoformat() + "+00:00")
-    updated_at = LazyAttribute(lambda o: datetime.utcnow().isoformat() + "+00:00")
+    created_at = LazyAttribute(lambda o: datetime.now(tz=UTC).isoformat())
+    updated_at = LazyAttribute(lambda o: datetime.now(tz=UTC).isoformat())
 
 
 def generate_beatmap_data(count: int = 1, **overrides: Any) -> list[dict[str, Any]]:
@@ -42,7 +42,9 @@ def generate_beatmap_data(count: int = 1, **overrides: Any) -> list[dict[str, An
     return [BeatmapFactory.build(**overrides) for _ in range(count)]
 
 
-def generate_user_data(count: int = 1, ruleset: str = "osu", **overrides: Any) -> list[dict[str, Any]]:
+def generate_user_data(
+    count: int = 1, ruleset: str = "osu", **overrides: Any
+) -> list[dict[str, Any]]:
     """Generate user/tester data with optional overrides."""
     data = []
     for i in range(count):
@@ -52,10 +54,7 @@ def generate_user_data(count: int = 1, ruleset: str = "osu", **overrides: Any) -
             "username": f"FactoryUser{user_id}",
             "avatar_url": f"https://example.com/avatar{user_id}.png",
             "country_code": "US",
-            "join_date": (
-                datetime.utcnow().replace(year=2020) + __import__("datetime").timedelta(days=i * 30)
-            ).isoformat()
-            + "+00:00",
+            "join_date": (datetime(2020, 1, 1, tzinfo=UTC) + timedelta(days=i * 30)).isoformat(),
             "is_active": True,
             "statistics": {
                 "pp": float(user_id * 10),
@@ -69,7 +68,9 @@ def generate_user_data(count: int = 1, ruleset: str = "osu", **overrides: Any) -
     return data
 
 
-def generate_score_data(count: int = 1, ruleset: str = "osu", **overrides: Any) -> list[dict[str, Any]]:
+def generate_score_data(
+    count: int = 1, ruleset: str = "osu", **overrides: Any
+) -> list[dict[str, Any]]:
     """Generate score test data with optional overrides."""
     data = []
     for i in range(count):
