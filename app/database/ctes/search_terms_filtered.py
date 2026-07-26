@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, cast
 
 from sqlalchemy.orm import InstrumentedAttribute
 from sqlalchemy.sql import and_, exists, select, true, union_all
@@ -40,7 +40,9 @@ def search_terms_filtered_cte_factory(scope: Scope, search_terms: SearchTermsSch
     Returns:
         A CTE yielding distinct entity IDs that satisfy all terms.
     """
-    categories: list[SearchableFieldCategory] = SCOPE_CATEGORIES_MAPPING[scope]
+    categories: list[SearchableFieldCategory] = cast(
+        list[SearchableFieldCategory], SCOPE_CATEGORIES_MAPPING[scope]
+    )
     terms = search_terms.terms
     field_weights = search_terms.field_weights
     like_operator: Literal["like", "ilike"] = "like" if search_terms.case_sensitive else "ilike"

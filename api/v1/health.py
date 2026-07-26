@@ -89,8 +89,9 @@ async def health_check() -> dict:
     checks["daemon"] = {"status": "ok", "services": {}}
     try:
         daemon = request.state.daemon
+        daemon_services: dict[str, dict[str, str | float | int | dict]] = checks["daemon"]["services"]
         for name, service in daemon._services.items():
-            checks["daemon"]["services"][name] = {
+            daemon_services[name] = {
                 "status": "running" if not service._stop_event.is_set() else "stopped",
             }
     except Exception as e:

@@ -53,7 +53,7 @@ class _C:
             if key not in valid_attrs:
                 raise ValueError(f"{model.__name__} has no attribute '{key}'")
 
-        instance = await _C._resolve_or_create(model_class, kwargs, session)
+        instance: BaseType = await _C._resolve_or_create(model_class, kwargs, session)
         session.add(instance)
         await session.flush()
         await session.refresh(instance)
@@ -111,7 +111,7 @@ class _C:
                 if key not in valid_attrs:
                     raise ValueError(f"{model.__name__} has no attribute '{key}'")
 
-            instance = await _C._resolve_or_create(model_class, item, session)
+            instance: BaseType = await _C._resolve_or_create(model_class, item, session)
             instances.append(instance)
 
         session.add_all(instances)
@@ -164,8 +164,8 @@ class _C:
         model = model_class.value
         mapper = model_class.mapper
         pk_keys = [col.key for col in mapper.primary_key if col.key is not None]
-        column_keys = model_class.column_names
-        relationship_keys = model_class.relationship_names
+        column_keys = typing_cast(set[str], model_class.column_names)
+        relationship_keys = typing_cast(set[str], model_class.relationship_names)
         relationship_loaders = (
             [selectinload(getattr(model, rel.key)) for rel in mapper.relationships]
             if _load_relationships
@@ -192,7 +192,7 @@ class _C:
                 if column.unique:
                     unique_sets.append([column.key])
 
-            for constraint in mapper.local_table.constraints:  # type: ignore[attr-defined]
+            for constraint in mapper.local_table.constraints:
                 if isinstance(constraint, UniqueConstraint):
                     cols = [col.key for col in constraint.columns]
                     unique_sets.append(cols)
@@ -225,19 +225,19 @@ class _C:
         if instance is None:
             instance = model()
 
-            for key in column_keys:
-                if key in data:
-                    setattr(instance, str(key), data[key])
+            for col_key in column_keys:
+                if col_key in data:
+                    setattr(instance, str(col_key), data[col_key])
 
         # Recursively resolve relationships (applies to both create and resolve)
-        for key in relationship_keys:
-            if key not in data:
+        for rel_key in relationship_keys:
+            if rel_key not in data:
                 continue
 
-            relationship = mapper.relationships[key]
+            relationship = mapper.relationships[rel_key]
             related_model = relationship.mapper.class_
             related_model_class = ModelClass(related_model)
-            value = data[key]
+            value = data[rel_key]
 
             # One-to-many / many-to-many
             if relationship.uselist:
@@ -245,7 +245,7 @@ class _C:
 
                 for item in value:
                     if isinstance(item, dict):
-                        obj = await _C._resolve_or_create(
+                        obj: BaseType = await _C._resolve_or_create(
                             related_model_class,
                             item,
                             session,

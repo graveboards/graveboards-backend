@@ -92,7 +92,7 @@ def rate_limit(
             elif obj is not None and hasattr(obj, "rc"):
                 rc = obj.rc
             elif obj is not None and hasattr(obj, "incr") and hasattr(obj, "expire"):
-                rc = obj
+                rc: RedisClient | _HasIncrExpire | None = obj
 
             if rc is None:
                 raise ValueError(

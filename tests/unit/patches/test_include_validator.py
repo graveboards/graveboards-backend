@@ -12,9 +12,7 @@ class TestIncludeValidator:
         schema = {"properties": {"user": {"type": "boolean"}}}
         include = {"user": True}
 
-        result = validate_include(include, schema)
-
-        assert result is None
+        validate_include(include, schema)
 
     def test_validate_include_boolean_false(self) -> None:
         """Test validation of boolean false."""
@@ -34,9 +32,7 @@ class TestIncludeValidator:
         }
         include = {"user": {"profile": True}}
 
-        result = validate_include(include, schema)
-
-        assert result is None
+        validate_include(include, schema)
 
     def test_validate_include_unknown_field_raises(self) -> None:
         """Test that unknown fields raise error."""
@@ -80,9 +76,7 @@ class TestIncludeValidator:
         }
         include = {"user": True}
 
-        result = validate_include(include, schema)
-
-        assert result is None
+        validate_include(include, schema)
 
     def test_validate_include_expected_nested_object_raises(self) -> None:
         """Test that non-object value raises error for object type."""
@@ -117,27 +111,21 @@ class TestIncludeValidator:
         }
         include = {"user": {"profile": {"settings": True}}}
 
-        result = validate_include(include, schema)
-
-        assert result is None
+        validate_include(include, schema)
 
     def test_validate_include_multiple_fields(self) -> None:
         """Test validation of multiple include fields."""
         schema = {"properties": {"user": {"type": "boolean"}, "beatmaps": {"type": "boolean"}}}
         include = {"user": True, "beatmaps": False}
 
-        result = validate_include(include, schema)
-
-        assert result is None
+        validate_include(include, schema)
 
     def test_validate_include_empty_include(self) -> None:
         """Test validation of empty include."""
         schema: dict[str, dict[str, object]] = {"properties": {"user": {"type": "boolean"}}}
         include: dict[str, object] = {}
 
-        result = validate_include(include, schema)
-
-        assert result is None
+        validate_include(include, schema)
 
     def test_validate_include_with_path_tracking(self) -> None:
         """Test that path tracking works correctly."""
@@ -156,18 +144,14 @@ class TestIncludeValidator:
         }
         include = {"user": {"profile": {"settings": True}}}
 
-        result = validate_include(include, schema)
-
-        assert result is None
+        validate_include(include, schema)
 
     def test_validate_include_enum_boolean_restriction(self) -> None:
         """Test validation with enum restriction on boolean."""
         schema = {"properties": {"user": {"type": "boolean", "enum": [True]}}}
         include = {"user": True}
 
-        result = validate_include(include, schema)
-
-        assert result is None
+        validate_include(include, schema)
 
     def test_validate_include_enum_false_restriction_raises(self) -> None:
         """Test that enum False restriction rejects True."""

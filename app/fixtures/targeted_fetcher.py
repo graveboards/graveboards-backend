@@ -666,7 +666,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
 
     async def fetch_targeted(self) -> dict[str, Any]:
         """Execute targeted fetch based on configured parameters."""
-        counts = {
+        counts: dict[str, dict[str, Any]] = {
             "beatmapsets": {},
             "beatmaps": {},
             "users": {},

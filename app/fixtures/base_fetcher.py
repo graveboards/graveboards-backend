@@ -42,7 +42,7 @@ class BaseFetcher:
         self.force_fetch = False
         self.id_source = id_source
         self.fixtures_dir = fixtures_dir
-        self.exclude_ids = set()
+        self.exclude_ids: set[int] = set()
         self.failed_id_store = failed_id_store or FailedIdStore(rc)
         self.id_ranges = id_ranges or ID_RANGES
         self.top_player_ids = load_top_player_ids(fixtures_dir=fixtures_dir)
@@ -223,7 +223,7 @@ class BaseFetcher:
 
         for ruleset_name in rulesets:
             page = 1
-            player_ids = []
+            player_ids: list[int] = []
 
             while len(player_ids) < count_per_ruleset:
                 remaining = count_per_ruleset - len(player_ids)

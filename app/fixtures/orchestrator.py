@@ -13,7 +13,7 @@ Usage:
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from app.fixtures.criteria import (
     FetchCriteria,
@@ -84,6 +84,7 @@ class FixtureOrchestrator:
         if self.criteria.fixtures_dir:
             fixtures_dir = Path(self.criteria.fixtures_dir)
 
+        fetcher: SearchTestFixtureFetcher | TargetedFixtureFetcher | FixtureDataFetcher
         if self.criteria.is_search_test:
             fetcher = SearchTestFixtureFetcher(
                 self.rc,
@@ -202,6 +203,9 @@ class FixtureOrchestrator:
             return FetchReport(criteria=self.criteria.criteria)
 
         targeted = self.criteria.targeted
+        if targeted is None:
+            return FetchReport(criteria=self.criteria.criteria)
+
         if not targeted.rulesets:
             targeted.rulesets = ["osu"]
 
@@ -214,10 +218,11 @@ class FixtureOrchestrator:
                 rulesets=targeted.rulesets,
             )
 
-        async for _ in self.fetcher.fetch_targeted():
+        targeted_fetcher = cast(TargetedFixtureFetcher, self.fetcher)
+        async for _ in targeted_fetcher.fetch_targeted():
             pass
 
-        results = self.fetcher.get_last_results()
+        results = targeted_fetcher.get_last_results()
         return FetchReport(criteria=self.criteria.criteria, results=results)
 
     async def _execute_search_test(self) -> FetchReport:
@@ -237,6 +242,9 @@ class FixtureOrchestrator:
             return FetchReport(criteria=self.criteria.criteria)
 
         st = self.criteria.search_test
+        if st is None:
+            return FetchReport(criteria=self.criteria.criteria)
+
         if st.quick:
             st.min_per_category = 1
             st.max_total = 20
@@ -244,19 +252,20 @@ class FixtureOrchestrator:
         if st.gaps:
             return FetchReport(criteria=self.criteria.criteria)
 
+        search_fetcher = cast(SearchTestFixtureFetcher, self.fetcher)
         if st.full:
-            self.fetcher.logger.info(f"Search test fetch: full mode, max {st.max_total} API calls")
-            coverage = await self.fetcher.ensure_search_test_coverage(
+            search_fetcher.logger.info(f"Search test fetch: full mode, max {st.max_total} API calls")
+            coverage = await search_fetcher.ensure_search_test_coverage(
                 min_per_category=st.min_per_category,
                 max_total=st.max_total,
                 skip_covered=False,
             )
         else:
-            self.fetcher.logger.info(
+            search_fetcher.logger.info(
                 f"Starting search test fetch: max {st.max_total} API calls, "
                 f"min {st.min_per_category} per category (skip covered)"
             )
-            coverage = await self.fetcher.ensure_search_test_coverage(
+            coverage = await search_fetcher.ensure_search_test_coverage(
                 min_per_category=st.min_per_category,
                 max_total=st.max_total,
                 skip_covered=True,

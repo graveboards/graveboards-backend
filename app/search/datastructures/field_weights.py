@@ -196,7 +196,7 @@ class FieldWeights(BaseModel):
         """
         presence, null_presence = struct.unpack_from("!HH", data, offset)
         offset += 4
-        values = defaultdict(dict)
+        values: defaultdict[str, dict[str, int]] = defaultdict(dict)
 
         for flag in FieldWeightFieldFlag:
             assert flag.name is not None
@@ -214,13 +214,13 @@ class FieldWeights(BaseModel):
 # Default field weight configuration used for diff-based serialization.
 _DEFAULTS = FieldWeights().model_dump()
 
+_field_weight_field_flag_map: dict[str, int] = {
+    f"{category_name}__{field}": auto()
+    for category_name, defaults in _DEFAULTS.items()
+    for field in defaults
+}
 FieldWeightFieldFlag = IntFlag(
-    "FieldWeightFieldFlag",
-    {
-        f"{category_name}__{field}": auto()
-        for category_name, defaults in _DEFAULTS.items()
-        for field in defaults
-    },
+    "FieldWeightFieldFlag", _field_weight_field_flag_map
 )
 """
 Bitmask flags representing individual field weights.

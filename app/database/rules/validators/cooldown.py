@@ -41,8 +41,11 @@ class CooldownRestriction(RestrictionBase):
         remaining_hours = int(remaining // 3600)
         remaining_minutes = int((remaining % 3600) // 60)
 
-        queue = await context.db.get(Queue, id=context.queue_id)
-        queue_name = queue.name if queue else f"Queue {context.queue_id}"
+        if context.db is None:
+            queue_name = f"Queue {context.queue_id}"
+        else:
+            queue = await context.db.get(Queue, id=context.queue_id)
+            queue_name = queue.name if queue else f"Queue {context.queue_id}"
 
         time_parts = []
         if remaining_hours > 0:

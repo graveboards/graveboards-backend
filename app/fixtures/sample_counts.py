@@ -89,7 +89,7 @@ def calculate_sample_counts(
             if isinstance(override_value, dict):
                 if key not in result:
                     result[key] = {}
-                target_dict = result[key]
+                target_dict: dict[Any, Any] = result[key]
                 for subkey, subvalue in override_value.items():
                     if subvalue is not None:
                         target_dict[subkey] = subvalue

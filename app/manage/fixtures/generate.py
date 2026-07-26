@@ -81,7 +81,7 @@ async def cmd_generate(
     console.print()
 
     console.print("[bold]Generated queue names:[/bold]")
-    name_counts = {}
+    name_counts: dict[str, int] = {}
     for q in queues:
         name = q["name"]
         name_counts[name] = name_counts.get(name, 0) + 1
@@ -93,7 +93,7 @@ async def cmd_generate(
     console.print()
     console.print("[bold]Generated request statuses:[/bold]")
     status_names = {-1: "rejected", 0: "pending", 1: "accepted"}
-    status_counts = {}
+    status_counts: dict[int, int] = {}
     for r in requests:
         status = r["status"]
         status_counts[status] = status_counts.get(status, 0) + 1

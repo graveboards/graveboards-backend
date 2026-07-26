@@ -290,7 +290,7 @@ def _format_include(obj: BaseType | BaseModel, include_tree: dict) -> dict:
 
     Handles nested objects and collections using ``"__all__"`` for lists.
     """
-    result = {}
+    result: dict[str, bool | dict[str, dict] | dict[str, Any]] = {}
 
     for field, meta in include_tree.items():
         if not meta["__enabled__"]:

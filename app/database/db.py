@@ -80,10 +80,10 @@ class PostgresqlDB(CRUD):
         def on_connect_pool(
             dbapi_connection: Connection, connection_record: ConnectionPoolEntry
         ) -> None:
-            db_pool_size.set(self.engine.pool.size())  # type: ignore[func-returns-value]
-            db_pool_overflow.set(max(0, self.engine.sync_engine.pool.overflow()))  # type: ignore[func-returns-value]
+            db_pool_size.set(self.engine.pool.size())
+            db_pool_overflow.set(max(0, self.engine.sync_engine.pool.overflow()))
 
-        db_pool_size.set(self.engine.pool.size())  # type: ignore[func-returns-value]
+        db_pool_size.set(self.engine.pool.size())
 
     def _setup_query_metrics(self) -> None:
         import time as _time

@@ -28,8 +28,11 @@ class BlacklistRestriction(RestrictionBase):
             return
 
         if scope == "user" and context.user_id in target:
-            queue = await context.db.get(Queue, id=context.queue_id)
-            queue_name = queue.name if queue else f"Queue {context.queue_id}"
+            if context.db is None:
+                queue_name = f"Queue {context.queue_id}"
+            else:
+                queue = await context.db.get(Queue, id=context.queue_id)
+                queue_name = queue.name if queue else f"Queue {context.queue_id}"
 
             raise Forbidden(
                 detail=(

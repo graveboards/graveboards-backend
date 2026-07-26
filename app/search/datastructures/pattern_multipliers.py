@@ -123,10 +123,11 @@ class PatternMultipliers(BaseModel):
 
         for flag in PatternMultiplierFieldFlag:
             if presence & flag:
-                values[flag.name] = struct.unpack_from("!b", data, offset)[0]
+                flag_name = str(flag.name)
+                values[flag_name] = struct.unpack_from("!b", data, offset)[0]
                 offset += 1
             elif null_presence & flag:
-                values[flag.name] = None
+                values[str(flag.name)] = None
 
         return cls(**values), offset
 
@@ -134,9 +135,11 @@ class PatternMultipliers(BaseModel):
 # Default multiplier values used to determine serialization deltas.
 _DEFAULTS = PatternMultipliers().model_dump()
 
+_pattern_multiplier_field_flag_map: dict[str, int] = {
+    field: auto() for field in PatternMultipliers.model_fields
+}
 PatternMultiplierFieldFlag = IntFlag(
-    "PatternMultiplierFieldFlag",
-    {field: auto() for field in PatternMultipliers.model_fields},
+    "PatternMultiplierFieldFlag", _pattern_multiplier_field_flag_map
 )
 """Bitmask flags representing individual pattern multipliers.
 

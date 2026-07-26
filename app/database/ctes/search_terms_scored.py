@@ -1,5 +1,6 @@
 from collections import defaultdict
 from collections.abc import Generator
+from typing import cast
 
 from sqlalchemy.sql import cast, select, union_all
 from sqlalchemy.sql.elements import literal
@@ -100,7 +101,9 @@ def _generate_term_score_stmts(
         Tuples of (category, SELECT) where each SELECT returns id, field, term, pattern,
         score.
     """
-    categories: list[SearchableFieldCategory] = SCOPE_CATEGORIES_MAPPING[scope]
+    categories: list[SearchableFieldCategory] = cast(
+        list[SearchableFieldCategory], SCOPE_CATEGORIES_MAPPING[scope]
+    )
     terms = search_terms.terms
     multipliers = search_terms.pattern_multipliers
     field_weights = search_terms.field_weights

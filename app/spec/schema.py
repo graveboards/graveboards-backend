@@ -16,7 +16,7 @@ def _get_spec_cached() -> dict[str, Any]:
     Returns:
         dict: The OpenAPI specification.
     """
-    return typing_cast(dict[str, Any], load_spec())
+    return load_spec()
 
 
 def get_filter_schema(

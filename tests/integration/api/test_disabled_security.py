@@ -150,7 +150,7 @@ class TestSecurityConfiguration:
         while security is disabled, e.g. to exercise the non-admin code path
         without needing real credentials.
         """
-        from app.config import DEV_USER_ID  # type: ignore[attr-defined]
+        from app.config import DEV_USER_ID
         from app.database.models import Queue
 
         mock_db = AsyncMock()

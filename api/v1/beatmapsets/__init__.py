@@ -85,7 +85,7 @@ async def post(
     try:
         if bm is None:
             bm = BeatmapManagerType(rc, db)
-        changelog = await bm.archive(beatmapset_id)  # type: ignore[union-attr]
+        changelog = await bm.archive(beatmapset_id)
     except httpx.HTTPStatusError as e:
         return (
             problem(

@@ -42,7 +42,8 @@ class SortingOrder(Enum):
         raise ValueError(f"No SortingOrder exists by the name of '{name}'")
 
 
-SortingOrderId = IntEnum("SortingOrderId", {field.name: auto() for field in SortingOrder})
+_sorting_order_id_map: dict[str, int] = {field.name: auto() for field in SortingOrder}
+SortingOrderId = IntEnum("SortingOrderId", _sorting_order_id_map)
 """Compact integer identifiers for ``SortingOrder``.
 
 Used for deterministic binary serialization of sort direction.

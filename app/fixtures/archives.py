@@ -177,13 +177,14 @@ def save_archive_index(index: ArchiveIndex) -> None:
     """Save the archive index to cache."""
     import json
 
-    data = {
+    data: dict[str, Any] = {
         "last_updated": index.last_updated.isoformat() if index.last_updated else None,
         "archives": {},
     }
 
+    archives_data: dict[str, dict[Any, Any]] = data["archives"]
     for filename, archive in index.archives.items():
-        data["archives"][filename] = {
+        archives_data[filename] = {
             "filename": archive.filename,
             "url": archive.url,
             "date": archive.date.isoformat(),
@@ -292,7 +293,7 @@ async def extract_sql_from_archive(
 
     archive_path: Path | None = ARCHIVE_DIR / archive_info.filename
 
-    if not archive_path.exists():
+    if archive_path is not None and not archive_path.exists():
         if allow_download:
             logger.info("Archive not cached locally, downloading...")
             archive_path = await download_archive(archive_info)
@@ -300,6 +301,9 @@ async def extract_sql_from_archive(
                 return None
         else:
             return None
+
+    if archive_path is None:
+        return None
 
     extraction_dir.mkdir(parents=True, exist_ok=True)
 
@@ -327,9 +331,9 @@ def parse_performance_sql(sql_path: Path) -> dict[str, list[dict]]:
     data = {}
 
     try:
-        tables = {}
+        tables: dict[str, list[dict]] = {}
         current_table = None
-        current_rows = []
+        current_rows: list[dict] = []
 
         with open(sql_path) as f:
             for line in f:

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from pydantic import ValidationError
@@ -102,27 +102,32 @@ class TestReadInputValidation:
     def test_sorting_default_order(self) -> None:
         """Test sorting with default order."""
         sorting: Sorting = [{"field": "Beatmapset.id"}]
-        assert sorting[0]["field"] == "Beatmapset.id"
+        sorting_list: list[dict[str, Any]] = list(sorting)
+        assert sorting_list[0]["field"] == "Beatmapset.id"
 
     def test_valid_filter_structure(self) -> None:
         """Test valid filter configuration."""
         filters: Filters = {"id": {"eq": 123}, "user": {"username": {"eq": "test_user"}}}
-        assert filters["id"]["eq"] == 123
+        filters_dict: dict[str, Any] = dict(filters)
+        assert cast(dict, filters_dict["id"])["eq"] == 123
 
     def test_filter_with_null_check(self) -> None:
         """Test filter with null condition."""
         filters: Filters = {"deleted_at": {"is_null": True}}
-        assert filters["deleted_at"]["is_null"] is True
+        filters_dict: dict[str, Any] = dict(filters)
+        assert cast(dict, filters_dict["deleted_at"])["is_null"] is True
 
     def test_valid_include_structure(self) -> None:
         """Test valid include configuration."""
         include: Include = {"user": True, "beatmaps": {"owner_profiles": True}}
-        assert include["user"] is True
+        include_dict: dict[str, Any] = dict(include)
+        assert include_dict["user"] is True
 
     def test_include_with_explicit_false(self) -> None:
         """Test include with explicit false."""
         include: Include = {"user": True, "Beatmapset.user": False}
-        assert include["Beatmapset.user"] is False
+        include_dict: dict[str, Any] = dict(include)
+        assert include_dict["Beatmapset.user"] is False
 
     def test_invalid_include_type(self) -> None:
         """Test include validates boolean or nested object."""
@@ -230,8 +235,11 @@ class TestComplexValidationScenarios:
             "user": {"username": {"regex": "test.*"}, "profile": {"osu_id": {"in": [1, 2, 3]}}},
         }
 
-        assert filters["beatmaps"]["checksum"]["eq"] == "abc123"
-        assert filters["user"]["username"]["regex"] == "test.*"
+        filters_dict: dict[str, Any] = dict(filters)
+        beatmaps: dict[str, Any] = cast(dict, filters_dict["beatmaps"])
+        user: dict[str, Any] = cast(dict, filters_dict["user"])
+        assert beatmaps["checksum"]["eq"] == "abc123"
+        assert user["username"]["regex"] == "test.*"
 
     def test_complex_sorting_with_multiple_fields(self) -> None:
         """Test sorting with multiple fields and orders."""
@@ -242,7 +250,8 @@ class TestComplexValidationScenarios:
         ]
 
         assert len(list(sorting)) == 3
-        assert sorting[0]["order"] == "desc"
+        sorting_list: list[dict[str, Any]] = list(sorting)
+        assert sorting_list[0]["order"] == "desc"
 
     def test_mixed_include_boolean_and_nested(self) -> None:
         """Test include with both boolean and nested structures."""
@@ -252,8 +261,10 @@ class TestComplexValidationScenarios:
             "user.profile": True,
         }
 
-        assert include["user"] is True
-        assert include["beatmaps"]["owner_profiles"] is True
+        include_dict: dict[str, Any] = dict(include)
+        assert include_dict["user"] is True
+        beatmaps_include: dict[str, Any] = cast(dict, include_dict["beatmaps"])
+        assert beatmaps_include["owner_profiles"] is True
 
     def test_filter_with_range_conditions(self) -> None:
         """Test filter with range conditions."""
@@ -262,19 +273,22 @@ class TestComplexValidationScenarios:
             "created_at": {"gte": "2024-01-01T00:00:00+00:00"},
         }
 
-        assert filters["id"]["gt"] == 100
-        assert filters["id"]["lt"] == 200
+        filters_dict: dict[str, Any] = dict(filters)
+        assert cast(dict, filters_dict["id"])["gt"] == 100
+        assert cast(dict, filters_dict["id"])["lt"] == 200
 
     def test_multiple_filter_operators(self) -> None:
         """Test filter with multiple operators on same field."""
         filters: Filters = {"id": {"eq": 123, "neq": 456, "in": [1, 2, 3, 4, 5]}}
 
-        assert filters["id"]["eq"] == 123
-        assert filters["id"]["in"] == [1, 2, 3, 4, 5]
+        filters_dict: dict[str, Any] = dict(filters)
+        assert cast(dict, filters_dict["id"])["eq"] == 123
+        assert cast(dict, filters_dict["id"])["in"] == [1, 2, 3, 4, 5]
 
     def test_null_conditions(self) -> None:
         """Test null condition handling."""
         filters: Filters = {"deleted_at": {"is_null": True}, "scheduled_end": {"is_null": False}}
 
-        assert filters["deleted_at"]["is_null"] is True
-        assert filters["scheduled_end"]["is_null"] is False
+        filters_dict: dict[str, Any] = dict(filters)
+        assert cast(dict, filters_dict["deleted_at"])["is_null"] is True
+        assert cast(dict, filters_dict["scheduled_end"])["is_null"] is False

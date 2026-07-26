@@ -21,7 +21,7 @@ class SearchableFieldCategory(Enum):
     # TODO: Add beatmap tags and beatmapset tags
 
     def __init__(self, name: str, model_class: ModelClass):
-        self._value_ = name
+        self._value_: str = name
         self.model_class = model_class
 
     @classmethod
@@ -67,13 +67,18 @@ class SearchableFieldCategory(Enum):
         raise ValueError(f"No SearchableFieldCategoryFlag exists with model class {model_class}")
 
 
-SearchableFieldCategoryFlag = IntFlag(
-    "SearchableFieldCategoryFlag", {category.name: auto() for category in SearchableFieldCategory}
-)
+class SearchableFieldCategoryFlag(IntFlag):
+    PROFILE = auto()
+    BEATMAP = auto()
+    BEATMAPSET = auto()
+    QUEUE = auto()
+    REQUEST = auto()
+
+
 """Bitmask representation of searchable field categories.
 
 Used for compact encoding of multiple categories within serialized query payloads.
 """
 
-CATEGORY_NAMES = [category.value for category in SearchableFieldCategory]
+CATEGORY_NAMES: list[str] = [category.value for category in SearchableFieldCategory]
 """List of valid external category names."""

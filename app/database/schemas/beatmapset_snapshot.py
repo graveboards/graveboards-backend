@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class BeatmapsetSnapshotSchema(BeatmapsetOsuApiSchema, BaseModelExtra):
     model_config = ConfigDict(from_attributes=True)
 
-    id = None
+    id: int | None = None
     beatmapset_id: int
     snapshot_number: int | None = None
     snapshot_date: datetime | None = None

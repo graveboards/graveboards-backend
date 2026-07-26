@@ -109,7 +109,7 @@ class QueueRequestFixtureGenerator:
     def generate_queues(self, count: int = 10) -> list[dict]:
         """Generate diverse queue fixtures."""
         queues = []
-        used_names = set()
+        used_names: set[str] = set()
 
         for i in range(count):
             queue_id = self._next_queue_id + i

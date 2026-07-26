@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Generator, Sequence
-from typing import Any
+from typing import Any, cast
 
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.engine.row import RowMapping
@@ -119,8 +119,8 @@ class SearchEngine:
                 If schema validation fails for raw inputs.
         """
         self.scope = scope
-        self.model_class: ModelClass = SCOPE_MODEL_MAPPING[scope]
-        self.schema_class = SCOPE_SCHEMA_MAPPING[scope]
+        self.model_class: ModelClass = cast(ModelClass, SCOPE_MODEL_MAPPING[scope])
+        self.schema_class: type[BaseModel] = SCOPE_SCHEMA_MAPPING[scope]
 
         if isinstance(search_terms, SearchTermsSchema) or search_terms is None:
             self.search_terms = search_terms
@@ -535,6 +535,8 @@ class SearchEngine:
             return
 
         def apply_clause(target: ColumnElement[Any]) -> None:
+            if sorting_option.order is None:
+                return
             sorting_clauses.append(sorting_option.order.sort_func(target))
 
         def apply_sorting_cte(

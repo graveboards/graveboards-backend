@@ -77,8 +77,11 @@ class RateLimitRestriction(RestrictionBase):
     async def _limit_error(self, context: ExecutionContext, config: dict) -> Forbidden:
         max_requests = config.get("max_requests")
         period = config.get("period", "week")
-        queue = await context.db.get(Queue, id=context.queue_id)
-        queue_name = queue.name if queue else f"Queue {context.queue_id}"
+        if context.db is None:
+            queue_name = f"Queue {context.queue_id}"
+        else:
+            queue = await context.db.get(Queue, id=context.queue_id)
+            queue_name = queue.name if queue else f"Queue {context.queue_id}"
 
         return Forbidden(
             detail=(

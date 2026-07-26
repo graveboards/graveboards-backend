@@ -21,9 +21,7 @@ class TestSortingValidator:
         }
         sorting = [{"field": "id", "order": "asc"}]
 
-        result = validate_sorting(sorting, schema)
-
-        assert result is None
+        validate_sorting(sorting, schema)
 
     def test_validate_sorting_missing_order_uses_default(self) -> None:
         """Test that missing order defaults to asc."""
@@ -32,9 +30,7 @@ class TestSortingValidator:
         }
         sorting = [{"field": "id"}]
 
-        result = validate_sorting(sorting, schema)
-
-        assert result is None
+        validate_sorting(sorting, schema)
 
     def test_validate_sorting_multiple_entries(self) -> None:
         """Test validation of multiple sorting entries."""
@@ -104,9 +100,7 @@ class TestSortingValidator:
         }
         sorting = cast(list[dict[str, str]], [])
 
-        result = validate_sorting(sorting, schema)
-
-        assert result is None
+        validate_sorting(sorting, schema)
 
     def test_validate_sorting_default_order_asc(self) -> None:
         """Test that default order is asc."""
@@ -116,9 +110,7 @@ class TestSortingValidator:
         sorting = [{"field": "id"}]
 
         # When order is missing, it defaults to "asc"
-        result = validate_sorting(sorting, schema)
-
-        assert result is None
+        validate_sorting(sorting, schema)
 
     def test_validate_sorting_case_sensitive_enum(self) -> None:
         """Test that enum validation is case-sensitive."""

@@ -355,6 +355,8 @@ class Service:
 
         async def runner() -> None:
             retry_policy = spec.retry_policy
+            if retry_policy is None:
+                return
             failures = 0
 
             while True:

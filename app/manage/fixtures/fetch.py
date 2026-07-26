@@ -90,20 +90,25 @@ def _print_dry_run(criteria: FetchCriteria) -> None:
         console.print(f"\n  Estimated API calls: ~{total}")
 
     elif criteria.is_targeted:
+        targeted = criteria.targeted
+        if targeted is None:
+            return
         console.print("  Would fetch targeted fixtures based on:")
-        if criteria.targeted.statuses:
-            console.print(f"    - Statuses: {', '.join(criteria.targeted.statuses)}")
-        if criteria.targeted.difficulty_range:
-            console.print(f"    - Difficulty: {criteria.targeted.difficulty_range}")
-        if criteria.targeted.playcount_range:
-            console.print(f"    - Playcount: {criteria.targeted.playcount_range}")
-        if criteria.targeted.activity_tier:
-            console.print(f"    - Activity: {criteria.targeted.activity_tier}")
-        if criteria.targeted.rulesets:
-            console.print(f"    - Rulesets: {', '.join(criteria.targeted.rulesets)}")
+        if targeted.statuses:
+            console.print(f"    - Statuses: {', '.join(targeted.statuses)}")
+        if targeted.difficulty_range:
+            console.print(f"    - Difficulty: {targeted.difficulty_range}")
+        if targeted.playcount_range:
+            console.print(f"    - Playcount: {targeted.playcount_range}")
+        if targeted.activity_tier:
+            console.print(f"    - Activity: {targeted.activity_tier}")
+        if targeted.rulesets:
+            console.print(f"    - Rulesets: {', '.join(targeted.rulesets)}")
 
     elif criteria.is_search_test:
         st = criteria.search_test
+        if st is None:
+            return
         console.print("  Would fetch search-test coverage:")
         console.print(f"    - Max total API calls: {st.max_total}")
         console.print(f"    - Min per category: {st.min_per_category}")

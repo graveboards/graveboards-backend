@@ -388,7 +388,8 @@ class ModelField(Enum):
         return self.alias is not None
 
 
-ModelFieldId = IntEnum("ModelFieldId", {field.name: auto() for field in ModelField})
+_model_field_id_map: dict[str, int] = {field.name: auto() for field in ModelField}
+ModelFieldId = IntEnum("ModelFieldId", _model_field_id_map)
 """Compact integer identifiers for `ModelField`.
 
 Used during binary serialization to encode fields efficiently and deterministically.

@@ -61,8 +61,8 @@ class FixtureDataFetcher:
         self.failed_id_store = failed_id_store or FailedIdStore(rc)
         self.id_ranges = id_ranges or self.metadata.get("id_ranges", ID_RANGES)
         self.top_player_ids = self.metadata.get("top_player_ids", {r: [] for r in RULESETS})
-        self.last_fetch_results = {}
-        self._current_session_results = {}
+        self.last_fetch_results: dict[str, list[dict]] = {}
+        self._current_session_results: dict[str, list[dict]] = {}
         self._valid_beatmap_ids: list[int] = []
         self._seen_ids: set[int] = set()
         self._consecutive_errors = 0
@@ -311,7 +311,7 @@ class FixtureDataFetcher:
 
             config = FetchConfig(
                 api_call=api_call_factory,
-                id_generator=lambda _category=category: self._get_random_id(_category),
+                id_generator=self._make_id_generator(category),
                 path_builder=path_builder,
                 data_type="user",
                 success_handler=success_handler,
@@ -727,7 +727,7 @@ class FixtureDataFetcher:
 
         for ruleset_name in rulesets:
             page = 1
-            player_ids = []
+            player_ids: list[int] = []
 
             while len(player_ids) < count_per_ruleset:
                 remaining = count_per_ruleset - len(player_ids)

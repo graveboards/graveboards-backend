@@ -298,7 +298,7 @@ class OsuAPIClient(OsuAPIClientBase):
         mode: Ruleset | None = None,
         limit: int | None = None,
         offset: int | None = None,
-    ) -> dict[str, Any]:
+    ) -> list[dict[str, Any]]:
         """Fetch scores for a user from the osu! API.
 
         Args:
@@ -311,7 +311,7 @@ class OsuAPIClient(OsuAPIClientBase):
             offset: Offset for pagination.
 
         Returns:
-            Dictionary containing user scores data.
+            List of score dictionaries.
         """
         url = APIEndpoint.SCORES.format(user=str(user_id), type=score_type.value)
 
@@ -340,7 +340,7 @@ class OsuAPIClient(OsuAPIClientBase):
         response = await self._http_client.get(url, headers=headers)
 
         response.raise_for_status()
-        result: dict[str, Any] = response.json()
+        result: list[dict[str, Any]] = response.json()
         return result
 
     @rate_limit(min_interval=0.5, limit_per_window=120, window_size=60)

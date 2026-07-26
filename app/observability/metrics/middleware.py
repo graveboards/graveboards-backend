@@ -106,7 +106,7 @@ def _reconstruct_nested_params(params: dict) -> dict:
     become one ``include.queue`` object).
     """
     bracket_re = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_]*)((?:\[[^]]+])+)$")
-    nested = {}
+    nested: dict[str, dict[str, Any]] = {}
     flat_keys = []
 
     for key, value in params.items():

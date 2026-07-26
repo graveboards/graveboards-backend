@@ -16,18 +16,14 @@ class TestFiltersValidator:
         }
         filters = {"id": {"eq": 123}}
 
-        result = validate_filters(filters, schema)
-
-        assert result is None
+        validate_filters(filters, schema)
 
     def test_validate_filters_shorthand_value(self) -> None:
         """Test validation of shorthand scalar filter."""
         schema = {"properties": {"id": {"type": "integer"}}}
         filters = {"id": 123}
 
-        result = validate_filters(filters, schema)
-
-        assert result is None
+        validate_filters(filters, schema)
 
     def test_validate_filters_nested_filter(self) -> None:
         """Test validation of nested filter."""
@@ -38,9 +34,7 @@ class TestFiltersValidator:
         }
         filters = {"user": {"username": "test"}}
 
-        result = validate_filters(filters, schema)
-
-        assert result is None
+        validate_filters(filters, schema)
 
     def test_validate_filters_oneof_condition_object(self) -> None:
         """Test validation of oneOf with condition object."""
@@ -56,9 +50,7 @@ class TestFiltersValidator:
         }
         filters = {"id": {"eq": 123}}
 
-        result = validate_filters(filters, schema)
-
-        assert result is None
+        validate_filters(filters, schema)
 
     def test_validate_filters_oneof_shorthand_value(self) -> None:
         """Test validation of oneOf with shorthand value."""
@@ -74,9 +66,7 @@ class TestFiltersValidator:
         }
         filters = {"id": 123}
 
-        result = validate_filters(filters, schema)
-
-        assert result is None
+        validate_filters(filters, schema)
 
     def test_validate_filters_unknown_field_raises(self) -> None:
         """Test that unknown fields raise error."""
@@ -89,7 +79,7 @@ class TestFiltersValidator:
     def test_validate_filters_expected_dict_raises(self) -> None:
         """Test that non-dict filter raises error."""
         schema = {"properties": {"id": {"type": "integer"}}}
-        filters = cast(dict[str, Any], "not_a_dict")
+        filters = cast(dict[str, Any], cast(object, "not_a_dict"))
 
         with pytest.raises(DeepObjectValidationError):
             validate_filters(filters, schema)
@@ -117,18 +107,14 @@ class TestFiltersValidator:
         schema = {"properties": {"tags": {"type": "array", "items": {"type": "string"}}}}
         filters = {"tags": ["tag1", "tag2", "tag3"]}
 
-        result = validate_filters(filters, schema)
-
-        assert result is None
+        validate_filters(filters, schema)
 
     def test_validate_filters_string_format_date_time(self) -> None:
         """Test validation of date-time format."""
         schema = {"properties": {"created_at": {"type": "string", "format": "date-time"}}}
         filters = {"created_at": "2024-01-01T00:00:00+00:00"}
 
-        result = validate_filters(filters, schema)
-
-        assert result is None
+        validate_filters(filters, schema)
 
     def test_validate_filters_string_format_date_time_invalid_raises(self) -> None:
         """Test that invalid date-time format raises error."""
@@ -143,9 +129,7 @@ class TestFiltersValidator:
         schema = {"properties": {"id": {"type": "integer"}}}
         filters = {"id": 123}
 
-        result = validate_filters(filters, schema)
-
-        assert result is None
+        validate_filters(filters, schema)
 
     def test_validate_filters_integer_type_raises_for_float(self) -> None:
         """Test that float raises error for integer type."""
@@ -160,9 +144,7 @@ class TestFiltersValidator:
         schema = {"properties": {"value": {"type": "number"}}}
         filters = {"value": 3.14}
 
-        result = validate_filters(filters, schema)
-
-        assert result is None
+        validate_filters(filters, schema)
 
     def test_validate_filters_boolean_type(self) -> None:
         """Test validation of boolean type."""
@@ -197,18 +179,14 @@ class TestFiltersValidator:
             "created_at": "2024-01-01T00:00:00+00:00",
         }
 
-        result = validate_filters(filters, schema)
-
-        assert result is None
+        validate_filters(filters, schema)
 
     def test_validate_filters_null_value(self) -> None:
         """Test validation of null value."""
         schema = {"properties": {"deleted_at": {"type": "null"}}}
         filters = {"deleted_at": None}
 
-        result = validate_filters(filters, schema)
-
-        assert result is None
+        validate_filters(filters, schema)
 
     def test_validate_filters_invalid_filter_schema_definition_raises(self) -> None:
         """Test that invalid schema raises error."""
@@ -235,9 +213,7 @@ class TestFiltersValidator:
         }
         filters = {"user": {"profile": {"settings": True}}}
 
-        result = validate_filters(filters, schema)
-
-        assert result is None
+        validate_filters(filters, schema)
 
     def test_validate_filters_oneof_no_match_raises(self) -> None:
         """Test that oneOf with no matching branch raises error."""
