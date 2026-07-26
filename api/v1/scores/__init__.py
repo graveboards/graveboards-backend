@@ -58,9 +58,9 @@ async def get(score_id: int, **kwargs):
 
 @api_query(ModelClass.SCORE)
 @role_authorization(RoleName.ADMIN)
-async def post(body: dict, db: PostgresqlDB = None, **kwargs):
+async def post(body: dict, db: PostgresqlDB | None = None, **kwargs):
     if db is None:
-        db: PostgresqlDB = request.state.db
+        db = request.state.db
 
     user_id = body["user_id"]
     beatmap_id = body["beatmap"]["id"]
@@ -99,7 +99,7 @@ async def post(body: dict, db: PostgresqlDB = None, **kwargs):
 
     body = bleach_body(
         body,
-        whitelisted_keys={k for k in ScoreSchema.model_fields if k != "id"},
+        whitelisted_keys=set(k for k in ScoreSchema.model_fields if k != "id"),
         blacklisted_keys={"id"},
     )
     await db.add(Score, **body)

@@ -1,8 +1,8 @@
 import asyncio
 import inspect
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Coroutine
 from functools import wraps
-from typing import Any, ParamSpec, TypeVar, Coroutine
+from typing import Any, ParamSpec, TypeVar
 
 from app.observability.logging import get_logger
 

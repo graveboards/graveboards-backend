@@ -4,9 +4,10 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 from typing import cast as typing_cast
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 if TYPE_CHECKING:
     from app.database import PostgresqlDB
-    from app.database.models.base import AsyncSession
     from app.database.models.beatmap_snapshot import BeatmapSnapshot
     from app.database.models.beatmapset_snapshot import BeatmapsetSnapshot
     from app.database.schemas.sub_schemas import BeatmapOsuApiSchema, BeatmapsetOsuApiSchema

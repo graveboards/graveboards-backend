@@ -23,16 +23,20 @@ class CreatorIdentityProvider(MetadataProvider):
 
         seen_ids: set[int] = set()
         for bm in beatmaps:
-            if bm.owners:
-                for owner in bm.owners:
-                    if isinstance(owner, dict):
-                        owner_id = owner.get("id")
-                        owner_username = owner.get("username")
-                        if owner_id is not None and owner_id not in seen_ids:
-                            seen_ids.add(owner_id)
-                            mapper_ids.append(owner_id)
-                            if owner_username:
-                                mapper_usernames.append(owner_username)
+            if not bm.owners:
+                continue
+
+            for owner in bm.owners:
+                if not isinstance(owner, dict) or not owner:
+                    continue
+
+                owner_id: int | None = owner.get("id")
+                owner_username: str | None = owner.get("username")
+                if owner_id and owner_id not in seen_ids:
+                    seen_ids.add(owner_id)
+                    mapper_ids.append(owner_id)
+                    if owner_username:
+                        mapper_usernames.append(str(owner_username))
 
         return {
             "artist_creator_id": creator_id,

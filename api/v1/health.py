@@ -22,7 +22,7 @@ async def health_check() -> dict:
     """
     start_time = aware_utcnow()
 
-    checks = {
+    checks: dict[str, dict[str, str | float | int | dict]] = {
         "database": {"status": "ok", "response_time_ms": 0, "message": "Connected"},
         "redis": {"status": "ok", "response_time_ms": 0, "message": "Connected"},
         "osu_api": {"status": "ok", "response_time_ms": 0, "message": "Connected"},

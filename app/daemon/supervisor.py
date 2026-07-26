@@ -131,7 +131,8 @@ class ServiceSupervisor(Service):
         """Not supported by ``ServiceSupervisor``.
 
         Raises:
-            RuntimeError"""
+            RuntimeError
+        """
         raise RuntimeError("ServiceSupervisor does not support ephemeral tasks.")
 
     async def _on_stop(self) -> None:

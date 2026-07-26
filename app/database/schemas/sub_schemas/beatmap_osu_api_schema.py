@@ -1,6 +1,6 @@
 from copy import copy
 from datetime import datetime
-from typing import Any, ClassVar, Literal
+from typing import Any, ClassVar, Literal, TypedDict
 
 from pydantic.functional_validators import field_validator, model_validator
 from pydantic.main import BaseModel
@@ -36,12 +36,12 @@ class BeatmapOsuApiSchema(BaseModel):
     max_combo: int
     mode: RulesetLiteral
     mode_int: RulesetIntLiteral
-    owners: list[dict[Literal["id", "username"], int | str]] = None
+    owners: list[Owner] | None = None
     passcount: int
     playcount: int
     ranked: RankedIntLiteral
     status: RankedStatusLiteral
-    top_tag_ids: list[dict[Literal["tag_id"], int]] = None
+    top_tag_ids: list[dict[Literal["tag_id"], int]] | None = None
     total_length: int
     url: str
     user_id: int
@@ -88,3 +88,8 @@ class BeatmapOsuApiSchema(BaseModel):
         if value is None:
             return None
         return [{"tag_id": item["tag_id"]} for item in value]
+
+
+class Owner(TypedDict):
+    id: int
+    username: str

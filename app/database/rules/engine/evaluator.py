@@ -2,11 +2,9 @@ from __future__ import annotations
 
 import logging
 from typing import Any
-from typing import cast as typing_cast
 
 from connexion.exceptions import Forbidden
 
-from app.database.rules.base import RestrictionBase
 from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError
 from app.database.rules.registry import get_validator
@@ -41,8 +39,7 @@ class AtomicRuleNode(RuleNode):
         context.config = self.config
 
         try:
-            validator_cls = typing_cast(type[RestrictionBase], self._validator_cls)
-            validator = validator_cls()
+            validator = self._validator_cls()
             await validator.check(context)
             return True
         except RuleViolationError as e:
@@ -154,6 +151,6 @@ def build_rule_node(
             )
 
         children = [build_rule_node(r) for r in child_rules]
-        return typing_cast(RuleNode, node_cls(children))
+        return node_cls(children)
 
     return AtomicRuleNode(rule_type, config)

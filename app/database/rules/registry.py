@@ -91,12 +91,12 @@ RULE_TIERS: dict[str, int] = {
 }
 
 
-def get_validator(type: str) -> type[RestrictionBase] | None:
-    return RULE_REGISTRY.get(type)
+def get_validator(type_: str) -> type[RestrictionBase] | None:
+    return RULE_REGISTRY.get(type_)
 
 
-def get_validator_tier(type: str) -> int | None:
-    return RULE_TIERS.get(type)
+def get_validator_tier(type_: str) -> int | None:
+    return RULE_TIERS.get(type_)
 
 
 def effective_rule_tier(rule_type: str, config: dict) -> int:
@@ -121,12 +121,12 @@ def effective_rule_tier(rule_type: str, config: dict) -> int:
 
 
 def register_validator(
-    type: str,
+    type_: str,
     validator_class: type[RestrictionBase],
     tier: int = 1,
 ) -> None:
-    RULE_REGISTRY[type] = validator_class
-    RULE_TIERS[type] = tier
+    RULE_REGISTRY[type_] = validator_class
+    RULE_TIERS[type_] = tier
 
 
 def get_validators_for_tier(tier: int) -> dict[str, type[RestrictionBase]]:
@@ -137,8 +137,8 @@ def get_validators_for_tier(tier: int) -> dict[str, type[RestrictionBase]]:
     }
 
 
-def get_supported_versions(type: str) -> set[str] | None:
-    validator_cls = RULE_REGISTRY.get(type)
+def get_supported_versions(type_: str) -> set[str] | None:
+    validator_cls = RULE_REGISTRY.get(type_)
     if validator_cls is None:
         return None
     return validator_cls.supported_versions

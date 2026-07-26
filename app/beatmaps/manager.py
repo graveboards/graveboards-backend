@@ -24,6 +24,7 @@ import asyncio
 import os
 from copy import copy
 from io import BytesIO
+from typing import Any
 from typing import cast as typing_cast
 from zipfile import ZipFile
 
@@ -47,13 +48,12 @@ from app.database.models import (
     User,
 )
 from app.database.schemas import (
-    BeatmapOsuApiSchema,
-    BeatmapsetOsuApiSchema,
     BeatmapsetSnapshotSchema,
     BeatmapSnapshotSchema,
     BeatmapTagSchema,
     ProfileSchema,
 )
+from app.database.schemas.sub_schemas import BeatmapOsuApiSchema, BeatmapsetOsuApiSchema
 from app.exceptions import RedisLockTimeoutError, RestrictedUserError
 from app.observability.logging import get_logger
 from app.osu_api import OsuAPIClient
@@ -142,7 +142,7 @@ class BeatmapManager:
         self.oac = OsuAPIClient(rc)
 
         self._session: AsyncSession | None = None
-        self._changelog = {}
+        self._changelog: dict[str, Any] = {}
 
     async def archive(
         self, beatmapset_id: int, download: bool = True

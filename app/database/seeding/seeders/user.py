@@ -14,7 +14,7 @@ from .base import Seeder
 class UserSeeder(Seeder):
     @session_manager(session_resolver=db_session_resolver, autoflush_allowed=False)
     async def seed(
-        self, queue: asyncio.Queue[SeedEvent | None], session: AsyncSession = None
+        self, queue: asyncio.Queue[SeedEvent | None], session: AsyncSession | None = None
     ) -> None:
         self.session = session
         await queue.put(SeedEvent(SeederTarget.USER, self.progress, self.total))

@@ -28,7 +28,7 @@ def create_connexion_app() -> AsyncApp:
 
     os.makedirs(INSTANCE_DIR, exist_ok=True)
 
-    if DISABLE_SECURITY and ENV is not Env.DEV:
+    if DISABLE_SECURITY and ENV.value != Env.DEV.value:
         raise RuntimeError(
             "DISABLE_SECURITY=True is not allowed outside of dev environments. "
             "Set ENV=dev or remove DISABLE_SECURITY from your environment."
@@ -38,7 +38,7 @@ def create_connexion_app() -> AsyncApp:
         __name__,
         specification_dir=SPEC_DIR,
         lifespan=lifespan,
-        uri_parser_class=OpenAPIURIParserPatched,  # type: ignore
+        uri_parser_class=OpenAPIURIParserPatched,
         validator_map={"parameter": ParameterValidatorPatched},
     )
 

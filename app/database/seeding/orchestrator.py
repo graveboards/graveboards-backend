@@ -49,12 +49,12 @@ class SeederOrchestrator:
                 If invalid ``SeedTarget`` values are provided.
         """
         self.db = db
-        targets = set(targets)
+        seed_targets = {t for t in targets}
 
-        if not targets.issubset(set(SeedTarget)):
+        if not seed_targets.issubset(set(SeedTarget)):
             raise TypeError(f"Invalid target(s) provided, all must be {SeedTarget}")
 
-        self.targets: set[SeederTarget] = self._normalize_cli_targets(targets)
+        self.targets: set[SeederTarget] = self._normalize_cli_targets(seed_targets)
         self.execution_order: list[list[SeederTarget]] = resolve_dependencies(self.targets)
         self.seeders = {
             target: SEEDERS[target](db) for layer in self.execution_order for target in layer

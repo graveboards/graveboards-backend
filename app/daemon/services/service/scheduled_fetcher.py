@@ -93,8 +93,9 @@ class ScheduledFetcherService(ScheduledService, ABC):
             record = await self._get_pending_record(record_id)
             return JobLoadInstruction(last_execution=record.last_fetch)
         except TimeoutError:
+            model_name = self.RECORD_MODEL.__name__ if self.RECORD_MODEL is not None else "Unknown"
             self.logger.warning(
-                f"Timed out while waiting to get pending {self.RECORD_MODEL.__name__} with id %s; scheduling fallback execution",
+                f"Timed out while waiting to get pending {model_name} with id %s; scheduling fallback execution",
                 record_id,
             )
 

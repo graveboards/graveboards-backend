@@ -49,7 +49,7 @@ class BeatmapSeeder(Seeder):
 
     @session_manager(session_resolver=db_session_resolver, autoflush_allowed=False)
     async def seed(
-        self, queue: asyncio.Queue[SeedEvent | None], session: AsyncSession = None
+        self, queue: asyncio.Queue[SeedEvent | None], session: AsyncSession | None = None
     ) -> None:
         self.queue = queue
         self.session = session
@@ -266,12 +266,13 @@ class BeatmapSeeder(Seeder):
                 added_bm_dicts.append(added_bm_dict)
         else:
             # Generate snapshot from beatmap data (following BeatmapManager pattern)
-            added_bm_dict = await self._generate_bm_snapshot(beatmap_entry)
+            added_bm_dict: dict[str, Any] | None = await self._generate_bm_snapshot(beatmap_entry)
             if added_bm_dict:
                 added_bm_dicts.append(added_bm_dict)
 
         self.progress += 1
-        await self.queue.put(SeedEvent(SeederTarget.BEATMAP, self.progress, self.total))
+        if self.queue is not None:
+            await self.queue.put(SeedEvent(SeederTarget.BEATMAP, self.progress, self.total))
 
         return added_bm_dicts
 

@@ -4,7 +4,7 @@ from connexion.problem import problem
 
 from api.decorators import api_query
 from api.utils import build_pydantic_include
-from app.beatmaps import BeatmapManager
+from app.beatmaps import BeatmapManager as BeatmapManagerType
 from app.database import PostgresqlDB
 from app.database.enums import RoleName
 from app.database.models import Beatmapset, ModelClass
@@ -68,7 +68,7 @@ async def post(
     body: dict,
     rc: RedisClient | None = None,
     db: PostgresqlDB | None = None,
-    bm: BeatmapManager | None = None,
+    bm: BeatmapManagerType | None = None,
     **kwargs,
 ):
     if rc is None:
@@ -80,8 +80,8 @@ async def post(
 
     try:
         if bm is None:
-            bm = BeatmapManager(rc, db)
-        changelog = await bm.archive(beatmapset_id)
+            bm = BeatmapManagerType(rc, db)
+        changelog = await bm.archive(beatmapset_id)  # type: ignore[union-attr]
     except httpx.HTTPStatusError as e:
         return (
             problem(
