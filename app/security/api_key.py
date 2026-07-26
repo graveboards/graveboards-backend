@@ -28,7 +28,7 @@ def hash_api_key(key: str) -> str:
     return hashlib.sha256(key.encode()).hexdigest()
 
 
-def validate_api_key(api_key: ApiKey) -> dict[str, int]:
+def validate_api_key(api_key: ApiKey | None) -> dict[str, int]:
     """Validate an API key and return a JWT-style payload.
 
     Args:

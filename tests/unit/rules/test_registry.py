@@ -58,7 +58,7 @@ class TestRegistryAllValidators:
     def test_get_validator_returns_correct_class(self) -> None:
         cls = get_validator("beatmap_duration")
         assert cls is not None
-        assert cls.type == "beatmap_duration"
+        assert getattr(cls, "type", None) == "beatmap_duration"
 
     @pytest.mark.unit
     def test_get_validator_returns_none_for_unknown(self) -> None:

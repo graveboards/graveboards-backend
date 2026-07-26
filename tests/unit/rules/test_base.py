@@ -128,6 +128,7 @@ class TestBeatmapRestrictionBase:
             type = "logging_beatmap_test"
 
             async def check_beatmap(self, context: ExecutionContext) -> None:
+                assert context.beatmapset is not None
                 call_log.append(context.beatmapset.id)
 
         rule = LoggingBeatmapRestriction()

@@ -1,4 +1,4 @@
-from typing import cast as typing_cast
+from typing import Any, cast as typing_cast
 
 from pydantic.main import BaseModel
 
@@ -35,13 +35,13 @@ class OsuClientOAuthToken(BaseModel):
         Returns:
             A validated ``OsuClientOAuthToken`` instance.
         """
-        deserialized_dict = {}
+        deserialized_dict: dict[str, Any] = {}
 
         for key, value in serialized_dict.items():
             match key:
                 case "expires_in" | "expires_at":
-                    value = int(value)
-
-            deserialized_dict[key] = value
+                    deserialized_dict[key] = int(value)
+                case _:
+                    deserialized_dict[key] = value
 
         return typing_cast(OsuClientOAuthToken, cls.model_validate(deserialized_dict))

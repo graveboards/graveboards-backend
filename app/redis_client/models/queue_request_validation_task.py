@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import cast as typing_cast
+from typing import Any, cast as typing_cast
 
 from pydantic.fields import computed_field
 from pydantic.main import BaseModel
@@ -35,15 +35,15 @@ class QueueRequestValidationTask(BaseModel):
 
     @classmethod
     def deserialize(cls, serialized_dict: dict[str, str]) -> QueueRequestValidationTask:
-        deserialized_dict = {}
+        deserialized_dict: dict[str, Any] = {}
 
         for key, value in serialized_dict.items():
             match key:
                 case "request_id" | "queue_id" | "beatmapset_id":
-                    value = int(value)
+                    deserialized_dict[key] = int(value)
                 case "completed_at" | "failed_at":
-                    value = datetime.fromisoformat(value) if value else None
-
-            deserialized_dict[key] = value
+                    deserialized_dict[key] = datetime.fromisoformat(value) if value else None
+                case _:
+                    deserialized_dict[key] = value
 
         return typing_cast(QueueRequestValidationTask, cls.model_validate(deserialized_dict))

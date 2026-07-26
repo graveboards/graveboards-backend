@@ -357,7 +357,10 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
 
             return data
 
-        if isinstance(value, list) and len(value) == 1:
-            return cast(value[0])
+        if isinstance(value, list):
+            if len(value) == 1:
+                return cast(value[0])
+
+            return cast(", ".join(value))
 
         return cast(value)

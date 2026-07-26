@@ -102,7 +102,8 @@ async def test_beatmap_snapshot_with_tags_and_owners(db: PostgresqlDB, db_sessio
 
     assert created.checksum == "bm_snapshot_tags_owners_unique"
 
-    tags = await db.get_many(BeatmapTag, session=db_session)
+    tags_result = await db.get_many(BeatmapTag, session=db_session)
+    tags = tags_result if isinstance(tags_result, list) else tags_result[0]
     tag_names = {t.name for t in tags}
     assert tag_names == {"style/symmetrical", "genre/electronic"}
 

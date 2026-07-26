@@ -1,3 +1,5 @@
+from typing import cast
+
 import pytest
 
 from app.search.compression import compress_query, decompress_query
@@ -35,4 +37,4 @@ def test_decompress_query_rejects_truncated_or_non_query_data() -> None:
         decompress_query(compressed[:-3])
 
     with pytest.raises(TypeError, match="q must be str"):
-        decompress_query(b"not-a-string")
+        decompress_query(cast(str, b"not-a-string"))

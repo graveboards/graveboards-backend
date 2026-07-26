@@ -1,5 +1,8 @@
 import httpx
 from connexion import request
+from starlette.requests import Request
+from typing import Any
+from starlette.responses import Response
 from connexion.problem import problem
 
 from api.decorators import api_query
@@ -20,7 +23,7 @@ __all__ = ["search", "get", "post", "listings", "snapshots", "tags"]
 
 
 @api_query(ModelClass.BEATMAPSET, many=True)
-async def search(**kwargs):
+async def search(request: Request, **kwargs: Any) -> Response:
     db: PostgresqlDB = request.state.db
 
     beatmapsets = await db.get_many(Beatmapset, **kwargs)
@@ -43,7 +46,7 @@ async def search(**kwargs):
 
 
 @api_query(ModelClass.BEATMAPSET)
-async def get(beatmapset_id: int, **kwargs):
+async def get(request: Request, beatmapset_id: int, **kwargs: Any) -> Response:
     db: PostgresqlDB = request.state.db
 
     beatmapset = await db.get(Beatmapset, **kwargs)
@@ -65,12 +68,13 @@ async def get(beatmapset_id: int, **kwargs):
 @api_query(ModelClass.BEATMAPSET)
 @role_authorization(RoleName.ADMIN)
 async def post(
+    request: Request,
     body: dict,
     rc: RedisClient | None = None,
     db: PostgresqlDB | None = None,
     bm: BeatmapManagerType | None = None,
-    **kwargs,
-):
+    **kwargs: Any,
+) -> Response:
     if rc is None:
         rc = request.state.rc
     if db is None:

@@ -100,7 +100,7 @@ def _generate_term_score_stmts(
         Tuples of (category, SELECT) where each SELECT returns id, field, term, pattern,
         score.
     """
-    categories = SCOPE_CATEGORIES_MAPPING[scope]
+    categories: list[SearchableFieldCategory] = SCOPE_CATEGORIES_MAPPING[scope]
     terms = search_terms.terms
     multipliers = search_terms.pattern_multipliers
     field_weights = search_terms.field_weights

@@ -78,7 +78,7 @@ class FixtureOrchestrator:
 
         return report
 
-    def _create_fetcher(self) -> FixtureDataFetcher:
+    def _create_fetcher(self) -> SearchTestFixtureFetcher | TargetedFixtureFetcher | FixtureDataFetcher:
         """Create the appropriate fetcher for the criteria profile."""
         fixtures_dir: Path | None = None
         if self.criteria.fixtures_dir:
@@ -120,6 +120,9 @@ class FixtureOrchestrator:
         """Execute standard/minimal fetch: hit counts for each data type."""
         from app.fixtures.progress import ProgressBar
 
+        if self.fetcher is None:
+            return FetchReport(criteria=self.criteria.criteria)
+
         sample_counts = self.criteria.resolve_sample_counts()
         progress = ProgressBar(no_progress=self.criteria.no_progress)
         progress.start()
@@ -139,6 +142,9 @@ class FixtureOrchestrator:
     async def _execute_concurrent(self, sample_counts: dict, progress: ProgressBar) -> None:
         """Execute fetches concurrently for independent categories."""
         import asyncio
+
+        if self.fetcher is None:
+            return
 
         users = sample_counts.get("users", {})
         scores = sample_counts.get("scores", {})
@@ -192,6 +198,9 @@ class FixtureOrchestrator:
 
     async def _execute_targeted(self) -> FetchReport:
         """Execute targeted fetch: criterion-based coverage."""
+        if self.fetcher is None:
+            return FetchReport(criteria=self.criteria.criteria)
+
         targeted = self.criteria.targeted
         if not targeted.rulesets:
             targeted.rulesets = ["osu"]
@@ -223,6 +232,9 @@ class FixtureOrchestrator:
         The adaptive fetch loop prioritizes rare buckets (NSFW, restricted users)
         over common ones, and actions that fill multiple buckets at once.
         """
+
+        if self.fetcher is None:
+            return FetchReport(criteria=self.criteria.criteria)
 
         st = self.criteria.search_test
         if st.quick:

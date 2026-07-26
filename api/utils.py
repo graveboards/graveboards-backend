@@ -58,8 +58,8 @@ def prime_query_kwargs(kwargs: dict[str, Any], many: bool = False) -> None:
 
 def bleach_body(
     body: dict[str, Any],
-    whitelisted_keys: Iterable[str] = None,
-    blacklisted_keys: Iterable[str] = None,
+    whitelisted_keys: Iterable[str] | None = None,
+    blacklisted_keys: Iterable[str] | None = None,
 ) -> dict[str, Any]:
     """Filter a request body using whitelist and/or blacklist rules.
 

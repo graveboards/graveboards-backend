@@ -167,6 +167,7 @@ async def test_crud_relationship_queue_to_user(db_session: Any) -> None:
     queue = await db.add(Queue, session=db_session, **queue_data)
 
     fetched = await db.get(Queue, session=db_session, id=queue.id)
+    assert fetched is not None
 
     assert fetched.user_id == 54321
 

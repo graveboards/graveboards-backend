@@ -243,9 +243,10 @@ class Service:
                 if on_finish:
                     await self._safe_hook(on_finish)
 
-        task = self._ephemeral_tg.create_task(wrapper(), name=name)
-        self._ephemeral_tasks.add(task)
-        task.add_done_callback(self._ephemeral_tasks.discard)
+        if self._ephemeral_tg is not None:
+            task = self._ephemeral_tg.create_task(wrapper(), name=name)
+            self._ephemeral_tasks.add(task)
+            task.add_done_callback(self._ephemeral_tasks.discard)
 
     async def _main(self) -> None:
         """Default main loop of the service.
@@ -401,7 +402,8 @@ class Service:
 
                     await asyncio.sleep(delay)
 
-        self._tg.create_task(runner(), name=name)
+        if self._tg is not None:
+            self._tg.create_task(runner(), name=name)
 
     async def _safe_hook(
         self, hook: Callable[..., Awaitable[Any] | None], *args: Any, **kwargs: Any

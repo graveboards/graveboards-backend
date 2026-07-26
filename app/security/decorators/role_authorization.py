@@ -82,6 +82,7 @@ def role_authorization(
 
             kwargs["user"] = user_id
             user_roles = await get_user_roles(db, user_id)
+            assert one_of is not None
             user_meets_role_requirements = (
                 all(role in user_roles for role in required_roles)
                 if required_roles
@@ -102,7 +103,7 @@ def role_authorization(
             strip_auth_info(kwargs)
             return await func(*args, **kwargs)
 
-        wrapper.__security_authorization__ = True
+        setattr(wrapper, "__security_authorization__", True)
         return wrapper
 
     return decorator

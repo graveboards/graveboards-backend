@@ -199,6 +199,7 @@ class FieldWeights(BaseModel):
         values = defaultdict(dict)
 
         for flag in FieldWeightFieldFlag:
+            assert flag.name is not None
             category_name, field = flag.name.split("__")
 
             if presence & flag:

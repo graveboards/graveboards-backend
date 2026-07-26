@@ -40,7 +40,7 @@ def search_terms_filtered_cte_factory(scope: Scope, search_terms: SearchTermsSch
     Returns:
         A CTE yielding distinct entity IDs that satisfy all terms.
     """
-    categories = SCOPE_CATEGORIES_MAPPING[scope]
+    categories: list[SearchableFieldCategory] = SCOPE_CATEGORIES_MAPPING[scope]
     terms = search_terms.terms
     field_weights = search_terms.field_weights
     like_operator: Literal["like", "ilike"] = "like" if search_terms.case_sensitive else "ilike"

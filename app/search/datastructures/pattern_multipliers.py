@@ -119,7 +119,7 @@ class PatternMultipliers(BaseModel):
         """
         presence, null_presence = struct.unpack_from("!BB", data, offset)
         offset += 2
-        values = {}
+        values: dict[str, int | None] = {}
 
         for flag in PatternMultiplierFieldFlag:
             if presence & flag:

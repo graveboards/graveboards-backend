@@ -54,7 +54,7 @@ class TestScoreFetcher:
         score = {"beatmap": {"id": 456}}
         service._db.get = AsyncMock(return_value=MagicMock())
 
-        result = await service._score_is_submittable(score)  # type: ignore[misc]
+        result = await service._score_is_submittable(score)
 
         service._db.get.assert_awaited_once_with(Leaderboard, beatmap_id=456)
         assert result is True
@@ -66,6 +66,6 @@ class TestScoreFetcher:
         score = {"beatmap": {"id": 456}}
         service._db.get = AsyncMock(return_value=None)
 
-        result = await service._score_is_submittable(score)  # type: ignore[misc]
+        result = await service._score_is_submittable(score)
 
         assert result is False

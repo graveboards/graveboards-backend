@@ -138,7 +138,10 @@ async def cmd_seed(
             seeder.set_data(seeding_data[seed_target])
             # BeatmapSeeder needs beatmap tags separately
             if seed_target == SeederTarget.BEATMAP and "beatmap_tags" in seeding_data:
-                seeder.set_beatmap_tags(seeding_data["beatmap_tags"])
+                from app.database.seeding.seeders.beatmap import BeatmapSeeder
+
+                if isinstance(seeder, BeatmapSeeder):
+                    seeder.set_beatmap_tags(seeding_data["beatmap_tags"])
 
     # Recalculate totals after data is set
     orchestrator._refresh_totals()

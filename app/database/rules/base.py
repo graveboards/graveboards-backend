@@ -54,7 +54,7 @@ class BeatmapRestrictionBase(RestrictionBase):
     async def _check(self, context: ExecutionContext) -> None:
         if not context.beatmapset:
             raise RuleViolationError(
-                self.type,
+                self.type_,
                 "Beatmapset metadata not available",
             )
         await self.check_beatmap(context)
@@ -67,7 +67,7 @@ class DatabaseRestrictionBase(RestrictionBase):
     async def _check(self, context: ExecutionContext) -> None:
         if not context.osu_client:
             raise RuleViolationError(
-                self.type,
+                self.type_,
                 "This rule requires osu! API access (Phase 2 only)",
             )
         await self.check_database(context)

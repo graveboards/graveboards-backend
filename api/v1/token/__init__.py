@@ -1,5 +1,8 @@
 from authlib.integrations.base_client.errors import OAuthError
 from connexion import request
+from starlette.requests import Request
+from typing import Any
+from starlette.responses import Response
 from jwt.exceptions import ExpiredSignatureError, InvalidIssuerError, InvalidTokenError
 
 from app.database import PostgresqlDB
@@ -16,7 +19,7 @@ from app.utils import aware_utcnow
 __all__ = ["search", "post"]
 
 
-async def search(token: str, rc: RedisClient | None = None):
+async def search(request: Request, token: str, rc: RedisClient | None = None) -> Response:
     if rc is None:
         rc = request.state.rc
 
@@ -38,12 +41,13 @@ async def search(token: str, rc: RedisClient | None = None):
 
 
 async def post(
+    request: Request,
     body: dict,
     oauth: OAuth | None = None,
     osu_api_client: OsuAPIClient | None = None,
     db: PostgresqlDB | None = None,
     rc: RedisClient | None = None,
-):
+) -> Response:
     if rc is None:
         rc = request.state.rc
     if db is None:

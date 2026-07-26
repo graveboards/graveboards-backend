@@ -278,7 +278,7 @@ class TestRegistry:
     def test_rate_limit_registered(self) -> None:
         validator_cls = get_validator("rate_limit")
         assert validator_cls is not None
-        assert validator_cls.type == "rate_limit"
+        assert getattr(validator_cls, "type", None) == "rate_limit"
 
     @pytest.mark.unit
     def test_cooldown_registered(self) -> None:

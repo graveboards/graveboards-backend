@@ -32,6 +32,9 @@ def request_sorting_cte_factory(scope: Scope, sorting_option: SortingOption) -> 
     sorting_order = sorting_option.order
     field_name = sorting_option.field.field_name
 
+    if sorting_order is None:
+        raise ValueError("Sorting order is required for request sorting")
+
     match scope:
         case Scope.BEATMAPS:
             return (

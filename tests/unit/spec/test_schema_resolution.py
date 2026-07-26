@@ -119,7 +119,7 @@ class TestSchemaResolution:
     def test_get_schema_by_suffix_model_enum_required(self, mock_spec: dict[str, Any]) -> None:
         """Test that _get_schema_by_suffix validates model class enum."""
         with pytest.raises(ValueError):
-            _get_schema_by_suffix("Filter", model_class="not_an_enum")
+            _get_schema_by_suffix("Filter", model_class=None)
 
     def test_get_schema_by_suffix_schema_name_must_end_with_suffix(
         self, mock_spec: dict[str, Any]

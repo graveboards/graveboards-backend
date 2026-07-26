@@ -79,7 +79,7 @@ def count_files(path: Path) -> int:
 
 def get_instance_counts() -> dict[str, int | dict[str, int]]:
     """Get fixture counts for instance/ directory."""
-    counts = {}
+    counts: dict[str, int | dict[str, int]] = {}
     for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
         path = FIXTURES_DIR / category
         counts[category] = count_files(path)
@@ -105,7 +105,7 @@ def get_instance_counts() -> dict[str, int | dict[str, int]]:
 
 def get_promoted_counts() -> dict[str, int | dict[str, int]]:
     """Get fixture counts for tests/fixtures/ directory."""
-    counts = {}
+    counts: dict[str, int | dict[str, int]] = {}
     for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
         path = TEST_FIXTURES_DIR / category
         counts[category] = count_files(path)
@@ -165,35 +165,41 @@ def create_instance_table(
     sample_metadata = metadata.get("samples", {})
 
     for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
-        disk_count = instance_counts.get(category, 0)
+        raw_count = instance_counts.get(category, 0)
+        disk_count = raw_count if isinstance(raw_count, int) else 0
         meta_count = sample_metadata.get(category, {}).get("count", 0)
         status = format_status_icon(disk_count, meta_count, is_empty_ok=False)
         table.add_row(category, str(meta_count), str(disk_count), status)
 
-    users_disk = sum(instance_counts.get("users", {}).values())
+    users_counts = instance_counts.get("users", {})
+    users_disk = sum(users_counts.values()) if isinstance(users_counts, dict) else 0
     users_meta = sample_metadata.get("users", {}).get("count", 0)
     users_status = format_status_icon(users_disk, users_meta, is_empty_ok=True)
     table.add_row("[b]users[/b]", str(users_meta), str(users_disk), users_status)
 
     for ruleset in RULESETS:
-        rule_disk = instance_counts.get("users", {}).get(ruleset, 0)
+        users_counts = instance_counts.get("users", {})
+        rule_disk = users_counts.get(ruleset, 0) if isinstance(users_counts, dict) else 0
         rule_meta = sample_metadata.get("users", {}).get("per_ruleset", {}).get(ruleset, 0)
         rule_status = format_status_icon(rule_disk, rule_meta, is_empty_ok=True)
         table.add_row(f"  {ruleset}", str(rule_meta), str(rule_disk), rule_status)
 
-    scores_disk = sum(instance_counts.get("scores", {}).values())
+    scores_counts = instance_counts.get("scores", {})
+    scores_disk = sum(scores_counts.values()) if isinstance(scores_counts, dict) else 0
     scores_meta = sample_metadata.get("scores", {}).get("count", 0)
     scores_status = format_status_icon(scores_disk, scores_meta, is_empty_ok=True)
     table.add_row("[b]scores[/b]", str(scores_meta), str(scores_disk), scores_status)
 
     for score_type in SCORE_TYPES:
-        type_disk = instance_counts.get("scores", {}).get(score_type, 0)
+        scores_counts = instance_counts.get("scores", {})
+        type_disk = scores_counts.get(score_type, 0) if isinstance(scores_counts, dict) else 0
         type_meta = sample_metadata.get("scores", {}).get("per_type", {}).get(score_type, 0)
         type_status = format_status_icon(type_disk, type_meta, is_empty_ok=True)
         table.add_row(f"  {score_type}", str(type_meta), str(type_disk), type_status)
 
     for category in ["queues", "requests"]:
-        disk_count = instance_counts.get(category, 0)
+        raw_count = instance_counts.get(category, 0)
+        disk_count = raw_count if isinstance(raw_count, int) else 0
         meta_count = sample_metadata.get(category, {}).get("count", 0)
         status = format_status_icon(disk_count, meta_count, is_empty_ok=True)
         table.add_row(f"[b]{category}[/b]", str(meta_count), str(disk_count), status)
@@ -216,26 +222,30 @@ def create_promoted_table(
 
     for category in ["beatmaps", "beatmapsets", "beatmap_scores", "beatmap_attributes"]:
         meta_count = promoted_metadata.get(category, {}).get("count", 0)
-        disk_count = promoted_counts.get(category, 0)
+        raw_count = promoted_counts.get(category, 0)
+        disk_count = raw_count if isinstance(raw_count, int) else 0
         status = format_status_icon(disk_count, meta_count, is_empty_ok=True)
         coverage = format_coverage(disk_count, meta_count)
         table.add_row(category, str(meta_count), str(disk_count), status, coverage)
 
     users_meta = promoted_metadata.get("users", {}).get("count", 0)
-    users_disk = sum(promoted_counts.get("users", {}).values())
+    users_counts = promoted_counts.get("users", {})
+    users_disk = sum(users_counts.values()) if isinstance(users_counts, dict) else 0
     users_status = format_status_icon(users_disk, users_meta, is_empty_ok=True)
     users_coverage = format_coverage(users_disk, users_meta)
     table.add_row("[b]users[/b]", str(users_meta), str(users_disk), users_status, users_coverage)
 
     for ruleset in RULESETS:
         rule_meta = promoted_metadata.get("users", {}).get("per_ruleset", {}).get(ruleset, 0)
-        rule_disk = promoted_counts.get("users", {}).get(ruleset, 0)
+        users_counts = promoted_counts.get("users", {})
+        rule_disk = users_counts.get(ruleset, 0) if isinstance(users_counts, dict) else 0
         rule_status = format_status_icon(rule_disk, rule_meta, is_empty_ok=True)
         rule_coverage = format_coverage(rule_disk, rule_meta)
         table.add_row(f"  {ruleset}", str(rule_meta), str(rule_disk), rule_status, rule_coverage)
 
     scores_meta = promoted_metadata.get("scores", {}).get("count", 0)
-    scores_disk = sum(promoted_counts.get("scores", {}).values())
+    scores_counts = promoted_counts.get("scores", {})
+    scores_disk = sum(scores_counts.values()) if isinstance(scores_counts, dict) else 0
     scores_status = format_status_icon(scores_disk, scores_meta, is_empty_ok=True)
     scores_coverage = format_coverage(scores_disk, scores_meta)
     table.add_row(
@@ -244,14 +254,16 @@ def create_promoted_table(
 
     for score_type in SCORE_TYPES:
         type_meta = promoted_metadata.get("scores", {}).get("per_type", {}).get(score_type, 0)
-        type_disk = promoted_counts.get("scores", {}).get(score_type, 0)
+        scores_counts = promoted_counts.get("scores", {})
+        type_disk = scores_counts.get(score_type, 0) if isinstance(scores_counts, dict) else 0
         type_status = format_status_icon(type_disk, type_meta, is_empty_ok=True)
         type_coverage = format_coverage(type_disk, type_meta)
         table.add_row(f"  {score_type}", str(type_meta), str(type_disk), type_status, type_coverage)
 
     for category in ["queues", "requests"]:
         meta_count = promoted_metadata.get(category, {}).get("count", 0)
-        disk_count = promoted_counts.get(category, 0)
+        raw_count = promoted_counts.get(category, 0)
+        disk_count = raw_count if isinstance(raw_count, int) else 0
         status = format_status_icon(disk_count, meta_count, is_empty_ok=True)
         coverage = format_coverage(disk_count, meta_count)
         table.add_row(f"[b]{category}[/b]", str(meta_count), str(disk_count), status, coverage)

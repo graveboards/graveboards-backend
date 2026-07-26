@@ -105,7 +105,7 @@ def ownership_authorization(
             strip_auth_info(kwargs)
             return await func(*args, **kwargs)
 
-        wrapper.__security_authorization__ = True
+        setattr(wrapper, "__security_authorization__", True)
         return wrapper
 
     return decorator

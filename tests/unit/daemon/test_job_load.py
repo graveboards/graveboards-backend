@@ -80,7 +80,7 @@ class TestJobLoadInstruction:
         instruction = JobLoadInstruction()
 
         with pytest.raises(AttributeError):
-            instruction.new_attr = "value"
+            setattr(instruction, "new_attr", "value")
 
     def test_equality_with_same_values(self) -> None:
         """Test equality comparison with same values."""
@@ -166,4 +166,5 @@ class TestJobLoadInstruction:
         utc_time = datetime.now(UTC)
         instruction = JobLoadInstruction(execution_time=utc_time)
 
+        assert instruction.execution_time is not None
         assert instruction.execution_time.tzinfo is not None

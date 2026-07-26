@@ -78,7 +78,7 @@ class TestTaskRetryPolicy:
         policy = TaskRetryPolicy(backoff=backoff)
 
         with pytest.raises(AttributeError):
-            policy.new_attr = "value"
+            setattr(policy, "new_attr", "value")
 
     def test_policy_with_only_max_retries(self) -> None:
         """Test policy with only max_retries set."""
@@ -171,7 +171,7 @@ class TestTaskRetryPolicy:
         policy2 = TaskRetryPolicy(backoff=ConstantBackoff(delay=0.0), max_retries=5)
 
         assert policy1.backoff is None
-        assert policy2.backoff is not None
+        assert isinstance(policy2.backoff, ConstantBackoff)
         assert policy2.backoff.delay == 0.0
 
         assert policy1 != policy2

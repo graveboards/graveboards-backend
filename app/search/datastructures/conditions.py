@@ -90,6 +90,7 @@ class ConditionFieldFlag(IntFlag):
         Returns:
             The lowercase operator name.
         """
+        assert self.name is not None
         return self.name.lower()
 
 
@@ -341,16 +342,41 @@ class Conditions(BaseModel):
         upper_bound = self.lt if self.lt is not None else self.lte
 
         if lower_bound is not None and upper_bound is not None:
-            if self.gt is not None and self.lt is not None and self.gt >= self.lt:
+            numeric = (int, float)
+            if (
+                self.gt is not None
+                and self.lt is not None
+                and isinstance(self.gt, numeric)
+                and isinstance(self.lt, numeric)
+                and self.gt >= self.lt
+            ):
                 raise ValueError(f"Invalid range: gt ({self.gt}) >= lt ({self.lt})")
 
-            if self.gt is not None and self.lte is not None and self.gt >= self.lte:
+            if (
+                self.gt is not None
+                and self.lte is not None
+                and isinstance(self.gt, numeric)
+                and isinstance(self.lte, numeric)
+                and self.gt >= self.lte
+            ):
                 raise ValueError(f"Invalid range: gt ({self.gt}) >= lte ({self.lte})")
 
-            if self.gte is not None and self.lt is not None and self.gte >= self.lt:
+            if (
+                self.gte is not None
+                and self.lt is not None
+                and isinstance(self.gte, numeric)
+                and isinstance(self.lt, numeric)
+                and self.gte >= self.lt
+            ):
                 raise ValueError(f"Invalid range: gte ({self.gte}) >= lt ({self.lt})")
 
-            if self.gte is not None and self.lte is not None and self.gte > self.lte:
+            if (
+                self.gte is not None
+                and self.lte is not None
+                and isinstance(self.gte, numeric)
+                and isinstance(self.lte, numeric)
+                and self.gte > self.lte
+            ):
                 raise ValueError(f"Invalid range: gte ({self.gte}) > lte ({self.lte})")
 
         return self
@@ -362,7 +388,7 @@ class Conditions(BaseModel):
             A list of scalar condition values.
         """
         values = [self.eq, self.neq, self.lt, self.lte, self.gt, self.gte]
-        values += (self.in_ or []) + (self.not_in or [])
+        values += list(self.in_ or []) + list(self.not_in or [])
         return [value for value in values if value is not None]
 
     @staticmethod
@@ -481,7 +507,7 @@ class Conditions(BaseModel):
         """
         presence = struct.unpack_from("!H", data, offset=offset)[0]
         offset += 2
-        values = {}
+        values: dict[str, ConditionValue | list[ConditionValue]] = {}
 
         for flag in ConditionFieldFlag:
             if not presence & flag:

@@ -1,6 +1,6 @@
 from ast import literal_eval
 from datetime import datetime
-from typing import cast as typing_cast
+from typing import Any, cast as typing_cast
 
 from pydantic.fields import computed_field
 from pydantic.main import BaseModel
@@ -56,17 +56,17 @@ class QueueRequestHandlerTask(BaseModel):
         Returns:
             A validated ``QueueRequestHandlerTask`` instance.
         """
-        deserialized_dict = {}
+        deserialized_dict: dict[str, Any] = {}
 
         for key, value in serialized_dict.items():
             match key:
                 case "user_id" | "beatmapset_id" | "queue_id":
-                    value = int(value)
+                    deserialized_dict[key] = int(value)
                 case "mv_checked":
-                    value = literal_eval(value)
+                    deserialized_dict[key] = literal_eval(value)
                 case "completed_at" | "failed_at":
-                    value = datetime.fromisoformat(value) if value else None
-
-            deserialized_dict[key] = value
+                    deserialized_dict[key] = datetime.fromisoformat(value) if value else None
+                case _:
+                    deserialized_dict[key] = value
 
         return typing_cast(QueueRequestHandlerTask, cls.model_validate(deserialized_dict))

@@ -1,4 +1,7 @@
 from connexion import request
+from starlette.requests import Request
+from typing import Any
+from starlette.responses import Response
 from connexion.exceptions import Forbidden
 from structlog.contextvars import get_contextvars
 
@@ -42,7 +45,7 @@ logger = get_logger(__name__)
 
 
 @api_query(ModelClass.REQUEST, many=True)
-async def search(**kwargs):
+async def search(request: Request, **kwargs: Any) -> Response:
     db: PostgresqlDB = request.state.db
 
     requests = await db.get_many(Request, **kwargs)
@@ -68,7 +71,7 @@ async def search(**kwargs):
     resource_model=Request,
 )
 @api_query(ModelClass.REQUEST)
-async def get(request_id: int, **kwargs):
+async def get(request: Request, request_id: int, **kwargs: Any) -> Response:
     db: PostgresqlDB = request.state.db
 
     request_ = await db.get(Request, id=request_id, **kwargs)
@@ -88,7 +91,7 @@ async def get(request_id: int, **kwargs):
 
 
 @with_authenticated_user_id()
-async def post(body: dict, _caller_user_id: int | None = None, **kwargs):
+async def post(request: Request, body: dict, _caller_user_id: int | None = None, **kwargs: Any) -> Response:
     rc: RedisClient = request.state.rc
     db: PostgresqlDB = request.state.db
 
@@ -225,7 +228,7 @@ async def _run_phase1_checks(
 @role_authorization(
     RoleName.ADMIN, override=queue_manager_override, override_kwargs={"from_request": True}
 )
-async def patch(request_id: int, body: dict, **kwargs):
+async def patch(request: Request, request_id: int, body: dict, **kwargs: Any) -> Response:
     db: PostgresqlDB = request.state.db
 
     body = bleach_body(body, whitelisted_keys={"status"})
@@ -249,7 +252,7 @@ async def patch(request_id: int, body: dict, **kwargs):
 @role_authorization(
     RoleName.ADMIN, override=queue_owner_override, override_kwargs={"from_request": True}
 )
-async def delete(request_id: int, **kwargs):
+async def delete(request: Request, request_id: int, **kwargs: Any) -> Response:
     db: PostgresqlDB = request.state.db
     rc: RedisClient = request.state.rc
 

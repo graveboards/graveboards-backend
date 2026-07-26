@@ -90,6 +90,22 @@ class ScoreFetcher(ScheduledFetcherService):
 
             await self._db.add(Score, **score_data)
 
+    async def _score_is_submittable(self, score: dict[str, Any]) -> bool:
+        """Check whether a score can be submitted to a leaderboard.
+
+        Args:
+            score:
+                Score data containing at minimum ``beatmap.id``.
+
+        Returns:
+            ``True`` if an active leaderboard exists for the score's beatmap.
+        """
+        beatmap_id = score.get("beatmap", {}).get("id")
+        if beatmap_id is None:
+            return False
+        leaderboard = await self._db.get(Leaderboard, beatmap_id=beatmap_id)
+        return leaderboard is not None
+
     async def _resolve_leaderboard(self, beatmap_id: int) -> int | None:
         """Get the current leaderboard ID for a beatmap."""
         snapshot = await self._db.get(

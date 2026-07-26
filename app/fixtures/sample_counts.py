@@ -62,7 +62,7 @@ def calculate_sample_counts(
                 base[key] = max(1, int(value * scale))
             elif isinstance(value, dict):
                 for subkey, subvalue in value.items():
-                    base[key][subkey] = max(1, int(subvalue * scale))
+                    value[subkey] = max(1, int(subvalue * scale))
 
     result = {} if has_explicit_categories else base.copy()
 
@@ -89,9 +89,10 @@ def calculate_sample_counts(
             if isinstance(override_value, dict):
                 if key not in result:
                     result[key] = {}
+                target_dict = result[key]
                 for subkey, subvalue in override_value.items():
                     if subvalue is not None:
-                        result[key][subkey] = subvalue
+                        target_dict[subkey] = subvalue
             else:
                 result[key] = override_value
 

@@ -1,4 +1,7 @@
 from connexion import request
+from starlette.requests import Request
+from typing import Any
+from starlette.responses import Response
 
 from api.decorators import api_query, coerce_arguments
 from api.utils import build_pydantic_include
@@ -13,7 +16,7 @@ __all__ = ["search"]
 
 @api_query(ModelClass.SCORE, many=True)
 @coerce_arguments(snapshot_number={"latest": -1})
-async def search(beatmap_id: int, snapshot_number: int = -1, **kwargs):
+async def search(request: Request, beatmap_id: int, snapshot_number: int = -1, **kwargs: Any) -> Response:
     db: PostgresqlDB = request.state.db
 
     if snapshot_number < 0:

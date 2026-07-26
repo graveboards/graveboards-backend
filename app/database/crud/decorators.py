@@ -11,6 +11,7 @@ from typing import (
     ParamSpec,
     Protocol,
     TypeVar,
+    cast,
 )
 from typing import (
     cast as typing_cast,
@@ -248,7 +249,7 @@ def ensure_required(
                     raise ValueError(f"Missing required columns: {', '.join(missing_columns)}")
             else:
                 for i, d in enumerate(args):
-                    missing_columns = get_missing(d)
+                    missing_columns = get_missing(cast(dict, d))
 
                     if missing_columns:
                         raise ValueError(

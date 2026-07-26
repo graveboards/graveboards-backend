@@ -39,9 +39,9 @@ class QueueRequestFixtureGenerator:
 
     def __init__(
         self,
-        user_ids: list[int] = None,
-        beatmapset_ids: list[int] = None,
-        queue_ids: list[int] = None,
+        user_ids: list[int] | None = None,
+        beatmapset_ids: list[int] | None = None,
+        queue_ids: list[int] | None = None,
     ):
         self.user_ids = user_ids or self._load_existing_user_ids()
         self.beatmapset_ids = beatmapset_ids or self._load_existing_beatmapset_ids()

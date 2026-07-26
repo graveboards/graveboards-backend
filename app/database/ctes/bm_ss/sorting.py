@@ -34,6 +34,9 @@ def bm_ss_sorting_cte_factory(scope: Scope, sorting_option: SortingOption) -> CT
     sorting_order = sorting_option.order
     field_name = target.key
 
+    if sorting_order is None:
+        raise ValueError("Sorting order is required for beatmap sorting")
+
     match scope:
         case Scope.BEATMAPS:
             return (

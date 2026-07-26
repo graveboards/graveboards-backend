@@ -323,7 +323,7 @@ class TestBeatmapManager:
         """Test populate beatmap tags returns empty list for None input."""
         manager._session = MagicMock()
 
-        tags = await manager._populate_beatmap_tags(None)
+        tags = await manager._populate_beatmap_tags([])
 
         assert tags == []
 

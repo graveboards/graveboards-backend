@@ -1,4 +1,7 @@
 from connexion import request
+from starlette.requests import Request
+from typing import Any
+from starlette.responses import Response
 
 from api.decorators import api_query, coerce_arguments
 from api.utils import bleach_body, build_pydantic_include
@@ -15,7 +18,7 @@ __all__ = ["search", "post", "patch"]
 
 @api_query(ModelClass.LEADERBOARD)
 @coerce_arguments(snapshot_number={"latest": -1})
-async def search(beatmap_id: int, snapshot_number: int = -1, **kwargs):
+async def search(request: Request, beatmap_id: int, snapshot_number: int = -1, **kwargs: Any) -> Response:
     db: PostgresqlDB = request.state.db
 
     if snapshot_number < 0:
@@ -61,7 +64,7 @@ async def search(beatmap_id: int, snapshot_number: int = -1, **kwargs):
 
 @coerce_arguments(snapshot_number={"latest": -1})
 @role_authorization(RoleName.ADMIN)
-async def post(body: dict, beatmap_id: int, snapshot_number: int = -1, **kwargs):
+async def post(request: Request, body: dict, beatmap_id: int, snapshot_number: int = -1, **kwargs: Any) -> Response:
     db: PostgresqlDB = request.state.db
 
     if snapshot_number < 0:
@@ -99,7 +102,7 @@ async def post(body: dict, beatmap_id: int, snapshot_number: int = -1, **kwargs)
 
 @coerce_arguments(snapshot_number={"latest": -1})
 @role_authorization(RoleName.ADMIN)
-async def patch(body: dict, beatmap_id: int, snapshot_number: int = -1, **kwargs):
+async def patch(request: Request, body: dict, beatmap_id: int, snapshot_number: int = -1, **kwargs: Any) -> Response:
     db: PostgresqlDB = request.state.db
 
     if snapshot_number < 0:

@@ -3,7 +3,7 @@ import inspect
 from collections.abc import Awaitable, Callable
 from datetime import timedelta
 from functools import wraps
-from typing import ParamSpec, Protocol, TypeVar, runtime_checkable
+from typing import Any, ParamSpec, Protocol, TypeVar, runtime_checkable
 
 from app.exceptions import RateLimitExceededError
 from app.observability.logging import get_logger
@@ -32,10 +32,12 @@ class _HasRedisClient(Protocol):
 
 @runtime_checkable
 class _HasIncrExpire(Protocol):
-    """Protocol for Redis-like objects with async incr and expire methods."""
+    """Protocol for Redis-like objects with async incr, expire, get, and set methods."""
 
     async def incr(self, name: str) -> int: ...
     async def expire(self, name: str, time: int) -> bool: ...
+    async def get(self, name: str) -> Any: ...
+    async def set(self, name: str, value: str, ex: int | None = None) -> Any: ...
 
 
 def rate_limit(
@@ -83,7 +85,7 @@ def rate_limit(
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             obj = args[0] if args else None
-            rc: RedisClient | object | None = None
+            rc: RedisClient | _HasIncrExpire | None = None
 
             if isinstance(obj, RedisClient):
                 rc = obj

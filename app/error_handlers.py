@@ -27,7 +27,11 @@ def _track_error(request: ConnexionRequest, status_code: int, error_type: str) -
 
 def forbidden(request: ConnexionRequest, exc: Exception | Forbidden) -> ConnexionResponse:
     _track_error(request, 403, "forbidden")
-    return problem(status=403, title="Forbidden", detail=exc.detail, type="about:blank")
+    if isinstance(exc, Forbidden):
+        detail = exc.detail
+    else:
+        detail = str(exc)
+    return problem(status=403, title="Forbidden", detail=detail, type="about:blank")
 
 
 def bad_request(request: ConnexionRequest, exc: Exception | BadRequestProblem) -> ConnexionResponse:

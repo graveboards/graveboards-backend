@@ -88,7 +88,7 @@ def populate_shallow_refs(openapi_spec: dict) -> None:
             title = prop.get("title")
 
             # Shallow
-            if is_shallow(title):
+            if isinstance(title, str) and is_shallow(title):
                 base_title = title[:-7]
 
                 if base_title in stack:
@@ -199,11 +199,17 @@ def _propagate_to_parameters(openapi_spec: dict, schemas: dict) -> None:
             continue
 
         # Path-level parameters shared across operations
-        fix_params(path_item.get("parameters"))
+        path_params = path_item.get("parameters")
+
+        if isinstance(path_params, list):
+            fix_params(path_params)
 
         # Operation-level parameters
         for method in http_methods:
             operation = path_item.get(method)
 
             if isinstance(operation, dict):
-                fix_params(operation.get("parameters"))
+                op_params = operation.get("parameters")
+
+                if isinstance(op_params, list):
+                    fix_params(op_params)

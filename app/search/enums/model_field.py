@@ -344,7 +344,7 @@ class ModelField(Enum):
         field_name: str,
         model_class: ModelClass,
         target: InstrumentedAttribute | ColumnClause,
-        alias: str = None,
+        alias: str | None = None,
     ):
         self._value_ = f"{model_class.value.__name__}.{field_name}"
         self.field_name = field_name

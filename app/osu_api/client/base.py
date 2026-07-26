@@ -117,6 +117,7 @@ class OsuAPIClientBase:
 
             await self.refresh_token()
 
+        assert self._token is not None
         return self._token.access_token
 
     async def refresh_token(self) -> None:

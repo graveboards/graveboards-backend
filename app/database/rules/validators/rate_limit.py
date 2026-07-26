@@ -95,6 +95,9 @@ class RateLimitRestriction(RestrictionBase):
         if not self._applies(config, context.user_id):
             return
 
+        if context.redis is None:
+            return
+
         max_requests = config.get("max_requests")
         redis_key = self._redis_key(context, config)
 
@@ -106,6 +109,9 @@ class RateLimitRestriction(RestrictionBase):
 
     async def reserve(self, context: ExecutionContext, config: dict) -> str | None:
         if not self._applies(config, context.user_id):
+            return None
+
+        if context.redis is None:
             return None
 
         max_requests = config.get("max_requests")
@@ -123,4 +129,6 @@ class RateLimitRestriction(RestrictionBase):
         return redis_key
 
     async def rollback(self, context: ExecutionContext, token: str) -> None:
+        if context.redis is None:
+            return
         await context.redis.decr(token)

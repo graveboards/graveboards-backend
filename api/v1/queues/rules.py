@@ -1,4 +1,7 @@
 from connexion import request
+from starlette.requests import Request
+from typing import Any
+from starlette.responses import Response
 
 from app.database import PostgresqlDB
 from app.database.crud.rules import RuleCRUD
@@ -20,7 +23,7 @@ async def _can_view_private_rules(
 
 
 @with_authenticated_user_id()
-async def search(queue_id: int, _caller_user_id: int | None = None, **kwargs):
+async def search(request: Request, queue_id: int, _caller_user_id: int | None = None, **kwargs: Any) -> Response:
     """List all rules for a queue.
 
     Args:
@@ -54,7 +57,7 @@ async def search(queue_id: int, _caller_user_id: int | None = None, **kwargs):
 
 
 @with_authenticated_user_id()
-async def get(queue_id: int, rule_id: int, _caller_user_id: int | None = None, **kwargs):
+async def get(request: Request, queue_id: int, rule_id: int, _caller_user_id: int | None = None, **kwargs: Any) -> Response:
     """Get a single rule by ID.
 
     Args:
@@ -87,7 +90,7 @@ async def get(queue_id: int, rule_id: int, _caller_user_id: int | None = None, *
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def post(queue_id: int, body: dict, **kwargs):
+async def post(request: Request, queue_id: int, body: dict, **kwargs: Any) -> Response:
     """Add a single rule to a queue.
 
     Args:
@@ -124,7 +127,7 @@ async def post(queue_id: int, body: dict, **kwargs):
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def patch(queue_id: int, rule_id: int, body: dict, **kwargs):
+async def patch(request: Request, queue_id: int, rule_id: int, body: dict, **kwargs: Any) -> Response:
     """Update a single rule.
 
     Args:
@@ -165,7 +168,7 @@ async def patch(queue_id: int, rule_id: int, body: dict, **kwargs):
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def delete(queue_id: int, rule_id: int, **kwargs):
+async def delete(request: Request, queue_id: int, rule_id: int, **kwargs: Any) -> Response:
     """Remove a single rule from a queue.
 
     Args:
@@ -195,7 +198,7 @@ async def delete(queue_id: int, rule_id: int, **kwargs):
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def put(queue_id: int, body: dict, **kwargs):
+async def put(request: Request, queue_id: int, body: dict, **kwargs: Any) -> Response:
     """Replace all rules for a queue.
 
     Args:

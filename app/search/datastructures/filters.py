@@ -134,7 +134,7 @@ class FieldFilters(RootModel):
 
                 try:
                     relationship = model_class.mapper.relationships[field_name]
-                    related_model = relationship.mapper.class_  # type: ignore[attr-defined]
+                    related_model = relationship.mapper.class_
                     related_model_class = ModelClass(related_model)
                 except (KeyError, ValueError) as e:
                     raise FieldNotSupportedError(model_class.value, field_name) from e
@@ -162,10 +162,10 @@ class FieldFilters(RootModel):
         chunks = []
 
         for field_name, conditions in self.root.items():
-            model_field = ModelField.from_model_field_name(category.value, field_name)
+            model_field = ModelField.from_model_field_name(category.model_class, field_name)
             model_field_id = ModelFieldId[model_field.name]
             chunks.append(struct.pack("!H", model_field_id))
-            chunks.append(conditions.serialize())
+            chunks.append(conditions.serialize(category))
 
         return length + b"".join(chunks)
 

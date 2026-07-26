@@ -74,8 +74,13 @@ class ParameterValidatorPatched(ParameterValidator):
         value = request.query_params.get(param_name)
 
         if param_name == "sorting" and isinstance(value, list):
+            schema = param.get("schema")
+
+            if schema is None:
+                return None
+
             try:
-                validate_sorting(value, param.get("schema"))
+                validate_sorting(value, schema)
             except ArrayValidationError as e:
                 raise bad_request_factory(e) from e
 

@@ -1,5 +1,6 @@
 import asyncio
 from unittest.mock import patch
+from typing import Any
 
 import pytest
 
@@ -138,11 +139,13 @@ class TestAutoRetryDecorator:
 
     async def test_auto_retry_does_not_retry_non_async_functions(self) -> None:
         """Test that non-async functions raise ValueError."""
-        with pytest.raises(ValueError, match="must be async"):
+        def sync_func() -> str:
+            return "sync"
 
-            @auto_retry()
-            def sync_func() -> str:
-                return "sync"
+        func_any: Any = sync_func
+
+        with pytest.raises(ValueError, match="must be async"):
+            auto_retry()(func_any)
 
     async def test_auto_retry_preserves_function_name(self) -> None:
         """Test that function name is preserved."""

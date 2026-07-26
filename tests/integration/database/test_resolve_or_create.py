@@ -149,6 +149,7 @@ async def test_resolve_or_create_relationship_scalar_resolve_existing(
     )
 
     profile = await db.get(Profile, session=db_session, user_id=100010)
+    assert profile is not None
     assert profile.username == "existing"
 
 
@@ -167,7 +168,8 @@ async def test_resolve_or_create_relationship_list(db: PostgresqlDB, db_session:
 
     assert created.id == 100011
 
-    queues = await db.get_many(Queue, session=db_session, user_id=100011)
+    queues_result = await db.get_many(Queue, session=db_session, user_id=100011)
+    queues = queues_result if isinstance(queues_result, list) else queues_result[0]
     assert len(queues) == 2
     names = {q.name for q in queues}
     assert names == {"Q1", "Q2"}
@@ -190,7 +192,8 @@ async def test_resolve_or_create_relationship_list_resolve_existing(
         ],
     )
 
-    queues = await db.get_many(Queue, session=db_session, user_id=100012)
+    queues_result = await db.get_many(Queue, session=db_session, user_id=100012)
+    queues = queues_result if isinstance(queues_result, list) else queues_result[0]
     assert len(queues) == 2
     names = {q.name for q in queues}
     assert names == {"QueueA", "QueueB"}
@@ -205,7 +208,8 @@ async def test_resolve_or_create_relationship_list_resolve_existing(
         ],
     )
 
-    queues = await db.get_many(Queue, session=db_session, user_id=100012)
+    queues_result = await db.get_many(Queue, session=db_session, user_id=100012)
+    queues = queues_result if isinstance(queues_result, list) else queues_result[0]
     names = {q.name for q in queues}
     assert "QueueA" in names
     assert "QueueC" in names

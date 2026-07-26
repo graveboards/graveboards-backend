@@ -60,7 +60,7 @@ class RedisClient(AsyncRedis):
             redis_commands_duration_seconds.labels(command=command_name).observe(duration)
 
     async def paginate_scan(
-        self, pattern: str, limit: int = None, offset: int = 0, type_: str = None
+        self, pattern: str, limit: int | None = None, offset: int = 0, type_: str | None = None
     ) -> list[str]:
         """Scan keys matching a pattern with offset/limit pagination.
 

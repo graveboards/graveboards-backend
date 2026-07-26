@@ -13,7 +13,7 @@ class TaskRetryPolicy:
 
     def __repr__(self) -> str:
         """Custom repr that includes backoff delay for testing."""
-        backoff_info = f"({self.backoff.delay})" if self.backoff else "(None)"
+        backoff_info = f"({self.backoff.next_delay()})" if self.backoff else "(None)"
         return (
             f"TaskRetryPolicy(backoff={self.backoff.__class__.__name__}{backoff_info}, "
             f"max_retries={self.max_retries}, "

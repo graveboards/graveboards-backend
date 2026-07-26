@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -28,7 +28,7 @@ class TestGetFilterCondition:
 
     def test_unsupported_operator_raises_value_error(self) -> None:
         with pytest.raises(ValueError):
-            get_filter_condition("invalid_operator", None, 42)
+            get_filter_condition(cast(FilterOperator, "invalid_operator"), None, 42)
 
 
 @pytest.fixture

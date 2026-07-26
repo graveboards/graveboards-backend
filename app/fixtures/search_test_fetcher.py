@@ -8,6 +8,7 @@ Uses CoverageRegistry for data-driven bucket tracking instead of 50+ instance at
 """
 
 import json
+import logging
 import random
 from datetime import UTC, datetime
 from pathlib import Path
@@ -53,12 +54,6 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
             exclude_ids=exclude_ids,
             failed_id_store=failed_id_store,
         )
-
-        # Set default logger if not provided
-        if self.logger is None:
-            from app.observability.logging import get_logger
-
-            self.logger = get_logger(__name__)
 
         # Initialize CoverageRegistry for data-driven bucket tracking
         self.coverage = CoverageRegistry()
@@ -297,7 +292,7 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
         total_calls = 0
         seen_ids: set[int] = set()
 
-        search_statuses = [1, 4, 0, -1]
+        search_statuses = ["1", "4", "0", "-1"]
         status_index = 0
 
         while total_calls < max_calls:

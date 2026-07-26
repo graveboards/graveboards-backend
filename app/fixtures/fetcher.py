@@ -1,6 +1,7 @@
 import contextlib
 import inspect
 import json
+import logging
 import os
 import random
 from collections.abc import AsyncIterator, Callable, Coroutine
@@ -51,7 +52,7 @@ class FixtureDataFetcher:
     ):
         self.rc = rc
         self.oac = OsuAPIClient(rc)
-        self.logger = None
+        self.logger = logging.getLogger(__name__)
         self.force_fetch = force_fetch
         self.id_source = id_source
         self.fixtures_dir = fixtures_dir
@@ -597,7 +598,7 @@ class FixtureDataFetcher:
 
                 mods = random.choice([0, 8, 16, 24, 64, 80])
                 try:
-                    data = await self.oac.get_beatmap_attributes(beatmap_id, mods)
+                    data = await self.oac.get_beatmap_attributes(beatmap_id, [mods])
                     consecutive_errors = 0
                     self._record_success()
                     filepath = path / f"beatmap_attrs_{beatmap_id}_mods{mods}.json"

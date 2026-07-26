@@ -104,7 +104,7 @@ class TestService:
             return "result"
 
         service.create_ephemeral_task(
-            coro=ephemeral_coro,
+            coro=ephemeral_coro(),
             name="test_ephemeral",
         )
 
@@ -118,7 +118,7 @@ class TestService:
             return "result"
 
         with pytest.raises(RuntimeError):
-            service.create_ephemeral_task(coro=ephemeral_coro)
+            service.create_ephemeral_task(coro=ephemeral_coro())
 
     async def test_service_serve_forever_blocks(self, service: Service) -> None:
         """Test that serve_forever blocks until stop."""
@@ -223,7 +223,7 @@ class TestService:
                 name="failing",
                 factory=failing_task,
                 max_retries=0,
-                on_failure=lambda n, e: on_failure(n, e, failures),
+                on_failure=lambda n, e, r: on_failure(n, e, failures),
             )
 
     async def test_service_critical_task_propagates_failure(self, service: Service) -> None:
@@ -260,7 +260,7 @@ class TestService:
             return "result"
 
         service.create_ephemeral_task(
-            coro=successful_coro,
+            coro=successful_coro(),
             on_success=on_success,
             on_error=on_error,
             on_finish=on_finish,
@@ -310,4 +310,6 @@ class TestService:
                 backoff=backoff,
             )
 
-        assert service._task_specs["backoff_task"].retry_policy.backoff is backoff
+        spec = service._task_specs["backoff_task"]
+        assert spec.retry_policy is not None
+        assert spec.retry_policy.backoff is backoff

@@ -40,6 +40,9 @@ class NeverRankedRestriction(DatabaseRestrictionBase):
         config = NeverRankedConfig(**context.config)
         identity = await context.get_metadata("song_identity")
 
+        if context.osu_client is None:
+            return
+
         candidate_forms = normalized_identity_forms(
             identity.get("artist", ""),
             identity.get("title", ""),

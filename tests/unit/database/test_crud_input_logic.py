@@ -97,7 +97,7 @@ class TestReadInputValidation:
             {"field": "Beatmapset.id", "order": "asc"},
             {"field": "Beatmapset.created_at", "order": "desc"},
         ]
-        assert len(sorting) == 2
+        assert len(list(sorting)) == 2
 
     def test_sorting_default_order(self) -> None:
         """Test sorting with default order."""
@@ -241,7 +241,7 @@ class TestComplexValidationScenarios:
             {"field": "Beatmapset.channel_id", "order": "desc"},
         ]
 
-        assert len(sorting) == 3
+        assert len(list(sorting)) == 3
         assert sorting[0]["order"] == "desc"
 
     def test_mixed_include_boolean_and_nested(self) -> None:

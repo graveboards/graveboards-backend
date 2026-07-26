@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -261,17 +261,17 @@ class TestSearchEngineValidation:
     def test_engine_rejects_invalid_search_terms_type(self) -> None:
         """Test that invalid search terms type raises."""
         with pytest.raises(TypeError):
-            SearchEngine(scope=Scope.BEATMAPS, search_terms="not_a_dict")
+            SearchEngine(scope=Scope.BEATMAPS, search_terms=cast(Any, "not_a_dict"))
 
     def test_engine_rejects_invalid_sorting_type(self) -> None:
         """Test that invalid sorting type raises."""
         with pytest.raises(TypeError):
-            SearchEngine(scope=Scope.BEATMAPS, sorting="not_a_list")
+            SearchEngine(scope=Scope.BEATMAPS, sorting=cast(Any, "not_a_list"))
 
     def test_engine_rejects_invalid_filters_type(self) -> None:
         """Test that invalid filters type raises."""
         with pytest.raises(TypeError):
-            SearchEngine(scope=Scope.BEATMAPS, filters="not_a_dict")
+            SearchEngine(scope=Scope.BEATMAPS, filters=cast(Any, "not_a_dict"))
 
     @pytest.mark.asyncio
     async def test_search_requires_non_negative_limit(self, mock_session: MagicMock) -> None:
@@ -292,14 +292,14 @@ class TestSearchEngineValidation:
         """Test that search requires integer limit."""
         engine = SearchEngine(scope=Scope.BEATMAPS)
         with pytest.raises(TypeError):
-            await engine.search(mock_session, limit=10.5)
+            await engine.search(mock_session, limit=cast(int, 10.5))
 
     @pytest.mark.asyncio
     async def test_search_requires_integer_offset(self, mock_session: MagicMock) -> None:
         """Test that search requires integer offset."""
         engine = SearchEngine(scope=Scope.BEATMAPS)
         with pytest.raises(TypeError):
-            await engine.search(mock_session, offset=10.5)
+            await engine.search(mock_session, offset=cast(int, 10.5))
 
     def test_search_returns_results(self, mock_session: MagicMock) -> None:
         """Test that search returns results."""
@@ -364,6 +364,7 @@ class TestSearchEngineValidation:
         engine = SearchEngine(
             scope=Scope.BEATMAPS, sorting=[{"field": "BeatmapsetSnapshot.beatmapset_id"}]
         )
+        assert engine.sorting is not None
         options = list(engine.sorting)
         assert len(options) == 1
 

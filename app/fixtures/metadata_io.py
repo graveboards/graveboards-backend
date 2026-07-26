@@ -247,7 +247,7 @@ def get_all_fixture_files(fixtures_dir: Path | None = None) -> dict[str, list[Pa
     from .paths import FIXTURES_DIR
 
     base = fixtures_dir or FIXTURES_DIR
-    fixtures = {}
+    fixtures: dict[str, list[Path] | dict[str, list[Path]]] = {}
     for category in [
         "beatmaps",
         "beatmapsets",

@@ -161,6 +161,7 @@ async def test_refresh_token_success(mock_redis_client: MagicMock) -> None:
 
             await client.refresh_token()
 
+    assert client._token is not None
     assert client._token.access_token == "new_token"
     mock_oauth.fetch_token.assert_called_once()
     mock_redis_client.hset.assert_called_once()

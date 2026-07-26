@@ -1,6 +1,6 @@
 from ast import literal_eval
 from datetime import datetime
-from typing import cast as typing_cast
+from typing import Any, cast as typing_cast
 
 from app.database.schemas.sub_schemas import BeatmapOsuApiSchema
 
@@ -41,37 +41,17 @@ class Beatmap(BeatmapOsuApiSchema):
         Returns:
             A validated ``Beatmap`` instance.
         """
-        deserialized_dict = {}
+        deserialized_dict: dict[str, Any] = {}
 
         for key, value in serialized_dict.items():
             match key:
-                case (
-                    "id"
-                    | "user_id"
-                    | "count_circles"
-                    | "count_sliders"
-                    | "count_spinners"
-                    | "hit_length"
-                    | "max_combo"
-                    | "mode_int"
-                    | "passcount"
-                    | "playcount"
-                    | "ranked"
-                    | "total_length"
-                ):
-                    value = int(value) if value != "" else None
+                case "id" | "user_id" | "count_circles" | "count_sliders" | "count_spinners" | "hit_length" | "max_combo" | "mode_int" | "passcount" | "playcount" | "ranked" | "total_length":
+                    deserialized_dict[key] = int(value) if value != "" else None
                 case "accuracy" | "ar" | "bpm" | "cs" | "difficulty_rating" | "drain":
-                    value = float(value) if value != "" else None
-                case (
-                    "is_scoreable"  # Bools
-                    | "failtimes"
-                    | "owners"
-                    | "top_tag_ids"  # Lists
-                ):
-                    value = literal_eval(value) if value != "" else None
+                    deserialized_dict[key] = float(value) if value != "" else None
+                case "is_scoreable" | "failtimes" | "owners" | "top_tag_ids":
+                    deserialized_dict[key] = literal_eval(value) if value != "" else None
                 case "deleted_at" | "last_updated":
-                    value = datetime.fromisoformat(value) if value != "" else None
-
-            deserialized_dict[key] = value
+                    deserialized_dict[key] = datetime.fromisoformat(value) if value != "" else None
 
         return typing_cast(Beatmap, cls.model_validate(deserialized_dict))

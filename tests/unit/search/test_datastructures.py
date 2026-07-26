@@ -53,6 +53,7 @@ class TestDatastructures:
         """Test SortingOption creation."""
         option = SortingOption(field="BeatmapSnapshot.beatmap_id", order="asc")
 
+        assert option.order is not None
         assert option.order.value == "asc"
 
     def test_sorting_schema_creation(self) -> None:

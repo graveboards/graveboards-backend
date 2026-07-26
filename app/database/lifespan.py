@@ -1,6 +1,6 @@
 from collections.abc import Awaitable, Callable
 from functools import wraps
-from typing import Concatenate, ParamSpec, TypeVar
+from typing import Any, Concatenate, ParamSpec, TypeVar
 
 from .db import PostgresqlDB
 
@@ -24,15 +24,14 @@ def db_lifespan[**P, R](
     """
 
     @wraps(func)
-    async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+    async def wrapper(*args: Any, **kwargs: Any) -> R:
         db = next((a for a in args if isinstance(a, PostgresqlDB)), None)
 
         if db is None:
-            db = PostgresqlDB()
-            args = (db, *args)
+            return await func(PostgresqlDB(), *args, **kwargs)
 
         try:
-            return await func(*args, **kwargs)
+            return await func(db, *args, **kwargs)
         finally:
             await db.close()
 

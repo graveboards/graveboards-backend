@@ -55,6 +55,7 @@ class SortingOption(BaseModel):
             A bytes object representing the serialized sorting option.
         """
         field_id = ModelFieldId[self.field.name]
+        assert self.order is not None
         order_id = SortingOrderId[self.order.name]
         return struct.pack("!BB", field_id, order_id)
 

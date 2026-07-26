@@ -13,7 +13,7 @@ from app.observability.logging import get_logger
 logger = get_logger(__name__)
 
 
-SCHEMAS = {
+SCHEMAS: dict[str, dict[str, Any]] = {
     "beatmap": {
         "required_fields": ["id", "beatmapset_id", "difficulty_rating", "total_length"],
         "type_checks": {

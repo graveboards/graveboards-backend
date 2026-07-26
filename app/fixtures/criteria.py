@@ -63,8 +63,8 @@ class FetchCriteria:
     source: str = Source.AUTO
 
     # Overrides per criteria
-    targeted: TargetedOverrides = field(default_factory=TargetedOverrides)
-    search_test: SearchTestOverrides = field(default_factory=SearchTestOverrides)
+    targeted: TargetedOverrides | None = field(default_factory=TargetedOverrides)
+    search_test: SearchTestOverrides | None = field(default_factory=SearchTestOverrides)
 
     # Data type counts (used by standard criteria, can override minimal)
     beatmaps: int = 0

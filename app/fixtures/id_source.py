@@ -169,7 +169,7 @@ class ArchiveIDSource(IDSource):
         self._loaded = False
         self.allow_download = allow_download
         self.pre_load = pre_load
-        self._archive_index = None
+        self._archive_index: ArchiveIndex | None = None
         self._player_ids_loaded: dict[str, bool] = {}
         self._beatmap_ids_loaded = False
         self._resolve_called = False

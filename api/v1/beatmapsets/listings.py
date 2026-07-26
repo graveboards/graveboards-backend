@@ -1,4 +1,7 @@
 from connexion import request
+from starlette.requests import Request
+from typing import Any
+from starlette.responses import Response
 
 from api.decorators import api_query
 from api.utils import build_pydantic_include
@@ -11,7 +14,7 @@ __all__ = ["search"]
 
 
 @api_query(ModelClass.BEATMAPSET_SNAPSHOT, many=True)
-async def search(**kwargs):
+async def search(request: Request, **kwargs: Any) -> Response:
     db: PostgresqlDB = request.state.db
 
     beatmapset_snapshots = await db.get_many(

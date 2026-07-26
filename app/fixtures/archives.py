@@ -290,7 +290,7 @@ async def extract_sql_from_archive(
         logger.info(f"Using cached extraction: {extraction_dir}")
         return extraction_dir
 
-    archive_path = ARCHIVE_DIR / archive_info.filename
+    archive_path: Path | None = ARCHIVE_DIR / archive_info.filename
 
     if not archive_path.exists():
         if allow_download:
@@ -368,9 +368,9 @@ def parse_performance_sql(sql_path: Path) -> dict[str, list[dict]]:
     return data
 
 
-def parse_sql_values(values: str) -> list:
+def parse_sql_values(values: str) -> list[str | int | None]:
     """Parse SQL VALUES clause into Python values."""
-    parsed = []
+    parsed: list[str | int | None] = []
     current = ""
     in_string = False
 

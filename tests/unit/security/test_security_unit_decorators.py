@@ -29,11 +29,13 @@ class TestRoleAuthorizationConfiguration:
     @pytest.mark.asyncio
     async def test_non_async_function_raises_error(self) -> None:
         """Test that non-async functions raise ValueError."""
-        with pytest.raises(ValueError, match="must be async"):
+        def sync_endpoint(**kwargs: Any) -> dict[str, str]:
+            return {"data": "success"}
 
-            @role_authorization(RoleName.ADMIN)
-            def sync_endpoint(**kwargs: Any) -> dict[str, str]:  # type: ignore[arg-type]
-                return {"data": "success"}
+        func: Any = sync_endpoint
+
+        with pytest.raises(ValueError, match="must be async"):
+            role_authorization(RoleName.ADMIN)(func)
 
     @pytest.mark.asyncio
     async def test_mutually_exclusive_args_raises_error(self) -> None:
@@ -71,11 +73,13 @@ class TestOwnershipAuthorizationConfiguration:
     @pytest.mark.asyncio
     async def test_non_async_function_raises_error(self) -> None:
         """Test that non-async functions raise ValueError."""
-        with pytest.raises(ValueError, match="must be async"):
+        def sync_endpoint(**kwargs: Any) -> tuple[dict[str, str], int]:
+            return ({"data": "success"}, 200)
 
-            @ownership_authorization()
-            def sync_endpoint(**kwargs: Any) -> tuple[dict[str, str], int]:  # type: ignore[arg-type]
-                return ({"data": "success"}, 200)
+        func: Any = sync_endpoint
+
+        with pytest.raises(ValueError, match="must be async"):
+            ownership_authorization()(func)
 
 
 # Security-disabled behavior (role_authorization now runs its real DB-backed role

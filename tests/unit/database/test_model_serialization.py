@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from sqlalchemy import column
@@ -186,7 +186,7 @@ class TestGetFilterCondition:
                 method = lambda self, x, y: None
 
             fake_op = FakeOperator()
-            get_filter_condition(fake_op, column("test"), 1)
+            get_filter_condition(cast(FilterOperator, fake_op), column("test"), 1)
 
     def test_aggregated_eq_operator(self, db_session: Any) -> None:
         condition = get_filter_condition(

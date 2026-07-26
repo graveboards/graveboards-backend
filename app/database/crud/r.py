@@ -689,7 +689,7 @@ class _R:
         if handler is None:
             return select_stmt
 
-        return handler(select_stmt, category_score_ctes, search_terms)
+        return handler(select_stmt, typing_cast(dict[str, Any], category_score_ctes), search_terms)
 
     @staticmethod
     def _apply_search_simple(

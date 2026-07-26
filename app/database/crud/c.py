@@ -227,7 +227,7 @@ class _C:
 
             for key in column_keys:
                 if key in data:
-                    setattr(instance, key, data[key])
+                    setattr(instance, str(key), data[key])
 
         # Recursively resolve relationships (applies to both create and resolve)
         for key in relationship_keys:
@@ -235,7 +235,7 @@ class _C:
                 continue
 
             relationship = mapper.relationships[key]
-            related_model = relationship.mapper.class_  # type: ignore[attr-defined]
+            related_model = relationship.mapper.class_
             related_model_class = ModelClass(related_model)
             value = data[key]
 
@@ -260,18 +260,18 @@ class _C:
                 # already handles deduplication by primary key, so existing items
                 # with matching IDs are resolved to the same instance rather than
                 # being duplicated.
-                setattr(instance, key, new_items)
+                setattr(instance, str(key), new_items)
             # One-to-one / Many-to-one
             else:
                 if value is None:
-                    setattr(instance, key, None)
+                    setattr(instance, str(key), None)
                 elif isinstance(value, dict):
                     obj = await _C._resolve_or_create(
                         related_model_class,
                         value,
                         session,
                     )
-                    setattr(instance, key, obj)
+                    setattr(instance, str(key), obj)
                 else:
                     obj = value
                     _C._ensure_same_session(obj, session)

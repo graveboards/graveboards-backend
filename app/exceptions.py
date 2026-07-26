@@ -201,7 +201,7 @@ class DeepObjectValidationError(ValueError):
 
 
 class BadRequest(BadRequestProblem):
-    def __init__(self, detail: str, path: Sequence[str] = None):
+    def __init__(self, detail: str, path: Sequence[str] | None = None):
         super().__init__(detail=detail)
 
         if path:
@@ -209,7 +209,7 @@ class BadRequest(BadRequestProblem):
 
 
 class NotFound(ClientProblem):
-    def __init__(self, detail: str, path: Sequence[str] = None):
+    def __init__(self, detail: str, path: Sequence[str] | None = None):
         super().__init__(status=404, title="Not Found", detail=detail)
 
         if path:
@@ -217,7 +217,7 @@ class NotFound(ClientProblem):
 
 
 class Conflict(ClientProblem):
-    def __init__(self, detail: str, path: Sequence[str] = None):
+    def __init__(self, detail: str, path: Sequence[str] | None = None):
         super().__init__(status=409, title="Conflict", detail=detail)
 
         if path:
@@ -247,7 +247,9 @@ class TooManyRequests(ClientProblem):
 def bad_request_factory(e: Exception) -> BadRequest:
     message = getattr(e, "message", str(e))
     path = getattr(e, "path", None)
-    return BadRequest(message, path=path)
+    if path is not None:
+        return BadRequest(message, path=path)
+    return BadRequest(message)
 
 
 def clean_error_msg(e: Exception) -> str:

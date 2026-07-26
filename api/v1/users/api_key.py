@@ -1,6 +1,9 @@
 from datetime import timedelta
 
 from connexion import request
+from starlette.requests import Request
+from typing import Any
+from starlette.responses import Response
 
 from app.database import PostgresqlDB
 from app.database.enums import RoleName
@@ -18,7 +21,7 @@ logger = get_logger(__name__)
 
 
 @role_authorization(RoleName.ADMIN, override=matching_user_id_override)
-async def search(user_id: int, **kwargs):
+async def search(request: Request, user_id: int, **kwargs: Any) -> Response:
     db: PostgresqlDB = request.state.db
 
     key = await db.get(ApiKey, user_id=user_id, is_revoked=False)
@@ -37,7 +40,7 @@ async def search(user_id: int, **kwargs):
 
 
 @role_authorization(RoleName.ADMIN, override=matching_user_id_override)
-async def post(user_id: int, **kwargs):
+async def post(request: Request, user_id: int, **kwargs: Any) -> Response:
     db: PostgresqlDB = request.state.db
 
     user = await db.get(User, id=user_id)

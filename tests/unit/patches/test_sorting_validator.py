@@ -1,3 +1,5 @@
+from typing import Any, cast
+
 import pytest
 
 from app.exceptions import ArrayValidationError
@@ -100,7 +102,7 @@ class TestSortingValidator:
         schema = {
             "items": {"properties": {"field": {"enum": ["id"]}, "order": {"enum": ["asc", "desc"]}}}
         }
-        sorting: list[dict[str, str | None]] = []
+        sorting = cast(list[dict[str, str]], [])
 
         result = validate_sorting(sorting, schema)
 
@@ -168,7 +170,7 @@ class TestSortingValidator:
         schema = {
             "items": {"properties": {"field": {"enum": ["id"]}, "order": {"enum": ["asc", "desc"]}}}
         }
-        sorting = [{"field": None, "order": "asc"}]
+        sorting = cast(list[dict[str, str]], [{"field": None, "order": "asc"}])
 
         with pytest.raises(ArrayValidationError):
             validate_sorting(sorting, schema)

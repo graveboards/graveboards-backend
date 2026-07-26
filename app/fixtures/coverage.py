@@ -351,32 +351,32 @@ class CoverageRegistry:
         if desc:
             desc_str = desc.get("description", "") if isinstance(desc, dict) else str(desc)
             if desc_str and desc_str.strip():
-                self._set_bool_bucket("fetched_beatmapset_has_description", True, newly_filled)
+                self._set_bool_bucket("fetched_beatmapset_has_description", True, newly_filled, item_id)
 
         # pack_tags
         if data.get("pack_tags"):
-            self._set_bool_bucket("fetched_beatmapset_has_pack_tags", True, newly_filled)
+            self._set_bool_bucket("fetched_beatmapset_has_pack_tags", True, newly_filled, item_id)
 
         # video
         if data.get("video"):
-            self._set_bool_bucket("fetched_beatmapset_videos", True, newly_filled)
+            self._set_bool_bucket("fetched_beatmapset_videos", True, newly_filled, item_id)
 
         # storyboard
         if data.get("storyboard"):
-            self._set_bool_bucket("fetched_beatmapset_storyboards", True, newly_filled)
+            self._set_bool_bucket("fetched_beatmapset_storyboards", True, newly_filled, item_id)
 
         # discussion_enabled
         if data.get("discussion_enabled") is not None:
-            self._set_bool_bucket("fetched_beatmapset_discussions", True, newly_filled)
+            self._set_bool_bucket("fetched_beatmapset_discussions", True, newly_filled, item_id)
 
         # hype
         if data.get("hype") is not None:
-            self._set_bool_bucket("fetched_beatmapset_hype", True, newly_filled)
+            self._set_bool_bucket("fetched_beatmapset_hype", True, newly_filled, item_id)
 
         # nominations
         noms = data.get("current_nominations")
         if noms and isinstance(noms, dict) and noms.get("nominators"):
-            self._set_bool_bucket("fetched_beatmapset_nominations", True, newly_filled)
+            self._set_bool_bucket("fetched_beatmapset_nominations", True, newly_filled, item_id)
 
         # sr_gaps / hit_lengths from beatmaps within the beatmapset
         beatmaps = data.get("beatmaps", [])
@@ -388,9 +388,9 @@ class CoverageRegistry:
             if bm.get("hit_length") is not None:
                 has_hit_lengths = True
         if has_sr_gaps:
-            self._set_bool_bucket("fetched_beatmapset_sr_gaps", True, newly_filled)
+            self._set_bool_bucket("fetched_beatmapset_sr_gaps", True, newly_filled, item_id)
         if has_hit_lengths:
-            self._set_bool_bucket("fetched_beatmapset_hit_lengths", True, newly_filled)
+            self._set_bool_bucket("fetched_beatmapset_hit_lengths", True, newly_filled, item_id)
 
     def _classify_user(self, data: dict, item_id: int, newly_filled: dict[str, set[int]]) -> None:
         """Classify user data into buckets."""
@@ -428,14 +428,14 @@ class CoverageRegistry:
             newly_filled.setdefault(bucket_name, set()).add(item_id)
 
     def _set_bool_bucket(
-        self, bucket_name: str, value: bool, newly_filled: dict[str, set[int]]
+        self, bucket_name: str, value: bool, newly_filled: dict[str, set[int]], item_id: int
     ) -> None:
         """Set a bool-type bucket."""
         if bucket_name not in self._data:
             self._data[bucket_name] = False
         if not self._data[bucket_name] and value:
             self._data[bucket_name] = True
-            newly_filled.setdefault(bucket_name, set()).add(bucket_name)
+            newly_filled.setdefault(bucket_name, set()).add(item_id)
 
     def is_covered(self, bucket_name: str, category: Any = None) -> bool:
         """Check if a bucket meets minimum coverage.
@@ -577,7 +577,7 @@ class CoverageRegistry:
         """
         from .constants import BEATMAP_MODE_NAMES, BEATMAP_STATUS_NAMES, GENRE_NAMES, LANGUAGE_NAMES
 
-        report = {}
+        report: dict[str, list | dict | bool] = {}
 
         for bucket_name, bucket in self._buckets.items():
             data = self._data.get(bucket_name, {})

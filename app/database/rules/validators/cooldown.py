@@ -64,17 +64,23 @@ class CooldownRestriction(RestrictionBase):
         if not self._applies(config, context.user_id):
             return
 
+        if context.redis is None:
+            return
+
         cooldown_seconds = config.get("cooldown_seconds")
         redis_key = self._redis_key(context, config)
 
         last_request_ts = await context.redis.get(redis_key)
-        if last_request_ts is not None:
-            remaining = self._remaining_seconds(last_request_ts, cooldown_seconds)
+        if last_request_ts is not None and cooldown_seconds is not None:
+            remaining = self._remaining_seconds(int(last_request_ts), cooldown_seconds)
             if remaining > 0:
                 raise await self._cooldown_error(context, remaining)
 
     async def reserve(self, context: ExecutionContext, config: dict) -> str | None:
         if not self._applies(config, context.user_id):
+            return None
+
+        if context.redis is None:
             return None
 
         cooldown_seconds = config.get("cooldown_seconds")
@@ -84,14 +90,19 @@ class CooldownRestriction(RestrictionBase):
         was_set = await context.redis.set(redis_key, now_ts, nx=True, ex=cooldown_seconds)
         if not was_set:
             last_request_ts = await context.redis.get(redis_key)
-            remaining = (
-                self._remaining_seconds(last_request_ts, cooldown_seconds)
-                if last_request_ts is not None
-                else cooldown_seconds
-            )
+            if cooldown_seconds is None:
+                raise await self._cooldown_error(context, 0.0)
+
+            if last_request_ts is not None:
+                remaining = self._remaining_seconds(int(last_request_ts), cooldown_seconds)
+            else:
+                remaining = float(cooldown_seconds)
+
             raise await self._cooldown_error(context, remaining)
 
         return redis_key
 
     async def rollback(self, context: ExecutionContext, token: str) -> None:
+        if context.redis is None:
+            return
         await context.redis.delete(token)

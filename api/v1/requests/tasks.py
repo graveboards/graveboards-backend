@@ -1,4 +1,7 @@
 from connexion import request
+from starlette.requests import Request
+from typing import Any
+from starlette.responses import Response
 from connexion.exceptions import Forbidden
 
 from api.utils import build_pydantic_include
@@ -15,7 +18,7 @@ __all__ = ["search", "get"]
 
 
 @role_authorization(RoleName.ADMIN)
-async def search(**kwargs):
+async def search(request: Request, **kwargs: Any) -> Response:
     rc = request.state.rc
 
     limit = kwargs.get("limit")
@@ -48,7 +51,7 @@ async def search(**kwargs):
 
 
 @with_authenticated_user_id()
-async def get(hashed_id: int, _caller_user_id: int | None = None, **kwargs):
+async def get(request: Request, hashed_id: int, _caller_user_id: int | None = None, **kwargs: Any) -> Response:
     rc = request.state.rc
 
     task_hash_name = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(hashed_id)

@@ -1,9 +1,10 @@
 import json
+import logging
 import random
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast as typing_cast
 
 from app.exceptions import clean_error_msg
 from app.osu_api.enums import Ruleset
@@ -53,6 +54,10 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
             failed_id_store=failed_id_store,
         )
         # Difficulty and playcount categorization uses Categorizer instances from categorization.py
+        from .categorization import DIFFICULTY_CATEGORIZER, PLAYCOUNT_CATEGORIZER
+
+        self.difficulty_ranges = DIFFICULTY_CATEGORIZER.ranges
+        self.playcount_ranges = PLAYCOUNT_CATEGORIZER.ranges
         self.activity_levels = ["active", "moderate", "inactive"]
 
     async def fetch_beatmapsets_by_status(
@@ -426,14 +431,13 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
                 yield event
 
         self.metadata = load_metadata()
-        results = {
-            "beatmaps": self._current_session_results["beatmaps"],
-            "beatmapsets": self._current_session_results["beatmapsets"],
-            "users": self._current_session_results["users"].copy(),
-            "scores": self._current_session_results["scores"].copy(),
-            "beatmap_scores": self._current_session_results["beatmap_scores"],
-            "beatmap_attributes": self._current_session_results["beatmap_attributes"],
-        }
+        results: dict[str, Any] = {}
+        results["beatmaps"] = typing_cast(dict, self._current_session_results["beatmaps"])
+        results["beatmapsets"] = typing_cast(dict, self._current_session_results["beatmapsets"])
+        results["users"] = typing_cast(dict, self._current_session_results["users"]).copy()
+        results["scores"] = typing_cast(dict, self._current_session_results["scores"]).copy()
+        results["beatmap_scores"] = typing_cast(dict, self._current_session_results["beatmap_scores"])
+        results["beatmap_attributes"] = typing_cast(dict, self._current_session_results["beatmap_attributes"])
 
         self.last_fetch_results = results
 
@@ -619,9 +623,9 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         self.targeted_activity_tier = activity_tier
         self.targeted_rulesets = rulesets if rulesets else ["osu"]
 
-    def get_last_results(self) -> dict:
+    def get_last_results(self) -> dict[str, Any]:
         """Get last fetch results for CLI output."""
-        results = {
+        results: dict[str, Any] = {
             "beatmaps": {"count": 0, "last_fetched": None},
             "beatmapsets": {"count": 0, "last_fetched": None},
             "users": {"count": 0, "per_ruleset": {r: 0 for r in RULESETS}, "last_fetched": None},
@@ -631,29 +635,32 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         }
 
         if self.targeted_statuses:
-            results["beatmapsets"]["count"] = sum(
+            bs_count = sum(
                 self.metadata.get("targeted", {})
                 .get("beatmapsets", {})
                 .get("by_status", {})
                 .get(status, 0)
                 for status in self.targeted_statuses
             )
+            results["beatmapsets"]["count"] = bs_count
 
         if self.targeted_difficulty_range:
-            results["beatmaps"]["count"] = (
+            bm_count = (
                 self.metadata.get("targeted", {})
                 .get("beatmaps", {})
                 .get("by_difficulty", {})
                 .get(self.targeted_difficulty_range, 0)
             )
+            results["beatmaps"]["count"] = bm_count
 
         if self.targeted_activity_tier:
             users_meta = self.metadata.get("targeted", {}).get("users", {})
             per_ruleset = users_meta.get("per_ruleset", {})
+            users_inner = results["users"]
             for r in self.targeted_rulesets:
                 count = per_ruleset.get(r, {}).get(self.targeted_activity_tier, 0)
-                results["users"]["count"] += count
-                results["users"]["per_ruleset"][r] = count
+                users_inner["count"] += count
+                users_inner["per_ruleset"][r] = count
 
         return results
 

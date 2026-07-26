@@ -1,4 +1,7 @@
 from connexion import request
+from starlette.requests import Request
+from typing import Any
+from starlette.responses import Response
 from connexion.exceptions import Forbidden
 
 from api.decorators import api_query
@@ -26,7 +29,7 @@ def _filter_public_rules(queue_data: dict) -> dict:
 
 @with_authenticated_user_id()
 @api_query(ModelClass.QUEUE, many=True)
-async def search(_caller_user_id: int | None = None, **kwargs):
+async def search(request: Request, _caller_user_id: int | None = None, **kwargs: Any) -> Response:
     db: PostgresqlDB = request.state.db
 
     queues = await db.get_many(
@@ -52,7 +55,7 @@ async def search(_caller_user_id: int | None = None, **kwargs):
 
 @with_authenticated_user_id()
 @api_query(ModelClass.QUEUE)
-async def get(queue_id: int, _caller_user_id: int | None = None, **kwargs):
+async def get(request: Request, queue_id: int, _caller_user_id: int | None = None, **kwargs: Any) -> Response:
     db: PostgresqlDB = request.state.db
 
     queue = await db.get(Queue, id=queue_id, **kwargs)
@@ -81,7 +84,7 @@ async def get(queue_id: int, _caller_user_id: int | None = None, **kwargs):
 
 # @role_authorization(RoleName.ADMIN, override=matching_user_id_override, override_kwargs={"resource_user_id_lookup": "body.user_id"})  # Disable regular users from adding queues for now
 @role_authorization(RoleName.ADMIN)
-async def post(body: dict, **kwargs):
+async def post(request: Request, body: dict, **kwargs: Any) -> Response:
     db: PostgresqlDB = request.state.db
 
     queue_name = body["name"]
@@ -98,7 +101,7 @@ async def post(body: dict, **kwargs):
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def patch(queue_id: int, body: dict, **kwargs):
+async def patch(request: Request, queue_id: int, body: dict, **kwargs: Any) -> Response:
     db: PostgresqlDB = request.state.db
 
     body = bleach_body(body, whitelisted_keys={"name", "description", "visibility", "is_open"})
