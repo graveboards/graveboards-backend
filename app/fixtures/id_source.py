@@ -15,6 +15,7 @@ import random
 from abc import ABC, abstractmethod
 
 from app.fixtures.archives import (
+    ArchiveIndex,
     get_beatmap_ids_from_archive,
     get_user_ids_from_archive,
     load_archive_index,

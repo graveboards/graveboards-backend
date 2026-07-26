@@ -1,6 +1,7 @@
 import asyncio
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from typing import Any
 
 from connexion.middleware import ConnexionMiddleware
 
@@ -13,7 +14,7 @@ from .redis import RedisClient
 
 
 @asynccontextmanager
-async def lifespan(app: ConnexionMiddleware) -> AsyncGenerator[None]:
+async def lifespan(app: ConnexionMiddleware) -> AsyncGenerator[dict[str, Any]]:
     # setup_logging() runs earlier, in the app factory (create_connexion_app),
     # so logging is configured before uvicorn emits its first startup lines.
     logger = get_logger(__name__)

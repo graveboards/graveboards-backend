@@ -2,7 +2,7 @@ import contextlib
 import json
 import re
 import time
-from collections.abc import Awaitable, MutableMapping
+from collections.abc import MutableMapping
 from typing import Any
 from typing import cast as typing_cast
 from urllib.parse import parse_qsl
@@ -243,10 +243,11 @@ class MetricsMiddleware:
         start_time = time.perf_counter()
         status_code_ref: dict = {"value": None}
 
-        def wrapped_send(message: MutableMapping[str, Any]) -> Awaitable[None]:
+        async def wrapped_send(message: MutableMapping[str, Any]) -> None:
             if message["type"] == "http.response.start":
                 status_code_ref["value"] = message["status"]
-            return send(message)
+            await send(message)
+            return None
 
         body_bytes = None
         body_captured = False

@@ -8,7 +8,6 @@ Uses CoverageRegistry for data-driven bucket tracking instead of 50+ instance at
 """
 
 import json
-import logging
 import random
 from datetime import UTC, datetime
 from pathlib import Path

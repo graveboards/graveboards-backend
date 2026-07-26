@@ -8,6 +8,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import httpx
 
@@ -331,7 +332,7 @@ def parse_performance_sql(sql_path: Path) -> dict[str, list[dict]]:
     data = {}
 
     try:
-        tables: dict[str, list[dict]] = {}
+        tables: dict[str, list[Any]] = {}
         current_table = None
         current_rows: list[dict] = []
 

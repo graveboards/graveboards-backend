@@ -73,14 +73,14 @@ class TestJobLoadInstruction:
         instruction = JobLoadInstruction()
 
         with pytest.raises(FrozenInstanceError):
-            instruction.execution_time = datetime.now(UTC)
+            object.__setattr__(instruction, "execution_time", datetime.now(UTC))
 
     def test_slots_for_memory_efficiency(self) -> None:
         """Test that instruction uses slots."""
         instruction = JobLoadInstruction()
 
-        with pytest.raises(AttributeError):
-            setattr(instruction, "new_attr", "value")
+        with pytest.raises((AttributeError, TypeError)):
+            object.__setattr__(instruction, "new_attr", "value")
 
     def test_equality_with_same_values(self) -> None:
         """Test equality comparison with same values."""

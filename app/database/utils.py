@@ -158,7 +158,9 @@ def get_filter_condition(
     array_agg = func.array_agg(target)
 
     if not isinstance(target, (InstrumentedAttribute, ColumnClause)):
-        raise ValueError(f"Aggregated filter operators require a column target, got {type(target).__name__}")
+        raise ValueError(
+            f"Aggregated filter operators require a column target, got {type(target).__name__}"
+        )
 
     match filter_operator:
         case FilterOperator.EQ:

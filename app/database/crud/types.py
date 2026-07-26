@@ -28,7 +28,7 @@ Used by the read layer to construct validated ORDER BY clauses.
 
 type Conditions = Mapping[ConditionField, ConditionValue | None]
 
-type Filters = Mapping[AttrName | RelName, ConditionValue | None | Conditions | "Filters[RelName]"]
+type Filters = Mapping[AttrName | RelName, ConditionValue | None | Conditions | "Filters"]
 """Type alias describing nested filtering configurations for read operations.
 
 Expected format:
@@ -42,7 +42,7 @@ Expected format:
 Used by the read layer to construct validated WHERE clauses.
 """
 
-type Include = Mapping[AttrName, bool | "Include[AttrName]"]
+type Include = Mapping[AttrName, bool | "Include"]
 """Type alias describing nested relationship loading configuration.
 
 Maps relationship attribute names to:

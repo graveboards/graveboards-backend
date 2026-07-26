@@ -102,7 +102,7 @@ class TestReadInputValidation:
     def test_sorting_default_order(self) -> None:
         """Test sorting with default order."""
         sorting: Sorting = [{"field": "Beatmapset.id"}]
-        sorting_list: list[dict[str, Any]] = list(sorting)
+        sorting_list: list[dict[str, Any]] = [dict(s.items()) for s in sorting]
         assert sorting_list[0]["field"] == "Beatmapset.id"
 
     def test_valid_filter_structure(self) -> None:
@@ -230,7 +230,7 @@ class TestComplexValidationScenarios:
 
     def test_nested_filters_validation(self) -> None:
         """Test nested filter validation."""
-        filters: Filters = {
+        filters: dict[str, Any] = {
             "beatmaps": {"checksum": {"eq": "abc123"}},
             "user": {"username": {"regex": "test.*"}, "profile": {"osu_id": {"in": [1, 2, 3]}}},
         }
@@ -250,7 +250,7 @@ class TestComplexValidationScenarios:
         ]
 
         assert len(list(sorting)) == 3
-        sorting_list: list[dict[str, Any]] = list(sorting)
+        sorting_list: list[dict[str, Any]] = [dict(s.items()) for s in sorting]
         assert sorting_list[0]["order"] == "desc"
 
     def test_mixed_include_boolean_and_nested(self) -> None:
@@ -279,7 +279,7 @@ class TestComplexValidationScenarios:
 
     def test_multiple_filter_operators(self) -> None:
         """Test filter with multiple operators on same field."""
-        filters: Filters = {"id": {"eq": 123, "neq": 456, "in": [1, 2, 3, 4, 5]}}
+        filters: dict[str, Any] = {"id": {"eq": 123, "neq": 456, "in": [1, 2, 3, 4, 5]}}
 
         filters_dict: dict[str, Any] = dict(filters)
         assert cast(dict, filters_dict["id"])["eq"] == 123

@@ -61,11 +61,11 @@ def api_client() -> Generator[tuple[OsuAPIClient, MagicMock]]:
 
 
 class MockResponse:
-    def __init__(self, data: dict, status_code: int = 200) -> None:
+    def __init__(self, data: Any, status_code: int = 200) -> None:
         self._data = data
         self._status_code = status_code
 
-    def json(self) -> dict:
+    def json(self) -> Any:
         return self._data
 
     def raise_for_status(self) -> None:

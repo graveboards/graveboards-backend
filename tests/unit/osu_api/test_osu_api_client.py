@@ -208,10 +208,7 @@ async def test_get_user(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
 async def test_get_user_scores(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     api_client_obj, mock_redis = api_client
 
-    mock_data = {
-        "scores": [{"score_id": 1}, {"score_id": 2}],
-        "users": [{"user_id": 123, "username": "test"}],
-    }
+    mock_data = [{"score_id": 1}, {"score_id": 2}]
 
     mock_redis.hgetall.return_value = None
 
@@ -220,7 +217,7 @@ async def test_get_user_scores(api_client: tuple[OsuAPIClient, MagicMock]) -> No
 
     result = await api_client_obj.get_user_scores(123, score_type=ScoreType.BEST, limit=10)
 
-    assert len(result["scores"]) == 2
+    assert len(result) == 2
 
 
 @pytest.mark.asyncio

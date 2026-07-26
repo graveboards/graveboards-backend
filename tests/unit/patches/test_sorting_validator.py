@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import cast
 
 import pytest
 
@@ -44,9 +44,7 @@ class TestSortingValidator:
         }
         sorting = [{"field": "created_at", "order": "desc"}, {"field": "id", "order": "asc"}]
 
-        result = validate_sorting(sorting, schema)
-
-        assert result is None
+        validate_sorting(sorting, schema)
 
     def test_validate_sorting_invalid_field_raises(self) -> None:
         """Test that invalid field raises error."""

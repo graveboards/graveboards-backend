@@ -19,7 +19,7 @@ class RestrictionBase(ABC):
     async def validate_config(self, config: dict[str, Any]) -> dict[str, Any]:
         if self.config_schema:
             validated = self.config_schema(**config)
-            return validated.model_dump(exclude_none=True)
+            return dict(validated.model_dump(exclude_none=True))
         return config
 
     async def check(self, context: ExecutionContext) -> None:

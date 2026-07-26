@@ -1,6 +1,6 @@
-from connexion import request
-from starlette.requests import Request
 from typing import Any
+
+from starlette.requests import Request
 from starlette.responses import Response
 
 from api.decorators import api_query, coerce_arguments
@@ -41,7 +41,9 @@ async def search(request: Request, beatmap_id: int, **kwargs: Any) -> Response:
 
 @api_query(ModelClass.BEATMAP_SNAPSHOT)
 @coerce_arguments(snapshot_number={"latest": -1})
-async def get(request: Request, beatmap_id: int, snapshot_number: int = -1, **kwargs: Any) -> Response:
+async def get(
+    request: Request, beatmap_id: int, snapshot_number: int = -1, **kwargs: Any
+) -> Response:
     db: PostgresqlDB = request.state.db
 
     if snapshot_number < 0:

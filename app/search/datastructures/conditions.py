@@ -5,7 +5,10 @@ import struct
 from collections.abc import Sequence
 from datetime import datetime
 from enum import IntEnum, IntFlag, auto
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
+
+if TYPE_CHECKING:
+    from app.search.enums import SearchableFieldCategory
 
 import numpy as np
 from pydantic.config import ConfigDict
@@ -84,7 +87,7 @@ class ConditionFieldFlag(IntFlag):
     NOT_REGEX = auto()
 
     @property
-    def field_name(self) -> ConditionField:
+    def field_name(self) -> str:
         """The lowercase field name corresponding to the flag.
 
         Returns:
@@ -423,7 +426,7 @@ class Conditions(BaseModel):
                     f"Got {type(base).__name__} and {type(v).__name__}"
                 )
 
-    def serialize(self) -> bytes:
+    def serialize(self, category: SearchableFieldCategory | None = None) -> bytes:
         """Serialize the ``Conditions`` instance into compact binary format.
 
         Uses:

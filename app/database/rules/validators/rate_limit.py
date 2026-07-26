@@ -102,6 +102,10 @@ class RateLimitRestriction(RestrictionBase):
             return
 
         max_requests = config.get("max_requests")
+
+        if max_requests is None:
+            return
+
         redis_key = self._redis_key(context, config)
 
         current = await context.redis.get(redis_key)

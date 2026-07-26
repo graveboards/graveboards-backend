@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import mapped_column
@@ -37,7 +38,8 @@ class OAuthToken(Base):
         return decrypt_token(self.access_token_enc)
 
     @access_token.expression
-    def access_token(cls):
+    @classmethod
+    def _access_token_expr(cls) -> Any:
         return literal(None)
 
     @hybrid_property

@@ -28,21 +28,23 @@ class TestScoreFetcher:
             task1 = ScoreFetcherTask(id=1, user_id=123, enabled=True, last_fetch=None)
             task2 = ScoreFetcherTask(id=2, user_id=456, enabled=False, last_fetch=None)
             service._db.get_many = AsyncMock(return_value=[task1, task2])
-            service._load_job = AsyncMock()
+            mock_load_job = AsyncMock()
+            service._load_job = mock_load_job  # type: ignore[method-assign]
 
             await service._preload_jobs()
 
-            assert service._load_job.call_count == 1
+            assert mock_load_job.call_count == 1
 
     async def test_preload_jobs_skips_disabled_tasks(self, service: ScoreFetcher) -> None:
         """Test that disabled score fetch tasks are skipped."""
         task = ScoreFetcherTask(id=1, user_id=123, enabled=False)
         service._db.get_many = AsyncMock(return_value=[task])
-        service._load_job = AsyncMock()
+        mock_load_job = AsyncMock()
+        service._load_job = mock_load_job  # type: ignore[method-assign]
 
         await service._preload_jobs()
 
-        service._load_job.assert_not_called()
+        mock_load_job.assert_not_called()
 
     async def test_auto_retry_decorator_applied(self, service: ScoreFetcher) -> None:
         """Test that _execute_job has auto_retry decorator."""

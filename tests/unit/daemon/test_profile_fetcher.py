@@ -15,7 +15,7 @@ class TestProfileFetcher:
         rc = MagicMock()
         db = MagicMock()
         service = ProfileFetcher(rc, db)
-        service._load_job = AsyncMock()
+        object.__setattr__(service, "_load_job", AsyncMock())
         return service
 
     async def test_preload_jobs_skips_disabled_tasks(self, service: ProfileFetcher) -> None:
@@ -55,10 +55,11 @@ class TestProfileFetcher:
         task = ProfileFetcherTask(id=1, user_id=123, enabled=True)
         service._db.get = AsyncMock(return_value=task)
         service._rc.set = AsyncMock(return_value=True)
-        service._rc.lock_ctx = MagicMock()
-        service._rc.lock_ctx.__enter__ = MagicMock()
-        service._rc.lock_ctx.__exit__ = MagicMock()
-        service._respect_rate_limit = AsyncMock()
+        lock_ctx = MagicMock()
+        lock_ctx.__enter__ = MagicMock()
+        lock_ctx.__exit__ = MagicMock()
+        object.__setattr__(service._rc, "lock_ctx", lock_ctx)
+        object.__setattr__(service, "_respect_rate_limit", AsyncMock())
         service._oac.get_user = AsyncMock(return_value={"id": 123, "username": "test"})
         service._db.add = AsyncMock()
 
@@ -84,7 +85,7 @@ class TestProfileFetcher:
             ]
         )
         service._rc.set = AsyncMock(return_value=True)
-        service._respect_rate_limit = AsyncMock()
+        object.__setattr__(service, "_respect_rate_limit", AsyncMock())
         service._oac.get_user = AsyncMock(return_value={"id": 123, "username": "test"})
         service._db.add = AsyncMock()
 

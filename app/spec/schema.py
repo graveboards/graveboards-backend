@@ -1,9 +1,8 @@
 from functools import lru_cache
 from typing import Any
-from typing import cast as typing_cast
 
 from app.database.models import ModelClass
-from app.spec import load_spec
+from app.spec.load import load_spec
 
 
 @lru_cache(maxsize=1)
@@ -124,4 +123,4 @@ def _get_schema_by_suffix(
     if not schema:
         raise ValueError(f"Schema with name '{schema_name}' not found")
 
-    return schema
+    return dict(schema)

@@ -1,5 +1,4 @@
 from typing import Any
-from typing import cast as typing_cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.inspection import inspect
@@ -58,7 +57,7 @@ class _C:
         await session.flush()
         await session.refresh(instance)
 
-        return typing_cast(BaseType, instance)
+        return instance
 
     @staticmethod
     @ensure_required(many=True)
@@ -164,8 +163,8 @@ class _C:
         model = model_class.value
         mapper = model_class.mapper
         pk_keys = [col.key for col in mapper.primary_key if col.key is not None]
-        column_keys = typing_cast(set[str], model_class.column_names)
-        relationship_keys = typing_cast(set[str], model_class.relationship_names)
+        column_keys = model_class.column_names
+        relationship_keys = model_class.relationship_names
         relationship_loaders = (
             [selectinload(getattr(model, rel.key)) for rel in mapper.relationships]
             if _load_relationships

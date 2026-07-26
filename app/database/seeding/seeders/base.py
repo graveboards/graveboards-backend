@@ -1,6 +1,5 @@
 import asyncio
 from abc import ABC, abstractmethod
-from collections.abc import Awaitable
 from datetime import datetime
 from typing import Any
 
@@ -29,7 +28,7 @@ class Seeder(ABC):
     @abstractmethod
     async def seed(
         self, queue: asyncio.Queue[SeedEvent | None], session: AsyncSession | None = None
-    ) -> Awaitable[None]: ...
+    ) -> None: ...
 
     @staticmethod
     def _normalize_datetimes(obj: Any) -> Any:

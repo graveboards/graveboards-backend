@@ -55,7 +55,8 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
             return root_key, v if len(v) > 1 else v[0], False
 
         key_path = re.findall(r"\[([^\[\]]*)]", k)
-        root = prev = node: dict[str, Any] = {}
+        root: dict[str, Any] = {}
+        prev = node = root
         for key_part in key_path:
             node[key_part] = {}
             prev = node

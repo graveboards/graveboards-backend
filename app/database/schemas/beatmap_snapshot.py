@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Literal
 
 from pydantic.config import ConfigDict
 from pydantic.fields import Field
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 class BeatmapSnapshotSchema(BeatmapOsuApiSchema, BaseModelExtra):
     model_config = ConfigDict(from_attributes=True)
 
-    id: int | None = None
+    id: int
     beatmap_id: int
     snapshot_number: int | None = None
     snapshot_date: datetime | None = None

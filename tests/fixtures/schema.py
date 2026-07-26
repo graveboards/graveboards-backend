@@ -6,6 +6,7 @@ This module defines schemas and validation functions for osu! API response data.
 
 import json
 from pathlib import Path
+from typing import Any
 
 try:
     from jsonschema import ValidationError, validate
@@ -14,7 +15,9 @@ try:
 except ImportError:
     HAS_JSONSCHEMA = False
     ValidationError = Exception
-    validate = lambda *args, **kwargs: None
+
+    def validate(*args: Any, **kwargs: Any) -> None:
+        return None
 
 
 # Beatmap schema

@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Generator, Sequence
 from typing import Any, cast
 
+from pydantic.main import BaseModel
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.engine.row import RowMapping
 from sqlalchemy.ext.asyncio.session import AsyncSession
@@ -39,11 +40,11 @@ from app.database.models import (
     BeatmapsetListing,
     BeatmapsetSnapshot,
     BeatmapSnapshot,
+    ModelClass,
     Queue,
     Request,
     beatmap_snapshot_beatmapset_snapshot_association,
 )
-from app.database.models import ModelClass
 from app.database.utils import get_filter_condition
 from app.observability.logging import get_logger
 from app.spec import get_include_schema
@@ -64,10 +65,7 @@ DEFAULT_OFFSET = 0
 logger = get_logger(__name__)
 
 type ResultsType = (
-    Sequence[BeatmapSnapshot]
-    | Sequence[BeatmapsetSnapshot]
-    | Sequence[Queue]
-    | Sequence[Request]
+    Sequence[BeatmapSnapshot] | Sequence[BeatmapsetSnapshot] | Sequence[Queue] | Sequence[Request]
 )
 
 
@@ -300,9 +298,7 @@ class SearchEngine:
                         aggregated_beatmapset_cte.c.score_details.label("beatmapset_score_details")
                     )
 
-                query = query.add_columns(total_score_column).order_by(
-                    total_score_column.desc()
-                )
+                query = query.add_columns(total_score_column).order_by(total_score_column.desc())
             case Scope.BEATMAPSETS:
                 beatmap_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAP)
                 beatmapset_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAPSET)
@@ -347,9 +343,7 @@ class SearchEngine:
                         beatmapset_cte, beatmapset_cte.c.id == BeatmapsetSnapshot.id
                     ).add_columns(beatmapset_cte.c.score_details.label("beatmapset_score_details"))
 
-                query = query.add_columns(total_score_column).order_by(
-                    total_score_column.desc()
-                )
+                query = query.add_columns(total_score_column).order_by(total_score_column.desc())
             case Scope.QUEUES:
                 beatmap_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAP)
                 beatmapset_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAPSET)
@@ -444,9 +438,9 @@ class SearchEngine:
                     )
 
                 if queue_cte is not None:
-                    query = query.outerjoin(
-                        queue_cte, queue_cte.c.id == Queue.id
-                    ).add_columns(queue_cte.c.score_details.label("queue_score_details"))
+                    query = query.outerjoin(queue_cte, queue_cte.c.id == Queue.id).add_columns(
+                        queue_cte.c.score_details.label("queue_score_details")
+                    )
 
                 if queue_from_request_cte is not None:
                     query = query.outerjoin(
@@ -455,9 +449,7 @@ class SearchEngine:
                         queue_from_request_cte.c.score_details.label("request_score_details")
                     )
 
-                query = query.add_columns(total_score_column).order_by(
-                    total_score_column.desc()
-                )
+                query = query.add_columns(total_score_column).order_by(total_score_column.desc())
 
             case Scope.REQUESTS:
                 beatmap_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAP)
@@ -513,9 +505,7 @@ class SearchEngine:
                         request_cte, request_cte.c.id == Request.id
                     ).add_columns(request_cte.c.score_details.label("request_score_details"))
 
-                query = query.add_columns(total_score_column).order_by(
-                    total_score_column.desc()
-                )
+                query = query.add_columns(total_score_column).order_by(total_score_column.desc())
 
         self.query = query
 
@@ -539,12 +529,8 @@ class SearchEngine:
                 return
             sorting_clauses.append(sorting_option.order.sort_func(target))
 
-        def apply_sorting_cte(
-            cte: CTE, query: Select, target: ColumnElement[Any]
-        ) -> Select:
-            result = query.join(cte, cte.c.id == self.model_class.value.id).where(
-                cte.c.rank == 1
-            )
+        def apply_sorting_cte(cte: CTE, query: Select, target: ColumnElement[Any]) -> Select:
+            result = query.join(cte, cte.c.id == self.model_class.value.id).where(cte.c.rank == 1)
 
             apply_clause(target)
             return result
@@ -612,9 +598,7 @@ class SearchEngine:
                     filter_operator, target, value, is_aggregated=is_aggregated
                 )
 
-        def apply_clauses(
-            _conditions: Conditions, target: ColumnElement[Any]
-        ) -> None:
+        def apply_clauses(_conditions: Conditions, target: ColumnElement[Any]) -> None:
             for clause in clause_generator(_conditions, target):
                 filtering_clauses.append(clause)
 
@@ -657,7 +641,9 @@ class SearchEngine:
                     apply_clauses(conditions, target)
                     return query.join(cte, cte.c.id == self.model_class.value.id)
 
-        filtering_clauses: list[BinaryExpression | BindParameter | CollectionAggregate | ColumnElement[bool]] = []
+        filtering_clauses: list[
+            BinaryExpression | BindParameter | CollectionAggregate | ColumnElement[bool]
+        ] = []
 
         for category_name, field_filters in self.filters:
             if field_filters is None:

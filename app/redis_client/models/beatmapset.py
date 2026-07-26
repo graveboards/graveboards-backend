@@ -1,6 +1,7 @@
 from ast import literal_eval
 from datetime import datetime
-from typing import Any, cast as typing_cast
+from typing import Any
+from typing import cast as typing_cast
 
 from app.database.schemas.sub_schemas import BeatmapsetOsuApiSchema
 
@@ -60,21 +61,46 @@ class Beatmapset(BeatmapsetOsuApiSchema):
 
         for key, value in serialized_dict.items():
             match key:
-                case "id" | "user_id" | "favourite_count" | "offset" | "play_count" | "ranked" | "track_id":
+                case (
+                    "id"
+                    | "user_id"
+                    | "favourite_count"
+                    | "offset"
+                    | "play_count"
+                    | "ranked"
+                    | "track_id"
+                ):
                     deserialized_dict[key] = int(value) if value != "" else None
                 case "bpm" | "rating":
                     deserialized_dict[key] = float(value) if value != "" else None
                 case (
-                    "verified" | "nsfw" | "video" | "is_scoreable" | "spotlight"
-                    | "discussion_enabled" | "discussion_locked" | "can_be_hyped"
-                    | "storyboard" | "availability" | "description" | "nominations_summary"
-                    | "user" | "covers" | "genre" | "hype" | "language"
-                    | "pack_tags" | "current_nominations" | "ratings"
+                    "verified"
+                    | "nsfw"
+                    | "video"
+                    | "is_scoreable"
+                    | "spotlight"
+                    | "discussion_enabled"
+                    | "discussion_locked"
+                    | "can_be_hyped"
+                    | "storyboard"
+                    | "availability"
+                    | "description"
+                    | "nominations_summary"
+                    | "user"
+                    | "covers"
+                    | "genre"
+                    | "hype"
+                    | "language"
+                    | "pack_tags"
+                    | "current_nominations"
+                    | "ratings"
                 ):
                     deserialized_dict[key] = literal_eval(value) if value != "" else None
                 case "deleted_at" | "last_updated" | "submitted_date" | "ranked_date":
                     deserialized_dict[key] = datetime.fromisoformat(value) if value != "" else None
                 case "beatmaps":
-                    deserialized_dict[key] = [Beatmap.deserialize(beatmap) for beatmap in literal_eval(value)]
+                    deserialized_dict[key] = [
+                        Beatmap.deserialize(beatmap) for beatmap in literal_eval(value)
+                    ]
 
         return typing_cast(Beatmapset, cls.model_validate(deserialized_dict))

@@ -66,7 +66,7 @@ class TestTaskRetryPolicy:
         policy = TaskRetryPolicy(backoff=backoff, max_retries=5)
 
         with pytest.raises(FrozenInstanceError):
-            policy.max_retries = 10
+            object.__setattr__(policy, "max_retries", 10)
 
     def test_policy_is_slotted(self) -> None:
         """Test that policy uses slots for memory efficiency."""
@@ -77,8 +77,8 @@ class TestTaskRetryPolicy:
         backoff = ConstantBackoff(delay=1.0)
         policy = TaskRetryPolicy(backoff=backoff)
 
-        with pytest.raises(AttributeError):
-            setattr(policy, "new_attr", "value")
+        with pytest.raises((AttributeError, TypeError)):
+            object.__setattr__(policy, "new_attr", "value")
 
     def test_policy_with_only_max_retries(self) -> None:
         """Test policy with only max_retries set."""

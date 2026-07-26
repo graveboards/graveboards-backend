@@ -37,8 +37,12 @@ class FilterOperator(Enum):
     NOT_REGEX = "not_regex", staticmethod(lambda col, val: col.op("!~")(val))
 
     def __init__(self, value: str, method: Callable):
-        self._value_: str = value
+        self._operator_value: str = value
         self.method = method
+
+    @property
+    def operator_value(self) -> str:
+        return self._operator_value
 
     @classmethod
     def from_name(cls, name: str) -> FilterOperator:

@@ -1,8 +1,7 @@
 from datetime import timedelta
-
-from connexion import request
-from starlette.requests import Request
 from typing import Any
+
+from starlette.requests import Request
 from starlette.responses import Response
 
 from app.database import PostgresqlDB

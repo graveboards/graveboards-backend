@@ -167,7 +167,7 @@ class TestService:
         """Test that _on_start hook is called."""
         service._lock = asyncio.Lock()
         mock_start = AsyncMock()
-        service._on_start = mock_start
+        object.__setattr__(service, "_on_start", mock_start)
 
         with patch("asyncio.TaskGroup"):
             await service.start()
@@ -178,7 +178,7 @@ class TestService:
         """Test that _on_started hook is called."""
         service._lock = asyncio.Lock()
         mock_started = AsyncMock()
-        service._on_started = mock_started
+        object.__setattr__(service, "_on_started", mock_started)
 
         with patch("asyncio.TaskGroup"):
             await service.start()
@@ -189,7 +189,7 @@ class TestService:
         """Test that _on_stop hook is called."""
         service._running = True
         mock_stop = AsyncMock()
-        service._on_stop = mock_stop
+        object.__setattr__(service, "_on_stop", mock_stop)
 
         await service.stop()
 
@@ -199,7 +199,7 @@ class TestService:
         """Test that _on_stopped hook is called."""
         service._running = True
         mock_stopped = AsyncMock()
-        service._on_stopped = mock_stopped
+        object.__setattr__(service, "_on_stopped", mock_stopped)
 
         await service.stop()
 

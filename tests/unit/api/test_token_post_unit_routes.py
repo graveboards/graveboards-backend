@@ -87,9 +87,15 @@ class TestTokenPostEndpoint:
 
     async def _call_post_token(self, body: dict[str, Any], **kwargs: Any) -> Any:
         """Call the post token function with dependencies."""
+        from starlette.requests import Request
+
         from api.v1.token import post
 
-        return await post(body=body, **kwargs)
+        mock_request = MagicMock(spec=Request)
+        mock_request.state.rc = kwargs.get("rc")
+        mock_request.state.db = kwargs.get("db")
+
+        return await post(mock_request, body=body, **kwargs)
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -130,6 +136,7 @@ class TestTokenPostEndpoint:
 
         try:
             await post(
+                MagicMock(),
                 body={"state": self.TEST_STATE},
                 oauth=mock_oauth,
                 osu_api_client=mock_osu_client,
@@ -154,6 +161,7 @@ class TestTokenPostEndpoint:
 
         try:
             await post(
+                MagicMock(),
                 body={"code": "test_code"},
                 oauth=mock_oauth,
                 osu_api_client=mock_osu_client,
@@ -179,6 +187,7 @@ class TestTokenPostEndpoint:
 
         try:
             await post(
+                MagicMock(),
                 body={"code": "test_code", "state": "invalid_state"},
                 oauth=mock_oauth,
                 osu_api_client=mock_osu_client,
@@ -209,6 +218,7 @@ class TestTokenPostEndpoint:
 
         try:
             await post(
+                MagicMock(),
                 body={"code": "expired_code", "state": self.TEST_STATE},
                 oauth=mock_oauth,
                 osu_api_client=mock_osu_client,

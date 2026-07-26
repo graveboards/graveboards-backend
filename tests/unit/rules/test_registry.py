@@ -1,6 +1,7 @@
 import pytest
 
 from app.database.rules.base import RestrictionBase
+from app.database.rules.context import ExecutionContext
 from app.database.rules.registry import (
     RULE_REGISTRY,
     RULE_TIERS,
@@ -85,7 +86,10 @@ class TestRegistryAllValidators:
     @pytest.mark.unit
     def test_register_validator(self) -> None:
         class FakeValidator(RestrictionBase):
-            type = "fake_test_type"
+            type_ = "fake_test_type"
+
+            async def _check(self, context: ExecutionContext) -> None:
+                pass
 
         register_validator("fake_test_type", FakeValidator, tier=2)
         assert "fake_test_type" in RULE_REGISTRY

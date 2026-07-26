@@ -103,7 +103,7 @@ def role_authorization(
             strip_auth_info(kwargs)
             return await func(*args, **kwargs)
 
-        setattr(wrapper, "__security_authorization__", True)
+        object.__setattr__(wrapper, "__security_authorization__", True)
         return wrapper
 
     return decorator

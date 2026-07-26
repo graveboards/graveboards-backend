@@ -11,6 +11,7 @@ Run with: pytest tests/integration/search/test_search_integration.py -m integrat
 """
 
 import json
+from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
@@ -37,7 +38,7 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-async def search_test_fetcher() -> SearchTestFixtureFetcher:
+async def search_test_fetcher() -> AsyncGenerator[SearchTestFixtureFetcher]:
     """Create a SearchTestFixtureFetcher for reading coverage reports.
 
     This does NOT perform any API calls. It only reads the coverage state

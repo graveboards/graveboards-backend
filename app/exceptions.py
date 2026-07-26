@@ -52,7 +52,7 @@ class TypeValidationError(TypeError):
 
 
 class FieldValidationError(TypeValidationError):
-    def __init__(self, model: BaseType, field: str, value: Any, *target_types: type):
+    def __init__(self, model: type[BaseType], field: str, value: Any, *target_types: type):
         self.model = model
         self.field = field
         self.value = value
@@ -71,7 +71,7 @@ class FieldValidationError(TypeValidationError):
 
 
 class FieldNotSupportedError(Exception):
-    def __init__(self, model: BaseType, field: str):
+    def __init__(self, model: type[BaseType], field: str):
         self.model = model
         self.field = field
 
@@ -84,7 +84,7 @@ class FieldNotSupportedError(Exception):
 
 
 class FieldConditionValidationError(Exception):
-    def __init__(self, model: BaseType, field: str, detail: str):
+    def __init__(self, model: type[BaseType], field: str, detail: str):
         self.model = model
         self.field = field
         self.detail = detail

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy.dialects.postgresql.array import ARRAY
 from sqlalchemy.dialects.postgresql.json import JSONB
@@ -111,30 +111,7 @@ class BeatmapsetSnapshot(Base):
         lazy=True,
     )
 
-    # Hybrid annotations
-    availability_download_disabled: Mapped[bool]
-    availability_more_information: Mapped[str | None]
-    description_description: Mapped[str]
-    genre_name: Mapped[str]
-    genre_id: Mapped[int]
-    genre_name: Mapped[str]
-    hype_current: Mapped[int]
-    hype_required: Mapped[int]
-    language_id: Mapped[int]
-    language_name: Mapped[str]
-    # tags: Mapped[str]
-    nominations_summary_current: Mapped[int]
-    nominations_summary_required_meta_main_ruleset: Mapped[int]
-    nominations_summary_required_meta_non_main_ruleset: Mapped[int]
-    num_difficulties: Mapped[int]
-    sr_gaps: Mapped[list[float]]
-    sr_gaps_min: Mapped[float]
-    sr_gaps_max: Mapped[float]
-    sr_gaps_avg: Mapped[float]
-    hit_lengths: Mapped[list[int]]
-    hit_lengths_min: Mapped[int]
-    hit_lengths_max: Mapped[int]
-    hit_lengths_avg: Mapped[int]
+    # Hybrid annotations defined via @hybrid_property below
 
     __table_args__ = (
         UniqueConstraint(
@@ -144,10 +121,11 @@ class BeatmapsetSnapshot(Base):
 
     @hybrid_property
     def availability_download_disabled(self) -> bool:
-        return self.availability["download_disabled"]
+        return bool(self.availability["download_disabled"])
 
     @availability_download_disabled.expression
-    def availability_download_disabled(cls):
+    @classmethod
+    def _availability_download_disabled_expr(cls) -> Any:
         from app.database.ctes.bms_ss.availability import availability_download_disabled_cte
 
         return (
@@ -158,10 +136,12 @@ class BeatmapsetSnapshot(Base):
 
     @hybrid_property
     def availability_more_information(self) -> str | None:
-        return self.availability["more_information"]
+        value = self.availability["more_information"]
+        return value if value is None else str(value)
 
     @availability_more_information.expression
-    def availability_more_information(cls):
+    @classmethod
+    def _availability_more_information_expr(cls) -> Any:
         from app.database.ctes.bms_ss.availability import availability_more_information_cte
 
         return (
@@ -172,10 +152,11 @@ class BeatmapsetSnapshot(Base):
 
     @hybrid_property
     def description_description(self) -> str:
-        return self.description["description"]
+        return str(self.description["description"])
 
     @description_description.expression
-    def description_description(cls):
+    @classmethod
+    def _description_description_expr(cls) -> Any:
         from app.database.ctes.bms_ss.description import description_description_cte
 
         return (
@@ -187,12 +168,13 @@ class BeatmapsetSnapshot(Base):
     @hybrid_property
     def genre_id(self) -> int | None:
         if self.genre and "id" in self.genre:
-            return self.genre["id"]
+            return int(self.genre["id"])
 
         return None
 
     @genre_id.expression
-    def genre_id(cls):
+    @classmethod
+    def _genre_id_expr(cls) -> Any:
         from app.database.ctes.bms_ss.genre import genre_id_cte
 
         return (
@@ -204,12 +186,13 @@ class BeatmapsetSnapshot(Base):
     @hybrid_property
     def genre_name(self) -> str | None:
         if self.genre and "name" in self.genre:
-            return self.genre["name"]
+            return str(self.genre["name"])
 
         return None
 
     @genre_name.expression
-    def genre_name(cls):
+    @classmethod
+    def _genre_name_expr(cls) -> Any:
         from app.database.ctes.bms_ss.genre import genre_name_cte
 
         return (
@@ -221,12 +204,13 @@ class BeatmapsetSnapshot(Base):
     @hybrid_property
     def hype_current(self) -> int | None:
         if self.hype and "current" in self.hype:
-            return self.hype["current"]
+            return int(self.hype["current"])
 
         return None
 
     @hype_current.expression
-    def hype_current(cls):
+    @classmethod
+    def _hype_current_expr(cls) -> Any:
         from app.database.ctes.bms_ss.hype import hype_current_cte
 
         return (
@@ -238,12 +222,13 @@ class BeatmapsetSnapshot(Base):
     @hybrid_property
     def hype_required(self) -> str | None:
         if self.hype and "required" in self.hype:
-            return self.hype["required"]
+            return str(self.hype["required"])
 
         return None
 
     @hype_required.expression
-    def hype_required(cls):
+    @classmethod
+    def _hype_required_expr(cls) -> Any:
         from app.database.ctes.bms_ss.hype import hype_required_cte
 
         return (
@@ -255,12 +240,13 @@ class BeatmapsetSnapshot(Base):
     @hybrid_property
     def language_id(self) -> int | None:
         if self.language and "id" in self.language:
-            return self.language["id"]
+            return int(self.language["id"])
 
         return None
 
     @language_id.expression
-    def language_id(cls):
+    @classmethod
+    def _language_id_expr(cls) -> Any:
         from app.database.ctes.bms_ss.language import language_id_cte
 
         return (
@@ -272,12 +258,13 @@ class BeatmapsetSnapshot(Base):
     @hybrid_property
     def language_name(self) -> str | None:
         if self.language and "name" in self.language:
-            return self.language["name"]
+            return str(self.language["name"])
 
         return None
 
     @language_name.expression
-    def language_name(cls):
+    @classmethod
+    def _language_name_expr(cls) -> Any:
         from app.database.ctes.bms_ss.language import language_name_cte
 
         return (
@@ -302,10 +289,11 @@ class BeatmapsetSnapshot(Base):
 
     @hybrid_property
     def nominations_summary_current(self) -> int:
-        return self.nominations_summary["current"]
+        return int(self.nominations_summary["current"])
 
     @nominations_summary_current.expression
-    def nominations_summary_current(cls):
+    @classmethod
+    def _nominations_summary_current_expr(cls) -> Any:
         from app.database.ctes.bms_ss.nominations_summary import nominations_summary_current_cte
 
         return (
@@ -316,10 +304,11 @@ class BeatmapsetSnapshot(Base):
 
     @hybrid_property
     def nominations_summary_required_meta_main_ruleset(self) -> int:
-        return self.nominations_summary["required_meta"]["main_ruleset"]
+        return int(self.nominations_summary["required_meta"]["main_ruleset"])
 
     @nominations_summary_required_meta_main_ruleset.expression
-    def nominations_summary_required_meta_main_ruleset(cls):
+    @classmethod
+    def _nominations_summary_required_meta_main_ruleset_expr(cls) -> Any:
         from app.database.ctes.bms_ss.nominations_summary import (
             nominations_summary_required_meta_main_ruleset_cte,
         )
@@ -335,10 +324,11 @@ class BeatmapsetSnapshot(Base):
 
     @hybrid_property
     def nominations_summary_required_meta_non_main_ruleset(self) -> int:
-        return self.nominations_summary["required_meta"]["non_main_ruleset"]
+        return int(self.nominations_summary["required_meta"]["non_main_ruleset"])
 
     @nominations_summary_required_meta_non_main_ruleset.expression
-    def nominations_summary_required_meta_non_main_ruleset(cls):
+    @classmethod
+    def _nominations_summary_required_meta_non_main_ruleset_expr(cls) -> Any:
         from app.database.ctes.bms_ss.nominations_summary import (
             nominations_summary_required_meta_non_main_ruleset_cte,
         )
@@ -357,7 +347,8 @@ class BeatmapsetSnapshot(Base):
         return len(self.beatmap_snapshots)
 
     @num_difficulties.expression
-    def num_difficulties(cls):
+    @classmethod
+    def _num_difficulties_expr(cls) -> Any:
         from app.database.ctes.bms_ss.num_difficulties import num_difficulties_cte
 
         return (
@@ -377,7 +368,8 @@ class BeatmapsetSnapshot(Base):
         return diffs if len(ratings) > 1 else []
 
     @sr_gaps.expression
-    def sr_gaps(cls):
+    @classmethod
+    def _sr_gaps_expr(cls) -> Any:
         from app.database.ctes.bms_ss.sr_gap import sr_gap_agg_cte
 
         return (
@@ -388,10 +380,11 @@ class BeatmapsetSnapshot(Base):
 
     @hybrid_property
     def sr_gaps_min(self) -> float:
-        return min(self.sr_gaps)
+        return float(min(self.sr_gaps))
 
     @sr_gaps_min.expression
-    def sr_gaps_min(cls):
+    @classmethod
+    def _sr_gaps_min_expr(cls) -> Any:
         from app.database.ctes.bms_ss.sr_gap import min_sr_gap_cte
 
         return (
@@ -402,10 +395,11 @@ class BeatmapsetSnapshot(Base):
 
     @hybrid_property
     def sr_gaps_max(self) -> float:
-        return max(self.sr_gaps)
+        return float(max(self.sr_gaps))
 
     @sr_gaps_max.expression
-    def sr_gaps_max(cls):
+    @classmethod
+    def _sr_gaps_max_expr(cls) -> Any:
         from app.database.ctes.bms_ss.sr_gap import max_sr_gap_cte
 
         return (
@@ -416,10 +410,11 @@ class BeatmapsetSnapshot(Base):
 
     @hybrid_property
     def sr_gaps_avg(self) -> float:
-        return round(sum(self.sr_gaps) / len(self.sr_gaps), 2)
+        return round(float(sum(self.sr_gaps) / len(self.sr_gaps)), 2)
 
     @sr_gaps_avg.expression
-    def sr_gaps_avg(cls):
+    @classmethod
+    def _sr_gaps_avg_expr(cls) -> Any:
         from app.database.ctes.bms_ss.sr_gap import avg_sr_gap_cte
 
         return (
@@ -436,7 +431,8 @@ class BeatmapsetSnapshot(Base):
         return [snapshot.hit_length for snapshot in self.beatmap_snapshots]
 
     @hit_lengths.expression
-    def hit_lengths(cls):
+    @classmethod
+    def _hit_lengths_expr(cls) -> Any:
         from app.database.ctes.bms_ss.hit_length import hit_length_agg_cte
 
         return (
@@ -447,10 +443,11 @@ class BeatmapsetSnapshot(Base):
 
     @hybrid_property
     def hit_lengths_min(self) -> int:
-        return min(self.hit_lengths)
+        return int(min(self.hit_lengths))
 
     @hit_lengths_min.expression
-    def hit_lengths_min(cls):
+    @classmethod
+    def _hit_lengths_min_expr(cls) -> Any:
         from app.database.ctes.bms_ss.hit_length import min_hit_length_cte
 
         return (
@@ -461,10 +458,11 @@ class BeatmapsetSnapshot(Base):
 
     @hybrid_property
     def hit_lengths_max(self) -> int:
-        return max(self.hit_lengths)
+        return int(max(self.hit_lengths))
 
     @hit_lengths_max.expression
-    def hit_lengths_max(cls):
+    @classmethod
+    def _hit_lengths_max_expr(cls) -> Any:
         from app.database.ctes.bms_ss.hit_length import max_hit_length_cte
 
         return (
@@ -475,10 +473,11 @@ class BeatmapsetSnapshot(Base):
 
     @hybrid_property
     def hit_lengths_avg(self) -> float:
-        return round(sum(self.hit_lengths) / len(self.hit_lengths), 2)
+        return round(float(sum(self.hit_lengths) / len(self.hit_lengths)), 2)
 
     @hit_lengths_avg.expression
-    def hit_lengths_avg(cls):
+    @classmethod
+    def _hit_lengths_avg_expr(cls) -> Any:
         from app.database.ctes.bms_ss.hit_length import avg_hit_length_cte
 
         return (

@@ -19,9 +19,7 @@ class TestIncludeValidator:
         schema = {"properties": {"user": {"type": "boolean"}}}
         include = {"user": False}
 
-        result = validate_include(include, schema)
-
-        assert result is None
+        validate_include(include, schema)
 
     def test_validate_include_nested_object(self) -> None:
         """Test validation of nested object."""

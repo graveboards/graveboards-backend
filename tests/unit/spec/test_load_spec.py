@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 from unittest.mock import mock_open, patch
 
 import pytest
@@ -83,7 +83,7 @@ class TestLoadSpec:
                 with patch("builtins.open", mock_open(read_data="data")):
                     result = load_spec()
 
-        assert result == "cached_spec"
+        assert cast(str, result) == "cached_spec"
 
     def test_load_spec_non_prod_invalidates_on_mtime(
         self,
@@ -350,4 +350,4 @@ class TestLoadSpec:
                 with patch("builtins.open", mock_open(read_data="data")):
                     result = load_spec()
 
-        assert result == "cached"
+        assert cast(str, result) == "cached"

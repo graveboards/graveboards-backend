@@ -84,7 +84,7 @@ def rate_limit(
 
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-            obj = args[0] if args else None
+            obj: Any = args[0] if args else None
             rc: RedisClient | _HasIncrExpire | None = None
 
             if isinstance(obj, RedisClient):
@@ -92,7 +92,7 @@ def rate_limit(
             elif obj is not None and hasattr(obj, "rc"):
                 rc = obj.rc
             elif obj is not None and hasattr(obj, "incr") and hasattr(obj, "expire"):
-                rc: RedisClient | _HasIncrExpire | None = obj
+                rc = obj
 
             if rc is None:
                 raise ValueError(

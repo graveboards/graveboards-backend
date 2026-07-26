@@ -1,4 +1,5 @@
-from sqlalchemy.orm.strategy_options import joinedload, noload, selectinload
+from pydantic.main import BaseModel
+from sqlalchemy.orm.strategy_options import Load, joinedload, noload, selectinload
 
 from app.database.models import BeatmapsetSnapshot, BeatmapSnapshot, ModelClass, Queue, Request
 from app.database.schemas import (
@@ -31,10 +32,10 @@ SCOPE_MODEL_MAPPING = {
 Defines which root model a query operates against.
 """
 
-SCOPE_SCHEMA_MAPPING = {
+SCOPE_SCHEMA_MAPPING: dict[Scope, type[BaseModel]] = {
     Scope.BEATMAPS: BeatmapSnapshotSchema,
     Scope.BEATMAPSETS: BeatmapsetSnapshotSchema,
-    Scope.SCORES: ...,
+    Scope.SCORES: BaseModel,
     Scope.QUEUES: QueueSchema,
     Scope.REQUESTS: RequestSchema,
 }
@@ -43,7 +44,7 @@ SCOPE_SCHEMA_MAPPING = {
 Determines how results are serialized for each scope.
 """
 
-SCOPE_OPTIONS_MAPPING = {
+SCOPE_OPTIONS_MAPPING: dict[Scope, tuple[Load, ...]] = {
     Scope.BEATMAPS: (
         selectinload(BeatmapSnapshot.beatmap_tags),
         selectinload(BeatmapSnapshot.owner_profiles),
@@ -64,7 +65,7 @@ SCOPE_OPTIONS_MAPPING = {
         selectinload(BeatmapsetSnapshot.beatmapset_tags),
         joinedload(BeatmapsetSnapshot.user_profile),
     ),
-    Scope.SCORES: ...,
+    Scope.SCORES: (),
     Scope.QUEUES: (
         noload(Queue.managers),
         joinedload(Queue.user_profile),
@@ -110,10 +111,10 @@ Defines ORM loading behavior (selectinload/joinedload/noload) to optimize query
 execution and prevent N+1 issues.
 """
 
-SCOPE_CATEGORIES_MAPPING = {
+SCOPE_CATEGORIES_MAPPING: dict[Scope, list[SearchableFieldCategory]] = {
     Scope.BEATMAPS: [SearchableFieldCategory.BEATMAP, SearchableFieldCategory.BEATMAPSET],
     Scope.BEATMAPSETS: [SearchableFieldCategory.BEATMAP, SearchableFieldCategory.BEATMAPSET],
-    Scope.SCORES: ...,
+    Scope.SCORES: [],
     Scope.QUEUES: [
         SearchableFieldCategory.BEATMAP,
         SearchableFieldCategory.BEATMAPSET,

@@ -235,7 +235,9 @@ def get_fixture_count(
     return len(list(path.glob("*.json")))
 
 
-def get_all_fixture_files(fixtures_dir: Path | None = None) -> dict[str, list[Path]]:
+def get_all_fixture_files(
+    fixtures_dir: Path | None = None,
+) -> dict[str, list[Path] | dict[str, list[Path]]]:
     """Get all fixture files organized by category.
 
     Args:
@@ -262,10 +264,11 @@ def get_all_fixture_files(fixtures_dir: Path | None = None) -> dict[str, list[Pa
     for category in ["users", "scores"]:
         path = base / category
         if path.exists():
-            fixtures[category] = {}
+            sub_fixtures: dict[str, list[Path]] = {}
             for sub in path.iterdir():
                 if sub.is_dir():
-                    fixtures[category][sub.name] = list(sub.glob("*.json"))
+                    sub_fixtures[sub.name] = list(sub.glob("*.json"))
+            fixtures[category] = sub_fixtures
     return fixtures
 
 

@@ -1,9 +1,7 @@
 from io import BytesIO
 
 import aiofiles
-from connexion import request
 from starlette.requests import Request
-from typing import Any
 from starlette.responses import PlainTextResponse, Response
 
 from api.decorators import coerce_arguments

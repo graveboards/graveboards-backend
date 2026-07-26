@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, cast
 
 from connexion.exceptions import Forbidden
 
@@ -117,7 +117,7 @@ class CompositeEvaluator:
         return await node.evaluate(context)
 
 
-_RULE_TYPE_TO_NODE_CLASS = {
+_RULE_TYPE_TO_NODE_CLASS: dict[str, Any] = {
     "and": AndNode,
     "or": OrNode,
     "not": NotNode,
@@ -151,6 +151,6 @@ def build_rule_node(
             )
 
         children = [build_rule_node(r) for r in child_rules]
-        return node_cls(children)
+        return cast(RuleNode, node_cls(children))
 
     return AtomicRuleNode(rule_type, config)

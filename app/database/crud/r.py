@@ -325,7 +325,7 @@ class _R:
         model = model_class.value
         targets = []
 
-        def append_target(name_: str):
+        def append_target(name_: str) -> None:
             if name_ not in model_class.all_names:
                 raise ValueError(
                     f"Attribute '{name_}' is not a valid column, relationship, nor hybrid property of {model_class.value}"
@@ -689,7 +689,7 @@ class _R:
         if handler is None:
             return select_stmt
 
-        return handler(select_stmt, typing_cast(dict[str, Any], category_score_ctes), search_terms)
+        return handler(select_stmt, category_score_ctes, search_terms)
 
     @staticmethod
     def _apply_search_simple(

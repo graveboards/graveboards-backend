@@ -266,9 +266,11 @@ class BeatmapSeeder(Seeder):
                 added_bm_dicts.append(added_bm_dict)
         else:
             # Generate snapshot from beatmap data (following BeatmapManager pattern)
-            added_bm_dict: dict[str, Any] | None = await self._generate_bm_snapshot(beatmap_entry)
-            if added_bm_dict:
-                added_bm_dicts.append(added_bm_dict)
+            generated_bm_dict: dict[str, Any] | None = await self._generate_bm_snapshot(
+                beatmap_entry
+            )
+            if generated_bm_dict:
+                added_bm_dicts.append(generated_bm_dict)
 
         self.progress += 1
         if self.queue is not None:

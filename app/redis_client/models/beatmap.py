@@ -1,6 +1,7 @@
 from ast import literal_eval
 from datetime import datetime
-from typing import Any, cast as typing_cast
+from typing import Any
+from typing import cast as typing_cast
 
 from app.database.schemas.sub_schemas import BeatmapOsuApiSchema
 
@@ -45,7 +46,20 @@ class Beatmap(BeatmapOsuApiSchema):
 
         for key, value in serialized_dict.items():
             match key:
-                case "id" | "user_id" | "count_circles" | "count_sliders" | "count_spinners" | "hit_length" | "max_combo" | "mode_int" | "passcount" | "playcount" | "ranked" | "total_length":
+                case (
+                    "id"
+                    | "user_id"
+                    | "count_circles"
+                    | "count_sliders"
+                    | "count_spinners"
+                    | "hit_length"
+                    | "max_combo"
+                    | "mode_int"
+                    | "passcount"
+                    | "playcount"
+                    | "ranked"
+                    | "total_length"
+                ):
                     deserialized_dict[key] = int(value) if value != "" else None
                 case "accuracy" | "ar" | "bpm" | "cs" | "difficulty_rating" | "drain":
                     deserialized_dict[key] = float(value) if value != "" else None

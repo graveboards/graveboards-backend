@@ -61,8 +61,8 @@ class FixtureDataFetcher:
         self.failed_id_store = failed_id_store or FailedIdStore(rc)
         self.id_ranges = id_ranges or self.metadata.get("id_ranges", ID_RANGES)
         self.top_player_ids = self.metadata.get("top_player_ids", {r: [] for r in RULESETS})
-        self.last_fetch_results: dict[str, list[dict]] = {}
-        self._current_session_results: dict[str, list[dict]] = {}
+        self.last_fetch_results: dict[str, Any] = {}
+        self._current_session_results: dict[str, Any] = {}
         self._valid_beatmap_ids: list[int] = []
         self._seen_ids: set[int] = set()
         self._consecutive_errors = 0
@@ -449,7 +449,7 @@ class FixtureDataFetcher:
             def path_builder(id: int, st: str = score_type, _type_path: Path = type_path) -> Path:
                 return _type_path / f"scores_{id}_{st}.json"
 
-            async def id_generator(_use_top_players: bool = use_top_players):
+            async def id_generator(_use_top_players: bool = use_top_players) -> int:
                 return await self._get_random_id("users", use_top_players=_use_top_players)
 
             def success_handler(
@@ -773,6 +773,12 @@ class FixtureDataFetcher:
         self.metadata = load_metadata(fixtures_dir=self.fixtures_dir)
         self.top_player_ids = self.metadata.get("top_player_ids", {r: [] for r in RULESETS})
         return fetched
+
+    def _make_id_generator(self, category: str) -> Callable[[], Coroutine[Any, Any, int]]:
+        async def _generate() -> int:
+            return await self._get_random_id(category)
+
+        return _generate
 
     async def _get_random_id(
         self, category: str, use_top_players: bool = False, avoid_failed: bool = True

@@ -13,8 +13,10 @@ Fixture hierarchy:
 """
 
 import os
+from collections.abc import Callable
 from contextlib import ExitStack
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -29,10 +31,6 @@ def _clear_spec_cache() -> None:
     for cache_file in cache_files:
         if cache_file.exists():
             cache_file.unlink()
-
-
-from collections.abc import Callable
-from typing import Any
 
 
 def pytest_configure(config: Any) -> None:

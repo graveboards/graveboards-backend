@@ -133,12 +133,13 @@ async def cmd_seed(
     logger.info(f"Seed execution order: {execution_order_string}")
 
     # Inject loaded data into seeders
+    seeding_data_any: dict = seeding_data
     for seed_target, seeder in orchestrator.seeders.items():
         if seed_target in seeding_data:
             seeder.set_data(seeding_data[seed_target])
             # BeatmapSeeder needs beatmap tags separately
             if seed_target == SeederTarget.BEATMAP:
-                beatmap_tags = seeding_data.get("beatmap_tags")
+                beatmap_tags = seeding_data_any.get("beatmap_tags", [])
                 if beatmap_tags is not None:
                     from app.database.seeding.seeders.beatmap import BeatmapSeeder
 
@@ -157,11 +158,13 @@ async def cmd_seed(
         TimeElapsedColumn(),
     )
 
-    seeder_tasks: dict[SeedTarget, TaskID] = {}
+    seeder_tasks: dict[SeederTarget, TaskID] = {}
 
-    for target, seeder in orchestrator.seeders.items():
-        seeder_target: SeedTarget = SEEDER_TO_CLI[target]
-        seeder_tasks[seeder_target] = progress.add_task(target.seed_title, start=False, total=seeder.total)
+    for _target in orchestrator.seeders:
+        seeder = orchestrator.seeders[_target]
+        seeder_tasks[_target] = progress.add_task(
+            _target.seed_title, start=False, total=seeder.total
+        )
     overall_task = progress.add_task("Total", total=orchestrator.total)
     overall_progress = 0
 

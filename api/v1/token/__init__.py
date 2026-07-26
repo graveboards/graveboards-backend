@@ -1,9 +1,7 @@
 from authlib.integrations.base_client.errors import OAuthError
-from connexion import request
-from starlette.requests import Request
-from typing import Any
-from starlette.responses import Response
 from jwt.exceptions import ExpiredSignatureError, InvalidIssuerError, InvalidTokenError
+from starlette.requests import Request
+from starlette.responses import Response
 
 from app.database import PostgresqlDB
 from app.database.models import OAuthToken, ScoreFetcherTask, User

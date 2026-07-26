@@ -1,10 +1,10 @@
 import json
-import logging
 import random
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator, AsyncIterator
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, cast as typing_cast
+from typing import Any
+from typing import cast as typing_cast
 
 from app.exceptions import clean_error_msg
 from app.osu_api.enums import Ruleset
@@ -436,8 +436,12 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         results["beatmapsets"] = typing_cast(dict, self._current_session_results["beatmapsets"])
         results["users"] = typing_cast(dict, self._current_session_results["users"]).copy()
         results["scores"] = typing_cast(dict, self._current_session_results["scores"]).copy()
-        results["beatmap_scores"] = typing_cast(dict, self._current_session_results["beatmap_scores"])
-        results["beatmap_attributes"] = typing_cast(dict, self._current_session_results["beatmap_attributes"])
+        results["beatmap_scores"] = typing_cast(
+            dict, self._current_session_results["beatmap_scores"]
+        )
+        results["beatmap_attributes"] = typing_cast(
+            dict, self._current_session_results["beatmap_attributes"]
+        )
 
         self.last_fetch_results = results
 
@@ -664,7 +668,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
 
         return results
 
-    async def fetch_targeted(self) -> dict[str, Any]:
+    async def fetch_targeted(self) -> AsyncGenerator[FetchEvent]:
         """Execute targeted fetch based on configured parameters."""
         counts: dict[str, dict[str, Any]] = {
             "beatmapsets": {},

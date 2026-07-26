@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from typing import Any
 
 from sqlalchemy.dialects.postgresql.json import JSONB
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -103,8 +104,6 @@ class Profile(Base):
     website: Mapped[str | None] = mapped_column(String)
 
     # Hybrid annotations
-    total_maps: Mapped[int]
-    total_kudosu: Mapped[int]
     # TODO: Implement many more hybrid properties
 
     @hybrid_property
@@ -117,7 +116,8 @@ class Profile(Base):
         )
 
     @total_maps.expression
-    def total_maps(cls):
+    @classmethod
+    def _total_maps_expr(cls) -> Any:
         return (
             func.coalesce(cls.graveyard_beatmapset_count, 0)
             + func.coalesce(cls.loved_beatmapset_count, 0)
@@ -130,5 +130,6 @@ class Profile(Base):
         return self.kudosu.get("total", 0) if self.kudosu else 0
 
     @total_kudosu.expression
-    def total_kudosu(cls):
+    @classmethod
+    def _total_kudosu_expr(cls) -> Any:
         return func.coalesce(cast(cls.kudosu["total"].astext, Integer), 0)

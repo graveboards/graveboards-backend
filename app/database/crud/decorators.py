@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import inspect
-from collections.abc import AsyncIterator, Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable, Coroutine
 from contextlib import AbstractAsyncContextManager
 from contextvars import ContextVar
 from functools import wraps
@@ -46,7 +46,8 @@ _active_session: ContextVar[AsyncSession | None] = ContextVar(
 def session_manager(
     session_resolver: SessionResolver | None = None, autoflush_allowed: bool = True
 ) -> Callable[
-    [Callable[Concatenate[Any, P], Awaitable[T]]], Callable[Concatenate[Any, P], Awaitable[T]]
+    [Callable[Concatenate[Any, P], Coroutine[Any, Any, T]]],
+    Callable[Concatenate[Any, P], Coroutine[Any, Any, T]],
 ]:
     """Manage ``AsyncSession`` lifecycle for coroutine-based CRUD operations.
 
@@ -74,12 +75,13 @@ def session_manager(
         RuntimeError:
             If autoflush constraints are violated.
     """
-    if session_resolver is None:
-        session_resolver = _default_session_resolver
+    _resolver: SessionResolver = (
+        session_resolver if session_resolver is not None else _default_session_resolver
+    )
 
     def decorator(
-        func: Callable[Concatenate[Any, P], Awaitable[T]],
-    ) -> Callable[Concatenate[Any, P], Awaitable[T]]:
+        func: Callable[Concatenate[Any, P], Coroutine[Any, Any, T]],
+    ) -> Callable[Concatenate[Any, P], Coroutine[Any, Any, T]]:
         @wraps(func)
         async def wrapper(self: Any, *args: P.args, **kwargs: P.kwargs) -> T:
             passed_session = kwargs.get("session")
@@ -105,7 +107,7 @@ def session_manager(
                 kwargs["session"] = current_session
                 return await func(self, *args, **kwargs)
 
-            async with session_resolver(self, autoflush=autoflush_allowed) as session:
+            async with _resolver(self, autoflush=autoflush_allowed) as session:
                 _enforce_autoflush(session, autoflush_allowed, func)
                 token = _active_session.set(session)
 
@@ -151,8 +153,9 @@ def session_manager_stream(
         RuntimeError:
             If autoflush constraints are violated.
     """
-    if session_resolver is None:
-        session_resolver = _default_session_resolver
+    _resolver: Callable[..., Any] = (
+        session_resolver if session_resolver is not None else _default_session_resolver
+    )
 
     def decorator(
         func: Callable[Concatenate[Any, P], AsyncIterator[T]],
@@ -189,7 +192,7 @@ def session_manager_stream(
 
                 return
 
-            async with session_resolver(self, autoflush=autoflush_allowed) as session:
+            async with _resolver(self, autoflush=autoflush_allowed) as session:
                 _enforce_autoflush(session, autoflush_allowed, func)
                 token = _active_session.set(session)
 

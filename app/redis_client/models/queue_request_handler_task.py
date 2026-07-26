@@ -1,6 +1,7 @@
 from ast import literal_eval
 from datetime import datetime
-from typing import Any, cast as typing_cast
+from typing import Any
+from typing import cast as typing_cast
 
 from pydantic.fields import computed_field
 from pydantic.main import BaseModel
@@ -19,7 +20,6 @@ class QueueRequestHandlerTask(BaseModel):
     failed_at: datetime | None = None
 
     @computed_field
-    @property
     def hashed_id(self) -> int:
         """Compute a stable positive hash identifier for the task.
 

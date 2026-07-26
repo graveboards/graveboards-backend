@@ -78,7 +78,9 @@ class FixtureOrchestrator:
 
         return report
 
-    def _create_fetcher(self) -> SearchTestFixtureFetcher | TargetedFixtureFetcher | FixtureDataFetcher:
+    def _create_fetcher(
+        self,
+    ) -> SearchTestFixtureFetcher | TargetedFixtureFetcher | FixtureDataFetcher:
         """Create the appropriate fetcher for the criteria profile."""
         fixtures_dir: Path | None = None
         if self.criteria.fixtures_dir:
@@ -254,7 +256,9 @@ class FixtureOrchestrator:
 
         search_fetcher = cast(SearchTestFixtureFetcher, self.fetcher)
         if st.full:
-            search_fetcher.logger.info(f"Search test fetch: full mode, max {st.max_total} API calls")
+            search_fetcher.logger.info(
+                f"Search test fetch: full mode, max {st.max_total} API calls"
+            )
             coverage = await search_fetcher.ensure_search_test_coverage(
                 min_per_category=st.min_per_category,
                 max_total=st.max_total,

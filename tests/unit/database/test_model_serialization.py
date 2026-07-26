@@ -183,7 +183,8 @@ class TestGetFilterCondition:
         with pytest.raises(ValueError):
 
             class FakeOperator:
-                method = lambda self, x, y: None
+                def method(self, x: int, y: int) -> None:
+                    return None
 
             fake_op = FakeOperator()
             get_filter_condition(cast(FilterOperator, fake_op), column("test"), 1)

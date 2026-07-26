@@ -1,4 +1,5 @@
-from typing import Any, cast as typing_cast
+from typing import Any
+from typing import cast as typing_cast
 
 from pydantic.main import BaseModel
 

@@ -29,6 +29,7 @@ class TestRoleAuthorizationConfiguration:
     @pytest.mark.asyncio
     async def test_non_async_function_raises_error(self) -> None:
         """Test that non-async functions raise ValueError."""
+
         def sync_endpoint(**kwargs: Any) -> dict[str, str]:
             return {"data": "success"}
 
@@ -73,6 +74,7 @@ class TestOwnershipAuthorizationConfiguration:
     @pytest.mark.asyncio
     async def test_non_async_function_raises_error(self) -> None:
         """Test that non-async functions raise ValueError."""
+
         def sync_endpoint(**kwargs: Any) -> tuple[dict[str, str], int]:
             return ({"data": "success"}, 200)
 

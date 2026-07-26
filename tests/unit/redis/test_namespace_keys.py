@@ -77,14 +77,14 @@ class TestNamespaceKeys:
 
     def test_namespace_values(self) -> None:
         """Test namespace enum values."""
-        assert Namespace.LOCK == "lock"
-        assert Namespace.RATE_LIMIT_COUNTER == "rate_limit_counter"
-        assert Namespace.OSU_CLIENT_OAUTH_TOKEN == "osu_client_oauth_token"
-        assert Namespace.OSU_USER_PROFILE == "osu_user_profile"
-        assert Namespace.CSRF_STATE == "csrf_state"
-        assert Namespace.QUEUE_REQUEST_HANDLER_TASK == "queue_request_handler_task"
-        assert Namespace.CACHED_BEATMAP == "cached_beatmap"
-        assert Namespace.CACHED_BEATMAPSET == "cached_beatmapset"
+        assert Namespace.LOCK.value == "lock"
+        assert Namespace.RATE_LIMIT_COUNTER.value == "rate_limit_counter"
+        assert Namespace.OSU_CLIENT_OAUTH_TOKEN.value == "osu_client_oauth_token"
+        assert Namespace.OSU_USER_PROFILE.value == "osu_user_profile"
+        assert Namespace.CSRF_STATE.value == "csrf_state"
+        assert Namespace.QUEUE_REQUEST_HANDLER_TASK.value == "queue_request_handler_task"
+        assert Namespace.CACHED_BEATMAP.value == "cached_beatmap"
+        assert Namespace.CACHED_BEATMAPSET.value == "cached_beatmapset"
 
     def test_hash_name_with_special_characters(self) -> None:
         """Test hash_name with special characters in suffix."""

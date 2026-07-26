@@ -78,4 +78,4 @@ class TestValidationChannel:
 
     @pytest.mark.unit
     def test_channel_name_value(self) -> None:
-        assert ChannelName.QUEUE_REQUEST_VALIDATION_TASKS == "queue_request_validation_tasks"
+        assert ChannelName.QUEUE_REQUEST_VALIDATION_TASKS.value == "queue_request_validation_tasks"

@@ -1,13 +1,13 @@
 import json
 import time
-
-from connexion import request
-from starlette.requests import Request
 from typing import Any
-from starlette.responses import Response
+
+from connexion import request  # noqa: F401 - provides global request context
 from connexion.exceptions import Unauthorized
 from sqlalchemy import func
 from sqlalchemy import select as sa_select
+from starlette.requests import Request
+from starlette.responses import Response
 
 from api.auth import api_key_info, bearer_info
 from api.pagination import build_pagination_response

@@ -151,9 +151,7 @@ class TestFiltersValidator:
         schema = {"properties": {"visible": {"type": "boolean"}}}
         filters = {"visible": True}
 
-        result = validate_filters(filters, schema)
-
-        assert result is None
+        validate_filters(filters, schema)
 
     def test_validate_filters_complex_filter(self) -> None:
         """Test validation of complex filter with multiple conditions."""

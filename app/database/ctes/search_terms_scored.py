@@ -1,6 +1,5 @@
 from collections import defaultdict
 from collections.abc import Generator
-from typing import cast
 
 from sqlalchemy.sql import cast, select, union_all
 from sqlalchemy.sql.elements import literal
@@ -111,7 +110,7 @@ def _generate_term_score_stmts(
 
     for category in categories:
         model_fields = CATEGORY_MODEL_FIELDS_MAPPING[category]
-        weights = getattr(field_weights, category.value)
+        weights = getattr(field_weights, category.value[0])
 
         for field, model_field in model_fields.items():
             model_class = model_field.model_class

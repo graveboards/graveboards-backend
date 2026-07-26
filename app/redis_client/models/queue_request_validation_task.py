@@ -1,5 +1,6 @@
 from datetime import datetime
-from typing import Any, cast as typing_cast
+from typing import Any
+from typing import cast as typing_cast
 
 from pydantic.fields import computed_field
 from pydantic.main import BaseModel
@@ -17,7 +18,6 @@ class QueueRequestValidationTask(BaseModel):
     failed_at: datetime | None = None
 
     @computed_field
-    @property
     def hashed_id(self) -> int:
         return hash(("validation", self.request_id)) & 0x7FFFFFFFFFFFFFFF
 

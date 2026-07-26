@@ -1,5 +1,4 @@
 import struct
-from collections import defaultdict
 from collections.abc import Generator
 from enum import IntFlag, auto
 from typing import Annotated, Any
@@ -120,10 +119,12 @@ class FieldWeights(BaseModel):
             AllValuesNullError:
                 If no effective field weights are enabled for the given scope.
         """
+        scope_categories = SCOPE_CATEGORIES_MAPPING[scope]
+
         for category_name, model in self:
             category = SearchableFieldCategory.from_name(category_name)
 
-            if category not in SCOPE_CATEGORIES_MAPPING[scope]:
+            if category not in scope_categories:
                 continue
 
             if any(getattr(model, field) is not None for field in type(model).model_fields):
@@ -151,12 +152,11 @@ class FieldWeights(BaseModel):
         null_presence = 0
         chunks = []
 
+        scope_categories = SCOPE_CATEGORIES_MAPPING[scope]
+
         def iter_fields() -> Generator[tuple[str, int]]:
             for category_name, defaults in _DEFAULTS.items():
-                if (
-                    SearchableFieldCategory.from_name(category_name)
-                    not in SCOPE_CATEGORIES_MAPPING[scope]
-                ):
+                if SearchableFieldCategory.from_name(category_name) not in scope_categories:
                     continue
 
                 model = getattr(self, category_name)
@@ -196,17 +196,19 @@ class FieldWeights(BaseModel):
         """
         presence, null_presence = struct.unpack_from("!HH", data, offset)
         offset += 4
-        values: defaultdict[str, dict[str, int]] = defaultdict(dict)
+        values: dict[str, dict[str, int | None]] = {}
 
         for flag in FieldWeightFieldFlag:
             assert flag.name is not None
             category_name, field = flag.name.split("__")
 
             if presence & flag:
-                values[category_name][field] = struct.unpack_from("!b", data, offset)[0]
+                values.setdefault(category_name, {})[field] = struct.unpack_from(
+                    "!b", data, offset
+                )[0]
                 offset += 1
             elif null_presence & flag:
-                values[category_name][field] = None
+                values.setdefault(category_name, {})[field] = None
 
         return cls(**values), offset
 
@@ -214,17 +216,23 @@ class FieldWeights(BaseModel):
 # Default field weight configuration used for diff-based serialization.
 _DEFAULTS = FieldWeights().model_dump()
 
-_field_weight_field_flag_map: dict[str, int] = {
-    f"{category_name}__{field}": auto()
-    for category_name, defaults in _DEFAULTS.items()
-    for field in defaults
-}
-FieldWeightFieldFlag = IntFlag(
-    "FieldWeightFieldFlag", _field_weight_field_flag_map
-)
-"""
-Bitmask flags representing individual field weights.
 
-Each flag corresponds to a flattened "category__field" identifier and is used to encode
-presence and null-state information during binary serialization.
-"""
+class FieldWeightFieldFlag(IntFlag):
+    """Bitmask flags representing individual field weights.
+
+    Each flag corresponds to a flattened "category__field" identifier and is used to encode
+    presence and null-state information during binary serialization.
+    """
+
+    beatmap__version = auto()
+    beatmapset__title = auto()
+    beatmapset__title_unicode = auto()
+    beatmapset__artist = auto()
+    beatmapset__artist_unicode = auto()
+    beatmapset__creator = auto()
+    beatmapset__source = auto()
+    beatmapset__tags = auto()
+    beatmapset__description = auto()
+    queue__name = auto()
+    queue__description = auto()
+    request__comment = auto()

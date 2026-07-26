@@ -351,7 +351,9 @@ class CoverageRegistry:
         if desc:
             desc_str = desc.get("description", "") if isinstance(desc, dict) else str(desc)
             if desc_str and desc_str.strip():
-                self._set_bool_bucket("fetched_beatmapset_has_description", True, newly_filled, item_id)
+                self._set_bool_bucket(
+                    "fetched_beatmapset_has_description", True, newly_filled, item_id
+                )
 
         # pack_tags
         if data.get("pack_tags"):

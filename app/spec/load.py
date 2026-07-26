@@ -35,7 +35,7 @@ def load_spec() -> dict[str, Any]:
     with open(CACHE_FILE, "rb") as f:
         payload: dict[str, Any] = pickle.load(f)
 
-    if ENV == Env.PROD:
+    if ENV.value == Env.PROD.value:
         return typing_cast(dict[str, Any], payload["spec"])
 
     cache_mtime = os.path.getmtime(CACHE_FILE)
@@ -86,7 +86,7 @@ def _apply_mutations(spec: dict) -> None:
     """
     populate_shallow_refs(spec)
 
-    if not get_security_enabled() and ENV is not Env.PROD:
+    if not get_security_enabled() and ENV.value != Env.PROD.value:
         spec.pop("security", None)
 
         for path in spec.get("paths", {}).values():

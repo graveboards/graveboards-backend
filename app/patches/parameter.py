@@ -1,5 +1,5 @@
 import os
-from typing import Any
+from typing import Any, cast
 
 from connexion.lifecycle import ConnexionRequest
 from connexion.validators import ParameterValidator
@@ -110,7 +110,9 @@ class ParameterValidatorPatched(ParameterValidator):
 
             return None
 
-        return self.validate_parameter("query", value, param, param_name=param_name)
+        return cast(
+            str | None, self.validate_parameter("query", value, param, param_name=param_name)
+        )
 
     def validate(self, scope: dict[str, Any]) -> None:
         """Validate request scope while tracking context.

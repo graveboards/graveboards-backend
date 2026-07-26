@@ -1,4 +1,5 @@
 import asyncio
+from collections.abc import Awaitable, Callable
 from typing import Any, ClassVar, Never
 
 from app.observability.logging import Logger
@@ -127,7 +128,15 @@ class ServiceSupervisor(Service):
             f"Use {self.register_service.__name__}() instead."
         )
 
-    async def create_ephemeral_task(self, *args: Any, **kwargs: Any) -> Never:
+    def create_ephemeral_task(
+        self,
+        coro: Any,
+        *,
+        name: str | None = None,
+        on_success: Callable[[Any], Awaitable[None] | None] | None = None,
+        on_error: Callable[[Exception], Awaitable[None] | None] | None = None,
+        on_finish: Callable[[], Awaitable[None] | None] | None = None,
+    ) -> None:
         """Not supported by ``ServiceSupervisor``.
 
         Raises:

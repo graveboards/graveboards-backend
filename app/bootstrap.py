@@ -232,7 +232,7 @@ class SetupRunner:
 
 async def _setup_debug_api_key(
     rc: RedisClient | None = None, db: PostgresqlDB | None = None
-) -> None:
+) -> str | None:
     """Set up debug API key for development mode."""
     logger = get_logger(__name__)
     rc = rc or RedisClient()

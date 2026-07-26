@@ -30,7 +30,7 @@ class ExecutionContext:
     osu_client: OsuAPIClient | None = None
     session: AsyncSession | None = None
     config: dict[str, Any] = field(default_factory=dict)
-    metadata_providers: dict[str, type[MetadataProvider]] | None = None
+    metadata_providers: dict[str, Any] | None = None
     last_violation: Any = None
     _provider_cache: dict[str, dict[str, Any]] = field(default_factory=dict)
 

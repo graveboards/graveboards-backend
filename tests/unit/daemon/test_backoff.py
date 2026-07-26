@@ -207,7 +207,7 @@ class TestBackoffStrategyInterface:
     def test_abstract_class_cannot_be_instantiated(self) -> None:
         """Test that BackoffStrategy is abstract."""
         with pytest.raises(TypeError):
-            BackoffStrategy()
+            type.__call__(BackoffStrategy)
 
     def test_concrete_implementations_instantiate(self) -> None:
         """Test that concrete implementations can be instantiated."""

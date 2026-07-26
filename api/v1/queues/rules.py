@@ -1,6 +1,6 @@
-from connexion import request
-from starlette.requests import Request
 from typing import Any
+
+from starlette.requests import Request
 from starlette.responses import Response
 
 from app.database import PostgresqlDB
@@ -23,7 +23,9 @@ async def _can_view_private_rules(
 
 
 @with_authenticated_user_id()
-async def search(request: Request, queue_id: int, _caller_user_id: int | None = None, **kwargs: Any) -> Response:
+async def search(
+    request: Request, queue_id: int, _caller_user_id: int | None = None, **kwargs: Any
+) -> Response:
     """List all rules for a queue.
 
     Args:
@@ -57,7 +59,9 @@ async def search(request: Request, queue_id: int, _caller_user_id: int | None = 
 
 
 @with_authenticated_user_id()
-async def get(request: Request, queue_id: int, rule_id: int, _caller_user_id: int | None = None, **kwargs: Any) -> Response:
+async def get(
+    request: Request, queue_id: int, rule_id: int, _caller_user_id: int | None = None, **kwargs: Any
+) -> Response:
     """Get a single rule by ID.
 
     Args:
@@ -127,7 +131,9 @@ async def post(request: Request, queue_id: int, body: dict, **kwargs: Any) -> Re
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def patch(request: Request, queue_id: int, rule_id: int, body: dict, **kwargs: Any) -> Response:
+async def patch(
+    request: Request, queue_id: int, rule_id: int, body: dict, **kwargs: Any
+) -> Response:
     """Update a single rule.
 
     Args:

@@ -135,13 +135,14 @@ class PatternMultipliers(BaseModel):
 # Default multiplier values used to determine serialization deltas.
 _DEFAULTS = PatternMultipliers().model_dump()
 
-_pattern_multiplier_field_flag_map: dict[str, int] = {
-    field: auto() for field in PatternMultipliers.model_fields
-}
-PatternMultiplierFieldFlag = IntFlag(
-    "PatternMultiplierFieldFlag", _pattern_multiplier_field_flag_map
-)
-"""Bitmask flags representing individual pattern multipliers.
 
-Used to encode presence and null-state information during binary serialization.
-"""
+class PatternMultiplierFieldFlag(IntFlag):
+    """Bitmask flags representing individual pattern multipliers.
+
+    Used to encode presence and null-state information during binary serialization.
+    """
+
+    exact = auto()
+    prefix = auto()
+    suffix = auto()
+    substring = auto()

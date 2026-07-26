@@ -19,7 +19,8 @@ class OAuth(AsyncOAuth2Client):
         self.token_endpoint = OAUTH_CONFIGURATION["token_endpoint"]
 
     def create_authorization_url(self, *args: str, **kwargs: str) -> tuple[str, str]:
-        return super().create_authorization_url(self.authorize_url, *args, **kwargs)
+        result = super().create_authorization_url(self.authorize_url, *args, **kwargs)
+        return result[0], result[1]
 
     async def fetch_token(self, *args: str, **kwargs: str) -> OAuth2Token:
         return await super().fetch_token(self.token_endpoint, *args, **kwargs)

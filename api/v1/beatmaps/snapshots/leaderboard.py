@@ -1,6 +1,6 @@
-from connexion import request
-from starlette.requests import Request
 from typing import Any
+
+from starlette.requests import Request
 from starlette.responses import Response
 
 from api.decorators import api_query, coerce_arguments
@@ -18,7 +18,9 @@ __all__ = ["search", "post", "patch"]
 
 @api_query(ModelClass.LEADERBOARD)
 @coerce_arguments(snapshot_number={"latest": -1})
-async def search(request: Request, beatmap_id: int, snapshot_number: int = -1, **kwargs: Any) -> Response:
+async def search(
+    request: Request, beatmap_id: int, snapshot_number: int = -1, **kwargs: Any
+) -> Response:
     db: PostgresqlDB = request.state.db
 
     if snapshot_number < 0:
@@ -64,7 +66,9 @@ async def search(request: Request, beatmap_id: int, snapshot_number: int = -1, *
 
 @coerce_arguments(snapshot_number={"latest": -1})
 @role_authorization(RoleName.ADMIN)
-async def post(request: Request, body: dict, beatmap_id: int, snapshot_number: int = -1, **kwargs: Any) -> Response:
+async def post(
+    request: Request, body: dict, beatmap_id: int, snapshot_number: int = -1, **kwargs: Any
+) -> Response:
     db: PostgresqlDB = request.state.db
 
     if snapshot_number < 0:
@@ -102,7 +106,9 @@ async def post(request: Request, body: dict, beatmap_id: int, snapshot_number: i
 
 @coerce_arguments(snapshot_number={"latest": -1})
 @role_authorization(RoleName.ADMIN)
-async def patch(request: Request, body: dict, beatmap_id: int, snapshot_number: int = -1, **kwargs: Any) -> Response:
+async def patch(
+    request: Request, body: dict, beatmap_id: int, snapshot_number: int = -1, **kwargs: Any
+) -> Response:
     db: PostgresqlDB = request.state.db
 
     if snapshot_number < 0:

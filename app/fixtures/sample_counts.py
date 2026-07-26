@@ -1,5 +1,7 @@
 """Sample count calculation for fixture fetching."""
 
+from typing import Any
+
 from .constants import BASE_SAMPLE_COUNTS, MINIMAL_PROFILE
 
 
@@ -17,7 +19,7 @@ def calculate_sample_counts(
     beatmap_scores: int | None = None,
     beatmap_attributes: int | None = None,
     use_minimal: bool = False,
-) -> dict:
+) -> dict[str, Any]:
     """Calculate sample counts for fixture fetching.
 
     Args:
@@ -64,7 +66,7 @@ def calculate_sample_counts(
                 for subkey, subvalue in value.items():
                     value[subkey] = max(1, int(subvalue * scale))
 
-    result = {} if has_explicit_categories else base.copy()
+    result: dict[str, Any] = {} if has_explicit_categories else base.copy()
 
     overrides = {
         "beatmaps": beatmaps,
@@ -89,7 +91,7 @@ def calculate_sample_counts(
             if isinstance(override_value, dict):
                 if key not in result:
                     result[key] = {}
-                target_dict: dict[Any, Any] = result[key]
+                target_dict: dict[str, Any] = result[key]
                 for subkey, subvalue in override_value.items():
                     if subvalue is not None:
                         target_dict[subkey] = subvalue

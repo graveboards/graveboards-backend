@@ -1,6 +1,4 @@
-from connexion import request
 from starlette.requests import Request
-from typing import Any
 from starlette.responses import Response, StreamingResponse
 
 from api.decorators import coerce_arguments

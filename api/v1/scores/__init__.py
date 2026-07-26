@@ -1,6 +1,6 @@
-from connexion import request
-from starlette.requests import Request
 from typing import Any
+
+from starlette.requests import Request
 from starlette.responses import Response
 
 from api.decorators import api_query
@@ -61,7 +61,9 @@ async def get(request: Request, score_id: int, **kwargs: Any) -> Response:
 
 @api_query(ModelClass.SCORE)
 @role_authorization(RoleName.ADMIN)
-async def post(request: Request, body: dict, db: PostgresqlDB | None = None, **kwargs: Any) -> Response:
+async def post(
+    request: Request, body: dict, db: PostgresqlDB | None = None, **kwargs: Any
+) -> Response:
     if db is None:
         db = request.state.db
 

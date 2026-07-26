@@ -1,8 +1,8 @@
-from connexion import request
-from starlette.requests import Request
 from typing import Any
-from starlette.responses import Response
+
 from connexion.exceptions import Forbidden
+from starlette.requests import Request
+from starlette.responses import Response
 
 from api.decorators import api_query
 from api.utils import bleach_body, build_pydantic_include
@@ -55,7 +55,9 @@ async def search(request: Request, _caller_user_id: int | None = None, **kwargs:
 
 @with_authenticated_user_id()
 @api_query(ModelClass.QUEUE)
-async def get(request: Request, queue_id: int, _caller_user_id: int | None = None, **kwargs: Any) -> Response:
+async def get(
+    request: Request, queue_id: int, _caller_user_id: int | None = None, **kwargs: Any
+) -> Response:
     db: PostgresqlDB = request.state.db
 
     queue = await db.get(Queue, id=queue_id, **kwargs)

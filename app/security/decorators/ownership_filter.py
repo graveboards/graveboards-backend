@@ -77,7 +77,7 @@ def ownership_filter(
             )
 
         @wraps(func)
-        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> Any:
             try:
                 user_id = get_authenticated_user_id(kwargs, authorized_user_id_lookup)
             except KeyError as e:

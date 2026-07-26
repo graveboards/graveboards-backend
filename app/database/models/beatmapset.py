@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import mapped_column, relationship
@@ -39,14 +39,13 @@ class Beatmapset(Base):
     )
 
     # Hybrid annotations
-    num_snapshots: Mapped[int]
-
     @hybrid_property
     def num_snapshots(self) -> int:
         return len(self.snapshots)
 
     @num_snapshots.expression
-    def num_snapshots(cls):
+    @classmethod
+    def _num_snapshots_expr(cls) -> Any:
         return (
             select(func.count(BeatmapsetSnapshot.id))
             .where(BeatmapsetSnapshot.beatmapset_id == cls.id)
