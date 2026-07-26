@@ -105,7 +105,7 @@ class Profile(Base):
     # Hybrid annotations
     total_maps: Mapped[int]
     total_kudosu: Mapped[int]
-    # TODO: Yeah... a lot of shit
+    # TODO: Implement many more hybrid properties
 
     @hybrid_property
     def total_maps(self) -> int:  # Missing approved maps?
