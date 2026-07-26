@@ -28,7 +28,7 @@ def _make_context(
         db=AsyncMock(),
         redis=AsyncMock(),
         session=session,
-        metadata_providers={
+        metadata_providers={  # type: ignore[dict-item]
             "song_identity": MagicMock(),
         },
     )

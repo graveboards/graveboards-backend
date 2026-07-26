@@ -71,6 +71,9 @@ async def cmd_seed(
         SeederTarget.QUEUE in internal_targets or SeederTarget.REQUEST in internal_targets
     )
     if needs_generation:
+        queue_count = 0
+        request_count = 0
+
         if ensure_fixtures:
             profile = get_profile(profile_name)
             queue_count = profile.queue_count
@@ -153,7 +156,6 @@ async def cmd_seed(
 
     for target, seeder in orchestrator.seeders.items():
         seeder_tasks[target] = progress.add_task(target.seed_title, start=False, total=seeder.total)
-
     overall_task = progress.add_task("Total", total=orchestrator.total)
     overall_progress = 0
 

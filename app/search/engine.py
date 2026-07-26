@@ -195,13 +195,13 @@ class SearchEngine:
         """
         match self.scope:
             case Scope.BEATMAPS:
-                self.query = (
+                query = (
                     select(BeatmapSnapshot)
                     .join(BeatmapListing, BeatmapListing.beatmap_snapshot_id == BeatmapSnapshot.id)
                     .options(*SCOPE_OPTIONS_MAPPING[self.scope])
                 )
             case Scope.BEATMAPSETS:
-                self.query: Select = (
+                query = (
                     select(BeatmapsetSnapshot)
                     .join(
                         BeatmapsetListing,
@@ -210,13 +210,15 @@ class SearchEngine:
                     .options(*SCOPE_OPTIONS_MAPPING[self.scope])
                 )
             case Scope.QUEUES:
-                self.query: Select = select(Queue).options(*SCOPE_OPTIONS_MAPPING[self.scope])
+                query = select(Queue).options(*SCOPE_OPTIONS_MAPPING[self.scope])
             case Scope.REQUESTS:
-                self.query: Select = (
+                query = (
                     select(Request)
                     .join(Request.beatmapset_snapshot)
                     .options(*SCOPE_OPTIONS_MAPPING[self.scope])
                 )
+
+        self.query = query
 
         if self.search_terms:
             self._apply_search_terms()

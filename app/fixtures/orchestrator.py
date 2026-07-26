@@ -12,6 +12,7 @@ Usage:
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from app.fixtures.criteria import (
@@ -45,6 +46,7 @@ class FixtureOrchestrator:
         self.rc = rc
         self.id_source: IDSource | None = None
         self.fetcher: FixtureDataFetcher | None = None
+        self.failed_id_store: FailedIdStore | None = None
 
     async def execute(self) -> FetchReport:
         """Run the full fetch pipeline."""
@@ -78,24 +80,24 @@ class FixtureOrchestrator:
 
     def _create_fetcher(self) -> FixtureDataFetcher:
         """Create the appropriate fetcher for the criteria profile."""
-        fixtures_dir = None
+        fixtures_dir: Path | None = None
         if self.criteria.fixtures_dir:
-            from pathlib import Path
-
             fixtures_dir = Path(self.criteria.fixtures_dir)
 
         if self.criteria.is_search_test:
             fetcher = SearchTestFixtureFetcher(
                 self.rc,
+                force_fetch=self.criteria.force_fetch,
                 fixtures_dir=fixtures_dir,
-                exclude_ids=self.criteria.exclude_ids,
+                exclude_ids=self.criteria.exclude_ids or None,
                 failed_id_store=self.failed_id_store,
             )
         elif self.criteria.is_targeted:
             fetcher = TargetedFixtureFetcher(
                 self.rc,
+                force_fetch=self.criteria.force_fetch,
                 fixtures_dir=fixtures_dir,
-                exclude_ids=self.criteria.exclude_ids,
+                exclude_ids=self.criteria.exclude_ids or None,
                 failed_id_store=self.failed_id_store,
             )
         else:
@@ -103,7 +105,7 @@ class FixtureOrchestrator:
                 self.rc,
                 force_fetch=self.criteria.force_fetch,
                 fixtures_dir=fixtures_dir,
-                exclude_ids=self.criteria.exclude_ids,
+                exclude_ids=self.criteria.exclude_ids or None,
                 failed_id_store=self.failed_id_store,
             )
 
@@ -272,8 +274,10 @@ class FixtureOrchestrator:
             self.fetcher = FixtureDataFetcher(
                 self.rc,
                 force_fetch=self.criteria.force_fetch,
-                fixtures_dir=self.criteria.fixtures_dir,
-                exclude_ids=self.criteria.exclude_ids,
+                fixtures_dir=Path(self.criteria.fixtures_dir)
+                if self.criteria.fixtures_dir
+                else None,
+                exclude_ids=self.criteria.exclude_ids or None,
                 failed_id_store=self.failed_id_store,
             )
             self.fetcher.logger = get_logger(__name__)

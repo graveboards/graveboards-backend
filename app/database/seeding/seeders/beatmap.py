@@ -266,7 +266,7 @@ class BeatmapSeeder(Seeder):
                 added_bm_dicts.append(added_bm_dict)
         else:
             # Generate snapshot from beatmap data (following BeatmapManager pattern)
-            added_bm_dict: dict[str, Any] | None = await self._generate_bm_snapshot(beatmap_entry)
+            added_bm_dict = await self._generate_bm_snapshot(beatmap_entry)
             if added_bm_dict:
                 added_bm_dicts.append(added_bm_dict)
 

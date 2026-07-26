@@ -37,15 +37,19 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         self,
         rc: RedisClient,
         id_ranges: dict | None = None,
+        force_fetch: bool = False,
         id_source: IDSource | None = None,
         fixtures_dir: Path | None = None,
+        exclude_ids: list[int] | None = None,
         failed_id_store: FailedIdStore | None = None,
     ):
         super().__init__(
             rc,
             id_ranges,
+            force_fetch=force_fetch,
             id_source=id_source,
             fixtures_dir=fixtures_dir,
+            exclude_ids=exclude_ids,
             failed_id_store=failed_id_store,
         )
         # Difficulty and playcount categorization uses Categorizer instances from categorization.py

@@ -86,7 +86,7 @@ def ownership_filter(
                     f"Decorated function '{func_path}' must accept **kwargs to use @ownership_filter"
                 ) from e
 
-            if bypass_roles or override:
+            if bypass_roles is not None or override is not None:
                 db: PostgresqlDB = request.state.db
 
                 if bypass_roles:
@@ -96,7 +96,7 @@ def ownership_filter(
                         strip_auth_info(kwargs)
                         return await func(*args, **kwargs)
 
-                if override:
+                if override is not None:
                     kwargs_for_override = {**kwargs, **(override_kwargs or {})}
 
                     if await override(db=db, **kwargs_for_override):
@@ -121,17 +121,17 @@ def ownership_filter(
 
             if isinstance(data, dict):
                 if get_value(data, resource_user_id_lookup) == user_id:
-                    filtered_data = data
+                    filtered_data: dict | list = data
                 else:
-                    filtered_data = {} if isinstance(data, dict) else []
+                    filtered_data = {}
             else:
                 filtered_data = [
                     item for item in data if get_value(item, resource_user_id_lookup) == user_id
                 ]
 
             if has_headers:
-                return (filtered_data, status) + (result[2],)
-            return (filtered_data, status)
+                return filtered_data, status, result[2]
+            return filtered_data, status
 
         return wrapper
 

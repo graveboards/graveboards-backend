@@ -32,7 +32,7 @@ class TestRoleAuthorizationConfiguration:
         with pytest.raises(ValueError, match="must be async"):
 
             @role_authorization(RoleName.ADMIN)
-            def sync_endpoint(**kwargs: Any) -> dict[str, str]:
+            def sync_endpoint(**kwargs: Any) -> dict[str, str]:  # type: ignore[arg-type]
                 return {"data": "success"}
 
     @pytest.mark.asyncio
@@ -74,7 +74,7 @@ class TestOwnershipAuthorizationConfiguration:
         with pytest.raises(ValueError, match="must be async"):
 
             @ownership_authorization()
-            def sync_endpoint(**kwargs: Any) -> tuple[dict[str, str], int]:
+            def sync_endpoint(**kwargs: Any) -> tuple[dict[str, str], int]:  # type: ignore[arg-type]
                 return ({"data": "success"}, 200)
 
 

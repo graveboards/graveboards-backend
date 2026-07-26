@@ -10,6 +10,7 @@ Uses CoverageRegistry for data-driven bucket tracking instead of 50+ instance at
 import json
 import random
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 from app.exceptions import clean_error_msg
@@ -37,10 +38,21 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
         self,
         rc: RedisClient,
         id_ranges: dict | None = None,
+        force_fetch: bool = False,
         id_source: IDSource | None = None,
+        fixtures_dir: Path | None = None,
+        exclude_ids: list[int] | None = None,
         failed_id_store: FailedIdStore | None = None,
     ):
-        super().__init__(rc, id_ranges, id_source=id_source, failed_id_store=failed_id_store)
+        super().__init__(
+            rc,
+            id_ranges,
+            force_fetch=force_fetch,
+            id_source=id_source,
+            fixtures_dir=fixtures_dir,
+            exclude_ids=exclude_ids,
+            failed_id_store=failed_id_store,
+        )
 
         # Set default logger if not provided
         if self.logger is None:

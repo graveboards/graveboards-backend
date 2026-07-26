@@ -98,7 +98,7 @@ async def queue_manager_override(
     if not from_request:
         if "queue_id" not in kwargs:
             raise ValueError("queue_id must be provided in kwargs when from_request=False")
-        queue_id: int = kwargs["queue_id"]
+        queue_id = kwargs["queue_id"]
     else:
         if "request_id" not in kwargs:
             raise ValueError("request_id must be provided in kwargs when from_request=True")

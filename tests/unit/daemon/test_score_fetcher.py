@@ -28,7 +28,7 @@ class TestScoreFetcher:
             task1 = ScoreFetcherTask(id=1, user_id=123, enabled=True, last_fetch=None)
             task2 = ScoreFetcherTask(id=2, user_id=456, enabled=False, last_fetch=None)
             service._db.get_many = AsyncMock(return_value=[task1, task2])
-            service._load_job = AsyncMock()
+            service._load_job = AsyncMock()  # type: ignore[assignment]
 
             await service._preload_jobs()
 
@@ -38,7 +38,7 @@ class TestScoreFetcher:
         """Test that disabled score fetch tasks are skipped."""
         task = ScoreFetcherTask(id=1, user_id=123, enabled=False)
         service._db.get_many = AsyncMock(return_value=[task])
-        service._load_job = AsyncMock()
+        service._load_job = AsyncMock()  # type: ignore[assignment]
 
         await service._preload_jobs()
 
@@ -54,7 +54,7 @@ class TestScoreFetcher:
         score = {"beatmap": {"id": 456}}
         service._db.get = AsyncMock(return_value=MagicMock())
 
-        result = await service._score_is_submittable(score)
+        result = await service._score_is_submittable(score)  # type: ignore[misc]
 
         service._db.get.assert_awaited_once_with(Leaderboard, beatmap_id=456)
         assert result is True
@@ -66,6 +66,6 @@ class TestScoreFetcher:
         score = {"beatmap": {"id": 456}}
         service._db.get = AsyncMock(return_value=None)
 
-        result = await service._score_is_submittable(score)
+        result = await service._score_is_submittable(score)  # type: ignore[misc]
 
         assert result is False

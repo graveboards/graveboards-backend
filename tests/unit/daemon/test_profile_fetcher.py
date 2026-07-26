@@ -15,7 +15,7 @@ class TestProfileFetcher:
         rc = MagicMock()
         db = MagicMock()
         service = ProfileFetcher(rc, db)
-        service._load_job = AsyncMock()
+        service._load_job = AsyncMock()  # type: ignore[assignment]
         return service
 
     async def test_preload_jobs_skips_disabled_tasks(self, service: ProfileFetcher) -> None:
@@ -27,7 +27,7 @@ class TestProfileFetcher:
 
         await service._preload_jobs()
 
-        assert service._load_job.call_count == 1
+        assert service._load_job.call_count == 1  # type: ignore[attr-defined]
 
     async def test_execute_job_raises_value_error_when_record_not_found(
         self, service: ProfileFetcher
@@ -42,7 +42,7 @@ class TestProfileFetcher:
         """Test that execution is skipped when Redis lock is already held."""
         task = ProfileFetcherTask(id=1, user_id=123, enabled=True)
         service._db.get = AsyncMock(return_value=task)
-        service._rc.set = AsyncMock(return_value=None)
+        service._rc.set = AsyncMock(return_value=None)  # type: ignore[assignment]
 
         await service._execute_job(123)
 
@@ -54,11 +54,11 @@ class TestProfileFetcher:
         """Test that profile is fetched when Redis lock is acquired."""
         task = ProfileFetcherTask(id=1, user_id=123, enabled=True)
         service._db.get = AsyncMock(return_value=task)
-        service._rc.set = AsyncMock(return_value=True)
+        service._rc.set = AsyncMock(return_value=True)  # type: ignore[assignment]
         service._rc.lock_ctx = MagicMock()
         service._rc.lock_ctx.__enter__ = MagicMock()
         service._rc.lock_ctx.__exit__ = MagicMock()
-        service._respect_rate_limit = AsyncMock()
+        service._respect_rate_limit = AsyncMock()  # type: ignore[assignment]
         service._oac.get_user = AsyncMock(return_value={"id": 123, "username": "test"})
         service._db.add = AsyncMock()
 
@@ -83,8 +83,8 @@ class TestProfileFetcher:
                 None,
             ]
         )
-        service._rc.set = AsyncMock(return_value=True)
-        service._respect_rate_limit = AsyncMock()
+        service._rc.set = AsyncMock(return_value=True)  # type: ignore[assignment]
+        service._respect_rate_limit = AsyncMock()  # type: ignore[assignment]
         service._oac.get_user = AsyncMock(return_value={"id": 123, "username": "test"})
         service._db.add = AsyncMock()
 
