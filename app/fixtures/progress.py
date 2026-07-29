@@ -2,8 +2,11 @@ from __future__ import annotations
 """Progress bar handler for fixture fetch operations."""
 
 import contextlib
+import logging
 
 from rich.progress import BarColumn, Progress, TextColumn, TimeRemainingColumn
+
+logger = logging.getLogger(__name__)
 
 
 class ProgressBar:
@@ -44,7 +47,7 @@ class ProgressBar:
             task_id = self._task_ids[category]
             self._progress.update(task_id, completed=current)
         except Exception:
-            pass
+            logger.debug("Failed to update progress bar", exc_info=True)
 
     def stop(self) -> None:
         """Stop the progress display."""

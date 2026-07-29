@@ -68,6 +68,7 @@ async def reserve_stateful_rules(
             if token is not None:
                 reservations.append(Reservation(validator, token))
     except Exception:
+        logger.exception("Failed to reserve stateful rules")
         await rollback_reservations(reservations, context)
         raise
 

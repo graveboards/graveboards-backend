@@ -10,10 +10,13 @@ adaptive loop that stops as soon as all buckets are satisfied.
 """
 
 import heapq
+import logging
 from collections.abc import Awaitable, Callable, Coroutine
 from dataclasses import dataclass
 from typing import Any
 from typing import cast as typing_cast
+
+logger = logging.getLogger(__name__)
 
 # Rarity weights: how hard each bucket is to fill via random fetching.
 # Higher = rarer = should be prioritized when uncovered.
@@ -259,6 +262,7 @@ class SearchTestFetchAction:
         try:
             data = await self.fetcher.oac.search_beatmapsets(page=page, status=status)
         except Exception:
+            logger.debug("Failed to search beatmapsets for coverage", exc_info=True)
             return {}
 
         beatmapsets = data.get("beatmapsets", [])
@@ -273,6 +277,7 @@ class SearchTestFetchAction:
         try:
             bs_full = await self.fetcher.oac.get_beatmapset(bs_id)
         except Exception:
+            logger.debug("Failed to fetch beatmapset for coverage", exc_info=True)
             return {}
 
         filepath = get_fixture_path("beatmapsets") / f"beatmapset_{bs_id}.json"
@@ -305,6 +310,7 @@ class SearchTestFetchAction:
         try:
             beatmap_data = await self.fetcher.oac.get_beatmap(beatmap_id)
         except Exception:
+            logger.debug("Failed to fetch beatmap for coverage", exc_info=True)
             await self.fetcher._add_failed_id("beatmaps", beatmap_id)
             return {}
 
@@ -338,6 +344,7 @@ class SearchTestFetchAction:
                 ruleset="osu", mode="performance", cursor_page=1, limit=1
             )
         except Exception:
+            logger.debug("Failed to fetch rankings for coverage", exc_info=True)
             return {}
 
         players = data.get("ranking", [])
@@ -354,6 +361,7 @@ class SearchTestFetchAction:
         try:
             user_data = await self.fetcher.oac.get_user(user_id, "osu")
         except Exception:
+            logger.debug("Failed to fetch user for coverage", exc_info=True)
             await self.fetcher._add_failed_id("users.osu", user_id)
             return {}
 
@@ -400,6 +408,7 @@ class SearchTestFetchAction:
             try:
                 bs_full = await self.fetcher.oac.get_beatmapset(bs_id)
             except Exception:
+                logger.debug("Failed to fetch beatmapset for targeted fetch", exc_info=True)
                 await self.fetcher._add_failed_id("beatmapsets", bs_id)
                 continue
 
