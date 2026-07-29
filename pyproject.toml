@@ -7,7 +7,27 @@ name = "graveboards-backend"
 version = "0.1.0"
 description = "Backend service for Graveboards"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.14"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Graveboards" },
+]
+keywords = [
+    "osu",
+    "beatmap",
+    "leaderboard",
+    "scores",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
 dependencies = [
     "alembic>=1.18.0",
     "connexion[swagger-ui,uvicorn]>=3.3.0",
@@ -27,13 +47,17 @@ dependencies = [
     "prometheus_client>=0.20.0",
 ]
 
-[project.optional-dependencies]
+[project.urls]
+Homepage = "https://github.com/graveboards/graveboards"
+Issues = "https://github.com/graveboards/graveboards/issues"
+
+[dependency-groups]
 dev = [
-    "pytest>=7.4.0",
-    "pytest-asyncio>=0.21.0",
-    "pytest-cov>=4.1.0",
-    "ruff>=0.0.280",
-    "mypy>=1.5.0",
+    "pytest>=8",
+    "pytest-asyncio>=0.25",
+    "pytest-cov>=6",
+    "ruff>=0.16",
+    "mypy>=1.14",
 ]
 
 [tool.setuptools.packages.find]
@@ -62,12 +86,17 @@ markers = [
 ]
 
 [tool.ruff]
-line-length = 100
+# Pinned to the supported floor, not the newest interpreter, so a
+# 3.14-or-later idiom cannot slip in unnoticed.
 target-version = "py314"
+line-length = 100
+src = ["app", "api", "tests"]
 
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "lf"
 
 [tool.ruff.lint]
 select = [
@@ -75,13 +104,27 @@ select = [
     "W",      # pycodestyle warnings
     "F",      # pyflakes
     "I",      # isort
-    "UP",     # pyupgrade (modernize syntax)
-    "B",      # bugbear
-    "SIM",    # simplify
-    "T20",    # no print
+    "UP",     # pyupgrade
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "SIM",    # flake8-simplify
+    "N",      # pep8-naming
+    "RUF",    # ruff-specific rules
+    "PTH",    # prefer pathlib over os.path
+    "PT",     # flake8-pytest-style
+    "PIE",    # misc lint rules
+    "PERF",   # perflint
+    "TC",     # flake8-type-checking
+    "RET",    # flake8-return
+    "D",      # pydocstyle (numpy convention, configured below)
+    "ARG",    # unused arguments
+    "RSE",    # no redundant parentheses on bare raises
+    "A",      # shadowed builtins
 ]
 ignore = [
-    "E501",   # line too long (ruff format handles this)
+    "E501",   # line length is enforced by the formatter, not worth duplicating
+    "D105",   # magic methods are named by their contract; __len__ needs no prose
+    "D107",   # __init__ is documented in the class docstring, per numpy style
     "PLR",    # too many methods/arguments (not enforced)
     "B028",   # no explicit `stacklevel` keyword argument (not critical)
     "F403",   # star imports (intentional for re-exports)
@@ -90,30 +133,49 @@ ignore = [
     "SIM117", # nested with statements (style preference)
 ]
 
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
 [tool.ruff.lint.isort]
 known-first-party = ["app", "api", "tests"]
 known-third-party = ["alembic"]
 section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["PLR", "S"]
+# PT011: pinning every ValueError to a match= string is brittle busywork
+# for input-validation tests where the type alone is the contract.
+# D: a test's name is its docstring, and hundreds of them do not need prose.
+# ARG: test fixtures are stub implementations of an abstract signature, and
+# ignoring an argument the contract requires them to accept is the norm.
+"tests/*" = ["PT011", "D", "ARG", "PLR", "S"]
 "manage.py" = ["S"]
-"app/manage/*" = ["S", "T20"]
+"app/manage/*" = ["S", "T20", "D"]
 
 [tool.mypy]
 python_version = "3.14"
-warn_return_any = true
-warn_unused_configs = true
-disallow_incomplete_defs = true
-disallow_untyped_defs = true
-disallow_untyped_calls = true
-disallow_untyped_decorators = false
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-show_error_codes = true
-strict_equality = true
+files = ["app", "api"]
 mypy_path = "app"
+strict = true
+warn_unreachable = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+show_error_codes = true
+no_implicit_optional = true
 exclude = ["pyproject.toml", "alembic", "manage.py", "migrate.py"]
 ignore_missing_imports = true
 follow_imports = "skip"
+
+[[tool.mypy.overrides]]
+module = ["alembic.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["connexion.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Bodies are still checked (check_untyped_defs, inherited from strict) but
+# tests aren't required to annotate every `def test_...(): ...`.
+module = ["tests.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_calls = false
