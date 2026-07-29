@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class SampleCount:
     """Sample count tracking for a single category."""
 
@@ -92,7 +92,7 @@ class Samples:
         )
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class PromotedFixture:
     """Promotion tracking for a single category."""
 
@@ -100,7 +100,7 @@ class PromotedFixture:
     last_promoted: str | None = None
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class PromotedUsers:
     """Promotion tracking for users."""
 
@@ -111,7 +111,7 @@ class PromotedUsers:
     last_promoted: str | None = None
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class PromotedScores:
     """Promotion tracking for scores."""
 

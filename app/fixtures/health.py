@@ -14,7 +14,7 @@ from app.fixtures.constants import RULESETS, SCORE_TYPES
 from app.fixtures.paths import get_test_fixture_path
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class FixtureHealthResult:
     """Result of a fixture health check."""
 
@@ -23,13 +23,13 @@ class FixtureHealthResult:
     actual_count: int
     coverage_percentage: float
     complete: bool
-    files: list[str] = field(default_factory=list)
-    missing_files: list[str] = field(default_factory=list)
-    integrity_errors: list[str] = field(default_factory=list)
+    files: tuple[str, ...] = field(default_factory=tuple)
+    missing_files: tuple[str, ...] = field(default_factory=tuple)
+    integrity_errors: tuple[str, ...] = field(default_factory=tuple)
     last_updated: datetime | None = None
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class FixtureReport:
     """Comprehensive fixture report."""
 
@@ -37,8 +37,8 @@ class FixtureReport:
     complete_categories: int
     incomplete_categories: int
     coverage_percentage: float
-    categories: list[FixtureHealthResult] = field(default_factory=list)
-    missing_gaps: list[dict[str, Any]] = field(default_factory=list)
+    categories: tuple[FixtureHealthResult, ...] = field(default_factory=tuple)
+    missing_gaps: tuple[dict[str, Any], ...] = field(default_factory=tuple)
     generated_at: datetime = field(default_factory=lambda: datetime.now(tz=UTC))
 
 
@@ -131,7 +131,7 @@ def check_category_health(category: str, expected_count: int | None = None) -> F
             actual_count=0,
             coverage_percentage=0.0,
             complete=False,
-            integrity_errors=[f"Category directory does not exist: {category}"],
+            integrity_errors=(f"Category directory does not exist: {category}",),
         )
 
     files = [f.name for f in fixture_path.glob("*.json")]
@@ -157,8 +157,8 @@ def check_category_health(category: str, expected_count: int | None = None) -> F
         actual_count=actual_count,
         coverage_percentage=coverage,
         complete=coverage >= 100 and len(integrity_errors) == 0,
-        files=files,
-        integrity_errors=integrity_errors,
+        files=tuple(files),
+        integrity_errors=tuple(integrity_errors),
     )
 
 
@@ -197,8 +197,8 @@ def check_all_categories() -> FixtureReport:
         complete_categories=sum(1 for c in categories if c.complete),
         incomplete_categories=sum(1 for c in categories if not c.complete),
         coverage_percentage=coverage,
-        categories=categories,
-        missing_gaps=missing_gaps,
+        categories=tuple(categories),
+        missing_gaps=tuple(missing_gaps),
     )
 
 

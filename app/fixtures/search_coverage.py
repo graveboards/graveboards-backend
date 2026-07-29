@@ -108,7 +108,7 @@ class FetchAction:
         return await self._executor()
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class HeapEntry:
     """Entry in the priority queue. Lower priority_value = higher priority."""
 

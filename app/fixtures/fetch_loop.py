@@ -24,7 +24,7 @@ class FetchEvent:
         self.total = total
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class FetchConfig:
     """Configuration for a single fetch operation."""
 

@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 STATEFUL_RULE_TYPES = frozenset({"rate_limit", "cooldown"})
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class Reservation:
     validator: RestrictionBase
     token: str

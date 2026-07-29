@@ -20,7 +20,7 @@ class BucketType(Enum):
     BOOL = "bool"
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class Bucket:
     """Definition of a coverage bucket.
 

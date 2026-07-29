@@ -28,7 +28,7 @@ SQL_CACHE_DIR = ARCHIVE_DIR / "sql_cache"
 SQL_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class ArchiveInfo:
     """Information about an available archive."""
 
