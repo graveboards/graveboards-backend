@@ -1,5 +1,6 @@
+import types
 from collections.abc import Iterable
-from typing import Any, Union, get_args, get_origin
+from typing import Any, get_args, get_origin
 from typing import cast as typing_cast
 
 from sqlalchemy.dialects.postgresql import ARRAY
@@ -41,7 +42,7 @@ def extract_inner_types(annotated_type: Any) -> type | tuple[type, ...]:
         origin = get_origin(current)
         args = get_args(current)
 
-        if origin is Union:
+        if origin is types.UnionType:
             non_none_args = [arg for arg in args if arg is not type(None)]
             if len(non_none_args) == 1 or len(non_none_args) == 2:
                 return typing_cast(type, non_none_args[0])
@@ -75,7 +76,7 @@ def validate_type(expected_type: Any, value: Any) -> None:
     origin = get_origin(expected_type)
     args = get_args(expected_type)
 
-    if origin is Union:
+    if origin is types.UnionType:
         for arg in args:
             try:
                 validate_type(arg, value)
