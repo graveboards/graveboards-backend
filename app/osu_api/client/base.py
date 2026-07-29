@@ -117,7 +117,8 @@ class OsuAPIClientBase:
 
             await self.refresh_token()
 
-        assert self._token is not None
+        if self._token is None:
+            raise RuntimeError("osu client oauth token is missing after refresh attempts")
         return self._token.access_token
 
     async def refresh_token(self) -> None:

@@ -93,7 +93,8 @@ class ConditionFieldFlag(IntFlag):
         Returns:
             The lowercase operator name.
         """
-        assert self.name is not None
+        if self.name is None:
+            raise ValueError("operator flag has no name")
         return self.name.lower()
 
 

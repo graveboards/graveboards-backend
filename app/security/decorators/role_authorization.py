@@ -82,7 +82,8 @@ def role_authorization(
 
             kwargs["user"] = user_id
             user_roles = await get_user_roles(db, user_id)
-            assert one_of is not None
+            if one_of is None:
+                raise ValueError("role_authorization requires one_of or required_roles to be set")
             user_meets_role_requirements = (
                 all(role in user_roles for role in required_roles)
                 if required_roles
