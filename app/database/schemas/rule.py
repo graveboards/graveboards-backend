@@ -1,6 +1,6 @@
 from __future__ import annotations
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any, Literal, Self
 from typing import cast as typing_cast
 
 from pydantic import BaseModel, field_validator, model_validator
@@ -129,7 +129,7 @@ class DurationConfig(_StrictConfig):
         return v
 
     @model_validator(mode="after")
-    def validate_bounds(self) -> DurationConfig:
+    def validate_bounds(self) -> Self:
         if self.min_seconds is None and self.max_seconds is None:
             raise ValueError("at least one of min_seconds/max_seconds is required")
         if (
@@ -154,7 +154,7 @@ class StarRatingConfig(_StrictConfig):
         return v
 
     @model_validator(mode="after")
-    def validate_bounds(self) -> StarRatingConfig:
+    def validate_bounds(self) -> Self:
         if self.min is None and self.max is None:
             raise ValueError("at least one of min/max is required")
         if self.min is not None and self.max is not None and self.min > self.max:
@@ -181,7 +181,7 @@ class RangeConfig(_StrictConfig):
         return v
 
     @model_validator(mode="after")
-    def validate_bounds(self) -> RangeConfig:
+    def validate_bounds(self) -> Self:
         if self.min is None and self.max is None:
             raise ValueError("at least one of min/max is required")
         if self.min is not None and self.max is not None and self.min > self.max:
@@ -222,7 +222,7 @@ class BPMConfig(_StrictConfig):
         return v
 
     @model_validator(mode="after")
-    def validate_bounds(self) -> BPMConfig:
+    def validate_bounds(self) -> Self:
         if self.min_bpm is None and self.max_bpm is None:
             raise ValueError("at least one of min_bpm/max_bpm is required")
         if self.min_bpm is not None and self.max_bpm is not None and self.min_bpm > self.max_bpm:
@@ -282,7 +282,7 @@ class DifficultyCountConfig(_StrictConfig):
         return v
 
     @model_validator(mode="after")
-    def validate_bounds(self) -> DifficultyCountConfig:
+    def validate_bounds(self) -> Self:
         if self.min is None and self.max is None:
             raise ValueError("at least one of min/max is required")
         if self.min is not None and self.max is not None and self.min > self.max:
@@ -328,7 +328,7 @@ class LengthConfig(_StrictConfig):
         return v
 
     @model_validator(mode="after")
-    def validate_bounds(self) -> LengthConfig:
+    def validate_bounds(self) -> Self:
         if all(
             bound is None
             for bound in (
@@ -363,7 +363,7 @@ class CompositeConfig(_StrictConfig):
     rules: list[dict[str, Any]]
 
     @model_validator(mode="after")
-    def validate_composite(self) -> CompositeConfig:
+    def validate_composite(self) -> Self:
         _validate_composite_tree(self.operator, self.rules, depth=1)
         return self
 

@@ -5,7 +5,7 @@ import struct
 from collections.abc import Sequence
 from datetime import datetime
 from enum import IntEnum, IntFlag, auto
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, Self
 
 if TYPE_CHECKING:
     from app.search.enums import SearchableFieldCategory
@@ -300,7 +300,7 @@ class Conditions(BaseModel):
         return value
 
     @model_validator(mode="after")
-    def validate_logic(self) -> Conditions:
+    def validate_logic(self) -> Self:
         """Validate logical consistency between condition operators.
 
         Ensures:
