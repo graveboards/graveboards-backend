@@ -11,7 +11,14 @@ from app.exceptions import clean_error_msg
 from app.osu_api.enums import Ruleset
 from app.redis_client import RedisClient
 
-from .constants import RULESETS, SCORE_TYPES
+from .constants import (
+    RULESETS,
+    SCORE_TYPES,
+    TARGETED_BEATMAPS_DIFFICULTY_COUNT,
+    TARGETED_BEATMAPS_PLAYCOUNT_COUNT,
+    TARGETED_BEATMAPSETS_COUNT,
+    TARGETED_USERS_COUNT,
+)
 from .failed_id_store import FailedIdStore
 from .fetcher import FetchEvent, FixtureDataFetcher
 from .id_source import IDSource
@@ -64,7 +71,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
     async def fetch_beatmapsets_by_status(
         self,
         status: str = "ranked",
-        count: int = 10,
+        count: int = TARGETED_BEATMAPSETS_COUNT,
         skip_existing: bool = True,
     ) -> AsyncIterator[FetchEvent]:
         """Fetch beatmapsets by status using discussions endpoint."""
@@ -140,7 +147,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         self,
         ruleset: str = "osu",
         difficulty_range: str = "medium",
-        count: int = 10,
+        count: int = TARGETED_BEATMAPS_DIFFICULTY_COUNT,
         skip_existing: bool = True,
     ) -> AsyncIterator[FetchEvent]:
         """Fetch beatmaps within difficulty range."""
@@ -234,7 +241,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         self,
         ruleset: str,
         activity_level: str = "active",
-        count: int = 25,
+        count: int = TARGETED_USERS_COUNT,
         skip_existing: bool = True,
     ) -> AsyncIterator[FetchEvent]:
         """Fetch users with specified activity level."""
@@ -298,7 +305,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
     async def fetch_beatmaps_by_playcount(
         self,
         playcount_range: str = "medium",
-        count: int = 10,
+        count: int = TARGETED_BEATMAPS_PLAYCOUNT_COUNT,
         skip_existing: bool = True,
     ) -> AsyncIterator[FetchEvent]:
         """Fetch beatmaps within playcount range."""

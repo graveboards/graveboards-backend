@@ -27,6 +27,9 @@ from app.database.seeding.profiles import get_profile
 from app.fixtures.queue_request_generator import QueueRequestFixtureGenerator
 from app.observability.logging import get_logger
 
+DEFAULT_QUEUE_COUNT = 10
+DEFAULT_REQUEST_COUNT = 100
+
 
 @db_lifespan
 async def cmd_seed(
@@ -85,8 +88,8 @@ async def cmd_seed(
 
             fixture_status = check_fixtures(internal_targets)
             if fixture_status["counts"].get("queues", 0) == 0:
-                queue_count = 10
-                request_count = 100
+                queue_count = DEFAULT_QUEUE_COUNT
+                request_count = DEFAULT_REQUEST_COUNT
             else:
                 # Skip generation if queues already exist
                 needs_generation = False

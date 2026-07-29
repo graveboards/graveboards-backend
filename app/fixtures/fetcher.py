@@ -18,8 +18,12 @@ from app.osu_api.enums import Ruleset, ScoreType
 from app.redis_client import RedisClient
 
 from .constants import (
+    BEATMAP_SCORES_LIMIT,
     ID_RANGES,
+    MAX_CONSECUTIVE_EMPTY_SCORES,
+    MAX_CONSECUTIVE_EMPTY_SCORES_FORCE,
     MAX_RETRIES,
+    MAX_RETRIES_FORCE,
     MAX_RETRIES_SCORES,
     RANKING_PAGE_SIZE,
     RULESETS,
@@ -509,12 +513,12 @@ class FixtureDataFetcher:
         random.shuffle(valid_ids)
         valid_index = 0
         consecutive_empty = 0
-        max_consecutive_empty = 50 if not self.force_fetch else 500
+        max_consecutive_empty = MAX_CONSECUTIVE_EMPTY_SCORES if not self.force_fetch else MAX_CONSECUTIVE_EMPTY_SCORES_FORCE
 
         for i in range(count):
             beatmap_id = None
             retries = 0
-            inner_retries = MAX_RETRIES_SCORES if not self.force_fetch else 999999
+            inner_retries = MAX_RETRIES_SCORES if not self.force_fetch else MAX_RETRIES_FORCE
 
             while retries < inner_retries:
                 if valid_index < len(valid_ids):
@@ -527,7 +531,7 @@ class FixtureDataFetcher:
                     continue
 
                 try:
-                    data = await self.oac.get_beatmap_scores(beatmap_id, limit=1)
+                    data = await self.oac.get_beatmap_scores(beatmap_id, limit=BEATMAP_SCORES_LIMIT)
                     scores = data.get("scores", [])
                     if not scores:
                         consecutive_empty += 1
