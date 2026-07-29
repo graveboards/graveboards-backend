@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import override
 
 from app.database.rules.base import BeatmapRestrictionBase
 from app.database.rules.context import ExecutionContext
@@ -10,6 +11,7 @@ class ModeRestriction(BeatmapRestrictionBase):
     type = "beatmap_mode"
     config_schema = ModeConfig
 
+    @override
     async def check_beatmap(self, context: ExecutionContext) -> None:
         config = context.config
         allowed_modes = set(config.get("allowed_modes", []))

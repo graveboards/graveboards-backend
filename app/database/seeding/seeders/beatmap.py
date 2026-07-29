@@ -4,7 +4,7 @@ import hashlib
 import json
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, override
 
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
@@ -49,6 +49,7 @@ class BeatmapSeeder(Seeder):
         self._beatmap_tags = tags
 
     @session_manager(session_resolver=db_session_resolver, autoflush_allowed=False)
+    @override
     async def seed(
         self, queue: asyncio.Queue[SeedEvent | None], session: AsyncSession | None = None
     ) -> None:

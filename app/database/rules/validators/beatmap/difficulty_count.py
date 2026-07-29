@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import override
 
 from app.database.rules.base import BeatmapRestrictionBase
 from app.database.rules.context import ExecutionContext
@@ -10,6 +11,7 @@ class DifficultyCountRestriction(BeatmapRestrictionBase):
     type = "beatmap_difficulty_count"
     config_schema = DifficultyCountConfig
 
+    @override
     async def check_beatmap(self, context: ExecutionContext) -> None:
         config = context.config
         beatmaps = context.beatmaps or []

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -27,6 +27,7 @@ class UniqueArtistTitleRestriction(DatabaseRestrictionBase):
     config_schema = UniqueArtistTitleConfig
     supported_versions = {"1.0"}
 
+    @override
     async def check_database(self, context: ExecutionContext) -> None:
         config = UniqueArtistTitleConfig(**context.config)
         identity = await context.get_metadata("song_identity")

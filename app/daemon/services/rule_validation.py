@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from types import SimpleNamespace
-from typing import ClassVar
+from typing import ClassVar, override
 
 from httpx import ConnectTimeout
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -54,9 +54,11 @@ class RuleValidationService(ScheduledService):
     JOB_NAME: ClassVar[str] = "rule-validation"
     _should_reschedule: ClassVar[bool] = False
 
+    @override
     async def _resolve_job_instruction(self, job_id: int) -> JobLoadInstruction | None:
         return JobLoadInstruction(execution_time=aware_utcnow())
 
+    @override
     @auto_retry(retry_exceptions=(ConnectTimeout, RetryableValidationError))
     async def _execute_job(self, record_id: int) -> None:
         hash_name = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(record_id)

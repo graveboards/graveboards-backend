@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import override
 
 from app.database.models.beatmap import Beatmap
 from app.database.rules.base import BeatmapRestrictionBase
@@ -11,6 +12,7 @@ class LengthRestriction(BeatmapRestrictionBase):
     type = "beatmap_length"
     config_schema = LengthConfig
 
+    @override
     async def check_beatmap(self, context: ExecutionContext) -> None:
         config = context.config
         logic = config.get("logic", "any")

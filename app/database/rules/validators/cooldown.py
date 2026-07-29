@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import override
 
 from connexion.exceptions import Forbidden
 
@@ -61,6 +62,7 @@ class CooldownRestriction(RestrictionBase):
             )
         )
 
+    @override
     async def _check(self, context: ExecutionContext) -> None:
         config = context.config
 
@@ -79,6 +81,7 @@ class CooldownRestriction(RestrictionBase):
             if remaining > 0:
                 raise await self._cooldown_error(context, remaining)
 
+    @override
     async def reserve(self, context: ExecutionContext, config: dict) -> str | None:
         if not self._applies(config, context.user_id):
             return None
@@ -105,6 +108,7 @@ class CooldownRestriction(RestrictionBase):
 
         return redis_key
 
+    @override
     async def rollback(self, context: ExecutionContext, token: str) -> None:
         if context.redis is None:
             return

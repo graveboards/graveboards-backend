@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, override
 
 from app.database.rules.base import BeatmapRestrictionBase
 from app.database.rules.context import ExecutionContext
@@ -17,6 +17,7 @@ COMBINATION_TEMPLATES: dict[str, dict[str, Any]] = {
 class CombinationRestriction(BeatmapRestrictionBase):
     type = "beatmap_combination"
 
+    @override
     async def check_beatmap(self, context: ExecutionContext) -> None:
         config = context.config
         combination_name = config.get("combination")

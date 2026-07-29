@@ -1,6 +1,6 @@
 from __future__ import annotations
 import json
-from typing import ClassVar
+from typing import ClassVar, override
 
 from httpx import ConnectTimeout
 from structlog.contextvars import bind_contextvars, clear_contextvars
@@ -37,9 +37,11 @@ class QueueRequestHandler(ScheduledService):
     JOB_NAME: ClassVar[str] = "queue-request-handle"
     _should_reschedule: ClassVar[bool] = False
 
+    @override
     async def _resolve_job_instruction(self, record_id: int) -> JobLoadInstruction | None:
         return JobLoadInstruction(execution_time=aware_utcnow())
 
+    @override
     @auto_retry(retry_exceptions=(ConnectTimeout,))
     async def _execute_job(self, record_id: int) -> None:
         """Post a request to a queue.

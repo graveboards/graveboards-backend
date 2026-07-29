@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import ClassVar
+from typing import ClassVar, override
 
 from httpx import ConnectTimeout, HTTPStatusError, ReadTimeout
 
@@ -30,6 +30,7 @@ class ProfileFetcher(ScheduledFetcherService):
     CHANNEL: ClassVar[str] = ChannelName.PROFILE_FETCHER_TASKS
     JOB_NAME: ClassVar[str] = "profile-fetch"
 
+    @override
     async def _preload_jobs(self) -> None:
         """Load enabled profile fetch jobs into the scheduler at startup.
 
@@ -53,6 +54,7 @@ class ProfileFetcher(ScheduledFetcherService):
 
         self.logger.debug(f"Preloaded jobs: ({loaded})")
 
+    @override
     @auto_retry(retry_exceptions=(ConnectTimeout,))
     async def _execute_job(self, record_id: int) -> None:
         """Fetch and synchronize a user's osu! profile.

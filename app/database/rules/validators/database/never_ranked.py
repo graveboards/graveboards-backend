@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from pydantic import BaseModel, field_validator
 
@@ -36,6 +36,7 @@ class NeverRankedRestriction(DatabaseRestrictionBase):
 
     _MAX_SEARCH_PAGES = 5
 
+    @override
     async def check_database(self, context: ExecutionContext) -> None:
         config = NeverRankedConfig(**context.config)
         identity = await context.get_metadata("song_identity")

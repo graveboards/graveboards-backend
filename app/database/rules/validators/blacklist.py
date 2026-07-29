@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import override
+
 from connexion.exceptions import Forbidden
 
 from app.database.models import Queue
@@ -19,6 +21,7 @@ class BlacklistRestriction(RestrictionBase):
     type = "blacklist"
     config_schema = BlacklistConfig
 
+    @override
     async def _check(self, context: ExecutionContext) -> None:
         config = context.config
         scope = config.get("scope", "user")

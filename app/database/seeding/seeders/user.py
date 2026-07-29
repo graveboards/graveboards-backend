@@ -1,6 +1,6 @@
 from __future__ import annotations
 import asyncio
-from typing import Any
+from typing import Any, override
 
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
@@ -14,6 +14,7 @@ from .base import Seeder
 
 class UserSeeder(Seeder):
     @session_manager(session_resolver=db_session_resolver, autoflush_allowed=False)
+    @override
     async def seed(
         self, queue: asyncio.Queue[SeedEvent | None], session: AsyncSession | None = None
     ) -> None:

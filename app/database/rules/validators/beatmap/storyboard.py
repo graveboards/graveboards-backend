@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import override
 
 from app.database.rules.base import BeatmapRestrictionBase
 from app.database.rules.context import ExecutionContext
@@ -10,6 +11,7 @@ class StoryboardRestriction(BeatmapRestrictionBase):
     type = "beatmap_storyboard"
     config_schema = StoryboardConfig
 
+    @override
     async def check_beatmap(self, context: ExecutionContext) -> None:
         config = context.config
         beatmapset = context.beatmapset

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from typing import override
 
 from connexion.exceptions import Forbidden
 
@@ -92,6 +93,7 @@ class RateLimitRestriction(RestrictionBase):
             )
         )
 
+    @override
     async def _check(self, context: ExecutionContext) -> None:
         config = context.config
 
@@ -114,6 +116,7 @@ class RateLimitRestriction(RestrictionBase):
         if count >= max_requests:
             raise await self._limit_error(context, config)
 
+    @override
     async def reserve(self, context: ExecutionContext, config: dict) -> str | None:
         if not self._applies(config, context.user_id):
             return None
@@ -135,6 +138,7 @@ class RateLimitRestriction(RestrictionBase):
 
         return redis_key
 
+    @override
     async def rollback(self, context: ExecutionContext, token: str) -> None:
         if context.redis is None:
             return

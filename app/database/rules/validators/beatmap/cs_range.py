@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import override
 
 from app.database.rules.base import BeatmapRestrictionBase
 from app.database.rules.context import ExecutionContext
@@ -10,6 +11,7 @@ class CSRangeRestriction(BeatmapRestrictionBase):
     type = "beatmap_cs_range"
     config_schema = CSRangeConfig
 
+    @override
     async def check_beatmap(self, context: ExecutionContext) -> None:
         config = context.config
         logic = config.get("logic", "any")

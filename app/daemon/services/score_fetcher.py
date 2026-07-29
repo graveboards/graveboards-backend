@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, ClassVar
+from typing import Any, ClassVar, override
 
 from httpx import ConnectTimeout
 
@@ -32,6 +32,7 @@ class ScoreFetcher(ScheduledFetcherService):
     CHANNEL: ClassVar[str] = ChannelName.SCORE_FETCHER_TASKS
     JOB_NAME: ClassVar[str] = "score-fetch"
 
+    @override
     async def _preload_jobs(self) -> None:
         """Load enabled score fetch jobs into the scheduler at startup."""
         records = await self._db.get_many(ScoreFetcherTask, enabled=True)
@@ -47,6 +48,7 @@ class ScoreFetcher(ScheduledFetcherService):
 
         self.logger.debug(f"Preloaded jobs: ({num_loaded})")
 
+    @override
     @auto_retry(retry_exceptions=(ConnectTimeout,))
     async def _execute_job(self, record_id: int) -> None:
         """Fetch and synchronize a user's recent osu! scores.
