@@ -1,3 +1,4 @@
+from __future__ import annotations
 from pydantic.config import ConfigDict
 from pydantic.main import BaseModel
 

@@ -1,3 +1,4 @@
+from __future__ import annotations
 import httpx
 from authlib.integrations.httpx_client import AsyncOAuth2Client
 from authlib.oauth2.rfc6749.wrappers import OAuth2Token

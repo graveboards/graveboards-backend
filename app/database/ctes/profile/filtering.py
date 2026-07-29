@@ -1,3 +1,4 @@
+from __future__ import annotations
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.sql import select
 from sqlalchemy.sql.elements import ColumnClause

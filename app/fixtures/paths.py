@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Path constants and utilities for fixture file locations.
 
 File naming convention:

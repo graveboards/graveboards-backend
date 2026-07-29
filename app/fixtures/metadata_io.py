@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Metadata I/O operations for fixture tracking."""
 
 import json

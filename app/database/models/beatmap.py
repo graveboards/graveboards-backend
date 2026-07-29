@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy.ext.hybrid import hybrid_property

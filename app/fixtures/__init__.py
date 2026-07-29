@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Fixture system for fetching and managing osu! API data.
 
 This package provides tools for:

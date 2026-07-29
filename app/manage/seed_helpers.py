@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Helper functions for seed command fixture assurance."""
 
 import json

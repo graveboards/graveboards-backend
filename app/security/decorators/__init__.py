@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .auth_context import with_authenticated_user_id
 from .ownership_authorization import ownership_authorization
 from .ownership_filter import ownership_filter

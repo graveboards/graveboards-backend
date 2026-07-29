@@ -1,3 +1,4 @@
+from __future__ import annotations
 from pydantic.fields import Field
 from pydantic.functional_serializers import model_serializer
 from pydantic.main import BaseModel

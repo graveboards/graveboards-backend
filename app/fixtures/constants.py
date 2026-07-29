@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Constants for the fixtures system."""
 
 # Rulesets and score types

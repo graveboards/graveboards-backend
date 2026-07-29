@@ -1,3 +1,4 @@
+from __future__ import annotations
 """CLI command for fixture status and validation.
 
 Usage:

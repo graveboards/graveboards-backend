@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Archive system for osu.sh data source.
 
 This module provides tools to discover, index, and extract data from

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Coverage-gated fetcher for comprehensive search engine test coverage.
 
 Uses random fetch + multi-bucket classification to efficiently populate

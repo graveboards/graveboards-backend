@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .conditions import ConditionField, Conditions, ConditionValue
 from .field_weights import FieldWeights
 from .filters import FieldFilters, FiltersSchema

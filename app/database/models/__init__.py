@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .api_key import ApiKey
 from .associations import (
     beatmap_snapshot_beatmapset_snapshot_association,

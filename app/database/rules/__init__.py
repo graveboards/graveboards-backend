@@ -1,3 +1,4 @@
+from __future__ import annotations
 from app.database.rules.base import BeatmapRestrictionBase, DatabaseRestrictionBase, RestrictionBase
 from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError

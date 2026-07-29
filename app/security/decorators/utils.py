@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Any
 
 from app.config import get_security_enabled

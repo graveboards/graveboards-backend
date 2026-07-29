@@ -1,3 +1,4 @@
+from __future__ import annotations
 from pydantic.config import ConfigDict
 from pydantic.fields import Field
 from pydantic.functional_serializers import model_serializer

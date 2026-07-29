@@ -1,3 +1,4 @@
+from __future__ import annotations
 from sqlalchemy import event, text
 from sqlalchemy.engine.base import Connection
 from sqlalchemy.orm.mapper import Mapper

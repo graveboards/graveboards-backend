@@ -1,3 +1,4 @@
+from __future__ import annotations
 from . import overrides
 from .api_key import generate_api_key, hash_api_key, validate_api_key
 from .decorators import (

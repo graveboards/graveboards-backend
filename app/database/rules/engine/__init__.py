@@ -1,3 +1,4 @@
+from __future__ import annotations
 from app.database.rules.engine.evaluator import (
     MAX_COMPOSITE_DEPTH,
     AndNode,

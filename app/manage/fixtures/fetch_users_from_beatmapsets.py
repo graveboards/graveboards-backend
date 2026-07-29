@@ -1,3 +1,4 @@
+from __future__ import annotations
 """CLI command to extract user IDs from beatmapset fixtures and fetch those users.
 
 This command reads beatmapset fixtures to extract unique owner user IDs,

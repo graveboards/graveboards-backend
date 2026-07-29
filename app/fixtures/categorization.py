@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Categorization logic for fixture data classification.
 
 Provides a reusable Categorizer class for mapping numeric values to buckets

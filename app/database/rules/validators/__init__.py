@@ -1,3 +1,4 @@
+from __future__ import annotations
 from app.database.rules.validators.beatmap import (
     ARRangeRestriction,
     BPMRestriction,

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .event import SeedEvent
 from .orchestrator import SeederOrchestrator
 from .seeders import *

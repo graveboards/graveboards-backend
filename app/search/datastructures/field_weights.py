@@ -1,3 +1,4 @@
+from __future__ import annotations
 import struct
 from collections.abc import Generator
 from enum import IntFlag, auto

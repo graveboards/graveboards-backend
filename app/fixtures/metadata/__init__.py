@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Metadata subpackage for typed metadata models and store."""
 
 from .models import (

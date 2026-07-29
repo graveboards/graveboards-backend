@@ -1,3 +1,4 @@
+from __future__ import annotations
 from ast import literal_eval
 from datetime import datetime
 from typing import Any

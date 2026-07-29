@@ -1,3 +1,4 @@
+from __future__ import annotations
 from authlib.integrations.base_client.errors import OAuthError
 from jwt.exceptions import ExpiredSignatureError, InvalidIssuerError, InvalidTokenError
 from starlette.requests import Request

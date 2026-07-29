@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Beatmap archiving, versioning, and downloadable artifact generation.
 
 This module is intentionally monolithic (``~676 lines``) because ``BeatmapManager``

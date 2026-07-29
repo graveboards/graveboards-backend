@@ -1,3 +1,4 @@
+from __future__ import annotations
 # Realign every owned SERIAL/IDENTITY sequence with the current max of its column.
 # Inserting rows with explicit primary keys (e.g. during a data migration) does not
 # advance the backing sequence, so a subsequent server-generated insert would reuse an

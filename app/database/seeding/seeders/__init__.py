@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .base import Seeder
 from .beatmap import BeatmapSeeder
 from .queue import QueueSeeder

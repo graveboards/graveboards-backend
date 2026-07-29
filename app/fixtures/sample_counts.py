@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Sample count calculation for fixture fetching."""
 
 from typing import Any

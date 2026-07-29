@@ -1,3 +1,4 @@
+from __future__ import annotations
 LOCK_EXPIRY = 10
 LOCK_ACQUISITION_TIMEOUT = 10
 LOCK_ACQUISITION_RETRY_INTERVAL = 1

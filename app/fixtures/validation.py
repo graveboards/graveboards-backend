@@ -1,3 +1,4 @@
+from __future__ import annotations
 """JSON schema validation for fetched fixture data.
 
 Validates fetched data against expected schemas before writing to disk.

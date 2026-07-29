@@ -1,3 +1,4 @@
+from __future__ import annotations
 """CLI command to fetch fixture data from the osu! API.
 
 Uses the FixtureOrchestrator with composable criteria:

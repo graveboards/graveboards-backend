@@ -1,3 +1,4 @@
+from __future__ import annotations
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import literal_column
 from sqlalchemy.sql.functions import func

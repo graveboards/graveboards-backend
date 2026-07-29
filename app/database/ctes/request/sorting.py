@@ -1,3 +1,4 @@
+from __future__ import annotations
 from sqlalchemy.sql import select
 from sqlalchemy.sql.functions import func
 from sqlalchemy.sql.selectable import CTE

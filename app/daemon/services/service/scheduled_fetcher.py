@@ -1,3 +1,4 @@
+from __future__ import annotations
 import asyncio
 from abc import ABC
 from datetime import datetime, timedelta

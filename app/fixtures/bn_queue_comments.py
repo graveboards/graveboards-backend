@@ -1,3 +1,4 @@
+from __future__ import annotations
 """BN Queue Request Comments.
 
 Inspired by real prod data from Neto's BN queue (421 actual request comments).

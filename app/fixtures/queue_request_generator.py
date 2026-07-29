@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Queue and Request fixture generator for search engine testing.
 
 Generates diverse queue and request fixtures to enable comprehensive

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from . import job, task
 from .scheduled import ScheduledService
 from .scheduled_fetcher import ScheduledFetcherService

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from redis import ConnectionPool
 
 from app.config import REDIS_CONFIGURATION

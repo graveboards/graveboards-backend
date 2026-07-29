@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .clean import cmd_clean_fixtures
 from .demote import cmd_demote_fixtures
 from .fetch import cmd_fetch_fixtures

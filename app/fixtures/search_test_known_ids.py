@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Known IDs for hard-to-find coverage gaps.
 
 These are IDs of beatmapsets/users that are difficult to find via random search

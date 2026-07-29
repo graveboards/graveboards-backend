@@ -1,3 +1,4 @@
+from __future__ import annotations
 import types
 from collections.abc import Iterable
 from typing import Any, get_args, get_origin

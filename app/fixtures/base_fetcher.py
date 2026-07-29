@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Base fetcher with shared logic for all fetcher types.
 
 Extracts common functionality from FixtureDataFetcher that is shared across

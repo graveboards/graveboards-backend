@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Metadata store with section-level dirty tracking and coverage management."""
 
 import json

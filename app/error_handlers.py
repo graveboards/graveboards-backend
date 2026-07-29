@@ -1,3 +1,4 @@
+from __future__ import annotations
 from connexion.exceptions import BadRequestProblem, Forbidden, InternalServerError, Unauthorized
 from connexion.lifecycle import ConnexionRequest, ConnexionResponse
 from connexion.problem import problem

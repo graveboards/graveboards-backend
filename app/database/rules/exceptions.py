@@ -1,3 +1,4 @@
+from __future__ import annotations
 class RuleViolationError(Exception):
     def __init__(self, type: str, detail: str):
         self.type = type

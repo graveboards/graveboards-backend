@@ -1,3 +1,4 @@
+from __future__ import annotations
 """CLI command to reconcile fixture metadata with disk state.
 
 Usage:

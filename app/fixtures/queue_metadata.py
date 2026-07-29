@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Queue names and descriptions for fixture generation.
 
 Provides diverse queue metadata for testing the search engine's QUEUES scope,

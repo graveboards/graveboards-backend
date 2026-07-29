@@ -1,3 +1,4 @@
+from __future__ import annotations
 from sqlalchemy.sql import select, text
 
 from app.database.models import Base, ModelClass

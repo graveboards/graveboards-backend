@@ -1,3 +1,4 @@
+from __future__ import annotations
 from sqlalchemy import event
 from sqlalchemy.orm.attributes import AttributeEventToken
 

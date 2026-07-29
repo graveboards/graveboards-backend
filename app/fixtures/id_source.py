@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Pluggable ID source strategies for fixture fetching.
 
 Each ID source provides a way to resolve which IDs to fetch from the osu! API.

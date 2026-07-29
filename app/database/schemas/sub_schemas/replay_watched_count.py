@@ -1,3 +1,4 @@
+from __future__ import annotations
 from datetime import date
 
 from pydantic.main import BaseModel

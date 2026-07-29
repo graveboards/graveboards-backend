@@ -1,3 +1,4 @@
+from __future__ import annotations
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql import select
 from sqlalchemy.sql.selectable import CTE, ScalarSelect

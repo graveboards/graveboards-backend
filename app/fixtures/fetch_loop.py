@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Parameterized fetch loop for eliminating duplicate fetch methods.
 
 Replaces the 6 near-duplicate fetch_* methods in FixtureDataFetcher with a single

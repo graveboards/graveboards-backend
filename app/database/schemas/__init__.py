@@ -1,3 +1,4 @@
+from __future__ import annotations
 from . import rule
 from .api_key import ApiKeyCreateSchema, ApiKeySchema, ApiKeyUpdateSchema
 from .base_model_extra import BaseModelExtra

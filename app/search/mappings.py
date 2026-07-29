@@ -1,3 +1,4 @@
+from __future__ import annotations
 from pydantic.main import BaseModel
 from sqlalchemy.orm.strategy_options import Load, joinedload, noload, selectinload
 

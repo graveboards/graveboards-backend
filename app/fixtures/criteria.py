@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Declarative criteria and report dataclasses for fixture fetching."""
 
 from dataclasses import dataclass, field

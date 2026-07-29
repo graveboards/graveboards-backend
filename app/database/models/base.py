@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import TypeVar
 
 from sqlalchemy.ext.asyncio import AsyncAttrs

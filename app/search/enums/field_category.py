@@ -1,3 +1,4 @@
+from __future__ import annotations
 from enum import Enum, IntFlag, auto
 
 from app.database.models import ModelClass

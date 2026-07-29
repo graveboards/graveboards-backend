@@ -1,3 +1,4 @@
+from __future__ import annotations
 """CLI command to refresh archive data from osu.sh.
 
 Usage:

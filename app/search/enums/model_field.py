@@ -1,3 +1,4 @@
+from __future__ import annotations
 from enum import Enum, IntEnum, auto
 
 from sqlalchemy.orm import InstrumentedAttribute

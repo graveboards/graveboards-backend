@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Test App Module - Provides isolated app startup for testing.
 

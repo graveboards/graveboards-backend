@@ -1,3 +1,4 @@
+from __future__ import annotations
 """CLI configuration dataclasses for fixture commands."""
 
 from dataclasses import dataclass

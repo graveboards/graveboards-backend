@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Redis-backed failed ID store.
 
 Persists failed IDs uncapped in Redis sets for O(1) lookup.

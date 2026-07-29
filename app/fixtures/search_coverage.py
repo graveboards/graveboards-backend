@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Adaptive coverage engine for search test fixtures.
 
 Uses a priority queue of fetch actions to minimize API calls while

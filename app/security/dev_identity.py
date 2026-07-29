@@ -1,3 +1,4 @@
+from __future__ import annotations
 from connexion import request
 
 from app.config import DEV_ADMIN_USER_ID

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from app.database.rules.validators.beatmap.ar_range import ARRangeRestriction
 from app.database.rules.validators.beatmap.bpm import BPMRestriction
 from app.database.rules.validators.beatmap.combinations import CombinationRestriction

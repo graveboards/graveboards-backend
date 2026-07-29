@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .target import SeederTarget
 
 DEPENDENCIES: dict[SeederTarget, set[SeederTarget]] = {

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Display utilities for fixture operations."""
 
 from rich.console import Console

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .constants import *
 from .decorators import *
 from .enums import *

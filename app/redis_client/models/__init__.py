@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .beatmap import Beatmap
 from .beatmapset import Beatmapset
 from .osu_client_oauth_token import OsuClientOAuthToken

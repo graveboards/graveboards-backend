@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .summary import get_summary_status
 from .target import STATUS_TARGETS, StatusTarget
 

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from prometheus_client import Gauge, Histogram
 
 db_pool_size = Gauge(

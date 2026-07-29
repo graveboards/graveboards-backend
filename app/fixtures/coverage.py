@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Coverage tracking registry for search test fixtures.
 
 Replaces 50+ instance attributes in SearchTestFixtureFetcher with a data-driven

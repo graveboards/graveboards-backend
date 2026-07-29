@@ -1,3 +1,4 @@
+from __future__ import annotations
 from prometheus_client import Counter
 
 auth_rate_limit_checks_total = Counter(

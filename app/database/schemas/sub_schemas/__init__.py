@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .availability import AvailabilitySchema
 from .beatmap_osu_api_schema import BeatmapOsuApiSchema
 from .beatmapset_description import BeatmapsetDescriptionSchema

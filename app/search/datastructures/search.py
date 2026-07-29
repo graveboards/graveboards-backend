@@ -1,3 +1,4 @@
+from __future__ import annotations
 import struct
 from enum import IntEnum, IntFlag, auto
 from typing import Self, cast

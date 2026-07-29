@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .profile_fetcher import ProfileFetcher
 from .queue_request_handler import QueueRequestHandler
 from .rule_validation import RuleValidationService

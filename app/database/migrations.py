@@ -1,3 +1,4 @@
+from __future__ import annotations
 import subprocess
 
 from app.config import PROJECT_ROOT

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Shared helpers for fixture promotion and demotion."""
 
 from datetime import UTC, datetime

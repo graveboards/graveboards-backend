@@ -1,3 +1,4 @@
+from __future__ import annotations
 """SQLAlchemy event listeners for database model side effects.
 
 All event handlers are intentionally synchronous. They execute within the

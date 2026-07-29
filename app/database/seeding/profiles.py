@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Seeding profiles for configuring default fixture counts.
 
 Profiles define the default counts for fetching/generating fixtures,

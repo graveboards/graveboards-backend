@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Fixture health check utilities for Graveboards Backend.
 
 This module provides health check functionality for fixture data,

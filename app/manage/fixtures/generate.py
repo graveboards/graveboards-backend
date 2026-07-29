@@ -1,3 +1,4 @@
+from __future__ import annotations
 """CLI command to generate queue and request fixtures.
 
 Generates diverse queue and request fixtures for testing the search

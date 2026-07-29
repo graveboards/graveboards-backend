@@ -1,3 +1,4 @@
+from __future__ import annotations
 from connexion.lifecycle import ConnexionRequest
 from jwt.exceptions import ExpiredSignatureError, InvalidIssuerError, InvalidTokenError
 
