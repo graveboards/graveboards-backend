@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.models import BaseType, ModelClass
 
 from .decorators import session_manager
+from .helpers import validate_model_attrs
 
 
 class _U:
@@ -56,10 +57,9 @@ class _U:
         if instance is None:
             raise ValueError(f"There is no {model.__name__} with the primary key '{primary_key}'")
 
-        for key, value in kwargs.items():
-            if key not in valid_attrs:
-                raise ValueError(f"{model.__name__} has no attribute '{key}'")
+        validate_model_attrs(model.__name__, kwargs, valid_attrs)
 
+        for key, value in kwargs.items():
             setattr(instance, key, value)
 
         await session.flush()
@@ -124,10 +124,9 @@ class _U:
             if instance is None:
                 raise ValueError(f"There is no {model.__name__} with the primary key '{pk}'")
 
-            for key, value in delta.items():
-                if key not in valid_attrs:
-                    raise ValueError(f"{model.__name__} has no attribute '{key}'")
+            validate_model_attrs(model.__name__, delta, valid_attrs)
 
+            for key, value in delta.items():
                 setattr(instance, key, value)
 
             instances.append(instance)

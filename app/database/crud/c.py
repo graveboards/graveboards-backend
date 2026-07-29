@@ -10,6 +10,7 @@ from sqlalchemy.sql.schema import UniqueConstraint
 from app.database.models import BaseType, ModelClass
 
 from .decorators import ensure_required, session_manager
+from .helpers import validate_model_attrs
 
 
 class _C:
@@ -49,9 +50,7 @@ class _C:
         model = model_class.value
         valid_attrs = model_class.column_names | model_class.relationship_names
 
-        for key in kwargs:
-            if key not in valid_attrs:
-                raise ValueError(f"{model.__name__} has no attribute '{key}'")
+        validate_model_attrs(model.__name__, kwargs, valid_attrs)
 
         instance: BaseType = await _C._resolve_or_create(model_class, kwargs, session)
         session.add(instance)
@@ -107,9 +106,7 @@ class _C:
             if not item and required_columns_len > 0:
                 raise ValueError(f"Item #{i} must contain at least one field")
 
-            for key in item:
-                if key not in valid_attrs:
-                    raise ValueError(f"{model.__name__} has no attribute '{key}'")
+            validate_model_attrs(model.__name__, item, valid_attrs)
 
             instance: BaseType = await _C._resolve_or_create(model_class, item, session)
             instances.append(instance)

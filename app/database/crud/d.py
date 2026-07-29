@@ -9,6 +9,7 @@ from sqlalchemy.sql.elements import and_
 from app.database.models import BaseType, ModelClass
 
 from .decorators import session_manager
+from .helpers import validate_model_attrs
 
 
 class _D:
@@ -49,9 +50,7 @@ class _D:
         model = model_class.value
         valid_attrs = model_class.column_names | model_class.hybrid_property_names
 
-        for key in kwargs:
-            if key not in valid_attrs:
-                raise ValueError(f"{model.__name__} has no attribute '{key}'")
+        validate_model_attrs(model.__name__, kwargs, valid_attrs)
 
         select_stmt = select(model_class.value).filter_by(**kwargs)
 
@@ -103,10 +102,9 @@ class _D:
         valid_attrs = model_class.column_names | model_class.hybrid_property_names
         conditions = []
 
-        for key, value in kwargs.items():
-            if key not in valid_attrs:
-                raise ValueError(f"{model.__name__} has no attribute '{key}'")
+        validate_model_attrs(model.__name__, kwargs, valid_attrs)
 
+        for key, value in kwargs.items():
             attr = getattr(model, key)
 
             if isinstance(value, Iterable) and not isinstance(value, (str, bytes)):
