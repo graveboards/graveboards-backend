@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Any
 
 from starlette.requests import Request
-from starlette.responses import Response
+from app.types import APIResponse
 
 from api.decorators import api_query, coerce_arguments
 from api.utils import bleach_body, build_pydantic_include
@@ -21,7 +21,7 @@ __all__ = ["search", "post", "patch"]
 @coerce_arguments(snapshot_number={"latest": -1})
 async def search(
     request: Request, beatmap_id: int, snapshot_number: int = -1, **kwargs: Any
-) -> Response:
+) -> APIResponse:
     db: PostgresqlDB = request.state.db
 
     if snapshot_number < 0:
@@ -69,7 +69,7 @@ async def search(
 @role_authorization(RoleName.ADMIN)
 async def post(
     request: Request, body: dict, beatmap_id: int, snapshot_number: int = -1, **kwargs: Any
-) -> Response:
+) -> APIResponse:
     db: PostgresqlDB = request.state.db
 
     if snapshot_number < 0:
@@ -109,7 +109,7 @@ async def post(
 @role_authorization(RoleName.ADMIN)
 async def patch(
     request: Request, body: dict, beatmap_id: int, snapshot_number: int = -1, **kwargs: Any
-) -> Response:
+) -> APIResponse:
     db: PostgresqlDB = request.state.db
 
     if snapshot_number < 0:

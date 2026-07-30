@@ -56,7 +56,7 @@ class OsuAPIClient(OsuAPIClientBase):
         beatmap_data: dict[str, Any] = response.json()
 
         cached_beatmap = Beatmap.model_validate(beatmap_data)
-        await self.rc.hset(cached_beatmap_hash_name, mapping=cached_beatmap.serialize())
+        await self.rc.hset(cached_beatmap_hash_name, mapping=cached_beatmap.serialize())  # type: ignore[arg-type]
         await self.rc.expire(cached_beatmap_hash_name, CACHED_BEATMAP_EXPIRY)
 
         return beatmap_data
@@ -169,7 +169,7 @@ class OsuAPIClient(OsuAPIClientBase):
         beatmapset_data: dict[str, Any] = response.json()
 
         cached_beatmapset = Beatmapset.model_validate(beatmapset_data)
-        await self.rc.hset(cached_beatmapset_hash_name, mapping=cached_beatmapset.serialize())
+        await self.rc.hset(cached_beatmapset_hash_name, mapping=cached_beatmapset.serialize())  # type: ignore[arg-type]
         await self.rc.expire(cached_beatmapset_hash_name, CACHED_BEATMAPSET_EXPIRY)
 
         return beatmapset_data

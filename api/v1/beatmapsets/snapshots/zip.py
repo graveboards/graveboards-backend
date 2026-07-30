@@ -1,6 +1,7 @@
 from __future__ import annotations
 from starlette.requests import Request
-from starlette.responses import Response, StreamingResponse
+from starlette.responses import StreamingResponse
+from app.types import APIResponse
 
 from api.decorators import coerce_arguments
 from app.beatmaps import BeatmapManager
@@ -13,7 +14,7 @@ __all__ = ["search"]
 
 
 @coerce_arguments(snapshot_number={"latest": -1})
-async def search(request: Request, beatmapset_id: int, snapshot_number: int = -1) -> Response:
+async def search(request: Request, beatmapset_id: int, snapshot_number: int = -1) -> APIResponse:
     rc: RedisClient = request.state.rc
     db: PostgresqlDB = request.state.db
 

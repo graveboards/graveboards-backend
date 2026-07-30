@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Any
 
 from starlette.requests import Request
-from starlette.responses import Response
+from app.types import APIResponse
 
 from api.decorators import api_query
 from api.utils import build_pydantic_include
@@ -18,7 +18,7 @@ __all__ = ["search", "get", "listings", "snapshots", "tags"]
 
 
 @api_query(ModelClass.BEATMAP, many=True)
-async def search(request: Request, **kwargs: Any) -> Response:
+async def search(request: Request, **kwargs: Any) -> APIResponse:
     db: PostgresqlDB = request.state.db
 
     beatmaps = await db.get_many(Beatmap, **kwargs)
@@ -40,7 +40,7 @@ async def search(request: Request, **kwargs: Any) -> Response:
 
 
 @api_query(ModelClass.BEATMAP)
-async def get(request: Request, beatmap_id: int, **kwargs: Any) -> Response:
+async def get(request: Request, beatmap_id: int, **kwargs: Any) -> APIResponse:
     db: PostgresqlDB = request.state.db
 
     beatmap = await db.get(Beatmap, id=beatmap_id, **kwargs)

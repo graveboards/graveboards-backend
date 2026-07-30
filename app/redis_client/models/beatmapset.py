@@ -48,19 +48,20 @@ class Beatmapset(BeatmapsetOsuApiSchema):
         return serialized_dict
 
     @classmethod
-    def deserialize(cls, serialized_dict: dict[str, str]) -> Beatmapset:
+    def deserialize(cls, serialized_dict: dict[str | bytes, str | bytes]) -> Beatmapset:
         """Deserialize a Redis-stored beatmapset dictionary.
 
         Args:
             serialized_dict:
-                Serialized beatmapset data.
+                Serialized beatmapset data (keys and values may be bytes or str).
 
         Returns:
             A validated ``Beatmapset`` instance.
         """
+        string_dict = {str(k): str(v) for k, v in serialized_dict.items()}
         deserialized_dict: dict[str, Any] = {}
 
-        for key, value in serialized_dict.items():
+        for key, value in string_dict.items():
             match key:
                 case (
                     "id"

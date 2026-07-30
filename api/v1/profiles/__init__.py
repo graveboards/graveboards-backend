@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Any
 
 from starlette.requests import Request
-from starlette.responses import Response
+from app.types import APIResponse
 
 from api.decorators import api_query
 from api.utils import build_pydantic_include
@@ -17,7 +17,7 @@ __all__ = ["search", "get"]
 
 
 @api_query(ModelClass.PROFILE, many=True)
-async def search(request: Request, **kwargs: Any) -> Response:
+async def search(request: Request, **kwargs: Any) -> APIResponse:
     db: PostgresqlDB = request.state.db
 
     profiles = await db.get_many(Profile, **kwargs)
@@ -40,7 +40,7 @@ async def search(request: Request, **kwargs: Any) -> Response:
 
 @api_query(ModelClass.PROFILE)
 @ownership_authorization()
-async def get(request: Request, user_id: int, **kwargs: Any) -> Response:
+async def get(request: Request, user_id: int, **kwargs: Any) -> APIResponse:
     db: PostgresqlDB = request.state.db
 
     profile = await db.get(Profile, user_id=user_id, **kwargs)

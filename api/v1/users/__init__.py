@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Any
 
 from starlette.requests import Request
-from starlette.responses import Response
+from app.types import APIResponse
 
 from api.decorators import api_query
 from api.utils import bleach_body, build_pydantic_include
@@ -22,7 +22,7 @@ __all__ = ["search", "get", "post", "api_key"]
 
 @role_authorization(RoleName.ADMIN)
 @api_query(ModelClass.USER, many=True)
-async def search(request: Request, **kwargs: Any) -> Response:
+async def search(request: Request, **kwargs: Any) -> APIResponse:
     db: PostgresqlDB = request.state.db
 
     users = await db.get_many(User, **kwargs)
@@ -43,7 +43,7 @@ async def search(request: Request, **kwargs: Any) -> Response:
 
 @role_authorization(RoleName.ADMIN, override=matching_user_id_override)
 @api_query(ModelClass.USER)
-async def get(request: Request, user_id: int, **kwargs: Any) -> Response:
+async def get(request: Request, user_id: int, **kwargs: Any) -> APIResponse:
     db: PostgresqlDB = request.state.db
 
     user = await db.get(User, id=user_id, **kwargs)
@@ -63,7 +63,7 @@ async def get(request: Request, user_id: int, **kwargs: Any) -> Response:
 
 
 @role_authorization(RoleName.ADMIN)
-async def post(request: Request, body: dict, **kwargs: Any) -> Response:
+async def post(request: Request, body: dict, **kwargs: Any) -> APIResponse:
     db: PostgresqlDB = request.state.db
 
     user_id = body["id"]

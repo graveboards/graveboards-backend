@@ -47,19 +47,20 @@ class QueueRequestHandlerTask(BaseModel):
         return serialized_dict
 
     @classmethod
-    def deserialize(cls, serialized_dict: dict[str, str]) -> QueueRequestHandlerTask:
-        """Deserialize a stored task dictionary.
+    def deserialize(cls, serialized_dict: dict[str | bytes, str | bytes]) -> QueueRequestHandlerTask:
+        """Deserialize a stored task dictionary from Redis.
 
         Args:
             serialized_dict:
-                Serialized task data.
+                Serialized task data (keys and values may be bytes or str).
 
         Returns:
             A validated ``QueueRequestHandlerTask`` instance.
         """
+        string_dict = {str(k): str(v) for k, v in serialized_dict.items()}
         deserialized_dict: dict[str, Any] = {}
 
-        for key, value in serialized_dict.items():
+        for key, value in string_dict.items():
             match key:
                 case "user_id" | "beatmapset_id" | "queue_id":
                     deserialized_dict[key] = int(value)

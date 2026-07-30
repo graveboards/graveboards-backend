@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Any
 
 from starlette.requests import Request
-from starlette.responses import Response
+from app.types import APIResponse
 
 from api.decorators import api_query
 from api.utils import bleach_body, build_pydantic_include
@@ -19,7 +19,7 @@ __all__ = ["search", "get", "post"]
 
 
 @api_query(ModelClass.SCORE, many=True)
-async def search(request: Request, **kwargs: Any) -> Response:
+async def search(request: Request, **kwargs: Any) -> APIResponse:
     db: PostgresqlDB = request.state.db
 
     scores = await db.get_many(Score, **kwargs)
@@ -41,7 +41,7 @@ async def search(request: Request, **kwargs: Any) -> Response:
 
 
 @api_query(ModelClass.SCORE)
-async def get(request: Request, score_id: int, **kwargs: Any) -> Response:
+async def get(request: Request, score_id: int, **kwargs: Any) -> APIResponse:
     db: PostgresqlDB = request.state.db
 
     score = await db.get(Score, id=score_id, **kwargs)
@@ -64,7 +64,7 @@ async def get(request: Request, score_id: int, **kwargs: Any) -> Response:
 @role_authorization(RoleName.ADMIN)
 async def post(
     request: Request, body: dict, db: PostgresqlDB | None = None, **kwargs: Any
-) -> Response:
+) -> APIResponse:
     if db is None:
         db = request.state.db
 

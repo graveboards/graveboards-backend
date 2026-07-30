@@ -35,10 +35,11 @@ class QueueRequestValidationTask(BaseModel):
         return serialized_dict
 
     @classmethod
-    def deserialize(cls, serialized_dict: dict[str, str]) -> QueueRequestValidationTask:
+    def deserialize(cls, serialized_dict: dict[str | bytes, str | bytes]) -> QueueRequestValidationTask:
+        string_dict = {str(k): str(v) for k, v in serialized_dict.items()}
         deserialized_dict: dict[str, Any] = {}
 
-        for key, value in serialized_dict.items():
+        for key, value in string_dict.items():
             match key:
                 case "request_id" | "queue_id" | "beatmapset_id":
                     deserialized_dict[key] = int(value)

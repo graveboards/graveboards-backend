@@ -4,7 +4,7 @@ from typing import Any
 import httpx
 from connexion.problem import problem
 from starlette.requests import Request
-from starlette.responses import Response
+from app.types import APIResponse
 
 from api.decorators import api_query
 from api.utils import build_pydantic_include
@@ -23,7 +23,7 @@ __all__ = ["search", "get", "post", "listings", "snapshots", "tags"]
 
 
 @api_query(ModelClass.BEATMAPSET, many=True)
-async def search(request: Request, **kwargs: Any) -> Response:
+async def search(request: Request, **kwargs: Any) -> APIResponse:
     db: PostgresqlDB = request.state.db
 
     beatmapsets = await db.get_many(Beatmapset, **kwargs)
@@ -46,7 +46,7 @@ async def search(request: Request, **kwargs: Any) -> Response:
 
 
 @api_query(ModelClass.BEATMAPSET)
-async def get(request: Request, beatmapset_id: int, **kwargs: Any) -> Response:
+async def get(request: Request, beatmapset_id: int, **kwargs: Any) -> APIResponse:
     db: PostgresqlDB = request.state.db
 
     beatmapset = await db.get(Beatmapset, **kwargs)
@@ -74,7 +74,7 @@ async def post(
     db: PostgresqlDB | None = None,
     bm: Any = None,
     **kwargs: Any,
-) -> Response:
+) -> APIResponse:
     if rc is None:
         rc = request.state.rc
     if db is None:

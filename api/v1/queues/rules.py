@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Any
 
 from starlette.requests import Request
-from starlette.responses import Response
+from app.types import APIResponse
 
 from app.database import PostgresqlDB
 from app.database.crud.rules import RuleCRUD
@@ -26,7 +26,7 @@ async def _can_view_private_rules(
 @with_authenticated_user_id()
 async def search(
     request: Request, queue_id: int, _caller_user_id: int | None = None, **kwargs: Any
-) -> Response:
+) -> APIResponse:
     """List all rules for a queue.
 
     Args:
@@ -62,7 +62,7 @@ async def search(
 @with_authenticated_user_id()
 async def get(
     request: Request, queue_id: int, rule_id: int, _caller_user_id: int | None = None, **kwargs: Any
-) -> Response:
+) -> APIResponse:
     """Get a single rule by ID.
 
     Args:
@@ -95,7 +95,7 @@ async def get(
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def post(request: Request, queue_id: int, body: dict, **kwargs: Any) -> Response:
+async def post(request: Request, queue_id: int, body: dict, **kwargs: Any) -> APIResponse:
     """Add a single rule to a queue.
 
     Args:
@@ -134,7 +134,7 @@ async def post(request: Request, queue_id: int, body: dict, **kwargs: Any) -> Re
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
 async def patch(
     request: Request, queue_id: int, rule_id: int, body: dict, **kwargs: Any
-) -> Response:
+) -> APIResponse:
     """Update a single rule.
 
     Args:
@@ -175,7 +175,7 @@ async def patch(
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def delete(request: Request, queue_id: int, rule_id: int, **kwargs: Any) -> Response:
+async def delete(request: Request, queue_id: int, rule_id: int, **kwargs: Any) -> APIResponse:
     """Remove a single rule from a queue.
 
     Args:
@@ -205,7 +205,7 @@ async def delete(request: Request, queue_id: int, rule_id: int, **kwargs: Any) -
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def put(request: Request, queue_id: int, body: dict, **kwargs: Any) -> Response:
+async def put(request: Request, queue_id: int, body: dict, **kwargs: Any) -> APIResponse:
     """Replace all rules for a queue.
 
     Args:

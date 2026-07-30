@@ -1,6 +1,6 @@
 from __future__ import annotations
 from starlette.requests import Request
-from starlette.responses import Response
+from app.types import APIResponse
 
 from app.exceptions import TooManyRequests
 from app.oauth import OAuth
@@ -12,7 +12,7 @@ __all__ = ["search"]
 STATE_EXPIRES_IN = 300
 
 
-async def search(request: Request, rc: RedisClient | None = None) -> Response:
+async def search(request: Request, rc: RedisClient | None = None) -> APIResponse:
     if rc is None:
         rc = request.state.rc
 

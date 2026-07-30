@@ -27,19 +27,20 @@ class OsuClientOAuthToken(BaseModel):
         return serialized_dict
 
     @classmethod
-    def deserialize(cls, serialized_dict: dict[str, str]) -> OsuClientOAuthToken:
+    def deserialize(cls, serialized_dict: dict[str | bytes, str | bytes]) -> OsuClientOAuthToken:
         """Deserialize a stored OAuth token dictionary.
 
         Args:
             serialized_dict:
-                Serialized token data.
+                Serialized token data from Redis (keys and values may be bytes or str).
 
         Returns:
             A validated ``OsuClientOAuthToken`` instance.
         """
+        string_dict = {str(k): str(v) for k, v in serialized_dict.items()}
         deserialized_dict: dict[str, Any] = {}
 
-        for key, value in serialized_dict.items():
+        for key, value in string_dict.items():
             match key:
                 case "expires_in" | "expires_at":
                     deserialized_dict[key] = int(value)

@@ -8,7 +8,7 @@ from connexion.exceptions import Unauthorized
 from sqlalchemy import func
 from sqlalchemy import select as sa_select
 from starlette.requests import Request
-from starlette.responses import Response
+from app.types import APIResponse
 
 from api.auth import api_key_info, bearer_info
 from api.pagination import build_pagination_response
@@ -91,7 +91,7 @@ async def _authenticate_for_scope(scope: Scope) -> int | None:
     return int(token_info["sub"])
 
 
-async def search(request: Request, **kwargs: Any) -> Response:
+async def search(request: Request, **kwargs: Any) -> APIResponse:
     db: PostgresqlDB = request.state.db
     rc: RedisClient = request.state.rc
 
@@ -201,7 +201,7 @@ async def search(request: Request, **kwargs: Any) -> Response:
     return page_data, status, headers
 
 
-async def post(request: Request, body: dict) -> Response:
+async def post(request: Request, body: dict) -> APIResponse:
     # TODO: caching
     try:
         search_query = SearchSchema.model_validate(body)

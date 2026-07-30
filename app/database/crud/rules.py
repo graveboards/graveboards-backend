@@ -60,7 +60,7 @@ class RuleCRUD:
     async def get_rules(
         self,
         queue_id: int,
-        session: AsyncSession = None,
+        session: AsyncSession | None = None,
         only_active: bool = False,
     ) -> list[QueueRule]:
         """Fetch all rules for a queue, optionally filtered by active status."""
@@ -79,7 +79,7 @@ class RuleCRUD:
         self,
         queue_id: int,
         rules_data: list[dict],
-        session: AsyncSession = None,
+        session: AsyncSession | None = None,
     ) -> list[QueueRule]:
         """Replace all rules for a queue with the provided list.
 
@@ -141,7 +141,7 @@ class RuleCRUD:
         rule_id: int,
         queue_id: int,
         updates: dict,
-        session: AsyncSession = None,
+        session: AsyncSession | None = None,
     ) -> QueueRule | None:
         """Update a specific rule by ID.
 
@@ -222,7 +222,7 @@ class RuleCRUD:
         self,
         queue_id: int,
         rule_id: int,
-        session: AsyncSession = None,
+        session: AsyncSession | None = None,
     ) -> QueueRule | None:
         """Fetch a single rule by ID, scoped to a queue."""
         stmt = select(QueueRule).where(
@@ -237,7 +237,7 @@ class RuleCRUD:
         self,
         queue_id: int,
         rule_data: dict,
-        session: AsyncSession = None,
+        session: AsyncSession | None = None,
     ) -> QueueRule:
         """Create a single rule and append it to the queue's existing rules."""
         _validate_rule_version(rule_data["type"], rule_data.get("version", "1.0"))
@@ -278,7 +278,7 @@ class RuleCRUD:
         self,
         rule_id: int,
         queue_id: int,
-        session: AsyncSession = None,
+        session: AsyncSession | None = None,
     ) -> QueueRule | None:
         """Delete a single rule by ID, scoped to a queue."""
         stmt = select(QueueRule).where(

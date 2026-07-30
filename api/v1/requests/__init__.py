@@ -3,7 +3,7 @@ from typing import Any
 
 from connexion.exceptions import Forbidden
 from starlette.requests import Request as StarletteRequest
-from starlette.responses import Response
+from app.types import APIResponse
 from structlog.contextvars import get_contextvars
 
 from api.decorators import api_query
@@ -46,7 +46,7 @@ logger = get_logger(__name__)
 
 
 @api_query(ModelClass.REQUEST, many=True)
-async def search(request: StarletteRequest, **kwargs: Any) -> Response:
+async def search(request: StarletteRequest, **kwargs: Any) -> APIResponse:
     db: PostgresqlDB = request.state.db
 
     requests = await db.get_many(Request, **kwargs)
@@ -72,7 +72,7 @@ async def search(request: StarletteRequest, **kwargs: Any) -> Response:
     resource_model=Request,
 )
 @api_query(ModelClass.REQUEST)
-async def get(request: StarletteRequest, request_id: int, **kwargs: Any) -> Response:
+async def get(request: StarletteRequest, request_id: int, **kwargs: Any) -> APIResponse:
     db: PostgresqlDB = request.state.db
 
     request_ = await db.get(Request, id=request_id, **kwargs)
@@ -94,7 +94,7 @@ async def get(request: StarletteRequest, request_id: int, **kwargs: Any) -> Resp
 @with_authenticated_user_id()
 async def post(
     request: StarletteRequest, body: dict, _caller_user_id: int | None = None, **kwargs: Any
-) -> Response:
+) -> APIResponse:
     rc: RedisClient = request.state.rc
     db: PostgresqlDB = request.state.db
 
@@ -145,7 +145,7 @@ async def post(
 
     ctx = get_contextvars()
     task = QueueRequestHandlerTask(**body, http_request_id=ctx.get("request_id", ""))
-    task_hash_name = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(task.hashed_id)
+    task_hash_name = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(task.hashed_id)  # type: ignore[arg-type]
 
     logger.debug(
         f"POST /requests: creating handler task hashed_id={task.hashed_id}, "
@@ -172,11 +172,11 @@ async def post(
     reservations = await reserve_stateful_rules(active_rules, rule_context)
 
     try:
-        await rc.hset(task_hash_name, mapping=task.serialize())
+        await rc.hset(task_hash_name, mapping=task.serialize())  # type: ignore[arg-type]
         logger.debug(
             f"POST /requests: stored task at {task_hash_name}, publishing to {ChannelName.QUEUE_REQUEST_HANDLER_TASKS.value}"
         )
-        await rc.publish(ChannelName.QUEUE_REQUEST_HANDLER_TASKS.value, task.hashed_id)
+        await rc.publish(ChannelName.QUEUE_REQUEST_HANDLER_TASKS.value, task.hashed_id)  # type: ignore[arg-type]
         logger.debug(f"POST /requests: published job_id={task.hashed_id}")
     except Exception:
         await rollback_reservations(reservations, rule_context)
@@ -231,7 +231,7 @@ async def _run_phase1_checks(
 @role_authorization(
     RoleName.ADMIN, override=queue_manager_override, override_kwargs={"from_request": True}
 )
-async def patch(request: StarletteRequest, request_id: int, body: dict, **kwargs: Any) -> Response:
+async def patch(request: StarletteRequest, request_id: int, body: dict, **kwargs: Any) -> APIResponse:
     db: PostgresqlDB = request.state.db
 
     body = bleach_body(body, whitelisted_keys={"status"})
@@ -255,7 +255,7 @@ async def patch(request: StarletteRequest, request_id: int, body: dict, **kwargs
 @role_authorization(
     RoleName.ADMIN, override=queue_owner_override, override_kwargs={"from_request": True}
 )
-async def delete(request: StarletteRequest, request_id: int, **kwargs: Any) -> Response:
+async def delete(request: StarletteRequest, request_id: int, **kwargs: Any) -> APIResponse:
     db: PostgresqlDB = request.state.db
     rc: RedisClient = request.state.rc
 

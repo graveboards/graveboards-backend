@@ -8,7 +8,7 @@ from .decorators import session_manager
 
 class Misc:
     @session_manager()
-    async def status(self, target: StatusTarget = "summary", session: AsyncSession = None) -> dict:
+    async def status(self, target: StatusTarget = "summary", session: AsyncSession | None = None) -> dict:
         if target == "summary":
             return await get_summary_status(session)
 

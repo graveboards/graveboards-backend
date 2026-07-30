@@ -93,6 +93,7 @@ class ScheduledService(Service, ABC):
         await self._preload_jobs()
         await self.register_task("job_scheduler", self._job_scheduler, critical=True)
         await self.register_task("job_subscriber", self._job_subscriber, critical=True)
+        assert self.CHANNEL is not None
         await self._pubsub.subscribe(self.CHANNEL)
 
     async def _on_stop(self) -> None:

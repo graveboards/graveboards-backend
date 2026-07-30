@@ -51,7 +51,8 @@ def user_after_insert(mapper: Mapper[User], connection: Connection, target: User
 
     try:
         with redis_connection() as rc:
-            rc.publish(ChannelName.PROFILE_FETCHER_TASKS.value, profile_fetcher_task_id)
+            if profile_fetcher_task_id is not None:
+                rc.publish(ChannelName.PROFILE_FETCHER_TASKS.value, profile_fetcher_task_id)
             logger.debug(
                 f"Published ProfileFetcherTask ID to redis channel '{ChannelName.PROFILE_FETCHER_TASKS.value}': {profile_fetcher_task_id}"
             )
