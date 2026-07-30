@@ -6,3 +6,4 @@ pytest-cov>=6.0
 pytest-env>=0.8
 pytest-mock>=3.14
 factory-boy>=3.3
+mypy>=2.0

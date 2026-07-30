@@ -1,6 +1,6 @@
 COMPOSE=docker compose
 
-.PHONY: help up down build logs shell status reset seed fresh test clean lint format migrate-upgrade migrate-downgrade migrate-history migrate-current migrate-stamp migrate-stamp-head migrate-stamp-purge-head
+.PHONY: help up down build logs shell status reset seed fresh test clean lint format typecheck migrate-upgrade migrate-downgrade migrate-history migrate-current migrate-stamp migrate-stamp-head migrate-stamp-purge-head
 
 help:
 	@echo "Available commands:"
@@ -108,6 +108,11 @@ lint:
 format:
 	ruff check --fix . || true
 	ruff format .
+
+# ---------- Typechecking ----------
+
+typecheck:
+	mypy app api main.py manage.py migrate.py
 
 # ---------- Migrations ----------
 
