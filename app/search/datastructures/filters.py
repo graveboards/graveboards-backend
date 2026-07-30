@@ -77,7 +77,7 @@ class FieldFilters(RootModel):
         """
         return self.root.items()
 
-    def validate_against_sqlalchemy_model(self, model_class: ModelClass) -> None:
+    def validate_against_sqlalchemy_model(self, model_class: ModelClass[Any]) -> None:
         """Recursively validate filters against the SQLAlchemy model.
 
         Ensures:
@@ -88,7 +88,7 @@ class FieldFilters(RootModel):
 
         Args:
             model_class:
-                ``ModelClass`` enum member defining the SQLAlchemy model.
+                ``ModelClass`` instance defining the SQLAlchemy model.
 
         Raises:
             FieldNotSupportedError:
@@ -135,7 +135,7 @@ class FieldFilters(RootModel):
                 try:
                     relationship = model_class.mapper.relationships[field_name]
                     related_model = relationship.mapper.class_
-                    related_model_class = ModelClass(related_model)
+                    related_model_class = ModelClass.from_model(related_model)
                 except (KeyError, ValueError) as e:
                     raise FieldNotSupportedError(model_class.value, field_name) from e
 

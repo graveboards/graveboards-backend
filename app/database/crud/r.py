@@ -1,7 +1,7 @@
 from __future__ import annotations
 from collections.abc import Iterable
-from typing import Any, Literal, TypeGuard
-from typing import cast as typing_cast
+from types import EllipsisType
+from typing import Any, Literal, TypeGuard, overload
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import QueryableAttribute
@@ -19,7 +19,6 @@ from app.database.ctes.search_terms_scored import search_terms_scored_ctes_facto
 from app.database.enums import FilterOperator
 from app.database.models import (
     Base,
-    BaseType,
     ModelClass,
 )
 from app.database.utils import extract_inner_types, get_filter_condition
@@ -28,7 +27,7 @@ from app.search.enums import Scope
 from app.search.mappings import SCOPE_MODEL_MAPPING
 from app.utils import clamp
 
-from .decorators import session_manager
+from .decorators import require_session, session_manager
 from .relevance import SCOPE_RELEVANCE_HANDLERS
 from .types import Filters, Include, Sorting
 
@@ -41,18 +40,17 @@ type JoinTarget = type[Base] | tuple[type[Base], BinaryExpression]
 type JoinTargets = JoinTarget | Iterable[JoinTarget]
 type WhereClause = BinaryExpression | Iterable[BinaryExpression]
 
-MODEL_SCOPE_MAPPING = {
+MODEL_SCOPE_MAPPING: dict[ModelClass[Any], Scope] = {
     model_class: scope
     for scope, model_class in SCOPE_MODEL_MAPPING.items()
-    if model_class is not ...
+    if not isinstance(model_class, EllipsisType)
 }
 
 
 class _R:
     @staticmethod
-    async def _get_instance(
-        model_class: ModelClass,
-        session: AsyncSession,
+    async def _get_instance[M: Base](
+        model_class: ModelClass[M], session: AsyncSession, /,
         _select: str | Iterable[str] | None = None,
         _join: JoinTargets | None = None,
         _where: WhereClause | None = None,
@@ -64,7 +62,7 @@ class _R:
         _include: Include | None = None,
         _offset: int = 0,
         **kwargs: Any,
-    ) -> BaseType:
+    ) -> M | None:
         """Fetch a single instance using a dynamically constructed query.
 
         This method composes a SQLAlchemy ``Select`` statement via ``_construct_stmt``,
@@ -118,12 +116,52 @@ class _R:
         )
         select_stmt = select_stmt.offset(_offset)
 
-        return typing_cast(BaseType, await session.scalar(select_stmt))
+        result: M | None = await session.scalar(select_stmt)
+        return result
+
+    @overload
+    @staticmethod
+    async def _get_instances[M: Base](
+        model_class: ModelClass[M], session: AsyncSession, /, *,
+        _select: str | Iterable[str] | None = None,
+        _join: JoinTargets | None = None,
+        _where: WhereClause | None = None,
+        _sorting: Sorting | None = None,
+        _filters: Filters | None = None,
+        _search: str | None = None,
+        _search_mode: SearchMode = "simple",
+        _search_relevance: bool = False,
+        _include: Include | None = None,
+        _limit: int = QUERY_DEFAULT_LIMIT,
+        _offset: int = 0,
+        _reversed: bool = False,
+        _count: Literal[False] = False,
+        **kwargs: Any,
+    ) -> list[M]: ...
+
+    @overload
+    @staticmethod
+    async def _get_instances[M: Base](
+        model_class: ModelClass[M], session: AsyncSession, /, *,
+        _select: str | Iterable[str] | None = None,
+        _join: JoinTargets | None = None,
+        _where: WhereClause | None = None,
+        _sorting: Sorting | None = None,
+        _filters: Filters | None = None,
+        _search: str | None = None,
+        _search_mode: SearchMode = "simple",
+        _search_relevance: bool = False,
+        _include: Include | None = None,
+        _limit: int = QUERY_DEFAULT_LIMIT,
+        _offset: int = 0,
+        _reversed: bool = False,
+        _count: Literal[True],
+        **kwargs: Any,
+    ) -> tuple[list[M], int | None]: ...
 
     @staticmethod
-    async def _get_instances(
-        model_class: ModelClass,
-        session: AsyncSession,
+    async def _get_instances[M: Base](
+        model_class: ModelClass[M], session: AsyncSession, /, *,
         _select: str | Iterable[str] | None = None,
         _join: JoinTargets | None = None,
         _where: WhereClause | None = None,
@@ -138,7 +176,7 @@ class _R:
         _reversed: bool = False,
         _count: bool = False,
         **kwargs: Any,
-    ) -> list[BaseType] | tuple[list[BaseType], int | None]:
+    ) -> list[M] | tuple[list[M], int | None]:
         """Fetch multiple instances using a dynamically constructed query.
 
         Applies limit and offset constraints with bounds clamping, executes the query,
@@ -183,8 +221,6 @@ class _R:
             A list of matching model instances or projected scalar values.
             If _count is True, returns a tuple of (results, total_count).
         """
-        from sqlalchemy import func
-
         select_stmt = _R._construct_stmt(
             model_class,
             _select,
@@ -202,22 +238,22 @@ class _R:
         if _count:
             count_stmt = select(func.count()).select_from(select_stmt.subquery())
             total = await session.scalar(count_stmt)
-            results = list((await session.scalars(select_stmt)).all())
-            return results, total
-        else:
-            select_stmt = select_stmt.limit(clamp(_limit, QUERY_MIN_LIMIT, QUERY_MAX_LIMIT)).offset(
-                _offset
-            )
-            results = list((await session.scalars(select_stmt)).all())
+            count_results: list[M] = list((await session.scalars(select_stmt)).all())
+            return count_results, total
 
-            if _reversed:
-                results.reverse()
+        select_stmt = select_stmt.limit(clamp(_limit, QUERY_MIN_LIMIT, QUERY_MAX_LIMIT)).offset(
+            _offset
+        )
+        results: list[M] = list((await session.scalars(select_stmt)).all())
 
-            return results
+        if _reversed:
+            results.reverse()
+
+        return results
 
     @staticmethod
     def _construct_stmt(
-        model_class: ModelClass,
+        model_class: ModelClass[Any],
         _select: str | Iterable[str] | None = None,
         _join: JoinTargets | None = None,
         _where: WhereClause | None = None,
@@ -305,7 +341,7 @@ class _R:
         return select_stmt
 
     @staticmethod
-    def _apply_select(model_class: ModelClass, select_: str | Iterable[str]) -> Select:
+    def _apply_select(model_class: ModelClass[Any], select_: str | Iterable[str]) -> Select:
         """Apply projection to a ``Select`` statement.
 
         Validates requested attribute names against the model metadata and restricts
@@ -443,9 +479,9 @@ class _R:
     @staticmethod
     def _apply_sorting(
         select_stmt: Select,
-        model_class: ModelClass,
+        model_class: ModelClass[Any],
         sorting: Sorting,
-        joined_models: dict[str, type[BaseType]] | None = None,
+        joined_models: dict[str, type[Base]] | None = None,
     ) -> Select:
         """Apply validated sorting clauses to a ``Select`` statement.
 
@@ -502,7 +538,7 @@ class _R:
                 valid_target_fields = valid_fields
             elif joined_models is not None and prefix in joined_models:
                 target_model = joined_models[prefix]
-                target_model_class = ModelClass(target_model)
+                target_model_class = ModelClass.from_model(target_model)
                 valid_target_fields = (
                     target_model_class.column_names | target_model_class.hybrid_property_names
                 )
@@ -530,7 +566,7 @@ class _R:
     @staticmethod
     def _apply_filters(
         select_stmt: Select,
-        model_class: ModelClass,
+        model_class: ModelClass[Any],
         filters: Filters,
     ) -> Select:
         """Apply validated filter clauses to a ``Select`` statement.
@@ -556,7 +592,7 @@ class _R:
         """
 
         def parse_filters(
-            parent_model_class: ModelClass,
+            parent_model_class: ModelClass[Any],
             filters_: Filters,
             prefix: str = "",
         ) -> list[ColumnElement[bool]]:
@@ -586,7 +622,7 @@ class _R:
                         raise TypeError(f"Nested filter for relationship '{path}' must be a dict")
 
                     rel = parent_model_class.mapper.relationships[attr_name]
-                    target_model_class = ModelClass(rel.mapper.class_)
+                    target_model_class = ModelClass.from_model(rel.mapper.class_)
                     relationship_attr = getattr(parent_model_class.value, attr_name)
 
                     nested_conditions = parse_filters(
@@ -619,7 +655,7 @@ class _R:
     @staticmethod
     def _apply_search(
         select_stmt: Select,
-        model_class: ModelClass,
+        model_class: ModelClass[Any],
         search: str,
         mode: SearchMode = "simple",
         relevance: bool = False,
@@ -660,7 +696,7 @@ class _R:
     @staticmethod
     def _apply_search_engine(
         select_stmt: Select,
-        model_class: ModelClass,
+        model_class: ModelClass[Any],
         search: str,
         relevance: bool = False,
     ) -> Select | None:
@@ -696,7 +732,7 @@ class _R:
     @staticmethod
     def _apply_search_simple(
         select_stmt: Select,
-        model_class: ModelClass,
+        model_class: ModelClass[Any],
         search: str,
     ) -> Select:
         """Apply full-text + substring search to a ``Select`` statement."""
@@ -738,7 +774,7 @@ class _R:
         return select_stmt.where(or_(fts_condition, substring_condition))
 
     @staticmethod
-    def _apply_include(select_stmt: Select, model_class: ModelClass, include: Include) -> Select:
+    def _apply_include(select_stmt: Select, model_class: ModelClass[Any], include: Include) -> Select:
         """Apply eager-loading options based on a nested include specification.
 
         Supports nested relationship loading using `joinedload` or `selectinload`,
@@ -760,7 +796,7 @@ class _R:
         def parse_node(
             attr: QueryableAttribute,
             rel_info: RelationshipProperty,
-            target_model_class: ModelClass,
+            target_model_class: ModelClass[Any],
             value: bool | Include,
             path: str,
         ) -> LoaderOption:
@@ -779,15 +815,15 @@ class _R:
                 )
 
         def parse_includes(
-            parent_model_class: ModelClass, includes: Include, prefix: str = ""
+            parent_model_class: ModelClass[Any], includes: Include, prefix: str = ""
         ) -> list[LoaderOption]:
             options: list[LoaderOption] = []
 
             for attr_name, value in includes.items():
                 if attr_name in parent_model_class.relationship_names:
-                    attr = parent_model_class.mapper.attrs[attr_name]
+                    attr: QueryableAttribute[Any] = getattr(parent_model_class.value, attr_name)
                     rel_info = parent_model_class.mapper.relationships[attr_name]
-                    target_model_class = ModelClass(rel_info.mapper.class_)
+                    target_model_class = ModelClass.from_model(rel_info.mapper.class_)
                     path = f"{prefix}.{attr_name}" if prefix else attr_name
                 elif (
                     attr_name
@@ -809,7 +845,7 @@ class _R:
 
     @staticmethod
     def _apply_exclude_lazy(
-        select_stmt: Select, model_class: ModelClass, include: Include | None
+        select_stmt: Select, model_class: ModelClass[Any], include: Include | None
     ) -> Select:
         """Prevent unintended lazy-loading of relationships.
 
@@ -835,7 +871,7 @@ class _R:
             return rel.lazy in {True, "select", "dynamic"}
 
         def exclude_unincluded(
-            parent_model_class: ModelClass, includes: Include, base_loader: Load | None = None
+            parent_model_class: ModelClass[Any], includes: Include, base_loader: Load | None = None
         ) -> list[LoaderOption]:
             options: list[LoaderOption] = []
 
@@ -843,7 +879,7 @@ class _R:
                 if not is_lazy(rel):
                     continue
 
-                attr = parent_model_class.mapper.attrs[rel.key]
+                attr: QueryableAttribute[Any] = getattr(parent_model_class.value, rel.key)
 
                 loader = base_loader.noload(attr) if base_loader is not None else noload(attr)
 
@@ -870,7 +906,7 @@ class _R:
                     else (selectinload(attr) if rel.uselist else joinedload(attr))
                 )
 
-                target_model_class = ModelClass(rel.mapper.class_)
+                target_model_class = ModelClass.from_model(rel.mapper.class_)
                 options.extend(exclude_unincluded(target_model_class, value, next_base))
 
             return options
@@ -881,9 +917,9 @@ class _R:
 
 class R(_R):
     @session_manager()
-    async def get(
-        self,
-        model: type[BaseType],
+    async def get[M: Base](
+        self, /,
+        model: type[M],
         session: AsyncSession | None = None,
         _select: str | Iterable[str] | None = None,
         _join: JoinTargets | None = None,
@@ -896,7 +932,7 @@ class R(_R):
         _include: Include | None = None,
         _offset: int = 0,
         **kwargs: Any,
-    ) -> BaseType | None:
+    ) -> M | None:
         """Public API for fetching a single model instance.
 
         Wraps ``_get_instance`` and manages session lifecycle via the
@@ -936,11 +972,12 @@ class R(_R):
             The first matching model instance or projected scalar value, or ``None`` if
             no result is found.
         """
-        model_class = ModelClass(model)
+        model_class = ModelClass.from_model(model)
+        resolved = require_session(session)
 
         return await self._get_instance(
             model_class,
-            session,
+            resolved,
             _select=_select,
             _join=_join,
             _where=_where,
@@ -954,10 +991,54 @@ class R(_R):
             **kwargs,
         )
 
+    @overload
     @session_manager()
-    async def get_many(
-        self,
-        model: type[BaseType],
+    async def get_many[M: Base](
+        self, /,
+        model: type[M], *,
+        session: AsyncSession | None = None,
+        _select: str | Iterable[str] | None = None,
+        _join: JoinTargets | None = None,
+        _where: WhereClause | None = None,
+        _sorting: Sorting | None = None,
+        _filters: Filters | None = None,
+        _search: str | None = None,
+        _search_mode: SearchMode = "simple",
+        _search_relevance: bool = False,
+        _include: Include | None = None,
+        _limit: int = QUERY_DEFAULT_LIMIT,
+        _offset: int = 0,
+        _reversed: bool = False,
+        _count: Literal[False] = False,
+        **kwargs: Any,
+    ) -> list[M]: ...
+
+    @overload
+    @session_manager()
+    async def get_many[M: Base](
+        self, /,
+        model: type[M], *,
+        session: AsyncSession | None = None,
+        _select: str | Iterable[str] | None = None,
+        _join: JoinTargets | None = None,
+        _where: WhereClause | None = None,
+        _sorting: Sorting | None = None,
+        _filters: Filters | None = None,
+        _search: str | None = None,
+        _search_mode: SearchMode = "simple",
+        _search_relevance: bool = False,
+        _include: Include | None = None,
+        _limit: int = QUERY_DEFAULT_LIMIT,
+        _offset: int = 0,
+        _reversed: bool = False,
+        _count: Literal[True],
+        **kwargs: Any,
+    ) -> tuple[list[M], int | None]: ...
+
+    @session_manager()
+    async def get_many[M: Base](
+        self, /,
+        model: type[M], *,
         session: AsyncSession | None = None,
         _select: str | Iterable[str] | None = None,
         _join: JoinTargets | None = None,
@@ -973,7 +1054,7 @@ class R(_R):
         _reversed: bool = False,
         _count: bool = False,
         **kwargs: Any,
-    ) -> list[BaseType] | tuple[list[BaseType], int | None]:
+    ) -> list[M] | tuple[list[M], int | None]:
         """Public API for fetching multiple model instances.
 
         Wraps ``_get_instances`` and manages session lifecycle via the
@@ -1019,11 +1100,32 @@ class R(_R):
             A list of matching model instances or projected scalar values.
             If _count is True, returns a tuple of (results, total_count).
         """
-        model_class = ModelClass(model)
+        model_class = ModelClass.from_model(model)
+        resolved = require_session(session)
+
+        if _count:
+            return await self._get_instances(
+                model_class,
+                resolved,
+                _select=_select,
+                _join=_join,
+                _where=_where,
+                _sorting=_sorting,
+                _filters=_filters,
+                _search=_search,
+                _search_mode=_search_mode,
+                _search_relevance=_search_relevance,
+                _include=_include,
+                _limit=_limit,
+                _offset=_offset,
+                _reversed=_reversed,
+                _count=True,
+                **kwargs,
+            )
 
         return await self._get_instances(
             model_class,
-            session,
+            resolved,
             _select=_select,
             _join=_join,
             _where=_where,
@@ -1036,6 +1138,6 @@ class R(_R):
             _limit=_limit,
             _offset=_offset,
             _reversed=_reversed,
-            _count=_count,
+            _count=False,
             **kwargs,
         )

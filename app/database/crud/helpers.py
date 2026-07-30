@@ -1,20 +1,30 @@
 from __future__ import annotations
 
-def validate_model_attrs(model_name: str, attrs: dict, valid_attrs: set[str]) -> None:
-    """Validate that all attributes in a dict are valid for the given model.
+from collections.abc import Iterable, Mapping
+from typing import Any
+
+__all__ = ["validate_model_attrs"]
+
+
+def validate_model_attrs(
+    model_name: str, attrs: Mapping[str, Any], valid_attrs: Iterable[str]
+) -> None:
+    """Raise if any key in ``attrs`` is not a valid attribute of the model.
 
     Args:
         model_name:
-            The model class name for error messages.
+            Name of the model, used for the error message.
         attrs:
-            Dictionary of attributes to validate.
+            Mapping of supplied field names to values.
         valid_attrs:
-            Set of valid attribute names (column_names | relationship_names or similar).
+            Names accepted by the model (columns and relationships).
 
     Raises:
         ValueError:
-            If any attribute in ``attrs`` is not in ``valid_attrs``.
+            If a supplied key is not in ``valid_attrs``.
     """
+    valid = set(valid_attrs)
+
     for key in attrs:
-        if key not in valid_attrs:
+        if key not in valid:
             raise ValueError(f"{model_name} has no attribute '{key}'")

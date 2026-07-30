@@ -7,18 +7,18 @@ from sqlalchemy.orm.strategy_options import selectinload
 from sqlalchemy.sql import and_, select
 from sqlalchemy.sql.schema import UniqueConstraint
 
-from app.database.models import BaseType, ModelClass
+from app.database.models import Base, ModelClass
 
-from .decorators import ensure_required, session_manager
+from .decorators import ensure_required, require_session, session_manager
 from .helpers import validate_model_attrs
 
 
 class _C:
     @staticmethod
     @ensure_required()
-    async def _add_instance(
-        model_class: ModelClass, session: AsyncSession, **kwargs: Any
-    ) -> BaseType:
+    async def _add_instance[M: Base](
+        model_class: ModelClass[M], session: AsyncSession, /, **kwargs: Any
+    ) -> M:
         """Create or resolve a single model instance.
 
         Validates input attributes against the model schema, then processed through
@@ -52,7 +52,7 @@ class _C:
 
         validate_model_attrs(model.__name__, kwargs, valid_attrs)
 
-        instance: BaseType = await _C._resolve_or_create(model_class, kwargs, session)
+        instance: M = await _C._resolve_or_create(model_class, session, kwargs)
         session.add(instance)
         await session.flush()
         await session.refresh(instance)
@@ -61,9 +61,9 @@ class _C:
 
     @staticmethod
     @ensure_required(many=True)
-    async def _add_instances(
-        model_class: ModelClass, session: AsyncSession, *data: dict
-    ) -> list[BaseType]:
+    async def _add_instances[M: Base](
+        model_class: ModelClass[M], session: AsyncSession, /, *data: dict[str, Any]
+    ) -> list[M]:
         """Create or resolve multiple model instances.
 
         Each input dictionary is validated against the model schema, then processed
@@ -97,7 +97,7 @@ class _C:
         model = model_class.value
         valid_attrs = model_class.column_names | model_class.relationship_names
         required_columns_len = len(model_class.required_columns)
-        instances = []
+        instances: list[M] = []
 
         for i, item in enumerate(data):
             if not isinstance(item, dict):
@@ -108,7 +108,7 @@ class _C:
 
             validate_model_attrs(model.__name__, item, valid_attrs)
 
-            instance: BaseType = await _C._resolve_or_create(model_class, item, session)
+            instance: M = await _C._resolve_or_create(model_class, session, item)
             instances.append(instance)
 
         session.add_all(instances)
@@ -120,12 +120,11 @@ class _C:
         return instances
 
     @staticmethod
-    async def _resolve_or_create(
-        model_class: ModelClass,
+    async def _resolve_or_create[M: Base](
+        model_class: ModelClass[M], session: AsyncSession, /,
         data: dict[str, Any],
-        session: AsyncSession,
         _load_relationships: bool = True,
-    ) -> BaseType:
+    ) -> M:
         """Resolve an existing instance or create one from structured input.
 
         Resolution strategy (in order):
@@ -168,7 +167,7 @@ class _C:
             if _load_relationships
             else []
         )
-        instance: BaseType | None = None
+        instance: M | None = None
 
         # Lookup via primary key
         if all(pk in data for pk in pk_keys):
@@ -224,7 +223,7 @@ class _C:
 
             for col_key in column_keys:
                 if col_key in data:
-                    setattr(instance, str(col_key), data[col_key])
+                    setattr(instance, col_key, data[col_key])
 
         # Recursively resolve relationships (applies to both create and resolve)
         for rel_key in relationship_keys:
@@ -233,7 +232,7 @@ class _C:
 
             relationship = mapper.relationships[rel_key]
             related_model = relationship.mapper.class_
-            related_model_class = ModelClass(related_model)
+            related_model_class = ModelClass.from_model(related_model)
             value = data[rel_key]
 
             # One-to-many / many-to-many
@@ -242,10 +241,10 @@ class _C:
 
                 for item in value:
                     if isinstance(item, dict):
-                        obj: BaseType = await _C._resolve_or_create(
+                        obj: M = await _C._resolve_or_create(
                             related_model_class,
-                            item,
                             session,
+                            item,
                         )
                     else:
                         obj = item
@@ -257,25 +256,23 @@ class _C:
                 # already handles deduplication by primary key, so existing items
                 # with matching IDs are resolved to the same instance rather than
                 # being duplicated.
-                setattr(instance, str(key), new_items)
+                setattr(instance, rel_key, new_items)
             # One-to-one / Many-to-one
             else:
                 if value is None:
-                    setattr(instance, str(key), None)
+                    setattr(instance, rel_key, None)
                 elif isinstance(value, dict):
                     obj = await _C._resolve_or_create(
                         related_model_class,
-                        value,
                         session,
+                        value,
                     )
-                    setattr(instance, str(key), obj)
+                    setattr(instance, rel_key, obj)
                 else:
                     obj = value
                     _C._ensure_same_session(obj, session)
 
-        if instance is None:
-            raise RuntimeError()
-
+        assert instance is not None
         return instance
 
     @staticmethod
@@ -312,9 +309,9 @@ class _C:
 
 class C(_C):
     @session_manager()
-    async def add(
-        self, model: type[BaseType], session: AsyncSession | None = None, **kwargs: Any
-    ) -> BaseType:
+    async def add[M: Base](
+        self, /, model: type[M], session: AsyncSession | None = None, **kwargs: Any
+    ) -> M:
         """Public API for creating or resolving a single model instance.
 
         Wraps ``_add_instance`` and manages session lifecycle via the
@@ -331,14 +328,15 @@ class C(_C):
         Returns:
             The newly created or resolved model instance.
         """
-        model_class = ModelClass(model)
+        model_class = ModelClass.from_model(model)
+        resolved = require_session(session)
 
-        return await self._add_instance(model_class, session, **kwargs)
+        return await self._add_instance(model_class, resolved, **kwargs)
 
     @session_manager()
-    async def add_many(
-        self, model: type[BaseType], *data: dict, session: AsyncSession | None = None
-    ) -> list[BaseType]:
+    async def add_many[M: Base](
+        self, /, model: type[M], *data: dict[str, Any], session: AsyncSession | None = None
+    ) -> list[M]:
         """Public API for creating or resolving multiple model instances.
 
         Wraps ``_add_instances`` and manages session lifecycle via the
@@ -355,10 +353,7 @@ class C(_C):
         Returns:
             A list of newly created or resolved model instances.
         """
-        model_class = ModelClass(model)
+        model_class = ModelClass.from_model(model)
+        resolved = require_session(session)
 
-        return await self._add_instances(
-            model_class,
-            session,
-            *data,
-        )
+        return await self._add_instances(model_class, resolved, *data)

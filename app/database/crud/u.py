@@ -1,20 +1,20 @@
 from __future__ import annotations
 from typing import Any
-from typing import cast as typing_cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.models import BaseType, ModelClass
+from app.database.models import Base, ModelClass
 
-from .decorators import session_manager
+from .decorators import require_session, session_manager
 from .helpers import validate_model_attrs
 
 
 class _U:
     @staticmethod
-    async def _update_instance(
-        model_class: ModelClass, session: AsyncSession, primary_key: int, **kwargs: Any
-    ) -> BaseType:
+    async def _update_instance[M: Base](
+        model_class: ModelClass[M], session: AsyncSession, /,
+        primary_key: int, **kwargs: Any
+    ) -> M:
         """Update a single model instance by primary key.
 
         Performs strict primary key lookup, validates provided attributes, applies
@@ -65,12 +65,13 @@ class _U:
         await session.flush()
         await session.refresh(instance)
 
-        return typing_cast(BaseType, instance)
+        return instance
 
     @staticmethod
-    async def _update_instances(
-        model_class: ModelClass, session: AsyncSession, *data: tuple[int, dict[str, Any]]
-    ) -> list[BaseType]:
+    async def _update_instances[M: Base](
+        model_class: ModelClass[M], session: AsyncSession, /,
+        *data: tuple[int, dict[str, Any]]
+    ) -> list[M]:
         """Update multiple model instances by primary key.
 
         Each update is provided as a tuple of: (primary_key, delta_dict)
@@ -116,7 +117,7 @@ class _U:
 
         model = model_class.value
         valid_attrs = model_class.column_names | model_class.relationship_names
-        instances = []
+        instances: list[M] = []
 
         for pk, delta in data:
             instance = await session.get(model, pk)
@@ -141,13 +142,13 @@ class _U:
 
 class U(_U):
     @session_manager()
-    async def update(
-        self,
-        model: type[BaseType],
+    async def update[M: Base](
+        self, /,
+        model: type[M],
         primary_key: int,
         session: AsyncSession | None = None,
         **kwargs: Any,
-    ) -> BaseType:
+    ) -> M:
         """Public API for updating a single model instance.
 
         Wraps ``_update_instance`` and manages session lifecycle via
@@ -166,14 +167,18 @@ class U(_U):
         Returns:
             The updated model instance.
         """
-        model_class = ModelClass(model)
+        model_class = ModelClass.from_model(model)
+        resolved = require_session(session)
 
-        return await self._update_instance(model_class, session, primary_key, **kwargs)
+        return await self._update_instance(model_class, resolved, primary_key, **kwargs)
 
     @session_manager()
-    async def update_many(
-        self, model: type[BaseType], *data: tuple[int, dict[str, Any]], session: AsyncSession = None
-    ) -> list[BaseType]:
+    async def update_many[M: Base](
+        self, /,
+        model: type[M],
+        *data: tuple[int, dict[str, Any]],
+        session: AsyncSession | None = None,
+    ) -> list[M]:
         """Public API for updating multiple model instances.
 
         Wraps ``_update_instances`` and manages session lifecycle via
@@ -190,6 +195,7 @@ class U(_U):
         Returns:
             A list of updated model instances.
         """
-        model_class = ModelClass(model)
+        model_class = ModelClass.from_model(model)
+        resolved = require_session(session)
 
-        return await self._update_instances(model_class, session, *data)
+        return await self._update_instances(model_class, resolved, *data)

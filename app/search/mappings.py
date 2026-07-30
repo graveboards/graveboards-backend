@@ -1,4 +1,8 @@
 from __future__ import annotations
+
+from types import EllipsisType
+from typing import Any
+
 from pydantic.main import BaseModel
 from sqlalchemy.orm.strategy_options import Load, joinedload, noload, selectinload
 
@@ -21,7 +25,7 @@ __all__ = [
     "CATEGORY_FIELD_GROUPS_MAPPING",
 ]
 
-SCOPE_MODEL_MAPPING = {
+SCOPE_MODEL_MAPPING: dict[Scope, ModelClass[Any] | EllipsisType] = {
     Scope.BEATMAPS: ModelClass.BEATMAP_SNAPSHOT,
     Scope.BEATMAPSETS: ModelClass.BEATMAPSET_SNAPSHOT,
     Scope.SCORES: ...,

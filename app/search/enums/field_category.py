@@ -1,5 +1,6 @@
 from __future__ import annotations
 from enum import Enum, IntFlag, auto
+from typing import Any
 
 from app.database.models import ModelClass
 
@@ -21,7 +22,7 @@ class SearchableFieldCategory(Enum):
     REQUEST = "request", ModelClass.REQUEST
     # TODO: Add beatmap tags and beatmapset tags
 
-    def __init__(self, name: str, model_class: ModelClass):
+    def __init__(self, name: str, model_class: ModelClass[Any]):
         self._category_value: str = name
         self.model_class = model_class
 
@@ -51,7 +52,7 @@ class SearchableFieldCategory(Enum):
         raise ValueError(f"No SearchableFieldCategoryFlag exists by the name of '{name}'")
 
     @classmethod
-    def from_model_class(cls, model_class: ModelClass) -> SearchableFieldCategory:
+    def from_model_class(cls, model_class: ModelClass[Any]) -> SearchableFieldCategory:
         """Resolve a category from its internal ``ModelClass``.
 
         Args:

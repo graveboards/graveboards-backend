@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from collections.abc import Generator, Sequence
-from typing import Any, cast
+from types import EllipsisType
+from typing import Any
 
 from pydantic.main import BaseModel
 from sqlalchemy.dialects import postgresql
@@ -117,7 +118,10 @@ class SearchEngine:
                 If schema validation fails for raw inputs.
         """
         self.scope = scope
-        self.model_class: ModelClass = cast(ModelClass, SCOPE_MODEL_MAPPING[scope])
+        model_class = SCOPE_MODEL_MAPPING[scope]
+        if isinstance(model_class, EllipsisType):
+            raise NotImplementedError(f"Scope {scope!r} is not yet supported by the search engine")
+        self.model_class: ModelClass[Any] = model_class
         self.schema_class: type[BaseModel] = SCOPE_SCHEMA_MAPPING[scope]
 
         if isinstance(search_terms, SearchTermsSchema) or search_terms is None:
@@ -679,7 +683,7 @@ class SearchEngine:
 
         include = build_pydantic_include(
             obj=page[0],
-            include_schema=get_include_schema(SCOPE_MODEL_MAPPING[self.scope]),
+            include_schema=get_include_schema(self.model_class),
             request_include=include,
         )
 

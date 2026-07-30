@@ -20,7 +20,7 @@ def _get_spec_cached() -> dict[str, Any]:
 
 
 def get_filter_schema(
-    model_class: ModelClass | None = None,
+    model_class: ModelClass[Any] | None = None,
     schema_name: str | None = None,
 ) -> dict:
     """Retrieve a Filter schema from the OpenAPI specification.
@@ -29,7 +29,7 @@ def get_filter_schema(
 
     Args:
         model_class:
-            Enum value representing a model.
+            ModelClass instance representing a model.
         schema_name:
             Explicit schema name.
 
@@ -50,7 +50,7 @@ def get_filter_schema(
 
 
 def get_include_schema(
-    model_class: ModelClass | None = None,
+    model_class: ModelClass[Any] | None = None,
     schema_name: str | None = None,
 ) -> dict:
     """Retrieve an Include schema from the OpenAPI specification.
@@ -59,7 +59,7 @@ def get_include_schema(
 
     Args:
         model_class:
-            Enum value representing a model.
+            ModelClass instance representing a model.
         schema_name:
             Explicit schema name.
 
@@ -82,7 +82,7 @@ def get_include_schema(
 def _get_schema_by_suffix(
     suffix: str,
     *,
-    model_class: ModelClass | None = None,
+    model_class: ModelClass[Any] | None = None,
     schema_name: str | None = None,
 ) -> dict:
     """Retrieve a schema from the OpenAPI spec using a suffix convention.
@@ -95,7 +95,7 @@ def _get_schema_by_suffix(
         suffix:
             Required schema suffix (e.g., ``"Include"``, ``"Filter"``).
         model_class:
-            Enum value representing a model.
+            ModelClass instance representing a model.
         schema_name:
             Explicit schema name ending with the provided suffix.
 

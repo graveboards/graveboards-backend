@@ -1,7 +1,7 @@
 from __future__ import annotations
-from enum import Enum
-from typing import Any
-from typing import cast as typing_cast
+
+from collections.abc import Iterator
+from typing import Any, ClassVar
 
 from sqlalchemy.ext.hybrid import HybridExtensionType
 from sqlalchemy.inspection import inspect
@@ -9,7 +9,7 @@ from sqlalchemy.orm.mapper import Mapper
 from sqlalchemy.sql.elements import ColumnElement
 
 from .api_key import ApiKey
-from .base import BaseType
+from .base import Base
 from .beatmap import Beatmap
 from .beatmap_listing import BeatmapListing
 from .beatmap_snapshot import BeatmapSnapshot
@@ -30,40 +30,95 @@ from .score import Score
 from .score_fetcher_task import ScoreFetcherTask
 from .user import User
 
+__all__ = ["ModelClass"]
 
-class ModelClass(Enum):
-    USER = User
-    ROLE = Role
-    PROFILE = Profile
-    API_KEY = ApiKey
-    OAUTH_TOKEN = OAuthToken
-    SCORE_FETCHER_TASK = ScoreFetcherTask
-    PROFILE_FETCHER_TASK = ProfileFetcherTask
-    BEATMAP = Beatmap
-    BEATMAP_SNAPSHOT = BeatmapSnapshot
-    BEATMAP_LISTING = BeatmapListing
-    BEATMAPSET = Beatmapset
-    BEATMAPSET_SNAPSHOT = BeatmapsetSnapshot
-    BEATMAPSET_LISTING = BeatmapsetListing
-    LEADERBOARD = Leaderboard
-    SCORE = Score
-    QUEUE = Queue
-    REQUEST = Request
-    BEATMAPSET_TAG = BeatmapsetTag
-    BEATMAP_TAG = BeatmapTag
-    QUEUE_RULE = QueueRule
+
+class _ModelClassMeta(type):
+    """Metaclass enabling ``for model_class in ModelClass: ...``."""
+
+    def __iter__(cls) -> Iterator[ModelClass[Any]]:
+        return iter(ModelClass._members)
+
+
+class ModelClass[M: Base](metaclass=_ModelClassMeta):
+    """Typed handle to one of the app's mapped model classes.
+
+    Each member is parameterized on its own concrete model, so
+    ``ModelClass.USER.value`` is exactly ``type[User]`` and generic helpers taking a
+    ``ModelClass[M]`` return ``M`` rather than ``Base``.
+
+    Provides:
+      - ``ModelClass.USER`` / ``ModelClass.QUEUE`` / ...  member access
+      - ``for model_class in ModelClass: ...``            iteration
+      - ``isinstance(x, ModelClass)``                     membership check
+      - ``ModelClass.from_model(User)``                   reverse lookup
+    """
+
+    _members: ClassVar[list[ModelClass[Any]]] = []
+    _by_model: ClassVar[dict[type[Base], ModelClass[Any]]] = {}
+
+    USER: ClassVar[ModelClass[User]]
+    ROLE: ClassVar[ModelClass[Role]]
+    PROFILE: ClassVar[ModelClass[Profile]]
+    API_KEY: ClassVar[ModelClass[ApiKey]]
+    OAUTH_TOKEN: ClassVar[ModelClass[OAuthToken]]
+    SCORE_FETCHER_TASK: ClassVar[ModelClass[ScoreFetcherTask]]
+    PROFILE_FETCHER_TASK: ClassVar[ModelClass[ProfileFetcherTask]]
+    BEATMAP: ClassVar[ModelClass[Beatmap]]
+    BEATMAP_SNAPSHOT: ClassVar[ModelClass[BeatmapSnapshot]]
+    BEATMAP_LISTING: ClassVar[ModelClass[BeatmapListing]]
+    BEATMAPSET: ClassVar[ModelClass[Beatmapset]]
+    BEATMAPSET_SNAPSHOT: ClassVar[ModelClass[BeatmapsetSnapshot]]
+    BEATMAPSET_LISTING: ClassVar[ModelClass[BeatmapsetListing]]
+    LEADERBOARD: ClassVar[ModelClass[Leaderboard]]
+    SCORE: ClassVar[ModelClass[Score]]
+    QUEUE: ClassVar[ModelClass[Queue]]
+    REQUEST: ClassVar[ModelClass[Request]]
+    BEATMAPSET_TAG: ClassVar[ModelClass[BeatmapsetTag]]
+    BEATMAP_TAG: ClassVar[ModelClass[BeatmapTag]]
+    QUEUE_RULE: ClassVar[ModelClass[QueueRule]]
+
+    def __init__(self, name: str, model: type[M]) -> None:
+        self._name = name
+        self._model = model
+        ModelClass._by_model[model] = self
+        ModelClass._members.append(self)
 
     @property
-    def value(self) -> type[BaseType]:
-        return typing_cast(type[BaseType], self._value_)
+    def name(self) -> str:
+        return self._name
 
     @property
-    def mapper(self) -> Mapper[BaseType]:
+    def value(self) -> type[M]:
+        return self._model
+
+    @classmethod
+    def from_model[T: Base](cls, model: type[T]) -> ModelClass[T]:
+        """Reverse lookup by model class.
+
+        Args:
+            model:
+                A SQLAlchemy model class registered with ``ModelClass``.
+
+        Returns:
+            The ``ModelClass`` wrapping ``model``, parameterized on ``model``'s own type.
+
+        Raises:
+            KeyError:
+                If the model class is not registered with ``ModelClass``.
+        """
+        try:
+            return cls._by_model[model]
+        except KeyError:
+            raise KeyError(f"{model.__name__} is not registered with ModelClass") from None
+
+    @property
+    def mapper(self) -> Mapper[M]:
         return inspect(self.value)
 
     @property
     def required_columns(self) -> set[str]:
-        required_columns = set()
+        required: set[str] = set()
 
         for column in self.mapper.columns:
             if (
@@ -73,9 +128,9 @@ class ModelClass(Enum):
                 or column.primary_key
                 and not column.autoincrement
             ):
-                required_columns.add(column.name)
+                required.add(column.name)
 
-        return required_columns
+        return required
 
     @property
     def column_names(self) -> set[str]:
@@ -99,4 +154,29 @@ class ModelClass(Enum):
 
     @property
     def primary_keys(self) -> tuple[ColumnElement[Any], ...]:
-        return typing_cast(tuple[Any, ...], self.mapper.primary_key)
+        return self.mapper.primary_key
+
+    def __repr__(self) -> str:
+        return f"ModelClass.{self._name}"
+
+
+ModelClass.USER = ModelClass("USER", User)
+ModelClass.ROLE = ModelClass("ROLE", Role)
+ModelClass.PROFILE = ModelClass("PROFILE", Profile)
+ModelClass.API_KEY = ModelClass("API_KEY", ApiKey)
+ModelClass.OAUTH_TOKEN = ModelClass("OAUTH_TOKEN", OAuthToken)
+ModelClass.SCORE_FETCHER_TASK = ModelClass("SCORE_FETCHER_TASK", ScoreFetcherTask)
+ModelClass.PROFILE_FETCHER_TASK = ModelClass("PROFILE_FETCHER_TASK", ProfileFetcherTask)
+ModelClass.BEATMAP = ModelClass("BEATMAP", Beatmap)
+ModelClass.BEATMAP_SNAPSHOT = ModelClass("BEATMAP_SNAPSHOT", BeatmapSnapshot)
+ModelClass.BEATMAP_LISTING = ModelClass("BEATMAP_LISTING", BeatmapListing)
+ModelClass.BEATMAPSET = ModelClass("BEATMAPSET", Beatmapset)
+ModelClass.BEATMAPSET_SNAPSHOT = ModelClass("BEATMAPSET_SNAPSHOT", BeatmapsetSnapshot)
+ModelClass.BEATMAPSET_LISTING = ModelClass("BEATMAPSET_LISTING", BeatmapsetListing)
+ModelClass.LEADERBOARD = ModelClass("LEADERBOARD", Leaderboard)
+ModelClass.SCORE = ModelClass("SCORE", Score)
+ModelClass.QUEUE = ModelClass("QUEUE", Queue)
+ModelClass.REQUEST = ModelClass("REQUEST", Request)
+ModelClass.BEATMAPSET_TAG = ModelClass("BEATMAPSET_TAG", BeatmapsetTag)
+ModelClass.BEATMAP_TAG = ModelClass("BEATMAP_TAG", BeatmapTag)
+ModelClass.QUEUE_RULE = ModelClass("QUEUE_RULE", QueueRule)

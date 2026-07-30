@@ -1,5 +1,6 @@
 from __future__ import annotations
 from enum import Enum, IntEnum, auto
+from typing import Any
 
 from sqlalchemy.orm import InstrumentedAttribute
 from sqlalchemy.sql.elements import ColumnClause
@@ -343,7 +344,7 @@ class ModelField(Enum):
     def __init__(
         self,
         field_name: str,
-        model_class: ModelClass,
+        model_class: ModelClass[Any],
         target: InstrumentedAttribute | ColumnClause,
         alias: str | None = None,
     ):
@@ -354,7 +355,7 @@ class ModelField(Enum):
         self.alias = alias
 
     @classmethod
-    def from_model_field_name(cls, model_class: ModelClass, field_name: str) -> ModelField:
+    def from_model_field_name(cls, model_class: ModelClass[Any], field_name: str) -> ModelField:
         """Resolve a model field from a ``ModelClass`` and field name.
 
         Supports alias resolution where defined.

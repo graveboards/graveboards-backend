@@ -5,21 +5,11 @@ from collections.abc import AsyncIterator, Awaitable, Callable, Coroutine
 from contextlib import AbstractAsyncContextManager
 from contextvars import ContextVar
 from functools import wraps
-from typing import (
-    Any,
-    Concatenate,
-    ParamSpec,
-    Protocol,
-    TypeVar,
-    cast,
-)
-from typing import (
-    cast as typing_cast,
-)
+from typing import Any, Concatenate, Literal, ParamSpec, Protocol, TypeVar, overload
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.models import ModelClass
+from app.database.models import Base, ModelClass
 from app.observability.logging import get_logger, log_stack_warning
 
 from .protocol import DatabaseProtocol
@@ -32,6 +22,7 @@ __all__ = [
     "session_manager",
     "session_manager_stream",
     "ensure_required",
+    "require_session",
     "SessionResolver",
     "DbSessionResolver",
     "db_session_resolver",
@@ -83,8 +74,8 @@ def session_manager(
         func: Callable[Concatenate[Any, P], Coroutine[Any, Any, T]],
     ) -> Callable[Concatenate[Any, P], Coroutine[Any, Any, T]]:
         @wraps(func)
-        async def wrapper(self: Any, *args: P.args, **kwargs: P.kwargs) -> T:
-            passed_session = kwargs.get("session")
+        async def wrapper(self: Any, /, *args: P.args, **kwargs: P.kwargs) -> T:
+            passed_session: Any = kwargs.get("session")
             current_session = _active_session.get()
 
             if passed_session is not None:
@@ -161,8 +152,8 @@ def session_manager_stream(
         func: Callable[Concatenate[Any, P], AsyncIterator[T]],
     ) -> Callable[Concatenate[Any, P], AsyncIterator[T]]:
         @wraps(func)
-        async def wrapper(self: Any, *args: P.args, **kwargs: P.kwargs) -> AsyncIterator[T]:
-            passed_session = kwargs.get("session")
+        async def wrapper(self: Any, /, *args: P.args, **kwargs: P.kwargs) -> AsyncIterator[T]:
+            passed_session: Any = kwargs.get("session")
             current_session = _active_session.get()
 
             if passed_session is not None:
@@ -209,12 +200,27 @@ def session_manager_stream(
     return decorator
 
 
-def ensure_required(
-    many: bool = False,
-) -> Callable[
-    [Callable[Concatenate[ModelClass, AsyncSession, P], Awaitable[T]]],
-    Callable[Concatenate[ModelClass, AsyncSession, P], Awaitable[T]],
-]:
+class AddOneFn(Protocol):
+    def __call__[M: Base](
+        self, __model_class: ModelClass[M], __session: AsyncSession, /, **kwargs: Any
+    ) -> Coroutine[Any, Any, M]: ...
+
+
+class AddManyFn(Protocol):
+    def __call__[M: Base](
+        self, __model_class: ModelClass[M], __session: AsyncSession, /, *data: dict[str, Any]
+    ) -> Coroutine[Any, Any, list[M]]: ...
+
+
+@overload
+def ensure_required(many: Literal[False] = False) -> Callable[[AddOneFn], AddOneFn]: ...
+
+
+@overload
+def ensure_required(many: Literal[True]) -> Callable[[AddManyFn], AddManyFn]: ...
+
+
+def ensure_required(many: bool = False) -> Any:
     """Validate presence of required model columns before execution.
 
     This decorator checks that all required columns defined on the model are present in
@@ -233,16 +239,14 @@ def ensure_required(
             If required columns are missing.
     """
 
-    def decorator(
-        func: Callable[Concatenate[ModelClass, AsyncSession, P], Awaitable[T]],
-    ) -> Callable[Concatenate[ModelClass, AsyncSession, P], Awaitable[T]]:
+    def decorator(func: Any) -> Any:
         @wraps(func)
         async def wrapper(
-            model_class: ModelClass, session: AsyncSession, *args: P.args, **kwargs: P.kwargs
-        ) -> T:
+            model_class: ModelClass[Any], session: AsyncSession, /, *args: Any, **kwargs: Any
+        ) -> Any:
             required_columns = model_class.required_columns
 
-            def get_missing(d_: dict) -> list[str]:
+            def get_missing(d_: dict[str, Any]) -> list[str]:
                 return [col for col in required_columns if col not in d_]
 
             if not many:
@@ -252,7 +256,7 @@ def ensure_required(
                     raise ValueError(f"Missing required columns: {', '.join(missing_columns)}")
             else:
                 for i, d in enumerate(args):
-                    missing_columns = get_missing(cast(dict, d))
+                    missing_columns = get_missing(d)
 
                     if missing_columns:
                         raise ValueError(
@@ -264,6 +268,29 @@ def ensure_required(
         return wrapper
 
     return decorator
+
+
+def require_session(session: AsyncSession | None) -> AsyncSession:
+    """Narrow the decorator-injected session to a non-optional ``AsyncSession``.
+
+    ``@session_manager`` always populates ``session`` before the wrapped body runs, but
+    that guarantee is invisible to the type checker. This makes it explicit and keeps
+    the failure loud if the invariant is ever broken.
+
+    Raises:
+        RuntimeError:
+            If no session was injected.
+    """
+    if session is None:
+        raise RuntimeError("@session_manager did not provide a session")
+
+    return session
+
+
+class _DbHolder(Protocol):
+    """Protocol for objects that expose a ``db`` attribute with a ``session()`` method."""
+
+    db: DatabaseProtocol
 
 
 class SessionResolver(Protocol):
@@ -290,11 +317,9 @@ class DbSessionResolver(SessionResolver):
     """
 
     def __call__(
-        self, obj: Any, *, autoflush: bool = True
+        self, obj: _DbHolder, *, autoflush: bool = True
     ) -> AbstractAsyncContextManager[AsyncSession]:
-        return typing_cast(
-            AbstractAsyncContextManager[Any, bool | None], obj.db.session(autoflush=autoflush)
-        )
+        return obj.db.session(autoflush=autoflush)
 
 
 db_session_resolver = DbSessionResolver()
@@ -319,10 +344,10 @@ def _default_session_resolver(
     return obj.session(autoflush=autoflush)
 
 
-def _enforce_autoflush[**P, T](
+def _enforce_autoflush(
     session: AsyncSession,
     autoflush_allowed: bool,
-    func: Callable[P, Awaitable[T] | AsyncIterator[T]],
+    func: Callable[..., Awaitable[Any] | AsyncIterator[Any]],
 ) -> None:
     """Enforce autoflush policy for a wrapped CRUD operation.
 

@@ -8,14 +8,14 @@ from sqlalchemy.sql.elements import and_
 
 from app.database.models import BaseType, ModelClass
 
-from .decorators import session_manager
+from .decorators import require_session, session_manager
 from .helpers import validate_model_attrs
 
 
 class _D:
     @staticmethod
     async def _delete_instance(
-        model_class: ModelClass, session: AsyncSession, **kwargs: Any
+        model_class: ModelClass[Any], session: AsyncSession, **kwargs: Any
     ) -> None:
         """Delete a single model instance matching strict filter criteria.
 
@@ -69,7 +69,7 @@ class _D:
 
     @staticmethod
     async def _delete_instances(
-        model_class: ModelClass, session: AsyncSession, **kwargs: Any
+        model_class: ModelClass[Any], session: AsyncSession, **kwargs: Any
     ) -> int:
         """Delete multiple model instances matching filter criteria.
 
@@ -131,7 +131,7 @@ class _D:
 class D(_D):
     @session_manager()
     async def delete(
-        self, model: type[BaseType], session: AsyncSession | None = None, **kwargs: Any
+        self, /, model: type[BaseType], session: AsyncSession | None = None, **kwargs: Any
     ) -> None:
         """Public API for deleting a single model instance.
 
@@ -146,13 +146,14 @@ class D(_D):
             **kwargs:
                 Equality-based filters used to uniquely identify the instance to delete.
         """
-        model_class = ModelClass(model)
+        model_class = ModelClass.from_model(model)
+        resolved = require_session(session)
 
-        await self._delete_instance(model_class, session, **kwargs)
+        await self._delete_instance(model_class, resolved, **kwargs)
 
     @session_manager()
     async def delete_many(
-        self, model: type[BaseType], session: AsyncSession | None = None, **kwargs: Any
+        self, /, model: type[BaseType], session: AsyncSession | None = None, **kwargs: Any
     ) -> int:
         """Public API for deleting multiple model instances.
 
@@ -170,6 +171,7 @@ class D(_D):
         Returns:
             The number of rows deleted.
         """
-        model_class = ModelClass(model)
+        model_class = ModelClass.from_model(model)
+        resolved = require_session(session)
 
-        return await self._delete_instances(model_class, session, **kwargs)
+        return await self._delete_instances(model_class, resolved, **kwargs)
