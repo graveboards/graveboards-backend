@@ -101,9 +101,7 @@ def _generate_term_score_stmts(
         Tuples of (category, SELECT) where each SELECT returns id, field, term, pattern,
         score.
     """
-    categories: list[SearchableFieldCategory] = cast(
-        list[SearchableFieldCategory], SCOPE_CATEGORIES_MAPPING[scope]
-    )
+    categories: list[SearchableFieldCategory] = SCOPE_CATEGORIES_MAPPING[scope]
     terms = search_terms.terms
     multipliers = search_terms.pattern_multipliers
     field_weights = search_terms.field_weights
@@ -202,7 +200,7 @@ def _process_field_groups(
 
     base_subq = base_query.subquery() if hasattr(base_query, "subquery") else base_query
 
-    non_grouped = select(base_subq.c).where(~base_subq.c.field.in_(grouped_fields))
+    non_grouped = select(base_subq.c).where(~base_subq.c.field.in_(grouped_fields))  # type: ignore[call-overload]
 
     group_queries = []
 

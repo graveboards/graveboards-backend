@@ -47,10 +47,10 @@ def populate_shallow_refs(openapi_spec: dict) -> None:
     schemas = openapi_spec["components"]["schemas"]
 
     def is_shallow(title: str) -> bool:
-        return isinstance(title, str) and title.endswith("Shallow")
+        return title.endswith("Shallow")
 
     def is_include(title: str) -> bool:
-        return isinstance(title, str) and title.endswith("Include")
+        return title.endswith("Include")
 
     def resolve_schema(schema: dict, stack: tuple[str, ...]) -> dict | None:
         schema = copy.deepcopy(schema)

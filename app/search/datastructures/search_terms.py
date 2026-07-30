@@ -1,7 +1,7 @@
 from __future__ import annotations
 import shlex
 import struct
-from collections.abc import Iterator
+
 from typing import Annotated
 
 from pydantic.fields import Field
@@ -30,14 +30,6 @@ class SearchTermsSchema(BaseModel):
     case_sensitive: bool = False
     pattern_multipliers: PatternMultipliers = PatternMultipliers()
     field_weights: FieldWeights = FieldWeights()
-
-    def __iter__(self) -> Iterator[str]:
-        """Iterate over normalized search terms.
-
-        Returns:
-            An iterator of search term strings.
-        """
-        return iter(self.terms)
 
     @field_validator("terms", mode="before")
     @classmethod

@@ -215,7 +215,7 @@ class RuleCRUD:
         await session.flush()
         await session.refresh(rule)
 
-        return typing_cast(QueueRule, rule)
+        return rule
 
     @session_manager()
     async def get_rule(
@@ -230,7 +230,7 @@ class RuleCRUD:
             QueueRule.queue_id == queue_id,
         )
         result = await session.execute(stmt)
-        return typing_cast(QueueRule | None, result.scalars().first())
+        return result.scalars().first()
 
     @session_manager()
     async def create_rule(

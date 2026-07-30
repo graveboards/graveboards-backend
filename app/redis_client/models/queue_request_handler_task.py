@@ -71,4 +71,4 @@ class QueueRequestHandlerTask(BaseModel):
                 case _:
                     deserialized_dict[key] = value
 
-        return typing_cast(QueueRequestHandlerTask, cls.model_validate(deserialized_dict))
+        return cls.model_validate(deserialized_dict)

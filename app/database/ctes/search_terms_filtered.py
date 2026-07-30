@@ -3,7 +3,7 @@ from typing import Literal
 
 from sqlalchemy.orm import InstrumentedAttribute
 from sqlalchemy.sql import and_, exists, select, true, union_all
-from sqlalchemy.sql.selectable import CTE, Select
+from sqlalchemy.sql.selectable import CTE, ScalarSelect, Select
 
 from app.database.models import (
     BeatmapsetSnapshot,
@@ -100,7 +100,7 @@ def search_terms_filtered_cte_factory(scope: Scope, search_terms: SearchTermsSch
 def get_filter_stmt(
     scope: Scope,
     category: SearchableFieldCategory,
-    target: InstrumentedAttribute | HashableCTE,
+    target: InstrumentedAttribute | HashableCTE | ScalarSelect,
     like_operator: Literal["like", "ilike"],
     pattern: str,
 ) -> Select:

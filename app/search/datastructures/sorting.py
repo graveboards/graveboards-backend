@@ -1,6 +1,5 @@
 from __future__ import annotations
 import struct
-from collections.abc import Iterator
 
 from pydantic import BaseModel, RootModel
 from pydantic.functional_serializers import field_serializer
@@ -91,14 +90,6 @@ class SortingSchema(RootModel):
     """
 
     root: list[SortingOption]
-
-    def __iter__(self) -> Iterator[SortingOption]:
-        """Iterate over sorting options in priority order.
-
-        Returns:
-            An iterator of ``SortingOption`` instances.
-        """
-        return iter(self.root)
 
     def __len__(self) -> int:
         """Return the number of sorting options.

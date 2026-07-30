@@ -89,7 +89,6 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
         if last_schema.get("type") == "array":
             if (
                 k.startswith("filters")
-                and isinstance(v, list)
                 and len(v) == 1
                 and isinstance(v[0], str)
             ):

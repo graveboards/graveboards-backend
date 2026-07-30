@@ -16,6 +16,7 @@ from sqlalchemy.sql.elements import (
     literal,
 )
 from sqlalchemy.sql.functions import func
+from sqlalchemy.sql.selectable import ScalarSelect
 
 from app.database.ctes.hashable_cte import HashableCTE
 from app.database.enums import FilterOperator
@@ -124,7 +125,7 @@ def validate_type(expected_type: Any, value: Any) -> None:
 
 def get_filter_condition(
     filter_operator: FilterOperator,
-    target: InstrumentedAttribute | ColumnClause | HashableCTE,
+    target: InstrumentedAttribute | ColumnClause | HashableCTE | ScalarSelect,
     value: Any,
     is_aggregated: bool = False,
 ) -> BinaryExpression | BindParameter | CollectionAggregate | ColumnElement[bool]:

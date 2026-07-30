@@ -105,4 +105,4 @@ class Beatmapset(BeatmapsetOsuApiSchema):
                         Beatmap.deserialize(beatmap) for beatmap in literal_eval(value)
                     ]
 
-        return typing_cast(Beatmapset, cls.model_validate(deserialized_dict))
+        return cls.model_validate(deserialized_dict)

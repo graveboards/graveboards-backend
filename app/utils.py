@@ -55,7 +55,7 @@ def get_nested_value(data: dict[str, Any], path: str) -> Any:
     value = data
 
     for key in keys:
-        if isinstance(value, dict) and key in value:
+        if key in value:
             value = value[key]
         else:
             raise KeyError(f"Key '{key}' not found in {value}")

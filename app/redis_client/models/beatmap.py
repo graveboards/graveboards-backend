@@ -70,4 +70,4 @@ class Beatmap(BeatmapOsuApiSchema):
                 case "deleted_at" | "last_updated":
                     deserialized_dict[key] = datetime.fromisoformat(value) if value != "" else None
 
-        return typing_cast(Beatmap, cls.model_validate(deserialized_dict))
+        return cls.model_validate(deserialized_dict)

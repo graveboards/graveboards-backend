@@ -1,13 +1,11 @@
 from __future__ import annotations
 from collections.abc import Iterable
 
-from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.sql import select
 from sqlalchemy.sql.elements import (
     BinaryExpression,
     BindParameter,
     CollectionAggregate,
-    ColumnClause,
     ColumnElement,
 )
 from sqlalchemy.sql.functions import func
@@ -25,7 +23,7 @@ from app.search.enums import Scope
 
 def bm_ss_filtering_cte_factory(
     scope: Scope,
-    target: InstrumentedAttribute | ColumnClause,
+    target: ColumnElement,
     aggregated_conditions: Iterable[
         BinaryExpression | BindParameter | CollectionAggregate | ColumnElement[bool]
     ]

@@ -1,7 +1,6 @@
 from __future__ import annotations
-from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.sql import select
-from sqlalchemy.sql.elements import ColumnClause
+from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.sql.selectable import CTE
 
 from app.database.models import BeatmapsetSnapshot, BeatmapSnapshot, Queue, Request
@@ -9,7 +8,7 @@ from app.search.enums import Scope
 
 
 def profile_filtering_cte_factory(
-    scope: Scope, target: InstrumentedAttribute | ColumnClause
+    scope: Scope, target: ColumnElement
 ) -> CTE:
     """Build a profile-derived filtering CTE for the given scope.
 

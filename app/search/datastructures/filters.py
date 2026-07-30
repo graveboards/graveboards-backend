@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import ItemsView, Iterator
+from collections.abc import ItemsView
 from typing import Any
 
 from pydantic.functional_validators import model_validator
@@ -36,14 +36,6 @@ class FieldFilters(RootModel):
     """
 
     root: dict[str, Conditions | FieldFilters]
-
-    def __iter__(self) -> Iterator[str]:
-        """Iterate over filter field names.
-
-        Returns:
-            An iterator over field names.
-        """
-        return iter(self.root)
 
     def __getitem__(self, key: str) -> Conditions | FieldFilters:
         """Retrieve conditions for a specific field.

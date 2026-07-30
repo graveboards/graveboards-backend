@@ -46,8 +46,8 @@ class APIEndpoint(Enum):
     TAGS = API_BASEURL + "/tags"
 
     def format(self, *args: str, **kwargs: str) -> str:
-        args = tuple(arg if arg is not None else "" for arg in args)
-        kwargs = {key: value if value is not None else "" for key, value in kwargs.items()}
+        args = tuple(arg or "" for arg in args)
+        kwargs = {key: value or "" for key, value in kwargs.items()}
 
         return str.format(self.value, *args, **kwargs).rstrip("/")
 

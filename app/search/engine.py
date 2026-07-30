@@ -176,7 +176,7 @@ class SearchEngine:
             TypeError:
                 If ``limit`` or ``offset`` are not non-negative integers.
         """
-        if not isinstance(limit, int) or not isinstance(offset, int) or limit < 0 or offset < 0:
+        if limit < 0 or offset < 0:
             raise TypeError("Both limit and offset must be a non-negative integer")
 
         if self.query is None:
@@ -198,6 +198,8 @@ class SearchEngine:
         applies search term scoring (relevance), explicit sorting (overrides relevance
         ordering), and filtering constraints.
         """
+        query: Select[Any]
+
         match self.scope:
             case Scope.BEATMAPS:
                 query = (
@@ -528,12 +530,14 @@ class SearchEngine:
         if query is None:
             return
 
+        assert query is not None
+
         def apply_clause(target: ColumnElement) -> None:
             if sorting_option.order is None:
                 return
             sorting_clauses.append(sorting_option.order.sort_func(target))
 
-        def apply_sorting_cte(cte: CTE, query: Select, target: ColumnElement) -> Select:
+        def apply_sorting_cte(cte: CTE, query: Select[Any], target: ColumnElement[Any]) -> Select[Any]:
             result = query.join(cte, cte.c.id == self.model_class.value.id).where(cte.c.rank == 1)
 
             apply_clause(target)
@@ -602,15 +606,15 @@ class SearchEngine:
                     filter_operator, target, value, is_aggregated=is_aggregated
                 )
 
-        def apply_clauses(_conditions: Conditions, target: ColumnElement) -> None:
+        def apply_clauses(_conditions: Conditions, target: ColumnElement[Any]) -> None:
             for clause in clause_generator(_conditions, target):
                 filtering_clauses.append(clause)
 
         def apply_filter_conditions(
             conditions: Conditions,
-            query: Select,
-            target: ColumnElement,
-        ) -> Select:
+            query: Select[Any],
+            target: ColumnElement[Any],
+        ) -> Select[Any]:
             match field_category:
                 case SearchableFieldCategory.PROFILE:
                     cte = profile_filtering_cte_factory(self.scope, target)
@@ -746,5 +750,7 @@ class SearchEngine:
         if self.query is None:
             raise RuntimeError("Query not composed")
         return str(
-            self.query.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True})
-        )
+            self.query.compile(
+                dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}
+            )
+        )  # type: ignore[no-untyped-call]

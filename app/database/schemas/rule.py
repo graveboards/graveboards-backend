@@ -493,7 +493,7 @@ def validate_rule_config(rule_type: str, config: dict[str, Any]) -> dict[str, An
     """
     schema_cls = RULE_CONFIG_SCHEMA_MAP.get(rule_type)
     if schema_cls:
-        return typing_cast(dict[str, Any], schema_cls(**config).model_dump(exclude_none=True))
+        return schema_cls(**config).model_dump(exclude_none=True)
     return config
 
 

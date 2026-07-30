@@ -1,7 +1,6 @@
 from __future__ import annotations
-from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.sql import select
-from sqlalchemy.sql.elements import ColumnClause
+from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.sql.selectable import CTE
 
 from app.database.models import (
@@ -14,7 +13,7 @@ from app.database.models import (
 from app.search.enums import Scope
 
 
-def bms_ss_filtering_cte_factory(scope: Scope, target: InstrumentedAttribute | ColumnClause) -> CTE:
+def bms_ss_filtering_cte_factory(scope: Scope, target: ColumnElement) -> CTE:
     """Build a beatmapset-derived filtering CTE for the given scope.
 
     Projects a beatmapset-level field into the active scope, joining through

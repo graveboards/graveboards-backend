@@ -27,7 +27,7 @@ class CreatorIdentityProvider(MetadataProvider):
                 continue
 
             for owner in bm.owners:
-                if not isinstance(owner, dict) or not owner:
+                if not owner:
                     continue
 
                 owner_id: int | None = owner.get("id")
