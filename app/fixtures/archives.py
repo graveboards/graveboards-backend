@@ -374,6 +374,35 @@ def parse_performance_sql(sql_path: Path) -> dict[str, list[dict]]:
     return data
 
 
+def _extract_ids_from_sql_data(
+    data: dict[str, list[Any]],
+    table_filter: str,
+    id_index: int,
+) -> set[int]:
+    """Extract unique IDs from parsed SQL data matching a table name filter.
+
+    Args:
+        data: Parsed SQL data mapping table names to rows.
+        table_filter: Substring to match in table names (case-insensitive).
+        id_index: Index of the ID field in each row.
+
+    Returns
+    -------
+    Set of non-null IDs found.
+    """
+    ids: set[int] = set()
+    for table_name, rows in data.items():
+        if table_filter not in table_name.lower():
+            continue
+        for row in rows:
+            if not row or not isinstance(row, list) or len(row) <= id_index:
+                continue
+            beatmap_id = row[id_index]
+            if beatmap_id:
+                ids.add(beatmap_id)
+    return ids
+
+
 def parse_sql_values(values: str) -> list[str | int | None]:
     """Parse SQL VALUES clause into Python values."""
     parsed: list[str | int | None] = []
@@ -441,13 +470,7 @@ async def get_user_ids_from_archive(
     for sql_file in extraction_dir.glob("osu_beatmaps.sql"):
         try:
             data = parse_performance_sql(sql_file)
-            for table_name, rows in data.items():
-                if "beatmaps" in table_name.lower():
-                    for row in rows:
-                        if len(row) >= 3:
-                            user_id = row[2]
-                            if user_id:
-                                user_ids.add(user_id)
+            user_ids.update(_extract_ids_from_sql_data(data, "beatmaps", id_index=2))
         except Exception as e:
             logger.warning(f"Failed to parse {sql_file.name}: {e}")
 
@@ -470,13 +493,7 @@ async def get_beatmap_ids_from_archive(
         for sql_file in sql_dir.glob("osu_beatmaps.sql"):
             try:
                 data = parse_performance_sql(sql_file)
-                for table_name, rows in data.items():
-                    if "beatmaps" in table_name.lower():
-                        for row in rows:
-                            if row and isinstance(row, list) and len(row) >= 1:
-                                beatmap_id = row[0]
-                                if beatmap_id:
-                                    beatmap_ids.add(beatmap_id)
+                beatmap_ids.update(_extract_ids_from_sql_data(data, "beatmaps", id_index=0))
             except Exception as e:
                 logger.warning(f"Failed to parse {sql_file.name}: {e}")
 
@@ -496,7 +513,7 @@ async def get_beatmap_ids_from_archive(
                             beatmap_id = int(line.split(":")[1].strip())
                             beatmap_ids.add(beatmap_id)
                             break
-            except OSError, ValueError:
+            except (OSError, ValueError):
                 continue
 
     logger.info(f"Extracted {len(beatmap_ids)} beatmap IDs from {archive_info.filename}")
