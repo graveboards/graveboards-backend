@@ -4,7 +4,7 @@ from typing import Any
 import httpx
 from connexion.problem import problem
 from starlette.requests import Request
-from app.http_types import APIResponse
+from api.http_types import APIResponse
 
 from api.decorators import api_query
 from api.utils import build_pydantic_include

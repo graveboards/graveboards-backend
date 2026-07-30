@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Any
 
 from starlette.requests import Request
-from app.http_types import APIResponse
+from api.http_types import APIResponse
 
 from app.database import PostgresqlDB
 from app.database.crud.rules import RuleCRUD

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from starlette.requests import Request
 from starlette.responses import StreamingResponse
-from app.http_types import APIResponse
+from api.http_types import APIResponse
 
 from api.decorators import coerce_arguments
 from app.beatmaps import BeatmapManager

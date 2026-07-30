@@ -1,6 +1,6 @@
 from __future__ import annotations
 from starlette.requests import Request
-from app.http_types import APIResponse
+from api.http_types import APIResponse
 
 from app.exceptions import TooManyRequests
 from app.oauth import OAuth

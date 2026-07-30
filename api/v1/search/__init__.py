@@ -8,7 +8,7 @@ from connexion.exceptions import Unauthorized
 from sqlalchemy import func
 from sqlalchemy import select as sa_select
 from starlette.requests import Request
-from app.http_types import APIResponse
+from api.http_types import APIResponse
 
 from api.auth import api_key_info, bearer_info
 from api.pagination import build_pagination_response

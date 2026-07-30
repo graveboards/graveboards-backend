@@ -5,7 +5,7 @@ import aiofiles
 from starlette.requests import Request
 from starlette.responses import PlainTextResponse
 
-from app.http_types import APIResponse
+from api.http_types import APIResponse
 
 from api.decorators import coerce_arguments
 from app.beatmaps import BeatmapManager

@@ -3,7 +3,7 @@ from typing import Any
 
 from connexion.exceptions import Forbidden
 from starlette.requests import Request
-from app.http_types import APIResponse
+from api.http_types import APIResponse
 
 from api.utils import build_pydantic_include
 from app.database import PostgresqlDB
