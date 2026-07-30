@@ -504,7 +504,7 @@ async def get_beatmap_ids_from_archive(
                 osu_dir = item
                 break
 
-    if osu_dir and osu_dir.exists():
+    if osu_dir.exists():
         for osu_file in osu_dir.glob("*.osu"):
             try:
                 with open(osu_file) as f:

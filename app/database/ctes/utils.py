@@ -34,6 +34,8 @@ def extract_cte_target_scalar(
         A correlated ScalarSelect suitable for use in WHERE clauses.
     """
     pk_column = model_class.mapper.primary_key[0]
-    cte = aliased(cte) if use_alias else cte
+    from sqlalchemy.sql.selectable import Alias as AliasType
 
-    return select(cte.c.target).where(cte.c[id_column_label] == pk_column).scalar_subquery()
+    aliased_cte: CTE | AliasType = aliased(cte) if use_alias else cte  # type: ignore[assignment]
+
+    return select(aliased_cte.c.target).where(aliased_cte.c[id_column_label] == pk_column).scalar_subquery()

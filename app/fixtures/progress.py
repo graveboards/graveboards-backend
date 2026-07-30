@@ -45,7 +45,7 @@ class ProgressBar:
                 )
 
             task_id = self._task_ids[category]
-            self._progress.update(task_id, completed=current)
+            self._progress.update(task_id, completed=current)  # type: ignore[arg-type]
         except Exception:
             logger.debug("Failed to update progress bar", exc_info=True)
 

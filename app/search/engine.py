@@ -8,6 +8,8 @@ from pydantic.main import BaseModel
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.engine.row import RowMapping
 from sqlalchemy.ext.asyncio.session import AsyncSession
+from sqlalchemy.orm.attributes import InstrumentedAttribute
+from sqlalchemy.sql.elements import ColumnClause
 from sqlalchemy.sql import and_, select
 from sqlalchemy.sql.elements import (
     BinaryExpression,
@@ -532,18 +534,20 @@ class SearchEngine:
 
         assert query is not None
 
-        def apply_clause(target: ColumnElement) -> None:
+        def apply_clause(target: InstrumentedAttribute[Any] | ColumnClause[Any] | ColumnElement[Any]) -> None:
             if sorting_option.order is None:
                 return
             sorting_clauses.append(sorting_option.order.sort_func(target))
 
-        def apply_sorting_cte(cte: CTE, query: Select[Any], target: ColumnElement[Any]) -> Select[Any]:
+        def apply_sorting_cte(cte: CTE, query: Select[Any], target: InstrumentedAttribute[Any] | ColumnClause[Any] | ColumnElement[Any]) -> Select[Any]:
             result = query.join(cte, cte.c.id == self.model_class.value.id).where(cte.c.rank == 1)
 
             apply_clause(target)
             return result
 
         def apply_sorting_option() -> None:
+            nonlocal query
+            assert query is not None
             target = sorting_option.field.target
 
             match category:
@@ -570,7 +574,7 @@ class SearchEngine:
 
         sorting_clauses: list[ColumnElement] = []
 
-        for sorting_option in self.sorting:
+        for sorting_option in self.sorting.root:
             category = SearchableFieldCategory.from_model_class(sorting_option.field.model_class)
             apply_sorting_option()
 
@@ -595,7 +599,7 @@ class SearchEngine:
 
         def clause_generator(
             conditions: Conditions,
-            target: ColumnElement,
+            target: InstrumentedAttribute[Any] | ColumnClause[Any] | ColumnElement[Any],
             is_aggregated: bool = False,
         ) -> Generator[
             BinaryExpression | BindParameter | CollectionAggregate | ColumnElement[bool]
@@ -613,11 +617,11 @@ class SearchEngine:
         def apply_filter_conditions(
             conditions: Conditions,
             query: Select[Any],
-            target: ColumnElement[Any],
+            target: InstrumentedAttribute[Any] | ColumnClause[Any] | ColumnElement[Any],
         ) -> Select[Any]:
             match field_category:
                 case SearchableFieldCategory.PROFILE:
-                    cte = profile_filtering_cte_factory(self.scope, target)
+                    cte = profile_filtering_cte_factory(self.scope, target)  # type: ignore[arg-type]
                     target = cte.c.target
                     apply_clauses(conditions, target)
                     return query.join(cte, cte.c.id == self.model_class.value.id)
@@ -627,24 +631,22 @@ class SearchEngine:
                         if self.scope is not Scope.BEATMAPS
                         else None
                     )
-                    cte = bm_ss_filtering_cte_factory(
-                        self.scope, target, aggregated_conditions=aggregated_conditions
-                    )
+                    cte = bm_ss_filtering_cte_factory(self.scope, target, aggregated_conditions=aggregated_conditions)  # type: ignore[arg-type]
                     if aggregated_conditions is None:
-                        apply_clauses(conditions, target)
+                        apply_clauses(conditions, target)  # type: ignore[arg-type]
                     return query.join(cte, cte.c.id == self.model_class.value.id)
                 case SearchableFieldCategory.BEATMAPSET:
-                    cte = bms_ss_filtering_cte_factory(self.scope, target)
+                    cte = bms_ss_filtering_cte_factory(self.scope, target)  # type: ignore[arg-type]
                     target = cte.c.target
                     apply_clauses(conditions, target)
                     return query.join(cte, cte.c.id == self.model_class.value.id)
                 case SearchableFieldCategory.QUEUE:
-                    cte = queue_filtering_cte_factory(self.scope, target)
+                    cte = queue_filtering_cte_factory(self.scope, target)  # type: ignore[arg-type]
                     target = cte.c.target
                     apply_clauses(conditions, target)
                     return query.join(cte, cte.c.id == self.model_class.value.id)
                 case SearchableFieldCategory.REQUEST:
-                    cte = request_filtering_cte_factory(self.scope, target)
+                    cte = request_filtering_cte_factory(self.scope, target)  # type: ignore[arg-type]
                     target = cte.c.target
                     apply_clauses(conditions, target)
                     return query.join(cte, cte.c.id == self.model_class.value.id)
@@ -749,8 +751,4 @@ class SearchEngine:
         """
         if self.query is None:
             raise RuntimeError("Query not composed")
-        return str(
-            self.query.compile(
-                dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}
-            )
-        )  # type: ignore[no-untyped-call]
+        return str(self.query.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}))  # type: ignore[no-untyped-call]

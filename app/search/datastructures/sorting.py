@@ -112,7 +112,7 @@ class SortingSchema(RootModel):
         option_count = struct.pack("!B", len(self))
         chunks = []
 
-        for option in self:
+        for option in self.root:
             chunks.append(option.serialize())
 
         return option_count + b"".join(chunks)

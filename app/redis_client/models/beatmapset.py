@@ -12,7 +12,7 @@ from .beatmap import Beatmap
 class Beatmapset(BeatmapsetOsuApiSchema):
     """Domain model representing an osu! beatmapset and its beatmaps."""
 
-    beatmaps: list[Beatmap]
+    beatmaps: list[Beatmap] | None = None  # type: ignore[assignment]
 
     def serialize(self) -> dict[str, str]:
         """Serialize the beatmapset into a Redis-safe string dictionary.

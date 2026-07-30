@@ -307,7 +307,7 @@ class FixtureOrchestrator:
             )
             self.fetcher.logger = get_logger(__name__)
 
-            if self.id_source:
+            if self.id_source is not None:
                 self.fetcher.id_source = self.id_source
 
             progress = ProgressBar(no_progress=self.criteria.no_progress)

@@ -109,6 +109,8 @@ class FieldFilters(RootModel):
 
                 expected_type = extract_inner_types(column)
 
+                if not isinstance(value, Conditions):
+                    continue
                 for condition_value in value.values_for_validation():
                     if condition_value is not None:
                         try:
@@ -187,7 +189,7 @@ class FieldFilters(RootModel):
             value, offset = Conditions.deserialize(data, offset=offset)
             values[model_field.field_name] = value
 
-        return cls(**values), offset
+        return cls(**values), offset  # type: ignore[arg-type]
 
 
 class FiltersSchema(BaseModel):
@@ -255,12 +257,12 @@ class FiltersSchema(BaseModel):
                     f"Category '{category_name}' expected dict, got {type(field_filters).__name__}"
                 )
 
-            validated_field_filters = {}
+            validated_field_filters: dict[str, Conditions | FieldFilters] = {}
 
             for field_name, value in field_filters.items():
                 try:
                     if isinstance(value, ConditionValue):
-                        validated_field_filters[field_name] = value
+                        validated_field_filters[field_name] = value  # type: ignore[assignment]
                     else:
                         validated_field_filters[field_name] = Conditions.model_validate(value)
                 except ValidationError as e:

@@ -16,7 +16,7 @@ from app.redis_client import RedisClient
 TIMEOUT_SECS = 60.0
 
 
-async def migrate(input_path: str = "requests.json"):
+async def migrate(input_path: str = "requests.json") -> None:
     logger = get_logger("migrate")
     logger.info("Starting migration...")
 

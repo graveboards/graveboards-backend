@@ -1,7 +1,7 @@
 from __future__ import annotations
 from starlette.requests import Request
 from starlette.responses import StreamingResponse
-from app.types import APIResponse
+from app.http_types import APIResponse
 
 from api.decorators import coerce_arguments
 from app.beatmaps import BeatmapManager
@@ -26,7 +26,7 @@ async def search(request: Request, beatmapset_id: int, snapshot_number: int = -1
             f"BeatmapsetSnapshot with beatmapset_id '{beatmapset_id}' and snapshot_number '{snapshot_number}' not found"
         ) from e
 
-    return StreamingResponse(
+    return StreamingResponse(  # type: ignore[return-value]
         content=stream_file(zip_file_io),
         headers={"Content-Disposition": f"attachment; filename={beatmapset_id}.zip"},
         media_type="application/zip",

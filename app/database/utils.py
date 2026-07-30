@@ -125,7 +125,7 @@ def validate_type(expected_type: Any, value: Any) -> None:
 
 def get_filter_condition(
     filter_operator: FilterOperator,
-    target: InstrumentedAttribute | ColumnClause | HashableCTE | ScalarSelect,
+    target: InstrumentedAttribute | ColumnClause | HashableCTE | ScalarSelect | ColumnElement,
     value: Any,
     is_aggregated: bool = False,
 ) -> BinaryExpression | BindParameter | CollectionAggregate | ColumnElement[bool]:
@@ -156,7 +156,7 @@ def get_filter_condition(
     if not is_aggregated:
         if not isinstance(filter_operator, FilterOperator):
             raise ValueError(f"Invalid filter operator: {filter_operator}")
-        return filter_operator.method(target, value)
+        return filter_operator.method(target, value)  # type: ignore[no-any-return]
 
     array_agg = func.array_agg(target)
 

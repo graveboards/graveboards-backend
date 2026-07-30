@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Any
 
 from starlette.requests import Request
-from app.types import APIResponse
+from app.http_types import APIResponse
 
 from api.decorators import api_query
 from api.utils import build_pydantic_include

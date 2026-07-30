@@ -3,7 +3,7 @@ from typing import Any
 
 from connexion.exceptions import Forbidden
 from starlette.requests import Request as StarletteRequest
-from app.types import APIResponse
+from app.http_types import APIResponse
 from structlog.contextvars import get_contextvars
 
 from api.decorators import api_query

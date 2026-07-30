@@ -1,6 +1,6 @@
 from __future__ import annotations
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy.dialects.postgresql.array import ARRAY
 from sqlalchemy.dialects.postgresql.json import JSONB
@@ -64,7 +64,7 @@ class BeatmapsetSnapshot(Base):
     language: Mapped[dict[str, int | str] | None] = mapped_column(JSONB)
     last_updated: Mapped[datetime] = mapped_column(AwareDateTime(), nullable=False)
     legacy_thread_url: Mapped[str | None] = mapped_column(String)
-    nominations_summary: Mapped[dict[str, int | list[str] | dict[str, int] | None]] = mapped_column(
+    nominations_summary: Mapped[dict[str, Any]] = mapped_column(
         JSONB, nullable=False
     )
     nsfw: Mapped[bool] = mapped_column(Boolean, nullable=False)

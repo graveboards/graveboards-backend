@@ -262,7 +262,7 @@ class SearchTestFetchAction:
         page = random.randint(1, 100)
 
         try:
-            data = await self.fetcher.oac.search_beatmapsets(page=page, status=status)
+            data = await self.fetcher.oac.search_beatmapsets(page=page, status=str(status))
         except Exception:
             logger.debug("Failed to search beatmapsets for coverage", exc_info=True)
             return {}
@@ -342,9 +342,7 @@ class SearchTestFetchAction:
         from app.fixtures.paths import get_fixture_path
 
         try:
-            data = await self.fetcher.oac.get_rankings(
-                ruleset="osu", mode="performance", cursor_page=1, limit=1
-            )
+            data = await self.fetcher.oac.get_rankings(ruleset="osu", mode="performance", cursor_page=1, limit=1)  # type: ignore[arg-type]
         except Exception:
             logger.debug("Failed to fetch rankings for coverage", exc_info=True)
             return {}
@@ -361,7 +359,7 @@ class SearchTestFetchAction:
             return {}
 
         try:
-            user_data = await self.fetcher.oac.get_user(user_id, "osu")
+            user_data = await self.fetcher.oac.get_user(user_id, "osu")  # type: ignore[arg-type]
         except Exception:
             logger.debug("Failed to fetch user for coverage", exc_info=True)
             await self.fetcher._add_failed_id("users.osu", user_id)
@@ -450,7 +448,7 @@ def build_actions(fetcher: FixtureDataFetcher) -> list[FetchAction]:
         _make_action(
             fetcher,
             name="beatmapsets",
-            execute=fetcher._adaptive_fetch_beatmapsets,
+            execute=fetcher._adaptive_fetch_beatmapsets,  # type: ignore[arg-type]
             affected_buckets=[
                 "fetched_beatmapset_genres",
                 "fetched_beatmapset_languages",
@@ -481,7 +479,7 @@ def build_actions(fetcher: FixtureDataFetcher) -> list[FetchAction]:
         _make_action(
             fetcher,
             name="beatmaps",
-            execute=fetcher._adaptive_fetch_beatmaps,
+            execute=fetcher._adaptive_fetch_beatmaps,  # type: ignore[arg-type]
             affected_buckets=[
                 "fetched_beatmap_modes",
                 "fetched_beatmap_statuses",
@@ -504,7 +502,7 @@ def build_actions(fetcher: FixtureDataFetcher) -> list[FetchAction]:
         _make_action(
             fetcher,
             name="users",
-            execute=fetcher._adaptive_fetch_users,
+            execute=fetcher._adaptive_fetch_users,  # type: ignore[arg-type]
             affected_buckets=[
                 "fetched_country_codes",
                 "fetched_restricted_users",
@@ -517,7 +515,7 @@ def build_actions(fetcher: FixtureDataFetcher) -> list[FetchAction]:
         _make_action(
             fetcher,
             name="special",
-            execute=fetcher._adaptive_fetch_special,
+            execute=fetcher._adaptive_fetch_special,  # type: ignore[arg-type]
             affected_buckets=[
                 "fetched_beatmapset_nsfw",
                 "fetched_beatmapset_statuses",
@@ -719,4 +717,4 @@ async def adaptive_fetch_loop(
         )
 
     fetcher._save_search_test_coverage_metadata()
-    return typing_cast(dict[str, Any], fetcher.get_coverage_report())
+    return fetcher.get_coverage_report()

@@ -4,7 +4,7 @@ from types import EllipsisType
 from typing import Any
 
 from pydantic.main import BaseModel
-from sqlalchemy.orm.strategy_options import Load, joinedload, noload, selectinload
+from sqlalchemy.orm.strategy_options import Load, _AbstractLoad, joinedload, noload, selectinload
 
 from app.database.models import BeatmapsetSnapshot, BeatmapSnapshot, ModelClass, Queue, Request
 from app.database.schemas import (
@@ -49,7 +49,7 @@ SCOPE_SCHEMA_MAPPING: dict[Scope, type[BaseModel]] = {
 Determines how results are serialized for each scope.
 """
 
-SCOPE_OPTIONS_MAPPING: dict[Scope, tuple[Load, ...]] = {
+SCOPE_OPTIONS_MAPPING: dict[Scope, tuple[_AbstractLoad, ...]] = {
     Scope.BEATMAPS: (
         selectinload(BeatmapSnapshot.beatmap_tags),
         selectinload(BeatmapSnapshot.owner_profiles),

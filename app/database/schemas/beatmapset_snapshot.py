@@ -29,7 +29,7 @@ class BeatmapsetSnapshotSchema(BeatmapsetOsuApiSchema, BaseModelExtra):
     user_profile: ProfileSchema | None = None
 
     beatmaps: list[BeatmapOsuApiSchema] | None = Field(exclude=True, default=None)
-    user: dict[str, Any] = Field(exclude=True, default=None)
+    user: dict[str, Any] = Field(exclude=True, default_factory=dict)
 
 
 class BeatmapsetSnapshotCreateSchema(BeatmapsetOsuApiSchema, BaseModelExtra):

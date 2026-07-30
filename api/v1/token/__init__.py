@@ -2,7 +2,7 @@ from __future__ import annotations
 from authlib.integrations.base_client.errors import OAuthError
 from jwt.exceptions import ExpiredSignatureError, InvalidIssuerError, InvalidTokenError
 from starlette.requests import Request
-from app.types import APIResponse
+from app.http_types import APIResponse
 
 from app.database import PostgresqlDB
 from app.database.models import OAuthToken, ScoreFetcherTask, User
@@ -22,7 +22,7 @@ async def search(request: Request, token: str, rc: RedisClient | None = None) ->
     if rc is None:
         rc = request.state.rc
 
-    client_ip = request.client.host if hasattr(request, "client") else "unknown"
+    client_ip = request.client.host if request.client is not None else "unknown"
     limiter = AuthRateLimiter(rc)
     allowed, retry_after = await limiter.check(client_ip)
     if not allowed:
@@ -52,7 +52,7 @@ async def post(
     if db is None:
         db = request.state.db
 
-    client_ip = request.client.host if hasattr(request, "client") else "unknown"
+    client_ip = request.client.host if request.client is not None else "unknown"
     limiter = AuthRateLimiter(rc)
     allowed, retry_after = await limiter.check(client_ip)
     if not allowed:

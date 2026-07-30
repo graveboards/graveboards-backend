@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import QueryableAttribute
 from sqlalchemy.orm.interfaces import LoaderOption
 from sqlalchemy.orm.relationships import RelationshipProperty
-from sqlalchemy.orm.strategy_options import Load, joinedload, noload, selectinload
+from sqlalchemy.orm.strategy_options import Load, _AbstractLoad, joinedload, noload, selectinload
 from sqlalchemy.sql import cast, select
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement, and_, or_
 from sqlalchemy.sql.functions import func
@@ -472,7 +472,7 @@ class _R:
             The ``Select`` statement with WHERE conditions applied.
         """
         if not isinstance(where, (list, tuple, set)):
-            where = [where]
+            where = [where]  # type: ignore[list-item]
 
         return select_stmt.where(*where)
 
@@ -727,7 +727,7 @@ class _R:
         if handler is None:
             return select_stmt
 
-        return handler(select_stmt, category_score_ctes, search_terms)
+        return handler(select_stmt, category_score_ctes, search_terms)  # type: ignore[arg-type]
 
     @staticmethod
     def _apply_search_simple(
@@ -808,7 +808,7 @@ class _R:
             elif isinstance(value, dict):
                 options = parse_includes(target_model_class, value, path)
                 loader = selectinload(attr) if rel_info.uselist else joinedload(attr)
-                return loader.options(*options)
+                return loader.options(*options)  # type: ignore[arg-type]
             else:
                 raise TypeError(
                     f"Invalid value type for nested include '{attr.key}': Expected bool or dict, got {type(value).__name__}"
@@ -871,7 +871,7 @@ class _R:
             return rel.lazy in {True, "select", "dynamic"}
 
         def exclude_unincluded(
-            parent_model_class: ModelClass[Any], includes: Include, base_loader: Load | None = None
+            parent_model_class: ModelClass[Any], includes: Include, base_loader: _AbstractLoad | None = None
         ) -> list[LoaderOption]:
             options: list[LoaderOption] = []
 

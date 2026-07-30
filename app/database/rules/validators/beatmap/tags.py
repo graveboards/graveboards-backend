@@ -27,7 +27,7 @@ class TagsRestriction(BeatmapRestrictionBase):
             if bm.top_tag_ids:
                 has_tag_metadata = True
                 for tag in bm.top_tag_ids:
-                    tag_id = tag.get("tag_id") if isinstance(tag, dict) else None
+                    tag_id = tag.get("tag_id")
                     if tag_id is not None:
                         beatmap_tag_ids.add(tag_id)
 

@@ -132,7 +132,7 @@ class RateLimitRestriction(RestrictionBase):
         if current_count == 1:
             await context.redis.expire(redis_key, _period_duration_seconds(period))
 
-        if current_count > max_requests:
+        if max_requests is not None and current_count > max_requests:
             await context.redis.decr(redis_key)
             raise await self._limit_error(context, config)
 

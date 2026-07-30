@@ -5,7 +5,7 @@ import json
 from typing import Any
 from typing import cast as typing_cast
 
-import brotli
+import brotli  # type: ignore[import-untyped]
 
 
 def compress_query(q: bytes | dict[str, Any], serialized: bool = True) -> str:

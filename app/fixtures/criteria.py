@@ -26,7 +26,7 @@ class Source:
     ALL = [AUTO, ARCHIVE, TOP_PLAYERS]
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class TargetedOverrides:
     """Overrides for the targeted criteria."""
 
@@ -37,7 +37,7 @@ class TargetedOverrides:
     rulesets: list[str] | None = None
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class SearchTestOverrides:
     """Overrides for the search-test criteria."""
 

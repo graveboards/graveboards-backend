@@ -1,6 +1,6 @@
 from __future__ import annotations
 from starlette.requests import Request
-from app.types import APIResponse
+from app.http_types import APIResponse
 
 from app.exceptions import TooManyRequests
 from app.oauth import OAuth
@@ -16,7 +16,7 @@ async def search(request: Request, rc: RedisClient | None = None) -> APIResponse
     if rc is None:
         rc = request.state.rc
 
-    client_ip = request.client.host if hasattr(request, "client") else "unknown"
+    client_ip = request.client.host if request.client is not None else "unknown"
     limiter = AuthRateLimiter(rc)
     allowed, retry_after = await limiter.check(client_ip)
     if not allowed:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import override
 
-from app.database.models.beatmap import Beatmap
+from app.database.schemas.sub_schemas.beatmap_osu_api_schema import BeatmapOsuApiSchema
 from app.database.rules.base import BeatmapRestrictionBase
 from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError
@@ -61,7 +61,7 @@ class LengthRestriction(BeatmapRestrictionBase):
                     )
         else:
             # logic == "any": at least one beatmap must satisfy every configured bound.
-            def within_bounds(beatmap: Beatmap) -> bool:
+            def within_bounds(beatmap: BeatmapOsuApiSchema) -> bool:
                 if min_hit_length is not None and beatmap.hit_length < min_hit_length:
                     return False
                 if max_hit_length is not None and beatmap.hit_length > max_hit_length:

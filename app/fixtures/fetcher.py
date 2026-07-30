@@ -57,7 +57,7 @@ class FixtureDataFetcher:
     ):
         self.rc = rc
         self.oac = OsuAPIClient(rc)
-        self.logger = logging.getLogger(__name__)
+        self.logger: Any = logging.getLogger(__name__)
         self.force_fetch = force_fetch
         self.id_source = id_source
         self.fixtures_dir = fixtures_dir
@@ -864,3 +864,33 @@ class FixtureDataFetcher:
                     category_ids[:] = category_ids[-10000:]
 
         self._mark_metadata_dirty()
+
+    # TODO: Implement search coverage tracking methods in subclasses.
+    fetched_restricted_users: dict[bool, set[int]] = {}
+
+    def _classify_beatmapset(self, data: dict, beatmapset_id: int) -> dict[str, Any]:
+        raise NotImplementedError
+
+    def _classify_beatmap(self, data: dict, beatmap_id: int) -> dict[str, Any]:
+        raise NotImplementedError
+
+    def _classify_user(self, data: dict, user_id: int) -> dict[str, Any]:
+        raise NotImplementedError
+
+    async def _adaptive_fetch_beatmapsets(self) -> None:
+        raise NotImplementedError
+
+    async def _adaptive_fetch_beatmaps(self) -> None:
+        raise NotImplementedError
+
+    async def _adaptive_fetch_users(self) -> None:
+        raise NotImplementedError
+
+    async def _adaptive_fetch_special(self) -> None:
+        raise NotImplementedError
+
+    def _save_search_test_coverage_metadata(self) -> None:
+        raise NotImplementedError
+
+    def get_coverage_report(self) -> dict[str, Any]:
+        raise NotImplementedError

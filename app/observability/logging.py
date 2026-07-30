@@ -159,7 +159,7 @@ def _configure_stdlib_bridge(shared_processors: list) -> None:
 
 
 def get_logger(name: str, **kwargs: Any) -> structlog.stdlib.BoundLogger:
-    return structlog.get_logger(name, service=SERVICE_NAME, **kwargs)
+    return structlog.get_logger(name, service=SERVICE_NAME, **kwargs)  # type: ignore[no-any-return]
 
 
 def clear_request_context() -> None:

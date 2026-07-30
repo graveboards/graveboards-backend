@@ -5,7 +5,7 @@ import aiofiles
 from starlette.requests import Request
 from starlette.responses import PlainTextResponse
 
-from app.types import APIResponse
+from app.http_types import APIResponse
 
 from api.decorators import coerce_arguments
 from app.beatmaps import BeatmapManager
@@ -55,4 +55,4 @@ async def search(request: Request, beatmap_id: int, snapshot_number: int = -1) -
     dotosu_file_io = BytesIO(dotosu_file_data)
     dotosu_file_io.seek(0)
 
-    return PlainTextResponse(content=dotosu_file_io.read().decode())
+    return PlainTextResponse(content=dotosu_file_io.read().decode())  # type: ignore[return-value]

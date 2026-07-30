@@ -185,6 +185,22 @@ module = ["asyncpg.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
+module = ["authlib.integrations.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["authlib.oauth2.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["yaml"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["aiofiles"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
 # Bodies are still checked (check_untyped_defs, inherited from strict) but
 # tests aren't required to annotate every `def test_...(): ...`.
 module = ["tests.*"]

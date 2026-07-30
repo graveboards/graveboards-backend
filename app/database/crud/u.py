@@ -102,7 +102,7 @@ class _U:
             return []
 
         for i, item in enumerate(data):
-            if not isinstance(item, tuple) or len(item) != 2:
+            if len(item) != 2:
                 raise TypeError(
                     f"Update #{i} must be a tuple of (int, dict), got {type(item).__name__}"
                 )

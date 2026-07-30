@@ -10,8 +10,8 @@ from .bootstrap import SetupRunner
 from .config import CONFIG, get_security_enabled
 from .daemon import Daemon
 from .database import PostgresqlDB
-from .logging import get_logger
-from .redis import RedisClient
+from .observability.logging import get_logger
+from .redis_client import RedisClient
 
 
 @asynccontextmanager

@@ -188,7 +188,7 @@ class _C:
                 if column.unique:
                     unique_sets.append([column.key])
 
-            for constraint in mapper.local_table.constraints:
+            for constraint in mapper.local_table.constraints:  # type: ignore[attr-defined]
                 if isinstance(constraint, UniqueConstraint):
                     cols = [col.key for col in constraint.columns]
                     unique_sets.append(cols)

@@ -102,7 +102,8 @@ class FieldWeights(BaseModel):
         for key, value in values.items():
             if value is None and key in cls.model_fields:
                 model_class = cls.model_fields[key].annotation
-                values[key] = model_class(**{f: None for f in model_class.model_fields})
+                if model_class is not None:
+                    values[key] = model_class(**{f: None for f in model_class.model_fields})
 
         return values
 
@@ -212,7 +213,7 @@ class FieldWeights(BaseModel):
             elif null_presence & flag:
                 values.setdefault(category_name, {})[field] = None
 
-        return cls(**values), offset
+        return cls(**values), offset  # type: ignore[arg-type]
 
 
 # Default field weight configuration used for diff-based serialization.

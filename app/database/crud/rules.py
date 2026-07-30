@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.models import QueueRule
 from app.exceptions import BadRequest, Conflict
 
-from .decorators import session_manager
+from .decorators import require_session, session_manager
 
 RULE_UPDATABLE_FIELDS = frozenset({"is_active", "is_public", "config", "version"})
 
@@ -64,6 +64,7 @@ class RuleCRUD:
         only_active: bool = False,
     ) -> list[QueueRule]:
         """Fetch all rules for a queue, optionally filtered by active status."""
+        session = require_session(session)
         stmt = select(QueueRule).where(QueueRule.queue_id == queue_id)
 
         if only_active:
@@ -91,6 +92,7 @@ class RuleCRUD:
                 If the input list contains fully duplicate rules (same type
                 and same config).
         """
+        session = require_session(session)
         if not rules_data:
             await self._delete_all_for_rule(queue_id, session=session)
             return []
@@ -156,6 +158,7 @@ class RuleCRUD:
             Conflict:
                 If the update would duplicate an existing rule in the queue.
         """
+        session = require_session(session)
         from app.database.rules.registry import get_supported_versions
         from app.database.schemas.rule import validate_rule_config
 
@@ -225,6 +228,7 @@ class RuleCRUD:
         session: AsyncSession | None = None,
     ) -> QueueRule | None:
         """Fetch a single rule by ID, scoped to a queue."""
+        session = require_session(session)
         stmt = select(QueueRule).where(
             QueueRule.id == rule_id,
             QueueRule.queue_id == queue_id,
@@ -240,6 +244,7 @@ class RuleCRUD:
         session: AsyncSession | None = None,
     ) -> QueueRule:
         """Create a single rule and append it to the queue's existing rules."""
+        session = require_session(session)
         _validate_rule_version(rule_data["type"], rule_data.get("version", "1.0"))
 
         existing = await self.get_rules(queue_id, session=session)
@@ -281,6 +286,7 @@ class RuleCRUD:
         session: AsyncSession | None = None,
     ) -> QueueRule | None:
         """Delete a single rule by ID, scoped to a queue."""
+        session = require_session(session)
         stmt = select(QueueRule).where(
             QueueRule.id == rule_id,
             QueueRule.queue_id == queue_id,

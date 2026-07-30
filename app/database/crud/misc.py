@@ -10,6 +10,7 @@ class Misc:
     @session_manager()
     async def status(self, target: StatusTarget = "summary", session: AsyncSession | None = None) -> dict:
         if target == "summary":
+            assert session is not None
             return await get_summary_status(session)
 
         return {"target": target, "error": f"Status target '{target}' is not yet implemented"}
