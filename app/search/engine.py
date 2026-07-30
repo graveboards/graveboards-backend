@@ -524,12 +524,12 @@ class SearchEngine:
         if query is None:
             return
 
-        def apply_clause(target: ColumnElement[Any]) -> None:
+        def apply_clause(target: ColumnElement) -> None:
             if sorting_option.order is None:
                 return
             sorting_clauses.append(sorting_option.order.sort_func(target))
 
-        def apply_sorting_cte(cte: CTE, query: Select, target: ColumnElement[Any]) -> Select:
+        def apply_sorting_cte(cte: CTE, query: Select, target: ColumnElement) -> Select:
             result = query.join(cte, cte.c.id == self.model_class.value.id).where(cte.c.rank == 1)
 
             apply_clause(target)
@@ -560,7 +560,7 @@ class SearchEngine:
                     nonlocal query
                     query = apply_sorting_cte(cte, query, target)
 
-        sorting_clauses: list[ColumnElement[Any]] = []
+        sorting_clauses: list[ColumnElement] = []
 
         for sorting_option in self.sorting:
             category = SearchableFieldCategory.from_model_class(sorting_option.field.model_class)
@@ -587,7 +587,7 @@ class SearchEngine:
 
         def clause_generator(
             conditions: Conditions,
-            target: ColumnElement[Any],
+            target: ColumnElement,
             is_aggregated: bool = False,
         ) -> Generator[
             BinaryExpression | BindParameter | CollectionAggregate | ColumnElement[bool]
@@ -598,14 +598,14 @@ class SearchEngine:
                     filter_operator, target, value, is_aggregated=is_aggregated
                 )
 
-        def apply_clauses(_conditions: Conditions, target: ColumnElement[Any]) -> None:
+        def apply_clauses(_conditions: Conditions, target: ColumnElement) -> None:
             for clause in clause_generator(_conditions, target):
                 filtering_clauses.append(clause)
 
         def apply_filter_conditions(
             conditions: Conditions,
             query: Select,
-            target: ColumnElement[Any],
+            target: ColumnElement,
         ) -> Select:
             match field_category:
                 case SearchableFieldCategory.PROFILE:

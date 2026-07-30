@@ -1,11 +1,11 @@
 from __future__ import annotations
 from datetime import date, datetime
-from typing import Any
 
 from sqlalchemy.dialects.postgresql.json import JSONB
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm.base import Mapped
+from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.sql.expression import cast
 from sqlalchemy.sql.functions import func
 from sqlalchemy.sql.schema import ForeignKey
@@ -118,7 +118,7 @@ class Profile(Base):
 
     @total_maps.expression
     @classmethod
-    def _total_maps_expr(cls) -> Any:
+    def _total_maps_expr(cls) -> ColumnElement:
         return (
             func.coalesce(cls.graveyard_beatmapset_count, 0)
             + func.coalesce(cls.loved_beatmapset_count, 0)
@@ -132,5 +132,5 @@ class Profile(Base):
 
     @total_kudosu.expression
     @classmethod
-    def _total_kudosu_expr(cls) -> Any:
+    def _total_kudosu_expr(cls) -> ColumnElement:
         return func.coalesce(cast(cls.kudosu["total"].astext, Integer), 0)

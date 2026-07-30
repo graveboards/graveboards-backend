@@ -1,11 +1,10 @@
 from __future__ import annotations
 from datetime import datetime
-from typing import Any
-
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm.base import Mapped
 from sqlalchemy.sql import literal
+from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import Boolean, DateTime, Integer, LargeBinary
 
@@ -40,7 +39,7 @@ class OAuthToken(Base):
 
     @access_token.expression
     @classmethod
-    def _access_token_expr(cls) -> Any:
+    def _access_token_expr(cls) -> ColumnElement:
         return literal(None)
 
     @hybrid_property

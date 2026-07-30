@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+from abc import abstractmethod
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
-from typing import cast as typing_cast
+from typing import TYPE_CHECKING, Any, Protocol
 
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.database.rules.exceptions import RuleViolationError
 
 if TYPE_CHECKING:
     from app.database import PostgresqlDB
@@ -14,7 +17,9 @@ if TYPE_CHECKING:
     from app.osu_api.client import OsuAPIClient
     from app.redis_client import RedisClient
 
-    MetadataProvider = Any
+    class MetadataProvider(Protocol):
+        @abstractmethod
+        async def resolve(self, context: ExecutionContext) -> dict[str, Any]: ...
 
 
 @dataclass
@@ -30,8 +35,8 @@ class ExecutionContext:
     osu_client: OsuAPIClient | None = None
     session: AsyncSession | None = None
     config: dict[str, Any] = field(default_factory=dict)
-    metadata_providers: dict[str, Any] | None = None
-    last_violation: Any = None
+    metadata_providers: Mapping[str, type[MetadataProvider]] | None = None
+    last_violation: RuleViolationError | None = None
     _provider_cache: dict[str, dict[str, Any]] = field(default_factory=dict)
 
     async def get_metadata(self, provider_name: str) -> dict[str, Any]:
@@ -46,9 +51,8 @@ class ExecutionContext:
 
         provider_cls = self.metadata_providers[provider_name]
         provider = provider_cls()
-        result = await provider.resolve(self)
-        self._provider_cache[provider_name] = result
-        return typing_cast(dict[str, Any], result)
+        self._provider_cache[provider_name] = result = await provider.resolve(self)
+        return result
 
     def invalidate_metadata(self, provider_name: str | None = None) -> None:
         if provider_name is None:
@@ -58,7 +62,7 @@ class ExecutionContext:
 
 
 def parse_osu_beatmapset(
-    beatmapset_dict: dict[str, Any],
+    beatmapset_dict: BeatmapsetOsuApiSchema | dict[str, Any],
 ) -> tuple[BeatmapsetOsuApiSchema, list[BeatmapOsuApiSchema]]:
     """Convert a raw osu! API beatmapset dict into the typed objects validators expect.
 

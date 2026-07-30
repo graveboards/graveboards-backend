@@ -1,6 +1,6 @@
 from __future__ import annotations
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from sqlalchemy.dialects.postgresql.array import ARRAY
 from sqlalchemy.dialects.postgresql.json import JSONB
@@ -8,6 +8,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import mapped_column, relationship
 from sqlalchemy.orm.base import Mapped
 from sqlalchemy.sql import select
+from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.sql.schema import ForeignKey, UniqueConstraint
 from sqlalchemy.sql.sqltypes import Boolean, Float, Integer, String
 
@@ -126,7 +127,7 @@ class BeatmapsetSnapshot(Base):
 
     @availability_download_disabled.expression
     @classmethod
-    def _availability_download_disabled_expr(cls) -> Any:
+    def _availability_download_disabled_expr(cls) -> ColumnElement:
         from app.database.ctes.bms_ss.availability import availability_download_disabled_cte
 
         return (
@@ -142,7 +143,7 @@ class BeatmapsetSnapshot(Base):
 
     @availability_more_information.expression
     @classmethod
-    def _availability_more_information_expr(cls) -> Any:
+    def _availability_more_information_expr(cls) -> ColumnElement:
         from app.database.ctes.bms_ss.availability import availability_more_information_cte
 
         return (
@@ -157,7 +158,7 @@ class BeatmapsetSnapshot(Base):
 
     @description_description.expression
     @classmethod
-    def _description_description_expr(cls) -> Any:
+    def _description_description_expr(cls) -> ColumnElement:
         from app.database.ctes.bms_ss.description import description_description_cte
 
         return (
@@ -175,7 +176,7 @@ class BeatmapsetSnapshot(Base):
 
     @genre_id.expression
     @classmethod
-    def _genre_id_expr(cls) -> Any:
+    def _genre_id_expr(cls) -> ColumnElement:
         from app.database.ctes.bms_ss.genre import genre_id_cte
 
         return (
@@ -193,7 +194,7 @@ class BeatmapsetSnapshot(Base):
 
     @genre_name.expression
     @classmethod
-    def _genre_name_expr(cls) -> Any:
+    def _genre_name_expr(cls) -> ColumnElement:
         from app.database.ctes.bms_ss.genre import genre_name_cte
 
         return (
@@ -211,7 +212,7 @@ class BeatmapsetSnapshot(Base):
 
     @hype_current.expression
     @classmethod
-    def _hype_current_expr(cls) -> Any:
+    def _hype_current_expr(cls) -> ColumnElement:
         from app.database.ctes.bms_ss.hype import hype_current_cte
 
         return (
@@ -229,7 +230,7 @@ class BeatmapsetSnapshot(Base):
 
     @hype_required.expression
     @classmethod
-    def _hype_required_expr(cls) -> Any:
+    def _hype_required_expr(cls) -> ColumnElement:
         from app.database.ctes.bms_ss.hype import hype_required_cte
 
         return (
@@ -247,7 +248,7 @@ class BeatmapsetSnapshot(Base):
 
     @language_id.expression
     @classmethod
-    def _language_id_expr(cls) -> Any:
+    def _language_id_expr(cls) -> ColumnElement:
         from app.database.ctes.bms_ss.language import language_id_cte
 
         return (
@@ -265,7 +266,7 @@ class BeatmapsetSnapshot(Base):
 
     @language_name.expression
     @classmethod
-    def _language_name_expr(cls) -> Any:
+    def _language_name_expr(cls) -> ColumnElement:
         from app.database.ctes.bms_ss.language import language_name_cte
 
         return (
@@ -294,7 +295,7 @@ class BeatmapsetSnapshot(Base):
 
     @nominations_summary_current.expression
     @classmethod
-    def _nominations_summary_current_expr(cls) -> Any:
+    def _nominations_summary_current_expr(cls) -> ColumnElement:
         from app.database.ctes.bms_ss.nominations_summary import nominations_summary_current_cte
 
         return (
@@ -309,7 +310,7 @@ class BeatmapsetSnapshot(Base):
 
     @nominations_summary_required_meta_main_ruleset.expression
     @classmethod
-    def _nominations_summary_required_meta_main_ruleset_expr(cls) -> Any:
+    def _nominations_summary_required_meta_main_ruleset_expr(cls) -> ColumnElement:
         from app.database.ctes.bms_ss.nominations_summary import (
             nominations_summary_required_meta_main_ruleset_cte,
         )
@@ -329,7 +330,7 @@ class BeatmapsetSnapshot(Base):
 
     @nominations_summary_required_meta_non_main_ruleset.expression
     @classmethod
-    def _nominations_summary_required_meta_non_main_ruleset_expr(cls) -> Any:
+    def _nominations_summary_required_meta_non_main_ruleset_expr(cls) -> ColumnElement:
         from app.database.ctes.bms_ss.nominations_summary import (
             nominations_summary_required_meta_non_main_ruleset_cte,
         )
@@ -349,7 +350,7 @@ class BeatmapsetSnapshot(Base):
 
     @num_difficulties.expression
     @classmethod
-    def _num_difficulties_expr(cls) -> Any:
+    def _num_difficulties_expr(cls) -> ColumnElement:
         from app.database.ctes.bms_ss.num_difficulties import num_difficulties_cte
 
         return (
@@ -370,7 +371,7 @@ class BeatmapsetSnapshot(Base):
 
     @sr_gaps.expression
     @classmethod
-    def _sr_gaps_expr(cls) -> Any:
+    def _sr_gaps_expr(cls) -> ColumnElement:
         from app.database.ctes.bms_ss.sr_gap import sr_gap_agg_cte
 
         return (
@@ -385,7 +386,7 @@ class BeatmapsetSnapshot(Base):
 
     @sr_gaps_min.expression
     @classmethod
-    def _sr_gaps_min_expr(cls) -> Any:
+    def _sr_gaps_min_expr(cls) -> ColumnElement:
         from app.database.ctes.bms_ss.sr_gap import min_sr_gap_cte
 
         return (
@@ -400,7 +401,7 @@ class BeatmapsetSnapshot(Base):
 
     @sr_gaps_max.expression
     @classmethod
-    def _sr_gaps_max_expr(cls) -> Any:
+    def _sr_gaps_max_expr(cls) -> ColumnElement:
         from app.database.ctes.bms_ss.sr_gap import max_sr_gap_cte
 
         return (
@@ -415,7 +416,7 @@ class BeatmapsetSnapshot(Base):
 
     @sr_gaps_avg.expression
     @classmethod
-    def _sr_gaps_avg_expr(cls) -> Any:
+    def _sr_gaps_avg_expr(cls) -> ColumnElement:
         from app.database.ctes.bms_ss.sr_gap import avg_sr_gap_cte
 
         return (
@@ -433,7 +434,7 @@ class BeatmapsetSnapshot(Base):
 
     @hit_lengths.expression
     @classmethod
-    def _hit_lengths_expr(cls) -> Any:
+    def _hit_lengths_expr(cls) -> ColumnElement:
         from app.database.ctes.bms_ss.hit_length import hit_length_agg_cte
 
         return (
@@ -448,7 +449,7 @@ class BeatmapsetSnapshot(Base):
 
     @hit_lengths_min.expression
     @classmethod
-    def _hit_lengths_min_expr(cls) -> Any:
+    def _hit_lengths_min_expr(cls) -> ColumnElement:
         from app.database.ctes.bms_ss.hit_length import min_hit_length_cte
 
         return (
@@ -463,7 +464,7 @@ class BeatmapsetSnapshot(Base):
 
     @hit_lengths_max.expression
     @classmethod
-    def _hit_lengths_max_expr(cls) -> Any:
+    def _hit_lengths_max_expr(cls) -> ColumnElement:
         from app.database.ctes.bms_ss.hit_length import max_hit_length_cte
 
         return (
@@ -478,7 +479,7 @@ class BeatmapsetSnapshot(Base):
 
     @hit_lengths_avg.expression
     @classmethod
-    def _hit_lengths_avg_expr(cls) -> Any:
+    def _hit_lengths_avg_expr(cls) -> ColumnElement:
         from app.database.ctes.bms_ss.hit_length import avg_hit_length_cte
 
         return (

@@ -16,6 +16,8 @@ from dataclasses import dataclass
 from typing import Any
 from typing import cast as typing_cast
 
+from .fetcher import FixtureDataFetcher
+
 logger = logging.getLogger(__name__)
 
 # Rarity weights: how hard each bucket is to fill via random fetching.
@@ -114,7 +116,7 @@ class HeapEntry:
 
     priority_value: float
     sequence: int
-    action: Any
+    action: FetchAction
 
     def __lt__(self, other: HeapEntry) -> bool:
         return self.priority_value < other.priority_value
@@ -127,11 +129,11 @@ class CoverageTracker:
     and provides priority calculation for the adaptive fetch loop.
     """
 
-    def __init__(self, fetcher: Any, min_per_category: int = 1):
+    def __init__(self, fetcher: FixtureDataFetcher, min_per_category: int = 1):
         self.fetcher = fetcher
         self.min_per_category = min_per_category
 
-    def is_bucket_covered(self, bucket_key: str, category: Any = None) -> bool:
+    def is_bucket_covered(self, bucket_key: str, category: str | None = None) -> bool:
         """Check if a bucket meets the minimum coverage threshold."""
         attr = getattr(self.fetcher, bucket_key, None)
         if attr is None:
@@ -159,7 +161,7 @@ class CoverageTracker:
 
         return False
 
-    def bucket_urgency(self, bucket_key: str, category: Any = None) -> float:
+    def bucket_urgency(self, bucket_key: str, category: str | None = None) -> float:
         """Compute urgency weight for a bucket (0 = satisfied, >0 = needs work)."""
         if self.is_bucket_covered(bucket_key, category):
             return 0.0
@@ -246,7 +248,7 @@ class CoverageTracker:
 class SearchTestFetchAction:
     """Concrete fetch actions for the adaptive loop."""
 
-    def __init__(self, fetcher: Any):
+    def __init__(self, fetcher: FixtureDataFetcher):
         self.fetcher = fetcher
 
     async def fetch_beatmapsets(self) -> dict[str, set[int]]:
@@ -440,7 +442,7 @@ class SearchTestFetchAction:
         return {}
 
 
-def build_actions(fetcher: Any) -> list[FetchAction]:
+def build_actions(fetcher: FixtureDataFetcher) -> list[FetchAction]:
     """Build the list of fetch actions with their bucket mappings."""
     actions = []
 
@@ -536,15 +538,15 @@ def build_actions(fetcher: Any) -> list[FetchAction]:
 
 
 def _make_action(
-    fetcher: Any,
+    _fetcher: FixtureDataFetcher,
     name: str,
-    execute: Callable[[], Awaitable[Any]],
+    execute: Callable[[], Awaitable[dict[str, set[int]]]],
     affected_buckets: list[str],
     cost: int,
 ) -> FetchAction:
     """Create a fetch action with the required interface."""
 
-    async def executor() -> Any:
+    async def executor() -> dict[str, set[int]]:
         return await execute()
 
     return FetchAction(
@@ -556,7 +558,7 @@ def _make_action(
 
 
 async def adaptive_fetch_loop(
-    fetcher: Any,
+    fetcher: FixtureDataFetcher,
     min_per_category: int = 1,
     max_total: int = 500,
 ) -> dict[str, Any]:

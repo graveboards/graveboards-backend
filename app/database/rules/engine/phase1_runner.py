@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from connexion.exceptions import Forbidden
 
 from app.database.models import QueueRule
+from app.database.rules.context import ExecutionContext
 from app.database.rules.engine.evaluator import RuleNode, build_rule_node
 from app.database.rules.engine.stateful import STATEFUL_RULE_TYPES
 from app.database.rules.exceptions import RuleViolationError
@@ -18,7 +18,7 @@ class Phase1Runner:
     async def run(
         self,
         rules: list[QueueRule],
-        context: Any,
+        context: ExecutionContext,
     ) -> None:
         for rule in rules:
             if not rule.is_active:

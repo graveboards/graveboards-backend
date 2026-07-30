@@ -37,6 +37,10 @@ QUERY_MAX_LIMIT = 100
 QUERY_DEFAULT_LIMIT = 50
 SearchMode = Literal["simple", "engine"]
 
+type JoinTarget = type[Base] | tuple[type[Base], BinaryExpression]
+type JoinTargets = JoinTarget | Iterable[JoinTarget]
+type WhereClause = BinaryExpression | Iterable[BinaryExpression]
+
 MODEL_SCOPE_MAPPING = {
     model_class: scope
     for scope, model_class in SCOPE_MODEL_MAPPING.items()
@@ -50,8 +54,8 @@ class _R:
         model_class: ModelClass,
         session: AsyncSession,
         _select: str | Iterable[str] | None = None,
-        _join: Any | Iterable[Any] | None = None,
-        _where: Any | Iterable[Any] | None = None,
+        _join: JoinTargets | None = None,
+        _where: WhereClause | None = None,
         _sorting: Sorting | None = None,
         _filters: Filters | None = None,
         _search: str | None = None,
@@ -121,8 +125,8 @@ class _R:
         model_class: ModelClass,
         session: AsyncSession,
         _select: str | Iterable[str] | None = None,
-        _join: Any | Iterable[Any] | None = None,
-        _where: Any | Iterable[Any] | None = None,
+        _join: JoinTargets | None = None,
+        _where: WhereClause | None = None,
         _sorting: Sorting | None = None,
         _filters: Filters | None = None,
         _search: str | None = None,
@@ -215,9 +219,9 @@ class _R:
     def _construct_stmt(
         model_class: ModelClass,
         _select: str | Iterable[str] | None = None,
-        _join: Any | Iterable[Any] | None = None,
-        _where: Any | Iterable[Any] | None = None,
-        _sorting: Any | Iterable[Any] | None = None,
+        _join: JoinTargets | None = None,
+        _where: WhereClause | None = None,
+        _sorting: Sorting | None = None,
         _filters: Filters | None = None,
         _search: str | None = None,
         _search_mode: SearchMode = "simple",
@@ -355,10 +359,7 @@ class _R:
     @staticmethod
     def _apply_join(
         select_stmt: Select,
-        join: type[Base]
-        | tuple[type[Base], BinaryExpression]
-        | Iterable[type[Base]]
-        | Iterable[tuple[type[Base], BinaryExpression]],
+        join: JoinTargets,
     ) -> tuple[Select, dict[str, type[Base]]]:
         """Apply one or more JOIN clauses to a ``Select`` statement.
 
@@ -422,7 +423,7 @@ class _R:
         return select_stmt, joined_models
 
     @staticmethod
-    def _apply_where(select_stmt: Select, where: Any | Iterable[Any]) -> Select:
+    def _apply_where(select_stmt: Select, where: WhereClause) -> Select:
         """Apply WHERE clause expressions to a ``Select`` statement.
 
         Args:
@@ -885,8 +886,8 @@ class R(_R):
         model: type[BaseType],
         session: AsyncSession | None = None,
         _select: str | Iterable[str] | None = None,
-        _join: Any | Iterable[Any] | None = None,
-        _where: Any | Iterable[Any] | None = None,
+        _join: JoinTargets | None = None,
+        _where: WhereClause | None = None,
         _sorting: Sorting | None = None,
         _filters: Filters | None = None,
         _search: str | None = None,
@@ -959,8 +960,8 @@ class R(_R):
         model: type[BaseType],
         session: AsyncSession | None = None,
         _select: str | Iterable[str] | None = None,
-        _join: Any | Iterable[Any] | None = None,
-        _where: Any | Iterable[Any] | None = None,
+        _join: JoinTargets | None = None,
+        _where: WhereClause | None = None,
         _sorting: Sorting | None = None,
         _filters: Filters | None = None,
         _search: str | None = None,

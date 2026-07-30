@@ -3,11 +3,11 @@ from __future__ import annotations
 import asyncio
 import logging
 from enum import Enum
-from typing import Any
 
 from connexion.exceptions import Forbidden
 
 from app.database.models import QueueRule
+from app.database.rules.context import ExecutionContext
 from app.database.rules.engine.evaluator import RuleNode, build_rule_node
 from app.database.rules.exceptions import RetryableValidationError, RuleViolationError
 from app.database.rules.registry import effective_rule_tier
@@ -29,7 +29,7 @@ class Phase2Runner:
     async def run(
         self,
         rules: list[QueueRule],
-        context: Any,
+        context: ExecutionContext,
     ) -> list[str]:
         """Run Tier-3 validators and return the rule types that rejected the request.
 
@@ -76,7 +76,7 @@ class Phase2Runner:
     async def _validate_one(
         self,
         rule: QueueRule,
-        context: Any,
+        context: ExecutionContext,
     ) -> tuple[str, Tier3Outcome]:
         try:
             async with asyncio.timeout(TIER3_TIMEOUT):

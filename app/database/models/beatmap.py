@@ -1,10 +1,11 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import mapped_column, relationship
 from sqlalchemy.orm.base import Mapped
 from sqlalchemy.sql import select
+from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.sql.functions import func
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import Integer
@@ -36,7 +37,7 @@ class Beatmap(Base):
 
     @num_snapshots.expression
     @classmethod
-    def _num_snapshots_expr(cls) -> Any:
+    def _num_snapshots_expr(cls) -> ColumnElement:
         return (
             select(func.count(BeatmapSnapshot.id))
             .where(BeatmapSnapshot.beatmap_id == cls.id)
