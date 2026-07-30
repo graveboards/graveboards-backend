@@ -44,7 +44,7 @@ class RedisClient(AsyncRedis):
         start = time.perf_counter()
 
         try:
-            result = await super().execute_command(*args, **kwargs)
+            result = await super().execute_command(*args, **kwargs)  # type: ignore[no-untyped-call]
             redis_commands_total.labels(command=command_name, status="success").inc()
 
             if command_name == "GET" and result is not None:
