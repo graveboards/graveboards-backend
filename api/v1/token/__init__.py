@@ -103,8 +103,8 @@ async def post(
     await db.add(
         OAuthToken,
         user_id=user_id,
-        access_token_enc=encrypt_token(access_token),
-        refresh_token_enc=encrypt_token(refresh_token),
+        access_token_enc=encrypt_token(str(access_token)),
+        refresh_token_enc=encrypt_token(str(refresh_token)),
         expires_at=aware_utcnow(),
     )
 

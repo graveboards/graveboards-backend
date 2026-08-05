@@ -125,7 +125,7 @@ class QueueRequestHandler(ScheduledService):
             rules_snapshot=rules_snapshot,
         )
         task_hash_name = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(task.hashed_id)  # type: ignore[arg-type]
-        await self._rc.hset(task_hash_name, mapping=task.serialize())  # type: ignore[arg-type]
+        await self._rc.hset(task_hash_name, mapping=task.serialize())
         await self._rc.publish(ChannelName.QUEUE_REQUEST_VALIDATION_TASKS.value, task.hashed_id)  # type: ignore[arg-type]
 
     async def _snapshot_active_rules(self, queue_id: int) -> str:

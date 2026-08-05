@@ -1,10 +1,12 @@
+"""Async Redis client with command instrumentation and distributed locking."""
+
 from __future__ import annotations
+
 import asyncio
 import secrets
 import time
-from collections.abc import AsyncIterator, Generator
 from contextlib import asynccontextmanager, contextmanager
-from typing import Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from redis import Redis
 from redis.asyncio import Redis as AsyncRedis
@@ -20,6 +22,11 @@ from app.observability.metrics.redis import (
 )
 
 from .constants import LOCK_ACQUISITION_RETRY_INTERVAL, LOCK_ACQUISITION_TIMEOUT, LOCK_EXPIRY
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator, Generator, Mapping, Sequence
+
+    from redis.typing import EncodableT, FieldT, KeyT
 
 __all__ = ["RedisClient", "redis_connection"]
 
@@ -40,6 +47,17 @@ class RedisClient(AsyncRedis):
         logger.debug(f"Redis client initialized at '{REDIS_BASE_URL}'")
 
     async def execute_command(self, *args: Any, **kwargs: Any) -> Any:
+        """Execute a Redis command with Prometheus metrics instrumentation.
+
+        Args:
+            *args:
+                Command arguments.
+            **kwargs:
+                Command keyword arguments.
+
+        Returns:
+            The command result.
+        """
         command_name = args[0].upper() if args else "UNKNOWN"
         start = time.perf_counter()
 
@@ -60,6 +78,46 @@ class RedisClient(AsyncRedis):
             duration = time.perf_counter() - start
             redis_commands_duration_seconds.labels(command=command_name).observe(duration)
 
+    # redis-py types async commands as `Awaitable[T] | T` (shared stubs with the
+    # sync client). Since RedisClient is async-only, redeclare the commands used
+    # across the codebase with their resolved (awaited) return types so callers can
+    # `await` them directly. Parameter types mirror the base class exactly so the
+    # overrides stay Liskov-compatible.
+    async def hgetall(self, name: KeyT) -> dict[str | bytes, str | bytes]:
+        """Return the whole hash stored at ``name`` (awaited, typed)."""
+        return await super().hgetall(name)
+
+    async def hset(
+        self,
+        name: KeyT,
+        key: FieldT | None = None,
+        value: EncodableT | None = None,
+        mapping: Mapping[Any, Any] | None = None,
+        items: Sequence[EncodableT] | None = None,
+    ) -> int:
+        """Set one or more fields in the hash at ``name``; returns the field count."""
+        return await super().hset(name, key=key, value=value, mapping=mapping, items=items)
+
+    async def sismember(self, name: KeyT, value: str) -> Literal[0, 1]:
+        """Return whether ``value`` is a member of the set at ``name``."""
+        return await super().sismember(name, value)
+
+    async def sadd(self, name: KeyT, *values: FieldT) -> int:
+        """Add members to the set at ``name``; returns the number added."""
+        return await super().sadd(name, *values)
+
+    async def smembers(self, name: KeyT) -> set[str | bytes]:
+        """Return all members of the set at ``name``."""
+        return await super().smembers(name)
+
+    async def eval(self, script: str, numkeys: int, *keys_and_args: KeyT | EncodableT) -> Any:
+        """Evaluate a Lua script server-side."""
+        return await super().eval(script, numkeys, *keys_and_args)
+
+    async def ping(self, **kwargs: Any) -> bool:
+        """Ping the Redis server; returns True when reachable."""
+        return await super().ping(**kwargs)
+
     async def paginate_scan(
         self, pattern: str, limit: int | None = None, offset: int = 0, type_: str | None = None
     ) -> list[str]:
@@ -79,6 +137,7 @@ class RedisClient(AsyncRedis):
                 Optional Redis type filter.
 
         Returns:
+        -------
             A list of matching Redis keys.
         """
         keys = []
@@ -121,9 +180,11 @@ class RedisClient(AsyncRedis):
                 Delay between retry attempts.
 
         Yields:
+        ------
             ``None``.
 
         Raises:
+        ------
             RedisLockTimeoutError:
                 If the lock cannot be acquired in time.
         """
@@ -158,6 +219,7 @@ def redis_connection() -> Generator[Redis, Any]:
     """Provide a synchronous Redis connection from the shared pool.
 
     Yields:
+    ------
         Redis: A Redis client instance.
     """
     from .pool import connection_pool

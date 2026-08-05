@@ -172,7 +172,7 @@ async def post(
     reservations = await reserve_stateful_rules(active_rules, rule_context)
 
     try:
-        await rc.hset(task_hash_name, mapping=task.serialize())  # type: ignore[arg-type]
+        await rc.hset(task_hash_name, mapping=task.serialize())
         logger.debug(
             f"POST /requests: stored task at {task_hash_name}, publishing to {ChannelName.QUEUE_REQUEST_HANDLER_TASKS.value}"
         )

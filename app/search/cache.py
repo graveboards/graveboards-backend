@@ -75,5 +75,5 @@ class SearchCache:
     async def invalidate_scope(self, scope: Scope) -> None:
         """Invalidate all cached results for a scope (on data changes)."""
         pattern = f"{self.CACHE_PREFIX}:{scope.value}:*"
-        async for key in self.rc.scan(match=pattern):  # type: ignore[attr-defined]
+        async for key in self.rc.scan_iter(match=pattern):
             await self.rc.delete(key)

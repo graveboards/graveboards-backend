@@ -2,6 +2,7 @@ from __future__ import annotations
 import httpx
 from authlib.integrations.httpx_client import AsyncOAuth2Client
 from authlib.oauth2.rfc6749.wrappers import OAuth2Token
+from typing import cast
 
 from .config import OAUTH_CONFIGURATION
 
@@ -24,4 +25,4 @@ class OAuth(AsyncOAuth2Client):
         return result[0], result[1]
 
     async def fetch_token(self, *args: str, **kwargs: str) -> OAuth2Token:
-        return await super().fetch_token(self.token_endpoint, *args, **kwargs)
+        return cast(OAuth2Token, await super().fetch_token(self.token_endpoint, *args, **kwargs))

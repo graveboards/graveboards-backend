@@ -130,7 +130,7 @@ class OsuAPIClientBase:
                 )
                 token = OsuClientOAuthToken.model_validate(token_dict)
                 await self.rc.hset(
-                    Namespace.OSU_CLIENT_OAUTH_TOKEN.value, mapping=token.serialize()  # type: ignore[arg-type]
+                    Namespace.OSU_CLIENT_OAUTH_TOKEN.value, mapping=token.serialize()
                 )
                 self._token = token
                 return
