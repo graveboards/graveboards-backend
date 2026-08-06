@@ -1,12 +1,18 @@
-from __future__ import annotations
-from typing import ClassVar
+"""Daemon entry point and service registration."""
 
-from app.database import PostgresqlDB
-from app.observability.logging import Logger, get_logger
-from app.redis_client import RedisClient
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, ClassVar
+
+from app.observability.logging import get_logger
 
 from .services import ProfileFetcher, QueueRequestHandler, RuleValidationService, ScoreFetcher
 from .supervisor import ServiceSupervisor
+
+if TYPE_CHECKING:
+    from app.database import PostgresqlDB
+    from app.observability.logging import Logger
+    from app.redis_client import RedisClient
 
 
 class Daemon(ServiceSupervisor):

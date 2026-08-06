@@ -1,4 +1,7 @@
+"""CRUD mixins composing the unified database interface."""
+
 from __future__ import annotations
+
 from sqlalchemy.sql import select, text
 
 from app.database.models import Base, ModelClass
@@ -23,15 +26,15 @@ __all__ = [
     "CRUD",
     "C",
     "D",
+    "DatabaseProtocol",
+    "Misc",
+    "R",
     "SessionResolver",
+    "U",
     "db_session_resolver",
     "ensure_required",
     "session_manager",
     "session_manager_stream",
-    "Misc",
-    "DatabaseProtocol",
-    "R",
-    "U",
 ]
 
 logger = get_logger(__name__)
@@ -55,20 +58,24 @@ class CRUD(C, R, U, D, Misc, DatabaseProtocol):
     """
 
     async def create_database(self) -> None:
+        """Create all tables from the metadata."""
         async with self.engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
     async def recreate_database(self) -> None:
+        """Drop and re-create all tables from the metadata."""
         async with self.engine.begin() as conn:
             await conn.run_sync(Base.metadata.drop_all)
             await conn.run_sync(Base.metadata.create_all)
 
     async def force_clear_database(self) -> None:
+        """Drop and re-create the ``public`` schema, wiping all data."""
         async with self.engine.begin() as conn:
             await conn.execute(text("DROP SCHEMA public CASCADE"))
             await conn.execute(text("CREATE SCHEMA public"))
 
     async def is_empty(self) -> bool:
+        """Return whether every table has no rows."""
         async with self.session() as session:
             for model_class in ModelClass:
                 stmt = select(model_class.value).limit(1)

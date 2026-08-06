@@ -1,4 +1,7 @@
+"""CTE projecting the full text description of beatmapset snapshots."""
+
 from __future__ import annotations
+
 from sqlalchemy.sql import select
 
 from app.database.models import BeatmapsetSnapshot

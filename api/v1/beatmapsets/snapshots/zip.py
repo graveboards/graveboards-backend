@@ -1,13 +1,21 @@
+"""Serve zip downloads for beatmapset snapshots."""
+
 from __future__ import annotations
-from starlette.requests import Request
+
+from typing import TYPE_CHECKING
+
 from starlette.responses import StreamingResponse
-from api.http_types import APIResponse
 
 from api.decorators import coerce_arguments
 from app.beatmaps import BeatmapManager
-from app.database import PostgresqlDB
 from app.exceptions import NotFound
-from app.redis_client import RedisClient
+
+if TYPE_CHECKING:
+    from starlette.requests import Request
+
+    from api.http_types import APIResponse
+    from app.database import PostgresqlDB
+    from app.redis_client import RedisClient
 from app.utils import stream_file
 
 __all__ = ["search"]
@@ -15,6 +23,11 @@ __all__ = ["search"]
 
 @coerce_arguments(snapshot_number={"latest": -1})
 async def search(request: Request, beatmapset_id: int, snapshot_number: int = -1) -> APIResponse:
+    """Serve a zip download for a beatmapset snapshot.
+
+    Returns:
+        Tuple of (streaming response, status code, headers).
+    """
     rc: RedisClient = request.state.rc
     db: PostgresqlDB = request.state.db
 

@@ -1,16 +1,15 @@
+"""CTEs aggregating per-field search-term scores for relevance ranking."""
+
 from __future__ import annotations
+
 from collections import defaultdict
-from collections.abc import Generator
+from typing import TYPE_CHECKING
 
 from sqlalchemy.sql import cast, select, union_all
 from sqlalchemy.sql.elements import literal
 from sqlalchemy.sql.functions import func
-from sqlalchemy.sql.schema import Table
-from sqlalchemy.sql.selectable import CTE, CompoundSelect, FromClause, Select
 from sqlalchemy.sql.sqltypes import Integer, String
 
-from app.search.datastructures import SearchTermsSchema
-from app.search.enums import Scope, SearchableFieldCategory
 from app.search.mappings import (
     CATEGORY_FIELD_GROUPS_MAPPING,
     CATEGORY_MODEL_FIELDS_MAPPING,
@@ -19,6 +18,15 @@ from app.search.mappings import (
 
 from .hashable_cte import HashableCTE
 from .utils import extract_cte_target_scalar
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from sqlalchemy.sql.schema import Table
+    from sqlalchemy.sql.selectable import CTE, CompoundSelect, FromClause, Select
+
+    from app.search.datastructures import SearchTermsSchema
+    from app.search.enums import Scope, SearchableFieldCategory
 
 
 def search_terms_scored_ctes_factory(
@@ -42,6 +50,7 @@ def search_terms_scored_ctes_factory(
             Parsed search configuration including weights and multipliers.
 
     Returns:
+    -------
         A mapping of category to aggregated scoring CTE.
     """
     category_score_stmts: dict[SearchableFieldCategory, list[Select]] = defaultdict(list)
@@ -98,6 +107,7 @@ def _generate_term_score_stmts(
             Parsed search configuration with weights and multipliers.
 
     Yields:
+    ------
         Tuples of (category, SELECT) where each SELECT returns id, field, term, pattern,
         score.
     """
@@ -191,6 +201,7 @@ def _process_field_groups(
             Mapping of category to grouping definitions.
 
     Returns:
+    -------
         A ``CompoundSelect`` with grouping logic applied.
     """
     if not (field_groups := field_groups_config.get(category, {})):
@@ -254,6 +265,7 @@ def aggregated_child_scores_to_parent_cte_factory(
             Name for the resulting CTE.
 
     Returns:
+    -------
         A parent-level aggregated scoring CTE.
     """
     exploded = (

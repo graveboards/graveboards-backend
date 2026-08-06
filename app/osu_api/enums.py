@@ -1,23 +1,33 @@
+"""osu! API enumerations for endpoints, score types, and metadata."""
+
 from __future__ import annotations
+
 from enum import Enum, IntEnum
 
 __all__ = [
     "APIEndpoint",
-    "ScoreType",
-    "Ruleset",
-    "ProfilePage",
-    "RankedInt",
-    "RankedStatus",
     "GenreId",
     "GenreName",
     "LanguageId",
     "LanguageName",
+    "ProfilePage",
+    "RankedInt",
+    "RankedStatus",
+    "Ruleset",
+    "ScoreType",
 ]
 
 API_BASEURL = "https://osu.ppy.sh/api/v2"
 
 
 class APIEndpoint(Enum):
+    """osu! API v2 endpoint URLs.
+
+    Attributes:
+        value:
+            The full API URL with optional path parameters.
+    """
+
     # Beatmaps
     BEATMAP_PACKS = API_BASEURL + "/beatmaps/packs"
     BEATMAP_LOOKUP = API_BASEURL + "/beatmaps/lookup"
@@ -46,6 +56,17 @@ class APIEndpoint(Enum):
     TAGS = API_BASEURL + "/tags"
 
     def format(self, *args: str, **kwargs: str) -> str:
+        """Format the endpoint URL with provided path parameters.
+
+        Args:
+            *args:
+                Positional path parameters.
+            **kwargs:
+                Named path parameters.
+
+        Returns:
+            The formatted URL with trailing slash removed.
+        """
         args = tuple(arg or "" for arg in args)
         kwargs = {key: value or "" for key, value in kwargs.items()}
 
@@ -53,12 +74,21 @@ class APIEndpoint(Enum):
 
 
 class ScoreType(Enum):
+    """Score display types for user score queries."""
+
     BEST = "best"
     FIRSTS = "firsts"
     RECENT = "recent"
 
 
 class Ruleset(Enum):
+    """osu! game modes.
+
+    Attributes:
+        value:
+            The lowercase mode identifier.
+    """
+
     FRUITS = "fruits"
     MANIA = "mania"
     OSU = "osu"
@@ -66,11 +96,25 @@ class Ruleset(Enum):
 
     @property
     def mode_int(self) -> int:
+        """Return the integer mode ID for this ruleset.
+
+        Returns:
+            The mode integer (osu=0, taiko=1, fruits=2, mania=3).
+        """
         # Canonical osu! mode ordering: osu=0, taiko=1, fruits=2, mania=3.
         return _RULESET_MODE_INT[self]
 
     @classmethod
     def to_mode_int(cls, ruleset: str | Ruleset) -> int:
+        """Convert a ruleset name or instance to its integer mode ID.
+
+        Args:
+            ruleset:
+                A ruleset name string or Ruleset enum member.
+
+        Returns:
+            The integer mode ID.
+        """
         if isinstance(ruleset, str):
             ruleset = cls(ruleset)
         return ruleset.mode_int
@@ -85,6 +129,8 @@ _RULESET_MODE_INT = {
 
 
 class ProfilePage(Enum):
+    """osu! profile page types."""
+
     ME = "me"
     RECENT_ACTIVITY = "recent_activity"
     BEATMAPS = "beatmaps"
@@ -95,6 +141,8 @@ class ProfilePage(Enum):
 
 
 class RankedInt(IntEnum):
+    """Integer representation of beatmap ranked statuses."""
+
     GRAVEYARD = -2
     WIP = -1
     PENDING = 0
@@ -105,6 +153,8 @@ class RankedInt(IntEnum):
 
 
 class RankedStatus(Enum):
+    """String representation of beatmap ranked statuses."""
+
     GRAVEYARD = "graveyard"
     WIP = "wip"
     PENDING = "pending"
@@ -115,6 +165,8 @@ class RankedStatus(Enum):
 
 
 class GenreId(IntEnum):
+    """Integer genre IDs for beatmap filtering."""
+
     ANY = 0
     UNSPECIFIED = 1
     VIDEO_GAME = 2
@@ -133,6 +185,8 @@ class GenreId(IntEnum):
 
 
 class GenreName(Enum):
+    """String genre names for beatmap filtering."""
+
     ANY = "Any"
     UNSPECIFIED = "Unspecified"
     VIDEO_GAME = "Video Game"
@@ -150,6 +204,8 @@ class GenreName(Enum):
 
 
 class LanguageId(IntEnum):
+    """Integer language IDs for beatmap filtering."""
+
     ANY = 0
     UNSPECIFIED = 1
     ENGLISH = 2
@@ -168,6 +224,8 @@ class LanguageId(IntEnum):
 
 
 class LanguageName(Enum):
+    """String language names for beatmap filtering."""
+
     ANY = "Any"
     UNSPECIFIED = "Unspecified"
     ENGLISH = "English"

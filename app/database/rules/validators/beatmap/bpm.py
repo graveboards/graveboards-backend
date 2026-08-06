@@ -1,13 +1,20 @@
+"""BPM range restriction for ranked-beatmap submission."""
+
 from __future__ import annotations
-from typing import override
+
+from typing import TYPE_CHECKING, override
 
 from app.database.rules.base import BeatmapRestrictionBase
-from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError
 from app.database.schemas.rule import BPMConfig
 
+if TYPE_CHECKING:
+    from app.database.rules.context import ExecutionContext
+
 
 class BPMRestriction(BeatmapRestrictionBase):
+    """Enforce minimum/maximum BPM across the set's beatmaps."""
+
     type = "beatmap_bpm"
     config_schema = BPMConfig
 

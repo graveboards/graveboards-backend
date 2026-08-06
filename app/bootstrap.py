@@ -1,4 +1,7 @@
+"""Database bootstrap and initial data seeding."""
+
 from __future__ import annotations
+
 import hashlib
 import secrets
 from datetime import timedelta
@@ -165,15 +168,15 @@ class SetupRunner:
                 }
             )
 
-        for extra in self.config.extra_queues:
-            if extra.user_id:
-                queue_data.append(
-                    {
-                        "user_id": extra.user_id,
-                        "name": extra.name,
-                        "description": extra.description,
-                    }
-                )
+        queue_data.extend(
+            {
+                "user_id": extra.user_id,
+                "name": extra.name,
+                "description": extra.description,
+            }
+            for extra in self.config.extra_queues
+            if extra.user_id
+        )
 
         if queue_data:
             await self.db.add_many(Queue, *queue_data)
@@ -187,6 +190,7 @@ class SetupRunner:
         deleted as they will be re-submitted if needed.
 
         Returns:
+        -------
             Number of tasks cleaned up.
         """
         logger = get_logger(__name__)

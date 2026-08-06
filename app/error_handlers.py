@@ -1,10 +1,20 @@
+"""Connexion error handlers for the application."""
+
 from __future__ import annotations
-from connexion.exceptions import BadRequestProblem, Forbidden, InternalServerError, Unauthorized
-from connexion.lifecycle import ConnexionRequest, ConnexionResponse
+
+from typing import TYPE_CHECKING
+
 from connexion.problem import problem
 
-from app.database.rules.exceptions import RuleViolationError
 from app.observability.metrics.error import errors_total
+
+if TYPE_CHECKING:
+    from connexion.exceptions import BadRequestProblem, InternalServerError, Unauthorized
+    from connexion.lifecycle import ConnexionRequest, ConnexionResponse
+
+    from app.database.rules.exceptions import RuleViolationError
+
+from connexion.exceptions import Forbidden
 
 
 def _get_endpoint(request: ConnexionRequest) -> str:
@@ -17,7 +27,7 @@ def _get_endpoint(request: ConnexionRequest) -> str:
     return "<unmatched>"
 
 
-def _track_error(request: ConnexionRequest, status_code: int, error_type: str) -> None:
+def _track_error(request: ConnexionRequest, _status_code: int, error_type: str) -> None:
     endpoint = _get_endpoint(request)
 
     errors_total.labels(
@@ -27,24 +37,28 @@ def _track_error(request: ConnexionRequest, status_code: int, error_type: str) -
 
 
 def forbidden(request: ConnexionRequest, exc: Exception | Forbidden) -> ConnexionResponse:
+    """Handle 403 Forbidden errors."""
     _track_error(request, 403, "forbidden")
     detail = exc.detail if isinstance(exc, Forbidden) else str(exc)
     return problem(status=403, title="Forbidden", detail=detail, type="about:blank")
 
 
 def bad_request(request: ConnexionRequest, exc: Exception | BadRequestProblem) -> ConnexionResponse:
+    """Handle 400 Bad Request errors."""
     _track_error(request, 400, "bad_request")
     return problem(status=400, title="Bad Request", detail=str(exc), type="about:blank")
 
 
 def unauthorized(request: ConnexionRequest, exc: Exception | Unauthorized) -> ConnexionResponse:
+    """Handle 401 Unauthorized errors."""
     _track_error(request, 401, "unauthorized")
     return problem(status=401, title="Unauthorized", detail=str(exc), type="about:blank")
 
 
 def internal_error(
-    request: ConnexionRequest, exc: Exception | InternalServerError
+    request: ConnexionRequest, _exc: Exception | InternalServerError
 ) -> ConnexionResponse:
+    """Handle 500 Internal Server Error."""
     _track_error(request, 500, "internal_server_error")
     return problem(
         status=500,
@@ -57,6 +71,7 @@ def internal_error(
 def rule_violation(
     request: ConnexionRequest, exc: Exception | RuleViolationError
 ) -> ConnexionResponse:
+    """Handle 422 Rule Violation errors."""
     _track_error(request, 422, "rule_violation")
     rule_type = getattr(exc, "type", "rule")
     reason = getattr(exc, "detail", str(exc))

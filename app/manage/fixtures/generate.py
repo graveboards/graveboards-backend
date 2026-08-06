@@ -1,4 +1,12 @@
 from __future__ import annotations
+
+from rich.console import Console
+from rich.table import Table
+
+from app.config import PROJECT_ROOT
+from app.fixtures.queue_request_generator import QueueRequestFixtureGenerator
+from app.observability.logging import get_logger
+
 """CLI command to generate queue and request fixtures.
 
 Generates diverse queue and request fixtures for testing the search
@@ -12,13 +20,6 @@ Examples:
     manage fixtures generate
     manage fixtures generate --queue-count 10 --request-count 100
 """
-
-from rich.console import Console
-from rich.table import Table
-
-from app.config import PROJECT_ROOT
-from app.fixtures.queue_request_generator import QueueRequestFixtureGenerator
-from app.observability.logging import get_logger
 
 console = Console()
 logger = get_logger(__name__)

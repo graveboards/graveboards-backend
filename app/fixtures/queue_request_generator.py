@@ -1,4 +1,3 @@
-from __future__ import annotations
 """Queue and Request fixture generator for search engine testing.
 
 Generates diverse queue and request fixtures to enable comprehensive
@@ -15,16 +14,21 @@ constraint on those columns. Each request's user_id is set to the owner
 of the requested beatmapset.
 """
 
+from __future__ import annotations
+
 import json
 import random
 from datetime import UTC, datetime, timedelta
 from itertools import product
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from app.config import PROJECT_ROOT
 from app.fixtures.bn_queue_comments import BN_QUEUE_COMMENTS as REQUEST_COMMENTS
 from app.fixtures.metadata_io import load_metadata, save_metadata
 from app.fixtures.queue_metadata import QUEUE_DESCRIPTIONS, QUEUE_NAMES
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 QUEUE_FIXTURES_PATH = PROJECT_ROOT / "instance" / "fixtures" / "queues"
 REQUEST_FIXTURES_PATH = PROJECT_ROOT / "instance" / "fixtures" / "requests"
@@ -98,7 +102,7 @@ class QueueRequestFixtureGenerator:
         for f in bms_path.glob("beatmapset_*.json"):
             try:
                 bid = int(f.stem.split("_")[1])
-                with open(f) as fh:
+                with f.open() as fh:
                     data = json.load(fh)
                 if "user_id" in data:
                     owners[bid] = data["user_id"]
@@ -147,6 +151,7 @@ class QueueRequestFixtureGenerator:
         owner of the requested beatmapset.
 
         Raises:
+        ------
             ValueError: If count exceeds the number of available (queue, beatmapset) pairs.
         """
         if not queues:
@@ -203,7 +208,7 @@ class QueueRequestFixtureGenerator:
             serializable_queue = {
                 k: v.isoformat() if isinstance(v, datetime) else v for k, v in queue.items()
             }
-            with open(filepath, "w") as f:
+            with filepath.open("w") as f:
                 json.dump(serializable_queue, f, indent=2)
 
         metadata = load_metadata()
@@ -222,7 +227,7 @@ class QueueRequestFixtureGenerator:
             serializable_request = {
                 k: v.isoformat() if isinstance(v, datetime) else v for k, v in request.items()
             }
-            with open(filepath, "w") as f:
+            with filepath.open("w") as f:
                 json.dump(serializable_request, f, indent=2)
 
         metadata = load_metadata()

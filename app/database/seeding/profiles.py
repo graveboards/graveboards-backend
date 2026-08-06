@@ -1,4 +1,3 @@
-from __future__ import annotations
 """Seeding profiles for configuring default fixture counts.
 
 Profiles define the default counts for fetching/generating fixtures,
@@ -10,6 +9,8 @@ Usage:
     profile = get_profile("default")
     print(profile.beatmapsets_count)  # 30
 """
+
+from __future__ import annotations
 
 from dataclasses import dataclass
 

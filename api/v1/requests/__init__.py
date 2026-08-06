@@ -1,14 +1,20 @@
+"""Re-exports for the requests v1 API."""
+
 from __future__ import annotations
-from typing import Any
+
+from typing import TYPE_CHECKING, Any
 
 from connexion.exceptions import Forbidden
-from starlette.requests import Request as StarletteRequest
-from api.http_types import APIResponse
 from structlog.contextvars import get_contextvars
 
 from api.decorators import api_query
 from api.utils import bleach_body, build_pydantic_include
-from app.database import PostgresqlDB
+
+if TYPE_CHECKING:
+    from starlette.requests import Request as StarletteRequest
+
+    from api.http_types import APIResponse
+    from app.database import PostgresqlDB
 from app.database.enums import RoleName
 from app.database.models import ModelClass, Queue, Request
 from app.database.roles import is_admin
@@ -33,7 +39,7 @@ from app.spec import get_include_schema
 
 from . import tasks
 
-__all__ = ["search", "get", "post", "patch", "delete", "tasks"]
+__all__ = ["delete", "get", "patch", "post", "search", "tasks"]
 
 _METADATA_PROVIDERS = {
     "song_identity": SongIdentityProvider,
@@ -46,10 +52,15 @@ logger = get_logger(__name__)
 
 
 @api_query(ModelClass.REQUEST, many=True)
-async def search(request: StarletteRequest, **kwargs: Any) -> APIResponse:
+async def search(request: StarletteRequest, **_kwargs: Any) -> APIResponse:
+    """Search for queue requests.
+
+    Returns:
+        Tuple of (requests data, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
 
-    requests = await db.get_many(Request, **kwargs)
+    requests = await db.get_many(Request, **_kwargs)
 
     if not requests:
         return [], 200, {"Content-Type": "application/json"}
@@ -57,7 +68,7 @@ async def search(request: StarletteRequest, **kwargs: Any) -> APIResponse:
     include = build_pydantic_include(
         obj=requests[0],
         include_schema=get_include_schema(ModelClass.REQUEST),
-        request_include=kwargs.get("_include"),
+        request_include=_kwargs.get("_include"),
     )
 
     requests_data = [
@@ -72,10 +83,15 @@ async def search(request: StarletteRequest, **kwargs: Any) -> APIResponse:
     resource_model=Request,
 )
 @api_query(ModelClass.REQUEST)
-async def get(request: StarletteRequest, request_id: int, **kwargs: Any) -> APIResponse:
+async def get(request: StarletteRequest, request_id: int, **_kwargs: Any) -> APIResponse:
+    """Get a single request by ID.
+
+    Returns:
+        Tuple of (request data, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
 
-    request_ = await db.get(Request, id=request_id, **kwargs)
+    request_ = await db.get(Request, id=request_id, **_kwargs)
 
     if not request_:
         raise NotFound(f"Request with ID '{request_id}' not found")
@@ -83,7 +99,7 @@ async def get(request: StarletteRequest, request_id: int, **kwargs: Any) -> APIR
     include = build_pydantic_include(
         obj=request_,
         include_schema=get_include_schema(ModelClass.REQUEST),
-        request_include=kwargs.get("_include"),
+        request_include=_kwargs.get("_include"),
     )
 
     request_data = RequestSchema.model_validate(request_).model_dump(include=include)
@@ -93,8 +109,13 @@ async def get(request: StarletteRequest, request_id: int, **kwargs: Any) -> APIR
 
 @with_authenticated_user_id()
 async def post(
-    request: StarletteRequest, body: dict, _caller_user_id: int | None = None, **kwargs: Any
+    request: StarletteRequest, body: dict, _caller_user_id: int | None = None, **_kwargs: Any
 ) -> APIResponse:
+    """Submit a new request to a queue.
+
+    Returns:
+        Tuple of (message and task ID, status code, headers).
+    """
     rc: RedisClient = request.state.rc
     db: PostgresqlDB = request.state.db
 
@@ -110,7 +131,7 @@ async def post(
 
     if _caller_user_id is None:
         raise Forbidden("Authenticated user could not be determined")
-    elif await is_admin(db, _caller_user_id):
+    if await is_admin(db, _caller_user_id):
         user_id = body.get("user_id") or _caller_user_id
     elif queue.enforce_user_id_match:
         submitted_user_id = body.get("user_id")
@@ -231,7 +252,14 @@ async def _run_phase1_checks(
 @role_authorization(
     RoleName.ADMIN, override=queue_manager_override, override_kwargs={"from_request": True}
 )
-async def patch(request: StarletteRequest, request_id: int, body: dict, **kwargs: Any) -> APIResponse:
+async def patch(
+    request: StarletteRequest, request_id: int, body: dict, **_kwargs: Any
+) -> APIResponse:
+    """Update the status of a request.
+
+    Returns:
+        Tuple of (message, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
 
     body = bleach_body(body, whitelisted_keys={"status"})
@@ -241,11 +269,7 @@ async def patch(request: StarletteRequest, request_id: int, body: dict, **kwargs
     if not request_:
         raise NotFound(f"Request with ID '{request_id}' not found")
 
-    delta = {}
-
-    for key, value in body.items():
-        if value != getattr(request_, key):
-            delta[key] = value
+    delta = {key: value for key, value in body.items() if value != getattr(request_, key)}
 
     await db.update(Request, request_id, **delta)
 
@@ -255,7 +279,12 @@ async def patch(request: StarletteRequest, request_id: int, body: dict, **kwargs
 @role_authorization(
     RoleName.ADMIN, override=queue_owner_override, override_kwargs={"from_request": True}
 )
-async def delete(request: StarletteRequest, request_id: int, **kwargs: Any) -> APIResponse:
+async def delete(request: StarletteRequest, request_id: int, **_kwargs: Any) -> APIResponse:
+    """Delete a request and clean up associated handler tasks.
+
+    Returns:
+        Tuple of (message, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
     rc: RedisClient = request.state.rc
 

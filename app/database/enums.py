@@ -1,18 +1,31 @@
+"""Enumerations used across the database layer.
+
+Defines roles, request statuses, and SQL filter operators.
+"""
+
 from __future__ import annotations
-from collections.abc import Callable
+
 from enum import Enum, IntEnum, StrEnum
+from typing import TYPE_CHECKING
 
 from sqlalchemy.sql import operators
 
-__all__ = ["RoleName", "RequestStatus", "FilterOperator"]
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+__all__ = ["FilterOperator", "RequestStatus", "RoleName"]
 
 
 class RoleName(StrEnum):
+    """Supported user roles."""
+
     USER = "user"
     ADMIN = "admin"
 
 
 class RequestStatus(IntEnum):
+    """Lifecycle statuses of a queue request."""
+
     REJECTED = -1
     PENDING = 0
     ACCEPTED = 1
@@ -43,6 +56,7 @@ class FilterOperator(Enum):
 
     @property
     def operator_value(self) -> str:
+        """Return the string identifier for this operator."""
         return self._operator_value
 
     @classmethod
@@ -54,9 +68,11 @@ class FilterOperator(Enum):
                 Case-insensitive operator name.
 
         Returns:
+        -------
             Matching ``FilterOperator``.
 
         Raises:
+        ------
             ValueError:
                 If no matching operator exists.
         """

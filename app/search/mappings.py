@@ -1,10 +1,11 @@
+"""Mappings between search scopes, schemas, and model relationships."""
+
 from __future__ import annotations
 
-from types import EllipsisType
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydantic.main import BaseModel
-from sqlalchemy.orm.strategy_options import Load, _AbstractLoad, joinedload, noload, selectinload
+from sqlalchemy.orm.strategy_options import _AbstractLoad, joinedload, noload, selectinload
 
 from app.database.models import BeatmapsetSnapshot, BeatmapSnapshot, ModelClass, Queue, Request
 from app.database.schemas import (
@@ -14,15 +15,18 @@ from app.database.schemas import (
     RequestSchema,
 )
 
+if TYPE_CHECKING:
+    from types import EllipsisType
+
 from .enums import ModelField, Scope, SearchableFieldCategory
 
 __all__ = [
-    "SCOPE_MODEL_MAPPING",
-    "SCOPE_SCHEMA_MAPPING",
-    "SCOPE_OPTIONS_MAPPING",
-    "SCOPE_CATEGORIES_MAPPING",
-    "CATEGORY_MODEL_FIELDS_MAPPING",
     "CATEGORY_FIELD_GROUPS_MAPPING",
+    "CATEGORY_MODEL_FIELDS_MAPPING",
+    "SCOPE_CATEGORIES_MAPPING",
+    "SCOPE_MODEL_MAPPING",
+    "SCOPE_OPTIONS_MAPPING",
+    "SCOPE_SCHEMA_MAPPING",
 ]
 
 SCOPE_MODEL_MAPPING: dict[Scope, ModelClass[Any] | EllipsisType] = {

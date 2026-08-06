@@ -1,4 +1,7 @@
+"""Filter validation for search query parameters."""
+
 from __future__ import annotations
+
 from datetime import datetime
 from typing import Any
 
@@ -27,6 +30,7 @@ def validate_filters(
             Internal recursion path (used for error reporting).
 
     Raises:
+    ------
         DeepObjectValidationError:
             If any filter does not conform to the schema definition, including unknown
             fields, type mismatches, invalid nested structures, or format violations.
@@ -40,7 +44,7 @@ def validate_filters(
     properties = schema.get("properties", {})
 
     for key, value in filters.items():
-        current_path = path + [key]
+        current_path = [*path, key]
 
         if key not in properties:
             raise DeepObjectValidationError(current_path, "Unknown filter field")
@@ -62,13 +66,12 @@ def validate_filters(
                         validate_filters(value, branch, current_path)
                         matched = True
                         break
-                    else:
-                        if isinstance(value, dict):
-                            continue
+                    if isinstance(value, dict):
+                        continue
 
-                        validate_value(value, branch, current_path)
-                        matched = True
-                        break
+                    validate_value(value, branch, current_path)
+                    matched = True
+                    break
                 except DeepObjectValidationError as e:
                     last_error = e
 
@@ -101,6 +104,7 @@ def validate_value(value: Any, schema: dict, path: list[str]) -> None:
             error reporting.
 
     Raises:
+    ------
         DeepObjectValidationError:
             If the value does not conform to the schema definition, including type
             mismatches or format violations.
@@ -121,7 +125,7 @@ def validate_value(value: Any, schema: dict, path: list[str]) -> None:
             items_schema = schema.get("items", {})
 
             for i, item in enumerate(value):
-                validate_value(item, items_schema, path + [str(i)])
+                validate_value(item, items_schema, [*path, str(i)])
         case "string":
             if not isinstance(value, str):
                 raise DeepObjectValidationError(

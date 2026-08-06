@@ -1,11 +1,15 @@
+"""Atomic reservation and rollback of stateful (Redis-backed) rule state."""
+
 from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from app.database.models import QueueRule
-from app.database.rules.base import RestrictionBase
-from app.database.rules.context import ExecutionContext
+if TYPE_CHECKING:
+    from app.database.models import QueueRule
+    from app.database.rules.base import RestrictionBase
+    from app.database.rules.context import ExecutionContext
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +21,8 @@ STATEFUL_RULE_TYPES = frozenset({"rate_limit", "cooldown"})
 
 @dataclass(frozen=True, slots=True)
 class Reservation:
+    """A held reservation of stateful rule state, ready to commit or rollback."""
+
     validator: RestrictionBase
     token: str
 
@@ -39,10 +45,12 @@ async def reserve_stateful_rules(
             Execution context carrying the Redis client, DB, user and queue.
 
     Returns:
+    -------
         The list of successful reservations, to be committed by the caller once the
         request is enqueued, or rolled back if the enqueue fails.
 
     Raises:
+    ------
         connexion.exceptions.Forbidden:
             If a stateful rule blocks the request.
     """

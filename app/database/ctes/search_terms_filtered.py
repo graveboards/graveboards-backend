@@ -1,10 +1,10 @@
-from __future__ import annotations
-from typing import Literal
+"""CTE filtering models to those matching the search terms."""
 
-from sqlalchemy.orm import InstrumentedAttribute
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Literal
+
 from sqlalchemy.sql import and_, exists, select, true, union_all
-from sqlalchemy.sql.elements import ColumnClause
-from sqlalchemy.sql.selectable import CTE, ScalarSelect, Select
 
 from app.database.models import (
     BeatmapsetSnapshot,
@@ -13,12 +13,18 @@ from app.database.models import (
     Request,
     beatmap_snapshot_beatmapset_snapshot_association,
 )
-from app.search.datastructures import SearchTermsSchema
 from app.search.enums import Scope, SearchableFieldCategory
 from app.search.mappings import CATEGORY_MODEL_FIELDS_MAPPING, SCOPE_CATEGORIES_MAPPING
 
 from .hashable_cte import HashableCTE
 from .utils import extract_cte_target_scalar
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import InstrumentedAttribute
+    from sqlalchemy.sql.elements import ColumnClause
+    from sqlalchemy.sql.selectable import CTE, ScalarSelect, Select
+
+    from app.search.datastructures import SearchTermsSchema
 
 type TermName = str
 
@@ -40,6 +46,7 @@ def search_terms_filtered_cte_factory(scope: Scope, search_terms: SearchTermsSch
             Structured search term configuration.
 
     Returns:
+    -------
         A CTE yielding distinct entity IDs that satisfy all terms.
     """
     categories: list[SearchableFieldCategory] = SCOPE_CATEGORIES_MAPPING[scope]
@@ -80,7 +87,7 @@ def search_terms_filtered_cte_factory(scope: Scope, search_terms: SearchTermsSch
                 term_cte = union_all(*term_queries).cte(f"term_{term}_ids_cte")
                 term_ctes[term] = term_cte
 
-    filter_cte = (
+    return (
         select(term_ctes[terms[0]].c.id)
         .where(
             and_(
@@ -94,8 +101,6 @@ def search_terms_filtered_cte_factory(scope: Scope, search_terms: SearchTermsSch
         .distinct()
         .cte("filter_cte")
     )
-
-    return filter_cte
 
 
 def get_filter_stmt(
@@ -123,6 +128,7 @@ def get_filter_stmt(
             The wildcard pattern to apply.
 
     Returns:
+    -------
         A SELECT statement yielding distinct root entity IDs that match.
     """
     match scope:
@@ -273,7 +279,7 @@ build_search_terms_filtered_cte = search_terms_filtered_cte_factory
 
 
 __all__ = [
-    "search_terms_filtered_cte_factory",
     "build_search_terms_filtered_cte",
     "get_filter_stmt",
+    "search_terms_filtered_cte_factory",
 ]

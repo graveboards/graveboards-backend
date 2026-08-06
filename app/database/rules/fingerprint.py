@@ -1,3 +1,5 @@
+"""Stable config fingerprints for per-rule state namespacing."""
+
 from __future__ import annotations
 
 import hashlib
@@ -18,6 +20,7 @@ def config_fingerprint(config: dict[str, Any] | None) -> str:
             The rule's config dict (flat, JSON-serializable values).
 
     Returns:
+    -------
         A 12-character hex fingerprint.
     """
     canonical = json.dumps(config or {}, sort_keys=True, default=str)

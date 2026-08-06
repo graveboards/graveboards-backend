@@ -1,9 +1,12 @@
+"""Health check endpoint for Graveboards services."""
+
 from __future__ import annotations
+
 import os
 import time
 from typing import Any, cast
 
-from connexion import request  # noqa: F401 - provides global request context
+from connexion import request
 
 from app.database import PostgresqlDB
 from app.redis_client import RedisClient
@@ -20,6 +23,7 @@ async def health_check() -> dict:
     and optional osu! API connectivity.
 
     Returns:
+    -------
         dict: Health status response
     """
     start_time = aware_utcnow()
@@ -91,7 +95,7 @@ async def health_check() -> dict:
     checks["daemon"] = {"status": "ok", "services": {}}
     try:
         daemon = request.state.daemon
-        daemon_services: dict[str, Any] = cast(dict[str, Any], checks["daemon"]["services"])
+        daemon_services: dict[str, Any] = cast("dict[str, Any]", checks["daemon"]["services"])
         for name, service in daemon._services.items():
             daemon_services[name] = {
                 "status": "running" if not service._stop_event.is_set() else "stopped",

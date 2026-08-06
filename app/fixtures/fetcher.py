@@ -1,21 +1,22 @@
+"""Fixture data fetcher that pulls records from the osu! API."""
+
 from __future__ import annotations
+
 import contextlib
 import inspect
 import json
 import logging
-import os
 import random
 from collections.abc import AsyncIterator, Callable, Coroutine
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import httpx
 
 from app.exceptions import clean_error_msg
 from app.osu_api.client.osu_api_client import OsuAPIClient
 from app.osu_api.enums import Ruleset, ScoreType
-from app.redis_client import RedisClient
 
 from .constants import (
     BEATMAP_SCORES_LIMIT,
@@ -31,10 +32,17 @@ from .constants import (
 )
 from .failed_id_store import FailedIdStore
 from .fetch_loop import FetchConfig, FetchEvent, FetchLoop
-from .id_source import IDSource
 from .metadata_io import load_metadata, load_top_player_ids, save_metadata, save_top_player_ids
 from .paths import get_fixture_path
 from .validation import validate_data
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator, Callable, Coroutine
+    from pathlib import Path
+
+    from app.redis_client import RedisClient
+
+    from .id_source import IDSource
 
 
 class FixtureDataFetcher:
@@ -122,9 +130,11 @@ class FixtureDataFetcher:
             self._metadata_dirty = False
 
     def _check_connection_stability(self, error: Exception | None = None) -> None:
-        """Fail fast when consecutive connection errors indicate a systemic issue
-        (e.g. Redis unreachable, network down) rather than transient API errors.
-        A connection-level failure won't resolve by retrying with a different ID.
+        """Fail fast when consecutive connection errors indicate a systemic issue.
+
+        Examples of such issues are an unreachable Redis instance or network
+        outage, rather than transient API errors. A connection-level failure
+        won't resolve by retrying with a different ID.
         """
         if error is not None and isinstance(error, httpx.HTTPStatusError):
             return
@@ -150,9 +160,9 @@ class FixtureDataFetcher:
                 self.logger.warning(f"Validation failed for {data_type}: {error_msg}")
 
         tmp_path = filepath.with_suffix(filepath.suffix + ".tmp")
-        with open(tmp_path, "w") as f:
+        with tmp_path.open("w") as f:
             json.dump(data, f, indent=2)
-        os.replace(tmp_path, filepath)
+        tmp_path.replace(filepath)
 
     def _make_fetch_config(
         self,
@@ -170,14 +180,14 @@ class FixtureDataFetcher:
         def id_generator() -> Coroutine[Any, Any, int]:
             return self._get_random_id(category, avoid_failed=True)
 
-        def success_handler(beatmap_id: int, data: dict[str, Any]) -> None:
+        def success_handler(beatmap_id: int, _data: dict[str, Any]) -> None:
             self._valid_beatmap_ids.append(beatmap_id)
             self._seen_ids.add(beatmap_id)
             self._add_fetched_id(category, beatmap_id)
             self._record_success()
             self.logger.debug(f"Fetched {data_type} {beatmap_id}")
 
-        async def failure_handler(beatmap_id: int, error: Exception) -> None:
+        async def failure_handler(beatmap_id: int, _error: Exception) -> None:
             await self._add_failed_id(category, beatmap_id)
 
         def skip_checker(id_: int) -> bool:
@@ -212,11 +222,25 @@ class FixtureDataFetcher:
     async def fetch_beatmaps(
         self, count: int, skip_existing: bool = True
     ) -> AsyncIterator[FetchEvent]:
+        """Fetch random beatmaps and yield fetch progress events.
+
+        Parameters
+        ----------
+        count : int
+            Number of beatmaps to fetch.
+        skip_existing : bool, optional
+            Whether to skip IDs already stored as fixtures.
+
+        Yields:
+        ------
+        FetchEvent
+            Progress events as each beatmap fetch completes.
+        """
         path = get_fixture_path("beatmaps", fixtures_dir=self.fixtures_dir)
         config = self._make_fetch_config(
             category="beatmaps",
-            api_call_factory=lambda id: self.oac.get_beatmap(id),
-            path_builder=lambda id: path / f"beatmap_{id}.json",
+            api_call_factory=lambda beatmap_id: self.oac.get_beatmap(beatmap_id),
+            path_builder=lambda beatmap_id: path / f"beatmap_{beatmap_id}.json",
             data_type="beatmap",
             max_attempts=count * 50 if self.force_fetch else count * 10,
         )
@@ -238,11 +262,25 @@ class FixtureDataFetcher:
     async def fetch_beatmapsets(
         self, count: int, skip_existing: bool = True
     ) -> AsyncIterator[FetchEvent]:
+        """Fetch random beatmapsets and yield fetch progress events.
+
+        Parameters
+        ----------
+        count : int
+            Number of beatmapsets to fetch.
+        skip_existing : bool, optional
+            Whether to skip IDs already stored as fixtures.
+
+        Yields:
+        ------
+        FetchEvent
+            Progress events as each beatmapset fetch completes.
+        """
         path = get_fixture_path("beatmapsets", fixtures_dir=self.fixtures_dir)
         config = self._make_fetch_config(
             category="beatmapsets",
-            api_call_factory=lambda id: self.oac.get_beatmapset(id),
-            path_builder=lambda id: path / f"beatmapset_{id}.json",
+            api_call_factory=lambda beatmap_id: self.oac.get_beatmapset(beatmap_id),
+            path_builder=lambda beatmap_id: path / f"beatmapset_{beatmap_id}.json",
             data_type="beatmapset",
             max_attempts=count * 50 if self.force_fetch else count * 10,
         )
@@ -269,8 +307,28 @@ class FixtureDataFetcher:
         users_mania: int,
         skip_existing: bool = True,
     ) -> AsyncIterator[FetchEvent]:
+        """Fetch users across the four rulesets and yield fetch progress events.
+
+        Parameters
+        ----------
+        users_osu : int
+            Number of osu! users to fetch.
+        users_taiko : int
+            Number of taiko users to fetch.
+        users_fruits : int
+            Number of fruits users to fetch.
+        users_mania : int
+            Number of mania users to fetch.
+        skip_existing : bool, optional
+            Whether to skip IDs already stored as fixtures.
+
+        Yields:
+        ------
+        FetchEvent
+            Progress events as each user fetch completes.
+        """
         path = get_fixture_path("users", fixtures_dir=self.fixtures_dir)
-        fetched = {r: 0 for r in RULESETS}
+        fetched = dict.fromkeys(RULESETS, 0)
 
         ruleset_counts = {
             "osu": users_osu,
@@ -291,16 +349,18 @@ class FixtureDataFetcher:
 
             category = f"users.{ruleset}"
 
-            def api_call_factory(id: int, r: str = ruleset) -> Any:
+            def api_call_factory(beatmap_id: int, r: str = ruleset) -> Any:
                 mode = getattr(Ruleset, r.upper()).value
-                return self.oac.get_user(id, Ruleset(mode))
+                return self.oac.get_user(beatmap_id, Ruleset(mode))
 
-            def path_builder(id: int, r: str = ruleset, _ruleset_path: Path = ruleset_path) -> Path:
-                return _ruleset_path / f"user_{id}_{r}.json"
+            def path_builder(
+                beatmap_id: int, r: str = ruleset, _ruleset_path: Path = ruleset_path
+            ) -> Path:
+                return _ruleset_path / f"user_{beatmap_id}_{r}.json"
 
             def success_handler(
                 beatmap_id: int,
-                data: dict[str, Any],
+                _data: dict[str, Any],
                 _category: str = category,
                 _ruleset: str = ruleset,
             ) -> None:
@@ -310,7 +370,7 @@ class FixtureDataFetcher:
                 self.logger.debug(f"Fetched user {beatmap_id} ({_ruleset})")
 
             async def failure_handler(
-                beatmap_id: int, error: Exception, _category: str = category
+                beatmap_id: int, _error: Exception, _category: str = category
             ) -> None:
                 await self._add_failed_id(_category, beatmap_id)
 
@@ -418,6 +478,24 @@ class FixtureDataFetcher:
         scores_recent: int,
         skip_existing: bool = True,
     ) -> AsyncIterator[FetchEvent]:
+        """Fetch user scores by type and yield fetch progress events.
+
+        Parameters
+        ----------
+        scores_best : int
+            Number of best-score records to fetch.
+        scores_firsts : int
+            Number of first-place records to fetch.
+        scores_recent : int
+            Number of recent records to fetch.
+        skip_existing : bool, optional
+            Whether to skip users already stored as fixtures.
+
+        Yields:
+        ------
+        FetchEvent
+            Progress events as each score fetch completes.
+        """
         if not self.top_player_ids.get(RULESETS[0]) or all(
             len(ids) == 0 for ids in self.top_player_ids.values()
         ):
@@ -425,7 +503,7 @@ class FixtureDataFetcher:
             await self.fetch_top_players()
 
         path = get_fixture_path("scores", fixtures_dir=self.fixtures_dir)
-        fetched = {t: 0 for t in SCORE_TYPES}
+        fetched = dict.fromkeys(SCORE_TYPES, 0)
 
         type_counts = {
             "best": scores_best,
@@ -447,25 +525,27 @@ class FixtureDataFetcher:
             score_type_enum = getattr(ScoreType, score_type.upper())
 
             def api_call_factory(
-                id: int, st: ScoreType = score_type_enum, m: Ruleset = Ruleset.OSU
+                beatmap_id: int, st: ScoreType = score_type_enum, m: Ruleset = Ruleset.OSU
             ) -> Any:
-                return self.oac.get_user_scores(id, st, mode=m)
+                return self.oac.get_user_scores(beatmap_id, st, mode=m)
 
-            def path_builder(id: int, st: str = score_type, _type_path: Path = type_path) -> Path:
-                return _type_path / f"scores_{id}_{st}.json"
+            def path_builder(
+                beatmap_id: int, st: str = score_type, _type_path: Path = type_path
+            ) -> Path:
+                return _type_path / f"scores_{beatmap_id}_{st}.json"
 
             async def id_generator(_use_top_players: bool = use_top_players) -> int:
                 return await self._get_random_id("users", use_top_players=_use_top_players)
 
             def success_handler(
-                beatmap_id: int, data: dict[str, Any], _score_type: str = score_type
+                beatmap_id: int, _data: dict[str, Any], _score_type: str = score_type
             ) -> None:
                 self._seen_ids.add(beatmap_id)
                 self._add_fetched_id("users", beatmap_id)
                 self._record_success()
                 self.logger.debug(f"Fetched scores for user {beatmap_id} ({_score_type})")
 
-            async def failure_handler(beatmap_id: int, error: Exception) -> None:
+            async def failure_handler(beatmap_id: int, _error: Exception) -> None:
                 await self._add_failed_id("users", beatmap_id)
 
             def data_validator(data: Any) -> bool:
@@ -507,13 +587,31 @@ class FixtureDataFetcher:
     async def fetch_beatmap_scores(
         self, count: int, skip_existing: bool = True
     ) -> AsyncIterator[FetchEvent]:
+        """Fetch scores for previously fetched beatmaps.
+
+        Parameters
+        ----------
+        count : int
+            Number of beatmap score sets to fetch.
+        skip_existing : bool, optional
+            Whether to skip beatmaps already stored as fixtures.
+
+        Yields:
+        ------
+        FetchEvent
+            Progress events as each beatmap score fetch completes.
+        """
         path = get_fixture_path("beatmap_scores", fixtures_dir=self.fixtures_dir)
         fetched = 0
         valid_ids = list(self._valid_beatmap_ids)
         random.shuffle(valid_ids)
         valid_index = 0
         consecutive_empty = 0
-        max_consecutive_empty = MAX_CONSECUTIVE_EMPTY_SCORES if not self.force_fetch else MAX_CONSECUTIVE_EMPTY_SCORES_FORCE
+        max_consecutive_empty = (
+            MAX_CONSECUTIVE_EMPTY_SCORES
+            if not self.force_fetch
+            else MAX_CONSECUTIVE_EMPTY_SCORES_FORCE
+        )
 
         for i in range(count):
             beatmap_id = None
@@ -578,6 +676,20 @@ class FixtureDataFetcher:
     async def fetch_beatmap_attributes(
         self, count: int, skip_existing: bool = True
     ) -> AsyncIterator[FetchEvent]:
+        """Fetch attributes for previously fetched beatmaps.
+
+        Parameters
+        ----------
+        count : int
+            Number of beatmap attribute sets to fetch.
+        skip_existing : bool, optional
+            Whether to skip beatmaps already stored as fixtures.
+
+        Yields:
+        ------
+        FetchEvent
+            Progress events as each attribute fetch completes.
+        """
         path = get_fixture_path("beatmap_attributes", fixtures_dir=self.fixtures_dir)
         fetched = 0
         valid_ids = list(self._valid_beatmap_ids)
@@ -649,15 +761,28 @@ class FixtureDataFetcher:
         self._current_session_results["beatmap_attributes"] = fetched
 
     def refresh_top_player_ids_from_metadata(self) -> None:
+        """Reload the top player IDs from the on-disk metadata."""
         self.top_player_ids = self.metadata.get("top_player_ids", {r: [] for r in RULESETS})
 
     async def fetch_all(self, sample_counts: dict) -> AsyncIterator[FetchEvent]:
+        """Fetch all requested fixture categories and yield progress events.
+
+        Parameters
+        ----------
+        sample_counts : dict
+            Requested counts per fixture category.
+
+        Yields:
+        ------
+        FetchEvent
+            Progress events from each underlying fetch operation.
+        """
         self.last_fetch_results = {}
         self._current_session_results = {
             "beatmaps": 0,
             "beatmapsets": 0,
-            "users": {r: 0 for r in RULESETS},
-            "scores": {t: 0 for t in SCORE_TYPES},
+            "users": dict.fromkeys(RULESETS, 0),
+            "scores": dict.fromkeys(SCORE_TYPES, 0),
             "beatmap_scores": 0,
             "beatmap_attributes": 0,
         }
@@ -725,6 +850,20 @@ class FixtureDataFetcher:
         rulesets: list[str] | None = None,
         count_per_ruleset: int = 1000,
     ) -> dict[str, list[int]]:
+        """Fetch the top player IDs for each ruleset and persist them.
+
+        Parameters
+        ----------
+        rulesets : list[str] | None, optional
+            Rulesets to fetch for; defaults to all rulesets.
+        count_per_ruleset : int, optional
+            Number of top players to fetch per ruleset.
+
+        Returns:
+        -------
+        dict[str, list[int]]
+            Mapping of ruleset name to fetched player IDs.
+        """
         if rulesets is None:
             rulesets = RULESETS
 
@@ -866,7 +1005,7 @@ class FixtureDataFetcher:
         self._mark_metadata_dirty()
 
     # TODO: Implement search coverage tracking methods in subclasses.
-    fetched_restricted_users: dict[bool, set[int]] = {}
+    fetched_restricted_users: ClassVar[dict[bool, set[int]]] = {}
 
     def _classify_beatmapset(self, data: dict, beatmapset_id: int) -> dict[str, Any]:
         raise NotImplementedError
@@ -893,4 +1032,5 @@ class FixtureDataFetcher:
         raise NotImplementedError
 
     def get_coverage_report(self) -> dict[str, Any]:
+        """Return a summary report of fetched search-test coverage."""
         raise NotImplementedError

@@ -1,11 +1,15 @@
+"""Shared utility functions for the API layer."""
+
 from __future__ import annotations
+
 import types
 from collections.abc import Iterable
-from typing import Any, Literal, Union, get_args, get_origin
+from typing import TYPE_CHECKING, Any, Literal, Union, get_args, get_origin
 
-from pydantic import BaseModel
+if TYPE_CHECKING:
+    from pydantic import BaseModel
 
-from app.database.models import BaseType
+    from app.database.models import BaseType
 
 
 def pop_auth_info(kwargs: dict[str, Any]) -> dict[str, Any]:
@@ -19,6 +23,7 @@ def pop_auth_info(kwargs: dict[str, Any]) -> dict[str, Any]:
             Keyword arguments from an API handler.
 
     Returns:
+    -------
         The extracted authentication data.
     """
     return {key: kwargs.pop(key) for key in ("user", "token_info") if key in kwargs}
@@ -73,9 +78,11 @@ def bleach_body(
             Keys explicitly disallowed.
 
     Returns:
+    -------
         Sanitized payload.
 
     Raises:
+    ------
         ValueError:
             If a key appears in both whitelist and blacklist.
     """
@@ -111,9 +118,11 @@ def coerce_value(value: Any, annotation: Any, param_name: str) -> Any | None:
             Parameter name (for error messages).
 
     Returns:
+    -------
         Coerced value.
 
     Raises:
+    ------
         TypeError:
             If coercion fails or annotation is unsupported.
     """
@@ -196,6 +205,7 @@ def build_pydantic_include(
             Client-provided include structure.
 
     Returns:
+    -------
         Nested include tree.
     """
     defaults = _extract_default_include(include_schema)
@@ -207,6 +217,7 @@ def _extract_default_include(include_schema: dict) -> dict:
     """Extract default include configuration from an Include schema.
 
     Raises:
+    ------
         RuntimeError:
             If unresolved shallow schemas are encountered.
     """
@@ -244,6 +255,7 @@ def _merge_include(defaults: dict, overrides: dict | None = None) -> dict:
     """Merge client include overrides into schema defaults recursively.
 
     Returns:
+    -------
         Merged dictionary
     """
     if overrides is None:

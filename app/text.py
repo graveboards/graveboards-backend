@@ -1,14 +1,43 @@
+"""Text alignment and formatting utilities."""
+
 from __future__ import annotations
+
 from typing import Any
 
 
 def align_center(text: str, width: int, fill: str = "=") -> str:
+    """Center-align text within a given width using a fill character.
+
+    Args:
+        text:
+            The text to center.
+        width:
+            Total width of the output string.
+        fill:
+            Character used for padding.
+
+    Returns:
+        The center-aligned text.
+    """
     left = fill * int(width / 2 - len(text) / 2)
     right = fill * (int(width / 2 - len(text) / 2) + (1 if width % 2 else 0))
     return f"{left}{text}{right}"
 
 
 def justify(*values: Any, width: int = 30, border: str | None = "|") -> str:
+    """Justify values across a given width with optional borders.
+
+    Args:
+        *values:
+            Values to justify.
+        width:
+            Total width of the output string.
+        border:
+            Optional border characters to wrap the output.
+
+    Returns:
+        The justified string.
+    """
     parts = [str(v) for v in values]
     left_border = f"{border} " if border else ""
     right_border = f" {border}" if border else ""

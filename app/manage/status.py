@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from collections.abc import Iterable, Sized
 from typing import Any
 
@@ -13,13 +14,12 @@ async def cmd_status(db: PostgresqlDB, target: StatusTarget) -> None:
     print_status(status)
 
 
-def _format_value(v: Any, width: int, prefix: str = "") -> str:
+def _format_value(v: Any, _width: int, prefix: str = "") -> str:
     if isinstance(v, dict):
         return f"{prefix}[dict with {len(v)} items]"
-    elif isinstance(v, Iterable) and not isinstance(v, (str, bytes)):
+    if isinstance(v, Iterable) and not isinstance(v, (str, bytes)):
         return f"{prefix}{list(v)}"
-    else:
-        return f"{prefix}{v}"
+    return f"{prefix}{v}"
 
 
 def print_status(status: dict[str, Any]) -> None:

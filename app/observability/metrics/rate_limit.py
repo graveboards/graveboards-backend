@@ -1,4 +1,7 @@
+"""Rate limiting Prometheus metrics."""
+
 from __future__ import annotations
+
 from prometheus_client import Counter
 
 rate_limit_attempts_total = Counter(

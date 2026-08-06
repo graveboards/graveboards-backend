@@ -1,4 +1,3 @@
-from __future__ import annotations
 """SQLAlchemy event listeners for database model side effects.
 
 All event handlers are intentionally synchronous. They execute within the
@@ -20,6 +19,8 @@ A future migration to async-aware event handling (or moving side effects out
 of SQLAlchemy events into explicit service calls) is tracked as a long-term
 refactoring.
 """
+
+from __future__ import annotations
 
 from .beatmap_snapshot import *
 from .beatmapset_snapshot import *

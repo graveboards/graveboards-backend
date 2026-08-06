@@ -1,14 +1,21 @@
-from __future__ import annotations
-from typing import override
+"""Beatmap length restriction for ranked-beatmap submission."""
 
-from app.database.schemas.sub_schemas.beatmap_osu_api_schema import BeatmapOsuApiSchema
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, override
+
 from app.database.rules.base import BeatmapRestrictionBase
-from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError
 from app.database.schemas.rule import LengthConfig
 
+if TYPE_CHECKING:
+    from app.database.rules.context import ExecutionContext
+    from app.database.schemas.sub_schemas.beatmap_osu_api_schema import BeatmapOsuApiSchema
+
 
 class LengthRestriction(BeatmapRestrictionBase):
+    """Enforce minimum/maximum hit length and total length for the set's beatmaps."""
+
     type = "beatmap_length"
     config_schema = LengthConfig
 

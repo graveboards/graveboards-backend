@@ -1,12 +1,19 @@
+"""SQLAlchemy event listeners for ``User``."""
+
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from sqlalchemy import event
-from sqlalchemy.engine.base import Connection
-from sqlalchemy.orm.mapper import Mapper
 from sqlalchemy.sql import insert
 
 from app.database.models import ProfileFetcherTask, ScoreFetcherTask, User
 from app.observability.logging import get_logger
 from app.redis_client import ChannelName, redis_connection
+
+if TYPE_CHECKING:
+    from sqlalchemy.engine.base import Connection
+    from sqlalchemy.orm.mapper import Mapper
 
 __all__ = ["user_after_insert"]
 
@@ -14,7 +21,7 @@ logger = get_logger(__name__)
 
 
 @event.listens_for(User, "after_insert")
-def user_after_insert(mapper: Mapper[User], connection: Connection, target: User) -> None:
+def user_after_insert(_mapper: Mapper[User], connection: Connection, target: User) -> None:
     """Initialize background tasks for a newly created ``User``.
 
     Automatically creates:

@@ -1,13 +1,20 @@
+"""Video restriction for ranked-beatmap submission."""
+
 from __future__ import annotations
-from typing import override
+
+from typing import TYPE_CHECKING, override
 
 from app.database.rules.base import BeatmapRestrictionBase
-from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError
 from app.database.schemas.rule import VideoConfig
 
+if TYPE_CHECKING:
+    from app.database.rules.context import ExecutionContext
+
 
 class VideoRestriction(BeatmapRestrictionBase):
+    """Require the beatmapset to either include or exclude a video."""
+
     type = "beatmap_video"
     config_schema = VideoConfig
 

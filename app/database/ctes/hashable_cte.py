@@ -1,9 +1,16 @@
+"""Hashable wrapper for SQLAlchemy CTEs."""
+
 from __future__ import annotations
 
-from sqlalchemy.sql.selectable import CTE
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from sqlalchemy.sql.selectable import CTE
 
 
 class HashableCTE:
+    """Make a CTE usable as a dict key or set member via its name."""
+
     def __init__(self, cte: CTE) -> None:
         self.cte = cte
 

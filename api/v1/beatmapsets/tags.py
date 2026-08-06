@@ -1,22 +1,32 @@
-from __future__ import annotations
-from typing import Any
+"""Tag endpoints for beatmapsets."""
 
-from starlette.requests import Request
-from api.http_types import APIResponse
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from api.decorators import api_query
 from api.utils import build_pydantic_include
-from app.database import PostgresqlDB
 from app.database.models import BeatmapsetTag, ModelClass
+
+if TYPE_CHECKING:
+    from starlette.requests import Request
+
+    from api.http_types import APIResponse
+    from app.database import PostgresqlDB
 from app.database.schemas import BeatmapsetTagSchema
 from app.exceptions import NotFound
 from app.spec import get_include_schema
 
-__all__ = ["search", "get"]
+__all__ = ["get", "search"]
 
 
 @api_query(ModelClass.BEATMAPSET_TAG, many=True)
 async def search(request: Request, **kwargs: Any) -> APIResponse:
+    """Search for beatmapset tags.
+
+    Returns:
+        Tuple of (tags data, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
 
     beatmapset_tags = await db.get_many(BeatmapsetTag, **kwargs)
@@ -40,6 +50,11 @@ async def search(request: Request, **kwargs: Any) -> APIResponse:
 
 @api_query(ModelClass.BEATMAPSET_TAG)
 async def get(request: Request, beatmapset_tag_id: int, **kwargs: Any) -> APIResponse:
+    """Get a single beatmapset tag by ID.
+
+    Returns:
+        Tuple of (tag data, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
 
     beatmapset_tag = await db.get(BeatmapsetTag, id=beatmapset_tag_id, **kwargs)

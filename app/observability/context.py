@@ -1,10 +1,17 @@
-from __future__ import annotations
-import uuid
+"""Request context middleware for structured logging."""
 
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.requests import Request
-from starlette.responses import Response
+from __future__ import annotations
+
+import uuid
+from typing import TYPE_CHECKING
+
+from starlette.middleware.base import BaseHTTPMiddleware
 from structlog.contextvars import bind_contextvars, clear_contextvars
+
+if TYPE_CHECKING:
+    from starlette.middleware.base import RequestResponseEndpoint
+    from starlette.requests import Request
+    from starlette.responses import Response
 
 
 class RequestContextMiddleware(BaseHTTPMiddleware):
@@ -19,6 +26,17 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        """Process each request, binding a request_id to contextvars.
+
+        Args:
+            request:
+                The incoming Starlette request.
+            call_next:
+                The next middleware or endpoint handler.
+
+        Returns:
+            The response from the downstream handler.
+        """
         request_id = request.headers.get("X-Request-ID", uuid.uuid4().hex)
         bind_contextvars(request_id=request_id)
 

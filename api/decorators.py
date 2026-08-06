@@ -1,19 +1,35 @@
+"""Decorators for normalizing and coercing API query handler arguments."""
+
 from __future__ import annotations
+
 import inspect
-from collections.abc import Awaitable, Callable
 from functools import wraps
 from inspect import Parameter, signature
-from typing import ParamSpec, TypeVar
+from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar
 
 from api.utils import coerce_value, pop_auth_info, prime_query_kwargs
-from app.database.models import ModelClass
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
+
+    from app.database.models import ModelClass
 
 P = ParamSpec("P")
 T = TypeVar("T")
 
 
+def _resolve_annotation(annotation: Any, func_globals: dict[str, Any]) -> Any:
+    """Resolve a string annotation to an actual type using the function's globals."""
+    if isinstance(annotation, str):
+        try:
+            return eval(annotation, func_globals)
+        except Exception:
+            return annotation
+    return annotation
+
+
 def api_query(
-    model_class: ModelClass, many: bool = False
+    _model_class: ModelClass, many: bool = False
 ) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Decorator for normalizing API query handlers.
 
@@ -29,6 +45,7 @@ def api_query(
             Whether the handler returns multiple results.
 
     Raises:
+    ------
         ValueError:
             If applied to a non-async function.
     """
@@ -67,6 +84,7 @@ def coerce_arguments(
             Optional value remapping per parameter.
 
     Raises:
+    ------
         ValueError:
             If the function is not async or parameter names are invalid.
         TypeError:
@@ -94,6 +112,12 @@ def coerce_arguments(
                     f"Parameter '{name}' in '{func.__name__}' must have a type annotation"
                 )
 
+        func_globals = func.__globals__
+        resolved_annotations: dict[str, Any] = {}
+        for name in all_params:
+            param = param_signatures[name]
+            resolved_annotations[name] = _resolve_annotation(param.annotation, func_globals)
+
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             bound = sig.bind_partial(*args, **kwargs)
@@ -102,15 +126,15 @@ def coerce_arguments(
                 if arg_name not in bound.arguments:
                     continue
 
-                param = param_signatures[arg_name]
                 value = bound.arguments[arg_name]
                 mapping = param_mappings.get(arg_name)
+                annotation = resolved_annotations[arg_name]
 
                 if mapping and value in mapping:
                     bound.arguments[arg_name] = mapping[value]
                     continue
 
-                bound.arguments[arg_name] = coerce_value(value, param.annotation, arg_name)
+                bound.arguments[arg_name] = coerce_value(value, annotation, arg_name)
 
             return await func(*bound.args, **bound.kwargs)
 

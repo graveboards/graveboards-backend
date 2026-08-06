@@ -1,24 +1,29 @@
+"""Scheduled job execution with concurrency control."""
+
 from __future__ import annotations
+
 import asyncio
 import heapq
 import time
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime, timedelta
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
-from app.database import PostgresqlDB
-from app.observability.logging import Logger
 from app.observability.metrics.daemon import (
     daemon_active_jobs,
     daemon_job_duration_seconds,
     daemon_jobs_total,
     daemon_last_job_timestamp,
 )
-from app.redis_client import RedisClient
 from app.utils import aware_utcnow
 
 from .job import JobLoadInstruction
 from .service import Service
+
+if TYPE_CHECKING:
+    from app.database import PostgresqlDB
+    from app.observability.logging import Logger
+    from app.redis_client import RedisClient
 
 DEFAULT_JOB_CONCURRENCY = 5
 DEFAULT_JOB_INTERVAL_HOURS = 24.0
@@ -52,8 +57,7 @@ class ScheduledService(Service, ABC):
         job_interval_hours: float = DEFAULT_JOB_INTERVAL_HOURS,
         job_distributed_spacing_seconds: float = DEFAULT_JOB_DISTRIBUTED_SPACING_SECONDS,
     ) -> None:
-        """
-        Initialize the service.
+        """Initialize the service.
 
         Args:
             rc:
@@ -176,14 +180,12 @@ class ScheduledService(Service, ABC):
         Subclasses can override to configure scheduling behavior of new jobs on a
         case-by-case basis as they arrive from the subscriber.
         """
-        pass
 
     async def _preload_jobs(self) -> None:
         """Load jobs into the scheduler at startup.
 
         Subclasses can override this to provide implementation.
         """
-        pass
 
     async def _load_job(
         self, job_id: int, *, instruction: JobLoadInstruction | None = None
@@ -215,6 +217,7 @@ class ScheduledService(Service, ABC):
                 Optional object controlling scheduling behavior.
 
         Raises:
+        ------
             TypeError: If the ``instruction`` value is invalid.
         """
         if instruction is None:
@@ -321,7 +324,6 @@ class ScheduledService(Service, ABC):
             job_id:
                 Identifier of the job.
         """
-        pass
 
     async def _on_job_error(self, job_id: int, exc: Exception) -> None:
         """Execute after a job failed due to an exception.
@@ -346,7 +348,6 @@ class ScheduledService(Service, ABC):
             job_id:
                 Identifier of the job.
         """
-        pass
 
     @abstractmethod
     async def _execute_job(self, job_id: int) -> None:

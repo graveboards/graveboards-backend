@@ -1,7 +1,7 @@
 from __future__ import annotations
-"""Helper functions for seed command fixture assurance."""
 
 import json
+from pathlib import Path
 from typing import Any
 
 from app.config import PROJECT_ROOT
@@ -10,6 +10,8 @@ from app.fixtures.criteria import FetchCriteria
 from app.fixtures.orchestrator import FixtureOrchestrator
 from app.fixtures.paths import get_fixture_path
 from app.redis_client import RedisClient
+
+"""Helper functions for seed command fixture assurance."""
 
 
 async def ensure_fixtures_async(logger: Any, profile: SeedProfile) -> bool:
@@ -63,7 +65,7 @@ async def ensure_fixtures_async(logger: Any, profile: SeedProfile) -> bool:
             owner_data: dict[int, dict] = {}
             for f in sorted(bms_path.glob("beatmapset_*.json")):
                 try:
-                    with open(f) as fh:
+                    with Path(f).open() as fh:
                         data = json.load(fh)
                     user_id = data.get("user_id")
                     if user_id:
@@ -109,7 +111,7 @@ async def ensure_fixtures_async(logger: Any, profile: SeedProfile) -> bool:
                             "avatar_url": owner_data.get(user_id, {}).get("avatar_url"),
                             "is_restricted": True,
                         }
-                        with open(filepath, "w") as fh:
+                        with Path(filepath).open("w") as fh:
                             json.dump(minimal_user, fh)
                     logger.info(f"Created minimal fixtures for {len(failed_ids)} user(s).")
             finally:

@@ -1,8 +1,10 @@
+"""Field weight definitions for search scoring."""
+
 from __future__ import annotations
+
 import struct
-from collections.abc import Generator
 from enum import IntFlag, auto
-from typing import Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any
 
 from pydantic.config import ConfigDict
 from pydantic.fields import Field
@@ -12,6 +14,9 @@ from pydantic.main import BaseModel
 from app.exceptions import AllValuesNullError
 from app.search.enums import Scope, SearchableFieldCategory
 from app.search.mappings import SCOPE_CATEGORIES_MAPPING
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 
 class BeatmapFieldWeights(BaseModel):
@@ -97,13 +102,14 @@ class FieldWeights(BaseModel):
                 Raw input values for model initialization.
 
         Returns:
+        -------
             Updated values dictionary with expanded category definitions.
         """
         for key, value in values.items():
             if value is None and key in cls.model_fields:
                 model_class = cls.model_fields[key].annotation
                 if model_class is not None:
-                    values[key] = model_class(**{f: None for f in model_class.model_fields})
+                    values[key] = model_class(**dict.fromkeys(model_class.model_fields))
 
         return values
 
@@ -118,6 +124,7 @@ class FieldWeights(BaseModel):
                 Search scope used to determine applicable categories.
 
         Raises:
+        ------
             AllValuesNullError:
                 If no effective field weights are enabled for the given scope.
         """
@@ -148,6 +155,7 @@ class FieldWeights(BaseModel):
                 Search scope determining applicable categories.
 
         Returns:
+        -------
             A bytes object containing the serialized field weights.
         """
         presence = 0
@@ -192,6 +200,7 @@ class FieldWeights(BaseModel):
                 Starting offset within the byte sequence.
 
         Returns:
+        -------
             A tuple containing:
                 - The reconstructed ``FieldWeights`` instance
                 - The updated byte offset

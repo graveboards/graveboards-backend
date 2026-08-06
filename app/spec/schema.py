@@ -1,4 +1,7 @@
+"""OpenAPI schema resolution and caching."""
+
 from __future__ import annotations
+
 from functools import lru_cache
 from typing import Any
 
@@ -14,6 +17,7 @@ def _get_spec_cached() -> dict[str, Any]:
     within the same process.
 
     Returns:
+    -------
         dict: The OpenAPI specification.
     """
     return load_spec()
@@ -34,10 +38,12 @@ def get_filter_schema(
             Explicit schema name.
 
     Returns:
+    -------
         dict:
             The requested schema definition.
 
     Raises:
+    ------
         ValueError:
             If arguments are invalid or schema is not found.
 
@@ -64,10 +70,12 @@ def get_include_schema(
             Explicit schema name.
 
     Returns:
+    -------
         dict:
             The requested schema definition.
 
     Raises:
+    ------
         ValueError:
             If arguments are invalid or schema is not found.
 
@@ -100,10 +108,12 @@ def _get_schema_by_suffix(
             Explicit schema name ending with the provided suffix.
 
     Returns:
+    -------
         dict:
             The requested schema definition.
 
     Raises:
+    ------
         ValueError:
             If arguments are invalid or schema is not found.
     """

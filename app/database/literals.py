@@ -1,7 +1,10 @@
+"""Typing literals enumerating role and request-status values."""
+
 from __future__ import annotations
+
 from typing import Literal
 
-__all__ = ["RoleNameLiteral", "RequestStatusLiteral", "RequestStatusIntLiteral"]
+__all__ = ["RequestStatusIntLiteral", "RequestStatusLiteral", "RoleNameLiteral"]
 
 
 RoleNameLiteral = Literal["admin"]

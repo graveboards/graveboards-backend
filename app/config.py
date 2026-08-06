@@ -1,15 +1,21 @@
+"""Application configuration loaded from environment variables and YAML."""
+
 from __future__ import annotations
+
 import os
-from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic_settings.sources import YamlConfigSettingsSource
 
 from .enums import Env
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 _SECURITY_ENABLED_OVERRIDE: ContextVar[bool | None] = ContextVar(
     "security_enabled_override", default=None
@@ -19,6 +25,17 @@ _bootstrap_yaml_file: str = "config/bootstrap.yaml"
 
 
 class QueueConfig(BaseSettings):
+    """Configuration for a queue.
+
+    Attributes:
+        name:
+            The queue name.
+        description:
+            The queue description.
+        user_id:
+            The user ID associated with the queue.
+    """
+
     model_config = SettingsConfigDict(extra="ignore")
 
     name: str = "Graveboards Queue"
@@ -27,6 +44,19 @@ class QueueConfig(BaseSettings):
 
 
 class UserConfig(BaseSettings):
+    """Configuration for an initial user.
+
+    Attributes:
+        user_id:
+            The user ID.
+        roles:
+            The user roles.
+        generate_api_key:
+            Whether to generate an API key for the user.
+        enable_score_fetcher:
+            Whether to enable the score fetcher for the user.
+    """
+
     model_config = SettingsConfigDict(extra="ignore")
 
     user_id: int
@@ -36,6 +66,21 @@ class UserConfig(BaseSettings):
 
 
 class BootstrapConfig(BaseSettings):
+    """Configuration for the bootstrap process.
+
+    Attributes:
+        master_queue:
+            The master queue configuration.
+        extra_queues:
+            Additional queue configurations.
+        initial_users:
+            Initial user configurations.
+        initial_roles:
+            Initial role configurations.
+        setup_steps:
+            The setup steps to run.
+    """
+
     model_config = SettingsConfigDict(
         yaml_file="config/bootstrap.yaml", yaml_file_encoding="utf-8", extra="ignore"
     )
@@ -60,6 +105,23 @@ class BootstrapConfig(BaseSettings):
         dotenv_settings,
         file_secret_settings,
     ):
+        """Customize the settings sources for the bootstrap configuration.
+
+        Args:
+            settings_cls:
+                The settings class.
+            init_settings:
+                The init settings.
+            env_settings:
+                The environment settings.
+            dotenv_settings:
+                The dotenv settings.
+            file_secret_settings:
+                The file secret settings.
+
+        Returns:
+            The customized settings sources.
+        """
         return (
             init_settings,
             env_settings,
@@ -86,11 +148,11 @@ class Config:
         self.DEV_USER_ID = int(os.getenv("DEV_USER_ID", "2"))
 
         self.PROJECT_ROOT = Path(__file__).resolve().parents[1]
-        self.SPEC_DIR = os.path.abspath("api/v1/spec")
-        self.OPENAPI_ENTRYPOINT = os.path.join(self.SPEC_DIR, "openapi.yaml")
-        self.INSTANCE_DIR = os.path.abspath("instance")
-        self.CACHE_FILE = os.path.join(self.INSTANCE_DIR, ".spec_cache.pkl")
-        self.LOGS_DIR = os.path.join(self.INSTANCE_DIR, "logs")
+        self.SPEC_DIR = str(Path("api/v1/spec").resolve())
+        self.OPENAPI_ENTRYPOINT = Path(self.SPEC_DIR) / "openapi.yaml"
+        self.INSTANCE_DIR = str(Path("instance").resolve())
+        self.CACHE_FILE = Path(self.INSTANCE_DIR) / ".spec_cache.pkl"
+        self.LOGS_DIR = Path(self.INSTANCE_DIR) / "logs"
         self.API_BASE_PATH = "api/v1/"
         self.DEFAULT_MODULE_NAME = "api.v1"
 
@@ -152,6 +214,11 @@ class Config:
 
     @property
     def bootstrap(self) -> BootstrapConfig:
+        """Get the bootstrap configuration.
+
+        Returns:
+            The bootstrap configuration.
+        """
         global _bootstrap_yaml_file
         _bootstrap_yaml_file = (
             "config/bootstrap.test.yaml" if self.ENV == Env.TEST else "config/bootstrap.yaml"

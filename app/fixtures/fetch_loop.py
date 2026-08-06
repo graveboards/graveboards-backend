@@ -1,4 +1,3 @@
-from __future__ import annotations
 """Parameterized fetch loop for eliminating duplicate fetch methods.
 
 Replaces the 6 near-duplicate fetch_* methods in FixtureDataFetcher with a single
@@ -6,18 +5,23 @@ parameterized FetchLoop that takes API call, ID generator, path builder, and
 success/failure handlers as configuration.
 """
 
+from __future__ import annotations
+
 import asyncio
 import json
-import os
-from collections.abc import AsyncIterator, Callable, Coroutine
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import httpx
 
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator, Callable, Coroutine
+    from pathlib import Path
+
 
 class FetchEvent:
+    """Progress event emitted by the fetch loop."""
+
     def __init__(self, category: str, current: int, total: int):
         self.category = category
         self.current = current
@@ -67,6 +71,7 @@ class FetchLoop:
             skip_existing: Whether to skip already-seen IDs
 
         Yields:
+        ------
             FetchEvent progress updates
         """
         fetched = 0
@@ -121,23 +126,19 @@ class FetchLoop:
                     if retries < self.config.max_retries:
                         beatmap_id = await self.config.id_generator()
 
-        if fetched < target_count:
-            pass
-
     def _atomic_write(self, filepath: Path, data: dict, data_type: str) -> None:
         """Write data to filepath atomically."""
         from .validation import validate_data
 
         if data_type:
-            is_valid, error_msg = validate_data(data, data_type)
+            is_valid, _error_msg = validate_data(data, data_type)
             if not is_valid:
                 pass
 
         tmp_path = filepath.with_suffix(filepath.suffix + ".tmp")
-        with open(tmp_path, "w") as f:
+        with tmp_path.open("w") as f:
             json.dump(data, f, indent=2)
-        os.replace(tmp_path, filepath)
+        tmp_path.replace(filepath)
 
     def _record_success(self) -> None:
         """Reset consecutive error counter (no-op, handled by callbacks)."""
-        pass

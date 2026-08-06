@@ -1,4 +1,7 @@
+"""Sorting directive validation for search queries."""
+
 from __future__ import annotations
+
 from typing import Any
 
 from app.exceptions import ArrayValidationError
@@ -19,6 +22,7 @@ def validate_sorting(sorting: list[dict[str, str]], schema: dict[str, Any]) -> N
             OpenAPI schema defining allowed fields and orders.
 
     Raises:
+    ------
         ArrayValidationError:
             If any entry fails validation.
     """

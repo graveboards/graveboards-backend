@@ -1,12 +1,20 @@
+"""Aggregate counts of each model for the summary status."""
+
 from __future__ import annotations
-from sqlalchemy.ext.asyncio.session import AsyncSession
+
+from typing import TYPE_CHECKING
+
 from sqlalchemy.sql import select
 from sqlalchemy.sql.functions import func
 
 from app.database.models import Beatmap, Beatmapset, Queue, Request, User
 
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio.session import AsyncSession
+
 
 async def get_summary_status(session: AsyncSession) -> dict:
+    """Return a row count per model keyed by table name."""
     models = (User, Beatmap, Beatmapset, Queue, Request)
     status: dict[str, int | str] = {"target": "summary"}
 

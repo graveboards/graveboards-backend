@@ -1,9 +1,10 @@
+"""Named combination template restriction for ranked-beatmap submission."""
+
 from __future__ import annotations
 
-from typing import Any, override
+from typing import TYPE_CHECKING, Any, override
 
 from app.database.rules.base import BeatmapRestrictionBase
-from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError
 
 COMBINATION_TEMPLATES: dict[str, dict[str, Any]] = {
@@ -14,7 +15,13 @@ COMBINATION_TEMPLATES: dict[str, dict[str, Any]] = {
 }
 
 
+if TYPE_CHECKING:
+    from app.database.rules.context import ExecutionContext
+
+
 class CombinationRestriction(BeatmapRestrictionBase):
+    """Validate the beatmapset against a named combination template."""
+
     type = "beatmap_combination"
 
     @override

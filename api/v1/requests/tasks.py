@@ -1,12 +1,18 @@
+"""Handler task endpoints for queue requests."""
+
 from __future__ import annotations
-from typing import Any
+
+from typing import TYPE_CHECKING, Any
 
 from connexion.exceptions import Forbidden
-from starlette.requests import Request
-from api.http_types import APIResponse
 
 from api.utils import build_pydantic_include
-from app.database import PostgresqlDB
+
+if TYPE_CHECKING:
+    from starlette.requests import Request
+
+    from api.http_types import APIResponse
+    from app.database import PostgresqlDB
 from app.database.enums import RoleName
 from app.database.roles import is_admin
 from app.exceptions import NotFound
@@ -15,11 +21,16 @@ from app.redis_client.models import QueueRequestHandlerTask
 from app.security import role_authorization, with_authenticated_user_id
 from app.spec import get_include_schema
 
-__all__ = ["search", "get"]
+__all__ = ["get", "search"]
 
 
 @role_authorization(RoleName.ADMIN)
 async def search(request: Request, **kwargs: Any) -> APIResponse:
+    """Search for handler tasks from Redis.
+
+    Returns:
+        Tuple of (tasks data, status code, headers).
+    """
     rc = request.state.rc
 
     limit = kwargs.get("limit")
@@ -55,6 +66,11 @@ async def search(request: Request, **kwargs: Any) -> APIResponse:
 async def get(
     request: Request, hashed_id: int, _caller_user_id: int | None = None, **kwargs: Any
 ) -> APIResponse:
+    """Get a single handler task by hashed ID.
+
+    Returns:
+        Tuple of (task data, status code, headers).
+    """
     rc = request.state.rc
 
     task_hash_name = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(hashed_id)

@@ -1,18 +1,24 @@
+"""HTTP metrics collection and access logging middleware."""
+
 from __future__ import annotations
+
 import contextlib
 import json
 import re
 import time
-from collections.abc import MutableMapping
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from typing import cast as typing_cast
 from urllib.parse import parse_qsl
 
 from connexion.middleware.abstract import ROUTING_CONTEXT
 from starlette.requests import Request
-from starlette.types import ASGIApp, Receive, Scope, Send
 
 from app.observability.logging import get_logger
+
+if TYPE_CHECKING:
+    from collections.abc import MutableMapping
+
+    from starlette.types import ASGIApp, Receive, Scope, Send
 
 from .error import errors_total
 from .http import http_request_duration_seconds, http_requests_in_flight, http_requests_total
@@ -94,13 +100,11 @@ def _get_query_params(request: Request) -> dict:
         params[key] = values[0] if len(values) == 1 else values
     params = _reconstruct_nested_params(params)
     params = _try_parse_sorting(params)
-    return typing_cast(dict[Any, Any], _redact(params))
+    return typing_cast("dict[Any, Any]", _redact(params))
 
 
 def _reconstruct_nested_params(params: dict) -> dict:
-    """Rebuild flat bracket-notation query params (e.g. ``filters[comment][neq]``)
-    into nested dicts so access logs show clean structure instead of a wall of
-    dotted field names.
+    """Rebuild flat bracket-notation query params into nested dicts for clean access logs.
 
     Keys that don't match the bracket pattern are left untouched. Duplicate
     paths are merged (e.g. ``include[queue][id]`` + ``include[queue][name]``
@@ -139,10 +143,7 @@ def _reconstruct_nested_params(params: dict) -> dict:
 
 
 def _try_parse_sorting(params: dict) -> dict:
-    """The frontend serializes each sort item as JSON.stringify(obj) and sends them
-    as repeated query params, so the backend sees strings like
-    '{\"field\":\"Request.id\",\"order\":\"asc\"}'. Parse them back into proper
-    objects so access logs stay readable instead of showing nested quoted JSON.
+    r"""Parse frontend-serialized JSON sort items back into proper objects for access logs.
 
     If parsing fails for any reason the original string is kept as fallback.
     """
@@ -174,18 +175,22 @@ def _parse_body(raw: bytes, content_type: str) -> dict[str, Any] | str | None:
         return None
     try:
         if content_type == "application/json":
-            return typing_cast(dict[str, Any] | str | None, _redact(json.loads(raw)))
+            return typing_cast("dict[str, Any] | str | None", _redact(json.loads(raw)))
         if content_type == "application/x-www-form-urlencoded":
-            return typing_cast(dict[str, Any] | str | None, _redact(dict(parse_qsl(raw.decode()))))
+            return typing_cast(
+                "dict[str, Any] | str | None", _redact(dict(parse_qsl(raw.decode())))
+            )
     except Exception:
         return "<unparseable>"
     return None
 
 
 async def _capture_body(receive: Receive) -> tuple[bytes, Receive]:
-    """Drain the ASGI body stream into memory, returning the bytes plus a
+    """Drain the ASGI body stream into memory with a replay-capable receive wrapper.
+
     replacement `receive` that replays the exact same messages so downstream
-    body parsing (Connexion's request validation/handler) is unaffected."""
+    body parsing (Connexion's request validation/handler) is unaffected.
+    """
     messages = []
     chunks = []
     more_body = True
@@ -200,8 +205,8 @@ async def _capture_body(receive: Receive) -> tuple[bytes, Receive]:
 
     async def replay_receive() -> dict[str, Any]:
         if messages:
-            return typing_cast(dict[str, Any], messages.pop(0))
-        return typing_cast(dict[str, Any], await receive())
+            return typing_cast("dict[str, Any]", messages.pop(0))
+        return typing_cast("dict[str, Any]", await receive())
 
     return b"".join(chunks), replay_receive
 
@@ -227,10 +232,32 @@ def _get_auth_info(scope: Scope, request: Request) -> tuple[int | None, str]:
 
 
 class MetricsMiddleware:
+    """ASGI middleware for HTTP metrics collection and access logging.
+
+    Records request counts, durations, and in-flight counts to Prometheus.
+    Emits structured access log lines with redacted sensitive data.
+    """
+
     def __init__(self, app: ASGIApp) -> None:
+        """Initialize the middleware.
+
+        Args:
+            app:
+                The next ASGI application in the chain.
+        """
         self.app = app
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        """Process an ASGI request and collect metrics.
+
+        Args:
+            scope:
+                The ASGI scope.
+            receive:
+                The ASGI receive callable.
+            send:
+                The ASGI send callable.
+        """
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
@@ -248,7 +275,7 @@ class MetricsMiddleware:
             if message["type"] == "http.response.start":
                 status_code_ref["value"] = message["status"]
             await send(message)
-            return None
+            return
 
         body_bytes = None
         body_captured = False

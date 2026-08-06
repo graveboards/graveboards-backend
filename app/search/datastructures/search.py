@@ -1,4 +1,7 @@
+"""Search schema data structures."""
+
 from __future__ import annotations
+
 import struct
 from enum import IntEnum, IntFlag, auto
 from typing import Self, cast
@@ -32,9 +35,10 @@ class ScopeId(IntEnum):
         """The lowercase string representation of the scope.
 
         Returns:
+        -------
             The canonical lowercase scope name.
         """
-        return cast(ScopeLiteral, self.name.lower())
+        return cast("ScopeLiteral", self.name.lower())
 
     @classmethod
     def from_name(cls, name: str) -> ScopeId:
@@ -45,13 +49,14 @@ class ScopeId(IntEnum):
                 Case-insensitive scope name.
 
         Returns:
+        -------
             Corresponding ``ScopeId``.
 
         Raises:
+        ------
             ValueError:
                 If no matching scope exists.
         """
-
         for member_name, member in cls.__members__.items():
             if name.upper() == member_name:
                 return member
@@ -98,9 +103,11 @@ class SearchSchema(BaseModel):
         scope.
 
         Returns:
+        -------
             The validated ``SearchSchema`` instance.
 
         Raises:
+        ------
             FieldNotSupportedError:
                 If a field is invalid for the scope.
             FieldValidationError:
@@ -121,6 +128,7 @@ class SearchSchema(BaseModel):
               in deterministic order.
 
         Returns:
+        -------
             A bytes object representing the encoded search configuration.
         """
         scope_byte = struct.pack("!B", ScopeId.from_name(self.scope.name))
@@ -152,6 +160,7 @@ class SearchSchema(BaseModel):
                 Serialized search schema bytes.
 
         Returns:
+        -------
             The reconstructed ``SearchSchema``.
         """
         scope_byte, presence = struct.unpack_from("!BB", data)

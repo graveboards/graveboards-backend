@@ -1,17 +1,20 @@
-from __future__ import annotations
 """Metadata I/O operations for fixture tracking."""
+
+from __future__ import annotations
 
 import json
 import shutil
 from datetime import UTC, datetime
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from typing import cast as typing_cast
 
 from app.observability.logging import get_logger
 
 from .constants import ID_RANGES, RULESETS, SCORE_TYPES
 from .paths import FIXTURES_DIR
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 logger = get_logger(__name__)
 
@@ -31,11 +34,12 @@ def load_metadata(fixtures_dir: Path | None = None) -> dict[str, Any]:
         fixtures_dir: Override base directory (defaults to FIXTURES_DIR)
 
     Returns:
+    -------
         Metadata dictionary
     """
     metadata_file = _metadata_path(fixtures_dir)
     if metadata_file.exists():
-        with open(metadata_file) as f:
+        with metadata_file.open() as f:
             data: dict[str, Any] = json.load(f)
         return data
     return create_empty_metadata()
@@ -54,8 +58,12 @@ def save_metadata(metadata: dict, fixtures_dir: Path | None = None) -> None:
         {
             "beatmaps": {"count": 0, "last_promoted": None},
             "beatmapsets": {"count": 0, "last_promoted": None},
-            "users": {"count": 0, "per_ruleset": {r: 0 for r in RULESETS}, "last_promoted": None},
-            "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_promoted": None},
+            "users": {"count": 0, "per_ruleset": dict.fromkeys(RULESETS, 0), "last_promoted": None},
+            "scores": {
+                "count": 0,
+                "per_type": dict.fromkeys(SCORE_TYPES, 0),
+                "last_promoted": None,
+            },
             "beatmap_scores": {"count": 0, "last_promoted": None},
             "beatmap_attributes": {"count": 0, "last_promoted": None},
             "queues": {"count": 0, "last_promoted": None},
@@ -74,7 +82,7 @@ def save_metadata(metadata: dict, fixtures_dir: Path | None = None) -> None:
     metadata.setdefault("id_ranges", ID_RANGES.copy())
     metadata_file = _metadata_path(fixtures_dir)
     metadata_file.parent.mkdir(parents=True, exist_ok=True)
-    with open(metadata_file, "w") as f:
+    with metadata_file.open("w") as f:
         json.dump(metadata, f, indent=2)
 
 
@@ -82,6 +90,7 @@ def create_empty_metadata() -> dict:
     """Create empty metadata structure.
 
     Returns:
+    -------
         Empty metadata dictionary
     """
     return {
@@ -89,8 +98,8 @@ def create_empty_metadata() -> dict:
         "samples": {
             "beatmaps": {"count": 0, "last_fetched": None},
             "beatmapsets": {"count": 0, "last_fetched": None},
-            "users": {"count": 0, "per_ruleset": {r: 0 for r in RULESETS}, "last_fetched": None},
-            "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_fetched": None},
+            "users": {"count": 0, "per_ruleset": dict.fromkeys(RULESETS, 0), "last_fetched": None},
+            "scores": {"count": 0, "per_type": dict.fromkeys(SCORE_TYPES, 0), "last_fetched": None},
             "beatmap_scores": {"count": 0, "last_fetched": None},
             "beatmap_attributes": {"count": 0, "last_fetched": None},
             "queues": {"count": 0, "last_fetched": None},
@@ -99,8 +108,12 @@ def create_empty_metadata() -> dict:
         "promoted_fixtures": {
             "beatmaps": {"count": 0, "last_promoted": None},
             "beatmapsets": {"count": 0, "last_promoted": None},
-            "users": {"count": 0, "per_ruleset": {r: 0 for r in RULESETS}, "last_promoted": None},
-            "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_promoted": None},
+            "users": {"count": 0, "per_ruleset": dict.fromkeys(RULESETS, 0), "last_promoted": None},
+            "scores": {
+                "count": 0,
+                "per_type": dict.fromkeys(SCORE_TYPES, 0),
+                "last_promoted": None,
+            },
             "beatmap_scores": {"count": 0, "last_promoted": None},
             "beatmap_attributes": {"count": 0, "last_promoted": None},
             "queues": {"count": 0, "last_promoted": None},
@@ -122,13 +135,14 @@ def create_empty_samples() -> dict:
     """Create empty samples structure.
 
     Returns:
+    -------
         Empty samples dictionary
     """
     return {
         "beatmaps": {"count": 0, "last_fetched": None},
         "beatmapsets": {"count": 0, "last_fetched": None},
-        "users": {"count": 0, "per_ruleset": {r: 0 for r in RULESETS}, "last_fetched": None},
-        "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_fetched": None},
+        "users": {"count": 0, "per_ruleset": dict.fromkeys(RULESETS, 0), "last_fetched": None},
+        "scores": {"count": 0, "per_type": dict.fromkeys(SCORE_TYPES, 0), "last_fetched": None},
         "beatmap_scores": {"count": 0, "last_fetched": None},
         "beatmap_attributes": {"count": 0, "last_fetched": None},
         "queues": {"count": 0, "last_fetched": None},
@@ -140,13 +154,14 @@ def create_empty_promoted_fixtures() -> dict:
     """Create empty promoted fixtures structure.
 
     Returns:
+    -------
         Empty promoted fixtures dictionary
     """
     return {
         "beatmaps": {"count": 0, "last_promoted": None},
         "beatmapsets": {"count": 0, "last_promoted": None},
-        "users": {"count": 0, "per_ruleset": {r: 0 for r in RULESETS}, "last_promoted": None},
-        "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_promoted": None},
+        "users": {"count": 0, "per_ruleset": dict.fromkeys(RULESETS, 0), "last_promoted": None},
+        "scores": {"count": 0, "per_type": dict.fromkeys(SCORE_TYPES, 0), "last_promoted": None},
         "beatmap_scores": {"count": 0, "last_promoted": None},
         "beatmap_attributes": {"count": 0, "last_promoted": None},
         "queues": {"count": 0, "last_promoted": None},
@@ -161,11 +176,12 @@ def load_top_player_ids(fixtures_dir: Path | None = None) -> dict[str, list[int]
         fixtures_dir: Override base directory (defaults to FIXTURES_DIR)
 
     Returns:
+    -------
         Dictionary mapping rulesets to lists of player IDs
     """
     metadata = load_metadata(fixtures_dir=fixtures_dir)
     return typing_cast(
-        dict[str, list[int]], metadata.get("top_player_ids", {r: [] for r in RULESETS})
+        "dict[str, list[int]]", metadata.get("top_player_ids", {r: [] for r in RULESETS})
     )
 
 
@@ -226,6 +242,7 @@ def get_fixture_count(
         fixtures_dir: Override base directory (defaults to FIXTURES_DIR)
 
     Returns:
+    -------
         Number of JSON files in the category directory
     """
     from .paths import get_fixture_path
@@ -245,6 +262,7 @@ def get_all_fixture_files(
         fixtures_dir: Override base directory (defaults to FIXTURES_DIR)
 
     Returns:
+    -------
         Dictionary mapping category names to lists of file paths
     """
     from .paths import FIXTURES_DIR
@@ -277,6 +295,7 @@ def create_targeted_metadata() -> dict:
     """Create the standard targeted fixtures metadata structure.
 
     Returns:
+    -------
         Targeted metadata dictionary
     """
     return {

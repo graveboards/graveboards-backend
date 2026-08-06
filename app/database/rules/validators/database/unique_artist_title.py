@@ -1,7 +1,9 @@
+"""Unique-artist-title rule: reject duplicate songs already in a queue."""
+
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, ClassVar, override
 
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -19,16 +21,21 @@ logger = logging.getLogger(__name__)
 
 
 class UniqueArtistTitleConfig(BaseModel):
+    """Config for the unique-artist-title rule: identity normalization."""
+
     normalize_versions: bool = True
 
 
 class UniqueArtistTitleRestriction(DatabaseRestrictionBase):
+    """Reject a song whose normalized identity already exists in a queue."""
+
     type = "unique_artist_title"
     config_schema = UniqueArtistTitleConfig
-    supported_versions = {"1.0"}
+    supported_versions: ClassVar[set[str]] = {"1.0"}
 
     @override
     async def check_database(self, context: ExecutionContext) -> None:
+        """Query prior requests and violate when the song identity already exists."""
         config = UniqueArtistTitleConfig(**context.config)
         identity = await context.get_metadata("song_identity")
 

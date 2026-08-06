@@ -1,10 +1,17 @@
+"""SQLAlchemy event listeners for ``ScoreFetcherTask``."""
+
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from sqlalchemy import event
-from sqlalchemy.orm.attributes import AttributeEventToken
 
 from app.database.models import ScoreFetcherTask
 from app.observability.logging import get_logger
 from app.redis_client import ChannelName, redis_connection
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm.attributes import AttributeEventToken
 
 __all__ = ["score_fetcher_task_enabled_set"]
 
@@ -13,7 +20,7 @@ logger = get_logger(__name__)
 
 @event.listens_for(ScoreFetcherTask.enabled, "set")
 def score_fetcher_task_enabled_set(
-    target: ScoreFetcherTask, value: bool, oldvalue: bool, initiator: AttributeEventToken
+    target: ScoreFetcherTask, value: bool, _oldvalue: bool, _initiator: AttributeEventToken
 ) -> None:
     """Publish ``ScoreFetcherTask`` activation events to Redis.
 

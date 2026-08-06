@@ -1,4 +1,4 @@
-"""Add enforce_user_id_match to queues
+"""Add enforce_user_id_match to queues.
 
 Revision ID: 2a3b4c5d6e7f
 Revises: 7b3d5e9f2a18

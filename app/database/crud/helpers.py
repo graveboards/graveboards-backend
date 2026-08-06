@@ -1,7 +1,11 @@
+"""Shared CRUD helpers."""
+
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Mapping
 
 __all__ = ["validate_model_attrs"]
 
@@ -20,6 +24,7 @@ def validate_model_attrs(
             Names accepted by the model (columns and relationships).
 
     Raises:
+    ------
         ValueError:
             If a supplied key is not in ``valid_attrs``.
     """

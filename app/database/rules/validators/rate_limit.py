@@ -1,16 +1,20 @@
+"""Rate-limit rule: cap submissions per user within a configured period."""
+
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
-from typing import override
+from typing import TYPE_CHECKING, ClassVar, override
 
 from connexion.exceptions import Forbidden
 
 from app.database.models import Queue
 from app.database.rules.base import RestrictionBase
-from app.database.rules.context import ExecutionContext
 from app.database.rules.fingerprint import config_fingerprint
 from app.database.schemas.rule import RateLimitConfig
 from app.redis_client import Namespace
+
+if TYPE_CHECKING:
+    from app.database.rules.context import ExecutionContext
 
 
 def _truncate_to_period(now: datetime, period: str) -> int:
@@ -40,17 +44,16 @@ def _truncate_to_period(now: datetime, period: str) -> int:
 def _period_duration_seconds(period: str) -> int:
     if period == "day":
         return 86400
-    elif period == "week":
+    if period == "week":
         return 604800
-    elif period == "month":
+    if period == "month":
         return 2592000
-    elif period == "year":
+    if period == "year":
         return 31536000
-    else:
-        try:
-            return int(period)
-        except ValueError, TypeError:
-            return 604800
+    try:
+        return int(period)
+    except ValueError, TypeError:
+        return 604800
 
 
 def _is_target_match(config: dict, user_id: int) -> bool:
@@ -61,9 +64,11 @@ def _is_target_match(config: dict, user_id: int) -> bool:
 
 
 class RateLimitRestriction(RestrictionBase):
+    """Enforce a maximum number of user requests per period, via Redis counters."""
+
     type = "rate_limit"
     config_schema = RateLimitConfig
-    supported_versions = {"1.0", "1.1"}
+    supported_versions: ClassVar[set[str]] = {"1.0", "1.1"}
 
     def _applies(self, config: dict, user_id: int) -> bool:
         return _is_target_match(config, user_id) and config.get("scope", "user") == "user"

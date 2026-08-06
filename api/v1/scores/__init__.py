@@ -1,12 +1,17 @@
-from __future__ import annotations
-from typing import Any
+"""Re-exports for the scores v1 API."""
 
-from starlette.requests import Request
-from api.http_types import APIResponse
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from api.decorators import api_query
 from api.utils import bleach_body, build_pydantic_include
-from app.database import PostgresqlDB
+
+if TYPE_CHECKING:
+    from starlette.requests import Request
+
+    from api.http_types import APIResponse
+    from app.database import PostgresqlDB
 from app.database.enums import RoleName
 from app.database.models import Beatmap, BeatmapSnapshot, Leaderboard, ModelClass, Score, User
 from app.database.schemas import ScoreSchema
@@ -15,11 +20,16 @@ from app.security import role_authorization
 from app.spec import get_include_schema
 from app.utils import parse_iso8601
 
-__all__ = ["search", "get", "post"]
+__all__ = ["get", "post", "search"]
 
 
 @api_query(ModelClass.SCORE, many=True)
 async def search(request: Request, **kwargs: Any) -> APIResponse:
+    """Search for scores.
+
+    Returns:
+        Tuple of (scores data, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
 
     scores = await db.get_many(Score, **kwargs)
@@ -42,6 +52,11 @@ async def search(request: Request, **kwargs: Any) -> APIResponse:
 
 @api_query(ModelClass.SCORE)
 async def get(request: Request, score_id: int, **kwargs: Any) -> APIResponse:
+    """Get a single score by ID.
+
+    Returns:
+        Tuple of (score data, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
 
     score = await db.get(Score, id=score_id, **kwargs)
@@ -63,8 +78,13 @@ async def get(request: Request, score_id: int, **kwargs: Any) -> APIResponse:
 @api_query(ModelClass.SCORE)
 @role_authorization(RoleName.ADMIN)
 async def post(
-    request: Request, body: dict, db: PostgresqlDB | None = None, **kwargs: Any
+    request: Request, body: dict, db: PostgresqlDB | None = None, **_kwargs: Any
 ) -> APIResponse:
+    """Create a new score.
+
+    Returns:
+        Tuple of (message, status code, headers).
+    """
     if db is None:
         db = request.state.db
 
@@ -105,7 +125,7 @@ async def post(
 
     body = bleach_body(
         body,
-        whitelisted_keys=set(k for k in ScoreSchema.model_fields if k != "id"),
+        whitelisted_keys={k for k in ScoreSchema.model_fields if k != "id"},
         blacklisted_keys={"id"},
     )
     await db.add(Score, **body)

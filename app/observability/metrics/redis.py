@@ -1,4 +1,7 @@
+"""Redis command metrics."""
+
 from __future__ import annotations
+
 from prometheus_client import Counter, Histogram
 
 redis_commands_total = Counter(

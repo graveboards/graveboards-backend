@@ -1,4 +1,7 @@
+"""CTE projecting the current hype count of beatmapset snapshots."""
+
 from __future__ import annotations
+
 from sqlalchemy.sql import cast, select
 from sqlalchemy.sql.sqltypes import Integer
 

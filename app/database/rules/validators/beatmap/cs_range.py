@@ -1,13 +1,20 @@
+"""Circle-size (CS) range restriction for ranked-beatmap submission."""
+
 from __future__ import annotations
-from typing import override
+
+from typing import TYPE_CHECKING, override
 
 from app.database.rules.base import BeatmapRestrictionBase
-from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError
 from app.database.schemas.rule import CSRangeConfig
 
+if TYPE_CHECKING:
+    from app.database.rules.context import ExecutionContext
+
 
 class CSRangeRestriction(BeatmapRestrictionBase):
+    """Enforce minimum/maximum circle size (CS) across the set's beatmaps."""
+
     type = "beatmap_cs_range"
     config_schema = CSRangeConfig
 

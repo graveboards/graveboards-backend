@@ -1,10 +1,10 @@
-from __future__ import annotations
-import asyncio
-from collections.abc import AsyncGenerator
-from contextlib import asynccontextmanager
-from typing import Any
+"""Application lifespan management for startup and shutdown."""
 
-from connexion.middleware import ConnexionMiddleware
+from __future__ import annotations
+
+import asyncio
+from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING, Any
 
 from .bootstrap import SetupRunner
 from .config import CONFIG, get_security_enabled
@@ -13,9 +13,23 @@ from .database import PostgresqlDB
 from .observability.logging import get_logger
 from .redis_client import RedisClient
 
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
+    from connexion.middleware import ConnexionMiddleware
+
 
 @asynccontextmanager
-async def lifespan(app: ConnexionMiddleware) -> AsyncGenerator[dict[str, Any]]:
+async def lifespan(_app: ConnexionMiddleware) -> AsyncGenerator[dict[str, Any]]:
+    """Manage application startup and shutdown lifecycle.
+
+    Args:
+        _app:
+            The Connexion application instance.
+
+    Yields:
+        Dictionary with ``rc``, ``db``, and ``daemon`` keys.
+    """
     logger = get_logger(__name__)
     logger.info("Start of app lifespan")
 

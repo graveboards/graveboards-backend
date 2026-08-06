@@ -1,4 +1,4 @@
-"""Add search performance indexes
+"""Add search performance indexes.
 
 Revision ID: 7b3d5e9f2a18
 Revises: 4f8e2a1c9d30

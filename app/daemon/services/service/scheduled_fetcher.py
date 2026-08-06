@@ -1,18 +1,23 @@
+"""Scheduled fetcher service with rate limiting."""
+
 from __future__ import annotations
+
 import asyncio
 from abc import ABC
 from datetime import datetime, timedelta
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from app.database import PostgresqlDB
-from app.database.models import Base
-from app.observability.logging import Logger
 from app.osu_api import OsuAPIClient
-from app.redis_client import RedisClient
 from app.utils import aware_utcnow
 
 from .job import JobLoadInstruction
 from .scheduled import ScheduledService
+
+if TYPE_CHECKING:
+    from app.database import PostgresqlDB
+    from app.database.models import Base
+    from app.observability.logging import Logger
+    from app.redis_client import RedisClient
 
 DEFAULT_FETCH_CONCURRENCY = 5
 DEFAULT_FETCH_INTERVAL_HOURS = 24.0
@@ -48,8 +53,7 @@ class ScheduledFetcherService(ScheduledService, ABC):
         pending_record_timeout_seconds: float = DEFAULT_PENDING_RECORD_TIMEOUT_SECONDS,
         fallback_delay_hours: float = DEFAULT_FALLBACK_DELAY_HOURS,
     ) -> None:
-        """
-        Initialize the service.
+        """Initialize the service.
 
         Args:
             rc:
@@ -115,11 +119,15 @@ class ScheduledFetcherService(ScheduledService, ABC):
                 ID of the record.
             timeout:
                 Maximum number of seconds to wait.
+            interval_seconds:
+                Delay between polling attempts.
 
         Returns:
+        -------
             The matching record model.
 
         Raises:
+        ------
             TimeoutError: If the record is not found within the timeout.
         """
         if timeout is None:
@@ -138,7 +146,7 @@ class ScheduledFetcherService(ScheduledService, ABC):
         raise TimeoutError
 
     async def _on_job_success(self, record_id: int) -> None:
-        """Update the record's last fetch"""
+        """Update the record's last fetch time."""
         await self._db.update(self.RECORD_MODEL, record_id, last_fetch=aware_utcnow())
 
     async def _respect_rate_limit(self) -> None:

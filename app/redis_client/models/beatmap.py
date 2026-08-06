@@ -1,8 +1,10 @@
+"""Redis model for beatmap data serialization."""
+
 from __future__ import annotations
+
 from ast import literal_eval
 from datetime import datetime
 from typing import Any
-from typing import cast as typing_cast
 
 from app.database.schemas.sub_schemas import BeatmapOsuApiSchema
 
@@ -14,6 +16,7 @@ class Beatmap(BeatmapOsuApiSchema):
         """Serialize the beatmap into a Redis-safe string dictionary.
 
         Returns:
+        -------
             A dictionary with stringified values.
         """
         serialized_dict = {}
@@ -41,6 +44,7 @@ class Beatmap(BeatmapOsuApiSchema):
                 Serialized beatmap data (keys and values may be bytes or str).
 
         Returns:
+        -------
             A validated ``Beatmap`` instance.
         """
         string_dict = {str(k): str(v) for k, v in serialized_dict.items()}
@@ -51,6 +55,7 @@ class Beatmap(BeatmapOsuApiSchema):
                 case (
                     "id"
                     | "user_id"
+                    | "beatmapset_id"
                     | "count_circles"
                     | "count_sliders"
                     | "count_spinners"
@@ -69,5 +74,7 @@ class Beatmap(BeatmapOsuApiSchema):
                     deserialized_dict[key] = literal_eval(value) if value != "" else None
                 case "deleted_at" | "last_updated":
                     deserialized_dict[key] = datetime.fromisoformat(value) if value != "" else None
+                case _:
+                    deserialized_dict[key] = value
 
         return cls.model_validate(deserialized_dict)

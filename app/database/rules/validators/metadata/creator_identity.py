@@ -1,17 +1,25 @@
+"""Metadata provider resolving creator and mapper identities."""
+
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from app.database.rules.context import ExecutionContext
 from app.database.rules.validators.metadata.song_identity import MetadataProvider
+
+if TYPE_CHECKING:
+    from app.database.rules.context import ExecutionContext
 
 
 class CreatorIdentityProvider(MetadataProvider):
+    """Resolve the set creator plus any distinct mappers."""
+
     @property
     def name(self) -> str:
+        """Name under which this provider is registered."""
         return "creator_identity"
 
     async def resolve(self, context: ExecutionContext) -> dict[str, Any]:
+        """Resolve creator and distinct mapper identities for the context."""
         beatmapset = context.beatmapset
         beatmaps = context.beatmaps or []
 

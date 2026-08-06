@@ -1,13 +1,17 @@
+"""Blacklist rule: reject blocked users for a queue."""
+
 from __future__ import annotations
 
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from connexion.exceptions import Forbidden
 
 from app.database.models import Queue
 from app.database.rules.base import RestrictionBase
-from app.database.rules.context import ExecutionContext
 from app.database.schemas.rule import BlacklistConfig
+
+if TYPE_CHECKING:
+    from app.database.rules.context import ExecutionContext
 
 
 def _is_target_match(config: dict, user_id: int) -> bool:
@@ -18,6 +22,8 @@ def _is_target_match(config: dict, user_id: int) -> bool:
 
 
 class BlacklistRestriction(RestrictionBase):
+    """Reject requests from a config-scoped list of blocked user ids."""
+
     type = "blacklist"
     config_schema = BlacklistConfig
 

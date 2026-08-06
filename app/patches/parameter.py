@@ -1,5 +1,8 @@
+"""Patched Connexion parameter validator with domain-specific validation."""
+
 from __future__ import annotations
-import os
+
+from pathlib import Path
 from typing import Any, cast
 
 from connexion.lifecycle import ConnexionRequest
@@ -31,6 +34,18 @@ class ParameterValidatorPatched(ParameterValidator):
         strict_validation: bool = False,
         security_query_params: list[str] | None = None,
     ):
+        """Initialize the patched parameter validator.
+
+        Args:
+            parameters:
+                List of parameter definitions from the OpenAPI spec.
+            uri_parser:
+                URI parser instance.
+            strict_validation:
+                Whether to enforce strict validation.
+            security_query_params:
+                List of parameter names treated as security credentials.
+        """
         super().__init__(
             parameters,
             uri_parser,
@@ -62,12 +77,14 @@ class ParameterValidatorPatched(ParameterValidator):
                 Incoming Connexion request.
 
         Returns:
+        -------
             ``None`` if the parameter is valid, otherwise an error message describing
             why validation failed (mirrors the base class' ``validate_parameter``
             contract). Domain-specific failures (`sorting`, `filters`, `include`) are
             raised directly as HTTP exceptions instead of being returned as a string.
 
         Raises:
+        ------
             HTTPException:
                 On `sorting`, `filters`, or `include` validation failure.
         """
@@ -86,7 +103,7 @@ class ParameterValidatorPatched(ParameterValidator):
                 raise bad_request_factory(e) from e
 
             return None
-        elif param_name == "filters" and isinstance(value, dict):
+        if param_name == "filters" and isinstance(value, dict):
             try:
                 resolved_schema = get_filter_schema(schema_name=param["schema"]["title"])
                 validate_filters(value, resolved_schema)
@@ -94,10 +111,10 @@ class ParameterValidatorPatched(ParameterValidator):
                 raise bad_request_factory(e) from e
 
             return None
-        elif param_name == "include" and isinstance(value, dict):
+        if param_name == "include" and isinstance(value, dict):
             request_scope = self.request_scopes.get(request, {})
             scope_path = request_scope.get("path", "")
-            if scope_path.endswith(os.path.join(API_BASE_PATH.rstrip("/"), "search")):
+            if scope_path.endswith(str(Path(API_BASE_PATH.rstrip("/")) / "search")):
                 # The /search include schema is ambiguous due to multiple possibilities depending on the scope
                 # Neither the scope nor the respective include schema can be determined at this point
                 # Delegate this validation to be run by the operation function where the context is available
@@ -112,7 +129,7 @@ class ParameterValidatorPatched(ParameterValidator):
             return None
 
         return cast(
-            str | None, self.validate_parameter("query", value, param, param_name=param_name)
+            "str | None", self.validate_parameter("query", value, param, param_name=param_name)
         )
 
     def validate(self, scope: dict[str, Any]) -> None:

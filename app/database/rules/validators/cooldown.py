@@ -1,16 +1,20 @@
+"""Cooldown rule: limit how often a user may submit to a queue."""
+
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from connexion.exceptions import Forbidden
 
 from app.database.models import Queue
 from app.database.rules.base import RestrictionBase
-from app.database.rules.context import ExecutionContext
 from app.database.rules.fingerprint import config_fingerprint
 from app.database.schemas.rule import CooldownConfig
 from app.redis_client import Namespace
+
+if TYPE_CHECKING:
+    from app.database.rules.context import ExecutionContext
 
 
 def _is_target_match(config: dict, user_id: int) -> bool:
@@ -21,6 +25,8 @@ def _is_target_match(config: dict, user_id: int) -> bool:
 
 
 class CooldownRestriction(RestrictionBase):
+    """Enforce a per-user wait period between submissions to a queue."""
+
     type = "cooldown"
     config_schema = CooldownConfig
 

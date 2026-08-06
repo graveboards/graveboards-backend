@@ -1,5 +1,8 @@
+"""Connexion application factory with middleware configuration."""
+
 from __future__ import annotations
-import os
+
+from pathlib import Path
 
 from connexion import AsyncApp
 from connexion.exceptions import BadRequestProblem, Forbidden, InternalServerError, Unauthorized
@@ -22,12 +25,17 @@ from .spec import load_spec
 
 
 def create_connexion_app() -> AsyncApp:
+    """Create and configure the Connexion application.
+
+    Returns:
+        The configured Connexion application.
+    """
     # Configure logging here, before uvicorn's config.load() returns and it emits
     # its first startup lines ("Started server process", etc.), so those render
     # through our handlers too rather than uvicorn's stock format.
     setup_logging()
 
-    os.makedirs(INSTANCE_DIR, exist_ok=True)
+    Path(INSTANCE_DIR).mkdir(parents=True, exist_ok=True)
 
     if DISABLE_SECURITY and ENV.value != Env.DEV.value:
         raise RuntimeError(

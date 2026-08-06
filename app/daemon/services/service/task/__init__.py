@@ -1,4 +1,7 @@
+"""Task execution with backoff and retry support."""
+
 from __future__ import annotations
+
 from .backoff import BackoffStrategy, ConstantBackoff, ExponentialBackoff, LinearBackoff
 from .retry import TaskRetryPolicy
 from .spec import TaskFactory, TaskSpec
@@ -15,12 +18,12 @@ __all__ = [
     "ConstantBackoff",
     "ExponentialBackoff",
     "LinearBackoff",
-    "TaskRetryPolicy",
-    "TaskFactory",
-    "TaskSpec",
     "TaskErrorHook",
+    "TaskFactory",
     "TaskFailureHook",
     "TaskFinishHook",
     "TaskMaxRetriesExceededHook",
+    "TaskRetryPolicy",
+    "TaskSpec",
     "TaskSuccessHook",
 ]

@@ -1,4 +1,3 @@
-from __future__ import annotations
 """Path constants and utilities for fixture file locations.
 
 File naming convention:
@@ -10,9 +9,14 @@ File naming convention:
     beatmap_attributes: beatmap_attrs_{id}_mods{mods}.json
 """
 
-from pathlib import Path
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from app.config import PROJECT_ROOT
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # Instance fixtures (production API-fetched data)
 FIXTURES_DIR = PROJECT_ROOT / "instance" / "fixtures"

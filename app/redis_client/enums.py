@@ -1,4 +1,7 @@
+"""Redis namespace and channel enumerations."""
+
 from __future__ import annotations
+
 from enum import StrEnum
 
 __all__ = ["ChannelName", "Namespace"]
@@ -37,6 +40,7 @@ class Namespace(StrEnum):
                 Unique identifier appended to the namespace.
 
         Returns:
+        -------
             Fully-qualified Redis key string.
         """
         return f"{self.value}:{suffix}"

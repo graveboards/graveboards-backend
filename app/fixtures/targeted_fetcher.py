@@ -1,15 +1,15 @@
+"""Fetcher specialized for targeted fixture coverage strategies."""
+
 from __future__ import annotations
+
 import json
 import random
-from collections.abc import AsyncGenerator, AsyncIterator
 from datetime import UTC, datetime
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from typing import cast as typing_cast
 
 from app.exceptions import clean_error_msg
 from app.osu_api.enums import Ruleset
-from app.redis_client import RedisClient
 
 from .constants import (
     RULESETS,
@@ -19,15 +19,22 @@ from .constants import (
     TARGETED_BEATMAPSETS_COUNT,
     TARGETED_USERS_COUNT,
 )
-from .failed_id_store import FailedIdStore
 from .fetcher import FetchEvent, FixtureDataFetcher
-from .id_source import IDSource
 from .metadata_io import (
     create_targeted_metadata,
     load_metadata,
     save_metadata,
 )
 from .paths import get_fixture_path
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator, AsyncIterator
+    from pathlib import Path
+
+    from app.redis_client import RedisClient
+
+    from .failed_id_store import FailedIdStore
+    from .id_source import IDSource
 
 
 class TargetedFixtureFetcher(FixtureDataFetcher):
@@ -107,7 +114,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
                     try:
                         beatmapset_data = await self.oac.get_beatmapset(beatmapset_id)
                         filepath = path / f"beatmapset_{beatmapset_id}.json"
-                        with open(filepath, "w") as f:
+                        with filepath.open("w") as f:
                             json.dump(beatmapset_data, f, indent=2)
 
                         fetched += 1
@@ -197,7 +204,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
                     try:
                         beatmap_data = await self.oac.get_beatmap(beatmap_id)
                         filepath = path / f"beatmap_{beatmap_id}.json"
-                        with open(filepath, "w") as f:
+                        with filepath.open("w") as f:
                             json.dump(beatmap_data, f, indent=2)
 
                         fetched += 1
@@ -271,7 +278,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
             try:
                 user_data = await self.oac.get_user(user_id, mode=mode)
                 filepath = ruleset_path / f"user_{user_id}_{ruleset}.json"
-                with open(filepath, "w") as f:
+                with filepath.open("w") as f:
                     json.dump(user_data, f, indent=2)
 
                 fetched += 1
@@ -332,7 +339,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
                     continue
 
                 filepath = path / f"beatmap_{beatmap_id}.json"
-                with open(filepath, "w") as f:
+                with filepath.open("w") as f:
                     json.dump(beatmap_data, f, indent=2)
 
                 fetched += 1
@@ -372,8 +379,8 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         self._current_session_results = {
             "beatmaps": 0,
             "beatmapsets": 0,
-            "users": {r: 0 for r in RULESETS},
-            "scores": {t: 0 for t in SCORE_TYPES},
+            "users": dict.fromkeys(RULESETS, 0),
+            "scores": dict.fromkeys(SCORE_TYPES, 0),
             "beatmap_scores": 0,
             "beatmap_attributes": 0,
         }
@@ -440,15 +447,15 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
 
         self.metadata = load_metadata()
         results: dict[str, Any] = {}
-        results["beatmaps"] = typing_cast(dict, self._current_session_results["beatmaps"])
-        results["beatmapsets"] = typing_cast(dict, self._current_session_results["beatmapsets"])
-        results["users"] = typing_cast(dict, self._current_session_results["users"]).copy()
-        results["scores"] = typing_cast(dict, self._current_session_results["scores"]).copy()
+        results["beatmaps"] = typing_cast("dict", self._current_session_results["beatmaps"])
+        results["beatmapsets"] = typing_cast("dict", self._current_session_results["beatmapsets"])
+        results["users"] = typing_cast("dict", self._current_session_results["users"]).copy()
+        results["scores"] = typing_cast("dict", self._current_session_results["scores"]).copy()
         results["beatmap_scores"] = typing_cast(
-            dict, self._current_session_results["beatmap_scores"]
+            "dict", self._current_session_results["beatmap_scores"]
         )
         results["beatmap_attributes"] = typing_cast(
-            dict, self._current_session_results["beatmap_attributes"]
+            "dict", self._current_session_results["beatmap_attributes"]
         )
 
         self.last_fetch_results = results
@@ -560,12 +567,12 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
 
         activity_meta = users_meta.setdefault("by_activity", {})
         if activity_level not in activity_meta:
-            activity_meta[activity_level] = {r: 0 for r in RULESETS}
+            activity_meta[activity_level] = dict.fromkeys(RULESETS, 0)
         activity_meta[activity_level][ruleset] = activity_meta[activity_level].get(ruleset, 0) + 1
 
         ruleset_meta = users_meta.setdefault("per_ruleset", {})
         if ruleset not in ruleset_meta:
-            ruleset_meta[ruleset] = {level: 0 for level in self.activity_levels}
+            ruleset_meta[ruleset] = dict.fromkeys(self.activity_levels, 0)
         ruleset_meta[ruleset][activity_level] = ruleset_meta[ruleset].get(activity_level, 0) + 1
 
         save_metadata(self.metadata, fixtures_dir=self.fixtures_dir)
@@ -640,8 +647,8 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         results: dict[str, Any] = {
             "beatmaps": {"count": 0, "last_fetched": None},
             "beatmapsets": {"count": 0, "last_fetched": None},
-            "users": {"count": 0, "per_ruleset": {r: 0 for r in RULESETS}, "last_fetched": None},
-            "scores": {"count": 0, "per_type": {t: 0 for t in SCORE_TYPES}, "last_fetched": None},
+            "users": {"count": 0, "per_ruleset": dict.fromkeys(RULESETS, 0), "last_fetched": None},
+            "scores": {"count": 0, "per_type": dict.fromkeys(SCORE_TYPES, 0), "last_fetched": None},
             "beatmap_scores": {"count": 0, "last_fetched": None},
             "beatmap_attributes": {"count": 0, "last_fetched": None},
         }
@@ -685,7 +692,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
         }
 
         if self.targeted_statuses:
-            counts["beatmapsets"]["by_status"] = {status: 10 for status in self.targeted_statuses}
+            counts["beatmapsets"]["by_status"] = dict.fromkeys(self.targeted_statuses, 10)
 
         if self.targeted_difficulty_range:
             counts["beatmaps"]["by_difficulty"] = {self.targeted_difficulty_range: 10}
@@ -695,7 +702,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
 
         if self.targeted_activity_tier:
             counts["users"]["by_activity"] = {
-                self.targeted_activity_tier: {ruleset: 10 for ruleset in self.targeted_rulesets}
+                self.targeted_activity_tier: dict.fromkeys(self.targeted_rulesets, 10)
             }
 
         if not any(counts.values()):

@@ -1,4 +1,7 @@
+"""CTE projecting aggregated tags for beatmapset snapshots."""
+
 from __future__ import annotations
+
 from sqlalchemy.sql import select
 from sqlalchemy.sql.functions import func
 

@@ -1,10 +1,14 @@
-from __future__ import annotations
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
-from types import TracebackType
-from typing import Any
+"""Async PostgreSQL database adapter built on SQLAlchemy.
 
-from asyncpg.connection import Connection
+Provides engine lifecycle management, async session factories, connection
+hooks for metrics, and a transaction-scoped session context manager.
+"""
+
+from __future__ import annotations
+
+from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING, Any
+
 from sqlalchemy import event
 from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import (
@@ -13,7 +17,6 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.pool.base import ConnectionPoolEntry
 from sqlalchemy.sql import select
 
 from app.config import POSTGRESQL_CONFIGURATION
@@ -27,8 +30,14 @@ from app.observability.metrics.db import (
     db_query_duration_seconds,
 )
 
-from . import events  # noqa: F401  # register SQLAlchemy model event listeners
 from .crud import CRUD
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+    from types import TracebackType
+
+    from asyncpg.connection import Connection
+    from sqlalchemy.pool.base import ConnectionPoolEntry
 
 DATABASE_URI = URL.create(**POSTGRESQL_CONFIGURATION)
 logger = get_logger(__name__)
@@ -58,28 +67,28 @@ class PostgresqlDB(CRUD):
 
         @event.listens_for(self.engine.sync_engine, "first_connect")
         def on_connect(
-            dbapi_connection: Connection, connection_record: ConnectionPoolEntry
+            _dbapi_connection: Connection, _connection_record: ConnectionPoolEntry
         ) -> None:
             logger.debug(f"Connected to PostgreSQL at '{DATABASE_URI}'")
 
     def _setup_pool_metrics(self) -> None:
         @event.listens_for(self.engine.sync_engine.pool, "checkin")
         def on_checkin(
-            dbapi_connection: Connection, connection_record: ConnectionPoolEntry
+            _dbapi_connection: Connection, _connection_record: ConnectionPoolEntry
         ) -> None:
             db_pool_checked_out.dec()
             db_pool_checked_in.inc()
 
         @event.listens_for(self.engine.sync_engine.pool, "checkout")
         def on_checkout(
-            dbapi_connection: Connection, pid: int, connection_proxy: Connection
+            _dbapi_connection: Connection, _pid: int, _connection_proxy: Connection
         ) -> None:
             db_pool_checked_out.inc()
             db_pool_checked_in.dec()
 
         @event.listens_for(self.engine.sync_engine.pool, "connect")
         def on_connect_pool(
-            dbapi_connection: Connection, connection_record: ConnectionPoolEntry
+            _dbapi_connection: Connection, _connection_record: ConnectionPoolEntry
         ) -> None:
             db_pool_size.set(self.engine.pool.size())  # type: ignore[attr-defined]
             db_pool_overflow.set(max(0, self.engine.sync_engine.pool.overflow()))  # type: ignore[attr-defined]
@@ -91,13 +100,23 @@ class PostgresqlDB(CRUD):
 
         @event.listens_for(self.engine.sync_engine, "before_cursor_execute")
         def on_before_cursor_execute(
-            conn: Any, cursor: Any, statement: str, parameters: Any, context: Any, executemany: bool
+            _conn: Any,
+            _cursor: Any,
+            _statement: str,
+            _parameters: Any,
+            context: Any,
+            _executemany: bool,
         ) -> None:
             context._query_start_time = _time.perf_counter()
 
         @event.listens_for(self.engine.sync_engine, "after_cursor_execute")
         def on_after_cursor_execute(
-            conn: Any, cursor: Any, statement: str, parameters: Any, context: Any, executemany: bool
+            _conn: Any,
+            _cursor: Any,
+            statement: str,
+            _parameters: Any,
+            context: Any,
+            _executemany: bool,
         ) -> None:
             start: float | int | None = getattr(context, "_query_start_time", None)
             if start is not None:
@@ -112,6 +131,7 @@ class PostgresqlDB(CRUD):
         invalidation after transaction commits.
 
         Returns:
+        -------
             An ``async_sessionmaker`` bound to this engine.
         """
         return async_sessionmaker(self.engine, expire_on_commit=False)
@@ -123,6 +143,7 @@ class PostgresqlDB(CRUD):
         operational. Uses pooled connections without closing the engine.
 
         Raises:
+        ------
             SQLAlchemyError:
                 If the connection or query fails.
         """
@@ -157,9 +178,11 @@ class PostgresqlDB(CRUD):
                 Whether SQLAlchemy should autoflush pending changes.
 
         Yields:
+        ------
             AsyncSession: Active transactional session.
 
         Raises:
+        ------
             Exception:
                 Re-raises any exception after rolling back.
         """

@@ -1,13 +1,20 @@
+"""Star-rating restriction for ranked-beatmap submission."""
+
 from __future__ import annotations
-from typing import override
+
+from typing import TYPE_CHECKING, override
 
 from app.database.rules.base import BeatmapRestrictionBase
-from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError
 from app.database.schemas.rule import StarRatingConfig
 
+if TYPE_CHECKING:
+    from app.database.rules.context import ExecutionContext
+
 
 class StarRatingRestriction(BeatmapRestrictionBase):
+    """Enforce minimum/maximum star rating across the set's beatmaps."""
+
     type = "beatmap_star_rating"
     config_schema = StarRatingConfig
 

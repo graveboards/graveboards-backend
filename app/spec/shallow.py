@@ -1,4 +1,7 @@
+"""Shallow reference resolution for OpenAPI schemas."""
+
 from __future__ import annotations
+
 import copy
 from typing import Any
 
@@ -65,7 +68,7 @@ def populate_shallow_refs(openapi_spec: dict) -> None:
 
                 return None  # Drop property
 
-            stack = stack + (title,)
+            stack = (*stack, title)
 
         # Resolve properties
         if "properties" in schema:

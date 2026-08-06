@@ -1,26 +1,31 @@
-from __future__ import annotations
 """Base fetcher with shared logic for all fetcher types.
 
 Extracts common functionality from FixtureDataFetcher that is shared across
 standard, targeted, and search-test fetchers.
 """
 
+from __future__ import annotations
+
 import asyncio
 import contextlib
 import json
-import os
 import random
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from app.osu_api.client.osu_api_client import OsuAPIClient
-from app.redis_client import RedisClient
 
 from .constants import ID_RANGES, RULESETS
 from .failed_id_store import FailedIdStore
-from .id_source import IDSource
 from .metadata_io import load_metadata, load_top_player_ids, save_metadata
 from .paths import get_fixture_path
 from .validation import validate_data
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from app.redis_client import RedisClient
+
+    from .id_source import IDSource
 
 
 class BaseFetcher:
@@ -116,9 +121,9 @@ class BaseFetcher:
                 self.logger.warning(f"Validation failed for {data_type}: {error_msg}")
 
         tmp_path = filepath.with_suffix(filepath.suffix + ".tmp")
-        with open(tmp_path, "w") as f:
+        with tmp_path.open("w") as f:
             json.dump(data, f, indent=2)
-        os.replace(tmp_path, filepath)
+        tmp_path.replace(filepath)
 
     async def _get_random_id(
         self,

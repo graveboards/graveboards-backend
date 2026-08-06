@@ -1,16 +1,9 @@
-from __future__ import annotations
-"""
-Test App Module - Provides isolated app startup for testing.
+"""Test application factory with isolated startup for testing."""
 
-This module provides app creation functions that:
-1. Skip expensive non-test initialization (daemon services, API calls)
-2. Use test-specific configuration (in-memory DB, test Redis, etc.)
-3. Provide clean isolation between tests
-"""
+from __future__ import annotations
 
 import os
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock
 
 from connexion import AsyncApp
@@ -18,11 +11,9 @@ from connexion.exceptions import Forbidden
 from connexion.middleware import MiddlewarePosition
 from connexion.resolver import RestyResolver
 from connexion.security import ApiKeySecurityHandler, BearerSecurityHandler
-from starlette.applications import Starlette
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.testclient import TestClient
-from starlette.types import Receive, Send
 
 from app.config import (
     CONFIG,
@@ -35,6 +26,49 @@ from app.error_handlers import forbidden
 from app.patches import OpenAPIURIParserPatched, ParameterValidatorPatched
 from app.redis_client import RedisClient
 from app.spec import load_spec
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from starlette.applications import Starlette
+    from starlette.types import Receive, Send
+
+
+def _patch_connexion_request_injection() -> None:
+    """Patch connexion's parameter decorator to pass `request` to handlers.
+
+    Connexion 3.x's AsyncParameterDecorator calls ``function(**kwargs``) which
+    only contains path/query/body/file params — the ``request`` object itself
+    is NOT included.  All our handlers expect ``request: Request`` as the first
+    positional argument, so we must inject it into ``kwargs``.
+    """
+    import connexion.decorators.parameter as param_module
+
+    original_prep_kwargs = param_module.prep_kwargs
+
+    def patched_prep_kwargs(
+        request: Any,
+        *,
+        request_body: Any,
+        files: dict[str, Any],
+        arguments: list[str],
+        has_kwargs: bool,
+        sanitize: Callable,
+    ) -> dict[str, Any]:
+        kwargs: dict[str, Any] = original_prep_kwargs(
+            request,
+            request_body=request_body,
+            files=files,
+            arguments=arguments,
+            has_kwargs=has_kwargs,
+            sanitize=sanitize,
+        )
+        # Inject the request object if the handler expects it
+        if "request" in arguments or has_kwargs:
+            kwargs["request"] = request
+        return kwargs
+
+    param_module.prep_kwargs = patched_prep_kwargs
 
 
 class MockRedisMiddleware:
@@ -51,6 +85,16 @@ class MockRedisMiddleware:
         self.mock_rc = mock_rc
 
     async def __call__(self, scope: dict[str, Any], receive: Receive, send: Send) -> None:
+        """Process an ASGI request with mock Redis.
+
+        Args:
+            scope:
+                The ASGI scope.
+            receive:
+                The ASGI receive callable.
+            send:
+                The ASGI send callable.
+        """
         from unittest.mock import MagicMock
 
         if self.mock_rc is not None:
@@ -94,6 +138,16 @@ class MockDatabaseMiddleware:
         self.mock_db = mock_db
 
     async def __call__(self, scope: dict[str, Any], receive: Receive, send: Send) -> None:
+        """Process an ASGI request with mock database.
+
+        Args:
+            scope:
+                The ASGI scope.
+            receive:
+                The ASGI receive callable.
+            send:
+                The ASGI send callable.
+        """
         from unittest.mock import MagicMock
 
         if self.mock_db is not None:
@@ -142,8 +196,8 @@ class TestBearerSecurityHandler(BearerSecurityHandler):
     Accepts any Bearer token without validation.
     """
 
-    def _get_verify_func(self, token_info_func: Any) -> Callable[[Any], dict[str, str | bool]]:
-        def wrapper(request: Any) -> dict[str, str | bool]:
+    def _get_verify_func(self, _token_info_func: Any) -> Callable[[Any], dict[str, str | bool]]:
+        def wrapper(_request: Any) -> dict[str, str | bool]:
             return {"sub": "0", "test": True}
 
         return wrapper
@@ -156,9 +210,9 @@ class TestApiKeySecurityHandler(ApiKeySecurityHandler):
     """
 
     def _get_verify_func(
-        self, api_key_info_func: Any, loc: str, name: str, required_scopes: list[str]
+        self, _api_key_info_func: Any, _loc: str, _name: str, _required_scopes: list[str]
     ) -> Callable[[Any], bool]:
-        def wrapper(request: Any) -> bool:
+        def wrapper(_request: Any) -> bool:
             return True
 
         return wrapper
@@ -177,6 +231,8 @@ def create_test_app(mock_rc: Any = None, mock_db: Any = None) -> AsyncApp:
         mock_rc: Optional custom Redis mock to inject into MockRedisMiddleware
         mock_db: Optional custom database mock to inject into MockDatabaseMiddleware
     """
+    _patch_connexion_request_injection()
+
     connexion_app = AsyncApp(
         __name__,
         specification_dir=SPEC_DIR,
@@ -202,7 +258,7 @@ def create_test_app(mock_rc: Any = None, mock_db: Any = None) -> AsyncApp:
     class NoopRequestBodyValidator:
         """No-op validator that accepts all request bodies."""
 
-        async def validate(self, request: Any) -> None:
+        async def validate(self, _request: Any) -> None:
             return None
 
     validator_map = {"parameter": ParameterValidatorPatched}

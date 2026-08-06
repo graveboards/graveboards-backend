@@ -1,9 +1,14 @@
+"""Database lifecycle decorator for async services."""
+
 from __future__ import annotations
-from collections.abc import Awaitable, Callable
+
 from functools import wraps
-from typing import Any, Concatenate, ParamSpec, TypeVar
+from typing import TYPE_CHECKING, Any, Concatenate, ParamSpec, TypeVar
 
 from .db import PostgresqlDB
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -21,6 +26,7 @@ def db_lifespan[**P, R](
         func: Async function requiring a PostgresqlDB instance.
 
     Returns:
+    -------
         Wrapped async function with automatic DB lifecycle handling.
     """
 

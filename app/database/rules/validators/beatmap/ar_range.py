@@ -1,13 +1,20 @@
+"""Approach-rate (AR) range restriction for ranked-beatmap submission."""
+
 from __future__ import annotations
-from typing import override
+
+from typing import TYPE_CHECKING, override
 
 from app.database.rules.base import BeatmapRestrictionBase
-from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError
 from app.database.schemas.rule import ARRangeConfig
 
+if TYPE_CHECKING:
+    from app.database.rules.context import ExecutionContext
+
 
 class ARRangeRestriction(BeatmapRestrictionBase):
+    """Enforce minimum/maximum approach rate (AR) across the set's beatmaps."""
+
     type = "beatmap_ar_range"
     config_schema = ARRangeConfig
 

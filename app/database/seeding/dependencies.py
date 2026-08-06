@@ -1,4 +1,7 @@
+"""Dependency graph between seeder targets."""
+
 from __future__ import annotations
+
 from .target import SeederTarget
 
 DEPENDENCIES: dict[SeederTarget, set[SeederTarget]] = {
@@ -25,6 +28,7 @@ def resolve_dependencies(targets: set[SeederTarget]) -> list[list[SeederTarget]]
             Initial set of requested ``SeederTargets``.
 
     Returns:
+    -------
         A list of execution layers, where each inner list contains ``SeederTarget`` that
         may be executed concurrently.
     """
@@ -56,9 +60,11 @@ def _topological_layers(targets: set[SeederTarget]) -> list[list[SeederTarget]]:
             Set of ``SeederTarget`` to sort.
 
     Returns:
+    -------
         Ordered list of dependency-safe execution layers.
 
     Raises:
+    ------
         RuntimeError:
             If a circular dependency is detected.
     """

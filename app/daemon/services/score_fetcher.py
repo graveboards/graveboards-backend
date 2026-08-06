@@ -1,4 +1,7 @@
+"""Score fetching and synchronization service."""
+
 from __future__ import annotations
+
 from typing import Any, ClassVar, override
 
 from httpx import ConnectTimeout
@@ -61,6 +64,7 @@ class ScoreFetcher(ScheduledFetcherService):
                 ID of the score fetcher record.
 
         Raises:
+        ------
             ValueError: If the record does not exist.
         """
         if not (record := await self._db.get(ScoreFetcherTask, id=record_id)):
@@ -101,6 +105,7 @@ class ScoreFetcher(ScheduledFetcherService):
                 Score data containing at minimum ``beatmap.id``.
 
         Returns:
+        -------
             ``True`` if an active leaderboard exists for the score's beatmap.
         """
         beatmap_id = score.get("beatmap", {}).get("id")

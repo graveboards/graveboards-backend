@@ -1,9 +1,13 @@
+"""Metadata provider resolving beatmapset duration characteristics."""
+
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from app.database.rules.context import ExecutionContext
 from app.database.rules.validators.metadata.song_identity import MetadataProvider
+
+if TYPE_CHECKING:
+    from app.database.rules.context import ExecutionContext
 
 _VERSION_MARKERS = [
     "TV Size",
@@ -25,11 +29,15 @@ _VERSION_MARKERS = [
 
 
 class DurationProvider(MetadataProvider):
+    """Resolve the set's longest duration and version-marker presence."""
+
     @property
     def name(self) -> str:
+        """Name under which this provider is registered."""
         return "duration"
 
     async def resolve(self, context: ExecutionContext) -> dict[str, Any]:
+        """Resolve original duration and whether the title carries a version marker."""
         beatmapset = context.beatmapset
         beatmaps = context.beatmaps or []
 

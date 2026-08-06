@@ -1,4 +1,7 @@
+"""Daemon-related Prometheus metrics."""
+
 from __future__ import annotations
+
 from prometheus_client import Counter, Gauge, Histogram
 
 daemon_service_running = Gauge(

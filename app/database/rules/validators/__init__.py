@@ -1,4 +1,7 @@
+"""Concrete rule restrictions (Tier-1/2 entry points)."""
+
 from __future__ import annotations
+
 from app.database.rules.validators.beatmap import (
     ARRangeRestriction,
     BPMRestriction,
@@ -23,24 +26,24 @@ from app.database.rules.validators.cooldown import CooldownRestriction
 from app.database.rules.validators.rate_limit import RateLimitRestriction
 
 __all__ = [
-    "RateLimitRestriction",
-    "CooldownRestriction",
-    "BlacklistRestriction",
-    "DurationRestriction",
-    "StarRatingRestriction",
     "ARRangeRestriction",
-    "ODRangeRestriction",
-    "HPRangeRestriction",
-    "CSRangeRestriction",
-    "DrainRangeRestriction",
     "BPMRestriction",
-    "GenreRestriction",
-    "LanguageRestriction",
-    "ModeRestriction",
-    "DifficultyCountRestriction",
-    "StoryboardRestriction",
-    "VideoRestriction",
-    "TagsRestriction",
-    "LengthRestriction",
+    "BlacklistRestriction",
+    "CSRangeRestriction",
     "CombinationRestriction",
+    "CooldownRestriction",
+    "DifficultyCountRestriction",
+    "DrainRangeRestriction",
+    "DurationRestriction",
+    "GenreRestriction",
+    "HPRangeRestriction",
+    "LanguageRestriction",
+    "LengthRestriction",
+    "ModeRestriction",
+    "ODRangeRestriction",
+    "RateLimitRestriction",
+    "StarRatingRestriction",
+    "StoryboardRestriction",
+    "TagsRestriction",
+    "VideoRestriction",
 ]

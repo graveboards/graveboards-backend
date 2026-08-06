@@ -1,4 +1,7 @@
+"""Fixture reader that decouples tests from raw fixture files."""
+
 from __future__ import annotations
+
 import json
 from pathlib import Path
 from typing import Any
@@ -201,7 +204,7 @@ class FixtureReader:
                 targeted_metadata[main_category]["file_metadata"] = file_metadata
 
         file_paths = []
-        for _fixture_id, meta in file_metadata.items():
+        for meta in file_metadata.values():
             if self._matches_preferences(meta, preferences, category=category):
                 filepath = meta.get("filepath")
                 if filepath:
@@ -358,14 +361,14 @@ class FixtureReader:
 
     def _load_fixture(
         self,
-        category: str,
+        _category: str,
         file_path: Path,
     ) -> dict | None:
         """Load fixture from file."""
         try:
-            with open(file_path) as f:
+            with file_path.open() as f:
                 data = json.load(f)
-            return typing_cast(dict[Any, Any], data)
+            return typing_cast("dict[Any, Any]", data)
         except (json.JSONDecodeError, FileNotFoundError) as e:
             logger.warning(f"Failed to load fixture {file_path}: {e}")
             return None

@@ -26,10 +26,10 @@ from app.fixtures.id_source import IDSource, create_id_source
 from app.fixtures.search_test_fetcher import SearchTestFixtureFetcher
 from app.fixtures.targeted_fetcher import TargetedFixtureFetcher
 from app.observability.logging import get_logger
-from app.redis_client import RedisClient
 
 if TYPE_CHECKING:
     from app.fixtures.progress import ProgressBar
+    from app.redis_client import RedisClient
 
 logger = get_logger(__name__)
 
@@ -220,7 +220,7 @@ class FixtureOrchestrator:
                 rulesets=targeted.rulesets,
             )
 
-        targeted_fetcher = cast(TargetedFixtureFetcher, self.fetcher)
+        targeted_fetcher = cast("TargetedFixtureFetcher", self.fetcher)
         async for _ in targeted_fetcher.fetch_targeted():
             pass
 
@@ -239,7 +239,6 @@ class FixtureOrchestrator:
         The adaptive fetch loop prioritizes rare buckets (NSFW, restricted users)
         over common ones, and actions that fill multiple buckets at once.
         """
-
         if self.fetcher is None:
             return FetchReport(criteria=self.criteria.criteria)
 
@@ -254,7 +253,7 @@ class FixtureOrchestrator:
         if st.gaps:
             return FetchReport(criteria=self.criteria.criteria)
 
-        search_fetcher = cast(SearchTestFixtureFetcher, self.fetcher)
+        search_fetcher = cast("SearchTestFixtureFetcher", self.fetcher)
         if st.full:
             search_fetcher.logger.info(
                 f"Search test fetch: full mode, max {st.max_total} API calls"

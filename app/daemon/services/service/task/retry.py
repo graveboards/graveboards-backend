@@ -1,12 +1,30 @@
-from __future__ import annotations
-from dataclasses import dataclass
+"""Retry policy configuration for task execution."""
 
-from .backoff import BackoffStrategy
-from .types import TaskFailureHook, TaskMaxRetriesExceededHook
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .backoff import BackoffStrategy
+    from .types import TaskFailureHook, TaskMaxRetriesExceededHook
 
 
 @dataclass(frozen=True, slots=True)
 class TaskRetryPolicy:
+    """Configuration for task retry behavior.
+
+    Attributes:
+        backoff:
+            Strategy for determining retry delays.
+        max_retries:
+            Maximum number of retry attempts.
+        on_failure:
+            Hook called on each retry failure.
+        on_max_retries_exceeded:
+            Hook called when max retries are exceeded.
+    """
+
     backoff: BackoffStrategy | None = None
     max_retries: int | None = None
     on_failure: TaskFailureHook | None = None

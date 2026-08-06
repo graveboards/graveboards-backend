@@ -1,5 +1,6 @@
-from __future__ import annotations
 """Progress bar handler for fixture fetch operations."""
+
+from __future__ import annotations
 
 import contextlib
 import logging

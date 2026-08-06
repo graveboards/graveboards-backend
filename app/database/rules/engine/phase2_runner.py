@@ -1,16 +1,21 @@
+"""Asynchronous Phase-2 runner evaluating Tier-3 (osu! API backed) rules."""
+
 from __future__ import annotations
 
 import asyncio
 import logging
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from connexion.exceptions import Forbidden
 
-from app.database.models import QueueRule
-from app.database.rules.context import ExecutionContext
 from app.database.rules.engine.evaluator import RuleNode, build_rule_node
 from app.database.rules.exceptions import RetryableValidationError, RuleViolationError
 from app.database.rules.registry import effective_rule_tier
+
+if TYPE_CHECKING:
+    from app.database.models import QueueRule
+    from app.database.rules.context import ExecutionContext
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +31,8 @@ class Tier3Outcome(Enum):
 
 
 class Phase2Runner:
+    """Runs Tier-3 validators concurrently with a per-rule timeout."""
+
     async def run(
         self,
         rules: list[QueueRule],

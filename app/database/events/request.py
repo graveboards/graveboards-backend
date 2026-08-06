@@ -1,17 +1,26 @@
+"""SQLAlchemy event listeners for ``Request``."""
+
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from sqlalchemy import event
-from sqlalchemy.engine.base import Connection
-from sqlalchemy.orm.mapper import Mapper
 from sqlalchemy.sql import select
 from sqlalchemy.sql.functions import func
 
 from app.database.models import BeatmapsetSnapshot, Request
 
+if TYPE_CHECKING:
+    from sqlalchemy.engine.base import Connection
+    from sqlalchemy.orm.mapper import Mapper
+
 __all__ = ["request_before_insert"]
 
 
 @event.listens_for(Request, "before_insert")
-def request_before_insert(mapper: Mapper[Request], connection: Connection, target: Request) -> None:
+def request_before_insert(
+    _mapper: Mapper[Request], connection: Connection, target: Request
+) -> None:
     """Bind a ``Request`` to the latest ``BeatmapsetSnapshot``.
 
     Ensures referential consistency by resolving and attaching the most recent snapshot
@@ -26,6 +35,7 @@ def request_before_insert(mapper: Mapper[Request], connection: Connection, targe
             The ``Request`` being inserted.
 
     Raises:
+    ------
         ValueError:
             If no ``BeatmapsetSnapshot`` exists for the beatmapset.
 

@@ -1,15 +1,18 @@
-from __future__ import annotations
 """JSON schema validation for fetched fixture data.
 
 Validates fetched data against expected schemas before writing to disk.
 Prevents corrupted/invalid data from becoming fixtures.
 """
 
+from __future__ import annotations
+
 import json
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from app.observability.logging import get_logger
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 logger = get_logger(__name__)
 
@@ -66,6 +69,7 @@ def validate_data(data: Any, data_type: str) -> tuple[bool, str]:
     """Validate fetched data against the schema for the given type.
 
     Returns:
+    -------
         Tuple of (is_valid, error_message)
     """
     schema = SCHEMAS.get(data_type)
@@ -103,6 +107,7 @@ def validate_and_write(filepath: Path, data: Any, data_type: str) -> bool:
     """Validate data and write to file if valid.
 
     Returns:
+    -------
         True if data was valid and written, False otherwise
     """
     is_valid, error_msg = validate_data(data, data_type)
@@ -113,7 +118,7 @@ def validate_and_write(filepath: Path, data: Any, data_type: str) -> bool:
         return False
 
     try:
-        with open(filepath, "w") as f:
+        with filepath.open("w") as f:
             json.dump(data, f, indent=2)
         return True
     except Exception as e:

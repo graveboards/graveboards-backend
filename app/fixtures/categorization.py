@@ -1,10 +1,11 @@
-from __future__ import annotations
 """Categorization logic for fixture data classification.
 
 Provides a reusable Categorizer class for mapping numeric values to buckets
 using half-open intervals. Used across fetcher types for difficulty, playcount,
 bpm, accuracy, and other range-based classifications.
 """
+
+from __future__ import annotations
 
 
 class Categorizer:
@@ -32,6 +33,7 @@ class Categorizer:
             value: Numeric value to categorize
 
         Returns:
+        -------
             Bucket name if value falls in a range, None otherwise
         """
         items = list(self.ranges.items())

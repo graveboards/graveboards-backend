@@ -1,29 +1,41 @@
+"""Execution context and metadata-provider abstractions for rule evaluation."""
+
 from __future__ import annotations
 
-from abc import abstractmethod
-from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Protocol
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.database.rules.exceptions import RuleViolationError
-
 if TYPE_CHECKING:
+    from abc import abstractmethod
+    from collections.abc import Mapping
+
+    from sqlalchemy.ext.asyncio import AsyncSession
+
     from app.database import PostgresqlDB
     from app.database.models.beatmap_snapshot import BeatmapSnapshot
     from app.database.models.beatmapset_snapshot import BeatmapsetSnapshot
+    from app.database.rules.exceptions import RuleViolationError
     from app.database.schemas.sub_schemas import BeatmapOsuApiSchema, BeatmapsetOsuApiSchema
     from app.osu_api.client import OsuAPIClient
     from app.redis_client import RedisClient
 
     class MetadataProvider(Protocol):
+        """Protocol for a provider that resolves supplementary metadata."""
+
         @abstractmethod
-        async def resolve(self, context: ExecutionContext) -> dict[str, Any]: ...
+        async def resolve(self, context: ExecutionContext) -> dict[str, Any]:
+            """Resolve and return this provider's metadata for the context."""
 
 
 @dataclass
 class ExecutionContext:
+    """Mutable per-request state threaded through rule evaluation.
+
+    Carries the queue/user identifiers, the beatmapset data and snapshots, and the
+    optional infrastructure clients (database, redis, osu! API) plus any cached
+    metadata produced by the registered ``MetadataProvider`` implementations.
+    """
+
     queue_id: int
     user_id: int
     beatmapset: BeatmapsetOsuApiSchema | None = None
@@ -40,6 +52,10 @@ class ExecutionContext:
     _provider_cache: dict[str, dict[str, Any]] = field(default_factory=dict)
 
     async def get_metadata(self, provider_name: str) -> dict[str, Any]:
+        """Return cached metadata for ``provider_name``, resolving it on first use.
+
+        Raises ``KeyError`` when the provider is not registered.
+        """
         if provider_name in self._provider_cache:
             return self._provider_cache[provider_name]
 
@@ -55,6 +71,7 @@ class ExecutionContext:
         return result
 
     def invalidate_metadata(self, provider_name: str | None = None) -> None:
+        """Clear cached metadata for ``provider_name``, or the whole cache."""
         if provider_name is None:
             self._provider_cache.clear()
         else:
@@ -80,6 +97,7 @@ def parse_osu_beatmapset(
             shapes validate because the cache model subclasses ``BeatmapsetOsuApiSchema``.
 
     Returns:
+    -------
         A tuple of the parsed ``BeatmapsetOsuApiSchema`` and its list of
         ``BeatmapOsuApiSchema`` (an empty list when the set has no beatmaps).
     """

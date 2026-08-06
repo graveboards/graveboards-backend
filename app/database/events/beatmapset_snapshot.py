@@ -1,20 +1,27 @@
+"""SQLAlchemy event listeners for ``BeatmapsetSnapshot``."""
+
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from sqlalchemy import event, text
-from sqlalchemy.engine.base import Connection
-from sqlalchemy.orm.mapper import Mapper
 from sqlalchemy.sql import func, insert, select, update
 
 from app.database.models import BeatmapsetListing, BeatmapsetSnapshot, Request
 from app.observability.logging import get_logger
 
-__all__ = ["beatmapset_snapshot_before_insert", "beatmapset_snapshot_after_insert"]
+if TYPE_CHECKING:
+    from sqlalchemy.engine.base import Connection
+    from sqlalchemy.orm.mapper import Mapper
+
+__all__ = ["beatmapset_snapshot_after_insert", "beatmapset_snapshot_before_insert"]
 
 logger = get_logger(__name__)
 
 
 @event.listens_for(BeatmapsetSnapshot, "before_insert")
 def beatmapset_snapshot_before_insert(
-    mapper: Mapper[BeatmapsetSnapshot], connection: Connection, target: BeatmapsetSnapshot
+    _mapper: Mapper[BeatmapsetSnapshot], connection: Connection, target: BeatmapsetSnapshot
 ) -> None:
     """Assign the next sequential snapshot number for a ``BeatmapsetSnapshot``.
 
@@ -51,7 +58,7 @@ def beatmapset_snapshot_before_insert(
 
 @event.listens_for(BeatmapsetSnapshot, "after_insert")
 def beatmapset_snapshot_after_insert(
-    mapper: Mapper[BeatmapsetSnapshot], connection: Connection, target: BeatmapsetSnapshot
+    _mapper: Mapper[BeatmapsetSnapshot], connection: Connection, target: BeatmapsetSnapshot
 ) -> None:
     """Propagate a new ``BeatmapsetSnapshot`` to dependent tables.
 

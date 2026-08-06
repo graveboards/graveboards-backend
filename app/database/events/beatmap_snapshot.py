@@ -1,20 +1,27 @@
+"""SQLAlchemy event listeners for ``BeatmapSnapshot``."""
+
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from sqlalchemy import event, text
-from sqlalchemy.engine.base import Connection
-from sqlalchemy.orm.mapper import Mapper
 from sqlalchemy.sql import func, insert, select, update
 
 from app.database.models import BeatmapListing, BeatmapSnapshot
 from app.observability.logging import get_logger
 
-__all__ = ["beatmap_snapshot_before_insert", "beatmap_snapshot_after_insert"]
+if TYPE_CHECKING:
+    from sqlalchemy.engine.base import Connection
+    from sqlalchemy.orm.mapper import Mapper
+
+__all__ = ["beatmap_snapshot_after_insert", "beatmap_snapshot_before_insert"]
 
 logger = get_logger(__name__)
 
 
 @event.listens_for(BeatmapSnapshot, "before_insert")
 def beatmap_snapshot_before_insert(
-    mapper: Mapper[BeatmapSnapshot], connection: Connection, target: BeatmapSnapshot
+    _mapper: Mapper[BeatmapSnapshot], connection: Connection, target: BeatmapSnapshot
 ) -> None:
     """Assign the next sequential snapshot number for a ``BeatmapSnapshot``.
 
@@ -30,6 +37,7 @@ def beatmap_snapshot_before_insert(
             The ``BeatmapSnapshot`` instance being inserted.
 
     Raises:
+    ------
         SQLAlchemyError:
             If the aggregate query fails.
 
@@ -53,7 +61,7 @@ def beatmap_snapshot_before_insert(
 
 @event.listens_for(BeatmapSnapshot, "after_insert")
 def beatmap_snapshot_after_insert(
-    mapper: Mapper[BeatmapSnapshot], connection: Connection, target: BeatmapSnapshot
+    _mapper: Mapper[BeatmapSnapshot], connection: Connection, target: BeatmapSnapshot
 ) -> None:
     """Synchronize ``BeatmapListing`` to the newly inserted snapshot.
 
@@ -70,6 +78,7 @@ def beatmap_snapshot_after_insert(
             The newly inserted ``BeatmapSnapshot``.
 
     Raises:
+    ------
         SQLAlchemyError: If insert/update statements fail.
 
     Side Effects:

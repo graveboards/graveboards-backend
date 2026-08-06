@@ -1,31 +1,12 @@
+"""Beatmap archiving, versioning, and downloadable artifact generation."""
+
 from __future__ import annotations
-"""Beatmap archiving, versioning, and downloadable artifact generation.
-
-This module is intentionally monolithic (``~676 lines``) because ``BeatmapManager``
-coordinates a tightly coupled workflow:
-
-    osu! API  -->  database writes  -->  filesystem snapshots  -->  ZIP archives
-
-Splitting it into smaller classes would fragment the archive pipeline across
-multiple objects that all share the same session, lock state, and changelog.
-The class is well-documented with per-method docstrings and grouped into
-logical sections (snapshotting, updating, population, tags, downloads, archives)
-to aid navigation.
-
-Responsibilities:
-    - Fetching beatmapsets from the osu! API and determining whether to create a
-      new snapshot or apply field-level deltas.
-    - Creating ``BeatmapSnapshot`` / ``BeatmapsetSnapshot`` records with proper
-      relationship resolution (tags, owners, users, profiles).
-    - Downloading ``.osu`` files to the local filesystem for new snapshots.
-    - Generating ZIP archives of beatmap files for download.
-"""
 
 import asyncio
-import os
 from copy import copy
 from io import BytesIO
-from typing import Any
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
 from typing import cast as typing_cast
 from zipfile import ZipFile
 
@@ -33,10 +14,8 @@ import aiofiles
 import httpx
 from httpx import HTTPError
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio.session import AsyncSession
 
 from app.config import INSTANCE_DIR
-from app.database import PostgresqlDB
 from app.database.models import (
     Beatmap,
     Beatmapset,
@@ -62,10 +41,37 @@ from app.osu_api.client.base import OsuAPIMetricsTransport
 from app.redis_client import Namespace, RedisClient
 from app.utils import aware_utcnow, combine_checksums
 
-BEATMAPS_PATH = os.path.join(INSTANCE_DIR, "beatmaps")
-BEATMAPSETS_PATH = os.path.join(INSTANCE_DIR, "beatmapsets")
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio.session import AsyncSession
+
+    from app.database import PostgresqlDB
+
+"""Beatmap archiving, versioning, and downloadable artifact generation.
+
+This module is intentionally monolithic (``~676 lines``) because ``BeatmapManager``
+coordinates a tightly coupled workflow:
+
+    osu! API  -->  database writes  -->  filesystem snapshots  -->  ZIP archives
+
+Splitting it into smaller classes would fragment the archive pipeline across
+multiple objects that all share the same session, lock state, and changelog.
+The class is well-documented with per-method docstrings and grouped into
+logical sections (snapshotting, updating, population, tags, downloads, archives)
+to aid navigation.
+
+Responsibilities:
+    - Fetching beatmapsets from the osu! API and determining whether to create a
+      new snapshot or apply field-level deltas.
+    - Creating ``BeatmapSnapshot`` / ``BeatmapsetSnapshot`` records with proper
+      relationship resolution (tags, owners, users, profiles).
+    - Downloading ``.osu`` files to the local filesystem for new snapshots.
+    - Generating ZIP archives of beatmap files for download.
+"""
+
+BEATMAPS_PATH = Path(INSTANCE_DIR) / "beatmaps"
+BEATMAPSETS_PATH = Path(INSTANCE_DIR) / "beatmapsets"
 BEATMAP_DOWNLOAD_BASEURL = "https://osu.ppy.sh/osu/"
-BEATMAP_SNAPSHOT_FILE_PATH = os.path.join(BEATMAPS_PATH, "{beatmap_id}/{snapshot_number}.osu")
+BEATMAP_SNAPSHOT_FILE_PATH = f"{BEATMAPS_PATH}/{{beatmap_id}}/{{snapshot_number}}.osu"
 logger = get_logger(__name__)
 
 
@@ -91,16 +97,16 @@ async def download_beatmap_files(
     async with httpx.AsyncClient(transport=transport) as client:
         for beatmap_id in beatmap_ids:
             url = f"{BEATMAP_DOWNLOAD_BASEURL}{beatmap_id}"
-            output_directory = os.path.join(BEATMAPS_PATH, str(beatmap_id))
-            os.makedirs(output_directory, exist_ok=True)
+            output_directory = Path(BEATMAPS_PATH) / str(beatmap_id)
+            Path(output_directory).mkdir(parents=True, exist_ok=True)
             beatmap_snapshot = await db.get(
                 BeatmapSnapshot,
                 beatmap_id=beatmap_id,
                 _sorting=[{"field": "BeatmapSnapshot.id", "order": "desc"}],
                 session=session,
             )
-            output_path = os.path.join(output_directory, f"{beatmap_snapshot.snapshot_number}.osu")
-            exists = os.path.exists(output_path)
+            output_path = Path(output_directory) / f"{beatmap_snapshot.snapshot_number}.osu"
+            exists = Path(output_path).exists()
 
             async with client.stream("GET", url) as response:
                 response.raise_for_status()
@@ -163,6 +169,7 @@ class BeatmapManager:
                 Whether to download `.osu` files for new snapshots.
 
         Returns:
+        -------
             A changelog describing created or updated entities.
         """
         logger.debug(f"Started archive process for beatmapset {beatmapset_id}: {download=}")
@@ -246,6 +253,7 @@ class BeatmapManager:
                 Raw beatmap payloads from osu! API.
 
         Returns:
+        -------
             List of snapshot instances.
         """
         beatmap_snapshots = []
@@ -323,9 +331,9 @@ class BeatmapManager:
                 BeatmapsetSnapshot, beatmapset_snapshot.id, **delta, session=self._session
             )
 
-            info = {**{"beatmapset_id": beatmapset_snapshot.beatmapset_id}, **delta}
+            info = {"beatmapset_id": beatmapset_snapshot.beatmapset_id, **delta}
             self._changelog["updated_beatmapset"] = {
-                **{"beatmapset_id": beatmapset_snapshot.beatmapset_id},
+                "beatmapset_id": beatmapset_snapshot.beatmapset_id,
                 **delta,
             }
             logger.debug(f"Updated beatmapset: {info}")
@@ -376,7 +384,7 @@ class BeatmapManager:
                 beatmap_snapshot.beatmap_tags = beatmap_tags
                 beatmap_snapshot.owner_profiles = owner_profiles
 
-                info = {**{"beatmap_id": beatmap_snapshot.beatmap_id}, **delta}
+                info = {"beatmap_id": beatmap_snapshot.beatmap_id, **delta}
                 self._changelog["updated_beatmaps"].append(info)
                 logger.debug(f"Updated beatmap: {info}")
 
@@ -443,9 +451,11 @@ class BeatmapManager:
         """Ensure a ``User`` exists and populate their ``Profile``.
 
         Returns:
+        -------
             Instance of the user.
 
         Raises:
+        ------
             RestrictedUserError:
                 If the user profile cannot be retrieved from the osu! API.
         """
@@ -460,7 +470,7 @@ class BeatmapManager:
         except HTTPError:
             raise RestrictedUserError(user_id) from None
 
-        return typing_cast(User, user)
+        return typing_cast("User", user)
 
     async def _populate_profile(
         self, user_id: int, restricted_user_dict: dict | None = None, is_restricted: bool = False
@@ -479,9 +489,11 @@ class BeatmapManager:
                 Whether the user is restricted.
 
         Returns:
+        -------
             The persisted profile instance.
 
         Raises:
+        ------
             RedisLockTimeoutError:
                 If the distributed lock cannot be acquired.
         """
@@ -493,7 +505,7 @@ class BeatmapManager:
                 if (
                     profile := await self.db.get(Profile, user_id=user_id, session=self._session)
                 ) and not is_restricted:
-                    return typing_cast(Profile, profile)
+                    return typing_cast("Profile", profile)
 
                 if not is_restricted:
                     user_dict = await self.oac.get_user(user_id)
@@ -505,10 +517,8 @@ class BeatmapManager:
                     user_dict = {
                         **ProfileSchema.get_blank_slate(),
                         **restricted_user_dict,
-                        **{
-                            "id": user_id,
-                            "is_restricted": True,
-                        },
+                        "id": user_id,
+                        "is_restricted": True,
                     }
                     profile_dict = ProfileSchema.model_validate(user_dict).model_dump(
                         exclude={"id", "updated_at"}, context={"jsonify_nested": True}
@@ -540,7 +550,7 @@ class BeatmapManager:
                         session=self._session,
                     )
 
-                return typing_cast(Profile, profile)
+                return typing_cast("Profile", profile)
         except RedisLockTimeoutError:
             raise
 
@@ -548,6 +558,7 @@ class BeatmapManager:
         """Resolve and populate ``Profile`` instances for beatmap owners.
 
         Returns:
+        -------
             List of profile instances.
         """
         profiles = []
@@ -571,9 +582,10 @@ class BeatmapManager:
         """Create/retrieve tag records from a space-delimited string.
 
         Returns:
+        -------
             List of beatmapset tag instances.
         """
-        tag_strs = set(tag.strip() for tag in tags_str.split(" ") if tag.strip())
+        tag_strs = {tag.strip() for tag in tags_str.split(" ") if tag.strip()}
         beatmapset_tags = []
 
         if not tags_str:
@@ -601,6 +613,7 @@ class BeatmapManager:
         If tags are missing locally, synchronizes from the osu! API.
 
         Returns:
+        -------
             List of beatmap tag instances.
         """
 
@@ -617,7 +630,7 @@ class BeatmapManager:
                 await self._update_beatmap_tags_from_osu()
                 return await fetch_beatmap_tag(_recursed=True)
 
-            return typing_cast(BeatmapTag | None, beatmap_tag_)
+            return typing_cast("BeatmapTag | None", beatmap_tag_)
 
         beatmap_tags = []
 
@@ -670,9 +683,11 @@ class BeatmapManager:
         """Retrieve the raw `.osu` file contents for a snapshot from disk.
 
         Returns:
+        -------
             Raw bytes of the file's content.
 
         Raises:
+        ------
             FileNotFoundError:
                 If the file does not exist.
         """
@@ -680,7 +695,7 @@ class BeatmapManager:
             beatmap_id=beatmap_id, snapshot_number=snapshot_number
         )
 
-        if not os.path.exists(file_path):
+        if not Path(file_path).exists():
             raise FileNotFoundError(
                 f"No .osu file found for beatmap {beatmap_id}, snapshot {snapshot_number}"
             )
@@ -693,9 +708,11 @@ class BeatmapManager:
         """Resolve the filesystem path to a `.osu` snapshot file.
 
         Returns:
+        -------
             The path as a string.
 
         Raises:
+        ------
             FileNotFoundError:
                 If the file does not exist.
         """
@@ -703,7 +720,7 @@ class BeatmapManager:
             beatmap_id=beatmap_id, snapshot_number=snapshot_number
         )
 
-        if not os.path.exists(file_path):
+        if not Path(file_path).exists():
             raise FileNotFoundError(
                 f"No .osu file found for beatmap {beatmap_id}, snapshot {snapshot_number}"
             )
@@ -717,9 +734,11 @@ class BeatmapManager:
         recent version (e.g., ``-1`` = latest).
 
         Returns:
+        -------
             ``BytesIO`` object for streaming a response.
 
         Raises:
+        ------
             ValueError:
                 If the requested snapshot does not exist.
         """
@@ -753,7 +772,7 @@ class BeatmapManager:
                 beatmap_snapshot.beatmap_id, beatmap_snapshot.snapshot_number
             )
 
-            if os.path.exists(beatmap_path):
+            if Path(beatmap_path).exists():
                 beatmap_paths.append((beatmap_path, f"{beatmap_snapshot.beatmap_id}.osu"))
             else:
                 logger.warning(f"File {beatmap_path} does not exist and will be skipped.")
@@ -765,6 +784,7 @@ class BeatmapManager:
         """Create an in-memory ZIP archive from beatmap file paths.
 
         Returns:
+        -------
             ``BytesIO`` object of the archive
         """
         zip_buffer = BytesIO()

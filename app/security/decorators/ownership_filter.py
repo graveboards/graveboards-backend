@@ -1,18 +1,23 @@
+"""Ownership filter decorator for query results."""
+
 from __future__ import annotations
+
 import inspect
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import Sequence
 from functools import wraps
 from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar
 
 from connexion import request
 
-from app.database.enums import RoleName
 from app.database.roles import get_user_roles
 
 from .utils import get_authenticated_user_id, get_value, strip_auth_info
 
 if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
+
     from app.database import PostgresqlDB
+    from app.database.enums import RoleName
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -63,6 +68,7 @@ def ownership_filter(
             Extra static kwargs passed to ``override``.
 
     Raises:
+    ------
         ValueError:
             If decorator contract is violated.
     """

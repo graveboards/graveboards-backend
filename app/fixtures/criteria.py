@@ -1,8 +1,9 @@
-from __future__ import annotations
 """Declarative criteria and report dataclasses for fixture fetching."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, ClassVar
 
 
 class Criteria:
@@ -13,7 +14,7 @@ class Criteria:
     TARGETED = "targeted"
     SEARCH_TEST = "search-test"
 
-    ALL = [MINIMAL, STANDARD, TARGETED, SEARCH_TEST]
+    ALL: ClassVar[list[str]] = [MINIMAL, STANDARD, TARGETED, SEARCH_TEST]
 
 
 class Source:
@@ -23,7 +24,7 @@ class Source:
     ARCHIVE = "archive"
     TOP_PLAYERS = "top-players"
 
-    ALL = [AUTO, ARCHIVE, TOP_PLAYERS]
+    ALL: ClassVar[list[str]] = [AUTO, ARCHIVE, TOP_PLAYERS]
 
 
 @dataclass(slots=True)
@@ -91,18 +92,22 @@ class FetchCriteria:
 
     @property
     def is_targeted(self) -> bool:
+        """Whether the targeted criteria is selected."""
         return self.criteria == Criteria.TARGETED
 
     @property
     def is_search_test(self) -> bool:
+        """Whether the search-test criteria is selected."""
         return self.criteria == Criteria.SEARCH_TEST
 
     @property
     def is_minimal(self) -> bool:
+        """Whether the minimal criteria is selected."""
         return self.criteria == Criteria.MINIMAL
 
     @property
     def is_standard(self) -> bool:
+        """Whether the standard criteria is selected."""
         return self.criteria == Criteria.STANDARD
 
     def resolve_sample_counts(self) -> dict:
@@ -156,6 +161,7 @@ class FetchReport:
     errors: list[str] = field(default_factory=list)
 
     def summary(self) -> dict:
+        """Return a compact summary of the fetch results."""
         return {
             "criteria": self.criteria,
             "results": self.results,

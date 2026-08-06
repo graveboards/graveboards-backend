@@ -1,5 +1,6 @@
-from __future__ import annotations
 """Constants for the fixtures system."""
+
+from __future__ import annotations
 
 # Rulesets and score types
 RULESETS = ["osu", "taiko", "fruits", "mania"]

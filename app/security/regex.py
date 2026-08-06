@@ -1,4 +1,7 @@
+"""Safe regex compilation with timeout protection."""
+
 from __future__ import annotations
+
 import asyncio
 import re
 

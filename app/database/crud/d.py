@@ -1,8 +1,10 @@
-from __future__ import annotations
-from collections.abc import Iterable
-from typing import Any
+"""Deletion operations."""
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from __future__ import annotations
+
+from collections.abc import Iterable
+from typing import TYPE_CHECKING, Any
+
 from sqlalchemy.sql import select
 from sqlalchemy.sql.elements import and_
 
@@ -10,6 +12,9 @@ from app.database.models import BaseType, ModelClass
 
 from .decorators import require_session, session_manager
 from .helpers import validate_model_attrs
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class _D:
@@ -35,6 +40,7 @@ class _D:
                 Equality-based filters used to uniquely identify the instance to delete.
 
         Raises:
+        ------
             ValueError:
                 If no filters are provided.
             ValueError:
@@ -87,9 +93,11 @@ class _D:
                 treated as membership filters.
 
         Returns:
+        -------
             The number of rows deleted. Returns 0 if no rows match.
 
         Raises:
+        ------
             ValueError:
                 If no filters are provided.
             ValueError:
@@ -129,6 +137,8 @@ class _D:
 
 
 class D(_D):
+    """Public-facing deletion interface."""
+
     @session_manager()
     async def delete(
         self, /, model: type[BaseType], session: AsyncSession | None = None, **kwargs: Any
@@ -169,6 +179,7 @@ class D(_D):
                 Filtering criteria. Iterable values are treated as membership filters.
 
         Returns:
+        -------
             The number of rows deleted.
         """
         model_class = ModelClass.from_model(model)

@@ -1,17 +1,25 @@
+"""Metadata provider computing aggregate beatmap difficulty statistics."""
+
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from app.database.rules.context import ExecutionContext
 from app.database.rules.validators.metadata.song_identity import MetadataProvider
+
+if TYPE_CHECKING:
+    from app.database.rules.context import ExecutionContext
 
 
 class BeatmapStatsProvider(MetadataProvider):
+    """Resolve min/max/avg stats across the set's beatmaps."""
+
     @property
     def name(self) -> str:
+        """Name under which this provider is registered."""
         return "beatmap_stats"
 
     async def resolve(self, context: ExecutionContext) -> dict[str, Any]:
+        """Resolve aggregate difficulty statistics for the context's beatmaps."""
         beatmaps = context.beatmaps or []
 
         if not beatmaps:

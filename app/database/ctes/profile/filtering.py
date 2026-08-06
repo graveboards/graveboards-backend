@@ -1,15 +1,20 @@
+"""Filtering CTEs for profile search fields."""
+
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from sqlalchemy.sql import select
-from sqlalchemy.sql.elements import ColumnElement
-from sqlalchemy.sql.selectable import CTE
 
 from app.database.models import BeatmapsetSnapshot, BeatmapSnapshot, Queue, Request
 from app.search.enums import Scope
 
+if TYPE_CHECKING:
+    from sqlalchemy.sql.elements import ColumnElement
+    from sqlalchemy.sql.selectable import CTE
 
-def profile_filtering_cte_factory(
-    scope: Scope, target: ColumnElement
-) -> CTE:
+
+def profile_filtering_cte_factory(scope: Scope, target: ColumnElement) -> CTE:
     """Build a profile-derived filtering CTE for the given scope.
 
     Projects user/profile attributes into the active scope by joining through the
@@ -22,6 +27,7 @@ def profile_filtering_cte_factory(
             Profile attribute to expose for filtering.
 
     Returns:
+    -------
         A CTE yielding (id, target) for profile-based filtering.
     """
     field_name = target.key

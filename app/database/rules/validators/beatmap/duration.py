@@ -1,13 +1,20 @@
+"""Beatmap duration restriction for ranked-beatmap submission."""
+
 from __future__ import annotations
-from typing import override
+
+from typing import TYPE_CHECKING, override
 
 from app.database.rules.base import BeatmapRestrictionBase
-from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError
 from app.database.schemas.rule import DurationConfig
 
+if TYPE_CHECKING:
+    from app.database.rules.context import ExecutionContext
+
 
 class DurationRestriction(BeatmapRestrictionBase):
+    """Enforce minimum/maximum beatmap durations."""
+
     type = "beatmap_duration"
     config_schema = DurationConfig
 

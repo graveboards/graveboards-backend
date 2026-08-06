@@ -1,11 +1,15 @@
+"""API key management endpoints for users."""
+
 from __future__ import annotations
+
 from datetime import timedelta
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from starlette.requests import Request
-from api.http_types import APIResponse
+if TYPE_CHECKING:
+    from starlette.requests import Request
 
-from app.database import PostgresqlDB
+    from api.http_types import APIResponse
+    from app.database import PostgresqlDB
 from app.database.enums import RoleName
 from app.database.models import ApiKey, User
 from app.exceptions import NotFound
@@ -15,13 +19,18 @@ from app.security.api_key import generate_api_key, hash_api_key
 from app.security.overrides import matching_user_id_override
 from app.utils import aware_utcnow
 
-__all__ = ["search", "post"]
+__all__ = ["post", "search"]
 
 logger = get_logger(__name__)
 
 
 @role_authorization(RoleName.ADMIN, override=matching_user_id_override)
-async def search(request: Request, user_id: int, **kwargs: Any) -> APIResponse:
+async def search(request: Request, user_id: int, **_kwargs: Any) -> APIResponse:
+    """Get the active API key for a user.
+
+    Returns:
+        Tuple of (key metadata or message, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
 
     key = await db.get(ApiKey, user_id=user_id, is_revoked=False)
@@ -40,7 +49,12 @@ async def search(request: Request, user_id: int, **kwargs: Any) -> APIResponse:
 
 
 @role_authorization(RoleName.ADMIN, override=matching_user_id_override)
-async def post(request: Request, user_id: int, **kwargs: Any) -> APIResponse:
+async def post(request: Request, user_id: int, **_kwargs: Any) -> APIResponse:
+    """Rotate (create a new) API key for a user.
+
+    Returns:
+        Tuple of (message, raw key, and expiry, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
 
     user = await db.get(User, id=user_id)

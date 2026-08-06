@@ -1,27 +1,37 @@
-from __future__ import annotations
-from typing import Any
+"""Leaderboard endpoints for beatmap snapshots."""
 
-from starlette.requests import Request
-from api.http_types import APIResponse
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from api.decorators import api_query, coerce_arguments
 from api.utils import bleach_body, build_pydantic_include
-from app.database import PostgresqlDB
 from app.database.enums import RoleName
+
+if TYPE_CHECKING:
+    from starlette.requests import Request
+
+    from api.http_types import APIResponse
+    from app.database import PostgresqlDB
 from app.database.models import BeatmapSnapshot, Leaderboard, ModelClass
 from app.database.schemas import LeaderboardSchema
 from app.exceptions import Conflict, NotFound
 from app.security import role_authorization
 from app.spec import get_include_schema
 
-__all__ = ["search", "post", "patch"]
+__all__ = ["patch", "post", "search"]
 
 
 @api_query(ModelClass.LEADERBOARD)
 @coerce_arguments(snapshot_number={"latest": -1})
 async def search(
-    request: Request, beatmap_id: int, snapshot_number: int = -1, **kwargs: Any
+    request: Request, beatmap_id: int, snapshot_number: int = -1, **_kwargs: Any
 ) -> APIResponse:
+    """Get the leaderboard for a beatmap snapshot.
+
+    Returns:
+        Tuple of (leaderboard data, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
 
     if snapshot_number < 0:
@@ -46,7 +56,7 @@ async def search(
     snapshot_number = beatmap_snapshot.snapshot_number
 
     leaderboard = await db.get(
-        Leaderboard, beatmap_id=beatmap_id, beatmap_snapshot_id=beatmap_snapshot.id, **kwargs
+        Leaderboard, beatmap_id=beatmap_id, beatmap_snapshot_id=beatmap_snapshot.id, **_kwargs
     )
 
     if not leaderboard:
@@ -57,7 +67,7 @@ async def search(
     include = build_pydantic_include(
         obj=leaderboard,
         include_schema=get_include_schema(ModelClass.LEADERBOARD),
-        request_include=kwargs.get("_include"),
+        request_include=_kwargs.get("_include"),
     )
 
     leaderboard_data = LeaderboardSchema.model_validate(leaderboard).model_dump(include=include)
@@ -68,8 +78,13 @@ async def search(
 @coerce_arguments(snapshot_number={"latest": -1})
 @role_authorization(RoleName.ADMIN)
 async def post(
-    request: Request, body: dict, beatmap_id: int, snapshot_number: int = -1, **kwargs: Any
+    request: Request, body: dict, beatmap_id: int, snapshot_number: int = -1, **_kwargs: Any
 ) -> APIResponse:
+    """Create a new leaderboard for a beatmap snapshot.
+
+    Returns:
+        Tuple of (message, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
 
     if snapshot_number < 0:
@@ -108,8 +123,13 @@ async def post(
 @coerce_arguments(snapshot_number={"latest": -1})
 @role_authorization(RoleName.ADMIN)
 async def patch(
-    request: Request, body: dict, beatmap_id: int, snapshot_number: int = -1, **kwargs: Any
+    request: Request, body: dict, beatmap_id: int, snapshot_number: int = -1, **_kwargs: Any
 ) -> APIResponse:
+    """Update an existing leaderboard for a beatmap snapshot.
+
+    Returns:
+        Tuple of (message, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
 
     if snapshot_number < 0:
@@ -144,11 +164,7 @@ async def patch(
 
     body = bleach_body(body, whitelisted_keys={"frozen"})
 
-    delta = {}
-
-    for key, value in body.items():
-        if value != getattr(leaderboard, key):
-            delta[key] = value
+    delta = {key: value for key, value in body.items() if value != getattr(leaderboard, key)}
 
     await db.update(Leaderboard, leaderboard.id, **delta)
 

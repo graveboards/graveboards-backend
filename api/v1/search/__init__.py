@@ -1,19 +1,26 @@
+"""Re-exports for the search v1 API."""
+
 from __future__ import annotations
+
 import json
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from connexion import request  # noqa: F401 - provides global request context
+from connexion import request
 from connexion.exceptions import Unauthorized
 from sqlalchemy import func
 from sqlalchemy import select as sa_select
-from starlette.requests import Request
-from api.http_types import APIResponse
 
 from api.auth import api_key_info, bearer_info
 from api.pagination import build_pagination_response
 from api.utils import pop_auth_info
-from app.database import PostgresqlDB
+
+if TYPE_CHECKING:
+    from starlette.requests import Request
+
+    from api.http_types import APIResponse
+    from app.database import PostgresqlDB
+    from app.redis_client import RedisClient
 from app.database.queue_access import queue_visibility_where
 from app.exceptions import (
     AllValuesNullError,
@@ -31,7 +38,6 @@ from app.observability.metrics.search import (
     search_requests_total,
 )
 from app.patches.validators import validate_include
-from app.redis_client import RedisClient
 from app.search import (
     SCOPE_MODEL_MAPPING,
     Scope,
@@ -43,7 +49,7 @@ from app.search import (
 from app.search.cache import SearchCache
 from app.spec import get_include_schema
 
-__all__ = ["search", "post"]
+__all__ = ["post", "search"]
 
 EXCEPTIONS = (
     ValueError,
@@ -92,6 +98,11 @@ async def _authenticate_for_scope(scope: Scope) -> int | None:
 
 
 async def search(request: Request, **kwargs: Any) -> APIResponse:
+    """Search across multiple scopes with caching.
+
+    Returns:
+        Tuple of (page data, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
     rc: RedisClient = request.state.rc
 
@@ -201,7 +212,12 @@ async def search(request: Request, **kwargs: Any) -> APIResponse:
     return page_data, status, headers
 
 
-async def post(request: Request, body: dict) -> APIResponse:
+async def post(_request: Request, body: dict) -> APIResponse:
+    """Create a compressed search query resource.
+
+    Returns:
+        Tuple of (message and compressed query, status code, headers).
+    """
     # TODO: caching
     try:
         search_query = SearchSchema.model_validate(body)

@@ -1,4 +1,7 @@
+"""Concrete osu! API client for beatmap and user operations."""
+
 from __future__ import annotations
+
 from typing import Any
 
 from pydantic_core import ValidationError
@@ -14,6 +17,12 @@ logger = get_logger(__name__)
 
 
 class OsuAPIClient(OsuAPIClientBase):
+    """Concrete osu! API client for beatmap and user operations.
+
+    Extends the base client with rate limiting and Redis caching for
+    beatmap and beatmapset data.
+    """
+
     @rate_limit(min_interval=0.5, limit_per_window=120, window_size=60)
     async def get_beatmap(self, beatmap_id: int) -> dict[str, Any]:
         """Fetch a beatmap from the osu! API with Redis caching.
@@ -25,6 +34,7 @@ class OsuAPIClient(OsuAPIClientBase):
             beatmap_id: The ID of the beatmap to fetch.
 
         Returns:
+        -------
             Dictionary containing beatmap data.
         """
         cached_beatmap_hash_name = Namespace.CACHED_BEATMAP.hash_name(beatmap_id)
@@ -73,6 +83,7 @@ class OsuAPIClient(OsuAPIClientBase):
             offset: Offset for pagination.
 
         Returns:
+        -------
             Dictionary containing scores data.
         """
         url = APIEndpoint.BEATMAP_SCORES.format(beatmap=str(beatmap_id))
@@ -108,6 +119,7 @@ class OsuAPIClient(OsuAPIClientBase):
             mods: List of mod IDs to calculate attributes for.
 
         Returns:
+        -------
             Dictionary containing beatmap attributes.
         """
         url = APIEndpoint.BEATMAP_ATTRIBUTES.format(beatmap=str(beatmap_id))
@@ -136,6 +148,7 @@ class OsuAPIClient(OsuAPIClientBase):
             beatmapset_id: The ID of the beatmapset to fetch.
 
         Returns:
+        -------
             Dictionary containing beatmapset data.
         """
         cached_beatmapset_hash_name = Namespace.CACHED_BEATMAPSET.hash_name(beatmapset_id)
@@ -189,6 +202,7 @@ class OsuAPIClient(OsuAPIClientBase):
             limit: Maximum number of results per page.
 
         Returns:
+        -------
             Dictionary containing beatmapset discussions data.
         """
         url = APIEndpoint.BEATMAPSET_DISCUSSIONS.format()
@@ -273,6 +287,7 @@ class OsuAPIClient(OsuAPIClientBase):
             access_token: The OAuth2 access token for authentication.
 
         Returns:
+        -------
             Dictionary containing the user's data.
         """
         url = APIEndpoint.ME.value
@@ -312,6 +327,7 @@ class OsuAPIClient(OsuAPIClientBase):
             offset: Offset for pagination.
 
         Returns:
+        -------
             List of score dictionaries.
         """
         url = APIEndpoint.SCORES.format(user=str(user_id), type=score_type.value)
@@ -353,6 +369,7 @@ class OsuAPIClient(OsuAPIClientBase):
             mode: The game mode (e.g., OSU, TAITO, MANIA).
 
         Returns:
+        -------
             Dictionary containing user data.
         """
         mode_str = mode.value if mode is not None else ""
@@ -375,6 +392,7 @@ class OsuAPIClient(OsuAPIClientBase):
         """Fetch all tags from the osu! API.
 
         Returns:
+        -------
             Dictionary mapping tag names to their associated IDs.
         """
         url = APIEndpoint.TAGS.value
@@ -410,6 +428,7 @@ class OsuAPIClient(OsuAPIClientBase):
             cursor_page: Cursor-based pagination page.
 
         Returns:
+        -------
             Dictionary containing rankings data.
         """
         url = APIEndpoint.RANKINGS.format(ruleset=ruleset.value, mode=mode)

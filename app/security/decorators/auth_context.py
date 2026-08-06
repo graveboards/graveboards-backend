@@ -1,10 +1,15 @@
+"""Auth context decorator for extracting authenticated user ID."""
+
 from __future__ import annotations
+
 import inspect
-from collections.abc import Awaitable, Callable
 from functools import wraps
-from typing import ParamSpec, TypeVar
+from typing import TYPE_CHECKING, ParamSpec, TypeVar
 
 from .utils import get_authenticated_user_id
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
 
 P = ParamSpec("P")
 T = TypeVar("T")

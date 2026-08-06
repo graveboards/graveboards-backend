@@ -1,4 +1,16 @@
 from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from rich.console import Console
+
+from app.config import PROJECT_ROOT
+from app.fixtures.criteria import FetchCriteria
+from app.fixtures.orchestrator import FixtureOrchestrator
+from app.observability.logging import get_logger
+from app.redis_client import RedisClient
+
 """CLI command to extract user IDs from beatmapset fixtures and fetch those users.
 
 This command reads beatmapset fixtures to extract unique owner user IDs,
@@ -8,16 +20,6 @@ referenced by beatmapsets are available for seeding.
 Usage:
     manage fixtures fetch-users-from-beatmapsets
 """
-
-import json
-
-from rich.console import Console
-
-from app.config import PROJECT_ROOT
-from app.fixtures.criteria import FetchCriteria
-from app.fixtures.orchestrator import FixtureOrchestrator
-from app.observability.logging import get_logger
-from app.redis_client import RedisClient
 
 console = Console()
 logger = get_logger(__name__)
@@ -38,7 +40,7 @@ async def cmd_fetch_users_from_beatmapsets() -> None:
     owner_ids: set[int] = set()
     for f in sorted(bms_path.glob("beatmapset_*.json")):
         try:
-            with open(f) as fh:
+            with Path(f).open() as fh:
                 data = json.load(fh)
             user_id = data.get("user_id")
             if user_id:

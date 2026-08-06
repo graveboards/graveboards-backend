@@ -1,4 +1,7 @@
+"""Development identity resolution for security-disabled mode."""
+
 from __future__ import annotations
+
 from connexion import request
 
 from app.config import DEV_ADMIN_USER_ID
@@ -7,6 +10,11 @@ DEV_IDENTITY_HEADER = "X-Debug-User-Id"
 
 
 def resolve_dev_caller_id() -> int:
+    """Resolve the dev caller user ID from the request header.
+
+    Returns:
+        The dev user ID from the X-Debug-User-Id header, or the default admin ID.
+    """
     """Resolve the caller identity to use when ``DISABLE_SECURITY`` is set.
 
     Only ever called when security is disabled (never in prod - see the boot

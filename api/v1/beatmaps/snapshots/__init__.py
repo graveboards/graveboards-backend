@@ -1,24 +1,34 @@
-from __future__ import annotations
-from typing import Any
+"""Re-exports for the beatmaps snapshots v1 API."""
 
-from starlette.requests import Request
-from api.http_types import APIResponse
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from api.decorators import api_query, coerce_arguments
 from api.utils import build_pydantic_include
-from app.database import PostgresqlDB
 from app.database.models import BeatmapSnapshot, ModelClass
+
+if TYPE_CHECKING:
+    from starlette.requests import Request
+
+    from api.http_types import APIResponse
+    from app.database import PostgresqlDB
 from app.database.schemas import BeatmapSnapshotSchema
 from app.exceptions import NotFound
 from app.spec import get_include_schema
 
 from . import leaderboard, osu, scores
 
-__all__ = ["search", "get", "leaderboard", "osu", "scores"]
+__all__ = ["get", "leaderboard", "osu", "scores", "search"]
 
 
 @api_query(ModelClass.BEATMAP_SNAPSHOT, many=True)
 async def search(request: Request, beatmap_id: int, **kwargs: Any) -> APIResponse:
+    """Search for beatmap snapshots by beatmap ID.
+
+    Returns:
+        Tuple of (snapshots data, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
 
     beatmap_snapshots = await db.get_many(BeatmapSnapshot, beatmap_id=beatmap_id, **kwargs)
@@ -45,6 +55,11 @@ async def search(request: Request, beatmap_id: int, **kwargs: Any) -> APIRespons
 async def get(
     request: Request, beatmap_id: int, snapshot_number: int = -1, **kwargs: Any
 ) -> APIResponse:
+    """Get a single beatmap snapshot by beatmap ID and snapshot number.
+
+    Returns:
+        Tuple of (snapshot data, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
 
     if snapshot_number < 0:

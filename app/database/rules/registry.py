@@ -1,6 +1,9 @@
+"""Registration tables and lookup helpers for the known rule restrictions."""
+
 from __future__ import annotations
 
-from app.database.rules.base import RestrictionBase
+from typing import TYPE_CHECKING
+
 from app.database.rules.validators.beatmap.ar_range import ARRangeRestriction
 from app.database.rules.validators.beatmap.bpm import BPMRestriction
 from app.database.rules.validators.beatmap.combinations import CombinationRestriction
@@ -23,6 +26,9 @@ from app.database.rules.validators.cooldown import CooldownRestriction
 from app.database.rules.validators.database.never_ranked import NeverRankedRestriction
 from app.database.rules.validators.database.unique_artist_title import UniqueArtistTitleRestriction
 from app.database.rules.validators.rate_limit import RateLimitRestriction
+
+if TYPE_CHECKING:
+    from app.database.rules.base import RestrictionBase
 
 TIER_1_VALIDATORS: dict[str, type[RestrictionBase]] = {
     RateLimitRestriction.type: RateLimitRestriction,
@@ -92,10 +98,12 @@ RULE_TIERS: dict[str, int] = {
 
 
 def get_validator(type_: str) -> type[RestrictionBase] | None:
+    """Return the registered rule class for ``type_``, or ``None`` if unknown."""
     return RULE_REGISTRY.get(type_)
 
 
 def get_validator_tier(type_: str) -> int | None:
+    """Return the registered tier for ``type_``, or ``None`` if unknown."""
     return RULE_TIERS.get(type_)
 
 
@@ -125,11 +133,13 @@ def register_validator(
     validator_class: type[RestrictionBase],
     tier: int = 1,
 ) -> None:
+    """Register a rule class and its tier for future lookup by ``type_``."""
     RULE_REGISTRY[type_] = validator_class
     RULE_TIERS[type_] = tier
 
 
 def get_validators_for_tier(tier: int) -> dict[str, type[RestrictionBase]]:
+    """Return a mapping of rule type to class for every rule registered at tier."""
     return {
         type_name: validator_cls
         for type_name, validator_cls in RULE_REGISTRY.items()
@@ -138,6 +148,7 @@ def get_validators_for_tier(tier: int) -> dict[str, type[RestrictionBase]]:
 
 
 def get_supported_versions(type_: str) -> set[str] | None:
+    """Return the config versions supported by the registered rule, if any."""
     validator_cls = RULE_REGISTRY.get(type_)
     if validator_cls is None:
         return None

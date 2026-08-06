@@ -1,17 +1,15 @@
+"""Read and query operations."""
+
 from __future__ import annotations
+
 from collections.abc import Iterable
 from types import EllipsisType
-from typing import Any, Literal, TypeGuard, overload
+from typing import TYPE_CHECKING, Any, Literal, TypeGuard, overload
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm.attributes import QueryableAttribute
-from sqlalchemy.orm.interfaces import LoaderOption
-from sqlalchemy.orm.relationships import RelationshipProperty
-from sqlalchemy.orm.strategy_options import Load, _AbstractLoad, joinedload, noload, selectinload
+from sqlalchemy.orm.strategy_options import _AbstractLoad, joinedload, noload, selectinload
 from sqlalchemy.sql import cast, select
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement, and_, or_
 from sqlalchemy.sql.functions import func
-from sqlalchemy.sql.selectable import Select
 from sqlalchemy.sql.sqltypes import String, Text
 
 from app.database.ctes.search_terms_filtered import search_terms_filtered_cte_factory
@@ -21,15 +19,24 @@ from app.database.models import (
     Base,
     ModelClass,
 )
-from app.database.utils import extract_inner_types, get_filter_condition
+from app.database.utils import extract_inner_types, get_filter_condition, resolve_annotation
 from app.search.datastructures import SearchTermsSchema
-from app.search.enums import Scope
 from app.search.mappings import SCOPE_MODEL_MAPPING
 from app.utils import clamp
 
 from .decorators import require_session, session_manager
 from .relevance import SCOPE_RELEVANCE_HANDLERS
-from .types import Filters, Include, Sorting
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
+    from sqlalchemy.orm.attributes import QueryableAttribute
+    from sqlalchemy.orm.interfaces import LoaderOption
+    from sqlalchemy.orm.relationships import RelationshipProperty
+    from sqlalchemy.sql.selectable import Select
+
+    from app.search.enums import Scope
+
+    from .types import Filters, Include, Sorting
 
 QUERY_MIN_LIMIT = 1
 QUERY_MAX_LIMIT = 100
@@ -50,7 +57,9 @@ MODEL_SCOPE_MAPPING: dict[ModelClass[Any], Scope] = {
 class _R:
     @staticmethod
     async def _get_instance[M: Base](
-        model_class: ModelClass[M], session: AsyncSession, /,
+        model_class: ModelClass[M],
+        session: AsyncSession,
+        /,
         _select: str | Iterable[str] | None = None,
         _join: JoinTargets | None = None,
         _where: WhereClause | None = None,
@@ -98,6 +107,7 @@ class _R:
                 Additional equality filters applied via `filter_by()`.
 
         Returns:
+        -------
             The first matching model instance or projected scalar value, or ``None`` if
             no result is found.
         """
@@ -122,7 +132,10 @@ class _R:
     @overload
     @staticmethod
     async def _get_instances[M: Base](
-        model_class: ModelClass[M], session: AsyncSession, /, *,
+        model_class: ModelClass[M],
+        session: AsyncSession,
+        /,
+        *,
         _select: str | Iterable[str] | None = None,
         _join: JoinTargets | None = None,
         _where: WhereClause | None = None,
@@ -142,7 +155,10 @@ class _R:
     @overload
     @staticmethod
     async def _get_instances[M: Base](
-        model_class: ModelClass[M], session: AsyncSession, /, *,
+        model_class: ModelClass[M],
+        session: AsyncSession,
+        /,
+        *,
         _select: str | Iterable[str] | None = None,
         _join: JoinTargets | None = None,
         _where: WhereClause | None = None,
@@ -161,7 +177,10 @@ class _R:
 
     @staticmethod
     async def _get_instances[M: Base](
-        model_class: ModelClass[M], session: AsyncSession, /, *,
+        model_class: ModelClass[M],
+        session: AsyncSession,
+        /,
+        *,
         _select: str | Iterable[str] | None = None,
         _join: JoinTargets | None = None,
         _where: WhereClause | None = None,
@@ -218,6 +237,7 @@ class _R:
                 Additional equality filters applied via `filter_by()`.
 
         Returns:
+        -------
             A list of matching model instances or projected scalar values.
             If _count is True, returns a tuple of (results, total_count).
         """
@@ -296,6 +316,7 @@ class _R:
                 Equality-based filters applied via `filter_by()`.
 
         Returns:
+        -------
             A fully constructed SQLAlchemy ``Select`` statement.
         """
         if _select:
@@ -355,9 +376,11 @@ class _R:
                 Column name or iterable of column names.
 
         Returns:
+        -------
             A ``Select`` statement projecting only the requested attributes.
 
         Raises:
+        ------
             ValueError:
                 If an attribute does not exist or is a relationship.
             TypeError:
@@ -389,8 +412,7 @@ class _R:
                 f"select_ must be string or iterable of strings, got {type(select_).__name__}"
             )
 
-        stmt = select(*targets)
-        return stmt
+        return select(*targets)
 
     @staticmethod
     def _apply_join(
@@ -409,10 +431,12 @@ class _R:
                 Join specification(s).
 
         Returns:
+        -------
             A tuple of the ``Select`` statement with joins applied, and a mapping of
             joined model names to their types.
 
         Raises:
+        ------
             TypeError:
                 If the join specification is invalid.
         """
@@ -469,6 +493,7 @@ class _R:
                 A SQLAlchemy expression or iterable of expressions.
 
         Returns:
+        -------
             The ``Select`` statement with WHERE conditions applied.
         """
         if not isinstance(where, (list, tuple, set)):
@@ -500,9 +525,11 @@ class _R:
                 their columns.
 
         Returns:
+        -------
             The ``Select`` statement with ORDER BY clauses applied.
 
         Raises:
+        ------
             TypeError:
                 If sorting is not a list of dicts.
             ValueError:
@@ -582,9 +609,11 @@ class _R:
                 Dictionary describing filtering conditions.
 
         Returns:
+        -------
             The ``Select`` statement with WHERE clauses applied.
 
         Raises:
+        ------
             TypeError:
                 If filtering structure is invalid.
             ValueError:
@@ -680,6 +709,7 @@ class _R:
                 This is ignored for simple search and when explicit sorting is applied.
 
         Returns:
+        -------
             The ``Select`` statement with WHERE clauses applied.
         """
         if not (search := search.strip()):
@@ -747,7 +777,7 @@ class _R:
         string_columns += [
             getattr(model, name)
             for name in model_class.hybrid_property_names
-            if extract_inner_types(model.__annotations__[name]) is str
+            if extract_inner_types(resolve_annotation(model, name)) is str
         ]
 
         if not string_columns:
@@ -774,7 +804,9 @@ class _R:
         return select_stmt.where(or_(fts_condition, substring_condition))
 
     @staticmethod
-    def _apply_include(select_stmt: Select, model_class: ModelClass[Any], include: Include) -> Select:
+    def _apply_include(
+        select_stmt: Select, model_class: ModelClass[Any], include: Include
+    ) -> Select:
         """Apply eager-loading options based on a nested include specification.
 
         Supports nested relationship loading using `joinedload` or `selectinload`,
@@ -790,6 +822,7 @@ class _R:
                 Dictionary describing relationships to include.
 
         Returns:
+        -------
             The ``Select`` statement with loader options applied.
         """
 
@@ -803,16 +836,15 @@ class _R:
 
             if isinstance(value, bool) and value:
                 return selectinload(attr) if rel_info.uselist else joinedload(attr)
-            elif isinstance(value, bool) and not value:
+            if isinstance(value, bool) and not value:
                 return noload(attr)
-            elif isinstance(value, dict):
+            if isinstance(value, dict):
                 options = parse_includes(target_model_class, value, path)
                 loader = selectinload(attr) if rel_info.uselist else joinedload(attr)
                 return loader.options(*options)  # type: ignore[arg-type]
-            else:
-                raise TypeError(
-                    f"Invalid value type for nested include '{attr.key}': Expected bool or dict, got {type(value).__name__}"
-                )
+            raise TypeError(
+                f"Invalid value type for nested include '{attr.key}': Expected bool or dict, got {type(value).__name__}"
+            )
 
         def parse_includes(
             parent_model_class: ModelClass[Any], includes: Include, prefix: str = ""
@@ -862,6 +894,7 @@ class _R:
                 Nested include specification.
 
         Returns:
+        -------
             The ``Select`` statement with lazy exclusions applied.
         """
         if include is None:
@@ -871,7 +904,9 @@ class _R:
             return rel.lazy in {True, "select", "dynamic"}
 
         def exclude_unincluded(
-            parent_model_class: ModelClass[Any], includes: Include, base_loader: _AbstractLoad | None = None
+            parent_model_class: ModelClass[Any],
+            includes: Include,
+            base_loader: _AbstractLoad | None = None,
         ) -> list[LoaderOption]:
             options: list[LoaderOption] = []
 
@@ -916,9 +951,12 @@ class _R:
 
 
 class R(_R):
+    """Public-facing read/query interface."""
+
     @session_manager()
     async def get[M: Base](
-        self, /,
+        self,
+        /,
         model: type[M],
         session: AsyncSession | None = None,
         _select: str | Iterable[str] | None = None,
@@ -969,6 +1007,7 @@ class R(_R):
                 Additional equality filters applied via `filter_by()`.
 
         Returns:
+        -------
             The first matching model instance or projected scalar value, or ``None`` if
             no result is found.
         """
@@ -994,8 +1033,10 @@ class R(_R):
     @overload
     @session_manager()
     async def get_many[M: Base](
-        self, /,
-        model: type[M], *,
+        self,
+        /,
+        model: type[M],
+        *,
         session: AsyncSession | None = None,
         _select: str | Iterable[str] | None = None,
         _join: JoinTargets | None = None,
@@ -1016,8 +1057,10 @@ class R(_R):
     @overload
     @session_manager()
     async def get_many[M: Base](
-        self, /,
-        model: type[M], *,
+        self,
+        /,
+        model: type[M],
+        *,
         session: AsyncSession | None = None,
         _select: str | Iterable[str] | None = None,
         _join: JoinTargets | None = None,
@@ -1037,8 +1080,10 @@ class R(_R):
 
     @session_manager()
     async def get_many[M: Base](
-        self, /,
-        model: type[M], *,
+        self,
+        /,
+        model: type[M],
+        *,
         session: AsyncSession | None = None,
         _select: str | Iterable[str] | None = None,
         _join: JoinTargets | None = None,
@@ -1097,6 +1142,7 @@ class R(_R):
                 Additional equality filters applied via `filter_by()`.
 
         Returns:
+        -------
             A list of matching model instances or projected scalar values.
             If _count is True, returns a tuple of (results, total_count).
         """

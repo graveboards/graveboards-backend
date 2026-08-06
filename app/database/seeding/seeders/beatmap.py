@@ -1,15 +1,14 @@
+"""Seeder for beatmap, beatmapset, tag, and profile fixtures."""
+
 from __future__ import annotations
-import asyncio
+
 import hashlib
 import json
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, override
-
-from sqlalchemy.ext.asyncio.session import AsyncSession
+from typing import TYPE_CHECKING, Any, override
 
 from app.beatmaps.manager import download_beatmap_files
-from app.database import PostgresqlDB
 from app.database.crud import db_session_resolver, session_manager
 from app.database.models import (
     Beatmap,
@@ -30,10 +29,19 @@ from app.database.seeding.event import SeedEvent
 
 from .base import Seeder
 
+if TYPE_CHECKING:
+    import asyncio
+
+    from sqlalchemy.ext.asyncio.session import AsyncSession
+
+    from app.database import PostgresqlDB
+
 BEATMAP_TAGS_PATH = Path("instance/fixtures/beatmap_tags.json")
 
 
 class BeatmapSeeder(Seeder):
+    """Seed beatmaps, beatmapsets, tags, and profiles from fixtures."""
+
     def __init__(self, db: PostgresqlDB):
         super().__init__(db)
         self._beatmap_tags: list[dict] = []
@@ -65,7 +73,7 @@ class BeatmapSeeder(Seeder):
         if self._beatmap_tags:
             tag_data = self._beatmap_tags
         elif BEATMAP_TAGS_PATH.exists():
-            with open(BEATMAP_TAGS_PATH) as f:
+            with BEATMAP_TAGS_PATH.open() as f:
                 tag_data = json.load(f)
             tag_data = Seeder._normalize_datetimes(tag_data)
         else:

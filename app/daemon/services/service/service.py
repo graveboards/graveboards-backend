@@ -1,9 +1,10 @@
-from __future__ import annotations
-import asyncio
-from collections.abc import Awaitable, Callable, Coroutine
-from typing import Any, ClassVar
+"""Base service class with task execution and retry support."""
 
-from app.observability.logging import Logger
+from __future__ import annotations
+
+import asyncio
+from typing import TYPE_CHECKING, Any, ClassVar
+
 from app.observability.metrics.daemon import (
     daemon_jobs_total,
     daemon_service_running,
@@ -20,6 +21,11 @@ from .task import (
     TaskSpec,
     TaskSuccessHook,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable, Coroutine
+
+    from app.observability.logging import Logger
 
 
 class Service:
@@ -96,6 +102,7 @@ class Service:
                 Optional terminal failure hook.
 
         Raises:
+        ------
             ValueError: If a task with the same name is already registered.
         """
         async with self._lock:
@@ -113,12 +120,12 @@ class Service:
                 self._start_task(name, spec)
 
     async def start(self) -> None:
-        """
-        Start the service and all registered tasks.
+        """Start the service and all registered tasks.
 
         Executes ``_on_start`` and ``_on_started`` lifecycle hooks.
 
         Raises:
+        ------
             RuntimeError: If already running.
         """
         async with self._lock:
@@ -198,8 +205,7 @@ class Service:
         on_error: TaskErrorHook | None = None,
         on_finish: TaskFinishHook | None = None,
     ) -> None:
-        """
-        Schedule a short-lived coroutine to run under the service.
+        """Schedule a short-lived coroutine to run under the service.
 
         Unlike ``register_task``, this method is designed for fire-and-forget or finite
         jobs that should not impact the service lifecycle.
@@ -223,6 +229,7 @@ class Service:
                 Optional hook called after the coroutine finishes regardless of outcome.
 
         Raises:
+        ------
             RuntimeError:
                 If the service is not currently running.
         """
@@ -259,7 +266,7 @@ class Service:
         await self._stop_event.wait()
 
     def _wrap_factory(
-        self, factory: TaskFactory, task_name: str
+        self, factory: TaskFactory, _task_name: str
     ) -> Callable[[], Coroutine[Any, Any, None]]:
         async def wrapped() -> None:
             await factory()
@@ -271,31 +278,31 @@ class Service:
 
         Subclasses can override to perform setup before tasks start.
         """
-        pass
 
     async def _on_started(self) -> None:
         """Execute immediately after tasks have been started.
 
         Subclasses can override to perform actions that require tasks to be running.
         """
-        pass
 
     async def _on_stop(self) -> None:
         """Execute after stop is requested but before the ``TaskGroup`` exits.
 
         Subclasses can override to perform cleanup or pre-cancellation actions.
         """
-        pass
 
     async def _on_stopped(self) -> None:
         """Execute after all tasks are canceled and the service is stopped.
 
         Subclasses can override to perform final cleanup.
         """
-        pass
 
     async def _on_task_failure(
-        self, name: str, exc: Exception, failures: int, spec: TaskSpec
+        self,
+        name: str,  # noqa: ARG002
+        exc: Exception,  # noqa: ARG002
+        failures: int,  # noqa: ARG002
+        spec: TaskSpec,  # noqa: ARG002
     ) -> None:
         """Execute whenever a task fails, before retrying.
 
@@ -315,7 +322,12 @@ class Service:
         """
         daemon_jobs_total.labels(service=self._service_name, status="failure").inc()
 
-    async def _on_critical_failure(self, name: str, exc: Exception, spec: TaskSpec) -> None:
+    async def _on_critical_failure(
+        self,
+        name: str,  # noqa: ARG002
+        exc: Exception,  # noqa: ARG002
+        spec: TaskSpec,  # noqa: ARG002
+    ) -> None:
         """Execute when a critical task fails.
 
         Runs after the task's normal failure hooks and before the exception propagates
@@ -348,6 +360,7 @@ class Service:
                 Object containing task factory, critical flag, and ``RetryPolicy``.
 
         Raises:
+        ------
             RuntimeError:
                 If the service is not currently running.
         """

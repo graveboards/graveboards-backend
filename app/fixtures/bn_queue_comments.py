@@ -1,4 +1,3 @@
-from __future__ import annotations
 """BN Queue Request Comments.
 
 Inspired by real prod data from Neto's BN queue (421 actual request comments).
@@ -7,6 +6,8 @@ request BNs to mod and nominate their beatmapsets. Other queue types (e.g., comm
 queues, map pack queues, event queues) will have different comment patterns and will
 be added in the future as those queue types are implemented.
 """
+
+from __future__ import annotations
 
 BN_QUEUE_COMMENTS = [
     "Mattay 1st",
@@ -562,7 +563,7 @@ BN_QUEUE_COMMENTS = [
     "Still waiting on Kuki and Take gd but should be finished relatively soon. No 2nd yet. Storyboard WIP still.",
     "kauan 1st, old style map with old song thank you",
     "1st Hajime",
-    "atruе 1st",
+    "atrue 1st",
     "daycore first bn",
     "modded by muchin and plus4j, also muchin as 1st BN",
     "mpg quest :3",

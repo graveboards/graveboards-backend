@@ -1,10 +1,13 @@
+"""Metadata provider resolving a beatmapset's normalized song identity."""
+
 from __future__ import annotations
 
 import re
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from app.database.rules.context import ExecutionContext
+if TYPE_CHECKING:
+    from app.database.rules.context import ExecutionContext
 
 _VERSION_MARKER_PATTERN = re.compile(
     r"\(?(?:"
@@ -69,20 +72,28 @@ def normalized_identity_forms(
 
 
 class MetadataProvider(ABC):
+    """Abstract base class for supplementary metadata providers."""
+
     @property
     @abstractmethod
-    def name(self) -> str: ...
+    def name(self) -> str:
+        """Name under which this provider is registered."""
 
     @abstractmethod
-    async def resolve(self, context: ExecutionContext) -> dict[str, Any]: ...
+    async def resolve(self, context: ExecutionContext) -> dict[str, Any]:
+        """Resolve and return this provider's metadata for the context."""
 
 
 class SongIdentityProvider(MetadataProvider):
+    """Resolve a beatmapset's artist/title and their normalized forms."""
+
     @property
     def name(self) -> str:
+        """Name under which this provider is registered."""
         return "song_identity"
 
     async def resolve(self, context: ExecutionContext) -> dict[str, Any]:
+        """Resolve the set's artist/title fields and their normalized variants."""
         beatmapset = context.beatmapset
         if beatmapset is None:
             return {

@@ -1,5 +1,4 @@
 from __future__ import annotations
-"""CLI configuration dataclasses for fixture commands."""
 
 from dataclasses import dataclass
 
@@ -10,6 +9,8 @@ from app.fixtures.criteria import (
     Source,
     TargetedOverrides,
 )
+
+"""CLI configuration dataclasses for fixture commands."""
 
 
 @dataclass

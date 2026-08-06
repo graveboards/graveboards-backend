@@ -1,10 +1,12 @@
+"""Redis-based decorators for rate limiting and connection management."""
+
 from __future__ import annotations
+
 import asyncio
 import inspect
-from collections.abc import Awaitable, Callable
 from datetime import timedelta
 from functools import wraps
-from typing import Any, ParamSpec, Protocol, TypeVar, runtime_checkable
+from typing import TYPE_CHECKING, Any, ParamSpec, Protocol, TypeVar, runtime_checkable
 
 from app.exceptions import RateLimitExceededError
 from app.observability.logging import get_logger
@@ -16,6 +18,9 @@ from app.utils import aware_utcnow
 
 from .enums import Namespace
 from .rc import RedisClient
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
 
 __all__ = ["rate_limit"]
 
@@ -46,7 +51,7 @@ def rate_limit(
     window_size: int = 60,
     min_interval: float = 0.0,
     auto_retry: bool = True,
-    retry_backoff: float = 1.0,
+    _retry_backoff: float = 1.0,
 ) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Decorator for Redis-backed per-minute rate limiting with min-interval gating.
 
@@ -73,6 +78,7 @@ def rate_limit(
             Base backoff in seconds for retry sleep. Defaults to ``1.0``.
 
     Raises:
+    ------
         ValueError:
             If applied to a non-async function.
     """

@@ -1,4 +1,7 @@
+"""Queue request handler service for processing beatmap submission queues."""
+
 from __future__ import annotations
+
 import json
 from typing import ClassVar, override
 
@@ -54,6 +57,7 @@ class QueueRequestHandler(ScheduledService):
                 Identifier of the queue request handler job.
 
         Raises:
+        ------
             ValueError: If the record does not exist.
         """
         hash_name = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(record_id)

@@ -1,14 +1,20 @@
+"""Re-exports for the queues v1 API."""
+
 from __future__ import annotations
-from typing import Any
+
+from typing import TYPE_CHECKING, Any
 
 from connexion.exceptions import Forbidden
-from starlette.requests import Request
-from api.http_types import APIResponse
 
 from api.decorators import api_query
 from api.utils import bleach_body, build_pydantic_include
-from app.database import PostgresqlDB
 from app.database.enums import RoleName
+
+if TYPE_CHECKING:
+    from starlette.requests import Request
+
+    from api.http_types import APIResponse
+    from app.database import PostgresqlDB
 from app.database.models import ModelClass, Queue
 from app.database.queue_access import can_read_queue, queue_visibility_where
 from app.database.schemas import QueueSchema
@@ -17,7 +23,7 @@ from app.security import role_authorization, with_authenticated_user_id
 from app.security.overrides import queue_owner_override
 from app.spec import get_include_schema
 
-__all__ = ["search", "get", "post", "patch"]
+__all__ = ["get", "patch", "post", "search"]
 
 
 def _filter_public_rules(queue_data: dict) -> dict:
@@ -30,7 +36,14 @@ def _filter_public_rules(queue_data: dict) -> dict:
 
 @with_authenticated_user_id()
 @api_query(ModelClass.QUEUE, many=True)
-async def search(request: Request, _caller_user_id: int | None = None, **kwargs: Any) -> APIResponse:
+async def search(
+    request: Request, _caller_user_id: int | None = None, **kwargs: Any
+) -> APIResponse:
+    """Search for queues with visibility filtering.
+
+    Returns:
+        Tuple of (queues data, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
 
     queues = await db.get_many(
@@ -59,6 +72,11 @@ async def search(request: Request, _caller_user_id: int | None = None, **kwargs:
 async def get(
     request: Request, queue_id: int, _caller_user_id: int | None = None, **kwargs: Any
 ) -> APIResponse:
+    """Get a single queue by ID.
+
+    Returns:
+        Tuple of (queue data, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
 
     queue = await db.get(Queue, id=queue_id, **kwargs)
@@ -87,7 +105,12 @@ async def get(
 
 # @role_authorization(RoleName.ADMIN, override=matching_user_id_override, override_kwargs={"resource_user_id_lookup": "body.user_id"})  # Disable regular users from adding queues for now
 @role_authorization(RoleName.ADMIN)
-async def post(request: Request, body: dict, **kwargs: Any) -> APIResponse:
+async def post(request: Request, body: dict, **_kwargs: Any) -> APIResponse:
+    """Create a new queue.
+
+    Returns:
+        Tuple of (message, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
 
     queue_name = body["name"]
@@ -104,7 +127,12 @@ async def post(request: Request, body: dict, **kwargs: Any) -> APIResponse:
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def patch(request: Request, queue_id: int, body: dict, **kwargs: Any) -> APIResponse:
+async def patch(request: Request, queue_id: int, body: dict, **_kwargs: Any) -> APIResponse:
+    """Update an existing queue.
+
+    Returns:
+        Tuple of (message, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
 
     body = bleach_body(body, whitelisted_keys={"name", "description", "visibility", "is_open"})
@@ -114,11 +142,7 @@ async def patch(request: Request, queue_id: int, body: dict, **kwargs: Any) -> A
     if not queue:
         raise NotFound(f"Queue with ID '{queue_id}' not found")
 
-    delta = {}
-
-    for key, value in body.items():
-        if value != getattr(queue, key):
-            delta[key] = value
+    delta = {key: value for key, value in body.items() if value != getattr(queue, key)}
 
     if delta:
         await db.update(Queue, queue_id, **delta)

@@ -1,4 +1,7 @@
+"""Beatmap management and archiving utilities."""
+
 from __future__ import annotations
+
 __all__ = ["BeatmapManager"]
 
 

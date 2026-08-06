@@ -1,4 +1,7 @@
+"""Type aliases for CRUD queries."""
+
 from __future__ import annotations
+
 from collections.abc import Iterable, Mapping
 from typing import TYPE_CHECKING, Literal
 
@@ -29,7 +32,7 @@ Used by the read layer to construct validated ORDER BY clauses.
 
 type Conditions = Mapping[ConditionField, ConditionValue | None]
 
-type Filters = Mapping[AttrName | RelName, ConditionValue | None | Conditions | "Filters"]
+type Filters = Mapping[AttrName | RelName, ConditionValue | Conditions | "Filters" | None]
 """Type alias describing nested filtering configurations for read operations.
 
 Expected format:

@@ -1,4 +1,7 @@
+"""HTTP request metrics."""
+
 from __future__ import annotations
+
 from prometheus_client import Counter, Gauge, Histogram
 
 http_requests_total = Counter(

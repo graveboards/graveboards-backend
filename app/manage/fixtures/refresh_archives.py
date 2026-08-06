@@ -1,13 +1,4 @@
 from __future__ import annotations
-"""CLI command to refresh archive data from osu.sh.
-
-Usage:
-    manage fixtures refresh-archives [--force]
-
-Examples:
-    manage fixtures refresh-archives
-    manage fixtures refresh-archives --force
-"""
 
 import argparse
 import asyncio
@@ -20,6 +11,16 @@ from app.fixtures.archives import cleanup_archives, load_archive_index, refresh_
 from app.fixtures.id_source import ArchiveIDSource
 from app.observability.logging import get_logger
 from app.redis_client import RedisClient
+
+"""CLI command to refresh archive data from osu.sh.
+
+Usage:
+    manage fixtures refresh-archives [--force]
+
+Examples:
+    manage fixtures refresh-archives
+    manage fixtures refresh-archives --force
+"""
 
 console = Console()
 logger = get_logger(__name__)

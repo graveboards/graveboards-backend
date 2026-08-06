@@ -1,10 +1,11 @@
-from __future__ import annotations
 """Queue names and descriptions for fixture generation.
 
 Provides diverse queue metadata for testing the search engine's QUEUES scope,
 including text search (names/descriptions), boolean filtering (is_open, visibility),
 and general queue functionality.
 """
+
+from __future__ import annotations
 
 QUEUE_NAMES = [
     "BN Queue",

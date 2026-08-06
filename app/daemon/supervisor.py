@@ -1,12 +1,18 @@
-from __future__ import annotations
-import asyncio
-from collections.abc import Awaitable, Callable
-from typing import Any, ClassVar, Never
+"""Service supervisor for managing background service lifecycles."""
 
-from app.observability.logging import Logger
+from __future__ import annotations
+
+import asyncio
+from typing import TYPE_CHECKING, Any, ClassVar, Never
 
 from .services import Service, ServiceFactory
-from .services.service.task import BackoffStrategy, TaskFailureHook, TaskMaxRetriesExceededHook
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
+
+    from app.observability.logging import Logger
+
+    from .services.service.task import BackoffStrategy, TaskFailureHook, TaskMaxRetriesExceededHook
 
 
 class ServiceSupervisor(Service):
@@ -56,6 +62,7 @@ class ServiceSupervisor(Service):
                 Optional terminal failure hook.
 
         Raises:
+        ------
             ValueError:
                 If a service with the same name is already registered.
             TypeError:
@@ -90,6 +97,7 @@ class ServiceSupervisor(Service):
             )
 
     async def wait_stopped(self) -> None:
+        """Wait for all registered services to stop."""
         async with self._service_lock:
             services = tuple(service for service in self._services.values())
 
@@ -103,6 +111,7 @@ class ServiceSupervisor(Service):
                 Unique identifier for the service.
 
         Raises:
+        ------
             ValueError:
                 If the service is not registered.
         """
@@ -118,10 +127,11 @@ class ServiceSupervisor(Service):
         async with self._service_lock:
             self._services.pop(name, None)
 
-    async def register_task(self, *args: Any, **kwargs: Any) -> Never:
+    async def register_task(self, *_args: Any, **_kwargs: Any) -> Never:
         """Not supported by ``ServiceSupervisor``.
 
         Raises:
+        ------
             RuntimeError
         """
         raise RuntimeError(
@@ -131,24 +141,25 @@ class ServiceSupervisor(Service):
 
     def create_ephemeral_task(
         self,
-        coro: Any,
+        coro: Any,  # noqa: ARG002
         *,
-        name: str | None = None,
-        on_success: Callable[[Any], Awaitable[None] | None] | None = None,
-        on_error: Callable[[Exception], Awaitable[None] | None] | None = None,
-        on_finish: Callable[[], Awaitable[None] | None] | None = None,
+        name: str | None = None,  # noqa: ARG002
+        on_success: Callable[[Any], Awaitable[None] | None] | None = None,  # noqa: ARG002
+        on_error: Callable[[Exception], Awaitable[None] | None] | None = None,  # noqa: ARG002
+        on_finish: Callable[[], Awaitable[None] | None] | None = None,  # noqa: ARG002
     ) -> None:
         """Not supported by ``ServiceSupervisor``.
 
         Raises:
+        ------
             RuntimeError
         """
         raise RuntimeError("ServiceSupervisor does not support ephemeral tasks.")
 
     async def _on_stop(self) -> None:
-        """Stop all services before shutdown"""
+        """Stop all services before shutdown."""
         async with self._service_lock:
             services = dict(self._services)
 
-        for name, _service in services.items():
+        for name in services:
             await self.stop_service(name)

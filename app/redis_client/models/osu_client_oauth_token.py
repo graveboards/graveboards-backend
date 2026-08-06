@@ -1,6 +1,8 @@
+"""Redis model for osu! client OAuth token storage."""
+
 from __future__ import annotations
+
 from typing import Any
-from typing import cast as typing_cast
 
 from pydantic.main import BaseModel
 
@@ -17,6 +19,7 @@ class OsuClientOAuthToken(BaseModel):
         """Serialize the token for Redis storage.
 
         Returns:
+        -------
             A dictionary with stringified values.
         """
         serialized_dict = {}
@@ -35,6 +38,7 @@ class OsuClientOAuthToken(BaseModel):
                 Serialized token data from Redis (keys and values may be bytes or str).
 
         Returns:
+        -------
             A validated ``OsuClientOAuthToken`` instance.
         """
         string_dict = {str(k): str(v) for k, v in serialized_dict.items()}

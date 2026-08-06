@@ -1,7 +1,9 @@
+"""Never-ranked rule: reject songs already ranked on osu!."""
+
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, ClassVar, override
 
 from pydantic import BaseModel, field_validator
 
@@ -17,12 +19,15 @@ logger = logging.getLogger(__name__)
 
 
 class NeverRankedConfig(BaseModel):
+    """Config for the never-ranked rule: ruleset and identity normalization."""
+
     ruleset: str = "osu"
     normalize_versions: bool = True
 
     @field_validator("ruleset")
     @classmethod
     def validate_ruleset(cls, v: str) -> str:
+        """Reject any ruleset outside the supported osu! rulesets."""
         valid = {"osu", "taiko", "fruits", "mania"}
         if v not in valid:
             raise ValueError(f"ruleset must be one of {sorted(valid)}")
@@ -30,14 +35,17 @@ class NeverRankedConfig(BaseModel):
 
 
 class NeverRankedRestriction(DatabaseRestrictionBase):
+    """Search osu! ranked sets and reject when the song identity already exists."""
+
     type = "never_ranked"
     config_schema = NeverRankedConfig
-    supported_versions = {"1.0"}
+    supported_versions: ClassVar[set[str]] = {"1.0"}
 
     _MAX_SEARCH_PAGES = 5
 
     @override
     async def check_database(self, context: ExecutionContext) -> None:
+        """Query the osu! API and violate when a ranked set shares the song identity."""
         config = NeverRankedConfig(**context.config)
         identity = await context.get_metadata("song_identity")
 

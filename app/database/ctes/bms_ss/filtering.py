@@ -1,7 +1,10 @@
+"""Filtering CTEs for beatmapset-snapshot search fields."""
+
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from sqlalchemy.sql import select
-from sqlalchemy.sql.elements import ColumnElement
-from sqlalchemy.sql.selectable import CTE
 
 from app.database.models import (
     BeatmapsetSnapshot,
@@ -11,6 +14,10 @@ from app.database.models import (
     beatmap_snapshot_beatmapset_snapshot_association,
 )
 from app.search.enums import Scope
+
+if TYPE_CHECKING:
+    from sqlalchemy.sql.elements import ColumnElement
+    from sqlalchemy.sql.selectable import CTE
 
 
 def bms_ss_filtering_cte_factory(scope: Scope, target: ColumnElement) -> CTE:
@@ -26,6 +33,7 @@ def bms_ss_filtering_cte_factory(scope: Scope, target: ColumnElement) -> CTE:
             BeatmapsetSnapshot attribute to expose for filtering.
 
     Returns:
+    -------
         A CTE yielding (id, target) aligned to the root scope.
     """
     field_name = target.key

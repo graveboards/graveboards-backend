@@ -1,5 +1,4 @@
 from __future__ import annotations
-"""Shared helpers for fixture promotion and demotion."""
 
 from datetime import UTC, datetime
 from pathlib import Path
@@ -14,6 +13,8 @@ from app.fixtures.paths import (
     TEST_FIXTURES_DIR,
 )
 
+"""Shared helpers for fixture promotion and demotion."""
+
 console = Console()
 
 
@@ -25,9 +26,7 @@ def _accumulate_sub_metadata(
     per_key: str,
 ) -> None:
     """Increment per-subcategory count in promoted_fixtures metadata."""
-    metadata.setdefault("promoted_fixtures", {}).setdefault(
-        category, {"count": 0, per_key: {}}
-    )
+    metadata.setdefault("promoted_fixtures", {}).setdefault(category, {"count": 0, per_key: {}})
     metadata["promoted_fixtures"][category].setdefault(per_key, {})
     metadata["promoted_fixtures"][category][per_key][sub_name] = (
         metadata["promoted_fixtures"][category][per_key].get(sub_name, 0) + count
@@ -38,10 +37,9 @@ def _get_dst_path(category: str) -> str:
     """Get destination path for a category."""
     if category == "queues":
         return str(QUEUE_TEST_FIXTURES_DIR)
-    elif category == "requests":
+    if category == "requests":
         return str(REQUEST_TEST_FIXTURES_DIR)
-    else:
-        return str(TEST_FIXTURES_DIR / category)
+    return str(TEST_FIXTURES_DIR / category)
 
 
 def _move_fixture_files(
@@ -93,17 +91,19 @@ def _move_fixture_files(
             "requests",
         ]:
             if src_path.exists():
-                for filepath in src_path.glob("*.json"):
-                    copy_operations.append((filepath, dst_path / filepath.name, category, None))
+                copy_operations.extend(
+                    (filepath, dst_path / filepath.name, category, None)
+                    for filepath in src_path.glob("*.json")
+                )
         elif category in ["users", "scores"] and src_path.exists():
             for sub in src_path.iterdir():
                 if sub.is_dir():
                     sub_dst = dst_path / sub.name
                     sub_dst.mkdir(parents=True, exist_ok=True)
-                    for filepath in sub.glob("*.json"):
-                        copy_operations.append(
-                            (filepath, sub_dst / filepath.name, category, sub.name)
-                        )
+                    copy_operations.extend(
+                        (filepath, sub_dst / filepath.name, category, sub.name)
+                        for filepath in sub.glob("*.json")
+                    )
 
     # Phase 2: Execute all copy operations, tracking missing files
     for src, dst, _, _ in copy_operations:

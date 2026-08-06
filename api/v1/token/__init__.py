@@ -1,10 +1,17 @@
+"""Re-exports for the token v1 API."""
+
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from authlib.integrations.base_client.errors import OAuthError
 from jwt.exceptions import ExpiredSignatureError, InvalidIssuerError, InvalidTokenError
-from starlette.requests import Request
-from api.http_types import APIResponse
 
-from app.database import PostgresqlDB
+if TYPE_CHECKING:
+    from starlette.requests import Request
+
+    from api.http_types import APIResponse
+    from app.database import PostgresqlDB
 from app.database.models import OAuthToken, ScoreFetcherTask, User
 from app.exceptions import BadRequest, OsuOAuthError, TooManyRequests
 from app.oauth import OAuth
@@ -15,10 +22,15 @@ from app.security.auth_rate_limit import AuthRateLimiter
 from app.security.oauth_encryption import encrypt_token
 from app.utils import aware_utcnow
 
-__all__ = ["search", "post"]
+__all__ = ["post", "search"]
 
 
 async def search(request: Request, token: str, rc: RedisClient | None = None) -> APIResponse:
+    """Validate and return JWT claims.
+
+    Returns:
+        Tuple of (JWT claims, status code, headers).
+    """
     if rc is None:
         rc = request.state.rc
 
@@ -47,6 +59,11 @@ async def post(
     db: PostgresqlDB | None = None,
     rc: RedisClient | None = None,
 ) -> APIResponse:
+    """Complete OAuth flow and return a JWT token.
+
+    Returns:
+        Tuple of (JWT token, status code, headers).
+    """
     if rc is None:
         rc = request.state.rc
     if db is None:

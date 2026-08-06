@@ -1,4 +1,4 @@
-"""Initial schema from SQLAlchemy models
+"""Initial schema from SQLAlchemy models.
 
 Revision ID: 4f8e2a1c9d30
 Revises:

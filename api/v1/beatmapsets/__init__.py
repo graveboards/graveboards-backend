@@ -1,29 +1,40 @@
+"""Re-exports for the beatmapsets v1 API."""
+
 from __future__ import annotations
-from typing import Any
+
+from typing import TYPE_CHECKING, Any
 
 import httpx
 from connexion.problem import problem
-from starlette.requests import Request
-from api.http_types import APIResponse
 
 from api.decorators import api_query
 from api.utils import build_pydantic_include
-from app.database import PostgresqlDB
 from app.database.enums import RoleName
 from app.database.models import Beatmapset, ModelClass
 from app.database.schemas import BeatmapsetSchema
 from app.exceptions import NotFound
-from app.redis_client import RedisClient
+
+if TYPE_CHECKING:
+    from starlette.requests import Request
+
+    from api.http_types import APIResponse
+    from app.database import PostgresqlDB
+    from app.redis_client import RedisClient
 from app.security import role_authorization
 from app.spec import get_include_schema
 
 from . import listings, snapshots, tags
 
-__all__ = ["search", "get", "post", "listings", "snapshots", "tags"]
+__all__ = ["get", "listings", "post", "search", "snapshots", "tags"]
 
 
 @api_query(ModelClass.BEATMAPSET, many=True)
 async def search(request: Request, **kwargs: Any) -> APIResponse:
+    """Search for beatmapsets.
+
+    Returns:
+        Tuple of (beatmapsets data, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
 
     beatmapsets = await db.get_many(Beatmapset, **kwargs)
@@ -47,6 +58,11 @@ async def search(request: Request, **kwargs: Any) -> APIResponse:
 
 @api_query(ModelClass.BEATMAPSET)
 async def get(request: Request, beatmapset_id: int, **kwargs: Any) -> APIResponse:
+    """Get a single beatmapset by ID.
+
+    Returns:
+        Tuple of (beatmapset data, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
 
     beatmapset = await db.get(Beatmapset, **kwargs)
@@ -73,8 +89,13 @@ async def post(
     rc: RedisClient | None = None,
     db: PostgresqlDB | None = None,
     bm: Any = None,
-    **kwargs: Any,
+    **_kwargs: Any,
 ) -> APIResponse:
+    """Create or update a beatmapset from the osu! API.
+
+    Returns:
+        Tuple of (changelog message, status code, headers).
+    """
     if rc is None:
         rc = request.state.rc
     if db is None:

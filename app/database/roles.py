@@ -1,14 +1,18 @@
+"""Role-based authorization queries."""
+
 from __future__ import annotations
-from collections.abc import Iterable
+
 from typing import TYPE_CHECKING
 
 from app.database.enums import RoleName
 from app.database.models import User
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from app.database import PostgresqlDB
 
-__all__ = ["get_user_roles", "user_has_any_role", "is_admin"]
+__all__ = ["get_user_roles", "is_admin", "user_has_any_role"]
 
 
 async def get_user_roles(db: PostgresqlDB, user_id: int | None) -> set[RoleName]:

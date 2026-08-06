@@ -1,15 +1,20 @@
+"""Rule-tagging operations."""
+
 from __future__ import annotations
+
 import json
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from typing import cast as typing_cast
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import QueueRule
 from app.exceptions import BadRequest, Conflict
 
 from .decorators import require_session, session_manager
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 RULE_UPDATABLE_FIELDS = frozenset({"is_active", "is_public", "config", "version"})
 
@@ -21,6 +26,7 @@ def _validate_rule_version(rule_type: str, version: str) -> None:
     skipped by both phase runners, so it must never be persisted in the first place.
 
     Raises:
+    ------
         BadRequest:
             If the version is not supported by the rule type's validator.
     """
@@ -56,6 +62,8 @@ def _normalize_config(config: dict) -> str:
 
 
 class RuleCRUD:
+    """Read and write queue rule configurations."""
+
     @session_manager()
     async def get_rules(
         self,
@@ -88,6 +96,7 @@ class RuleCRUD:
         empty or None, all existing rules are deleted.
 
         Raises:
+        ------
             Conflict:
                 If the input list contains fully duplicate rules (same type
                 and same config).
@@ -153,6 +162,7 @@ class RuleCRUD:
         rejected if it would duplicate another rule in the same queue.
 
         Raises:
+        ------
             BadRequest:
                 If a non-updatable field is supplied, or config/version is invalid.
             Conflict:
@@ -299,7 +309,7 @@ class RuleCRUD:
 
         await session.delete(rule)
         await session.flush()
-        return typing_cast(QueueRule | None, rule)
+        return typing_cast("QueueRule | None", rule)
 
     async def _delete_all_for_rule(
         self,

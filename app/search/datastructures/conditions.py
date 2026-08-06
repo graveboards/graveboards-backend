@@ -1,3 +1,5 @@
+"""Search condition data structures for query filtering."""
+
 from __future__ import annotations
 
 import re
@@ -91,6 +93,7 @@ class ConditionFieldFlag(IntFlag):
         """The lowercase field name corresponding to the flag.
 
         Returns:
+        -------
             The lowercase operator name.
         """
         if self.name is None:
@@ -139,22 +142,23 @@ class Conditions(BaseModel):
                 Raw input value.
 
         Returns:
+        -------
             A normalized dictionary or Conditions instance.
 
         Raises:
+        ------
             TypeError:
                 If the value type is unsupported.
         """
         if isinstance(value, (cls, dict)):
             return value
-        elif isinstance(value, ConditionValue):
+        if isinstance(value, ConditionValue):
             return {"eq": value}
-        elif value is None:
+        if value is None:
             return {"is_null": True}
-        else:
-            raise TypeError(
-                f"Shorthand value to normalize must be {ConditionValue | None}, got {type(value).__name__}"
-            )
+        raise TypeError(
+            f"Shorthand value to normalize must be {ConditionValue | None}, got {type(value).__name__}"
+        )
 
     @model_validator(mode="before")
     @classmethod
@@ -166,9 +170,11 @@ class Conditions(BaseModel):
                 Raw input value.
 
         Returns:
+        -------
             The original value if valid.
 
         Raises:
+        ------
             ValueError:
                 If unsupported keys are present.
         """
@@ -193,6 +199,7 @@ class Conditions(BaseModel):
                 A scalar or list of potential datetime strings.
 
         Returns:
+        -------
             A parsed datetime, a list of parsed values, or the original value if parsing
             is not applicable.
         """
@@ -221,9 +228,11 @@ class Conditions(BaseModel):
                 Sequence of condition values for membership operators.
 
         Returns:
+        -------
             The original sequence if all values share the same type.
 
         Raises:
+        ------
             ValueError:
                 If the sequence contains mixed types.
         """
@@ -256,9 +265,11 @@ class Conditions(BaseModel):
                 Regex pattern string.
 
         Returns:
+        -------
             The validated regex pattern.
 
         Raises:
+        ------
             ValueError:
                 If the pattern is unsafe, invalid, or exceeds limits.
         """
@@ -310,9 +321,11 @@ class Conditions(BaseModel):
             - Range bounds are logically coherent
 
         Returns:
+        -------
             The validated ``Conditions`` instance.
 
         Raises:
+        ------
             ValueError:
                 If logical constraints are violated.
         """
@@ -389,6 +402,7 @@ class Conditions(BaseModel):
         """Collect all non-null scalar values for type validation.
 
         Returns:
+        -------
             A list of scalar condition values.
         """
         values = [self.eq, self.neq, self.lt, self.lte, self.gt, self.gte]
@@ -407,6 +421,7 @@ class Conditions(BaseModel):
                 List of non-null scalar condition values collected for validation.
 
         Raises:
+        ------
             ValueError:
                 If incompatible types are detected.
         """
@@ -427,7 +442,7 @@ class Conditions(BaseModel):
                     f"Got {type(base).__name__} and {type(v).__name__}"
                 )
 
-    def serialize(self, category: SearchableFieldCategory | None = None) -> bytes:
+    def serialize(self, _category: SearchableFieldCategory | None = None) -> bytes:
         """Serialize the ``Conditions`` instance into compact binary format.
 
         Uses:
@@ -436,9 +451,11 @@ class Conditions(BaseModel):
             - Length-prefixed encoding for sequences
 
         Returns:
+        -------
             A bytes object representing the serialized conditions.
 
         Raises:
+        ------
             TypeError:
                 If an unsupported value type is encountered.
             Exception:
@@ -475,8 +492,7 @@ class Conditions(BaseModel):
             elif flag in {ConditionFieldFlag.IN, ConditionFieldFlag.NOT_IN}:
                 chunks.append(struct.pack("!B", len(value)))
 
-                for item in value:
-                    chunks.append(self.serialize_condition_value(item))
+                chunks.extend(self.serialize_condition_value(item) for item in value)
             elif flag is ConditionFieldFlag.IS_NULL:
                 chunks.append(struct.pack("!?", value))
             else:
@@ -499,11 +515,13 @@ class Conditions(BaseModel):
                 Starting offset within the byte sequence.
 
         Returns:
+        -------
             A tuple containing:
                 - The reconstructed ``Conditions`` instance
                 - The updated byte offset
 
         Raises:
+        ------
             ValueError:
                 If an unsupported condition flag is encountered.
             Exception:
@@ -565,9 +583,11 @@ class Conditions(BaseModel):
                 Primitive value to serialize.
 
         Returns:
+        -------
             A bytes representation of the encoded value.
 
         Raises:
+        ------
             TypeError:
                 If the value type is unsupported.
             ValueError:
@@ -576,18 +596,15 @@ class Conditions(BaseModel):
         if isinstance(value, int) and not isinstance(value, bool):
             if 0 <= value <= 255:
                 return struct.pack("!BB", ConditionValueId.UNSIGNED_CHAR, value)
-            elif -128 <= value <= 127:
+            if -128 <= value <= 127:
                 return struct.pack("!Bb", ConditionValueId.SIGNED_CHAR, value)
-            elif value >= 0:
+            if value >= 0:
                 return struct.pack(
                     "!B", ConditionValueId.UNSIGNED_VARINT
                 ) + Conditions.encode_varint(value)
-            else:
-                zz = Conditions.encode_zigzag(value)
-                return struct.pack("!B", ConditionValueId.SIGNED_VARINT) + Conditions.encode_varint(
-                    zz
-                )
-        elif isinstance(value, float):
+            zz = Conditions.encode_zigzag(value)
+            return struct.pack("!B", ConditionValueId.SIGNED_VARINT) + Conditions.encode_varint(zz)
+        if isinstance(value, float):
             with np.errstate(over="ignore"):
                 f16 = np.float16(value)
                 f32 = np.float32(value)
@@ -595,30 +612,28 @@ class Conditions(BaseModel):
 
             if float(f16) == value:
                 return struct.pack("!Be", ConditionValueId.HALF_FLOAT, f16)
-            elif float(f32) == value:
+            if float(f32) == value:
                 return struct.pack("!Bf", ConditionValueId.FLOAT, f32)
-            elif float(f64) == value:
+            if float(f64) == value:
                 return struct.pack("!Bd", ConditionValueId.DOUBLE, f64)
-            else:
-                raise ValueError(f"Float {value} cannot be represented as f16, f32, nor f64")
-        elif isinstance(value, str):
+            raise ValueError(f"Float {value} cannot be represented as f16, f32, nor f64")
+        if isinstance(value, str):
             encoded = value.encode()
             return (
                 struct.pack("!B", ConditionValueId.STR)
                 + Conditions.encode_varint(len(encoded))
                 + encoded
             )
-        elif isinstance(value, bool):
+        if isinstance(value, bool):
             return struct.pack("!B?", ConditionValueId.BOOL, value)
-        elif isinstance(value, datetime):
+        if isinstance(value, datetime):
             timestamp = int(value.timestamp() * 1000)
             return struct.pack("!B", ConditionValueId.DATETIME) + Conditions.encode_varint(
                 timestamp
             )
-        else:
-            raise TypeError(
-                f"Unsupported value type. Expected {ConditionValue}, got {type(value).__name__}"
-            )
+        raise TypeError(
+            f"Unsupported value type. Expected {ConditionValue}, got {type(value).__name__}"
+        )
 
     @staticmethod
     def deserialize_condition_value(data: bytes, offset: int = 0) -> tuple[ConditionValue, int]:
@@ -631,11 +646,13 @@ class Conditions(BaseModel):
                 Starting offset within the sequence.
 
         Returns:
+        -------
             A tuple containing:
                 - The decoded primitive value
                 - The updated byte offset
 
         Raises:
+        ------
             ValueError:
                 If the type identifier is unsupported.
             TypeError:
@@ -646,30 +663,29 @@ class Conditions(BaseModel):
 
         if type_id == ConditionValueId.SIGNED_CHAR:
             return struct.unpack_from("!b", data, offset)[0], offset + 1
-        elif type_id == ConditionValueId.SIGNED_VARINT:
+        if type_id == ConditionValueId.SIGNED_VARINT:
             zz, offset = Conditions.decode_varint(data, offset)
             return Conditions.decode_zigzag(zz), offset
-        elif type_id == ConditionValueId.UNSIGNED_CHAR:
+        if type_id == ConditionValueId.UNSIGNED_CHAR:
             return struct.unpack_from("!B", data, offset)[0], offset + 1
-        elif type_id == ConditionValueId.UNSIGNED_VARINT:
+        if type_id == ConditionValueId.UNSIGNED_VARINT:
             value, offset = Conditions.decode_varint(data, offset)
             return value, offset
-        elif type_id == ConditionValueId.HALF_FLOAT:
+        if type_id == ConditionValueId.HALF_FLOAT:
             return struct.unpack_from("!e", data, offset)[0], offset + 2
-        elif type_id == ConditionValueId.FLOAT:
+        if type_id == ConditionValueId.FLOAT:
             return struct.unpack_from("!f", data, offset)[0], offset + 4
-        elif type_id == ConditionValueId.DOUBLE:
+        if type_id == ConditionValueId.DOUBLE:
             return struct.unpack_from("!d", data, offset)[0], offset + 8
-        elif type_id == ConditionValueId.STR:
+        if type_id == ConditionValueId.STR:
             length, offset = Conditions.decode_varint(data, offset)
             return data[offset : offset + length].decode(), offset + length
-        elif type_id == ConditionValueId.BOOL:
+        if type_id == ConditionValueId.BOOL:
             return struct.unpack_from("!?", data, offset)[0], offset + 1
-        elif type_id == ConditionValueId.DATETIME:
+        if type_id == ConditionValueId.DATETIME:
             millis, offset = Conditions.decode_varint(data, offset)
             return datetime.fromtimestamp(millis / 1000), offset
-        else:
-            raise ValueError(f"Unsupported type ID: {type_id}")
+        raise ValueError(f"Unsupported type ID: {type_id}")
 
     @staticmethod
     def encode_varint(value: int) -> bytes:
@@ -680,6 +696,7 @@ class Conditions(BaseModel):
                 Non-negative integer to encode.
 
         Returns:
+        -------
             Varint-encoded byte representation.
         """
         result = bytearray()
@@ -702,6 +719,7 @@ class Conditions(BaseModel):
                 Starting offset.
 
         Returns:
+        -------
             A tuple containing:
                 - The decoded integer
                 - The updated offset
@@ -730,6 +748,7 @@ class Conditions(BaseModel):
                 Signed integer.
 
         Returns:
+        -------
             ZigZag-encoded integer.
         """
         return (n << 1) ^ (n >> 63)
@@ -743,6 +762,7 @@ class Conditions(BaseModel):
                 ZigZag-encoded integer.
 
         Returns:
+        -------
             Decoded signed integer.
         """
         return (n >> 1) ^ -(n & 1)

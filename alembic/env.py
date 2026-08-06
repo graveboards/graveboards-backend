@@ -1,3 +1,5 @@
+"""Alembic environment configuration for database migrations."""
+
 import sys
 from logging.config import fileConfig
 from pathlib import Path

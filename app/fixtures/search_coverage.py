@@ -1,4 +1,3 @@
-from __future__ import annotations
 """Adaptive coverage engine for search test fixtures.
 
 Uses a priority queue of fetch actions to minimize API calls while
@@ -9,14 +8,19 @@ This replaces the old fixed 4-round approach (30/30/20/30) with an
 adaptive loop that stops as soon as all buckets are satisfied.
 """
 
+from __future__ import annotations
+
 import heapq
 import logging
-from collections.abc import Awaitable, Callable, Coroutine
 from dataclasses import dataclass
-from typing import Any
-from typing import cast as typing_cast
+from typing import TYPE_CHECKING, Any
 
-from .fetcher import FixtureDataFetcher
+from app.osu_api.enums import Ruleset
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable, Coroutine
+
+    from .fetcher import FixtureDataFetcher
 
 logger = logging.getLogger(__name__)
 
@@ -188,7 +192,7 @@ class CoverageTracker:
         # Inverse relationship: fewer items = higher urgency
         if count == 0:
             return rarity * 2.0
-        elif count < self.min_per_category:
+        if count < self.min_per_category:
             return rarity * 1.0
         return 0.0
 
@@ -285,14 +289,14 @@ class SearchTestFetchAction:
         filepath = get_fixture_path("beatmapsets") / f"beatmapset_{bs_id}.json"
         import json
 
-        with open(filepath, "w") as f:
+        with filepath.open("w") as f:
             json.dump(bs_full, f, indent=2)
 
         classifications = self.fetcher._classify_beatmapset(bs_full, bs_id)
         result: dict[str, set[int]] = {}
         for bucket_name, cats in classifications.items():
             if isinstance(cats, dict):
-                for _cat, ids in cats.items():
+                for ids in cats.values():
                     if len(ids) == 1:
                         result.setdefault(bucket_name, set()).update(ids)
             elif isinstance(cats, set) and len(cats) == 1:
@@ -319,14 +323,14 @@ class SearchTestFetchAction:
         filepath = get_fixture_path("beatmaps") / f"beatmap_{beatmap_id}.json"
         import json
 
-        with open(filepath, "w") as f:
+        with filepath.open("w") as f:
             json.dump(beatmap_data, f, indent=2)
 
         classifications = self.fetcher._classify_beatmap(beatmap_data, beatmap_id)
         result: dict[str, set[int]] = {}
         for bucket_name, cats in classifications.items():
             if isinstance(cats, dict):
-                for _cat, ids in cats.items():
+                for ids in cats.values():
                     if len(ids) == 1:
                         result.setdefault(bucket_name, set()).update(ids)
             elif isinstance(cats, set) and len(cats) == 1:
@@ -342,7 +346,9 @@ class SearchTestFetchAction:
         from app.fixtures.paths import get_fixture_path
 
         try:
-            data = await self.fetcher.oac.get_rankings(ruleset="osu", mode="performance", cursor_page=1, limit=1)  # type: ignore[arg-type]
+            data = await self.fetcher.oac.get_rankings(
+                ruleset=Ruleset.OSU, mode="performance", cursor_page=1, limit=1
+            )
         except Exception:
             logger.debug("Failed to fetch rankings for coverage", exc_info=True)
             return {}
@@ -370,14 +376,14 @@ class SearchTestFetchAction:
         filepath = ruleset_path / f"user_{user_id}_osu.json"
         import json
 
-        with open(filepath, "w") as f:
+        with filepath.open("w") as f:
             json.dump(user_data, f, indent=2)
 
         classifications = self.fetcher._classify_user(user_data, user_id)
         result: dict[str, set[int]] = {}
         for bucket_name, cats in classifications.items():
             if isinstance(cats, dict):
-                for _cat, ids in cats.items():
+                for ids in cats.values():
                     if len(ids) == 1:
                         result.setdefault(bucket_name, set()).update(ids)
 
@@ -415,7 +421,7 @@ class SearchTestFetchAction:
             filepath = get_fixture_path("beatmapsets") / f"beatmapset_{bs_id}.json"
             import json
 
-            with open(filepath, "w") as f:
+            with filepath.open("w") as f:
                 json.dump(bs_full, f, indent=2)
 
             user = bs_full.get("user") or {}
@@ -426,7 +432,7 @@ class SearchTestFetchAction:
             result: dict[str, set[int]] = {}
             for bucket_name, cats in classifications.items():
                 if isinstance(cats, dict):
-                    for _cat, ids in cats.items():
+                    for ids in cats.values():
                         if len(ids) == 1:
                             result.setdefault(bucket_name, set()).update(ids)
                 elif isinstance(cats, set) and len(cats) == 1:
@@ -626,13 +632,13 @@ async def adaptive_fetch_loop(
 
     last_progress_log = 0
     buckets_at_last_progress = initial_uncovered
-    PROGRESS_INTERVAL = 10
+    progress_interval = 10
 
     while heap and total_calls < max_total:
         entry = heapq.heappop(heap)
         action = entry.action
 
-        if total_calls - last_progress_log >= PROGRESS_INTERVAL:
+        if total_calls - last_progress_log >= progress_interval:
             uncovered_count, rare_count = tracker.total_uncovered()
             new_this_round = buckets_at_last_progress - uncovered_count
             if new_this_round < 0:
@@ -665,7 +671,7 @@ async def adaptive_fetch_loop(
             wasted_calls += 1
 
         # Count newly filled buckets
-        for bucket_key, _ids in result.items():
+        for bucket_key in result:
             newly_filled[bucket_key] = newly_filled.get(bucket_key, 0) + 1
 
         # Re-evaluate priorities
@@ -693,7 +699,7 @@ async def adaptive_fetch_loop(
                 else:
                     wasted_calls += 1
                     fetcher.logger.debug("  -> no new buckets filled")
-                for bucket_key, _ids in result.items():
+                for bucket_key in result:
                     newly_filled[bucket_key] = newly_filled.get(bucket_key, 0) + 1
                 _reheap()
                 _, rare_count = tracker.total_uncovered()

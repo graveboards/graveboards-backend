@@ -1,14 +1,17 @@
+"""Queue read-visibility and ownership authorization."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from sqlalchemy.sql import or_, true
-from sqlalchemy.sql.elements import ColumnElement
 
 from app.database.models import Queue, User
 from app.database.roles import is_admin
 
 if TYPE_CHECKING:
+    from sqlalchemy.sql.elements import ColumnElement
+
     from app.database import PostgresqlDB
 
 

@@ -1,4 +1,7 @@
+"""JWT token creation, encoding, and validation."""
+
 from __future__ import annotations
+
 from datetime import timedelta
 from typing import cast as typing_cast
 
@@ -19,6 +22,7 @@ def generate_token(user_id: int | str) -> str:
             Identifier of the authenticated user.
 
     Returns:
+    -------
         Encoded JWT string.
     """
     return encode_token(create_token_payload(user_id))
@@ -38,6 +42,7 @@ def create_token_payload(user_id: int | str) -> dict[str, str | int]:
             Identifier of the authenticated user.
 
     Returns:
+    -------
         JWT payload dictionary.
     """
     return {
@@ -56,6 +61,7 @@ def encode_token(payload: dict[str, str | int]) -> str:
             Token payload dictionary.
 
     Returns:
+    -------
         Signed JWT string.
     """
     return str(jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM))
@@ -69,16 +75,18 @@ def decode_token(token: str) -> dict[str, str | int]:
             Encoded JWT string.
 
     Returns:
+    -------
         Decoded payload dictionary.
 
     Raises:
+    ------
         InvalidTokenError:
             If signature or structure is invalid.
         ExpiredSignatureError:
             If token has expired.
     """
     return typing_cast(
-        dict[str, str | int],
+        "dict[str, str | int]",
         jwt.decode(
             token,
             key=JWT_SECRET_KEY,
@@ -102,9 +110,11 @@ def validate_token(token: str) -> dict[str, str | int]:
             Encoded JWT string.
 
     Returns:
+    -------
         Normalized payload dictionary.
 
     Raises:
+    ------
         ExpiredSignatureError:
             If token is expired.
         InvalidTokenError:

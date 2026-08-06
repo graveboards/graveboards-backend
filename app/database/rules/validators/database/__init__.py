@@ -1,4 +1,7 @@
+"""Database/osu! API backed (Tier-3) restrictions."""
+
 from __future__ import annotations
+
 from app.database.rules.validators.database.never_ranked import NeverRankedRestriction
 from app.database.rules.validators.database.unique_artist_title import UniqueArtistTitleRestriction
 

@@ -1,13 +1,17 @@
+"""Rule node model and the composite evaluator entry point."""
+
 from __future__ import annotations
 
 import logging
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from connexion.exceptions import Forbidden
 
-from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError
 from app.database.rules.registry import get_validator
+
+if TYPE_CHECKING:
+    from app.database.rules.context import ExecutionContext
 
 logger = logging.getLogger(__name__)
 
@@ -15,20 +19,26 @@ MAX_COMPOSITE_DEPTH = 10
 
 
 class RuleNode:
+    """Base class for a node in the rule evaluation tree."""
+
     def __init__(self, rule_type: str, config: dict[str, Any]):
         self.rule_type = rule_type
         self.config = config
 
     async def evaluate(self, context: ExecutionContext, depth: int = 0) -> bool:
+        """Evaluate this node against the context (implemented by subclasses)."""
         raise NotImplementedError
 
 
 class AtomicRuleNode(RuleNode):
+    """Evaluates a single registered rule restriction."""
+
     def __init__(self, rule_type: str, config: dict[str, Any]):
         super().__init__(rule_type, config)
         self._validator_cls = get_validator(rule_type)
 
-    async def evaluate(self, context: ExecutionContext, depth: int = 0) -> bool:
+    async def evaluate(self, context: ExecutionContext, _depth: int = 0) -> bool:
+        """Evaluate this node's rule against the context, catching violations."""
         if self._validator_cls is None:
             context.last_violation = RuleViolationError(
                 self.rule_type, f"Unknown rule type '{self.rule_type}'"
@@ -55,6 +65,8 @@ class AtomicRuleNode(RuleNode):
 
 
 class CompositeRuleNode(RuleNode):
+    """Base class for a node combining child nodes with a boolean operator."""
+
     def __init__(self, operator: str, rules: list[RuleNode]):
         super().__init__("composite", {"operator": operator, "rules": rules})
         self.operator = operator
@@ -62,10 +74,13 @@ class CompositeRuleNode(RuleNode):
 
 
 class AndNode(CompositeRuleNode):
+    """A composite node that passes only when every child passes."""
+
     def __init__(self, rules: list[RuleNode]):
         super().__init__("and", rules)
 
     async def evaluate(self, context: ExecutionContext, depth: int = 0) -> bool:
+        """Evaluate every child, passing only when all pass."""
         if depth > MAX_COMPOSITE_DEPTH:
             raise RuleViolationError(
                 "composite",
@@ -78,10 +93,13 @@ class AndNode(CompositeRuleNode):
 
 
 class OrNode(CompositeRuleNode):
+    """A composite node that passes when any child passes."""
+
     def __init__(self, rules: list[RuleNode]):
         super().__init__("or", rules)
 
     async def evaluate(self, context: ExecutionContext, depth: int = 0) -> bool:
+        """Evaluate every child, passing when any child passes."""
         if depth > MAX_COMPOSITE_DEPTH:
             raise RuleViolationError(
                 "composite",
@@ -94,10 +112,13 @@ class OrNode(CompositeRuleNode):
 
 
 class NotNode(CompositeRuleNode):
+    """A composite node that negates its single child."""
+
     def __init__(self, rule: RuleNode):
         super().__init__("not", [rule])
 
     async def evaluate(self, context: ExecutionContext, depth: int = 0) -> bool:
+        """Evaluate the single child, inverting its result."""
         if depth > MAX_COMPOSITE_DEPTH:
             raise RuleViolationError(
                 "composite",
@@ -112,8 +133,11 @@ class NotNode(CompositeRuleNode):
 
 
 class CompositeEvaluator:
+    """Entry point that evaluates a root rule node against a context."""
+
     @staticmethod
     async def evaluate(node: RuleNode, context: ExecutionContext) -> bool:
+        """Evaluate a root node against the context."""
         return await node.evaluate(context)
 
 
@@ -127,6 +151,11 @@ _RULE_TYPE_TO_NODE_CLASS: dict[str, Any] = {
 def build_rule_node(
     rule_data: dict[str, Any],
 ) -> RuleNode:
+    """Build a rule node tree from a raw rule dict.
+
+    Recurses into ``composite`` rules using their configured operator, producing an
+    ``AtomicRuleNode`` for everything else.
+    """
     rule_type = rule_data.get("type", "")
     config = rule_data.get("config", {})
 
@@ -151,6 +180,6 @@ def build_rule_node(
             )
 
         children = [build_rule_node(r) for r in child_rules]
-        return cast(RuleNode, node_cls(children))
+        return cast("RuleNode", node_cls(children))
 
     return AtomicRuleNode(rule_type, config)

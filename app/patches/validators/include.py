@@ -1,4 +1,7 @@
+"""Include directive validation for related entity loading."""
+
 from __future__ import annotations
+
 from typing import Any
 
 from app.exceptions import DeepObjectValidationError
@@ -26,6 +29,7 @@ def validate_include(
             Internal recursion path (used for error reporting).
 
     Raises:
+    ------
         DeepObjectValidationError:
             On invalid structure or value.
     """
@@ -35,7 +39,7 @@ def validate_include(
     properties = schema.get("properties", schema)
 
     for key, value in include.items():
-        current_path = path + [key]
+        current_path = [*path, key]
 
         if key not in properties:
             raise DeepObjectValidationError(current_path, "Unknown include field")

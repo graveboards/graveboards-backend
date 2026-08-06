@@ -1,25 +1,33 @@
+"""Synchronous Phase-1 runner evaluating Tier-1/Tier-2 rules."""
+
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 from connexion.exceptions import Forbidden
 
-from app.database.models import QueueRule
-from app.database.rules.context import ExecutionContext
 from app.database.rules.engine.evaluator import RuleNode, build_rule_node
 from app.database.rules.engine.stateful import STATEFUL_RULE_TYPES
 from app.database.rules.exceptions import RuleViolationError
 from app.database.rules.registry import effective_rule_tier
 
+if TYPE_CHECKING:
+    from app.database.models import QueueRule
+    from app.database.rules.context import ExecutionContext
+
 logger = logging.getLogger(__name__)
 
 
 class Phase1Runner:
+    """Evaluates non-stateful Tier-1 and Tier-2 rules on the synchronous request path."""
+
     async def run(
         self,
         rules: list[QueueRule],
         context: ExecutionContext,
     ) -> None:
+        """Run each applicable rule, raising the first ``RuleViolationError`` found."""
         for rule in rules:
             if not rule.is_active:
                 continue

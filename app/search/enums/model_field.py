@@ -1,9 +1,9 @@
-from __future__ import annotations
-from enum import Enum, IntEnum, auto
-from typing import Any
+"""Model field enumerations for search queries."""
 
-from sqlalchemy.orm import InstrumentedAttribute
-from sqlalchemy.sql.elements import ColumnClause
+from __future__ import annotations
+
+from enum import Enum, IntEnum, auto
+from typing import TYPE_CHECKING, Any
 
 from app.database.models import (
     BeatmapsetSnapshot,
@@ -13,6 +13,10 @@ from app.database.models import (
     Queue,
     Request,
 )
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import InstrumentedAttribute
+    from sqlalchemy.sql.elements import ColumnClause
 
 
 class ModelField(Enum):
@@ -367,9 +371,11 @@ class ModelField(Enum):
                 The field name or alias.
 
         Returns:
+        -------
             Matching ``ModelField``.
 
         Raises:
+        ------
             ValueError:
                 If no matching field exists.
         """

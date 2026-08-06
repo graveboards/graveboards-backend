@@ -1,10 +1,15 @@
+"""Sorting order enumerations for search queries."""
+
 from __future__ import annotations
-from collections.abc import Callable
+
 from enum import Enum, IntEnum, auto
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from typing import cast as typing_cast
 
 from sqlalchemy import asc, desc
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class SortingOrder(Enum):
@@ -19,7 +24,7 @@ class SortingOrder(Enum):
     @property
     def sort_func(self) -> Callable[..., Any]:
         """Return the ORM sort function corresponding to the order."""
-        return typing_cast(Callable[..., Any], asc if self is SortingOrder.ASCENDING else desc)
+        return typing_cast("Callable[..., Any]", asc if self is SortingOrder.ASCENDING else desc)
 
     @classmethod
     def from_name(cls, name: str) -> SortingOrder:
@@ -30,9 +35,11 @@ class SortingOrder(Enum):
                 Case-insensitive sort direction.
 
         Returns:
+        -------
             Matching ``SortingOrder``.
 
         Raises:
+        ------
             ValueError:
                 If no matching sorting order exists.
         """

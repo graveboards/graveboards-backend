@@ -1,4 +1,7 @@
+"""Beatmap-metadata (Tier-2) restrictions."""
+
 from __future__ import annotations
+
 from app.database.rules.validators.beatmap.ar_range import ARRangeRestriction
 from app.database.rules.validators.beatmap.bpm import BPMRestriction
 from app.database.rules.validators.beatmap.combinations import CombinationRestriction
@@ -18,21 +21,21 @@ from app.database.rules.validators.beatmap.tags import TagsRestriction
 from app.database.rules.validators.beatmap.video import VideoRestriction
 
 __all__ = [
-    "DurationRestriction",
-    "StarRatingRestriction",
     "ARRangeRestriction",
-    "ODRangeRestriction",
-    "HPRangeRestriction",
-    "CSRangeRestriction",
-    "DrainRangeRestriction",
     "BPMRestriction",
-    "GenreRestriction",
-    "LanguageRestriction",
-    "ModeRestriction",
-    "DifficultyCountRestriction",
-    "StoryboardRestriction",
-    "VideoRestriction",
-    "TagsRestriction",
-    "LengthRestriction",
+    "CSRangeRestriction",
     "CombinationRestriction",
+    "DifficultyCountRestriction",
+    "DrainRangeRestriction",
+    "DurationRestriction",
+    "GenreRestriction",
+    "HPRangeRestriction",
+    "LanguageRestriction",
+    "LengthRestriction",
+    "ModeRestriction",
+    "ODRangeRestriction",
+    "StarRatingRestriction",
+    "StoryboardRestriction",
+    "TagsRestriction",
+    "VideoRestriction",
 ]

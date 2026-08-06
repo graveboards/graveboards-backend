@@ -1,8 +1,16 @@
+"""API authentication utilities for validating API keys and bearer tokens."""
+
 from __future__ import annotations
-from connexion.lifecycle import ConnexionRequest
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from connexion.lifecycle import ConnexionRequest
+
+    from app.database import PostgresqlDB
+
 from jwt.exceptions import ExpiredSignatureError, InvalidIssuerError, InvalidTokenError
 
-from app.database import PostgresqlDB
 from app.database.models import ApiKey
 from app.security import hash_api_key, validate_api_key, validate_token
 
@@ -17,6 +25,7 @@ async def api_key_info(key: str, request: ConnexionRequest) -> dict | None:
             Incoming request context.
 
     Returns:
+    -------
         Token payload if valid, otherwise ``None``.
     """
     db: PostgresqlDB = request.state.db
@@ -28,7 +37,7 @@ async def api_key_info(key: str, request: ConnexionRequest) -> dict | None:
         return None
 
 
-async def bearer_info(token: str, request: ConnexionRequest) -> dict | None:
+async def bearer_info(token: str, _request: ConnexionRequest) -> dict | None:
     """Validate and decode a bearer JWT token.
 
     Args:
@@ -38,6 +47,7 @@ async def bearer_info(token: str, request: ConnexionRequest) -> dict | None:
             Incoming request context.
 
     Returns:
+    -------
         Decoded token payload if valid, otherwise ``None``.
     """
     try:

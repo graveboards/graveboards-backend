@@ -1,4 +1,3 @@
-from __future__ import annotations
 """Coverage tracking registry for search test fixtures.
 
 Replaces 50+ instance attributes in SearchTestFixtureFetcher with a data-driven
@@ -6,10 +5,14 @@ registry that tracks coverage buckets. Adding a new bucket requires registering
 one entry instead of adding 3+ attributes and updating 5+ methods.
 """
 
-from collections.abc import Callable
+from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class BucketType(Enum):
@@ -25,6 +28,7 @@ class Bucket:
     """Definition of a coverage bucket.
 
     Attributes:
+    ----------
         name: Unique bucket name (e.g., "fetched_beatmapset_genres")
         bucket_type: Type of data structure (SET, DICT, BOOL)
         categorize: Optional function to map data -> bucket key (for DICT type)
@@ -139,6 +143,7 @@ class CoverageRegistry:
             item_id: ID of the item being classified
 
         Returns:
+        -------
             Dictionary of {bucket_name: set_of_new_ids} for newly populated buckets
         """
         newly_filled: dict[str, set[int]] = {}
@@ -448,6 +453,7 @@ class CoverageRegistry:
             category: Optional category key (for DICT type buckets)
 
         Returns:
+        -------
             True if bucket is covered
         """
         bucket = self._buckets.get(bucket_name)
@@ -461,7 +467,7 @@ class CoverageRegistry:
         if bucket.bucket_type == BucketType.SET:
             return len(data) >= bucket.min_coverage
 
-        elif bucket.bucket_type == BucketType.DICT:
+        if bucket.bucket_type == BucketType.DICT:
             if category is not None:
                 cat_data = data.get(category)
                 if cat_data is None:
@@ -475,7 +481,7 @@ class CoverageRegistry:
                     return False
             return True
 
-        elif bucket.bucket_type == BucketType.BOOL:
+        if bucket.bucket_type == BucketType.BOOL:
             return bool(data)
 
         return False
@@ -488,6 +494,7 @@ class CoverageRegistry:
             category: Optional category key
 
         Returns:
+        -------
             Urgency weight
         """
         if self.is_covered(bucket_name, category):
@@ -517,7 +524,7 @@ class CoverageRegistry:
 
         if count == 0:
             return rarity * 2.0
-        elif count < bucket.min_coverage:
+        if count < bucket.min_coverage:
             return rarity * 1.0
         return 0.0
 
@@ -525,6 +532,7 @@ class CoverageRegistry:
         """Count total number of uncovered bucket entries.
 
         Returns:
+        -------
             Tuple of (total_uncovered, rare_uncovered)
         """
         count = 0
@@ -545,6 +553,7 @@ class CoverageRegistry:
         """Check if all buckets meet minimum coverage.
 
         Returns:
+        -------
             True if all buckets are covered
         """
         count, _ = self.total_uncovered()
@@ -554,6 +563,7 @@ class CoverageRegistry:
         """Get current coverage status for all buckets.
 
         Returns:
+        -------
             Dictionary of {bucket_name: {category: bool}}
         """
         status: dict[str, dict] = {}
@@ -576,6 +586,7 @@ class CoverageRegistry:
         """Get full coverage report with counts and IDs.
 
         Returns:
+        -------
             Coverage report dictionary
         """
         from .constants import BEATMAP_MODE_NAMES, BEATMAP_STATUS_NAMES, GENRE_NAMES, LANGUAGE_NAMES

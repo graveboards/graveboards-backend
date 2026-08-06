@@ -1,4 +1,17 @@
 from __future__ import annotations
+
+from typing import Any
+
+from rich.console import Console
+from rich.table import Table
+
+from app.fixtures.criteria import Criteria, FetchCriteria, FetchReport
+from app.fixtures.orchestrator import FixtureOrchestrator
+from app.observability.logging import get_logger
+from app.redis_client import RedisClient
+
+from .config import FetchConfig
+
 """CLI command to fetch fixture data from the osu! API.
 
 Uses the FixtureOrchestrator with composable criteria:
@@ -12,18 +25,6 @@ Usage:
     manage fixtures fetch --criteria search-test
     manage fixtures fetch --criteria search-test --archive --quick
 """
-
-from typing import Any
-
-from rich.console import Console
-from rich.table import Table
-
-from app.fixtures.criteria import Criteria, FetchCriteria, FetchReport
-from app.fixtures.orchestrator import FixtureOrchestrator
-from app.observability.logging import get_logger
-from app.redis_client import RedisClient
-
-from .config import FetchConfig
 
 console = Console()
 logger = get_logger(__name__)

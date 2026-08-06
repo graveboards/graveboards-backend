@@ -1,5 +1,6 @@
-from __future__ import annotations
 """Sample count calculation for fixture fetching."""
+
+from __future__ import annotations
 
 from typing import Any
 
@@ -39,6 +40,7 @@ def calculate_sample_counts(
         use_minimal: Use minimal profile instead of base counts
 
     Returns:
+    -------
         Dictionary with calculated counts for each category
     """
     has_explicit_categories = any(
@@ -92,10 +94,13 @@ def calculate_sample_counts(
             if isinstance(override_value, dict):
                 if key not in result:
                     result[key] = {}
-                target_dict: dict[str, Any] = result[key]
-                for subkey, subvalue in override_value.items():
-                    if subvalue is not None:
-                        target_dict[subkey] = subvalue
+                result[key].update(
+                    {
+                        subkey: subvalue
+                        for subkey, subvalue in override_value.items()
+                        if subvalue is not None
+                    }
+                )
             else:
                 result[key] = override_value
 

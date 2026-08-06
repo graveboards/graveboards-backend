@@ -1,7 +1,11 @@
+"""Sorting CTEs for request search fields."""
+
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from sqlalchemy.sql import select
 from sqlalchemy.sql.functions import func
-from sqlalchemy.sql.selectable import CTE
 
 from app.database.models import (
     BeatmapsetSnapshot,
@@ -10,8 +14,12 @@ from app.database.models import (
     Request,
     beatmap_snapshot_beatmapset_snapshot_association,
 )
-from app.search.datastructures import SortingOption
 from app.search.enums import Scope
+
+if TYPE_CHECKING:
+    from sqlalchemy.sql.selectable import CTE
+
+    from app.search.datastructures import SortingOption
 
 
 def request_sorting_cte_factory(scope: Scope, sorting_option: SortingOption) -> CTE:
@@ -27,6 +35,7 @@ def request_sorting_cte_factory(scope: Scope, sorting_option: SortingOption) -> 
             Sorting configuration including field and order.
 
     Returns:
+    -------
         A CTE yielding (id, target, rank) for request-based ordering.
     """
     target = sorting_option.field.target

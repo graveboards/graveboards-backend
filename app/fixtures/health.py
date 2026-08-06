@@ -1,9 +1,10 @@
-from __future__ import annotations
 """Fixture health check utilities for Graveboards Backend.
 
 This module provides health check functionality for fixture data,
 including completeness verification, coverage analysis, and gap detection.
 """
+
+from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
@@ -46,6 +47,7 @@ def calculate_fixture_counts() -> dict[str, int]:
     """Calculate expected fixture counts based on directory contents.
 
     Returns:
+    -------
         Dictionary mapping fixture categories to expected counts
     """
     counts = {
@@ -84,6 +86,7 @@ def validate_fixture_integrity(category: str, filename: str) -> list[str]:
         filename: Filename to validate
 
     Returns:
+    -------
         List of integrity errors (empty if valid)
     """
     errors = []
@@ -93,12 +96,12 @@ def validate_fixture_integrity(category: str, filename: str) -> list[str]:
         return [f"File not found: {filename}"]
 
     try:
-        with open(fixture_path) as f:
+        with fixture_path.open() as f:
             data = json.load(f)
     except json.JSONDecodeError as e:
-        return [f"Invalid JSON: {str(e)}"]
+        return [f"Invalid JSON: {e!s}"]
     except Exception as e:
-        return [f"Read error: {str(e)}"]
+        return [f"Read error: {e!s}"]
 
     if not isinstance(data, (dict, list)):
         errors.append("Root element must be object or array")
@@ -114,6 +117,7 @@ def check_category_health(category: str, expected_count: int | None = None) -> F
         expected_count: Expected fixture count (uses calculated count if None)
 
     Returns:
+    -------
         Health result for the category
     """
     fixture_path = get_test_fixture_path(category)
@@ -166,6 +170,7 @@ def check_all_categories() -> FixtureReport:
     """Check health of all fixture categories.
 
     Returns:
+    -------
         Comprehensive report of all category health
     """
     expected_counts = calculate_fixture_counts()
@@ -206,6 +211,7 @@ def get_incomplete_categories() -> list[FixtureHealthResult]:
     """Get list of incomplete fixture categories.
 
     Returns:
+    -------
         List of categories with coverage < 100%
     """
     report = check_all_categories()
@@ -216,6 +222,7 @@ def get_category_gaps() -> list[dict[str, Any]]:
     """Get detailed gap information for each category.
 
     Returns:
+    -------
         List of gap information dictionaries
     """
     categories = [

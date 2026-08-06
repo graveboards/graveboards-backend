@@ -1,4 +1,7 @@
+"""Patched OpenAPI URI parser for complex query parameter handling."""
+
 from __future__ import annotations
+
 import contextlib
 import json
 import re
@@ -87,11 +90,7 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
 
         # Preserve list only if leaf type is array
         if last_schema.get("type") == "array":
-            if (
-                k.startswith("filters")
-                and len(v) == 1
-                and isinstance(v[0], str)
-            ):
+            if k.startswith("filters") and len(v) == 1 and isinstance(v[0], str):
                 # Support non-exploded forms
                 v = v[0].split(",")
 
@@ -114,6 +113,7 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
                 Parameter location ("query", "path", etc.).
 
         Returns:
+        -------
             Dictionary of resolved and coerced parameters.
         """
         resolved_param = {}
@@ -160,7 +160,7 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
 
     @staticmethod
     def coerce_include(
-        param: dict, value: Any, parameter_type: str, parameter_name: str | None = None
+        param: dict, value: Any, _parameter_type: str, _parameter_name: str | None = None
     ) -> bool | str | dict[str, Any] | list[Any]:
         """Recursively coerce deep-object include parameters.
 
@@ -180,6 +180,7 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
                 Parameter name (optional).
 
         Returns:
+        -------
             Coerced include structure matching schema shape.
         """
         param_schema = param.get("schema", param)
@@ -195,19 +196,21 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
                 branch_type = branch.get("type")
 
                 if branch_type == "object" and isinstance(data, dict):
-                    return typing_cast(dict[str, Any], branch)
+                    return typing_cast("dict[str, Any]", branch)
 
                 if branch_type == "array" and isinstance(data, list):
-                    return typing_cast(dict[str, Any], branch)
+                    return typing_cast("dict[str, Any]", branch)
 
                 if branch_type == "boolean" and (
                     isinstance(data, bool)
-                    or isinstance(data, str)
-                    and data.lower() in affirmative_literals | negative_literals
+                    or (
+                        isinstance(data, str)
+                        and data.lower() in affirmative_literals | negative_literals
+                    )
                 ):
-                    return typing_cast(dict[str, Any], branch)
+                    return typing_cast("dict[str, Any]", branch)
 
-            return typing_cast(dict[str, Any], schema["oneOf"][0])
+            return typing_cast("dict[str, Any]", schema["oneOf"][0])
 
         def cast(data: Any, schema: Any) -> bool | str | dict[str, Any] | list[Any]:
             if isinstance(data, str):
@@ -215,7 +218,7 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
 
                 if lower in affirmative_literals:
                     return True
-                elif lower in negative_literals:
+                if lower in negative_literals:
                     return False
 
             if isinstance(data, dict):
@@ -234,7 +237,7 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
                         else:
                             new_dict[k] = cast(v, {})
 
-                    return typing_cast(bool | str, typing_cast(object, new_dict))
+                    return typing_cast("bool | str", typing_cast("object", new_dict))
 
                 return {k: cast(v, {}) for k, v in data.items()}
 
@@ -243,7 +246,7 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
 
                 return [cast(v, items_schema) for v in data]
 
-            return typing_cast(bool | str | dict[str, Any] | list[Any], data)
+            return typing_cast("bool | str | dict[str, Any] | list[Any]", data)
 
         if isinstance(value, list) and len(value) == 1:
             return cast(value[0], param_schema)
@@ -252,7 +255,7 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
 
     @staticmethod
     def coerce_sorting(
-        param: dict, value: list[str], parameter_type: str, parameter_name: str | None = None
+        _param: dict, value: list[str], _parameter_type: str, _parameter_name: str | None = None
     ) -> list[dict[str, str]]:
         """Coerce sorting parameters from JSON-encoded strings.
 
@@ -269,9 +272,11 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
                 Parameter name (optional).
 
         Returns:
+        -------
             List of parsed sorting dictionaries.
 
         Raises:
+        ------
             json.JSONDecodeError:
                 If any sorting item is invalid JSON.
         """
@@ -303,10 +308,9 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
 
     @staticmethod
     def coerce_filters(
-        param: dict, value: list[str], parameter_type: str, parameter_name: str | None = None
+        _param: dict, value: list[str], _parameter_type: str, _parameter_name: str | None = None
     ) -> str | bool | datetime | float | int:
-        """
-        Recursively coerce deep-object filter parameters.
+        """Recursively coerce deep-object filter parameters.
 
         Supports:
             - Primitive casting for condition values
@@ -324,6 +328,7 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
                 Parameter name (optional).
 
         Returns:
+        -------
             Coerced filters structure matching schema shape.
         """
 
@@ -348,7 +353,7 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
                 except ValueError:
                     pass
 
-            return typing_cast(bool | str, data)
+                return data
 
             if isinstance(data, dict):
                 return {k: cast(v) for k, v in data.items()}

@@ -1,3 +1,5 @@
+"""Authorization override functions for queue and resource access control."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -21,6 +23,7 @@ async def matching_user_id_override(
     equal and non-null.
 
     Returns:
+    -------
         ``True`` if user IDs match; otherwise ``False``.
     """
     authenticated_user_id = get_nested_value(kwargs, authenticated_user_id_lookup)
@@ -51,8 +54,11 @@ async def queue_owner_override(
             Key/path for authenticated user ID.
         from_request:
             Whether ownership should be resolved via Request -> Queue.
+        **kwargs:
+            Additional keyword arguments including ``queue_id`` or ``request_id``.
 
     Returns:
+    -------
         ``True`` if the authenticated user owns the queue; otherwise ``False``.
     """
     authenticated_user_id = get_nested_value(kwargs, authenticated_user_id_lookup)
@@ -89,8 +95,11 @@ async def queue_manager_override(
             Key/path for authenticated user ID.
         from_request:
             Whether ownership should be resolved via Request -> Queue.
+        **kwargs:
+            Additional keyword arguments including ``queue_id`` or ``request_id``.
 
     Returns:
+    -------
         ``True`` if the authenticated user owns or manages the queue; otherwise ``False``.
     """
     authenticated_user_id = get_nested_value(kwargs, authenticated_user_id_lookup)

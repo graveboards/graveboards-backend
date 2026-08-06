@@ -1,4 +1,7 @@
+"""Seed targets mapping CLI names to seeder classes."""
+
 from __future__ import annotations
+
 from enum import StrEnum
 
 

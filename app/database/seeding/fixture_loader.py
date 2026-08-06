@@ -23,13 +23,9 @@ from __future__ import annotations
 import contextlib
 import json
 from datetime import datetime
-from typing import TYPE_CHECKING
 
 from app.config import PROJECT_ROOT
 from app.database.seeding.target import SeederTarget
-
-if TYPE_CHECKING:
-    pass
 
 FIXTURES_DIR = PROJECT_ROOT / "instance" / "fixtures"
 
@@ -131,7 +127,7 @@ def _load_users() -> list[dict]:
         if not ruleset_dir.is_dir():
             continue
         for f in sorted(ruleset_dir.glob("user_*.json")):
-            with open(f) as fh:
+            with f.open() as fh:
                 api_data = json.load(fh)
 
             user_id = api_data.get("id")
@@ -167,7 +163,7 @@ def _load_beatmaps() -> list[dict]:
 
     beatmapsets: list[dict] = []
     for f in sorted(bms_path.glob("beatmapset_*.json")):
-        with open(f) as fh:
+        with f.open() as fh:
             api_data = json.load(fh)
 
         # The osu! API returns "maps" but the seeder expects "beatmaps"
@@ -190,7 +186,7 @@ def _load_queues() -> list[dict]:
 
     queues: list[dict] = []
     for f in sorted(queues_path.glob("queue_*.json")):
-        with open(f) as fh:
+        with f.open() as fh:
             queue_data = json.load(fh)
 
         # Convert ISO string timestamps back to datetime objects
@@ -212,7 +208,7 @@ def _load_requests() -> list[dict]:
 
     requests: list[dict] = []
     for f in sorted(requests_path.glob("request_*.json")):
-        with open(f) as fh:
+        with f.open() as fh:
             request_data = json.load(fh)
 
         # Convert ISO string timestamps back to datetime objects

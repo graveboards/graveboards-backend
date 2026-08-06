@@ -1,4 +1,3 @@
-from __future__ import annotations
 """Pluggable ID source strategies for fixture fetching.
 
 Each ID source provides a way to resolve which IDs to fetch from the osu! API.
@@ -11,9 +10,12 @@ Usage:
     id_ = source.get_id("beatmaps")
 """
 
+from __future__ import annotations
+
 import asyncio
 import random
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 from app.fixtures.archives import (
     ArchiveIndex,
@@ -23,10 +25,12 @@ from app.fixtures.archives import (
     refresh_archive_index,
 )
 from app.fixtures.constants import ID_RANGES, TOP_PLAYERS_PER_RULESET
-from app.fixtures.failed_id_store import FailedIdStore
 from app.fixtures.metadata_io import load_metadata
 from app.observability.logging import get_logger
-from app.redis_client import RedisClient
+
+if TYPE_CHECKING:
+    from app.fixtures.failed_id_store import FailedIdStore
+    from app.redis_client import RedisClient
 
 logger = get_logger(__name__)
 
@@ -44,7 +48,7 @@ class IDSource(ABC):
     async def get_id(self, category: str, subcategory: str | None = None) -> int | None:
         """Get a single ID for the given category. Returns None if exhausted."""
 
-    def has_ids(self, category: str, subcategory: str | None = None) -> bool:
+    def has_ids(self, _category: str, _subcategory: str | None = None) -> bool:
         """Check if source has any IDs for the given category."""
         return False
 
@@ -66,11 +70,13 @@ class RandomIDSource(IDSource):
         self._pool: dict[str, list[int]] = {}
 
     async def resolve(self) -> bool:
+        """Pre-load failed IDs into the in-memory cache."""
         if self.failed_id_store:
             self._failed_cache = await self.failed_id_store.load_all()
         return True
 
     async def get_id(self, category: str, subcategory: str | None = None) -> int | None:
+        """Return a random candidate ID, avoiding known failed IDs."""
         key = f"{category}.{subcategory}" if subcategory else category
         failed = self._failed_cache.get(key, set())
 
@@ -87,6 +93,7 @@ class RandomIDSource(IDSource):
         return random.randint(min_id, max_id)
 
     async def add_failed(self, category: str, id_: int, subcategory: str | None = None) -> None:
+        """Record an ID as failed both in the store and the local cache."""
         if self.failed_id_store:
             await self.failed_id_store.add_failed(category, id_, subcategory)
 
@@ -95,7 +102,8 @@ class RandomIDSource(IDSource):
             self._failed_cache[key] = set()
         self._failed_cache[key].add(id_)
 
-    def has_ids(self, category: str, subcategory: str | None = None) -> bool:
+    def has_ids(self, _category: str, _subcategory: str | None = None) -> bool:
+        """Random source always has candidate IDs available."""
         return True
 
 
@@ -113,10 +121,11 @@ class TopPlayerIDSource(IDSource):
         self._loaded = False
 
     async def resolve(self) -> bool:
+        """Load top player IDs from metadata and set up round-robin indices."""
         metadata = load_metadata()
         self.player_ids = metadata.get("top_player_ids", {})
         total = sum(len(ids) for ids in self.player_ids.values())
-        self._indices = {r: 0 for r in self.player_ids}
+        self._indices = dict.fromkeys(self.player_ids, 0)
         self._loaded = total > 0
         if self._loaded:
             logger.info(
@@ -124,7 +133,8 @@ class TopPlayerIDSource(IDSource):
             )
         return self._loaded
 
-    async def get_id(self, category: str, subcategory: str | None = None) -> int | None:
+    async def get_id(self, _category: str, subcategory: str | None = None) -> int | None:
+        """Return the next top player ID for the given ruleset."""
         if not self._loaded:
             return None
 
@@ -143,7 +153,8 @@ class TopPlayerIDSource(IDSource):
                 return ids[idx]
         return None
 
-    def has_ids(self, category: str, subcategory: str | None = None) -> bool:
+    def has_ids(self, _category: str, subcategory: str | None = None) -> bool:
+        """Whether the source has top player IDs available."""
         if not self._loaded:
             return False
         if subcategory:
@@ -177,6 +188,7 @@ class ArchiveIDSource(IDSource):
         self._resolve_called = False
 
     async def resolve(self) -> bool:
+        """Load (or download) the archive index into memory."""
         try:
             if self.allow_download:
                 logger.info("Refreshing archive index from osu.sh...")
@@ -236,6 +248,7 @@ class ArchiveIDSource(IDSource):
             logger.debug(f"ArchiveIDSource: loaded {len(self.beatmap_ids)} beatmap IDs")
 
     async def get_id(self, category: str, subcategory: str | None = None) -> int | None:
+        """Return the next ID from the archive for the given category."""
         if not self._loaded:
             return None
 
@@ -275,6 +288,7 @@ class ArchiveIDSource(IDSource):
             await self._ensure_player_ids_loaded(ruleset)
 
     def has_ids(self, category: str, subcategory: str | None = None) -> bool:
+        """Whether the archive source has IDs available."""
         if not self._loaded:
             return False
         if category == "beatmaps":
@@ -309,6 +323,7 @@ class AutoIDSource(IDSource):
         self.sources.append(RandomIDSource(id_ranges=id_ranges, failed_id_store=failed_id_store))
 
     async def resolve(self) -> bool:
+        """Resolve the first usable source in priority order."""
         for source in self.sources:
             try:
                 if await source.resolve():
@@ -323,6 +338,7 @@ class AutoIDSource(IDSource):
         return False
 
     async def get_id(self, category: str, subcategory: str | None = None) -> int | None:
+        """Return an ID from the current source, falling back to others."""
         if self._current is None:
             return None
         id_ = await self._current.get_id(category, subcategory)
@@ -338,11 +354,13 @@ class AutoIDSource(IDSource):
         return None
 
     def has_ids(self, category: str, subcategory: str | None = None) -> bool:
+        """Whether any source has IDs available for the category."""
         if self._current and self._current.has_ids(category, subcategory):
             return True
         return any(s.has_ids(category, subcategory) for s in self.sources)
 
     async def add_failed(self, category: str, id_: int, subcategory: str | None = None) -> None:
+        """Record a failed ID on every source that supports it."""
         for source in self.sources:
             if hasattr(source, "add_failed"):
                 if asyncio.iscoroutinefunction(source.add_failed):
@@ -357,12 +375,12 @@ def create_id_source(
     id_ranges: dict | None = None,
     failed_id_store: FailedIdStore | None = None,
 ) -> IDSource:
-    """Factory function to create an ID source by name."""
+    """Create an ID source by name and configuration."""
     if source_type == "archive":
         return ArchiveIDSource(pre_load=True)
-    elif source_type == "top_players":
+    if source_type == "top_players":
         return TopPlayerIDSource()
-    elif source_type == "random":
+    if source_type == "random":
         return RandomIDSource(id_ranges=id_ranges, failed_id_store=failed_id_store)
-    else:  # "auto"
-        return AutoIDSource(rc=rc, id_ranges=id_ranges, failed_id_store=failed_id_store)
+    # "auto"
+    return AutoIDSource(rc=rc, id_ranges=id_ranges, failed_id_store=failed_id_store)

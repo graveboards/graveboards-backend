@@ -1,4 +1,8 @@
+"""Pagination utilities for building paginated API responses."""
+
 from __future__ import annotations
+
+
 def build_pagination_response(
     data: list,
     total: int,

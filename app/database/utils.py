@@ -1,7 +1,10 @@
+"""Utilities for type introspection and SQL filter construction."""
+
 from __future__ import annotations
+
+import sys
 import types
-from collections.abc import Iterable
-from typing import Any, get_args, get_origin
+from typing import TYPE_CHECKING, Any, get_args, get_origin
 from typing import cast as typing_cast
 
 from sqlalchemy.dialects.postgresql import ARRAY
@@ -16,13 +19,18 @@ from sqlalchemy.sql.elements import (
     literal,
 )
 from sqlalchemy.sql.functions import func
-from sqlalchemy.sql.selectable import ScalarSelect
 
-from app.database.ctes.hashable_cte import HashableCTE
 from app.database.enums import FilterOperator
 from app.exceptions import TypeValidationError
 
-__all__ = ["extract_inner_types", "validate_type", "get_filter_condition"]
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from sqlalchemy.sql.selectable import ScalarSelect
+
+    from app.database.ctes.hashable_cte import HashableCTE
+
+__all__ = ["extract_inner_types", "get_filter_condition", "validate_type"]
 
 
 def extract_inner_types(annotated_type: Any) -> type | tuple[type, ...]:
@@ -36,6 +44,7 @@ def extract_inner_types(annotated_type: Any) -> type | tuple[type, ...]:
             A typing-annotated type.
 
     Returns:
+    -------
         A single type or tuple of possible types.
     """
     current = annotated_type
@@ -47,13 +56,41 @@ def extract_inner_types(annotated_type: Any) -> type | tuple[type, ...]:
         if origin is types.UnionType:
             non_none_args = [arg for arg in args if arg is not type(None)]
             if len(non_none_args) == 1 or len(non_none_args) == 2:
-                return typing_cast(type, non_none_args[0])
-            else:
-                return tuple(non_none_args)
-        else:
-            current = args[0] if args else current
+                return typing_cast("type", non_none_args[0])
+            return tuple(non_none_args)
+        current = args[0] if args else current
 
-    return typing_cast(type, current)
+    return typing_cast("type", current)
+
+
+def resolve_annotation(model: type, name: str) -> Any:
+    """Resolve a (possibly lazy) annotation for a model attribute to its runtime type.
+
+    ``from __future__ import annotations`` stores annotations as strings; this evaluates
+    them in the model's module namespace so callers can deal with concrete types.
+
+    Args:
+        model:
+            The model class owning the attribute.
+        name:
+            Attribute name.
+
+    Returns:
+    -------
+        The resolved runtime type (or the raw annotation if it cannot be resolved).
+    """
+    annotation = model.__annotations__.get(name)
+    if not isinstance(annotation, str):
+        return annotation
+
+    module = sys.modules.get(model.__module__)
+    if module is None:
+        return annotation
+
+    try:
+        return eval(annotation, vars(module))
+    except NameError, SyntaxError:
+        return annotation
 
 
 def validate_type(expected_type: Any, value: Any) -> None:
@@ -72,6 +109,7 @@ def validate_type(expected_type: Any, value: Any) -> None:
             Runtime value to validate.
 
     Raises:
+    ------
         TypeValidationError:
             If validation fails at any level.
     """
@@ -92,7 +130,7 @@ def validate_type(expected_type: Any, value: Any) -> None:
         if not isinstance(value, origin):
             raise TypeValidationError(type(value), origin)
 
-        iterable_value = typing_cast(Iterable[Any], value)
+        iterable_value = typing_cast("Iterable[Any]", value)
         item_types = args if origin is tuple and len(args) > 1 else [args[0]]
 
         for i, item in enumerate(iterable_value):
@@ -147,9 +185,11 @@ def get_filter_condition(
             Whether the filter applies to grouped results.
 
     Returns:
+    -------
         SQLAlchemy boolean expression suitable for WHERE or HAVING.
 
     Raises:
+    ------
         ValueError:
             If an unsupported filter operator is provided.
     """

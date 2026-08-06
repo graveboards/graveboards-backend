@@ -1,24 +1,34 @@
-from __future__ import annotations
-from typing import Any
+"""Re-exports for the beatmaps v1 API."""
 
-from starlette.requests import Request
-from api.http_types import APIResponse
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from api.decorators import api_query
 from api.utils import build_pydantic_include
-from app.database import PostgresqlDB
 from app.database.models import Beatmap, ModelClass
+
+if TYPE_CHECKING:
+    from starlette.requests import Request
+
+    from api.http_types import APIResponse
+    from app.database import PostgresqlDB
 from app.database.schemas import BeatmapSchema
 from app.exceptions import NotFound
 from app.spec import get_include_schema
 
 from . import listings, snapshots, tags
 
-__all__ = ["search", "get", "listings", "snapshots", "tags"]
+__all__ = ["get", "listings", "search", "snapshots", "tags"]
 
 
 @api_query(ModelClass.BEATMAP, many=True)
 async def search(request: Request, **kwargs: Any) -> APIResponse:
+    """Search for beatmaps.
+
+    Returns:
+        Tuple of (beatmaps data, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
 
     beatmaps = await db.get_many(Beatmap, **kwargs)
@@ -41,6 +51,11 @@ async def search(request: Request, **kwargs: Any) -> APIResponse:
 
 @api_query(ModelClass.BEATMAP)
 async def get(request: Request, beatmap_id: int, **kwargs: Any) -> APIResponse:
+    """Get a single beatmap by ID.
+
+    Returns:
+        Tuple of (beatmap data, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
 
     beatmap = await db.get(Beatmap, id=beatmap_id, **kwargs)

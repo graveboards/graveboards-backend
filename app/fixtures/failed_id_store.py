@@ -1,13 +1,17 @@
-from __future__ import annotations
 """Redis-backed failed ID store.
 
 Persists failed IDs uncapped in Redis sets for O(1) lookup.
 Provides a simple API for checking and adding failed IDs across categories.
 """
 
-from collections.abc import Iterable
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from app.redis_client import Namespace, RedisClient
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class FailedIdStore:
@@ -65,9 +69,7 @@ class FailedIdStore:
     async def clear_all(self) -> int:
         """Delete all failed ID sets. Returns number of keys deleted."""
         pattern = f"{Namespace.FAILED_IDS}:*"
-        keys = []
-        async for key in self.rc.scan_iter(match=pattern):
-            keys.append(key)
+        keys = [key async for key in self.rc.scan_iter(match=pattern)]
         if keys:
             return int(await self.rc.delete(*keys))
         return 0

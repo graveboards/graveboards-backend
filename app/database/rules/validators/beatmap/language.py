@@ -1,13 +1,20 @@
+"""Beatmapset language restriction for ranked-beatmap submission."""
+
 from __future__ import annotations
-from typing import override
+
+from typing import TYPE_CHECKING, override
 
 from app.database.rules.base import BeatmapRestrictionBase
-from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError
 from app.database.schemas.rule import LanguageConfig
 
+if TYPE_CHECKING:
+    from app.database.rules.context import ExecutionContext
+
 
 class LanguageRestriction(BeatmapRestrictionBase):
+    """Require the beatmapset language to be one of the allowed language ids."""
+
     type = "beatmap_language"
     config_schema = LanguageConfig
 

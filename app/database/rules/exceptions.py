@@ -1,12 +1,19 @@
+"""Exception types raised while evaluating rules."""
+
 from __future__ import annotations
+
+
 class RuleViolationError(Exception):
-    def __init__(self, type: str, detail: str):
-        self.type = type
+    """Raised when a request violates a rule, or a rule's lifecycle fails."""
+
+    def __init__(self, type_: str, detail: str):
+        self.type = type_
         self._detail = detail
         super().__init__(detail)
 
     @property
     def detail(self) -> str:
+        """Return the human-readable violation detail."""
         return self._detail
 
 

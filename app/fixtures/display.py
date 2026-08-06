@@ -1,10 +1,14 @@
-from __future__ import annotations
 """Display utilities for fixture operations."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from rich.console import Console
 from rich.table import Table
 
-from .fetcher import FixtureDataFetcher
+if TYPE_CHECKING:
+    from .fetcher import FixtureDataFetcher
 
 console = Console()
 

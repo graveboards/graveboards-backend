@@ -1,11 +1,16 @@
+"""Decorators for daemon service methods."""
+
 from __future__ import annotations
+
 import asyncio
 import inspect
-from collections.abc import Awaitable, Callable, Coroutine
 from functools import wraps
-from typing import Any, ParamSpec, TypeVar
+from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar
 
 from app.observability.logging import get_logger
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable, Coroutine
 
 MAX_ATTEMPTS = 5
 logger = get_logger(__name__)
@@ -19,6 +24,24 @@ def auto_retry(
     retry_exceptions: tuple[type[Exception], ...] = (TimeoutError,),
     backoff_strategy: Callable[[int], float] = lambda attempt_no: attempt_no**2,
 ) -> Callable[[Callable[_P, Awaitable[_T]]], Callable[_P, Coroutine[Any, Any, _T]]]:
+    """Retry an async function with configurable backoff.
+
+    Args:
+        max_attempts:
+            Maximum number of retry attempts.
+        retry_exceptions:
+            Tuple of exception types that should trigger a retry.
+        backoff_strategy:
+            Callable that returns the delay (in seconds) for a given attempt number.
+
+    Returns:
+        Decorated async function with retry logic.
+
+    Raises:
+        ValueError:
+            If the wrapped function is not a coroutine function.
+    """
+
     def decorator(func: Callable[_P, Awaitable[_T]]) -> Callable[_P, Coroutine[Any, Any, _T]]:
         if not inspect.iscoroutinefunction(func):
             raise ValueError(f"Function '{func.__name__}' must be async to use @auto_retry")

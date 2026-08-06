@@ -1,4 +1,7 @@
+"""API key generation, hashing, and validation utilities."""
+
 from __future__ import annotations
+
 import hashlib
 import secrets
 
@@ -7,9 +10,15 @@ from app.utils import aware_utcnow
 
 
 def generate_api_key() -> str:
+    """Generate a cryptographically secure API key.
+
+    Returns:
+        A random API key string.
+    """
     """Generate a cryptographically secure API key string.
 
     Returns:
+    -------
         A securely generated API key string.
     """
     sequence = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -24,6 +33,7 @@ def hash_api_key(key: str) -> str:
             Raw API key string.
 
     Returns:
+    -------
         The hex-encoded SHA-256 hash of the key.
     """
     return hashlib.sha256(key.encode()).hexdigest()
@@ -37,9 +47,11 @@ def validate_api_key(api_key: ApiKey | None) -> dict[str, int]:
             Persisted API key model instance.
 
     Returns:
+    -------
         A dictionary of the user ID, issued-at timestamp, and expiration timestamp.
 
     Raises:
+    ------
         ValueError:
             If the key is missing, expired, or revoked.
     """

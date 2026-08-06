@@ -1,21 +1,24 @@
-from __future__ import annotations
 """Archive system for osu.sh data source.
 
 This module provides tools to discover, index, and extract data from
 the osu.sh data archives (https://data.ppy.sh/).
 """
 
+from __future__ import annotations
+
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import httpx
 
 from app.config import PROJECT_ROOT
 from app.fixtures.constants import RULESETS
 from app.observability.logging import get_logger
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 logger = get_logger(__name__)
 
@@ -117,8 +120,7 @@ async def fetch_archive_index() -> list[str]:
 
     import re
 
-    filenames = re.findall(r'href=[\'"]([^\'"]+\.tar\.bz2)[\'"]', response.text)
-    return filenames
+    return re.findall(r'href=[\'"]([^\'"]+\.tar\.bz2)[\'"]', response.text)
 
 
 _cached_archive_index: ArchiveIndex | None = None
@@ -139,7 +141,7 @@ def load_archive_index() -> ArchiveIndex:
     import json
 
     try:
-        with open(INDEX_FILE) as f:
+        with INDEX_FILE.open() as f:
             data = json.load(f)
 
         index = ArchiveIndex(
@@ -196,7 +198,7 @@ def save_archive_index(index: ArchiveIndex) -> None:
             "count": archive.count,
         }
 
-    with open(INDEX_FILE, "w") as f:
+    with INDEX_FILE.open("w") as f:
         json.dump(data, f, indent=2)
 
 
@@ -244,7 +246,7 @@ async def download_archive(archive_info: ArchiveInfo) -> Path | None:
         async with httpx.AsyncClient() as client:
             async with client.stream("GET", archive_info.url) as response:
                 response.raise_for_status()
-                with open(archive_path, "wb") as f:
+                with archive_path.open("wb") as f:
                     async for chunk in response.aiter_bytes():
                         f.write(chunk)
 
@@ -337,7 +339,7 @@ def parse_performance_sql(sql_path: Path) -> dict[str, list[dict]]:
         current_table = None
         current_rows: list[dict] = []
 
-        with open(sql_path) as f:
+        with sql_path.open() as f:
             for line in f:
                 table_match = re.match(r"CREATE TABLE `(\w+)`", line)
                 if table_match:
@@ -386,7 +388,7 @@ def _extract_ids_from_sql_data(
         table_filter: Substring to match in table names (case-insensitive).
         id_index: Index of the ID field in each row.
 
-    Returns
+    Returns:
     -------
     Set of non-null IDs found.
     """
@@ -507,13 +509,13 @@ async def get_beatmap_ids_from_archive(
     if osu_dir.exists():
         for osu_file in osu_dir.glob("*.osu"):
             try:
-                with open(osu_file) as f:
+                with osu_file.open() as f:
                     for line in f:
                         if line.startswith("BeatmapID:"):
                             beatmap_id = int(line.split(":")[1].strip())
                             beatmap_ids.add(beatmap_id)
                             break
-            except (OSError, ValueError):
+            except OSError, ValueError:
                 continue
 
     logger.info(f"Extracted {len(beatmap_ids)} beatmap IDs from {archive_info.filename}")

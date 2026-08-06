@@ -1,8 +1,10 @@
+"""Redis model for queue request handler task data."""
+
 from __future__ import annotations
+
 from ast import literal_eval
 from datetime import datetime
 from typing import Any
-from typing import cast as typing_cast
 
 from pydantic.fields import computed_field
 from pydantic.main import BaseModel
@@ -25,6 +27,7 @@ class QueueRequestHandlerTask(BaseModel):
         """Compute a stable positive hash identifier for the task.
 
         Returns:
+        -------
             A 64-bit positive integer hash.
         """
         return hash((self.queue_id, self.beatmapset_id)) & 0x7FFFFFFFFFFFFFFF
@@ -33,6 +36,7 @@ class QueueRequestHandlerTask(BaseModel):
         """Serialize the task for Redis storage.
 
         Returns:
+        -------
             A dictionary with stringified values.
         """
         serialized_dict = {}
@@ -47,7 +51,9 @@ class QueueRequestHandlerTask(BaseModel):
         return serialized_dict
 
     @classmethod
-    def deserialize(cls, serialized_dict: dict[str | bytes, str | bytes]) -> QueueRequestHandlerTask:
+    def deserialize(
+        cls, serialized_dict: dict[str | bytes, str | bytes]
+    ) -> QueueRequestHandlerTask:
         """Deserialize a stored task dictionary from Redis.
 
         Args:
@@ -55,6 +61,7 @@ class QueueRequestHandlerTask(BaseModel):
                 Serialized task data (keys and values may be bytes or str).
 
         Returns:
+        -------
             A validated ``QueueRequestHandlerTask`` instance.
         """
         string_dict = {str(k): str(v) for k, v in serialized_dict.items()}

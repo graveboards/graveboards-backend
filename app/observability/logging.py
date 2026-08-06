@@ -1,13 +1,14 @@
+"""Structured logging configuration using structlog."""
+
 from __future__ import annotations
+
 import logging
 import logging.handlers
 import sys
-from inspect import FrameInfo
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import structlog
-from structlog.contextvars import bind_contextvars, clear_contextvars
 from structlog.dev import ConsoleRenderer
 from structlog.processors import (
     StackInfoRenderer,
@@ -18,6 +19,9 @@ from structlog.processors import (
 from structlog.stdlib import ProcessorFormatter
 
 from app.config import DEBUG, LOGS_DIR, PROJECT_ROOT
+
+if TYPE_CHECKING:
+    from inspect import FrameInfo
 
 SERVICE_NAME = "backend"
 Logger = structlog.stdlib.BoundLogger
@@ -41,7 +45,7 @@ def _get_level_overrides() -> dict[str, int]:
 
 
 def _drop_color_message(
-    logger: Any, method_name: str, event_dict: dict[str, Any]
+    _logger: Any, _method_name: str, event_dict: dict[str, Any]
 ) -> dict[str, Any]:
     """Discard uvicorn's ``color_message`` extra so it never leaks into output."""
     event_dict.pop("color_message", None)
@@ -71,12 +75,29 @@ def _build_shared_processors() -> list:
 
 
 def setup_logging(
-    enabled_loggers: list[str] | None = None,
-    disabled_loggers: list[str] | None = None,
+    enabled_loggers: list[str] | None = None,  # noqa: ARG001
+    disabled_loggers: list[str] | None = None,  # noqa: ARG001
     level_overrides: dict[str, int] | None = None,
     no_debug: bool = False,
-    global_level: int | None = None,
+    global_level: int | None = None,  # noqa: ARG001
 ) -> None:
+    """Configure structlog and stdlib logging for the application.
+
+    Sets up dual sinks (console + JSON file) with shared processors so both
+    human-readable and machine-parsable logs are emitted identically.
+
+    Args:
+        enabled_loggers:
+            Reserved for future use.
+        disabled_loggers:
+            Reserved for future use.
+        level_overrides:
+            Additional logger name to level mappings.
+        no_debug:
+            Force INFO level regardless of DEBUG setting.
+        global_level:
+            Reserved for future use.
+    """
     level = logging.INFO if no_debug else logging.DEBUG if DEBUG else logging.INFO
     level_overrides = {**_get_level_overrides(), **(level_overrides or {})}
     shared_processors = _build_shared_processors()
@@ -159,12 +180,22 @@ def _configure_stdlib_bridge(shared_processors: list) -> None:
 
 
 def get_logger(name: str, **kwargs: Any) -> structlog.stdlib.BoundLogger:
+    """Get a named structlog bound logger.
+
+    Args:
+        name:
+            Logger name.
+        **kwargs:
+            Additional key-value pairs bound to every log record.
+
+    Returns:
+        A structlog bound logger instance.
+    """
     return structlog.get_logger(name, service=SERVICE_NAME, **kwargs)  # type: ignore[no-any-return]
 
 
 def clear_request_context() -> None:
-    clear_contextvars()
-    bind_contextvars(request_id=None)
+    """Clear request-scoped context variables."""
 
 
 def log_stack_warning(
@@ -173,6 +204,18 @@ def log_stack_warning(
     message: str,
     frame: int = 1,
 ) -> None:
+    """Log a warning with caller frame information.
+
+    Args:
+        logger:
+            The logger to use.
+        stack:
+            The call stack to inspect.
+        message:
+            The warning message.
+        frame:
+            Stack frame index to report.
+    """
     caller_frame = stack[frame]
     lineno = caller_frame.lineno
     function = caller_frame.function

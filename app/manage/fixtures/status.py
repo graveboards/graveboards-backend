@@ -1,21 +1,4 @@
 from __future__ import annotations
-"""CLI command for fixture status and validation.
-
-Usage:
-    manage fixtures status [--instance] [--promoted] [--detailed] [--gaps]
-
-Examples:
-    manage fixtures status
-    manage fixtures status --instance
-    manage fixtures status --promoted --detailed
-    manage fixtures status --instance --promoted --gaps
-
-Flags:
-    --instance    Show only instance/ fixtures status
-    --promoted    Show only tests/fixtures/ promoted status
-    --detailed    Include detailed file lists
-    --gaps        Show missing fixture gaps
-"""
 
 from pathlib import Path
 from typing import Any
@@ -36,6 +19,24 @@ from app.fixtures.paths import (
     TEST_FIXTURES_DIR,
     get_test_fixture_path,
 )
+
+"""CLI command for fixture status and validation.
+
+Usage:
+    manage fixtures status [--instance] [--promoted] [--detailed] [--gaps]
+
+Examples:
+    manage fixtures status
+    manage fixtures status --instance
+    manage fixtures status --promoted --detailed
+    manage fixtures status --instance --promoted --gaps
+
+Flags:
+    --instance    Show only instance/ fixtures status
+    --promoted    Show only tests/fixtures/ promoted status
+    --detailed    Include detailed file lists
+    --gaps        Show missing fixture gaps
+"""
 
 console = Console()
 
@@ -147,10 +148,9 @@ def format_coverage(count: int, expected: int) -> str:
     percentage = (count / expected) * 100
     if percentage >= 100:
         return f"[green]{percentage:.0f}%[/green]"
-    elif percentage >= 80:
+    if percentage >= 80:
         return f"[yellow]{percentage:.1f}%[/yellow]"
-    else:
-        return f"[red]{percentage:.1f}%[/red]"
+    return f"[red]{percentage:.1f}%[/red]"
 
 
 def create_instance_table(
@@ -303,7 +303,7 @@ def get_category_gaps() -> list[dict[str, Any]]:
     return gaps
 
 
-def show_gaps(promoted_counts: dict[str, int | dict[str, int]]) -> None:
+def show_gaps(_promoted_counts: dict[str, int | dict[str, int]]) -> None:
     """Show missing fixture gaps."""
 
     gaps = get_category_gaps()
@@ -333,10 +333,9 @@ def format_percentage(value: float) -> str:
     """Format a percentage with color coding."""
     if value >= 100:
         return f"[green]{value:.1f}%[/green]"
-    elif value >= 80:
+    if value >= 80:
         return f"[yellow]{value:.1f}%[/yellow]"
-    else:
-        return f"[red]{value:.1f}%[/red]"
+    return f"[red]{value:.1f}%[/red]"
 
 
 async def cmd_fixture_status(

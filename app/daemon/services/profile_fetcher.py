@@ -1,4 +1,7 @@
+"""Profile fetching and synchronization service."""
+
 from __future__ import annotations
+
 from typing import ClassVar, override
 
 from httpx import ConnectTimeout, HTTPStatusError, ReadTimeout
@@ -69,6 +72,7 @@ class ProfileFetcher(ScheduledFetcherService):
                 ID of the profile fetcher record.
 
         Raises:
+        ------
             ValueError: If the record does not exist.
         """
         if not (record := await self._db.get(ProfileFetcherTask, id=record_id)):

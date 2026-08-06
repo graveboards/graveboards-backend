@@ -1,13 +1,18 @@
-from __future__ import annotations
-from typing import Any
+"""Scores endpoints for beatmap snapshots."""
 
-from starlette.requests import Request
-from api.http_types import APIResponse
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from api.decorators import api_query, coerce_arguments
 from api.utils import build_pydantic_include
-from app.database import PostgresqlDB
 from app.database.models import BeatmapSnapshot, Leaderboard, ModelClass
+
+if TYPE_CHECKING:
+    from starlette.requests import Request
+
+    from api.http_types import APIResponse
+    from app.database import PostgresqlDB
 from app.database.schemas import ScoreSchema
 from app.exceptions import NotFound
 from app.spec import get_include_schema
@@ -20,6 +25,11 @@ __all__ = ["search"]
 async def search(
     request: Request, beatmap_id: int, snapshot_number: int = -1, **kwargs: Any
 ) -> APIResponse:
+    """Search for scores on a beatmap snapshot.
+
+    Returns:
+        Tuple of (scores data, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
 
     if snapshot_number < 0:

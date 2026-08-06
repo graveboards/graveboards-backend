@@ -1,17 +1,26 @@
-from __future__ import annotations
 """Metadata store with section-level dirty tracking and coverage management."""
+
+from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from app.fixtures.metadata import PromotedFixtures, Samples, SearchTestCoverage, TargetedMetadata
 from app.observability.logging import get_logger
 
 from ..constants import RULESETS, SCORE_TYPES
 from ..paths import FIXTURES_DIR
 from .models import Metadata
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from app.fixtures.metadata import (
+        PromotedFixtures,
+        Samples,
+        SearchTestCoverage,
+        TargetedMetadata,
+    )
 
 logger = get_logger(__name__)
 
@@ -37,7 +46,7 @@ class MetadataStore:
     def _load(self) -> None:
         """Load metadata from disk."""
         try:
-            with open(self.metadata_file) as f:
+            with self.metadata_file.open() as f:
                 data = json.load(f)
             self.data = Metadata.from_dict(data)
         except (json.JSONDecodeError, ValueError) as e:
@@ -56,7 +65,7 @@ class MetadataStore:
 
         # Write to disk
         self.metadata_file.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.metadata_file, "w") as f:
+        with self.metadata_file.open("w") as f:
             json.dump(self.data.to_dict(), f, indent=2)
 
         logger.debug(f"Metadata saved ({len(self._dirty_sections)} sections changed)")
@@ -104,6 +113,7 @@ class MetadataStore:
         """Get the full metadata as a dictionary (backward compatibility).
 
         Returns:
+        -------
             Dictionary representation of all metadata
         """
         return self.data.to_dict()

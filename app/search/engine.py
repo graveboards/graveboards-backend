@@ -1,25 +1,22 @@
+"""Search engine implementation using SQLAlchemy."""
+
 from __future__ import annotations
 
 from collections.abc import Generator, Sequence
 from types import EllipsisType
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
-from pydantic.main import BaseModel
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.engine.row import RowMapping
-from sqlalchemy.ext.asyncio.session import AsyncSession
-from sqlalchemy.orm.attributes import InstrumentedAttribute
-from sqlalchemy.sql.elements import ColumnClause
 from sqlalchemy.sql import and_, select
 from sqlalchemy.sql.elements import (
     BinaryExpression,
     BindParameter,
     CollectionAggregate,
+    ColumnClause,
     ColumnElement,
     literal_column,
 )
 from sqlalchemy.sql.functions import func
-from sqlalchemy.sql.selectable import CTE, Select
 
 from api.utils import build_pydantic_include
 from app.database.ctes.bm_ss.filtering import bm_ss_filtering_cte_factory
@@ -62,6 +59,13 @@ from .datastructures import (
 )
 from .enums import CATEGORY_NAMES, ModelField, Scope, SearchableFieldCategory
 from .mappings import SCOPE_MODEL_MAPPING, SCOPE_OPTIONS_MAPPING, SCOPE_SCHEMA_MAPPING
+
+if TYPE_CHECKING:
+    from pydantic.main import BaseModel
+    from sqlalchemy.engine.row import RowMapping
+    from sqlalchemy.ext.asyncio.session import AsyncSession
+    from sqlalchemy.orm.attributes import InstrumentedAttribute
+    from sqlalchemy.sql.selectable import CTE, Select
 
 DEFAULT_LIMIT = 50
 DEFAULT_OFFSET = 0
@@ -114,6 +118,7 @@ class SearchEngine:
                 ``FiltersSchema`` instance, raw dictionary, or ``None``.
 
         Raises:
+        ------
             TypeError:
                 If any argument is provided with an invalid type.
             ValidationError:
@@ -172,12 +177,18 @@ class SearchEngine:
                 If ``True``, prints a detailed scoring breakdown.
 
         Returns:
+        -------
             A sequence of ORM model instances corresponding to the given scope.
 
         Raises:
+        ------
             TypeError:
                 If ``limit`` or ``offset`` are not non-negative integers.
         """
+        if not isinstance(limit, int) or isinstance(limit, bool):  # type: ignore[redundant-expr]
+            raise TypeError("limit must be a non-negative integer")
+        if not isinstance(offset, int) or isinstance(offset, bool):  # type: ignore[redundant-expr]
+            raise TypeError("offset must be a non-negative integer")
         if limit < 0 or offset < 0:
             raise TypeError("Both limit and offset must be a non-negative integer")
 
@@ -534,12 +545,18 @@ class SearchEngine:
 
         assert query is not None
 
-        def apply_clause(target: InstrumentedAttribute[Any] | ColumnClause[Any] | ColumnElement[Any]) -> None:
+        def apply_clause(
+            target: InstrumentedAttribute[Any] | ColumnClause[Any] | ColumnElement[Any],
+        ) -> None:
             if sorting_option.order is None:
                 return
             sorting_clauses.append(sorting_option.order.sort_func(target))
 
-        def apply_sorting_cte(cte: CTE, query: Select[Any], target: InstrumentedAttribute[Any] | ColumnClause[Any] | ColumnElement[Any]) -> Select[Any]:
+        def apply_sorting_cte(
+            cte: CTE,
+            query: Select[Any],
+            target: InstrumentedAttribute[Any] | ColumnClause[Any] | ColumnElement[Any],
+        ) -> Select[Any]:
             result = query.join(cte, cte.c.id == self.model_class.value.id).where(cte.c.rank == 1)
 
             apply_clause(target)
@@ -553,23 +570,18 @@ class SearchEngine:
             match category:
                 case SearchableFieldCategory.PROFILE:
                     cte = profile_sorting_cte_factory(self.scope, sorting_option)
-                    nonlocal query
                     query = apply_sorting_cte(cte, query, target)
                 case SearchableFieldCategory.BEATMAP:
                     cte = bm_ss_sorting_cte_factory(self.scope, sorting_option)
-                    nonlocal query
                     query = apply_sorting_cte(cte, query, target)
                 case SearchableFieldCategory.BEATMAPSET:
                     cte = bms_ss_sorting_cte_factory(self.scope, sorting_option)
-                    nonlocal query
                     query = apply_sorting_cte(cte, query, target)
                 case SearchableFieldCategory.QUEUE:
                     cte = queue_sorting_cte_factory(self.scope, sorting_option)
-                    nonlocal query
                     query = apply_sorting_cte(cte, query, target)
                 case SearchableFieldCategory.REQUEST:
                     cte = request_sorting_cte_factory(self.scope, sorting_option)
-                    nonlocal query
                     query = apply_sorting_cte(cte, query, target)
 
         sorting_clauses: list[ColumnElement] = []
@@ -589,7 +601,6 @@ class SearchEngine:
         Translates filter schema definitions into SQL expressions and, when necessary,
         uses category-specific CTEs to resolve aggregated or relational fields.
         """
-
         if self.filters is None:
             return
 
@@ -611,8 +622,7 @@ class SearchEngine:
                 )
 
         def apply_clauses(_conditions: Conditions, target: ColumnElement[Any]) -> None:
-            for clause in clause_generator(_conditions, target):
-                filtering_clauses.append(clause)
+            filtering_clauses.extend(clause_generator(_conditions, target))
 
         def apply_filter_conditions(
             conditions: Conditions,
@@ -631,7 +641,11 @@ class SearchEngine:
                         if self.scope is not Scope.BEATMAPS
                         else None
                     )
-                    cte = bm_ss_filtering_cte_factory(self.scope, target, aggregated_conditions=aggregated_conditions)  # type: ignore[arg-type]
+                    cte = bm_ss_filtering_cte_factory(
+                        self.scope,
+                        cast("ColumnElement[Any]", target),
+                        aggregated_conditions=aggregated_conditions,
+                    )
                     if aggregated_conditions is None:
                         apply_clauses(conditions, target)  # type: ignore[arg-type]
                     return query.join(cte, cte.c.id == self.model_class.value.id)
@@ -682,6 +696,7 @@ class SearchEngine:
                 Optional Pydantic include specification.
 
         Returns:
+        -------
             A list of serialized dictionaries matching the scope schema.
         """
         if not page:
@@ -747,8 +762,11 @@ class SearchEngine:
         Uses PostgreSQL dialect with literal binds for debugging/inspection purposes.
 
         Returns:
+        -------
             Compiled query as a string.
         """
         if self.query is None:
             raise RuntimeError("Query not composed")
-        return str(self.query.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}))  # type: ignore[no-untyped-call]
+        return str(
+            self.query.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True})  # type: ignore[no-untyped-call]
+        )

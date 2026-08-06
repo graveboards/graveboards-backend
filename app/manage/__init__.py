@@ -1,10 +1,9 @@
 from __future__ import annotations
+
 import argparse
 import logging
 import traceback
 from typing import cast as typing_cast
-
-from rich.console import Console
 
 from app.observability.logging import setup_logging
 
@@ -35,7 +34,7 @@ def build_status_parser(subparsers: argparse._SubParsersAction) -> argparse.Argu
         choices=["summary", "users", "beatmaps", "beatmapsets", "queues", "requests"],
         help="Status target (default: summary)",
     )
-    return typing_cast(argparse.ArgumentParser, p)
+    return typing_cast("argparse.ArgumentParser", p)
 
 
 def build_reset_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
@@ -47,7 +46,7 @@ def build_reset_parser(subparsers: argparse._SubParsersAction) -> argparse.Argum
         help="Optional seed target after reset (all, users, beatmaps, queues, requests)",
     )
     p.add_argument("--force", "-f", action="store_true", help="Skip confirmation prompt")
-    return typing_cast(argparse.ArgumentParser, p)
+    return typing_cast("argparse.ArgumentParser", p)
 
 
 def build_seed_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
@@ -57,7 +56,7 @@ def build_seed_parser(subparsers: argparse._SubParsersAction) -> argparse.Argume
         "--ensure-fixtures", action="store_true", help="Auto-fetch/generate missing fixtures"
     )
     p.add_argument("--profile", default="default", help="Profile name for fixture counts")
-    return typing_cast(argparse.ArgumentParser, p)
+    return typing_cast("argparse.ArgumentParser", p)
 
 
 def build_generate_api_key_parser(
@@ -68,7 +67,7 @@ def build_generate_api_key_parser(
     p.add_argument(
         "--expires-days", type=int, default=90, help="Days until key expires (default: 90)"
     )
-    return typing_cast(argparse.ArgumentParser, p)
+    return typing_cast("argparse.ArgumentParser", p)
 
 
 def build_migrate_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
@@ -282,10 +281,9 @@ def build_fixtures_parser(subparsers: argparse._SubParsersAction) -> argparse.Ar
     status_p.add_argument("--detailed", action="store_true", help="Include detailed file lists")
     status_p.add_argument("--gaps", action="store_true", help="Show missing fixture gaps")
 
-    return typing_cast(argparse.ArgumentParser, p)
+    return typing_cast("argparse.ArgumentParser", p)
 
 
-# ruff: noqa: C901 PLC0415 F401
 async def main() -> None:
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command", required=True)

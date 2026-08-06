@@ -1,19 +1,23 @@
+"""Role authorization decorator for endpoint handlers."""
+
 from __future__ import annotations
+
 import inspect
-from collections.abc import Awaitable, Callable, Iterable
 from functools import wraps
 from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar
 
 from connexion import request
 from connexion.exceptions import Forbidden
 
-from app.database.enums import RoleName
 from app.database.roles import get_user_roles
 
 from .utils import get_authenticated_user_id, strip_auth_info
 
 if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable, Iterable
+
     from app.database import PostgresqlDB
+    from app.database.enums import RoleName
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -48,6 +52,7 @@ def role_authorization(
             Additional keyword arguments passed to override.
 
     Raises:
+    ------
         ValueError:
             For invalid decorator usage or missing parameters.
         Forbidden:
@@ -66,7 +71,7 @@ def role_authorization(
 
         if required_roles and one_of is not None:
             raise ValueError("Arg(s) 'required_roles' and kwarg 'one_of' are mutually exclusive")
-        elif not required_roles and one_of is None:
+        if not required_roles and one_of is None:
             raise ValueError("Must provide either 'required_roles' arg(s) or 'one_of' kwarg")
 
         @wraps(func)
@@ -83,12 +88,12 @@ def role_authorization(
 
             kwargs["user"] = user_id
             user_roles = await get_user_roles(db, user_id)
-            if one_of is None:
+            if not required_roles and one_of is None:
                 raise ValueError("role_authorization requires one_of or required_roles to be set")
             user_meets_role_requirements = (
                 all(role in user_roles for role in required_roles)
                 if required_roles
-                else any(role in user_roles for role in one_of)
+                else any(role in user_roles for role in (one_of or ()))
             )
 
             override_kwargs_ = {"db": db, **kwargs, **(override_kwargs or {})}

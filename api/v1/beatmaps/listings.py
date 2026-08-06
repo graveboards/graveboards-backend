@@ -1,13 +1,18 @@
-from __future__ import annotations
-from typing import Any
+"""Listing-related endpoints for beatmaps."""
 
-from starlette.requests import Request
-from api.http_types import APIResponse
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from api.decorators import api_query
 from api.utils import build_pydantic_include
-from app.database import PostgresqlDB
 from app.database.models import BeatmapListing, BeatmapSnapshot, ModelClass
+
+if TYPE_CHECKING:
+    from starlette.requests import Request
+
+    from api.http_types import APIResponse
+    from app.database import PostgresqlDB
 from app.database.schemas import BeatmapSnapshotSchema
 from app.spec import get_include_schema
 
@@ -16,6 +21,11 @@ __all__ = ["search"]
 
 @api_query(ModelClass.BEATMAP_SNAPSHOT, many=True)
 async def search(request: Request, **kwargs: Any) -> APIResponse:
+    """Search for beatmap snapshots in listings.
+
+    Returns:
+        Tuple of (snapshots data, status code, headers).
+    """
     db: PostgresqlDB = request.state.db
 
     beatmap_snapshots = await db.get_many(

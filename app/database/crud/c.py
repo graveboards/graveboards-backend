@@ -1,7 +1,9 @@
-from __future__ import annotations
-from typing import Any
+"""Creation and identity-resolution operations."""
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.strategy_options import selectinload
 from sqlalchemy.sql import and_, select
@@ -11,6 +13,9 @@ from app.database.models import Base, ModelClass
 
 from .decorators import ensure_required, require_session, session_manager
 from .helpers import validate_model_attrs
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class _C:
@@ -35,9 +40,11 @@ class _C:
                 and relationship attributes.
 
         Returns:
+        -------
             The newly created or resolved model instance, flushed and refreshed.
 
         Raises:
+        ------
             ValueError:
                 If no fields are provided when required columns exist, or if an invalid
                 attribute is supplied.
@@ -80,9 +87,11 @@ class _C:
                 One or more dictionaries describing instances to create.
 
         Returns:
+        -------
             A list of newly created or resolved model instances.
 
         Raises:
+        ------
             TypeError:
                 If any item in ``data`` is not a dictionary.
             ValueError:
@@ -121,7 +130,9 @@ class _C:
 
     @staticmethod
     async def _resolve_or_create[M: Base](
-        model_class: ModelClass[M], session: AsyncSession, /,
+        model_class: ModelClass[M],
+        session: AsyncSession,
+        /,
         data: dict[str, Any],
         _load_relationships: bool = True,
     ) -> M:
@@ -151,9 +162,11 @@ class _C:
                 avoid unnecessary ``selectinload`` queries. Defaults to ``True``.
 
         Returns:
+        -------
             An existing or newly created model instance.
 
         Raises:
+        ------
             RuntimeError:
                 If an object is bound to a different session.
         """
@@ -182,11 +195,9 @@ class _C:
 
         # Lookup via single/composite constraint
         if instance is None:
-            unique_sets: list[list[str]] = []
-
-            for column in mapper.columns:
-                if column.unique:
-                    unique_sets.append([column.key])
+            unique_sets: list[list[str]] = [
+                [column.key] for column in mapper.columns if column.unique
+            ]
 
             for constraint in mapper.local_table.constraints:  # type: ignore[attr-defined]
                 if isinstance(constraint, UniqueConstraint):
@@ -290,6 +301,7 @@ class _C:
                 Active async SQLAlchemy session.
 
         Raises:
+        ------
             RuntimeError:
                 If the object is bound to a different session.
         """
@@ -308,6 +320,8 @@ class _C:
 
 
 class C(_C):
+    """Public-facing creation and identity-resolution interface."""
+
     @session_manager()
     async def add[M: Base](
         self, /, model: type[M], session: AsyncSession | None = None, **kwargs: Any
@@ -326,6 +340,7 @@ class C(_C):
                 Field values for the instance.
 
         Returns:
+        -------
             The newly created or resolved model instance.
         """
         model_class = ModelClass.from_model(model)
@@ -351,6 +366,7 @@ class C(_C):
                 Optional externally managed async session.
 
         Returns:
+        -------
             A list of newly created or resolved model instances.
         """
         model_class = ModelClass.from_model(model)

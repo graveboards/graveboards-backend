@@ -1,4 +1,7 @@
+"""Database-related Prometheus metrics."""
+
 from __future__ import annotations
+
 from prometheus_client import Gauge, Histogram
 
 db_pool_size = Gauge(
@@ -30,16 +33,24 @@ db_query_duration_seconds = Histogram(
 
 
 def classify_query(sql: str) -> str:
+    """Classify a SQL query by its primary operation type.
+
+    Args:
+        sql:
+            The SQL query string.
+
+    Returns:
+        One of ``select``, ``insert``, ``update``, ``delete``, ``cte``, or ``other``.
+    """
     sql_stripped = sql.strip().upper()
     if sql_stripped.startswith("SELECT"):
         return "select"
-    elif sql_stripped.startswith("INSERT"):
+    if sql_stripped.startswith("INSERT"):
         return "insert"
-    elif sql_stripped.startswith("UPDATE"):
+    if sql_stripped.startswith("UPDATE"):
         return "update"
-    elif sql_stripped.startswith("DELETE"):
+    if sql_stripped.startswith("DELETE"):
         return "delete"
-    elif sql_stripped.startswith("WITH"):
+    if sql_stripped.startswith("WITH"):
         return "cte"
-    else:
-        return "other"
+    return "other"

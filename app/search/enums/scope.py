@@ -1,4 +1,7 @@
+"""Search scope enumerations."""
+
 from __future__ import annotations
+
 from enum import Enum
 from typing import Literal
 
@@ -26,9 +29,11 @@ class Scope(Enum):
                 Case-insensitive scope name.
 
         Returns:
+        -------
             Matching ``Scope``.
 
         Raises:
+        ------
             ValueError:
                 If no matching scope exists.
         """

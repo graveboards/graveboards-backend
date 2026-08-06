@@ -1,31 +1,35 @@
+"""Decorators for session management and required-argument enforcement."""
+
 from __future__ import annotations
 
 import inspect
-from collections.abc import AsyncIterator, Awaitable, Callable, Coroutine
-from contextlib import AbstractAsyncContextManager
 from contextvars import ContextVar
 from functools import wraps
-from typing import Any, Concatenate, Literal, ParamSpec, Protocol, TypeVar, overload
-
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import TYPE_CHECKING, Any, Concatenate, Literal, ParamSpec, Protocol, TypeVar, overload
 
 from app.database.models import Base, ModelClass
 from app.observability.logging import get_logger, log_stack_warning
 
-from .protocol import DatabaseProtocol
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator, Awaitable, Callable, Coroutine
+    from contextlib import AbstractAsyncContextManager
+
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from .protocol import DatabaseProtocol
 
 P = ParamSpec("P")
 T = TypeVar("T")
 logger = get_logger(__name__)
 
 __all__ = [
-    "session_manager",
-    "session_manager_stream",
+    "DbSessionResolver",
+    "SessionResolver",
+    "db_session_resolver",
     "ensure_required",
     "require_session",
-    "SessionResolver",
-    "DbSessionResolver",
-    "db_session_resolver",
+    "session_manager",
+    "session_manager_stream",
 ]
 
 _active_session: ContextVar[AsyncSession | None] = ContextVar(
@@ -60,9 +64,11 @@ def session_manager(
             If False, enforces that the session has autoflush disabled.
 
     Returns:
+    -------
         A wrapped async function that guarantees session availability.
 
     Raises:
+    ------
         RuntimeError:
             If autoflush constraints are violated.
     """
@@ -138,9 +144,11 @@ def session_manager_stream(
             If False, enforces that the session has autoflush disabled.
 
     Returns:
+    -------
         A wrapped async generator function with managed session scope.
 
     Raises:
+    ------
         RuntimeError:
             If autoflush constraints are violated.
     """
@@ -232,9 +240,11 @@ def ensure_required(many: bool = False) -> Any:
             validates each dictionary in positional arguments (used for bulk creation).
 
     Returns:
+    -------
         A wrapped async function that enforces required column validation.
 
     Raises:
+    ------
         ValueError:
             If required columns are missing.
     """
@@ -278,6 +288,7 @@ def require_session(session: AsyncSession | None) -> AsyncSession:
     the failure loud if the invariant is ever broken.
 
     Raises:
+    ------
         RuntimeError:
             If no session was injected.
     """
@@ -306,7 +317,9 @@ class SessionResolver(Protocol):
         obj: Any,
         *,
         autoflush: bool = True,
-    ) -> AbstractAsyncContextManager[AsyncSession]: ...
+    ) -> AbstractAsyncContextManager[AsyncSession]:
+        """Resolve an async session context manager for ``obj``."""
+        ...
 
 
 class DbSessionResolver(SessionResolver):
@@ -319,6 +332,7 @@ class DbSessionResolver(SessionResolver):
     def __call__(
         self, obj: _DbHolder, *, autoflush: bool = True
     ) -> AbstractAsyncContextManager[AsyncSession]:
+        """Resolve an async session context manager for ``obj``."""
         return obj.db.session(autoflush=autoflush)
 
 
@@ -339,6 +353,7 @@ def _default_session_resolver(
             Whether the resolved session should enable autoflush.
 
     Returns:
+    -------
         An async context manager yielding an ``AsyncSession``.
     """
     return obj.session(autoflush=autoflush)
@@ -360,6 +375,7 @@ def _enforce_autoflush(
             The wrapped function (used for error context).
 
     Raises:
+    ------
         RuntimeError:
             If autoflush is enabled when disallowed.
     """

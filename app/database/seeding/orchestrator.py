@@ -1,13 +1,20 @@
-from __future__ import annotations
-import asyncio
-from collections.abc import AsyncIterator
+"""Orchestrator that runs seeders in dependency order."""
 
-from app.database import PostgresqlDB
+from __future__ import annotations
+
+import asyncio
+from typing import TYPE_CHECKING
 
 from .dependencies import resolve_dependencies
-from .event import SeedEvent
 from .seeders import BeatmapSeeder, QueueSeeder, RequestSeeder, Seeder, UserSeeder
 from .target import CLI_TO_SEEDER, SeederTarget, SeedTarget
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
+    from app.database import PostgresqlDB
+
+    from .event import SeedEvent
 
 SEEDERS: dict[SeederTarget, type[Seeder]] = {
     SeederTarget.USER: UserSeeder,
@@ -46,11 +53,12 @@ class SeederOrchestrator:
                 CLI-facing seed targets to execute.
 
         Raises:
+        ------
             TypeError:
                 If invalid ``SeedTarget`` values are provided.
         """
         self.db = db
-        seed_targets = {t for t in targets}
+        seed_targets = set(targets)
 
         if not seed_targets.issubset(set(SeedTarget)):
             raise TypeError(f"Invalid target(s) provided, all must be {SeedTarget}")
@@ -76,9 +84,11 @@ class SeederOrchestrator:
         concurrently. Progress events are streamed as they are produced.
 
         Yields:
+        ------
             SeedEvent: Incremental progress updates for each target.
 
         Raises:
+        ------
             Exception:
                 Propagates seeder-level exceptions.
         """
@@ -121,9 +131,10 @@ class SeederOrchestrator:
                 User-specified CLI targets.
 
         Returns:
+        -------
             A normalized set of ``SeederTarget`` values.
         """
         if SeedTarget.ALL in targets:
-            return {member for member in SeederTarget}
+            return set(SeederTarget)
 
         return {CLI_TO_SEEDER[t] for t in targets}

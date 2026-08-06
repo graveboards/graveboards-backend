@@ -1,19 +1,22 @@
-from __future__ import annotations
-from typing import Any
+"""Update operations."""
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from app.database.models import Base, ModelClass
 
 from .decorators import require_session, session_manager
 from .helpers import validate_model_attrs
 
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class _U:
     @staticmethod
     async def _update_instance[M: Base](
-        model_class: ModelClass[M], session: AsyncSession, /,
-        primary_key: int, **kwargs: Any
+        model_class: ModelClass[M], session: AsyncSession, /, primary_key: int, **kwargs: Any
     ) -> M:
         """Update a single model instance by primary key.
 
@@ -34,9 +37,11 @@ class _U:
                 Field updates to apply. May include column or relationship attributes.
 
         Returns:
+        -------
             The updated and refreshed model instance.
 
         Raises:
+        ------
             ValueError:
                 If no update fields are provided or if the instance does not exist.
             TypeError:
@@ -69,8 +74,7 @@ class _U:
 
     @staticmethod
     async def _update_instances[M: Base](
-        model_class: ModelClass[M], session: AsyncSession, /,
-        *data: tuple[int, dict[str, Any]]
+        model_class: ModelClass[M], session: AsyncSession, /, *data: tuple[int, dict[str, Any]]
     ) -> list[M]:
         """Update multiple model instances by primary key.
 
@@ -88,9 +92,11 @@ class _U:
                 One or more (int, dict) tuples describing updates.
 
         Returns:
+        -------
             A list of updated model instances.
 
         Raises:
+        ------
             TypeError:
                 If any update item is not a (int, dict) tuple.
             ValueError:
@@ -141,9 +147,12 @@ class _U:
 
 
 class U(_U):
+    """Public-facing update interface."""
+
     @session_manager()
     async def update[M: Base](
-        self, /,
+        self,
+        /,
         model: type[M],
         primary_key: int,
         session: AsyncSession | None = None,
@@ -165,6 +174,7 @@ class U(_U):
                 Field updates to apply.
 
         Returns:
+        -------
             The updated model instance.
         """
         model_class = ModelClass.from_model(model)
@@ -174,7 +184,8 @@ class U(_U):
 
     @session_manager()
     async def update_many[M: Base](
-        self, /,
+        self,
+        /,
         model: type[M],
         *data: tuple[int, dict[str, Any]],
         session: AsyncSession | None = None,
@@ -193,6 +204,7 @@ class U(_U):
                 Optional externally managed async session.
 
         Returns:
+        -------
             A list of updated model instances.
         """
         model_class = ModelClass.from_model(model)

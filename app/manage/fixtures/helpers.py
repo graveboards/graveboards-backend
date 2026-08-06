@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+
 def get_categories_to_process(
     beatmaps: bool,
     beatmapsets: bool,

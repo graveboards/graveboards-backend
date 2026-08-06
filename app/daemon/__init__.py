@@ -1,4 +1,7 @@
+"""Daemon services for background processing."""
+
 from __future__ import annotations
+
 from . import services
 from .daemon import Daemon
 

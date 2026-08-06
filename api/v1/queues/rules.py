@@ -1,10 +1,14 @@
+"""Rule management endpoints for queues."""
+
 from __future__ import annotations
-from typing import Any
 
-from starlette.requests import Request
-from api.http_types import APIResponse
+from typing import TYPE_CHECKING, Any
 
-from app.database import PostgresqlDB
+if TYPE_CHECKING:
+    from starlette.requests import Request
+
+    from api.http_types import APIResponse
+    from app.database import PostgresqlDB
 from app.database.crud.rules import RuleCRUD
 from app.database.enums import RoleName
 from app.database.models import Queue
@@ -14,7 +18,7 @@ from app.exceptions import BadRequest, NotFound
 from app.security import role_authorization, with_authenticated_user_id
 from app.security.overrides import queue_owner_override
 
-__all__ = ["search", "get", "post", "patch", "delete", "put"]
+__all__ = ["delete", "get", "patch", "post", "put", "search"]
 
 
 async def _can_view_private_rules(
@@ -25,18 +29,21 @@ async def _can_view_private_rules(
 
 @with_authenticated_user_id()
 async def search(
-    request: Request, queue_id: int, _caller_user_id: int | None = None, **kwargs: Any
+    request: Request, queue_id: int, _caller_user_id: int | None = None, **_kwargs: Any
 ) -> APIResponse:
     """List all rules for a queue.
 
     Args:
+        request: Incoming HTTP request.
         queue_id: The ID of the queue.
         _caller_user_id: The authenticated user ID.
 
     Returns:
+    -------
         Tuple of (rules list, status code, headers).
 
     Raises:
+    ------
         NotFound: If the queue doesn't exist or isn't readable.
     """
     db: PostgresqlDB = request.state.db
@@ -61,19 +68,26 @@ async def search(
 
 @with_authenticated_user_id()
 async def get(
-    request: Request, queue_id: int, rule_id: int, _caller_user_id: int | None = None, **kwargs: Any
+    request: Request,
+    queue_id: int,
+    rule_id: int,
+    _caller_user_id: int | None = None,
+    **_kwargs: Any,
 ) -> APIResponse:
     """Get a single rule by ID.
 
     Args:
+        request: Incoming HTTP request.
         queue_id: The ID of the queue.
         rule_id: The ID of the rule.
         _caller_user_id: The authenticated user ID.
 
     Returns:
+    -------
         Tuple of (rule dict, status code, headers).
 
     Raises:
+    ------
         NotFound: If the queue or rule doesn't exist.
     """
     db: PostgresqlDB = request.state.db
@@ -95,17 +109,20 @@ async def get(
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def post(request: Request, queue_id: int, body: dict, **kwargs: Any) -> APIResponse:
+async def post(request: Request, queue_id: int, body: dict, **_kwargs: Any) -> APIResponse:
     """Add a single rule to a queue.
 
     Args:
+        request: Incoming HTTP request.
         queue_id: The ID of the queue.
         body: The rule data to create.
 
     Returns:
+    -------
         Tuple of (created rule dict, status code, headers).
 
     Raises:
+    ------
         NotFound: If the queue doesn't exist.
         BadRequest: If the rule data is invalid.
     """
@@ -133,19 +150,22 @@ async def post(request: Request, queue_id: int, body: dict, **kwargs: Any) -> AP
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
 async def patch(
-    request: Request, queue_id: int, rule_id: int, body: dict, **kwargs: Any
+    request: Request, queue_id: int, rule_id: int, body: dict, **_kwargs: Any
 ) -> APIResponse:
     """Update a single rule.
 
     Args:
+        request: Incoming HTTP request.
         queue_id: The ID of the queue.
         rule_id: The ID of the rule.
         body: The rule updates.
 
     Returns:
+    -------
         Tuple of (updated rule dict, status code, headers).
 
     Raises:
+    ------
         NotFound: If the queue or rule doesn't exist.
         BadRequest: If the rule update data is invalid.
     """
@@ -175,17 +195,20 @@ async def patch(
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def delete(request: Request, queue_id: int, rule_id: int, **kwargs: Any) -> APIResponse:
+async def delete(request: Request, queue_id: int, rule_id: int, **_kwargs: Any) -> APIResponse:
     """Remove a single rule from a queue.
 
     Args:
+        request: Incoming HTTP request.
         queue_id: The ID of the queue.
         rule_id: The ID of the rule.
 
     Returns:
+    -------
         Tuple of (message dict, status code, headers).
 
     Raises:
+    ------
         NotFound: If the queue or rule doesn't exist.
     """
     db: PostgresqlDB = request.state.db
@@ -205,17 +228,20 @@ async def delete(request: Request, queue_id: int, rule_id: int, **kwargs: Any) -
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def put(request: Request, queue_id: int, body: dict, **kwargs: Any) -> APIResponse:
+async def put(request: Request, queue_id: int, body: dict, **_kwargs: Any) -> APIResponse:
     """Replace all rules for a queue.
 
     Args:
+        request: Incoming HTTP request.
         queue_id: The ID of the queue.
         body: The new rules data (must include a 'rules' array).
 
     Returns:
+    -------
         Tuple of (message dict, status code, headers).
 
     Raises:
+    ------
         NotFound: If the queue doesn't exist.
         BadRequest: If the body doesn't include a 'rules' array or data is invalid.
     """

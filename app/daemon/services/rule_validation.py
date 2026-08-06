@@ -1,11 +1,12 @@
+"""Rule validation service for queue requests."""
+
 from __future__ import annotations
 
 import json
 from types import SimpleNamespace
-from typing import ClassVar, override
+from typing import TYPE_CHECKING, ClassVar, override
 
 from httpx import ConnectTimeout
-from sqlalchemy.ext.asyncio import AsyncSession
 from structlog.contextvars import bind_contextvars, clear_contextvars
 
 from app.database.enums import RequestStatus
@@ -25,6 +26,9 @@ from app.osu_api.client import OsuAPIClient
 from app.redis_client import ChannelName, Namespace
 from app.redis_client.models import QueueRequestValidationTask
 from app.utils import aware_utcnow
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 from .decorators import auto_retry
 from .service import ScheduledService

@@ -1,10 +1,17 @@
+"""Sorting data structures for search queries."""
+
 from __future__ import annotations
+
 import struct
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, RootModel
 from pydantic.functional_serializers import field_serializer
 
 from app.search.enums import ModelField, ModelFieldId, SortingOrder, SortingOrderId
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 
 class SortingOption(BaseModel):
@@ -26,6 +33,7 @@ class SortingOption(BaseModel):
                 The ``ModelField`` instance.
 
         Returns:
+        -------
             The string value of the field.
         """
         return str(field.value)
@@ -39,6 +47,7 @@ class SortingOption(BaseModel):
                 The ``SortingOrder`` enum value.
 
         Returns:
+        -------
             The string value of the sorting order.
         """
         return order.value
@@ -52,6 +61,7 @@ class SortingOption(BaseModel):
             - Stores both as unsigned 8-bit integers.
 
         Returns:
+        -------
             A bytes object representing the serialized sorting option.
         """
         field_id = ModelFieldId[self.field.name]
@@ -71,6 +81,7 @@ class SortingOption(BaseModel):
                 Starting offset within the sequence.
 
         Returns:
+        -------
             A tuple containing:
                 - The reconstructed ``SortingOption`` instance
                 - The updated byte offset
@@ -95,9 +106,19 @@ class SortingSchema(RootModel):
         """Return the number of sorting options.
 
         Returns:
+        -------
             The number of configured sorting rules.
         """
         return len(self.root)
+
+    def __iter__(self) -> Iterator[SortingOption]:  # type: ignore[override]
+        """Iterate over the sorting options in priority order.
+
+        Returns:
+        -------
+            An iterator over the configured ``SortingOption`` instances.
+        """
+        return iter(self.root)
 
     def serialize(self) -> bytes:
         """Serialize all sorting options into binary format.
@@ -107,13 +128,13 @@ class SortingSchema(RootModel):
             - Serializes each ``SortingOption`` in order of priority.
 
         Returns:
+        -------
             A bytes object representing the serialized sorting schema.
         """
         option_count = struct.pack("!B", len(self))
         chunks = []
 
-        for option in self.root:
-            chunks.append(option.serialize())
+        chunks = [option.serialize() for option in self.root]
 
         return option_count + b"".join(chunks)
 
@@ -128,6 +149,7 @@ class SortingSchema(RootModel):
                 Starting offset within the sequence.
 
         Returns:
+        -------
             A tuple containing:
                 - The reconstructed ``SortingSchema`` instance
                 - The updated byte offset

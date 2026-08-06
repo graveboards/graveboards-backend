@@ -1,8 +1,8 @@
-from __future__ import annotations
-import asyncio
-from typing import Any, override
+"""Seeder for request fixtures."""
 
-from sqlalchemy.ext.asyncio.session import AsyncSession
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, override
 
 from app.database.crud import db_session_resolver, session_manager
 from app.database.models import BeatmapsetSnapshot, Request
@@ -11,8 +11,15 @@ from app.database.seeding.event import SeedEvent
 
 from .base import Seeder
 
+if TYPE_CHECKING:
+    import asyncio
+
+    from sqlalchemy.ext.asyncio.session import AsyncSession
+
 
 class RequestSeeder(Seeder):
+    """Seed requests from fixtures."""
+
     @session_manager(session_resolver=db_session_resolver, autoflush_allowed=False)
     @override
     async def seed(

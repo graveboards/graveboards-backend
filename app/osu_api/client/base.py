@@ -1,8 +1,10 @@
+"""Base osu! API client with rate limiting and token management."""
+
 from __future__ import annotations
+
 import asyncio
 import time
-from types import TracebackType
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
 import httpx
 from pydantic import ValidationError
@@ -18,6 +20,9 @@ from app.observability.metrics.osu import (
 from app.redis_client import Namespace, RedisClient
 from app.redis_client.models import OsuClientOAuthToken
 
+if TYPE_CHECKING:
+    from types import TracebackType
+
 MAX_TOKEN_FETCH_RETRIES = 3
 logger = get_logger(__name__)
 
@@ -28,10 +33,27 @@ def _get_osu_endpoint(path: str) -> str:
 
 
 class OsuAPIMetricsTransport(httpx.AsyncBaseTransport):
+    """HTTP transport that instruments osu! API requests with Prometheus metrics."""
+
     def __init__(self, transport: httpx.AsyncBaseTransport) -> None:
+        """Initialize with an underlying transport.
+
+        Args:
+            transport:
+                The HTTP transport to wrap.
+        """
         self._transport = transport
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+        """Handle an HTTP request with metrics instrumentation.
+
+        Args:
+            request:
+                The HTTP request.
+
+        Returns:
+            The HTTP response.
+        """
         endpoint = _get_osu_endpoint(request.url.path)
         start = time.perf_counter()
 
@@ -67,7 +89,20 @@ class OsuAPIMetricsTransport(httpx.AsyncBaseTransport):
 
 
 class OsuAPIClientBase:
+    """Base class for osu! API clients with rate limiting and token management.
+
+    Attributes:
+        rc:
+            Redis client for caching and distributed locking.
+    """
+
     def __init__(self, rc: RedisClient):
+        """Initialize the base client.
+
+        Args:
+            rc:
+                Redis client for caching and distributed locking.
+        """
         self.rc = rc
         # Separate transport/connection pool from _http_client, but instrumented the
         # same way, so oauth/token requests show up in osu_api_* metrics too - a stalled
@@ -80,6 +115,12 @@ class OsuAPIClientBase:
         )
 
     async def get_token(self) -> str:
+        """Get a valid access token, refreshing if necessary.
+
+        Returns:
+            A valid osu! API access token.
+        """
+
         async def get_valid_token_from_redis() -> OsuClientOAuthToken | None:
             serialized_token = await self.rc.hgetall(Namespace.OSU_CLIENT_OAUTH_TOKEN.value)
 
@@ -123,6 +164,12 @@ class OsuAPIClientBase:
         return self._token.access_token
 
     async def refresh_token(self) -> None:
+        """Refresh the OAuth token from the osu! API.
+
+        Raises:
+            TimeoutError:
+                If token refresh fails after all retries.
+        """
         for attempt in range(MAX_TOKEN_FETCH_RETRIES):
             try:
                 token_dict = await self._oauth.fetch_token(
@@ -144,9 +191,19 @@ class OsuAPIClientBase:
                 ) from None
 
     async def get_auth_headers(self, access_token: str | None = None) -> dict[str, str]:
+        """Build authorization headers with a valid access token.
+
+        Args:
+            access_token:
+                Optional token to use instead of fetching a new one.
+
+        Returns:
+            Dictionary with the Authorization header.
+        """
         return {"Authorization": f"Bearer {access_token or await self.get_token()}"}
 
     async def close(self) -> None:
+        """Close the underlying HTTP client."""
         await self._http_client.aclose()
 
     async def __aenter__(self) -> Self:
@@ -162,6 +219,15 @@ class OsuAPIClientBase:
 
     @staticmethod
     def format_query_parameters(query_parameters: dict) -> str:
+        """Format query parameters as a URL query string.
+
+        Args:
+            query_parameters:
+                Dictionary of query parameters.
+
+        Returns:
+            Query string prefixed with ``?``.
+        """
         from urllib.parse import urlencode
 
         return f"?{urlencode(query_parameters)}"

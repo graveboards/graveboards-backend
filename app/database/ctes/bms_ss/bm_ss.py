@@ -1,4 +1,7 @@
+"""CTE listing beatmapset snapshots that have multiple beatmap snapshots."""
+
 from __future__ import annotations
+
 from sqlalchemy.sql import select
 from sqlalchemy.sql.functions import func
 

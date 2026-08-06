@@ -1,4 +1,3 @@
-from __future__ import annotations
 """Known IDs for hard-to-find coverage gaps.
 
 These are IDs of beatmapsets/users that are difficult to find via random search
@@ -6,6 +5,8 @@ due to API limitations (NSFW content, restricted users, rare statuses).
 
 Update this file when discovering new IDs.
 """
+
+from __future__ import annotations
 
 # Beatmapset IDs with restricted/deleted user references
 # These beatmapsets have empty user objects due to:

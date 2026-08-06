@@ -1,4 +1,7 @@
+"""Search-related Prometheus metrics."""
+
 from __future__ import annotations
+
 from prometheus_client import Counter, Histogram
 
 search_requests_total = Counter(

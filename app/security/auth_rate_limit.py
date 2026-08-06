@@ -1,11 +1,17 @@
+"""Authentication rate limiting with Redis."""
+
 from __future__ import annotations
+
 import time
+from typing import TYPE_CHECKING
 
 from app.observability.metrics.auth import (
     auth_lockouts_total,
     auth_rate_limit_checks_total,
 )
-from app.redis_client import RedisClient
+
+if TYPE_CHECKING:
+    from app.redis_client import RedisClient
 
 
 class AuthRateLimiter:
@@ -20,12 +26,23 @@ class AuthRateLimiter:
     MAX_FAILURES = 20
 
     def __init__(self, rc: RedisClient):
+        """Initialize the auth rate limiter.
+
+        Args:
+            rc:
+                Redis client for state storage.
+        """
         self.rc = rc
 
     async def check(self, ip: str) -> tuple[bool, int | None]:
-        """Check if request is allowed.
+        """Check if a request from the given IP is allowed.
 
-        Returns: (allowed, retry_after_seconds)
+        Args:
+            ip:
+                The client IP address.
+
+        Returns:
+            Tuple of (allowed, retry_after_seconds).
         """
         lockout_key = f"auth_lockout:{ip}"
         lockout_remaining = await self.rc.ttl(lockout_key)
@@ -46,7 +63,12 @@ class AuthRateLimiter:
         return True, None
 
     async def record_failure(self, ip: str) -> None:
-        """Record a failed auth attempt. Locks out after MAX_FAILURES."""
+        """Record a failed auth attempt. Locks out after MAX_FAILURES.
+
+        Args:
+            ip:
+                The client IP address.
+        """
         fail_key = f"auth_failures:{ip}"
         failures = await self.rc.incr(fail_key)
         if failures == 1:
@@ -58,5 +80,10 @@ class AuthRateLimiter:
             auth_lockouts_total.inc()
 
     async def record_success(self, ip: str) -> None:
-        """Record a successful auth. Clears failure counter."""
+        """Record a successful auth. Clears failure counter.
+
+        Args:
+            ip:
+                The client IP address.
+        """
         await self.rc.delete(f"auth_failures:{ip}")

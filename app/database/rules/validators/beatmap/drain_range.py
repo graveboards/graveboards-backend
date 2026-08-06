@@ -1,13 +1,20 @@
+"""Drain-time range restriction for ranked-beatmap submission."""
+
 from __future__ import annotations
-from typing import override
+
+from typing import TYPE_CHECKING, override
 
 from app.database.rules.base import BeatmapRestrictionBase
-from app.database.rules.context import ExecutionContext
 from app.database.rules.exceptions import RuleViolationError
 from app.database.schemas.rule import DrainRangeConfig
 
+if TYPE_CHECKING:
+    from app.database.rules.context import ExecutionContext
+
 
 class DrainRangeRestriction(BeatmapRestrictionBase):
+    """Enforce minimum/maximum drain time across the set's beatmaps."""
+
     type = "beatmap_drain_range"
     config_schema = DrainRangeConfig
 

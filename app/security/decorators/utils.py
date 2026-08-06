@@ -1,4 +1,7 @@
+"""Utility functions for security decorators."""
+
 from __future__ import annotations
+
 from typing import Any
 
 from app.config import get_security_enabled
@@ -7,6 +10,21 @@ from app.utils import get_nested_value
 
 
 def get_authenticated_user_id(kwargs: dict[str, Any], user_lookup: str = "user") -> int:
+    """Extract the authenticated user ID from request kwargs.
+
+    Args:
+        kwargs:
+            The request kwargs dictionary.
+        user_lookup:
+            The key path to look for the user ID.
+
+    Returns:
+        The authenticated user ID.
+
+    Raises:
+        KeyError:
+            If the user ID cannot be found.
+    """
     if not get_security_enabled():
         return resolve_dev_caller_id()
 
@@ -26,6 +44,12 @@ def get_authenticated_user_id(kwargs: dict[str, Any], user_lookup: str = "user")
 
 
 def strip_auth_info(kwargs: dict[str, Any]) -> None:
+    """Remove authentication info from kwargs to prevent leakage.
+
+    Args:
+        kwargs:
+            The kwargs dictionary to clean.
+    """
     kwargs.pop("user", None)
     kwargs.pop("token_info", None)
 
@@ -43,9 +67,11 @@ def get_value(obj: Any, path: str) -> Any:
             Dot-separated path to the value (e.g., "user_id" or "a.b.c").
 
     Returns:
+    -------
         The value at the given path.
 
     Raises:
+    ------
         KeyError:
             If the path does not exist.
     """

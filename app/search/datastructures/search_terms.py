@@ -1,14 +1,17 @@
+"""Search terms parsing and representation."""
+
 from __future__ import annotations
+
 import shlex
 import struct
-
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 from pydantic.fields import Field
 from pydantic.functional_validators import field_validator
 from pydantic.main import BaseModel
 
-from app.search.enums import Scope
+if TYPE_CHECKING:
+    from app.search.enums import Scope
 
 from .field_weights import FieldWeights
 from .pattern_multipliers import PatternMultipliers
@@ -50,9 +53,11 @@ class SearchTermsSchema(BaseModel):
                 Raw search term input.
 
         Returns:
+        -------
             A normalized list of non-empty search terms.
 
         Raises:
+        ------
             ValueError:
                 If parsing fails or no valid terms remain.
             TypeError:
@@ -85,6 +90,7 @@ class SearchTermsSchema(BaseModel):
                 The search scope used to validate field eligibility.
 
         Raises:
+        ------
             FieldNotSupportedError:
                 If a field is not allowed in the scope.
             FieldValidationError:
@@ -106,6 +112,7 @@ class SearchTermsSchema(BaseModel):
                 Scope used for serializing field weights.
 
         Returns:
+        -------
             A bytes object representing the serialized search configuration.
         """
         encoded_terms = [t.encode() for t in self.terms]
@@ -134,6 +141,7 @@ class SearchTermsSchema(BaseModel):
                 Starting offset within the sequence.
 
         Returns:
+        -------
             A tuple containing:
                 - The reconstructed ``SearchTermsSchema`` instance
                 - The updated byte offset

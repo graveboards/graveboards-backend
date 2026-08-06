@@ -1,8 +1,9 @@
+"""Filter data structures for search queries."""
+
 from __future__ import annotations
 
 import struct
-from collections.abc import ItemsView
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydantic.functional_validators import model_validator
 from pydantic.main import BaseModel
@@ -10,7 +11,7 @@ from pydantic.root_model import RootModel
 from pydantic_core import ValidationError
 
 from app.database.models import ModelClass
-from app.database.utils import extract_inner_types, validate_type
+from app.database.utils import extract_inner_types, resolve_annotation, validate_type
 from app.exceptions import (
     FieldConditionValidationError,
     FieldNotSupportedError,
@@ -24,6 +25,9 @@ from app.search.enums import (
     SearchableFieldCategory,
     SearchableFieldCategoryFlag,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import ItemsView
 
 from .conditions import Conditions, ConditionValue
 
@@ -45,9 +49,11 @@ class FieldFilters(RootModel):
                 Field name.
 
         Returns:
+        -------
             The corresponding ``Conditions`` instance.
 
         Raises:
+        ------
             KeyError:
                 If the field does not exist.
         """
@@ -57,14 +63,29 @@ class FieldFilters(RootModel):
         """Return the number of filtered fields.
 
         Returns:
+        -------
             The number of field filters.
         """
         return len(self.root)
+
+    def __contains__(self, field_name: str) -> bool:
+        """Check whether a field filter exists.
+
+        Args:
+            field_name:
+                Field to look up.
+
+        Returns:
+        -------
+            Whether the field is present.
+        """
+        return field_name in self.root
 
     def items(self) -> ItemsView[str, Conditions | FieldFilters]:
         """Return a view of field-condition pairs.
 
         Returns:
+        -------
             An items view of field names and their associated conditions.
         """
         return self.root.items()
@@ -83,12 +104,16 @@ class FieldFilters(RootModel):
                 ``ModelClass`` instance defining the SQLAlchemy model.
 
         Raises:
+        ------
             FieldNotSupportedError:
                 If a field is not supported for the model.
             FieldValidationError:
                 If a condition value does not match the expected type.
         """
-        column_map = model_class.value.__annotations__
+        column_map = {
+            field_name: resolve_annotation(model_class.value, field_name)
+            for field_name in model_class.value.__annotations__
+        }
 
         for field_name, value in self.root.items():
             is_attribute = (
@@ -150,6 +175,7 @@ class FieldFilters(RootModel):
                 Category used to resolve model field identifiers.
 
         Returns:
+        -------
             A bytes object representing serialized field filters.
         """
         length = struct.pack("!B", len(self))
@@ -174,6 +200,7 @@ class FieldFilters(RootModel):
                 Starting offset within the sequence.
 
         Returns:
+        -------
             A tuple containing:
                 - The reconstructed ``FieldFilters`` instance
                 - The updated byte offset
@@ -221,9 +248,11 @@ class FiltersSchema(BaseModel):
                 Raw filter input mapping category names to definitions.
 
         Returns:
+        -------
             A validated mapping of category names to ``FieldFilters`` instances.
 
         Raises:
+        ------
             UnknownFieldCategoryError:
                 If a category name is invalid.
             TypeError:
@@ -294,6 +323,7 @@ class FiltersSchema(BaseModel):
             - Appends serialized ``FieldFilters`` per category.
 
         Returns:
+        -------
             A bytes object representing the serialized filtering configuration.
         """
         presence = 0
@@ -334,6 +364,7 @@ class FiltersSchema(BaseModel):
                 Starting offset within the sequence.
 
         Returns:
+        -------
             A tuple containing:
                 - The reconstructed ``FiltersSchema`` instance
                 - The updated byte offset

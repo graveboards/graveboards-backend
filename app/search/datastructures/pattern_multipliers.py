@@ -1,4 +1,7 @@
+"""Pattern multiplier definitions for search scoring."""
+
 from __future__ import annotations
+
 import struct
 from enum import IntFlag, auto
 from typing import Annotated, Literal, Self
@@ -32,9 +35,11 @@ class PatternMultipliers(BaseModel):
         """Ensure at least one multiplier is enabled.
 
         Returns:
+        -------
             The validated instance.
 
         Raises:
+        ------
             AllValuesNullError:
                 If all multipliers are set to ``None``.
         """
@@ -60,6 +65,7 @@ class PatternMultipliers(BaseModel):
                 The raw search term.
 
         Returns:
+        -------
             A list of tuples containing:
                 - Pattern name
                 - SQL pattern string
@@ -82,6 +88,7 @@ class PatternMultipliers(BaseModel):
             - Omits fields that match default values.
 
         Returns:
+        -------
             A bytes object representing serialized multipliers.
         """
         presence = 0
@@ -114,6 +121,7 @@ class PatternMultipliers(BaseModel):
                 Starting offset within the sequence.
 
         Returns:
+        -------
             A tuple containing:
                 - The reconstructed ``PatternMultipliers`` instance
                 - The updated byte offset

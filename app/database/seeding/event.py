@@ -1,7 +1,12 @@
-from __future__ import annotations
-from dataclasses import dataclass
+"""Progress events emitted during seeding."""
 
-from .target import SeederTarget
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .target import SeederTarget
 
 
 @dataclass(slots=True)
@@ -9,6 +14,7 @@ class SeedEvent:
     """Progress event emitted during seeding.
 
     Attributes:
+    ----------
         target:
             ``SeederTarget`` currently being processed.
         current:

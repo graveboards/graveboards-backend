@@ -1,4 +1,7 @@
+"""Build information metrics."""
+
 from __future__ import annotations
+
 import os
 
 from prometheus_client import Gauge

@@ -1,7 +1,10 @@
+"""Filtering CTEs for request search fields."""
+
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from sqlalchemy.sql import select
-from sqlalchemy.sql.elements import ColumnElement
-from sqlalchemy.sql.selectable import CTE
 
 from app.database.models import (
     BeatmapsetSnapshot,
@@ -12,10 +15,12 @@ from app.database.models import (
 )
 from app.search.enums import Scope
 
+if TYPE_CHECKING:
+    from sqlalchemy.sql.elements import ColumnElement
+    from sqlalchemy.sql.selectable import CTE
 
-def request_filtering_cte_factory(
-    scope: Scope, target: ColumnElement
-) -> CTE:
+
+def request_filtering_cte_factory(scope: Scope, target: ColumnElement) -> CTE:
     """Build a request-derived filtering CTE for the given scope.
 
     Projects request-level attributes into the active scope, joining through beatmapset
@@ -28,6 +33,7 @@ def request_filtering_cte_factory(
             Request attribute to expose for filtering.
 
     Returns:
+    -------
         A CTE yielding (id, target) for request-based filtering.
     """
     field_name = target.key

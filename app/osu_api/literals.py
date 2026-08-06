@@ -1,17 +1,20 @@
+"""Literal type aliases for osu! API enums."""
+
 from __future__ import annotations
+
 from typing import Literal
 
 __all__ = [
-    "RulesetLiteral",
-    "RulesetIntLiteral",
-    "PlaystyleLiteral",
-    "ProfilePageLiteral",
-    "RankedIntLiteral",
-    "RankedStatusLiteral",
     "GenreIdLiteral",
     "GenreNameLiteral",
     "LanguageIdLiteral",
     "LanguageNameLiteral",
+    "PlaystyleLiteral",
+    "ProfilePageLiteral",
+    "RankedIntLiteral",
+    "RankedStatusLiteral",
+    "RulesetIntLiteral",
+    "RulesetLiteral",
 ]
 
 RulesetLiteral = Literal["fruits", "mania", "osu", "taiko"]

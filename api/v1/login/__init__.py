@@ -1,7 +1,13 @@
-from __future__ import annotations
-from starlette.requests import Request
-from api.http_types import APIResponse
+"""Re-exports for the login v1 API."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from starlette.requests import Request
+
+    from api.http_types import APIResponse
 from app.exceptions import TooManyRequests
 from app.oauth import OAuth
 from app.redis_client import Namespace, RedisClient
@@ -13,6 +19,11 @@ STATE_EXPIRES_IN = 300
 
 
 async def search(request: Request, rc: RedisClient | None = None) -> APIResponse:
+    """Initiate an OAuth login flow.
+
+    Returns:
+        Tuple of (authorization URL and state, status code, headers).
+    """
     if rc is None:
         rc = request.state.rc
 

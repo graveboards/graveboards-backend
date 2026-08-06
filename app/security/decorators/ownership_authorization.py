@@ -1,6 +1,8 @@
+"""Ownership authorization decorator for endpoint handlers."""
+
 from __future__ import annotations
+
 import inspect
-from collections.abc import Awaitable, Callable
 from functools import wraps
 from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar
 
@@ -12,6 +14,8 @@ from app.database.roles import is_admin
 from .utils import get_authenticated_user_id, get_value, strip_auth_info
 
 if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
+
     from app.database import PostgresqlDB
 
 P = ParamSpec("P")
@@ -56,6 +60,7 @@ def ownership_authorization(
             ``resource_id_lookup`` is set.
 
     Raises:
+    ------
         ValueError:
             If decorator contract is violated or ownership cannot be resolved.
         Forbidden:
@@ -138,9 +143,11 @@ async def _resolve_resource_owner(
             resource_id_lookup is set.
 
     Returns:
+    -------
         The owner user ID.
 
     Raises:
+    ------
         ValueError:
             If the owner ID cannot be resolved.
     """

@@ -1,4 +1,10 @@
+"""Database layer for Graveboards.
+
+Lazily re-exports the primary database adapter and its lifecycle manager.
+"""
+
 from __future__ import annotations
+
 from typing import Any
 
 __all__ = ["PostgresqlDB", "db_lifespan"]

@@ -1,4 +1,7 @@
+"""osu! API request metrics."""
+
 from __future__ import annotations
+
 from prometheus_client import Counter, Histogram
 
 osu_api_requests_total = Counter(

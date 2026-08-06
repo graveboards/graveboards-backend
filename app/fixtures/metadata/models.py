@@ -1,5 +1,6 @@
-from __future__ import annotations
 """Typed metadata models for fixture tracking."""
+
+from __future__ import annotations
 
 from dataclasses import dataclass, field
 

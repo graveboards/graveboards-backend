@@ -1,4 +1,7 @@
+"""Searchable field category enumerations."""
+
 from __future__ import annotations
+
 from enum import Enum, IntFlag, auto
 from typing import Any
 
@@ -23,11 +26,24 @@ class SearchableFieldCategory(Enum):
     # TODO: Add beatmap tags and beatmapset tags
 
     def __init__(self, name: str, model_class: ModelClass[Any]):
+        """Initialize a searchable field category.
+
+        Args:
+            name:
+                The external category name.
+            model_class:
+                The corresponding internal model class.
+        """
         self._category_value: str = name
         self.model_class = model_class
 
     @property
     def category_value(self) -> str:
+        """Return the external category name.
+
+        Returns:
+            The string name of the category.
+        """
         return self._category_value
 
     @classmethod
@@ -39,9 +55,11 @@ class SearchableFieldCategory(Enum):
                 Public category name.
 
         Returns:
+        -------
             Matching ``SearchableFieldCategory``.
 
         Raises:
+        ------
             ValueError:
                 If no matching category exists.
         """
@@ -60,9 +78,11 @@ class SearchableFieldCategory(Enum):
                 Internal model class identifier.
 
         Returns:
+        -------
             Matching ``SearchableFieldCategory``.
 
         Raises:
+        ------
             ValueError:
                 If no matching category exists.
         """
@@ -74,17 +94,17 @@ class SearchableFieldCategory(Enum):
 
 
 class SearchableFieldCategoryFlag(IntFlag):
+    """Bitmask representation of searchable field categories.
+
+    Used for compact encoding of multiple categories within serialized query payloads.
+    """
+
     PROFILE = auto()
     BEATMAP = auto()
     BEATMAPSET = auto()
     QUEUE = auto()
     REQUEST = auto()
 
-
-"""Bitmask representation of searchable field categories.
-
-Used for compact encoding of multiple categories within serialized query payloads.
-"""
 
 CATEGORY_NAMES: list[str] = [category._category_value for category in SearchableFieldCategory]
 """List of valid external category names."""

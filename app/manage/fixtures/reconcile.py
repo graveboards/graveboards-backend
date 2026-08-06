@@ -1,14 +1,4 @@
 from __future__ import annotations
-"""CLI command to reconcile fixture metadata with disk state.
-
-Usage:
-    manage fixtures reconcile [--category CATEGORY] [--dry-run]
-
-Examples:
-    manage fixtures reconcile
-    manage fixtures reconcile --category beatmaps
-    manage fixtures reconcile --dry-run
-"""
 
 import argparse
 import asyncio
@@ -19,6 +9,17 @@ from rich.panel import Panel
 from rich.table import Table
 
 from app.fixtures.reader import FixtureReader
+
+"""CLI command to reconcile fixture metadata with disk state.
+
+Usage:
+    manage fixtures reconcile [--category CATEGORY] [--dry-run]
+
+Examples:
+    manage fixtures reconcile
+    manage fixtures reconcile --category beatmaps
+    manage fixtures reconcile --dry-run
+"""
 
 console = Console()
 
