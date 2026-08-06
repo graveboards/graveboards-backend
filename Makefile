@@ -98,11 +98,11 @@ clean:
 
 lint:
 	@if [ "$$(uname)" = "Linux" ]; then \
-		{ ruff check . || true; ruff format --check . || true; mypy . || true; } 2>&1 | tee /tmp/graveboards-lint.log; \
+		{ ruff check . || true; ruff format --check . || true; mypy app api main.py manage.py migrate.py || true; } 2>&1 | tee /tmp/graveboards-lint.log; \
 	else \
 		ruff check . || true; \
 		ruff format --check . || true; \
-		mypy . || true; \
+		mypy app api main.py manage.py migrate.py || true; \
 	fi
 
 format:

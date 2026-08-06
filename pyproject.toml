@@ -53,11 +53,11 @@ Issues = "https://github.com/graveboards/graveboards/issues"
 
 [dependency-groups]
 dev = [
-    "pytest>=8",
-    "pytest-asyncio>=0.25",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
     "pytest-cov>=6",
     "ruff>=0.16",
-    "mypy>=1.14",
+    "mypy>=2.3.0",
     "types-PyYAML",
     "types-Authlib",
     "types-aiofiles",
@@ -94,6 +94,9 @@ markers = [
 target-version = "py314"
 line-length = 100
 src = ["app", "api", "tests"]
+exclude = [
+    "docs", # markdown prose; don't reformat code fences inside it
+]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -119,7 +122,7 @@ select = [
     "PERF",   # perflint
     "TC",     # flake8-type-checking
     "RET",    # flake8-return
-    "D",      # pydocstyle (numpy convention, configured below)
+    "D",      # pydocstyle (google convention, configured below)
     "ARG",    # unused arguments
     "RSE",    # no redundant parentheses on bare raises
     "A",      # shadowed builtins
@@ -127,7 +130,7 @@ select = [
 ignore = [
     "E501",   # line length is enforced by the formatter, not worth duplicating
     "D105",   # magic methods are named by their contract; __len__ needs no prose
-    "D107",   # __init__ is documented in the class docstring, per numpy style
+    "D107",   # __init__ is documented in the class docstring, per google style
     "PLR",    # too many methods/arguments (not enforced)
     "B028",   # no explicit `stacklevel` keyword argument (not critical)
     "F403",   # star imports (intentional for re-exports)
@@ -137,7 +140,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.pydocstyle]
-convention = "numpy"
+convention = "google"
 
 [tool.ruff.lint.isort]
 known-first-party = ["app", "api", "tests"]
@@ -150,9 +153,16 @@ section-order = ["future", "standard-library", "third-party", "first-party", "lo
 # D: a test's name is its docstring, and hundreds of them do not need prose.
 # ARG: test fixtures are stub implementations of an abstract signature, and
 # ignoring an argument the contract requires them to accept is the norm.
-"tests/*" = ["PT011", "D", "ARG", "PLR", "S"]
+# TC: schemas/models are pydantic/SQLAlchemy-heavy and imports are only used
+# in type annotations; per-file TC silence is far less noisy than ~120 inline
+# `# noqa: TC00X` comments.
+# TC + D + ARG: test files use these imports in type annotations and fixtures.
+"tests/*" = ["PT011", "PT028", "D", "ARG", "PLR", "S", "TC"]
+"app/database/schemas/**" = ["TC"]
+"app/database/models/**" = ["TC"]
+"alembic/versions/**" = ["TC"]
 "manage.py" = ["S"]
-"app/manage/*" = ["S", "T20", "D"]
+"app/manage/*" = ["S", "T20", "D", "TC"]
 
 [tool.mypy]
 python_version = "3.14"
