@@ -1,4 +1,7 @@
+"""Score fetcher task model tracking per-user score fetching."""
+
 from __future__ import annotations
+
 from datetime import datetime
 
 from sqlalchemy.orm import mapped_column
@@ -10,6 +13,8 @@ from .base import Base
 
 
 class ScoreFetcherTask(Base):
+    """A background score-fetching task for a user."""
+
     __tablename__ = "score_fetcher_tasks"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(

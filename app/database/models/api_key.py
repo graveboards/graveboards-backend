@@ -1,4 +1,7 @@
+"""API key model used to authenticate API consumers."""
+
 from __future__ import annotations
+
 from datetime import datetime
 
 from sqlalchemy.orm import mapped_column
@@ -14,6 +17,8 @@ API_KEY_LENGTH = 32
 
 
 class ApiKey(Base):
+    """An API key belonging to a user."""
+
     __tablename__ = "api_keys"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     hashed_key: Mapped[str] = mapped_column(String(64), unique=True)

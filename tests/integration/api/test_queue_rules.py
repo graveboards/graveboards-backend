@@ -135,7 +135,7 @@ class TestQueueRulesCRUD:
     @pytest.mark.asyncio
     async def test_admin_lists_rules(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         admin_user_token: str,
         valid_rule_data: dict[str, Any],
         authenticated_user_id: Any,
@@ -153,7 +153,7 @@ class TestQueueRulesCRUD:
         mock_db = self._make_mock_db(queue=mock_queue, user=mock_admin_user)
 
         with patch("api.v1.queues.rules.RuleCRUD", return_value=mock_crud):
-            test_client = TestClientWithMocks(mock_db=mock_db)
+            test_client = test_client_with_mocks(mock_db=mock_db)
 
             with authenticated_user_id(self.ADMIN_USER_ID):
                 headers = {"Authorization": f"Bearer {admin_user_token}"}
@@ -170,7 +170,7 @@ class TestQueueRulesCRUD:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_gets_single_rule(
-        self, TestClientWithMocks: Any, admin_user_token: str, authenticated_user_id: Any
+        self, test_client_with_mocks: Any, admin_user_token: str, authenticated_user_id: Any
     ) -> None:
         """Test admin can get a single rule by ID."""
         from app.database.crud.rules import RuleCRUD
@@ -185,7 +185,7 @@ class TestQueueRulesCRUD:
         mock_db = self._make_mock_db(queue=mock_queue, user=mock_admin_user)
 
         with patch("api.v1.queues.rules.RuleCRUD", return_value=mock_crud):
-            test_client = TestClientWithMocks(mock_db=mock_db)
+            test_client = test_client_with_mocks(mock_db=mock_db)
 
             with authenticated_user_id(self.ADMIN_USER_ID):
                 headers = {"Authorization": f"Bearer {admin_user_token}"}
@@ -202,7 +202,7 @@ class TestQueueRulesCRUD:
     @pytest.mark.asyncio
     async def test_admin_creates_rule(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         admin_user_token: str,
         valid_rule_data: dict[str, Any],
         authenticated_user_id: Any,
@@ -221,7 +221,7 @@ class TestQueueRulesCRUD:
         mock_db = self._make_mock_db(queue=mock_queue, user=mock_admin_user)
 
         with patch("api.v1.queues.rules.RuleCRUD", return_value=mock_crud):
-            test_client = TestClientWithMocks(mock_db=mock_db)
+            test_client = test_client_with_mocks(mock_db=mock_db)
 
             with authenticated_user_id(self.ADMIN_USER_ID):
                 headers = {"Authorization": f"Bearer {admin_user_token}"}
@@ -236,7 +236,7 @@ class TestQueueRulesCRUD:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_updates_rule(
-        self, TestClientWithMocks: Any, admin_user_token: str, authenticated_user_id: Any
+        self, test_client_with_mocks: Any, admin_user_token: str, authenticated_user_id: Any
     ) -> None:
         """Test admin can update an existing rule."""
         from app.database.crud.rules import RuleCRUD
@@ -251,7 +251,7 @@ class TestQueueRulesCRUD:
         mock_db = self._make_mock_db(queue=mock_queue, user=mock_admin_user)
 
         with patch("api.v1.queues.rules.RuleCRUD", return_value=mock_crud):
-            test_client = TestClientWithMocks(mock_db=mock_db)
+            test_client = test_client_with_mocks(mock_db=mock_db)
 
             with authenticated_user_id(self.ADMIN_USER_ID):
                 headers = {"Authorization": f"Bearer {admin_user_token}"}
@@ -266,7 +266,7 @@ class TestQueueRulesCRUD:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_deletes_rule(
-        self, TestClientWithMocks: Any, admin_user_token: str, authenticated_user_id: Any
+        self, test_client_with_mocks: Any, admin_user_token: str, authenticated_user_id: Any
     ) -> None:
         """Test admin can delete a rule."""
         from app.database.crud.rules import RuleCRUD
@@ -281,7 +281,7 @@ class TestQueueRulesCRUD:
         mock_db = self._make_mock_db(queue=mock_queue, user=mock_admin_user)
 
         with patch("api.v1.queues.rules.RuleCRUD", return_value=mock_crud):
-            test_client = TestClientWithMocks(mock_db=mock_db)
+            test_client = test_client_with_mocks(mock_db=mock_db)
 
             with authenticated_user_id(self.ADMIN_USER_ID):
                 headers = {"Authorization": f"Bearer {admin_user_token}"}
@@ -296,7 +296,7 @@ class TestQueueRulesCRUD:
     @pytest.mark.asyncio
     async def test_admin_replaces_all_rules(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         admin_user_token: str,
         valid_rule_data: dict[str, Any],
         authenticated_user_id: Any,
@@ -313,7 +313,7 @@ class TestQueueRulesCRUD:
         mock_db = self._make_mock_db(queue=mock_queue, user=mock_admin_user)
 
         with patch("api.v1.queues.rules.RuleCRUD", return_value=mock_crud):
-            test_client = TestClientWithMocks(mock_db=mock_db)
+            test_client = test_client_with_mocks(mock_db=mock_db)
 
             with authenticated_user_id(self.ADMIN_USER_ID):
                 headers = {"Authorization": f"Bearer {admin_user_token}"}
@@ -329,7 +329,7 @@ class TestQueueRulesCRUD:
     @pytest.mark.asyncio
     async def test_owner_manages_rules(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         admin_user_token: str,
         valid_rule_data: dict[str, Any],
         authenticated_user_id: Any,
@@ -348,7 +348,7 @@ class TestQueueRulesCRUD:
         mock_db = self._make_mock_db(queue=mock_queue, user=mock_owner_user)
 
         with patch("api.v1.queues.rules.RuleCRUD", return_value=mock_crud):
-            test_client = TestClientWithMocks(mock_db=mock_db)
+            test_client = test_client_with_mocks(mock_db=mock_db)
 
             with authenticated_user_id(self.TEST_USER_ID):
                 headers = {"Authorization": f"Bearer {admin_user_token}"}
@@ -364,7 +364,7 @@ class TestQueueRulesCRUD:
     @pytest.mark.asyncio
     async def test_non_owner_gets_forbidden(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         admin_user_token: str,
         valid_rule_data: dict[str, Any],
         authenticated_user_id: Any,
@@ -375,7 +375,7 @@ class TestQueueRulesCRUD:
 
         mock_db = self._make_mock_db(queue=mock_queue, user=mock_other_user)
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         with authenticated_user_id(99999999):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
@@ -390,14 +390,14 @@ class TestQueueRulesCRUD:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_missing_queue_returns_404(
-        self, TestClientWithMocks: Any, admin_user_token: str, authenticated_user_id: Any
+        self, test_client_with_mocks: Any, admin_user_token: str, authenticated_user_id: Any
     ) -> None:
         """Test 404 when queue doesn't exist."""
         mock_admin_user = self._make_mock_user(self.ADMIN_USER_ID, roles=[self._make_role("admin")])
 
         mock_db = self._make_mock_db(user=mock_admin_user)
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         with authenticated_user_id(self.ADMIN_USER_ID):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
@@ -411,7 +411,7 @@ class TestQueueRulesCRUD:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_missing_rule_returns_404(
-        self, TestClientWithMocks: Any, admin_user_token: str, authenticated_user_id: Any
+        self, test_client_with_mocks: Any, admin_user_token: str, authenticated_user_id: Any
     ) -> None:
         """Test 404 when rule doesn't exist."""
         from app.database.crud.rules import RuleCRUD
@@ -425,7 +425,7 @@ class TestQueueRulesCRUD:
         mock_db = self._make_mock_db(queue=mock_queue, user=mock_admin_user)
 
         with patch("api.v1.queues.rules.RuleCRUD", return_value=mock_crud):
-            test_client = TestClientWithMocks(mock_db=mock_db)
+            test_client = test_client_with_mocks(mock_db=mock_db)
 
             with authenticated_user_id(self.ADMIN_USER_ID):
                 headers = {"Authorization": f"Bearer {admin_user_token}"}
@@ -440,7 +440,7 @@ class TestQueueRulesCRUD:
     @pytest.mark.asyncio
     async def test_duplicate_rule_returns_409(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         admin_user_token: str,
         valid_rule_data: dict[str, Any],
         authenticated_user_id: Any,
@@ -467,7 +467,7 @@ class TestQueueRulesCRUD:
         mock_db = self._make_mock_db(queue=mock_queue, user=mock_admin_user)
 
         with patch("api.v1.queues.rules.RuleCRUD", return_value=mock_crud):
-            test_client = TestClientWithMocks(mock_db=mock_db)
+            test_client = test_client_with_mocks(mock_db=mock_db)
 
             with authenticated_user_id(self.ADMIN_USER_ID):
                 headers = {"Authorization": f"Bearer {admin_user_token}"}
@@ -482,7 +482,7 @@ class TestQueueRulesCRUD:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_invalid_rule_config_returns_400(
-        self, TestClientWithMocks: Any, admin_user_token: str, authenticated_user_id: Any
+        self, test_client_with_mocks: Any, admin_user_token: str, authenticated_user_id: Any
     ) -> None:
         """Test 400 when rule config is invalid."""
         mock_queue = self._make_mock_queue()
@@ -490,7 +490,7 @@ class TestQueueRulesCRUD:
 
         mock_db = self._make_mock_db(queue=mock_queue, user=mock_admin_user)
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         invalid_data = {"type": "invalid_type"}
 
@@ -507,7 +507,7 @@ class TestQueueRulesCRUD:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_patch_queue_no_longer_affects_rules(
-        self, TestClientWithMocks: Any, admin_user_token: str, authenticated_user_id: Any
+        self, test_client_with_mocks: Any, admin_user_token: str, authenticated_user_id: Any
     ) -> None:
         """Test that patching queue doesn't affect rules."""
         mock_queue = self._make_mock_queue()
@@ -516,7 +516,7 @@ class TestQueueRulesCRUD:
         mock_db = self._make_mock_db(queue=mock_queue, user=mock_admin_user)
         mock_db.update = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         with authenticated_user_id(self.ADMIN_USER_ID):
             headers = {"Authorization": f"Bearer {admin_user_token}"}

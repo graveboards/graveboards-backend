@@ -70,11 +70,11 @@ class TestRateLimitModule:
             return 2 if call_count[0] == 1 else 1
 
         rc.incr = mock_incr
-        from unittest.mock import AsyncMock as AM
+        from unittest.mock import AsyncMock
 
-        rc.expire = AM(return_value=True)
-        rc.get = AM(return_value=None)
-        rc.set = AM(return_value=True)
+        rc.expire = AsyncMock(return_value=True)
+        rc.get = AsyncMock(return_value=None)
+        rc.set = AsyncMock(return_value=True)
 
         @rate_limit(limit_per_window=1, window_size=1, auto_retry=True)
         async def test_func(self: Any) -> Any:
@@ -109,9 +109,9 @@ class TestRateLimitModule:
         self, mock_rc: MockRedisClient
     ) -> None:
         """Test rate_limit skips window counter when limit_per_window=0."""
-        from unittest.mock import AsyncMock as AM
+        from unittest.mock import AsyncMock
 
-        mock_rc.incr = AM()
+        mock_rc.incr = AsyncMock()
 
         @rate_limit(limit_per_window=0, auto_retry=False)
         async def test_func(self: Any) -> Any:
@@ -124,9 +124,9 @@ class TestRateLimitModule:
     @pytest.mark.asyncio
     async def test_rate_limit_no_min_interval_no_get(self, mock_rc: MockRedisClient) -> None:
         """Test rate_limit with min_interval=0 does not read last_call_key."""
-        from unittest.mock import AsyncMock as AM
+        from unittest.mock import AsyncMock
 
-        mock_rc.get = AM()
+        mock_rc.get = AsyncMock()
 
         @rate_limit(limit_per_window=10, min_interval=0.0, auto_retry=False)
         async def test_func(self: Any) -> Any:
@@ -141,9 +141,9 @@ class TestRateLimitModule:
         self, mock_rc: MockRedisClient
     ) -> None:
         """Test min_interval causes sleep when previous call was too recent."""
-        from unittest.mock import AsyncMock as AM
+        from unittest.mock import AsyncMock
 
-        mock_rc.get = AM(return_value=str(time.time() - 0.001))
+        mock_rc.get = AsyncMock(return_value=str(time.time() - 0.001))
 
         @rate_limit(limit_per_window=10, min_interval=0.001, auto_retry=False)
         async def test_func(self: Any) -> Any:

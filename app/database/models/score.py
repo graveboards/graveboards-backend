@@ -1,4 +1,7 @@
+"""Score model storing a single leaderboard score."""
+
 from __future__ import annotations
+
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -15,6 +18,8 @@ if TYPE_CHECKING:
 
 
 class Score(Base):
+    """An individual score submitted on a leaderboard."""
+
     __tablename__ = "scores"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(

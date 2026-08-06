@@ -1,3 +1,5 @@
+"""Graveboards backend application entry point."""
+
 from app.connexion_app import create_connexion_app
 
 if __name__ == "__main__":

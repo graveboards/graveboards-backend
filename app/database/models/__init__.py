@@ -1,4 +1,11 @@
+"""SQLAlchemy ORM models and association tables for the data layer.
+
+Re-exports every mapped model class and association table for convenient
+single-module imports (e.g. ``from app.database.models import User``).
+"""
+
 from __future__ import annotations
+
 from .api_key import ApiKey
 from .associations import (
     beatmap_snapshot_beatmapset_snapshot_association,
@@ -32,34 +39,34 @@ from .score_fetcher_task import ScoreFetcherTask
 from .user import User
 
 __all__ = [
+    "ApiKey",
+    "AuditLog",
     "Base",
     "BaseType",
-    "user_role_association",
-    "beatmap_snapshot_beatmapset_snapshot_association",
-    "queue_manager_association",
-    "beatmapset_tag_beatmapset_snapshot_association",
-    "beatmap_tag_beatmap_snapshot_association",
-    "beatmap_snapshot_owner_association",
-    "ModelClass",
-    "User",
-    "Role",
-    "Profile",
-    "ApiKey",
-    "OAuthToken",
-    "ScoreFetcherTask",
-    "ProfileFetcherTask",
     "Beatmap",
-    "BeatmapSnapshot",
     "BeatmapListing",
-    "Beatmapset",
-    "BeatmapsetSnapshot",
-    "BeatmapsetListing",
-    "Leaderboard",
-    "Score",
-    "Queue",
-    "Request",
-    "BeatmapsetTag",
+    "BeatmapSnapshot",
     "BeatmapTag",
+    "Beatmapset",
+    "BeatmapsetListing",
+    "BeatmapsetSnapshot",
+    "BeatmapsetTag",
+    "Leaderboard",
+    "ModelClass",
+    "OAuthToken",
+    "Profile",
+    "ProfileFetcherTask",
+    "Queue",
     "QueueRule",
-    "AuditLog",
+    "Request",
+    "Role",
+    "Score",
+    "ScoreFetcherTask",
+    "User",
+    "beatmap_snapshot_beatmapset_snapshot_association",
+    "beatmap_snapshot_owner_association",
+    "beatmap_tag_beatmap_snapshot_association",
+    "beatmapset_tag_beatmapset_snapshot_association",
+    "queue_manager_association",
+    "user_role_association",
 ]

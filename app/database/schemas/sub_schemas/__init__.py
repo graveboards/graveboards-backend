@@ -1,4 +1,7 @@
+"""Public re-exports of the nested schema definitions."""
+
 from __future__ import annotations
+
 from .availability import AvailabilitySchema
 from .beatmap_osu_api_schema import BeatmapOsuApiSchema
 from .beatmapset_description import BeatmapsetDescriptionSchema
@@ -33,8 +36,8 @@ from .user_statistics import UserStatisticsSchema
 __all__ = [
     "AvailabilitySchema",
     "BeatmapOsuApiSchema",
-    "BeatmapsetOsuApiSchema",
     "BeatmapsetDescriptionSchema",
+    "BeatmapsetOsuApiSchema",
     "CountrySchema",
     "CoverSchema",
     "CoversSchema",

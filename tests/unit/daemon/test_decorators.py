@@ -66,7 +66,7 @@ class TestAutoRetryDecorator:
             nonlocal call_count
             call_count += 1
             if call_count < MAX_ATTEMPTS:
-                raise TimeoutError()
+                raise TimeoutError
             return "success"
 
         result = await fails_twice()
@@ -98,7 +98,7 @@ class TestAutoRetryDecorator:
             nonlocal call_count
             call_count += 1
             if call_count < 3:
-                raise ValueError()
+                raise ValueError
             return "success"
 
         with patch("app.daemon.services.decorators.logger") as mock_logger:
@@ -112,7 +112,7 @@ class TestAutoRetryDecorator:
 
         @auto_retry(max_attempts=2, retry_exceptions=(ValueError,))
         async def always_fails() -> str:
-            raise ValueError()
+            raise ValueError
 
         with patch("app.daemon.services.decorators.logger") as mock_logger:
             with pytest.raises(ValueError):
@@ -129,7 +129,7 @@ class TestAutoRetryDecorator:
             nonlocal call_count
             call_count += 1
             if call_count < 3:
-                raise TimeoutError()
+                raise TimeoutError
             return "success"
 
         result = await timeout_then_succeed()
@@ -166,7 +166,7 @@ class TestAutoRetryDecorator:
             nonlocal call_count
             call_count += 1
             if call_count < 3:
-                raise ValueError()
+                raise ValueError
             return "success"
 
         result = await fails_twice()
@@ -183,7 +183,7 @@ class TestAutoRetryDecorator:
             nonlocal call_count
             call_count += 1
             if call_count < 3:
-                raise TypeError()
+                raise TypeError
             return "success"
 
         result = await raises_type_error()
@@ -199,7 +199,7 @@ class TestAutoRetryDecorator:
         async def raises_key_error() -> str:
             nonlocal call_count
             call_count += 1
-            raise KeyError()
+            raise KeyError
 
         with pytest.raises(KeyError):
             await raises_key_error()

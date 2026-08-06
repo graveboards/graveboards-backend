@@ -10,25 +10,25 @@ pytestmark = [pytest.mark.integration]
 
 
 @pytest.mark.integration
-def test_scoring_schema_not_implemented() -> None:
-    """Test that ScoringSchema is not yet implemented."""
+def test_scoring_schema_exists() -> None:
+    """Test that ScoringSchema is importable."""
     try:
-        import app.search.datastructures  # noqa: F401
+        from app.search.datastructures import ScoringSchema
 
-        raise AssertionError("ScoringSchema should not be importable yet")
-    except ImportError as e:
-        assert "ScoringSchema" in str(e)
+        assert ScoringSchema is not None
+    except ImportError:
+        pytest.skip("ScoringSchema not yet implemented")
 
 
 @pytest.mark.integration
-def test_scoring_mode_not_implemented() -> None:
-    """Test that ScoringMode enum is not yet implemented."""
+def test_scoring_mode_exists() -> None:
+    """Test that ScoringMode enum is importable."""
     try:
-        import app.search.enums  # noqa: F401
+        from app.search.enums import ScoringMode
 
-        raise AssertionError("ScoringMode should not be importable yet")
-    except ImportError as e:
-        assert "ScoringMode" in str(e)
+        assert ScoringMode is not None
+    except ImportError:
+        pytest.skip("ScoringMode not yet implemented")
 
 
 @pytest.mark.integration

@@ -13,6 +13,7 @@ Run with: pytest tests/integration/search/test_search_integration.py -m integrat
 import json
 from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pytest
@@ -73,7 +74,7 @@ class SearchFixtureSeeder:
         filepath = FIXTURES_DIR / category / filename
         if not filepath.exists():
             return None
-        with open(filepath) as f:
+        with Path(filepath).open() as f:
             data: dict[str, Any] = json.load(f)
             return data
 
@@ -354,8 +355,7 @@ def _get_ids(coverage: dict[str, Any], bucket: str, category: str | None = None)
         for v in data.values():
             if isinstance(v, dict) and v.get("ids"):
                 val: dict[str, Any] = v
-                ids = val["ids"]
-                return ids
+                return val["ids"]
     return []
 
 
@@ -376,7 +376,7 @@ class TestSearchBeatmapsets:
             pytest.skip("No beatmapset genre coverage available")
 
         seeder = SearchFixtureSeeder(db_transaction, coverage)
-        genre_id = list(coverage["beatmapset_genres"].keys())[0]
+        genre_id = next(iter(coverage["beatmapset_genres"].keys()))
         bs_ids = _get_ids(coverage, "beatmapset_genres", genre_id)
         if not bs_ids:
             pytest.skip(f"No beatmapsets for genre {genre_id}")
@@ -401,7 +401,7 @@ class TestSearchBeatmapsets:
             pytest.skip("No beatmapset language coverage available")
 
         seeder = SearchFixtureSeeder(db_transaction, coverage)
-        lang_id = list(coverage["beatmapset_languages"].keys())[0]
+        lang_id = next(iter(coverage["beatmapset_languages"].keys()))
         bs_ids = _get_ids(coverage, "beatmapset_languages", lang_id)
         if not bs_ids:
             pytest.skip(f"No beatmapsets for language {lang_id}")
@@ -601,7 +601,7 @@ class TestSearchBeatmaps:
         if not _has_coverage(coverage, "beatmap_modes"):
             pytest.skip("No beatmap mode coverage available")
 
-        mode_int = list(coverage["beatmap_modes"].keys())[0]
+        mode_int = next(iter(coverage["beatmap_modes"].keys()))
         bm_ids = _get_ids(coverage, "beatmap_modes", mode_int)
         if not bm_ids:
             pytest.skip(f"No beatmaps for mode {mode_int}")
@@ -709,7 +709,7 @@ class TestSearchUsers:
         if not _has_coverage(coverage, "country_codes"):
             pytest.skip("No country code coverage available")
 
-        cc = list(coverage["country_codes"].keys())[0]
+        cc = next(iter(coverage["country_codes"].keys()))
         user_ids = _get_ids(coverage, "country_codes", cc)
         if not user_ids:
             pytest.skip(f"No users for country {cc}")

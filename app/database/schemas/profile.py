@@ -1,4 +1,7 @@
+"""Pydantic schemas for user profiles."""
+
 from __future__ import annotations
+
 from copy import copy
 from datetime import datetime
 from typing import Any
@@ -7,7 +10,11 @@ from pydantic.config import ConfigDict
 from pydantic.functional_validators import model_validator
 from pydantic.main import BaseModel
 
-from app.osu_api.literals import PlaystyleLiteral, ProfilePageLiteral, RulesetLiteral
+from app.osu_api.literals import (
+    PlaystyleLiteral,
+    ProfilePageLiteral,
+    RulesetLiteral,
+)
 
 from .base_model_extra import BaseModelExtra
 from .sub_schemas import (
@@ -32,6 +39,8 @@ from .sub_schemas import (
 
 
 class ProfileSchema(BaseModel, BaseModelExtra):
+    """User profile record with its osu! data fields."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int | None = None
@@ -42,6 +51,7 @@ class ProfileSchema(BaseModel, BaseModelExtra):
     @model_validator(mode="before")
     @classmethod
     def from_osu_api_format(cls, data: Any) -> Any:
+        """Normalize an osu! API profile payload into the schema field layout."""
         if isinstance(data, dict):
             data_copy = copy(data)
             data_copy["user_id"] = data_copy.pop("id")
@@ -123,12 +133,16 @@ class ProfileSchema(BaseModel, BaseModelExtra):
 
 
 class ProfileCreateSchema(BaseModel, BaseModelExtra):
+    """Fields required to create a profile."""
+
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     user_id: int
 
 
 class ProfileUpdateSchema(BaseModel, BaseModelExtra):
+    """Updatable fields for an existing profile."""
+
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     updated_at: datetime | None = None
@@ -200,6 +214,7 @@ class ProfileUpdateSchema(BaseModel, BaseModelExtra):
     @model_validator(mode="before")
     @classmethod
     def from_osu_api_format(cls, data: Any) -> Any:
+        """Normalize an osu! API payload into the update field layout."""
         if isinstance(data, dict):
             data_copy = copy(data)
             data_copy["user_id"] = data_copy.pop("id")

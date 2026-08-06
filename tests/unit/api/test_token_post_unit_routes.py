@@ -75,6 +75,11 @@ class TestTokenPostEndpoint:
         """Create a mock Redis client."""
         mock_rc = AsyncMock(spec=RedisClient)
         mock_rc.getdel = AsyncMock(return_value="valid")
+        mock_rc.ttl = AsyncMock(return_value=0)
+        mock_rc.incr = AsyncMock(return_value=1)
+        mock_rc.expire = AsyncMock(return_value=True)
+        mock_rc.set = AsyncMock(return_value=True)
+        mock_rc.delete = AsyncMock(return_value=1)
         return mock_rc
 
     async def _create_mock_db(self) -> AsyncMock:
@@ -134,7 +139,7 @@ class TestTokenPostEndpoint:
         mock_rc = await self._create_mock_redis()
         mock_db = await self._create_mock_db()
 
-        try:
+        with pytest.raises(BadRequest, match="Missing code"):
             await post(
                 MagicMock(),
                 body={"state": self.TEST_STATE},
@@ -143,9 +148,6 @@ class TestTokenPostEndpoint:
                 rc=mock_rc,
                 db=mock_db,
             )
-            raise AssertionError("Expected BadRequest exception")
-        except BadRequest as e:
-            assert "Missing code" in str(e)
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -159,7 +161,7 @@ class TestTokenPostEndpoint:
         mock_rc = await self._create_mock_redis()
         mock_db = await self._create_mock_db()
 
-        try:
+        with pytest.raises(BadRequest, match="Missing state"):
             await post(
                 MagicMock(),
                 body={"code": "test_code"},
@@ -168,9 +170,6 @@ class TestTokenPostEndpoint:
                 rc=mock_rc,
                 db=mock_db,
             )
-            raise AssertionError("Expected BadRequest exception")
-        except BadRequest as e:
-            assert "Missing state" in str(e)
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -185,7 +184,7 @@ class TestTokenPostEndpoint:
         mock_rc.getdel = AsyncMock(return_value=None)
         mock_db = await self._create_mock_db()
 
-        try:
+        with pytest.raises(BadRequest, match="Invalid or expired state"):
             await post(
                 MagicMock(),
                 body={"code": "test_code", "state": "invalid_state"},
@@ -194,9 +193,6 @@ class TestTokenPostEndpoint:
                 rc=mock_rc,
                 db=mock_db,
             )
-            raise AssertionError("Expected BadRequest exception")
-        except BadRequest as e:
-            assert "Invalid or expired state" in str(e)
 
     @pytest.mark.unit
     @pytest.mark.asyncio

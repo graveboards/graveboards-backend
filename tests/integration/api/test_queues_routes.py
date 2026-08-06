@@ -80,7 +80,7 @@ class TestQueuesPatchIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_can_update_queue(
-        self, TestClientWithMocks: Any, admin_user_token: Any
+        self, test_client_with_mocks: Any, admin_user_token: Any
     ) -> None:
         """Test admin can update queue."""
         from app.database.models import Queue
@@ -109,7 +109,7 @@ class TestQueuesPatchIntegration:
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.update = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         with (
             patch(
@@ -148,7 +148,7 @@ class TestQueuesPatchIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_queue_owner_can_update_queue(
-        self, TestClientWithMocks: Any, admin_user_token: Any
+        self, test_client_with_mocks: Any, admin_user_token: Any
     ) -> None:
         """Test queue owner can update queue."""
         from app.database.models import Queue
@@ -175,7 +175,7 @@ class TestQueuesPatchIntegration:
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.update = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         with (
             patch(
@@ -214,7 +214,7 @@ class TestQueuesPatchIntegration:
     @pytest.mark.asyncio
     async def test_non_admin_gets_forbidden_on_queue_patch(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         admin_user_token: Any,
     ) -> None:
         """Test non-admin user gets 403 Forbidden on queue patch."""
@@ -231,7 +231,7 @@ class TestQueuesPatchIntegration:
 
         mock_db.get = AsyncMock(side_effect=mock_get)
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         with (
             patch(
@@ -273,7 +273,7 @@ class TestQueuesPostIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_can_create_queue(
-        self, TestClientWithMocks: Any, admin_user_token: Any
+        self, test_client_with_mocks: Any, admin_user_token: Any
     ) -> None:
         """Test admin can create a new queue."""
         from app.database.models import Queue
@@ -293,7 +293,7 @@ class TestQueuesPostIntegration:
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.add = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         with (
             patch(
@@ -326,7 +326,7 @@ class TestQueuesPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_non_admin_cannot_create_queue(self, TestClientWithMocks: Any) -> None:
+    async def test_non_admin_cannot_create_queue(self, test_client_with_mocks: Any) -> None:
         """Test non-admin gets 403 on queue creation."""
         from app.security import generate_token
 
@@ -341,7 +341,7 @@ class TestQueuesPostIntegration:
 
         mock_db.get = AsyncMock(side_effect=mock_get)
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         with (
             patch(
@@ -379,7 +379,7 @@ class TestQueuesPostIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_create_queue_with_all_fields(
-        self, TestClientWithMocks: Any, admin_user_token: Any
+        self, test_client_with_mocks: Any, admin_user_token: Any
     ) -> None:
         """Test queue creation with all optional fields."""
         from app.database.models import Queue
@@ -399,7 +399,7 @@ class TestQueuesPostIntegration:
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.add = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         with (
             patch(
@@ -444,7 +444,9 @@ class TestQueuesGetIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_get_queue_by_id(self, TestClientWithMocks: Any, admin_user_token: Any) -> None:
+    async def test_get_queue_by_id(
+        self, test_client_with_mocks: Any, admin_user_token: Any
+    ) -> None:
         """Test GET /api/v1/queues/{id} returns specific queue."""
         from app.database.models import Queue
         from app.database.schemas import QueueSchema
@@ -474,7 +476,7 @@ class TestQueuesGetIntegration:
 
         mock_db.get = AsyncMock(side_effect=mock_get)
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         headers = {"Authorization": f"Bearer {admin_user_token}"}
         response = test_client.get(f"/api/v1/queues/{self.TEST_QUEUE_ID}", headers=headers)
@@ -485,7 +487,9 @@ class TestQueuesGetIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_queue_not_found(self, TestClientWithMocks: Any, admin_user_token: Any) -> None:
+    async def test_queue_not_found(
+        self, test_client_with_mocks: Any, admin_user_token: Any
+    ) -> None:
         """Test GET /api/v1/queues/{id} returns 404 for non-existent queue."""
         from app.database.models import Queue
 
@@ -503,7 +507,7 @@ class TestQueuesGetIntegration:
 
         mock_db.get = AsyncMock(side_effect=mock_get)
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         headers = {"Authorization": f"Bearer {admin_user_token}"}
         response = test_client.get("/api/v1/queues/999999", headers=headers)

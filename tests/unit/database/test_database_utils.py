@@ -28,7 +28,7 @@ class TestGetFilterCondition:
 
     def test_unsupported_operator_raises_value_error(self) -> None:
         with pytest.raises(ValueError):
-            get_filter_condition(cast(FilterOperator, "invalid_operator"), None, 42)
+            get_filter_condition(cast("FilterOperator", "invalid_operator"), None, 42)
 
 
 @pytest.fixture
@@ -37,5 +37,4 @@ def mock_column_clause() -> Any:
 
     from sqlalchemy.sql.elements import ColumnClause
 
-    column = MagicMock(spec=ColumnClause)
-    return column
+    return MagicMock(spec=ColumnClause)

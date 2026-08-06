@@ -1,4 +1,7 @@
+"""Beatmap snapshot model storing an archived beatmap version."""
+
 from __future__ import annotations
+
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -26,6 +29,8 @@ if TYPE_CHECKING:
 
 
 class BeatmapSnapshot(Base):
+    """A versioned snapshot of a beatmap's osu! API data."""
+
     __tablename__ = "beatmap_snapshots"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     beatmap_id: Mapped[int] = mapped_column(Integer, ForeignKey("beatmaps.id"), nullable=False)

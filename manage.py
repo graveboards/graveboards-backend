@@ -1,3 +1,5 @@
+"""Management script for Graveboards backend."""
+
 import asyncio
 
 from app.manage import main

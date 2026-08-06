@@ -1,4 +1,7 @@
+"""User model representing an authenticated application user."""
+
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import mapped_column, relationship
@@ -22,6 +25,8 @@ if TYPE_CHECKING:
 
 
 class User(Base):
+    """A user account in the application."""
+
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False)
 

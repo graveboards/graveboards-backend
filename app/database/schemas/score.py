@@ -1,4 +1,7 @@
+"""Pydantic schemas for scores."""
+
 from __future__ import annotations
+
 from copy import copy
 from datetime import datetime
 from typing import Any
@@ -12,6 +15,8 @@ from .sub_schemas import ScoreStatisticsSchema
 
 
 class ScoreSchema(BaseModel, BaseModelExtra):
+    """Score record with its statistics and leaderboard association."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int | None = None
@@ -35,6 +40,7 @@ class ScoreSchema(BaseModel, BaseModelExtra):
     @model_validator(mode="before")
     @classmethod
     def from_osu_api_format(cls, data: Any) -> Any:
+        """Normalize an osu! API score payload into the schema field layout."""
         if isinstance(data, dict):
             data_copy = copy(data)
             data_copy.pop("id", None)
@@ -47,6 +53,8 @@ class ScoreSchema(BaseModel, BaseModelExtra):
 
 
 class ScoreCreateSchema(BaseModel, BaseModelExtra):
+    """Fields required to create a score."""
+
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     beatmap_id: int
@@ -66,6 +74,8 @@ class ScoreCreateSchema(BaseModel, BaseModelExtra):
 
 
 class ScoreUpdateSchema(BaseModel, BaseModelExtra):
+    """Updatable fields for an existing score."""
+
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     leaderboard_id: int | None = None

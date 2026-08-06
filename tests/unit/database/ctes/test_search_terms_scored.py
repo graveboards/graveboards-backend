@@ -87,7 +87,7 @@ class TestSearchTermsScoredCTE:
 
         assert isinstance(ctes, dict)
         assert len(ctes) > 0
-        for _category, cte in ctes.items():
+        for cte in ctes.values():
             assert hasattr(cte.c, "id")
             assert hasattr(cte.c, "score")
 
@@ -101,7 +101,7 @@ class TestSearchTermsScoredCTE:
 
         assert isinstance(ctes, dict)
         assert len(ctes) > 0
-        for _category, cte in ctes.items():
+        for cte in ctes.values():
             assert hasattr(cte.c, "id")
             assert hasattr(cte.c, "score")
 

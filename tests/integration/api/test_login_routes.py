@@ -4,8 +4,8 @@ import pytest
 
 
 @pytest.mark.integration
-def test_login_endpoint_returns_authorization_url(TestClient: Any) -> None:
-    response = TestClient.get("/api/v1/login")
+def test_login_endpoint_returns_authorization_url(test_client: Any) -> None:
+    response = test_client.get("/api/v1/login")
 
     assert response.status_code == 200
     data = response.json()

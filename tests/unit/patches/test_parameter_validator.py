@@ -2,7 +2,6 @@ import contextlib
 from typing import Any
 
 import pytest
-from connexion.exceptions import BadRequest
 from connexion.lifecycle import ConnexionRequest
 
 from app.patches.parameter import ParameterValidatorPatched
@@ -332,10 +331,12 @@ class TestParameterValidator:
         """Test that scope is preserved through validation."""
         validator = make_validator()
 
-        scope = {"type": "http", "path": "/api/v1/test"}
+        scope = {"type": "http", "path": "/api/v1/test", "query_string": b"", "headers": []}
 
-        with pytest.raises(BadRequest):
-            validator.validate(scope)
+        validator.validate(scope)
+
+        assert validator.request_scopes == {}
+        assert scope["query_string"] == b""
 
     def test_parameter_validator_with_security_params(self) -> None:
         """Test validator with security query params."""

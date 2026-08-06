@@ -116,7 +116,7 @@ class TestBeatmapSerialization:
     """Test Beatmap model serialize/deserialize round-trips."""
 
     def _make_beatmap(self) -> Beatmap:
-        return cast(Beatmap, Beatmap.model_validate(_full_beatmap_dict()))
+        return cast("Beatmap", Beatmap.model_validate(_full_beatmap_dict()))
 
     def test_serialize_returns_string_dict(self) -> None:
         """Test Beatmap.serialize() returns dict with all string values."""
@@ -158,7 +158,7 @@ class TestBeatmapsetSerialization:
     """Test Beatmapset model serialize/deserialize round-trips."""
 
     def _make_beatmapset(self) -> Beatmapset:
-        return cast(Beatmapset, Beatmapset.model_validate(_full_beatmapset_dict()))
+        return cast("Beatmapset", Beatmapset.model_validate(_full_beatmapset_dict()))
 
     def test_serialize_returns_string_dict(self) -> None:
         """Test Beatmapset.serialize() returns dict with all string values."""

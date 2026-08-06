@@ -96,7 +96,7 @@ class TestSortingValidator:
         schema = {
             "items": {"properties": {"field": {"enum": ["id"]}, "order": {"enum": ["asc", "desc"]}}}
         }
-        sorting = cast(list[dict[str, str]], [])
+        sorting = cast("list[dict[str, str]]", [])
 
         validate_sorting(sorting, schema)
 
@@ -160,7 +160,7 @@ class TestSortingValidator:
         schema = {
             "items": {"properties": {"field": {"enum": ["id"]}, "order": {"enum": ["asc", "desc"]}}}
         }
-        sorting = cast(list[dict[str, str]], [{"field": None, "order": "asc"}])
+        sorting = cast("list[dict[str, str]]", [{"field": None, "order": "asc"}])
 
         with pytest.raises(ArrayValidationError):
             validate_sorting(sorting, schema)

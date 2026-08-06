@@ -21,11 +21,11 @@ class TestTokenPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_token_exchange_missing_code(self, TestClient: Any) -> None:
+    async def test_token_exchange_missing_code(self, test_client: Any) -> None:
         """Test POST /api/v1/token with missing code returns 400."""
         body = f"state={self.TEST_STATE}"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        response = TestClient.post("/api/v1/token", data=body, headers=headers)
+        response = test_client.post("/api/v1/token", data=body, headers=headers)
 
         assert response.status_code == 400
         data = response.json()
@@ -33,11 +33,11 @@ class TestTokenPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_token_exchange_missing_state(self, TestClient: Any) -> None:
+    async def test_token_exchange_missing_state(self, test_client: Any) -> None:
         """Test POST /api/v1/token with missing state returns 400."""
         body = "code=test_code"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        response = TestClient.post("/api/v1/token", data=body, headers=headers)
+        response = test_client.post("/api/v1/token", data=body, headers=headers)
 
         assert response.status_code == 400
         data = response.json()
@@ -45,7 +45,7 @@ class TestTokenPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_token_exchange_success(self, TestClientWithMocks: Any) -> None:
+    async def test_token_exchange_success(self, test_client_with_mocks: Any) -> None:
         """Test successful token exchange via HTTP stack with mocked dependencies."""
         state = "test_csrf_state_12345"
         code = "test_authorization_code"
@@ -80,7 +80,7 @@ class TestTokenPostIntegration:
         mock_db.add = AsyncMock()
         mock_db.update = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         with (
             patch("app.oauth.OAuth", return_value=mock_oauth),

@@ -5,7 +5,7 @@ Fixture hierarchy:
 - db_session: Creates tables, rolls back after each test (test isolation)
 - db_transaction: Creates tables, commits after each test (visible to search queries)
 - TestClient: Full Connexion app with mock middleware (no real Redis/DB)
-- TestClientWithMocks: TestClient with injectable mock_rc and mock_db
+- test_client_with_mocks: TestClient with injectable mock_rc and mock_db
 - admin_user_token: JWT for admin user ID 11111111
 - security_disabled: Context manager to bypass security decorators
 - security_enabled: Context manager to enforce security decorators
@@ -115,7 +115,7 @@ def _patch_all_auth_modules(user_id: int) -> ExitStack:
     return stack
 
 
-def TestClientWithMocksFactory(request: Any, mock_rc: Any = None, mock_db: Any = None) -> Any:
+def test_client_with_mocks_factory(request: Any, mock_rc: Any = None, mock_db: Any = None) -> Any:
     """Create a TestClient with configurable mocks.
 
     Args:
@@ -129,12 +129,11 @@ def TestClientWithMocksFactory(request: Any, mock_rc: Any = None, mock_db: Any =
 
     from app.test_app import create_test_app
 
-    test_client = TestClient(create_test_app(mock_rc=mock_rc, mock_db=mock_db))
-    return test_client
+    return TestClient(create_test_app(mock_rc=mock_rc, mock_db=mock_db))
 
 
 @pytest.fixture
-def TestClientWithMocks(request: Any) -> Any:
+def test_client_with_mocks(request: Any) -> Any:
     """Fixture that returns a callable for creating TestClient with mocks.
 
     This fixture provides a factory function that can be used to create
@@ -143,11 +142,11 @@ def TestClientWithMocks(request: Any) -> Any:
     Returns:
         A callable that accepts mock_rc and mock_db parameters
     """
-    return lambda **kwargs: TestClientWithMocksFactory(request, **kwargs)
+    return lambda **kwargs: test_client_with_mocks_factory(request, **kwargs)
 
 
 @pytest.fixture
-def TestClient() -> Any:
+def test_client() -> Any:
     """Create a basic TestClient without mocks for HTTP endpoint testing.
 
     Returns:
@@ -157,8 +156,7 @@ def TestClient() -> Any:
 
     from app.test_app import create_test_app
 
-    test_client = TestClient(create_test_app())
-    return test_client
+    return TestClient(create_test_app())
 
 
 @pytest.fixture
@@ -173,7 +171,7 @@ def admin_user_token() -> str:
     return str(generate_token(11111111))
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 async def db_session() -> Any:
     """Create a database session for CRUD operations.
 
@@ -200,7 +198,7 @@ async def db_session() -> Any:
     await db.close()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 async def db_transaction() -> Any:
     """Create a database session that commits changes.
 

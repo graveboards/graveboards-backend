@@ -1,4 +1,7 @@
+"""Queue model representing a mapping submission queue."""
+
 from __future__ import annotations
+
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -20,6 +23,8 @@ if TYPE_CHECKING:
 
 
 class Queue(Base):
+    """A mapping submission queue owned by a user."""
+
     __tablename__ = "queues"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(

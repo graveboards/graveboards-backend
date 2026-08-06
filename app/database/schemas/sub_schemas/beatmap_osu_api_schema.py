@@ -1,4 +1,7 @@
+"""Pydantic schemas for beatmaps as returned by the osu! API."""
+
 from __future__ import annotations
+
 from copy import copy
 from datetime import datetime
 from typing import Any, ClassVar, Literal, TypedDict
@@ -16,7 +19,16 @@ from app.osu_api.literals import (
 from .failtimes import FailtimesSchema
 
 
+class Owner(TypedDict):
+    """Identifier and username for a beatmap owner."""
+
+    id: int
+    username: str
+
+
 class BeatmapOsuApiSchema(BaseModel):
+    """Difficulty, ranking, and voting data for a single beatmap."""
+
     accuracy: float
     ar: float
     beatmapset_id: int
@@ -64,6 +76,7 @@ class BeatmapOsuApiSchema(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def from_snapshot(cls, data: Any) -> Any:
+        """Normalize database snapshot rows into osu! API field names."""
         if isinstance(data, dict):
             return data
 
@@ -86,11 +99,7 @@ class BeatmapOsuApiSchema(BaseModel):
     @field_validator("top_tag_ids", mode="before")
     @classmethod
     def filter_tag_keys(cls, value: Any) -> Any:
+        """Restrict tag entries to the single expected key."""
         if value is None:
             return None
         return [{"tag_id": item["tag_id"]} for item in value]
-
-
-class Owner(TypedDict):
-    id: int
-    username: str

@@ -53,7 +53,7 @@ class TestScoresPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_submission_creates_score(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         valid_score_body: dict[str, Any],
         admin_role_user: MagicMock,
         security_disabled: Any,
@@ -91,7 +91,7 @@ class TestScoresPostIntegration:
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.add = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         response = test_client.post("/api/v1/scores", json=valid_score_body)
 
@@ -104,7 +104,7 @@ class TestScoresPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_user_not_found(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         valid_score_body: dict[str, Any],
         admin_role_user: MagicMock,
         security_disabled: Any,
@@ -122,7 +122,7 @@ class TestScoresPostIntegration:
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.add = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         body = valid_score_body.copy()
         body["user_id"] = -1
@@ -136,7 +136,7 @@ class TestScoresPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_beatmap_not_found(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         valid_score_body: dict[str, Any],
         admin_role_user: MagicMock,
         security_disabled: Any,
@@ -160,7 +160,7 @@ class TestScoresPostIntegration:
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.add = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         body = valid_score_body.copy()
         body["beatmap"]["id"] = -1
@@ -174,7 +174,7 @@ class TestScoresPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_beatmap_snapshot_not_found(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         valid_score_body: dict[str, Any],
         admin_role_user: MagicMock,
         security_disabled: Any,
@@ -202,7 +202,7 @@ class TestScoresPostIntegration:
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.add = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         body = valid_score_body.copy()
         body["beatmap"]["id"] = -1
@@ -216,7 +216,7 @@ class TestScoresPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_leaderboard_not_found(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         valid_score_body: dict[str, Any],
         admin_role_user: MagicMock,
         security_disabled: Any,
@@ -249,7 +249,7 @@ class TestScoresPostIntegration:
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.add = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         body = valid_score_body.copy()
         body["beatmap"]["id"] = -1
@@ -263,7 +263,7 @@ class TestScoresPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_duplicate_score(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         valid_score_body: dict[str, Any],
         admin_role_user: MagicMock,
         security_disabled: Any,
@@ -301,7 +301,7 @@ class TestScoresPostIntegration:
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.add = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         body = valid_score_body.copy()
         body["beatmap"]["id"] = -1
@@ -314,7 +314,10 @@ class TestScoresPostIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_non_admin_user_gets_forbidden(
-        self, TestClientWithMocks: Any, valid_score_body: dict[str, Any], authenticated_user_id: Any
+        self,
+        test_client_with_mocks: Any,
+        valid_score_body: dict[str, Any],
+        authenticated_user_id: Any,
     ) -> None:
         """Test that non-admin user gets 403 Forbidden."""
         from app.security import generate_token
@@ -327,7 +330,7 @@ class TestScoresPostIntegration:
         mock_db.add = AsyncMock()
         mock_db.update = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         with authenticated_user_id(99999999):
             headers = {"Authorization": f"Bearer {generate_token(99999999)}"}
@@ -344,7 +347,7 @@ class TestScoresPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_access_succeeds_with_token(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         valid_score_body: dict[str, Any],
         admin_user_token: str,
         authenticated_user_id: Any,
@@ -378,20 +381,20 @@ class TestScoresPostIntegration:
         async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model == User:
                 return mock_user
-            elif model == Beatmap:
+            if model == Beatmap:
                 return mock_beatmap
-            elif model == BeatmapSnapshot:
+            if model == BeatmapSnapshot:
                 return mock_snapshot
-            elif model == Leaderboard:
+            if model == Leaderboard:
                 return mock_leaderboard
-            elif model == Score:
+            if model == Score:
                 return None
             return None
 
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.add = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         with authenticated_user_id(user_id):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
@@ -405,7 +408,7 @@ class TestScoresPostIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_success_with_auth(
-        self, TestClientWithMocks: Any, valid_score_body: dict[str, Any], admin_user_token: str
+        self, test_client_with_mocks: Any, valid_score_body: dict[str, Any], admin_user_token: str
     ) -> None:
         """Test that admin user can successfully post score with valid token."""
         from app.database.models import Beatmap, BeatmapSnapshot, Leaderboard, Score, User
@@ -441,7 +444,7 @@ class TestScoresPostIntegration:
         mock_db.add = AsyncMock()
 
         headers = {"Authorization": f"Bearer {admin_user_token}"}
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         response = test_client.post("/api/v1/scores", json=valid_score_body, headers=headers)
 
@@ -454,7 +457,7 @@ class TestScoresPostIntegration:
     @pytest.mark.asyncio
     async def test_bypass_security_with_flag(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         valid_score_body: dict[str, Any],
         admin_role_user: MagicMock,
         security_disabled: Any,
@@ -493,7 +496,7 @@ class TestScoresPostIntegration:
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.add = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         response = test_client.post("/api/v1/scores", json=valid_score_body)
 
@@ -503,7 +506,7 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_get_score_list(self, TestClientWithMocks: Any) -> None:
+    async def test_get_score_list(self, test_client_with_mocks: Any) -> None:
         """Test GET /api/v1/scores returns list of scores."""
         from datetime import datetime
 
@@ -572,7 +575,7 @@ class TestScoresPostIntegration:
         mock_score2 = ScoreSchema.model_validate(score_data_2)
         mock_db.get_many = AsyncMock(return_value=[mock_score1, mock_score2])
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         response = test_client.get("/api/v1/scores")
 
@@ -583,7 +586,7 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_get_score_by_id(self, TestClientWithMocks: Any) -> None:
+    async def test_get_score_by_id(self, test_client_with_mocks: Any) -> None:
         """Test GET /api/v1/scores/{id} returns specific score."""
         from datetime import datetime
 
@@ -623,7 +626,7 @@ class TestScoresPostIntegration:
         mock_score = ScoreSchema.model_validate(score_data)
         mock_db.get = AsyncMock(return_value=mock_score)
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         response = test_client.get("/api/v1/scores/1")
 
@@ -633,7 +636,7 @@ class TestScoresPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_get_score_not_found(self, TestClientWithMocks: Any) -> None:
+    async def test_get_score_not_found(self, test_client_with_mocks: Any) -> None:
         """Test GET /api/v1/scores/{id} returns 404 for non-existent score."""
 
         mock_db = AsyncMock()
@@ -648,7 +651,7 @@ class TestScoresPostIntegration:
 
         mock_db.get = AsyncMock(side_effect=mock_get)
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         response = test_client.get("/api/v1/scores/999999")
 

@@ -83,7 +83,7 @@ class TestLoadSpec:
                 with patch("builtins.open", mock_open(read_data="data")):
                     result = load_spec()
 
-        assert cast(str, result) == "cached_spec"
+        assert cast("str", result) == "cached_spec"
 
     def test_load_spec_non_prod_invalidates_on_mtime(
         self,
@@ -350,4 +350,4 @@ class TestLoadSpec:
                 with patch("builtins.open", mock_open(read_data="data")):
                     result = load_spec()
 
-        assert cast(str, result) == "cached"
+        assert cast("str", result) == "cached"

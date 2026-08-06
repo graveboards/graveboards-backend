@@ -1,4 +1,7 @@
+"""Pydantic schemas for score fetcher tasks."""
+
 from __future__ import annotations
+
 from datetime import datetime
 
 from pydantic.config import ConfigDict
@@ -8,6 +11,8 @@ from .base_model_extra import BaseModelExtra
 
 
 class ScoreFetcherTaskSchema(BaseModel, BaseModelExtra):
+    """Recurring score fetch task with its last-fetch timestamp."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int | None = None
@@ -17,6 +22,8 @@ class ScoreFetcherTaskSchema(BaseModel, BaseModelExtra):
 
 
 class ScoreFetcherTaskCreateSchema(BaseModel, BaseModelExtra):
+    """Fields required to create a score fetcher task."""
+
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     user_id: int
@@ -24,6 +31,8 @@ class ScoreFetcherTaskCreateSchema(BaseModel, BaseModelExtra):
 
 
 class ScoreFetcherTaskUpdateSchema(BaseModel, BaseModelExtra):
+    """Updatable fields for an existing score fetcher task."""
+
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     enabled: bool | None = None

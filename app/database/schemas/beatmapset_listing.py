@@ -1,4 +1,7 @@
+"""Pydantic schemas for beatmapset listings."""
+
 from __future__ import annotations
+
 from datetime import datetime
 
 from pydantic.config import ConfigDict
@@ -9,6 +12,8 @@ from .beatmapset_snapshot import BeatmapsetSnapshotSchema
 
 
 class BeatmapsetListingSchema(BaseModel, BaseModelExtra):
+    """Beatmapset listing record referencing its current snapshot."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int | None = None
@@ -20,6 +25,8 @@ class BeatmapsetListingSchema(BaseModel, BaseModelExtra):
 
 
 class BeatmapsetListingCreateSchema(BaseModel, BaseModelExtra):
+    """Fields required to create a beatmapset listing."""
+
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     beatmapset_id: int
@@ -27,6 +34,8 @@ class BeatmapsetListingCreateSchema(BaseModel, BaseModelExtra):
 
 
 class BeatmapsetListingUpdateSchema(BaseModel, BaseModelExtra):
+    """Updatable fields for an existing beatmapset listing."""
+
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     beatmapset_snapshot_id: int | None = None

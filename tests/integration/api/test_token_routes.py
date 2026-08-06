@@ -11,7 +11,7 @@ class TestTokenEndpoint:
     """Integration tests for /api/v1/token endpoint (GET only via minimal TestClient)."""
 
     @pytest.mark.integration
-    def test_token_get_valid_token(self, TestClient: Any) -> None:
+    def test_token_get_valid_token(self, test_client: Any) -> None:
         """Test token GET with valid token."""
         now = datetime.now(UTC)
         payload = {
@@ -22,7 +22,7 @@ class TestTokenEndpoint:
         }
         valid_token = jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
-        response = TestClient.get("/api/v1/token", params={"token": valid_token})
+        response = test_client.get("/api/v1/token", params={"token": valid_token})
 
         assert response.status_code == 200
         data = response.json()
@@ -30,15 +30,15 @@ class TestTokenEndpoint:
         assert data["iss"] == FRONTEND_BASE_URL
 
     @pytest.mark.integration
-    def test_token_get_invalid_token(self, TestClient: Any) -> None:
+    def test_token_get_invalid_token(self, test_client: Any) -> None:
         """Test token GET with invalid token."""
-        response = TestClient.get("/api/v1/token", params={"token": "invalid.token.here"})
+        response = test_client.get("/api/v1/token", params={"token": "invalid.token.here"})
 
         assert response.status_code == 400
         assert "Invalid or expired JWT" in response.json()["detail"]
 
     @pytest.mark.integration
-    def test_token_get_expired_token(self, TestClient: Any) -> None:
+    def test_token_get_expired_token(self, test_client: Any) -> None:
         """Test token GET with expired token."""
         now = datetime.now(UTC)
         payload = {
@@ -49,13 +49,13 @@ class TestTokenEndpoint:
         }
         expired_token = jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
-        response = TestClient.get("/api/v1/token", params={"token": expired_token})
+        response = test_client.get("/api/v1/token", params={"token": expired_token})
 
         assert response.status_code == 400
         assert "Invalid or expired JWT" in response.json()["detail"]
 
     @pytest.mark.integration
-    def test_token_get_wrong_issuer(self, TestClient: Any) -> None:
+    def test_token_get_wrong_issuer(self, test_client: Any) -> None:
         """Test token GET with wrong issuer."""
         now = datetime.now(UTC)
         payload = {
@@ -66,21 +66,21 @@ class TestTokenEndpoint:
         }
         wrong_issuer_token = jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
-        response = TestClient.get("/api/v1/token", params={"token": wrong_issuer_token})
+        response = test_client.get("/api/v1/token", params={"token": wrong_issuer_token})
 
         assert response.status_code == 400
         assert "Invalid or expired JWT" in response.json()["detail"]
 
     @pytest.mark.integration
-    def test_token_get_missing_token(self, TestClient: Any) -> None:
+    def test_token_get_missing_token(self, test_client: Any) -> None:
         """Test token GET with missing token parameter."""
-        response = TestClient.get("/api/v1/token")
+        response = test_client.get("/api/v1/token")
 
         assert response.status_code == 400
         assert "missing" in response.json()["detail"].lower()
 
     @pytest.mark.integration
-    def test_token_get_string_subject(self, TestClient: Any) -> None:
+    def test_token_get_string_subject(self, test_client: Any) -> None:
         """Test token GET with string subject (should fail validation)."""
         now = datetime.now(UTC)
         payload = {
@@ -91,7 +91,7 @@ class TestTokenEndpoint:
         }
         string_subject_token = jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
-        response = TestClient.get("/api/v1/token", params={"token": string_subject_token})
+        response = test_client.get("/api/v1/token", params={"token": string_subject_token})
 
         assert response.status_code == 400
         assert "Invalid or expired JWT" in response.json()["detail"]

@@ -1,11 +1,14 @@
+"""Profile model storing a user's osu! profile data."""
+
 from __future__ import annotations
+
 from datetime import date, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy.dialects.postgresql.json import JSONB
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm.base import Mapped
-from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.sql.expression import cast
 from sqlalchemy.sql.functions import func
 from sqlalchemy.sql.schema import ForeignKey
@@ -15,8 +18,13 @@ from app.utils import aware_utcnow
 
 from .base import Base
 
+if TYPE_CHECKING:
+    from sqlalchemy.sql.elements import ColumnElement
+
 
 class Profile(Base):
+    """A snapshot of a user's osu! profile data."""
+
     __tablename__ = "profiles"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(
@@ -109,6 +117,7 @@ class Profile(Base):
 
     @hybrid_property
     def total_maps(self) -> int:  # Missing approved maps?
+        """Total count of the user's mapped beatmapsets by status."""
         return (
             (self.graveyard_beatmapset_count or 0)
             + (self.loved_beatmapset_count or 0)
@@ -116,21 +125,20 @@ class Profile(Base):
             + (self.ranked_beatmapset_count or 0)
         )
 
-    @total_maps.expression
-    @classmethod
-    def _total_maps_expr(cls) -> ColumnElement:
+    @total_maps.inplace.expression
+    def _total_maps_expr(self) -> ColumnElement:
         return (
-            func.coalesce(cls.graveyard_beatmapset_count, 0)
-            + func.coalesce(cls.loved_beatmapset_count, 0)
-            + func.coalesce(cls.pending_beatmapset_count, 0)
-            + func.coalesce(cls.ranked_beatmapset_count, 0)
+            func.coalesce(self.graveyard_beatmapset_count, 0)
+            + func.coalesce(self.loved_beatmapset_count, 0)
+            + func.coalesce(self.pending_beatmapset_count, 0)
+            + func.coalesce(self.ranked_beatmapset_count, 0)
         )
 
     @hybrid_property
     def total_kudosu(self) -> int:
+        """Total kudosu earned by the user."""
         return self.kudosu.get("total", 0) if self.kudosu else 0
 
-    @total_kudosu.expression
-    @classmethod
-    def _total_kudosu_expr(cls) -> ColumnElement:
-        return func.coalesce(cast(cls.kudosu["total"].astext, Integer), 0)
+    @total_kudosu.inplace.expression
+    def _total_kudosu_expr(self) -> ColumnElement:
+        return func.coalesce(cast(self.kudosu["total"].astext, Integer), 0)  # type: ignore[index, union-attr]

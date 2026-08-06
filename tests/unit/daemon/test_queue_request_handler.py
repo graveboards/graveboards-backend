@@ -63,6 +63,11 @@ class TestQueueRequestHandler:
         with (
             patch("app.daemon.services.queue_request_handler.BeatmapManager", return_value=mock_bm),
             patch("app.daemon.services.queue_request_handler.aware_utcnow") as mock_utcnow,
+            patch(
+                "app.daemon.services.queue_request_handler.QueueRequestHandler._snapshot_active_rules",
+                new_callable=AsyncMock,
+                return_value="[]",
+            ),
         ):
             mock_utcnow.return_value = datetime(2026, 1, 1)
             await service._execute_job(123)
@@ -91,6 +96,11 @@ class TestQueueRequestHandler:
         with (
             patch("app.daemon.services.queue_request_handler.BeatmapManager", return_value=mock_bm),
             patch("app.daemon.services.queue_request_handler.aware_utcnow") as mock_utcnow,
+            patch(
+                "app.daemon.services.queue_request_handler.QueueRequestHandler._snapshot_active_rules",
+                new_callable=AsyncMock,
+                return_value="[]",
+            ),
         ):
             mock_utcnow.return_value = datetime(2026, 1, 1)
             await service._execute_job(123)
@@ -156,6 +166,11 @@ class TestQueueRequestHandler:
             ) as mock_deserialize,
             patch("app.daemon.services.queue_request_handler.aware_utcnow"),
             patch("app.daemon.services.queue_request_handler.RequestSchema"),
+            patch(
+                "app.daemon.services.queue_request_handler.QueueRequestHandler._snapshot_active_rules",
+                new_callable=AsyncMock,
+                return_value="[]",
+            ),
         ):
             mock_deserialize.return_value = QueueRequestHandlerTask(
                 user_id=123,
@@ -198,6 +213,11 @@ class TestQueueRequestHandler:
             patch("app.daemon.services.queue_request_handler.BeatmapManager", return_value=mock_bm),
             patch("app.daemon.services.queue_request_handler.aware_utcnow"),
             patch("app.daemon.services.queue_request_handler.RequestSchema") as mock_schema_class,
+            patch(
+                "app.daemon.services.queue_request_handler.QueueRequestHandler._snapshot_active_rules",
+                new_callable=AsyncMock,
+                return_value="[]",
+            ),
         ):
             mock_schema_class.model_validate.return_value = mock_schema_instance
             service._db.add.return_value = MagicMock()

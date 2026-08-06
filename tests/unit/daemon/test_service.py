@@ -40,11 +40,10 @@ class TestService:
         """Test that start sets running flag."""
         service._lock = asyncio.Lock()
 
-        with patch.object(service, "_on_start"):
-            with patch.object(service, "_on_started"):
-                with patch("asyncio.TaskGroup"):
-                    service._lock = asyncio.Lock()
-                    await service.start()
+        with patch.object(service, "_on_start"), patch.object(service, "_on_started"):
+            with patch("asyncio.TaskGroup"):
+                service._lock = asyncio.Lock()
+                await service.start()
 
         assert service._running is True
 

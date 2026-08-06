@@ -33,16 +33,15 @@ def _make_beatmap(
 def _make_context(
     beatmaps: list[Any] | None = None,
     config: dict[str, Any] | None = None,
-    type: str = "beatmap_ar_range",
+    rule_type: str = "beatmap_ar_range",
 ) -> ExecutionContext:
-    ctx = ExecutionContext(
+    return ExecutionContext(
         queue_id=1,
         user_id=12345678,
         beatmapset=MagicMock(),
         beatmaps=beatmaps or [],
         config=config or {},
     )
-    return ctx
 
 
 class TestARRangeRestriction:
@@ -109,7 +108,7 @@ class TestODRangeRestriction:
         context = _make_context(
             beatmaps=beatmaps,
             config={"min": 8.0, "max": 11.0},
-            type="beatmap_od_range",
+            rule_type="beatmap_od_range",
         )
         await validator.check(context)
 
@@ -121,7 +120,7 @@ class TestODRangeRestriction:
         context = _make_context(
             beatmaps=beatmaps,
             config={"min": 8.0},
-            type="beatmap_od_range",
+            rule_type="beatmap_od_range",
         )
 
         with pytest.raises(RuleViolationError):
@@ -137,7 +136,7 @@ class TestHPRangeRestriction:
         context = _make_context(
             beatmaps=beatmaps,
             config={"min": 3.0, "max": 5.0},
-            type="beatmap_hp_range",
+            rule_type="beatmap_hp_range",
         )
         await validator.check(context)
 
@@ -149,7 +148,7 @@ class TestHPRangeRestriction:
         context = _make_context(
             beatmaps=beatmaps,
             config={"max": 5.0},
-            type="beatmap_hp_range",
+            rule_type="beatmap_hp_range",
         )
 
         with pytest.raises(RuleViolationError):
@@ -165,7 +164,7 @@ class TestCSRangeRestriction:
         context = _make_context(
             beatmaps=beatmaps,
             config={"min": 2.0, "max": 4.0},
-            type="beatmap_cs_range",
+            rule_type="beatmap_cs_range",
         )
         await validator.check(context)
 
@@ -177,7 +176,7 @@ class TestCSRangeRestriction:
         context = _make_context(
             beatmaps=beatmaps,
             config={"max": 4.0},
-            type="beatmap_cs_range",
+            rule_type="beatmap_cs_range",
         )
 
         with pytest.raises(RuleViolationError):
@@ -193,7 +192,7 @@ class TestDrainRangeRestriction:
         context = _make_context(
             beatmaps=beatmaps,
             config={"min": 60.0, "max": 180.0},
-            type="beatmap_drain_range",
+            rule_type="beatmap_drain_range",
         )
         await validator.check(context)
 
@@ -205,7 +204,7 @@ class TestDrainRangeRestriction:
         context = _make_context(
             beatmaps=beatmaps,
             config={"min": 60.0},
-            type="beatmap_drain_range",
+            rule_type="beatmap_drain_range",
         )
 
         with pytest.raises(RuleViolationError):

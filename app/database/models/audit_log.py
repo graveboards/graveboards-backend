@@ -1,6 +1,8 @@
+"""Audit log model recording user actions on the platform."""
+
 from __future__ import annotations
+
 from datetime import datetime
-from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm.base import Mapped
@@ -11,11 +13,10 @@ from app.utils import aware_utcnow
 
 from .base import Base
 
-if TYPE_CHECKING:
-    pass
-
 
 class AuditLog(Base):
+    """An audit log entry capturing an audited action."""
+
     __tablename__ = "audit_logs"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=aware_utcnow)

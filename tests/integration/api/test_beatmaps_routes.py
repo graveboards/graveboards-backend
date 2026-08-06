@@ -82,7 +82,7 @@ async def test_beatmapset_beatmap_relationship() -> None:
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_get_beatmap_list(TestClientWithMocks: Any) -> None:
+async def test_get_beatmap_list(test_client_with_mocks: Any) -> None:
     """Test GET /api/v1/beatmaps returns list of beatmaps."""
     mock_db = AsyncMock()
     mock_beatmap1 = MagicMock()
@@ -91,7 +91,7 @@ async def test_get_beatmap_list(TestClientWithMocks: Any) -> None:
     mock_beatmap2.id = 116384
     mock_db.get_many = AsyncMock(return_value=[mock_beatmap1, mock_beatmap2])
 
-    test_client = TestClientWithMocks(mock_db=mock_db)
+    test_client = test_client_with_mocks(mock_db=mock_db)
 
     response = test_client.get("/api/v1/beatmaps")
 
@@ -103,7 +103,7 @@ async def test_get_beatmap_list(TestClientWithMocks: Any) -> None:
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_get_beatmap_by_id(TestClientWithMocks: Any) -> None:
+async def test_get_beatmap_by_id(test_client_with_mocks: Any) -> None:
     """Test GET /api/v1/beatmaps/{id} returns specific beatmap."""
     mock_db = AsyncMock()
     mock_beatmap = MagicMock()
@@ -111,7 +111,7 @@ async def test_get_beatmap_by_id(TestClientWithMocks: Any) -> None:
     mock_beatmap.beatmapset_id = 35965
     mock_db.get = AsyncMock(return_value=mock_beatmap)
 
-    test_client = TestClientWithMocks(mock_db=mock_db)
+    test_client = test_client_with_mocks(mock_db=mock_db)
 
     response = test_client.get("/api/v1/beatmaps/116383")
 
@@ -122,12 +122,12 @@ async def test_get_beatmap_by_id(TestClientWithMocks: Any) -> None:
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_get_beatmap_not_found(TestClientWithMocks: Any) -> None:
+async def test_get_beatmap_not_found(test_client_with_mocks: Any) -> None:
     """Test GET /api/v1/beatmaps/{id} returns 404 for non-existent beatmap."""
     mock_db = AsyncMock()
     mock_db.get = AsyncMock(return_value=None)
 
-    test_client = TestClientWithMocks(mock_db=mock_db)
+    test_client = test_client_with_mocks(mock_db=mock_db)
 
     response = test_client.get("/api/v1/beatmaps/999999")
 
@@ -146,7 +146,7 @@ class TestLeaderboardPatchIntegration:
     @pytest.mark.asyncio
     async def test_admin_can_update_leaderboard(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         admin_user_token: Any,
         authenticated_user_id: Any,
     ) -> None:
@@ -175,14 +175,14 @@ class TestLeaderboardPatchIntegration:
         async def mock_get(model: Any, **kwargs: Any) -> Any:
             if model == BeatmapSnapshot:
                 return mock_beatmap_snapshot
-            elif model == Leaderboard:
+            if model == Leaderboard:
                 return mock_leaderboard
             return mock_user
 
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.update = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         with authenticated_user_id(11111111):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
@@ -201,7 +201,7 @@ class TestLeaderboardPatchIntegration:
     @pytest.mark.asyncio
     async def test_non_admin_gets_forbidden_on_leaderboard_patch(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         admin_user_token: Any,
         authenticated_user_id: Any,
     ) -> None:
@@ -229,7 +229,7 @@ class TestLeaderboardPatchIntegration:
 
         mock_db.get = AsyncMock(side_effect=mock_get)
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         with authenticated_user_id(99999999):
             headers = {"Authorization": f"Bearer {generate_token(99999999)}"}
@@ -249,7 +249,7 @@ class TestLeaderboardPatchIntegration:
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_get_beatmap_osu_file(TestClientWithMocks: Any) -> None:
+async def test_get_beatmap_osu_file(test_client_with_mocks: Any) -> None:
     """Test GET /api/v1/beatmaps/{id}/snapshots/{n}/osu returns .osu file."""
     mock_db = AsyncMock()
     mock_beatmap_snapshot = MagicMock()
@@ -263,7 +263,7 @@ async def test_get_beatmap_osu_file(TestClientWithMocks: Any) -> None:
     mock_bm = MagicMock()
     mock_bm.get_path = MagicMock(return_value="/data/beatmaps/116383/1.osu")
 
-    test_client = TestClientWithMocks(mock_db=mock_db, mock_rc=mock_rc)
+    test_client = test_client_with_mocks(mock_db=mock_db, mock_rc=mock_rc)
 
     class AsyncFileMock:
         async def __aenter__(self) -> AsyncFileMock:
@@ -290,7 +290,7 @@ async def test_get_beatmap_osu_file(TestClientWithMocks: Any) -> None:
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_get_beatmap_osu_file_not_found(TestClientWithMocks: Any) -> None:
+async def test_get_beatmap_osu_file_not_found(test_client_with_mocks: Any) -> None:
     """Test 404 when .osu file doesn't exist."""
     mock_db = AsyncMock()
     mock_beatmap_snapshot = MagicMock()
@@ -303,7 +303,7 @@ async def test_get_beatmap_osu_file_not_found(TestClientWithMocks: Any) -> None:
     mock_bm = MagicMock()
     mock_bm.get_path = MagicMock(return_value="/data/beatmaps/116383/1.osu")
 
-    test_client = TestClientWithMocks(mock_db=mock_db, mock_rc=mock_rc)
+    test_client = test_client_with_mocks(mock_db=mock_db, mock_rc=mock_rc)
 
     mock_file = MagicMock()
     mock_file.__aenter__ = MagicMock(side_effect=FileNotFoundError("File not found"))
@@ -322,7 +322,7 @@ async def test_get_beatmap_osu_file_not_found(TestClientWithMocks: Any) -> None:
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_get_leaderboard(TestClientWithMocks: Any) -> None:
+async def test_get_leaderboard(test_client_with_mocks: Any) -> None:
     """Test GET /api/v1/beatmaps/{id}/snapshots/{n}/leaderboard returns leaderboard."""
     mock_db = AsyncMock()
     mock_beatmap_snapshot = MagicMock()
@@ -339,7 +339,7 @@ async def test_get_leaderboard(TestClientWithMocks: Any) -> None:
 
     mock_db.get = AsyncMock(return_value=mock_leaderboard)
 
-    test_client = TestClientWithMocks(mock_db=mock_db)
+    test_client = test_client_with_mocks(mock_db=mock_db)
 
     with patch(
         "api.v1.beatmaps.snapshots.leaderboard.LeaderboardSchema.model_validate"
@@ -365,7 +365,7 @@ async def test_get_leaderboard(TestClientWithMocks: Any) -> None:
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_admin_create_leaderboard(TestClientWithMocks: Any, admin_user_token: Any) -> None:
+async def test_admin_create_leaderboard(test_client_with_mocks: Any, admin_user_token: Any) -> None:
     """Test POST /api/v1/beatmaps/{id}/snapshots/{n}/leaderboard creates leaderboard."""
     from app.database.enums import RoleName
     from app.database.models import BeatmapSnapshot, Leaderboard, User
@@ -401,7 +401,7 @@ async def test_admin_create_leaderboard(TestClientWithMocks: Any, admin_user_tok
     mock_db.get = AsyncMock(side_effect=mock_get)
     mock_db.add = AsyncMock()
 
-    test_client = TestClientWithMocks(mock_db=mock_db)
+    test_client = test_client_with_mocks(mock_db=mock_db)
 
     headers = {"Authorization": f"Bearer {admin_user_token}"}
     response = test_client.post(
@@ -416,7 +416,7 @@ async def test_admin_create_leaderboard(TestClientWithMocks: Any, admin_user_tok
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_admin_patch_leaderboard(TestClientWithMocks: Any, admin_user_token: Any) -> None:
+async def test_admin_patch_leaderboard(test_client_with_mocks: Any, admin_user_token: Any) -> None:
     """Test PATCH /api/v1/beatmaps/{id}/snapshots/{n}/leaderboard updates leaderboard."""
     from app.database.enums import RoleName
     from app.database.models import BeatmapSnapshot, Leaderboard, User
@@ -452,7 +452,7 @@ async def test_admin_patch_leaderboard(TestClientWithMocks: Any, admin_user_toke
     mock_db.get = AsyncMock(side_effect=mock_get)
     mock_db.update = AsyncMock()
 
-    test_client = TestClientWithMocks(mock_db=mock_db)
+    test_client = test_client_with_mocks(mock_db=mock_db)
 
     headers = {"Authorization": f"Bearer {admin_user_token}"}
     response = test_client.patch(
@@ -467,7 +467,7 @@ async def test_admin_patch_leaderboard(TestClientWithMocks: Any, admin_user_toke
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_get_leaderboard_scores(TestClientWithMocks: Any) -> None:
+async def test_get_leaderboard_scores(test_client_with_mocks: Any) -> None:
     """Test GET /api/v1/beatmaps/{id}/snapshots/{n}/scores returns scores."""
     mock_db = AsyncMock()
     mock_beatmap_snapshot = MagicMock()
@@ -496,7 +496,7 @@ async def test_get_leaderboard_scores(TestClientWithMocks: Any) -> None:
     mock_leaderboard.scores = [mock_score1, mock_score2]
     mock_db.get = AsyncMock(return_value=mock_leaderboard)
 
-    test_client = TestClientWithMocks(mock_db=mock_db)
+    test_client = test_client_with_mocks(mock_db=mock_db)
 
     def mock_validate(obj: Any) -> MagicMock:
         m = MagicMock()

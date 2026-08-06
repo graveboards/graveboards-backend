@@ -24,16 +24,16 @@ def _make_beatmap(bpm: float = 150.0, mode: str = "osu", version: str = "Normal"
     return bm
 
 
-def _make_genre(id: int, name: str) -> MagicMock:
+def _make_genre(item_id: int, name: str) -> MagicMock:
     g = MagicMock()
-    g.id = id
+    g.id = item_id
     g.name = name
     return g
 
 
-def _make_language(id: int, name: str) -> MagicMock:
+def _make_language(item_id: int, name: str) -> MagicMock:
     lang = MagicMock()
-    lang.id = id
+    lang.id = item_id
     lang.name = name
     return lang
 

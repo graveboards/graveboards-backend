@@ -134,7 +134,7 @@ def validate_fixture_file(filepath: Path, category: str | None = None) -> tuple[
         return True, None  # Skip validation if jsonschema not available
 
     try:
-        with open(filepath) as f:
+        with Path(filepath).open() as f:
             data = json.load(f)
     except (json.JSONDecodeError, FileNotFoundError) as e:
         return False, f"Failed to parse JSON: {e}"
@@ -206,7 +206,7 @@ def validate_fixtures_command(fixtures_path: str = "tests/fixtures/osu") -> int:
     total_valid = 0
     total_invalid = 0
 
-    for _category, category_results in results.items():
+    for category_results in results.values():
         for _filename, _is_valid, error in category_results:
             if error:
                 total_invalid += 1

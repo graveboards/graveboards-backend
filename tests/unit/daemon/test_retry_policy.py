@@ -66,7 +66,7 @@ class TestTaskRetryPolicy:
         policy = TaskRetryPolicy(backoff=backoff, max_retries=5)
 
         with pytest.raises(FrozenInstanceError):
-            object.__setattr__(policy, "max_retries", 10)
+            policy.max_retries = 10
 
     def test_policy_is_slotted(self) -> None:
         """Test that policy uses slots for memory efficiency."""

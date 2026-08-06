@@ -1,4 +1,7 @@
+"""Pydantic schemas for queues."""
+
 from __future__ import annotations
+
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -15,6 +18,8 @@ if TYPE_CHECKING:
 
 
 class QueueSchema(BaseModel, BaseModelExtra):
+    """Queue record with its requests, managers, and rules."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int | None = None
@@ -27,14 +32,16 @@ class QueueSchema(BaseModel, BaseModelExtra):
     visibility: int | None = None
     enforce_user_id_match: bool | None = None
 
-    requests: list[RequestSchema] = []
-    managers: list[UserSchema] = []
+    requests: list[RequestSchema] = []  # noqa: RUF012
+    managers: list[UserSchema] = []  # noqa: RUF012
     user_profile: ProfileSchema | None = None
-    manager_profiles: list[ProfileSchema] = []
-    rules: list[RuleSchema] = []
+    manager_profiles: list[ProfileSchema] = []  # noqa: RUF012
+    rules: list[RuleSchema] = []  # noqa: RUF012
 
 
 class QueueCreateSchema(BaseModel, BaseModelExtra):
+    """Fields required to create a queue."""
+
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     user_id: int
@@ -45,6 +52,8 @@ class QueueCreateSchema(BaseModel, BaseModelExtra):
 
 
 class QueueUpdateSchema(BaseModel, BaseModelExtra):
+    """Updatable fields for an existing queue."""
+
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     user_id: int | None = None

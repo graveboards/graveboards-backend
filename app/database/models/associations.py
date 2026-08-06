@@ -1,4 +1,7 @@
+"""SQLAlchemy association tables for many-to-many relationships."""
+
 from __future__ import annotations
+
 from sqlalchemy.sql.schema import Column, ForeignKey, Table
 from sqlalchemy.sql.sqltypes import Integer
 

@@ -1,4 +1,7 @@
+"""Pydantic schemas for API keys."""
+
 from __future__ import annotations
+
 from datetime import datetime
 
 from pydantic.config import ConfigDict
@@ -8,6 +11,8 @@ from .base_model_extra import BaseModelExtra
 
 
 class ApiKeySchema(BaseModel, BaseModelExtra):
+    """API key record with its hashed value and expiry."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int | None = None
@@ -19,6 +24,8 @@ class ApiKeySchema(BaseModel, BaseModelExtra):
 
 
 class ApiKeyCreateSchema(BaseModel, BaseModelExtra):
+    """Fields required to issue a new API key."""
+
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     user_id: int
@@ -27,6 +34,8 @@ class ApiKeyCreateSchema(BaseModel, BaseModelExtra):
 
 
 class ApiKeyUpdateSchema(BaseModel, BaseModelExtra):
+    """Updatable fields for an existing API key."""
+
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     hashed_key: str | None = None

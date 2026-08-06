@@ -1,3 +1,3 @@
 """Test fixtures package."""
 
-__all__ = ["benchmark", "beatmapsets", "dependencies", "factories", "schema", "health"]
+__all__ = ["beatmapsets", "benchmark", "dependencies", "factories", "health", "schema"]

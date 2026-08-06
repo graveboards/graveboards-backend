@@ -46,7 +46,7 @@ def mock_beatmap_file(temp_fixture_dir: Path) -> Path:
     }
 
     filepath = temp_fixture_dir / "beatmaps" / "beatmap_12345.json"
-    with open(filepath, "w") as f:
+    with Path(filepath).open("w") as f:
         json.dump(beatmap_data, f)
 
     return filepath
@@ -61,7 +61,7 @@ def mock_beatmapset_file(temp_fixture_dir: Path) -> Path:
     }
 
     filepath = temp_fixture_dir / "beatmapsets" / "beatmapset_67890.json"
-    with open(filepath, "w") as f:
+    with Path(filepath).open("w") as f:
         json.dump(beatmapset_data, f)
 
     return filepath
@@ -79,7 +79,7 @@ def mock_user_file(temp_fixture_dir: Path) -> Path:
     }
 
     filepath = temp_fixture_dir / "users" / "osu" / "user_111111_osu.json"
-    with open(filepath, "w") as f:
+    with Path(filepath).open("w") as f:
         json.dump(user_data, f)
 
     return filepath
@@ -100,7 +100,7 @@ def mock_score_file(temp_fixture_dir: Path) -> Path:
     ]
 
     filepath = temp_fixture_dir / "scores" / "best" / "scores_111111_best.json"
-    with open(filepath, "w") as f:
+    with Path(filepath).open("w") as f:
         json.dump(score_data, f)
 
     return filepath
@@ -199,7 +199,7 @@ class TestFixtureManager:
         }
 
         filepath = users_dir / "user_111111_osu.json"
-        with open(filepath, "w") as f:
+        with Path(filepath).open("w") as f:
             json.dump(user_data, f)
 
         metadata = {
@@ -267,7 +267,7 @@ class TestFixtureManager:
         ]
 
         filepath = scores_dir / "scores_111111_best.json"
-        with open(filepath, "w") as f:
+        with Path(filepath).open("w") as f:
             json.dump(score_data, f)
 
         metadata = {

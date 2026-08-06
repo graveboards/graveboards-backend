@@ -175,7 +175,7 @@ async def seeded_beatmaps(db_transaction: Any) -> list[Beatmap]:
     beatmap_ids = [116383, 234567, 345678]
     for i, beatmap_id in enumerate(beatmap_ids):
         beatmapset_id = beatmap_id
-        beatmapset, beatmaps_list, _, _ = await seed_beatmapset(
+        _beatmapset, beatmaps_list, _, _ = await seed_beatmapset(
             db_transaction,
             beatmapset_id=beatmapset_id,
             beatmap_ids=[beatmap_id],

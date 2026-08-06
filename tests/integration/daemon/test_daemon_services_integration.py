@@ -54,7 +54,7 @@ class TestDaemonLifecycle:
         daemon = Daemon(rc=mock_rc, db=mock_db)
         await daemon._on_start()
 
-        for _name, service in daemon._services.items():
+        for service in daemon._services.values():
             assert isinstance(service, Service)
 
 
@@ -81,8 +81,7 @@ class TestServiceSupervisor:
         from app.observability.logging import get_logger
 
         ServiceSupervisor.LOGGER = get_logger("test.supervisor")
-        supervisor = ServiceSupervisor()
-        return supervisor
+        return ServiceSupervisor()
 
     @pytest.mark.asyncio
     async def test_register_service_stores_factory(self, supervisor: ServiceSupervisor) -> None:
@@ -131,11 +130,11 @@ class TestScheduledService:
     @pytest.mark.asyncio
     async def test_service_requires_logger(self) -> None:
         """Test Service subclass without LOGGER raises TypeError."""
+
+        class BadService(Service):
+            pass
+
         with pytest.raises(TypeError, match="LOGGER"):
-
-            class BadService(Service):
-                pass
-
             BadService()
 
     @pytest.mark.asyncio

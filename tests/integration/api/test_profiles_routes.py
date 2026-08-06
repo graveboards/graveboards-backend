@@ -19,7 +19,7 @@ class TestProfilesGetIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_can_get_profiles_list(
-        self, TestClientWithMocks: Any, security_disabled: Any
+        self, test_client_with_mocks: Any, security_disabled: Any
     ) -> None:
         """Test admin can get profiles list."""
         from app.database.models import Profile
@@ -37,7 +37,7 @@ class TestProfilesGetIntegration:
         mock_db.get_many = AsyncMock(return_value=[profile1, profile2])
         mock_db.update = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         response = test_client.get("/api/v1/profiles")
 
@@ -49,7 +49,7 @@ class TestProfilesGetIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_can_get_profile_by_user_id(
-        self, TestClientWithMocks: Any, security_disabled: Any
+        self, test_client_with_mocks: Any, security_disabled: Any
     ) -> None:
         """Test admin can get profile by user id."""
         from app.database.enums import RoleName
@@ -77,7 +77,7 @@ class TestProfilesGetIntegration:
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.update = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         response = test_client.get(f"/api/v1/profiles/{self.TEST_USER_ID}")
 
@@ -88,7 +88,7 @@ class TestProfilesGetIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_profile_not_found(
-        self, TestClientWithMocks: Any, security_disabled: Any
+        self, test_client_with_mocks: Any, security_disabled: Any
     ) -> None:
         """Test admin gets 404 when profile doesn't exist."""
         from app.database.enums import RoleName
@@ -109,7 +109,7 @@ class TestProfilesGetIntegration:
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.update = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         response = test_client.get(f"/api/v1/profiles/{-1}")
 
@@ -120,7 +120,7 @@ class TestProfilesGetIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_bypass_security_with_flag(
-        self, TestClientWithMocks: Any, security_disabled: Any
+        self, test_client_with_mocks: Any, security_disabled: Any
     ) -> None:
         """Test security disabled bypasses authorization on profiles."""
         from app.database.models import Profile
@@ -138,7 +138,7 @@ class TestProfilesGetIntegration:
         mock_db.get_many = AsyncMock(return_value=[profile1, profile2])
         mock_db.update = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         response = test_client.get("/api/v1/profiles")
 

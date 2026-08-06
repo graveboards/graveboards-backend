@@ -75,12 +75,12 @@ class TestSearchHttpIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_search_post_returns_201(self, TestClientWithMocks: Any) -> None:
+    async def test_search_post_returns_201(self, test_client_with_mocks: Any) -> None:
         """Test POST /api/v1/search returns 201 with compressed query."""
 
         mock_rc = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_rc=mock_rc)
+        test_client = test_client_with_mocks(mock_rc=mock_rc)
 
         response = test_client.post(
             "/api/v1/search",
@@ -99,11 +99,11 @@ class TestSearchHttpIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_search_post_invalid_scope_returns_400(self, TestClientWithMocks: Any) -> None:
+    async def test_search_post_invalid_scope_returns_400(self, test_client_with_mocks: Any) -> None:
         """Test POST /api/v1/search with invalid scope returns 400."""
         mock_rc = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_rc=mock_rc)
+        test_client = test_client_with_mocks(mock_rc=mock_rc)
 
         response = test_client.post(
             "/api/v1/search",

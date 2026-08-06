@@ -1,4 +1,7 @@
+"""Profile fetcher task model tracking per-user profile fetching."""
+
 from __future__ import annotations
+
 from datetime import datetime
 
 from sqlalchemy.orm import mapped_column
@@ -10,6 +13,8 @@ from .base import Base
 
 
 class ProfileFetcherTask(Base):
+    """A background profile-fetching task for a user."""
+
     __tablename__ = "profile_fetcher_tasks"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(

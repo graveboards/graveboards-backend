@@ -1,4 +1,7 @@
+"""Pydantic schemas for beatmap listings."""
+
 from __future__ import annotations
+
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -12,6 +15,8 @@ if TYPE_CHECKING:
 
 
 class BeatmapListingSchema(BaseModel, BaseModelExtra):
+    """Beatmap listing record referencing its current snapshot."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int | None = None
@@ -23,6 +28,8 @@ class BeatmapListingSchema(BaseModel, BaseModelExtra):
 
 
 class BeatmapListingCreateSchema(BaseModel, BaseModelExtra):
+    """Fields required to create a beatmap listing."""
+
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     beatmap_id: int
@@ -30,6 +37,8 @@ class BeatmapListingCreateSchema(BaseModel, BaseModelExtra):
 
 
 class BeatmapListingUpdateSchema(BaseModel, BaseModelExtra):
+    """Updatable fields for an existing beatmap listing."""
+
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     beatmap_snapshot_id: int | None = None

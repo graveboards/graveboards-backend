@@ -4,9 +4,9 @@ import pytest
 
 
 @pytest.mark.integration
-def test_login_endpoint(TestClient: Any) -> None:
+def test_login_endpoint(test_client: Any) -> None:
     """Test login endpoint via HTTP using minimal TestClient fixture."""
-    response = TestClient.get("/api/v1/login")
+    response = test_client.get("/api/v1/login")
 
     assert response.status_code == 200
     data = response.json()
@@ -16,9 +16,9 @@ def test_login_endpoint(TestClient: Any) -> None:
 
 
 @pytest.mark.integration
-def test_health_endpoint(TestClient: Any) -> None:
+def test_health_endpoint(test_client: Any) -> None:
     """Test GET /api/v1/health returns 200 with status field."""
-    response = TestClient.get("/api/v1/health")
+    response = test_client.get("/api/v1/health")
 
     assert response.status_code == 200
     data = response.json()

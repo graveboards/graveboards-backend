@@ -1,7 +1,10 @@
+"""Database migration helper script."""
+
 import asyncio
 import json
 import sys
 from datetime import UTC, datetime
+from pathlib import Path
 
 from httpx import HTTPStatusError
 
@@ -17,10 +20,15 @@ TIMEOUT_SECS = 60.0
 
 
 async def migrate(input_path: str = "requests.json") -> None:
+    """Run database migration from a JSON file.
+
+    Args:
+        input_path: Path to the JSON file containing migration data.
+    """
     logger = get_logger("migrate")
     logger.info("Starting migration...")
 
-    with open(input_path) as file:
+    with Path(input_path).open() as file:
         rows: list[dict] = sorted(json.load(file), key=lambda r: r["id"])
         total_rows = len(rows)
 
@@ -55,9 +63,8 @@ async def migrate(input_path: str = "requests.json") -> None:
                     if isinstance(e, HTTPStatusError) and e.response.status_code == 404:
                         logger.warning(f"Beatmapset {beatmapset_id} not found, skipping")
                         continue
-                    else:
-                        logger.error(f"Error archiving beatmapset {beatmapset_id}: {e}, skipping")
-                        continue
+                    logger.error(f"Error archiving beatmapset {beatmapset_id}: {e}, skipping")
+                    continue
             else:
                 async with db.session() as session:
                     beatmapset_snapshot = await db.get(

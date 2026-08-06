@@ -31,7 +31,10 @@ class TestRestrictionsOnRequestSubmission:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_request_submits_when_no_rules(
-        self, TestClientWithMocks: Any, valid_request_body: dict[str, Any], security_disabled: Any
+        self,
+        test_client_with_mocks: Any,
+        valid_request_body: dict[str, Any],
+        security_disabled: Any,
     ) -> None:
         """Test request succeeds when queue has no rules."""
 
@@ -151,7 +154,7 @@ class TestRestrictionsOnRequestSubmission:
         mock_osu_client.__aexit__ = AsyncMock(return_value=False)
         mock_osu_client.get_beatmapset = AsyncMock(side_effect=mock_get_beatmapset_wip)
 
-        test_client = TestClientWithMocks(mock_rc=mock_rc, mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_rc=mock_rc, mock_db=mock_db)
 
         with (
             patch("api.v1.requests.OsuAPIClient", return_value=mock_osu_client),
@@ -183,7 +186,10 @@ class TestRestrictionsOnRequestSubmission:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_request_blocked_by_rate_limit(
-        self, TestClientWithMocks: Any, valid_request_body: dict[str, Any], security_disabled: Any
+        self,
+        test_client_with_mocks: Any,
+        valid_request_body: dict[str, Any],
+        security_disabled: Any,
     ) -> None:
         """Test request is blocked when rate limit is exceeded."""
 
@@ -232,6 +238,7 @@ class TestRestrictionsOnRequestSubmission:
             # original "caller may submit whatever user_id the body carries" intent.
             mock_admin_user,
             None,
+            mock_queue,
         ]
         mock_db.add = AsyncMock()
         mock_db.session = MockSession
@@ -316,7 +323,7 @@ class TestRestrictionsOnRequestSubmission:
         mock_osu_client.__aexit__ = AsyncMock(return_value=False)
         mock_osu_client.get_beatmapset = AsyncMock(side_effect=mock_get_beatmapset_wip)
 
-        test_client = TestClientWithMocks(mock_rc=mock_rc, mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_rc=mock_rc, mock_db=mock_db)
 
         with patch("api.v1.requests.OsuAPIClient", return_value=mock_osu_client):
             response = test_client.post("/api/v1/requests", json=valid_request_body)
@@ -328,7 +335,10 @@ class TestRestrictionsOnRequestSubmission:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_request_blocked_by_cooldown(
-        self, TestClientWithMocks: Any, valid_request_body: dict[str, Any], security_disabled: Any
+        self,
+        test_client_with_mocks: Any,
+        valid_request_body: dict[str, Any],
+        security_disabled: Any,
     ) -> None:
         """Test request is blocked when cooldown period is active."""
         from datetime import datetime, timedelta
@@ -377,6 +387,7 @@ class TestRestrictionsOnRequestSubmission:
             # original "caller may submit whatever user_id the body carries" intent.
             mock_admin_user,
             None,
+            mock_queue,
         ]
         mock_db.add = AsyncMock()
         mock_db.session = MockSession
@@ -392,7 +403,7 @@ class TestRestrictionsOnRequestSubmission:
         mock_rc.publish = AsyncMock(return_value=True)
         mock_rc.hgetall = AsyncMock(return_value=None)
         mock_rc.get = AsyncMock(return_value=str(thirty_minutes_ago))
-        mock_rc.set = AsyncMock(return_value=True)
+        mock_rc.set = AsyncMock(return_value=False)
 
         class MockLockCtx:
             async def __aenter__(self) -> None:
@@ -466,7 +477,7 @@ class TestRestrictionsOnRequestSubmission:
         mock_osu_client.__aexit__ = AsyncMock(return_value=False)
         mock_osu_client.get_beatmapset = AsyncMock(side_effect=mock_get_beatmapset_wip)
 
-        test_client = TestClientWithMocks(mock_rc=mock_rc, mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_rc=mock_rc, mock_db=mock_db)
 
         with patch("api.v1.requests.OsuAPIClient", return_value=mock_osu_client):
             response = test_client.post("/api/v1/requests", json=valid_request_body)
@@ -478,7 +489,10 @@ class TestRestrictionsOnRequestSubmission:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_request_blocked_by_blacklist(
-        self, TestClientWithMocks: Any, valid_request_body: dict[str, Any], security_disabled: Any
+        self,
+        test_client_with_mocks: Any,
+        valid_request_body: dict[str, Any],
+        security_disabled: Any,
     ) -> None:
         """Test request is blocked when user is blacklisted."""
 
@@ -526,6 +540,7 @@ class TestRestrictionsOnRequestSubmission:
             # original "caller may submit whatever user_id the body carries" intent.
             mock_admin_user,
             None,
+            mock_queue,
         ]
         mock_db.add = AsyncMock()
         mock_db.session = MockSession
@@ -610,7 +625,7 @@ class TestRestrictionsOnRequestSubmission:
         mock_osu_client.__aexit__ = AsyncMock(return_value=False)
         mock_osu_client.get_beatmapset = AsyncMock(side_effect=mock_get_beatmapset_wip)
 
-        test_client = TestClientWithMocks(mock_rc=mock_rc, mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_rc=mock_rc, mock_db=mock_db)
 
         with patch("api.v1.requests.OsuAPIClient", return_value=mock_osu_client):
             response = test_client.post("/api/v1/requests", json=valid_request_body)
@@ -622,7 +637,10 @@ class TestRestrictionsOnRequestSubmission:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_request_passes_when_inactive_rule(
-        self, TestClientWithMocks: Any, valid_request_body: dict[str, Any], security_disabled: Any
+        self,
+        test_client_with_mocks: Any,
+        valid_request_body: dict[str, Any],
+        security_disabled: Any,
     ) -> None:
         """Test request succeeds when rule exists but is inactive."""
 
@@ -742,7 +760,7 @@ class TestRestrictionsOnRequestSubmission:
         mock_osu_client.__aexit__ = AsyncMock(return_value=False)
         mock_osu_client.get_beatmapset = AsyncMock(side_effect=mock_get_beatmapset_wip)
 
-        test_client = TestClientWithMocks(mock_rc=mock_rc, mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_rc=mock_rc, mock_db=mock_db)
 
         with (
             patch("api.v1.requests.OsuAPIClient", return_value=mock_osu_client),
@@ -774,7 +792,7 @@ class TestRestrictionsOnRequestSubmission:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_request_passes_when_user_not_in_target(
-        self, TestClientWithMocks: Any, security_disabled: Any
+        self, test_client_with_mocks: Any, security_disabled: Any
     ) -> None:
         """Test request succeeds when user is not in rule target list."""
 
@@ -911,7 +929,7 @@ class TestRestrictionsOnRequestSubmission:
         mock_osu_client.__aexit__ = AsyncMock(return_value=False)
         mock_osu_client.get_beatmapset = AsyncMock(side_effect=mock_get_beatmapset_wip)
 
-        test_client = TestClientWithMocks(mock_rc=mock_rc, mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_rc=mock_rc, mock_db=mock_db)
 
         with (
             patch("api.v1.requests.OsuAPIClient", return_value=mock_osu_client),
@@ -949,7 +967,7 @@ class TestQueueRulesPatch:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_can_set_rules(
-        self, TestClientWithMocks: Any, admin_user_token: str
+        self, test_client_with_mocks: Any, admin_user_token: str
     ) -> None:
         """Test admin can set rules via PATCH."""
         from app.database.models import Queue
@@ -987,7 +1005,7 @@ class TestQueueRulesPatch:
         mock_db.update = AsyncMock()
         mock_db.session = MockSession
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         with (
             patch(
@@ -1033,7 +1051,7 @@ class TestQueueRulesPatch:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_queue_owner_can_set_rules(
-        self, TestClientWithMocks: Any, admin_user_token: str
+        self, test_client_with_mocks: Any, admin_user_token: str
     ) -> None:
         """Test queue owner can set rules via PATCH."""
         from app.database.models import Queue
@@ -1071,7 +1089,7 @@ class TestQueueRulesPatch:
         mock_db.update = AsyncMock()
         mock_db.session = MockSession
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         with (
             patch(
@@ -1116,7 +1134,7 @@ class TestQueueRulesPatch:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_non_admin_cannot_set_rules(
-        self, TestClientWithMocks: Any, admin_user_token: str
+        self, test_client_with_mocks: Any, admin_user_token: str
     ) -> None:
         """Test non-admin non-owner gets 403 when trying to set rules."""
         from app.security import generate_token
@@ -1136,7 +1154,7 @@ class TestQueueRulesPatch:
         mock_db = AsyncMock()
         mock_db.get = AsyncMock(side_effect=mock_get)
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         with (
             patch(

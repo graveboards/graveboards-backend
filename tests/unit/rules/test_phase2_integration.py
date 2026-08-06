@@ -8,9 +8,9 @@ from app.database.rules.engine.phase2_runner import Phase2Runner
 from app.database.rules.exceptions import RetryableValidationError, RuleViolationError
 
 
-def _make_mock_rule(type: str, config: dict, is_active: bool = True) -> MagicMock:
+def _make_mock_rule(rule_type: str, config: dict, is_active: bool = True) -> MagicMock:
     r = MagicMock()
-    r.type = type
+    r.type = rule_type
     r.config = config
     r.is_active = is_active
     r.version = "1.0"
@@ -85,12 +85,14 @@ class TestPhase2Runner:
         async def failing_eval(self: Any, context: Any, depth: int = 0) -> Any:
             raise ValueError("Unexpected error")
 
-        with patch(
-            "app.database.rules.engine.evaluator.AtomicRuleNode.evaluate",
-            new=failing_eval,
+        with (
+            patch(
+                "app.database.rules.engine.evaluator.AtomicRuleNode.evaluate",
+                new=failing_eval,
+            ),
+            pytest.raises(RetryableValidationError),
         ):
-            with pytest.raises(RetryableValidationError):
-                await runner.run(rules, context)
+            await runner.run(rules, context)
 
     @pytest.mark.unit
     @pytest.mark.asyncio

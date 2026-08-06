@@ -1,4 +1,7 @@
+"""Pydantic schemas for requests."""
+
 from __future__ import annotations
+
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -16,6 +19,8 @@ if TYPE_CHECKING:
 
 
 class RequestSchema(BaseModel, BaseModelExtra):
+    """Request record with its status and related snapshot and queue."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int | None = None
@@ -36,6 +41,8 @@ class RequestSchema(BaseModel, BaseModelExtra):
 
 
 class RequestCreateSchema(BaseModel, BaseModelExtra):
+    """Fields required to create a request."""
+
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     user_id: int
@@ -47,6 +54,8 @@ class RequestCreateSchema(BaseModel, BaseModelExtra):
 
 
 class RequestUpdateSchema(BaseModel, BaseModelExtra):
+    """Updatable fields for an existing request."""
+
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     beatmapset_snapshot_id: int | None = None

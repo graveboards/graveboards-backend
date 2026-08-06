@@ -1,12 +1,11 @@
+"""Enum-like registry of the app's mapped model classes."""
+
 from __future__ import annotations
 
-from collections.abc import Iterator
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from sqlalchemy.ext.hybrid import HybridExtensionType
 from sqlalchemy.inspection import inspect
-from sqlalchemy.orm.mapper import Mapper
-from sqlalchemy.sql.elements import ColumnElement
 
 from .api_key import ApiKey
 from .base import Base
@@ -29,6 +28,12 @@ from .role import Role
 from .score import Score
 from .score_fetcher_task import ScoreFetcherTask
 from .user import User
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from sqlalchemy.orm.mapper import Mapper
+    from sqlalchemy.sql.elements import ColumnElement
 
 __all__ = ["ModelClass"]
 
@@ -86,10 +91,12 @@ class ModelClass[M: Base](metaclass=_ModelClassMeta):
 
     @property
     def name(self) -> str:
+        """The uppercase member name of this model handle."""
         return self._name
 
     @property
     def value(self) -> type[M]:
+        """The concrete mapped model class this handle wraps."""
         return self._model
 
     @classmethod
@@ -101,9 +108,11 @@ class ModelClass[M: Base](metaclass=_ModelClassMeta):
                 A SQLAlchemy model class registered with ``ModelClass``.
 
         Returns:
+        -------
             The ``ModelClass`` wrapping ``model``, parameterized on ``model``'s own type.
 
         Raises:
+        ------
             KeyError:
                 If the model class is not registered with ``ModelClass``.
         """
@@ -114,19 +123,17 @@ class ModelClass[M: Base](metaclass=_ModelClassMeta):
 
     @property
     def mapper(self) -> Mapper[M]:
+        """SQLAlchemy mapper inspecting the wrapped model class."""
         return inspect(self.value)
 
     @property
     def required_columns(self) -> set[str]:
+        """Columns that must be provided when creating a row."""
         required: set[str] = set()
 
         for column in self.mapper.columns:
-            if (
-                not column.primary_key
-                and not column.nullable
-                and column.default is None
-                or column.primary_key
-                and not column.autoincrement
+            if (not column.primary_key and not column.nullable and column.default is None) or (
+                column.primary_key and not column.autoincrement
             ):
                 required.add(column.name)
 
@@ -134,14 +141,17 @@ class ModelClass[M: Base](metaclass=_ModelClassMeta):
 
     @property
     def column_names(self) -> set[str]:
+        """Keys of all mapped columns on the wrapped model."""
         return {c.key for c in self.mapper.columns}
 
     @property
     def relationship_names(self) -> set[str]:
+        """Keys of all mapped relationships on the wrapped model."""
         return {r.key for r in self.mapper.relationships}
 
     @property
     def hybrid_property_names(self) -> set[str]:
+        """Names of all hybrid-property descriptors on the wrapped model."""
         return {
             name
             for name, attr in self.mapper.all_orm_descriptors.items()
@@ -150,10 +160,12 @@ class ModelClass[M: Base](metaclass=_ModelClassMeta):
 
     @property
     def all_names(self) -> set[str]:
+        """Union of all column, relationship, and hybrid-property names."""
         return self.column_names | self.relationship_names | self.hybrid_property_names
 
     @property
     def primary_keys(self) -> tuple[ColumnElement[Any], ...]:
+        """Primary key column elements of the wrapped model."""
         return self.mapper.primary_key
 
     def __repr__(self) -> str:

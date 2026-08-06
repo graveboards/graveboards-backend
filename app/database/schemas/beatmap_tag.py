@@ -1,4 +1,7 @@
+"""Pydantic schemas for beatmap tags."""
+
 from __future__ import annotations
+
 from datetime import datetime
 
 from pydantic.config import ConfigDict
@@ -8,6 +11,8 @@ from .base_model_extra import BaseModelExtra
 
 
 class BeatmapTagSchema(BaseModel, BaseModelExtra):
+    """Beatmap tag record with its ruleset association."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -19,6 +24,8 @@ class BeatmapTagSchema(BaseModel, BaseModelExtra):
 
 
 class BeatmapTagCreateSchema(BaseModel, BaseModelExtra):
+    """Fields required to create a beatmap tag."""
+
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     name: str
@@ -27,6 +34,8 @@ class BeatmapTagCreateSchema(BaseModel, BaseModelExtra):
 
 
 class BeatmapTagUpdateSchema(BaseModel, BaseModelExtra):
+    """Updatable fields for an existing beatmap tag."""
+
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     name: str | None = None

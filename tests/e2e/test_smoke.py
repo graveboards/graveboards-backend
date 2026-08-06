@@ -10,9 +10,9 @@ def test_e2e_marker_enabled() -> None:
 
 
 @pytest.mark.e2e
-def test_app_has_openapi_spec(TestClient: Any) -> None:
+def test_app_has_openapi_spec(test_client: Any) -> None:
     """Test that OpenAPI spec is available."""
-    response = TestClient.get("/api/v1/openapi.json")
+    response = test_client.get("/api/v1/openapi.json")
 
     assert response.status_code == 200
     spec = response.json()
@@ -22,9 +22,9 @@ def test_app_has_openapi_spec(TestClient: Any) -> None:
 
 
 @pytest.mark.e2e
-def test_cors_middleware_enabled(TestClient: Any) -> None:
+def test_cors_middleware_enabled(test_client: Any) -> None:
     """Test that CORS middleware is properly configured."""
-    response = TestClient.options(
+    response = test_client.options(
         "/api/v1/health",
         headers={
             "Origin": "http://localhost:3000",
@@ -36,9 +36,9 @@ def test_cors_middleware_enabled(TestClient: Any) -> None:
 
 
 @pytest.mark.e2e
-def test_gzip_middleware_enabled(TestClient: Any) -> None:
+def test_gzip_middleware_enabled(test_client: Any) -> None:
     """Test that GZip middleware is properly configured."""
-    response = TestClient.get(
+    response = test_client.get(
         "/api/v1/openapi.json",
         headers={
             "Accept-Encoding": "gzip",

@@ -1,4 +1,7 @@
+"""Pydantic schemas for beatmapset snapshots."""
+
 from __future__ import annotations
+
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
@@ -15,6 +18,8 @@ if TYPE_CHECKING:
 
 
 class BeatmapsetSnapshotSchema(BeatmapsetOsuApiSchema, BaseModelExtra):
+    """Snapshot of a beatmapset's state with its related records."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -24,8 +29,8 @@ class BeatmapsetSnapshotSchema(BeatmapsetOsuApiSchema, BaseModelExtra):
     checksum: str
     verified: bool | None = None
 
-    beatmap_snapshots: list[BeatmapSnapshotSchema] = []
-    beatmapset_tags: list[BeatmapsetTagSchema] = []
+    beatmap_snapshots: list[BeatmapSnapshotSchema] = []  # noqa: RUF012
+    beatmapset_tags: list[BeatmapsetTagSchema] = []  # noqa: RUF012
     user_profile: ProfileSchema | None = None
 
     beatmaps: list[BeatmapOsuApiSchema] | None = Field(exclude=True, default=None)
@@ -33,6 +38,8 @@ class BeatmapsetSnapshotSchema(BeatmapsetOsuApiSchema, BaseModelExtra):
 
 
 class BeatmapsetSnapshotCreateSchema(BeatmapsetOsuApiSchema, BaseModelExtra):
+    """Fields required to create a beatmapset snapshot."""
+
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     beatmapset_id: int
@@ -42,6 +49,8 @@ class BeatmapsetSnapshotCreateSchema(BeatmapsetOsuApiSchema, BaseModelExtra):
 
 
 class BeatmapsetSnapshotUpdateSchema(BeatmapsetOsuApiSchema, BaseModelExtra):
+    """Updatable fields for an existing beatmapset snapshot."""
+
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     snapshot_number: int | None = None

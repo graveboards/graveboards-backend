@@ -18,12 +18,6 @@ from tests.unit.osu_api.test_utils import (
 )
 
 __all__ = [
-    "_get_beatmap_attributes_with_fallback",
-    "_get_beatmap_scores_with_fallback",
-    "_get_beatmap_with_fallback",
-    "_get_beatmapset_with_fallback",
-    "_get_scores_with_fallback",
-    "_get_user_with_fallback",
     "_create_mock_beatmap",
     "_create_mock_beatmap_attributes",
     "_create_mock_beatmap_scores",
@@ -32,4 +26,10 @@ __all__ = [
     "_create_mock_score",
     "_create_mock_tags",
     "_create_mock_user",
+    "_get_beatmap_attributes_with_fallback",
+    "_get_beatmap_scores_with_fallback",
+    "_get_beatmap_with_fallback",
+    "_get_beatmapset_with_fallback",
+    "_get_scores_with_fallback",
+    "_get_user_with_fallback",
 ]

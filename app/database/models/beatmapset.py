@@ -1,24 +1,30 @@
+"""Beatmapset model representing a collection of beatmaps."""
+
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import mapped_column, relationship
 from sqlalchemy.orm.base import Mapped
 from sqlalchemy.sql import select
-from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.sql.functions import func
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import Integer
 
 from .base import Base
+from .beatmapset_snapshot import BeatmapsetSnapshot
 
 if TYPE_CHECKING:
+    from sqlalchemy.sql.elements import ColumnElement
+
     from .beatmap import Beatmap
     from .beatmapset_listing import BeatmapsetListing
-    from .beatmapset_snapshot import BeatmapsetSnapshot
 
 
 class Beatmapset(Base):
+    """A beatmapset that snapshots and listings are derived from."""
+
     __tablename__ = "beatmapsets"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False)
     user_id: Mapped[int] = mapped_column(
@@ -43,13 +49,13 @@ class Beatmapset(Base):
     # Hybrid annotations
     @hybrid_property
     def num_snapshots(self) -> int:
+        """Return the number of snapshots taken of this beatmapset."""
         return len(self.snapshots)
 
-    @num_snapshots.expression
-    @classmethod
-    def _num_snapshots_expr(cls) -> ColumnElement:
+    @num_snapshots.inplace.expression
+    def _num_snapshots_expr(self) -> ColumnElement:
         return (
             select(func.count(BeatmapsetSnapshot.id))
-            .where(BeatmapsetSnapshot.beatmapset_id == cls.id)
+            .where(BeatmapsetSnapshot.beatmapset_id == self.id)
             .scalar_subquery()
         )

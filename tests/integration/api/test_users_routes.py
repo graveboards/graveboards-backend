@@ -32,7 +32,7 @@ class TestUsersGetIntegration:
     @pytest.mark.asyncio
     async def test_admin_can_get_users_list(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         security_disabled: Any,
     ) -> None:
         """Test admin can get users list."""
@@ -54,7 +54,7 @@ class TestUsersGetIntegration:
         mock_db.get_many = AsyncMock(return_value=[user1, user2])
         mock_db.update = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         response = test_client.get("/api/v1/users")
 
@@ -67,7 +67,7 @@ class TestUsersGetIntegration:
     @pytest.mark.asyncio
     async def test_admin_can_get_user_by_id(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         security_disabled: Any,
     ) -> None:
         """Test admin can get user by id."""
@@ -86,7 +86,7 @@ class TestUsersGetIntegration:
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.update = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         response = test_client.get(f"/api/v1/users/{self.TEST_USER_ID}")
 
@@ -98,7 +98,7 @@ class TestUsersGetIntegration:
     @pytest.mark.asyncio
     async def test_admin_user_not_found(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         security_disabled: Any,
     ) -> None:
         """Test admin gets 404 when user doesn't exist."""
@@ -115,7 +115,7 @@ class TestUsersGetIntegration:
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.update = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         response = test_client.get(f"/api/v1/users/{-1}")
 
@@ -127,7 +127,7 @@ class TestUsersGetIntegration:
     @pytest.mark.asyncio
     async def test_security_disabled_resolves_dev_identity(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         security_disabled: Any,
     ) -> None:
         """Test that disabling security resolves a real (admin) dev identity rather
@@ -151,7 +151,7 @@ class TestUsersGetIntegration:
         mock_db.get_many = AsyncMock(return_value=[user1, user2])
         mock_db.update = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         response = test_client.get("/api/v1/users")
 
@@ -167,7 +167,7 @@ class TestUsersPostIntegration:
     @pytest.mark.asyncio
     async def test_create_user_success(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         admin_user_token: Any,
     ) -> None:
         """Test successful user creation."""
@@ -192,7 +192,7 @@ class TestUsersPostIntegration:
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.add = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         with (
             patch(
@@ -227,7 +227,7 @@ class TestUsersPostIntegration:
     @pytest.mark.asyncio
     async def test_create_user_conflict(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         admin_user_token: Any,
     ) -> None:
         """Test 409 when user already exists."""
@@ -251,7 +251,7 @@ class TestUsersPostIntegration:
 
         mock_db.get = AsyncMock(side_effect=mock_get)
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         with (
             patch(

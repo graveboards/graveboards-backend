@@ -1,8 +1,13 @@
+"""Pydantic schemas for a user's statistics."""
+
 from __future__ import annotations
+
 from pydantic.main import BaseModel
 
 
 class UserStatisticsSchema(BaseModel):
+    """Aggregated play statistics and ranks for a user."""
+
     count_100: int
     count_300: int
     count_50: int
@@ -28,11 +33,15 @@ class UserStatisticsSchema(BaseModel):
 
 
 class LevelSchema(BaseModel):
+    """Current level and progress toward the next level."""
+
     current: int
     progress: int
 
 
 class UserStatisticsGradeCountsSchema(BaseModel):
+    """Grade counts a user has earned across beatmaps."""
+
     ss: int
     ssh: int
     s: int
@@ -41,4 +50,6 @@ class UserStatisticsGradeCountsSchema(BaseModel):
 
 
 class UserStatisticsRankSchema(BaseModel):
+    """Country rank for a user's statistics."""
+
     country: int | None

@@ -27,7 +27,7 @@ async def test_csrf_state_is_validated() -> None:
     rc.delete = AsyncMock(return_value=True)
 
     oauth = OAuth()
-    authorization_url, state = oauth.create_authorization_url()
+    _authorization_url, state = oauth.create_authorization_url()
 
     state_hash_name = Namespace.CSRF_STATE.hash_name(state)
     await rc.set(state_hash_name, "valid", ex=300)

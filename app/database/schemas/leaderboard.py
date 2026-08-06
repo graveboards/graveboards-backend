@@ -1,4 +1,7 @@
+"""Pydantic schemas for leaderboards."""
+
 from __future__ import annotations
+
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -13,6 +16,8 @@ if TYPE_CHECKING:
 
 
 class LeaderboardSchema(BaseModel, BaseModelExtra):
+    """Leaderboard record with its beatmap snapshot and scores."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int | None = None
@@ -23,10 +28,12 @@ class LeaderboardSchema(BaseModel, BaseModelExtra):
     frozen: bool
 
     beatmap_snapshot: BeatmapSnapshotSchema | None = None
-    scores: list[ScoreSchema] = []
+    scores: list[ScoreSchema] = []  # noqa: RUF012
 
 
 class LeaderboardCreateSchema(BaseModel, BaseModelExtra):
+    """Fields required to create a leaderboard."""
+
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     beatmap_id: int
@@ -35,6 +42,8 @@ class LeaderboardCreateSchema(BaseModel, BaseModelExtra):
 
 
 class LeaderboardUpdateSchema(BaseModel, BaseModelExtra):
+    """Updatable fields for an existing leaderboard."""
+
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     beatmap_snapshot_id: int | None = None

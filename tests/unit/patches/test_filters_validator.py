@@ -79,7 +79,7 @@ class TestFiltersValidator:
     def test_validate_filters_expected_dict_raises(self) -> None:
         """Test that non-dict filter raises error."""
         schema = {"properties": {"id": {"type": "integer"}}}
-        filters = cast(dict[str, Any], cast(object, "not_a_dict"))
+        filters = cast("dict[str, Any]", cast("object", "not_a_dict"))
 
         with pytest.raises(DeepObjectValidationError):
             validate_filters(filters, schema)

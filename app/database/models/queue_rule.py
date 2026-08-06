@@ -1,4 +1,7 @@
+"""Queue rule model configuring a queue's acceptance criteria."""
+
 from __future__ import annotations
+
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -16,6 +19,8 @@ if TYPE_CHECKING:
 
 
 class QueueRule(Base):
+    """An individual rule governing requests submitted to a queue."""
+
     __tablename__ = "queue_rules"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     queue_id: Mapped[int] = mapped_column(

@@ -1,4 +1,7 @@
+"""Beatmap listing model linking a beatmap to its current snapshot."""
+
 from __future__ import annotations
+
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -16,6 +19,8 @@ if TYPE_CHECKING:
 
 
 class BeatmapListing(Base):
+    """Current listing state of a beatmap tied to its latest snapshot."""
+
     __tablename__ = "beatmap_listings"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     beatmap_id: Mapped[int] = mapped_column(

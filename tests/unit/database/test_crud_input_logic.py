@@ -109,13 +109,13 @@ class TestReadInputValidation:
         """Test valid filter configuration."""
         filters: Filters = {"id": {"eq": 123}, "user": {"username": {"eq": "test_user"}}}
         filters_dict: dict[str, Any] = dict(filters)
-        assert cast(dict, filters_dict["id"])["eq"] == 123
+        assert cast("dict", filters_dict["id"])["eq"] == 123
 
     def test_filter_with_null_check(self) -> None:
         """Test filter with null condition."""
         filters: Filters = {"deleted_at": {"is_null": True}}
         filters_dict: dict[str, Any] = dict(filters)
-        assert cast(dict, filters_dict["deleted_at"])["is_null"] is True
+        assert cast("dict", filters_dict["deleted_at"])["is_null"] is True
 
     def test_valid_include_structure(self) -> None:
         """Test valid include configuration."""
@@ -236,8 +236,8 @@ class TestComplexValidationScenarios:
         }
 
         filters_dict: dict[str, Any] = dict(filters)
-        beatmaps: dict[str, Any] = cast(dict, filters_dict["beatmaps"])
-        user: dict[str, Any] = cast(dict, filters_dict["user"])
+        beatmaps: dict[str, Any] = cast("dict", filters_dict["beatmaps"])
+        user: dict[str, Any] = cast("dict", filters_dict["user"])
         assert beatmaps["checksum"]["eq"] == "abc123"
         assert user["username"]["regex"] == "test.*"
 
@@ -263,7 +263,7 @@ class TestComplexValidationScenarios:
 
         include_dict: dict[str, Any] = dict(include)
         assert include_dict["user"] is True
-        beatmaps_include: dict[str, Any] = cast(dict, include_dict["beatmaps"])
+        beatmaps_include: dict[str, Any] = cast("dict", include_dict["beatmaps"])
         assert beatmaps_include["owner_profiles"] is True
 
     def test_filter_with_range_conditions(self) -> None:
@@ -274,21 +274,21 @@ class TestComplexValidationScenarios:
         }
 
         filters_dict: dict[str, Any] = dict(filters)
-        assert cast(dict, filters_dict["id"])["gt"] == 100
-        assert cast(dict, filters_dict["id"])["lt"] == 200
+        assert cast("dict", filters_dict["id"])["gt"] == 100
+        assert cast("dict", filters_dict["id"])["lt"] == 200
 
     def test_multiple_filter_operators(self) -> None:
         """Test filter with multiple operators on same field."""
         filters: dict[str, Any] = {"id": {"eq": 123, "neq": 456, "in": [1, 2, 3, 4, 5]}}
 
         filters_dict: dict[str, Any] = dict(filters)
-        assert cast(dict, filters_dict["id"])["eq"] == 123
-        assert cast(dict, filters_dict["id"])["in"] == [1, 2, 3, 4, 5]
+        assert cast("dict", filters_dict["id"])["eq"] == 123
+        assert cast("dict", filters_dict["id"])["in"] == [1, 2, 3, 4, 5]
 
     def test_null_conditions(self) -> None:
         """Test null condition handling."""
         filters: Filters = {"deleted_at": {"is_null": True}, "scheduled_end": {"is_null": False}}
 
         filters_dict: dict[str, Any] = dict(filters)
-        assert cast(dict, filters_dict["deleted_at"])["is_null"] is True
-        assert cast(dict, filters_dict["scheduled_end"])["is_null"] is False
+        assert cast("dict", filters_dict["deleted_at"])["is_null"] is True
+        assert cast("dict", filters_dict["scheduled_end"])["is_null"] is False

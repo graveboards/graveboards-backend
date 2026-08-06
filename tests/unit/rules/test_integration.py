@@ -8,9 +8,9 @@ from app.database.rules.engine.phase1_runner import Phase1Runner
 from app.database.rules.exceptions import RuleViolationError
 
 
-def _make_mock_rule(type: str, config: dict, is_active: bool = True) -> MagicMock:
+def _make_mock_rule(rule_type: str, config: dict, is_active: bool = True) -> MagicMock:
     r = MagicMock()
-    r.type = type
+    r.type = rule_type
     r.config = config
     r.is_active = is_active
     r.version = "1.0"

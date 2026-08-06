@@ -1,4 +1,7 @@
+"""Beatmap tag model for categorizing beatmaps."""
+
 from __future__ import annotations
+
 from datetime import datetime
 
 from sqlalchemy.orm import mapped_column
@@ -11,6 +14,8 @@ from .base import Base
 
 
 class BeatmapTag(Base):
+    """A tag applied to beatmap snapshots."""
+
     __tablename__ = "beatmap_tags"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False)
     name: Mapped[str] = mapped_column(String, nullable=False)

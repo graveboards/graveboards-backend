@@ -31,7 +31,7 @@ from starlette.testclient import TestClient as StarletteTestClient
 from app.oauth import OAuth
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def starlette_test_client() -> Any:
     """Create a TestClient for API route testing.
 
@@ -54,6 +54,4 @@ def starlette_test_client() -> Any:
     ]
 
     app = Starlette(routes=routes, middleware=middleware)
-    client = StarletteTestClient(app)
-
-    return client
+    return StarletteTestClient(app)

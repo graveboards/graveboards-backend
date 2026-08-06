@@ -1,8 +1,13 @@
+"""Pydantic schemas for matchmaking statistics."""
+
 from __future__ import annotations
+
 from pydantic.main import BaseModel
 
 
 class MatchmakingStatsSchema(BaseModel):
+    """Ranking and rating statistics for a user in a matchmaking pool."""
+
     first_placements: int
     is_rating_provisional: bool
     plays: int
@@ -15,6 +20,8 @@ class MatchmakingStatsSchema(BaseModel):
 
 
 class MatchmakingPoolSchema(BaseModel):
+    """Identity and ruleset details for a matchmaking pool."""
+
     active: bool
     id: int
     name: str

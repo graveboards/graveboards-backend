@@ -296,20 +296,20 @@ class TestBeatmapManager:
             )
             return None
 
-        with patch.object(
-            manager, "_update_beatmap_tags_from_osu", side_effect=mock_update_and_add
+        with (
+            patch.object(manager, "_update_beatmap_tags_from_osu", side_effect=mock_update_and_add),
+            patch.object(manager.db, "get") as mock_get,
         ):
-            with patch.object(manager.db, "get") as mock_get:
-                mock_get.side_effect = [None, mock_new_tag]
+            mock_get.side_effect = [None, mock_new_tag]
 
-                with patch.object(manager.db, "add") as mock_add:
-                    mock_add.return_value = mock_new_tag
+            with patch.object(manager.db, "add") as mock_add:
+                mock_add.return_value = mock_new_tag
 
-                    tags = await manager._populate_beatmap_tags([{"tag_id": 1}])
+                tags = await manager._populate_beatmap_tags([{"tag_id": 1}])
 
-                    mock_add.assert_called_once()
-                    assert len(tags) == 1
-                    assert tags[0].id == 1
+                mock_add.assert_called_once()
+                assert len(tags) == 1
+                assert tags[0].id == 1
 
     async def test_populate_beatmap_tags_empty_input(self, manager: BeatmapManager) -> None:
         """Test populate beatmap tags returns empty list for empty input."""

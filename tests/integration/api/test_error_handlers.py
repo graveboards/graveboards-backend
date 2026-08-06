@@ -20,14 +20,14 @@ from app.exceptions import (
 class TestForbiddenErrorHandler:
     """Test the 403 forbidden error handler."""
 
-    def test_forbidden_returns_rfc7807_response(self, TestClient: Any) -> None:
+    def test_forbidden_returns_rfc7807_response(self, test_client: Any) -> None:
         """Test 403 handler returns RFC 7807 Problem Details format."""
-        response = TestClient.get("/api/v1/nonexistent-resource-that-does-not-exist-at-all")
+        response = test_client.get("/api/v1/nonexistent-resource-that-does-not-exist-at-all")
         assert response.status_code == 404
 
-    def test_forbidden_handler_structure(self, TestClient: Any) -> None:
+    def test_forbidden_handler_structure(self, test_client: Any) -> None:
         """Test that error responses include standard problem details fields."""
-        response = TestClient.get("/api/v1/nonexistent-resource-that-does-not-exist-at-all")
+        response = test_client.get("/api/v1/nonexistent-resource-that-does-not-exist-at-all")
         data = response.json()
         assert "detail" in data
         assert (
@@ -145,14 +145,14 @@ class TestCustomExceptions:
 class TestUnknownRoute:
     """Test that unknown routes return proper error responses."""
 
-    def test_unknown_route_returns_404(self, TestClient: Any) -> None:
+    def test_unknown_route_returns_404(self, test_client: Any) -> None:
         """Test unknown route returns Connexion default 404."""
-        response = TestClient.get("/api/v1/nonexistent")
+        response = test_client.get("/api/v1/nonexistent")
         assert response.status_code == 404
 
-    def test_unknown_route_returns_json(self, TestClient: Any) -> None:
+    def test_unknown_route_returns_json(self, test_client: Any) -> None:
         """Test unknown route returns JSON error body."""
-        response = TestClient.get("/api/v1/nonexistent")
+        response = test_client.get("/api/v1/nonexistent")
         data = response.json()
         assert isinstance(data, dict)
         assert "detail" in data

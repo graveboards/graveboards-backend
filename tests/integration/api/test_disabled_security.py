@@ -21,7 +21,7 @@ class TestSecurityConfiguration:
     @pytest.mark.asyncio
     async def test_security_enabled_by_default(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         admin_user_token: Any,
         authenticated_user_id: Any,
     ) -> None:
@@ -47,7 +47,7 @@ class TestSecurityConfiguration:
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.update = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         with authenticated_user_id(12345678):
             response = test_client.patch(
@@ -62,7 +62,7 @@ class TestSecurityConfiguration:
     @pytest.mark.asyncio
     async def test_security_disabled_still_enforces_roles_for_default_identity(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         security_disabled: Any,
     ) -> None:
         """Disabling security resolves the default dev identity (DEV_ADMIN_USER_ID)
@@ -89,7 +89,7 @@ class TestSecurityConfiguration:
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.update = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         response = test_client.patch("/api/v1/queues/1", json={"name": "Updated"})
 
@@ -99,7 +99,7 @@ class TestSecurityConfiguration:
     @pytest.mark.asyncio
     async def test_security_disabled_allows_admin_dev_identity(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         security_disabled: Any,
     ) -> None:
         """The default dev identity (DEV_ADMIN_USER_ID) is admin-roled in a real
@@ -131,7 +131,7 @@ class TestSecurityConfiguration:
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.update = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         response = test_client.patch("/api/v1/queues/1", json={"name": "Updated"})
 
@@ -143,7 +143,7 @@ class TestSecurityConfiguration:
     @pytest.mark.asyncio
     async def test_security_disabled_debug_header_impersonates_non_admin(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         security_disabled: Any,
     ) -> None:
         """The X-Debug-User-Id header lets a dev impersonate a different identity
@@ -171,7 +171,7 @@ class TestSecurityConfiguration:
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.update = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         response = test_client.patch(
             "/api/v1/queues/1",
@@ -185,7 +185,7 @@ class TestSecurityConfiguration:
     @pytest.mark.asyncio
     async def test_security_enabled_enforces_auth(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         admin_user_token: Any,
         security_enabled: Any,
         authenticated_user_id: Any,
@@ -210,7 +210,7 @@ class TestSecurityConfiguration:
 
         mock_db.get = AsyncMock(side_effect=mock_get)
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         with authenticated_user_id(12345678):
             response = test_client.patch(

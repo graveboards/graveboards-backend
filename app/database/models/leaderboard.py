@@ -1,4 +1,7 @@
+"""Leaderboard model aggregating scores for a beatmap snapshot."""
+
 from __future__ import annotations
+
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -17,6 +20,8 @@ if TYPE_CHECKING:
 
 
 class Leaderboard(Base):
+    """A leaderboard attached to a particular beatmap snapshot."""
+
     __tablename__ = "leaderboards"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     beatmap_id: Mapped[int] = mapped_column(Integer, ForeignKey("beatmaps.id"), nullable=False)

@@ -71,7 +71,7 @@ class TestBeatmapsetsPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_archival_creates_snapshot(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         mock_beatmap_manager: Callable[[Any], MagicMock],
         mock_osu_client: MagicMock,
         mock_admin_db: AsyncMock,
@@ -95,10 +95,9 @@ class TestBeatmapsetsPostIntegration:
             }
         )
 
-        test_client = TestClientWithMocks(mock_db=mock_admin_db)
+        test_client = test_client_with_mocks(mock_db=mock_admin_db)
 
         with (
-            patch("api.v1.beatmapsets.BeatmapManager", return_value=mock_bm),
             patch("app.beatmaps.BeatmapManager", return_value=mock_bm),
             patch("app.osu_api.OsuAPIClient", return_value=mock_osu_client),
         ):
@@ -114,7 +113,7 @@ class TestBeatmapsetsPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_archival_updates_existing(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         mock_beatmap_manager: Callable[[Any], MagicMock],
         mock_osu_client: MagicMock,
         mock_admin_db: AsyncMock,
@@ -135,10 +134,9 @@ class TestBeatmapsetsPostIntegration:
             }
         )
 
-        test_client = TestClientWithMocks(mock_db=mock_admin_db)
+        test_client = test_client_with_mocks(mock_db=mock_admin_db)
 
         with (
-            patch("api.v1.beatmapsets.BeatmapManager", return_value=mock_bm),
             patch("app.beatmaps.BeatmapManager", return_value=mock_bm),
             patch("app.osu_api.OsuAPIClient", return_value=mock_osu_client),
         ):
@@ -154,7 +152,7 @@ class TestBeatmapsetsPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_archival_up_to_date(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         mock_beatmap_manager: Callable[[Any], MagicMock],
         mock_osu_client: MagicMock,
         mock_admin_db: AsyncMock,
@@ -171,10 +169,9 @@ class TestBeatmapsetsPostIntegration:
             }
         )
 
-        test_client = TestClientWithMocks(mock_db=mock_admin_db)
+        test_client = test_client_with_mocks(mock_db=mock_admin_db)
 
         with (
-            patch("api.v1.beatmapsets.BeatmapManager", return_value=mock_bm),
             patch("app.beatmaps.BeatmapManager", return_value=mock_bm),
             patch("app.osu_api.OsuAPIClient", return_value=mock_osu_client),
         ):
@@ -190,7 +187,7 @@ class TestBeatmapsetsPostIntegration:
     @pytest.mark.asyncio
     async def test_osu_api_error_handling(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         mock_beatmap_manager: Callable[[Any], MagicMock],
         mock_osu_client: MagicMock,
         mock_admin_db: AsyncMock,
@@ -215,10 +212,9 @@ class TestBeatmapsetsPostIntegration:
             )
         )
 
-        test_client = TestClientWithMocks(mock_db=mock_admin_db)
+        test_client = test_client_with_mocks(mock_db=mock_admin_db)
 
         with (
-            patch("api.v1.beatmapsets.BeatmapManager", return_value=mock_bm),
             patch("app.beatmaps.BeatmapManager", return_value=mock_bm),
             patch("app.osu_api.OsuAPIClient", return_value=mock_osu_client),
             patch("api.v1.beatmapsets.problem", return_value={"error": "Beatmapset not found"}),
@@ -234,7 +230,7 @@ class TestBeatmapsetsPostIntegration:
     @pytest.mark.asyncio
     async def test_non_admin_user_gets_forbidden(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         mock_beatmap_manager: Callable[[Any], MagicMock],
         mock_osu_client: MagicMock,
         authenticated_user_id: Any,
@@ -267,10 +263,9 @@ class TestBeatmapsetsPostIntegration:
         mock_db.add = AsyncMock()
         mock_db.update = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         with (
-            patch("api.v1.beatmapsets.BeatmapManager", return_value=mock_bm),
             patch("app.beatmaps.BeatmapManager", return_value=mock_bm),
             patch("app.osu_api.OsuAPIClient", return_value=mock_osu_client),
             authenticated_user_id(99999999),
@@ -290,7 +285,7 @@ class TestBeatmapsetsPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_access_succeeds_with_token(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         mock_beatmap_manager: Callable[[Any], MagicMock],
         mock_osu_client: MagicMock,
         admin_user_token: Any,
@@ -330,10 +325,9 @@ class TestBeatmapsetsPostIntegration:
         mock_db.add = AsyncMock()
         mock_db.update = AsyncMock()
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         with (
-            patch("api.v1.beatmapsets.BeatmapManager", return_value=mock_bm),
             patch("app.beatmaps.BeatmapManager", return_value=mock_bm),
             patch("app.osu_api.OsuAPIClient", return_value=mock_osu_client),
         ):
@@ -351,7 +345,7 @@ class TestBeatmapsetsPostIntegration:
     @pytest.mark.asyncio
     async def test_admin_success_with_auth(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         mock_beatmap_manager: Callable[[Any], MagicMock],
         mock_osu_client: MagicMock,
         admin_user_token: Any,
@@ -385,10 +379,9 @@ class TestBeatmapsetsPostIntegration:
         mock_db.get = AsyncMock(return_value=mock_user)
 
         headers = {"Authorization": f"Bearer {admin_user_token}"}
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         with (
-            patch("api.v1.beatmapsets.BeatmapManager", return_value=mock_bm),
             patch("app.beatmaps.BeatmapManager", return_value=mock_bm),
             patch("app.osu_api.OsuAPIClient", return_value=mock_osu_client),
         ):
@@ -404,7 +397,7 @@ class TestBeatmapsetsPostIntegration:
     @pytest.mark.asyncio
     async def test_bypass_security_with_flag(
         self,
-        TestClientWithMocks: Any,
+        test_client_with_mocks: Any,
         mock_beatmap_manager: Callable[[Any], MagicMock],
         mock_osu_client: MagicMock,
         mock_admin_db: AsyncMock,
@@ -430,10 +423,9 @@ class TestBeatmapsetsPostIntegration:
             }
         )
 
-        test_client = TestClientWithMocks(mock_db=mock_admin_db)
+        test_client = test_client_with_mocks(mock_db=mock_admin_db)
 
         with (
-            patch("api.v1.beatmapsets.BeatmapManager", return_value=mock_bm),
             patch("app.beatmaps.BeatmapManager", return_value=mock_bm),
             patch("app.osu_api.OsuAPIClient", return_value=mock_osu_client),
         ):
@@ -447,7 +439,7 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_get_beatmapset_list(self, TestClientWithMocks: Any) -> None:
+    async def test_get_beatmapset_list(self, test_client_with_mocks: Any) -> None:
         """Test GET /api/v1/beatmapsets returns list of beatmapsets."""
         mock_db = AsyncMock()
         mock_beatmapset1 = MagicMock()
@@ -456,7 +448,7 @@ class TestBeatmapsetsPostIntegration:
         mock_beatmapset2.id = 35966
         mock_db.get_many = AsyncMock(return_value=[mock_beatmapset1, mock_beatmapset2])
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         response = test_client.get("/api/v1/beatmapsets")
 
@@ -467,7 +459,7 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_get_beatmapset_by_id(self, TestClientWithMocks: Any) -> None:
+    async def test_get_beatmapset_by_id(self, test_client_with_mocks: Any) -> None:
         """Test GET /api/v1/beatmapsets/{id} returns specific beatmapset."""
         mock_db = AsyncMock()
         mock_beatmapset = MagicMock()
@@ -475,7 +467,7 @@ class TestBeatmapsetsPostIntegration:
         mock_beatmapset.user_id = 12345678
         mock_db.get = AsyncMock(return_value=mock_beatmapset)
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         response = test_client.get("/api/v1/beatmapsets/35965")
 
@@ -485,12 +477,12 @@ class TestBeatmapsetsPostIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_get_beatmapset_not_found(self, TestClientWithMocks: Any) -> None:
+    async def test_get_beatmapset_not_found(self, test_client_with_mocks: Any) -> None:
         """Test GET /api/v1/beatmapsets/{id} returns 404 for non-existent beatmapset."""
         mock_db = AsyncMock()
         mock_db.get = AsyncMock(return_value=None)
 
-        test_client = TestClientWithMocks(mock_db=mock_db)
+        test_client = test_client_with_mocks(mock_db=mock_db)
 
         response = test_client.get("/api/v1/beatmapsets/999999")
 
@@ -501,7 +493,7 @@ class TestBeatmapsetsPostIntegration:
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_get_beatmapset_zip(TestClientWithMocks: Any) -> None:
+async def test_get_beatmapset_zip(test_client_with_mocks: Any) -> None:
     """Test GET /api/v1/beatmapsets/{id}/snapshots/{n}/zip returns zip file."""
     from io import BytesIO
 
@@ -526,7 +518,7 @@ async def test_get_beatmapset_zip(TestClientWithMocks: Any) -> None:
     mock_bm = MagicMock()
     mock_bm.get_zip = AsyncMock(return_value=BytesIO(b"fake zip content"))
 
-    test_client = TestClientWithMocks(mock_db=mock_db, mock_rc=mock_rc)
+    test_client = test_client_with_mocks(mock_db=mock_db, mock_rc=mock_rc)
 
     with patch("api.v1.beatmapsets.snapshots.zip.BeatmapManager", return_value=mock_bm):
         response = test_client.get("/api/v1/beatmapsets/35965/snapshots/1/zip")
@@ -539,7 +531,7 @@ async def test_get_beatmapset_zip(TestClientWithMocks: Any) -> None:
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_get_beatmapset_zip_not_found(TestClientWithMocks: Any) -> None:
+async def test_get_beatmapset_zip_not_found(test_client_with_mocks: Any) -> None:
     """Test 404 when zip file doesn't exist."""
     mock_db = AsyncMock()
     mock_db.get = AsyncMock(return_value=None)
@@ -548,7 +540,7 @@ async def test_get_beatmapset_zip_not_found(TestClientWithMocks: Any) -> None:
     mock_bm = MagicMock()
     mock_bm.get_zip = AsyncMock(side_effect=ValueError("No snapshot found"))
 
-    test_client = TestClientWithMocks(mock_db=mock_db, mock_rc=mock_rc)
+    test_client = test_client_with_mocks(mock_db=mock_db, mock_rc=mock_rc)
 
     with patch("app.beatmaps.BeatmapManager", return_value=mock_bm):
         response = test_client.get("/api/v1/beatmapsets/999999/snapshots/1/zip")
@@ -560,7 +552,7 @@ async def test_get_beatmapset_zip_not_found(TestClientWithMocks: Any) -> None:
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_get_snapshot(TestClientWithMocks: Any) -> None:
+async def test_get_snapshot(test_client_with_mocks: Any) -> None:
     """Test GET /api/v1/beatmapsets/{id}/snapshots/{n} returns snapshot."""
     mock_db = AsyncMock()
     mock_beatmapset_snapshot = MagicMock()
@@ -571,7 +563,7 @@ async def test_get_snapshot(TestClientWithMocks: Any) -> None:
     mock_beatmapset_snapshot.created_at = "2024-01-01T00:00:00Z"
     mock_db.get = AsyncMock(return_value=mock_beatmapset_snapshot)
 
-    test_client = TestClientWithMocks(mock_db=mock_db)
+    test_client = test_client_with_mocks(mock_db=mock_db)
 
     with patch(
         "app.database.schemas.beatmapset_snapshot.BeatmapsetSnapshotSchema.model_validate"

@@ -73,7 +73,7 @@ class TestJobLoadInstruction:
         instruction = JobLoadInstruction()
 
         with pytest.raises(FrozenInstanceError):
-            object.__setattr__(instruction, "execution_time", datetime.now(UTC))
+            instruction.execution_time = datetime.now(UTC)
 
     def test_slots_for_memory_efficiency(self) -> None:
         """Test that instruction uses slots."""

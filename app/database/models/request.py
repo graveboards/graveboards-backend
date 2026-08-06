@@ -1,4 +1,7 @@
+"""Request model representing a beatmapset submission to a queue."""
+
 from __future__ import annotations
+
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -10,14 +13,16 @@ from sqlalchemy.sql.sqltypes import Boolean, DateTime, Integer, Text
 from app.utils import aware_utcnow
 
 from .base import Base
-from .beatmapset_snapshot import BeatmapsetSnapshot
 
 if TYPE_CHECKING:
+    from .beatmapset_snapshot import BeatmapsetSnapshot
     from .profile import Profile
     from .queue import Queue
 
 
 class Request(Base):
+    """A submission of a beatmapset snapshot to a queue."""
+
     __tablename__ = "requests"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(

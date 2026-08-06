@@ -29,7 +29,7 @@ class TestExtractInnerTypes:
 
     def test_unwraps_nested_optional(self) -> None:
         result = extract_inner_types(list[int] | None)
-        assert result is list[int]
+        assert result == list[int]
 
     def test_returns_plain_type_unmodified(self) -> None:
         result = extract_inner_types(int)
@@ -180,14 +180,13 @@ class TestGetFilterCondition:
 
     def test_invalid_operator_raises_value_error(self, db_session: Any) -> None:
 
+        class FakeOperator:
+            def method(self, x: int, y: int) -> None:
+                return None
+
+        fake_op = FakeOperator()
         with pytest.raises(ValueError):
-
-            class FakeOperator:
-                def method(self, x: int, y: int) -> None:
-                    return None
-
-            fake_op = FakeOperator()
-            get_filter_condition(cast(FilterOperator, fake_op), column("test"), 1)
+            get_filter_condition(cast("FilterOperator", fake_op), column("test"), 1)
 
     def test_aggregated_eq_operator(self, db_session: Any) -> None:
         condition = get_filter_condition(

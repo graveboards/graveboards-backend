@@ -1,4 +1,7 @@
+"""Pydantic schema for a beatmapset as returned by the osu! API."""
+
 from __future__ import annotations
+
 from datetime import datetime
 from typing import Any, ClassVar
 
@@ -18,6 +21,8 @@ from .nominations_summary import NominationsSummarySchema
 
 
 class BeatmapsetOsuApiSchema(BaseModel):
+    """Metadata and composed content for a beatmapset."""
+
     artist: str
     artist_unicode: str
     availability: AvailabilitySchema
