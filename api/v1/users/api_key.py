@@ -5,9 +5,9 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    from starlette.requests import Request
+from connexion import request
 
+if TYPE_CHECKING:
     from api.http_types import APIResponse
     from app.database import PostgresqlDB
 from app.database.enums import RoleName
@@ -25,7 +25,7 @@ logger = get_logger(__name__)
 
 
 @role_authorization(RoleName.ADMIN, override=matching_user_id_override)
-async def search(request: Request, user_id: int, **_kwargs: Any) -> APIResponse:
+async def search(user_id: int, **_kwargs: Any) -> APIResponse:
     """Get the active API key for a user.
 
     Returns:
@@ -49,7 +49,7 @@ async def search(request: Request, user_id: int, **_kwargs: Any) -> APIResponse:
 
 
 @role_authorization(RoleName.ADMIN, override=matching_user_id_override)
-async def post(request: Request, user_id: int, **_kwargs: Any) -> APIResponse:
+async def post(user_id: int, **_kwargs: Any) -> APIResponse:
     """Rotate (create a new) API key for a user.
 
     Returns:

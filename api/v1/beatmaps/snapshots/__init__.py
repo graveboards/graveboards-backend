@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from connexion import request
+
 from api.decorators import api_query, coerce_arguments
 from api.utils import build_pydantic_include
 from app.database.models import BeatmapSnapshot, ModelClass
 
 if TYPE_CHECKING:
-    from starlette.requests import Request
-
     from api.http_types import APIResponse
     from app.database import PostgresqlDB
 from app.database.schemas import BeatmapSnapshotSchema
@@ -23,7 +23,7 @@ __all__ = ["get", "leaderboard", "osu", "scores", "search"]
 
 
 @api_query(ModelClass.BEATMAP_SNAPSHOT, many=True)
-async def search(request: Request, beatmap_id: int, **kwargs: Any) -> APIResponse:
+async def search(beatmap_id: int, **kwargs: Any) -> APIResponse:
     """Search for beatmap snapshots by beatmap ID.
 
     Returns:
@@ -52,9 +52,7 @@ async def search(request: Request, beatmap_id: int, **kwargs: Any) -> APIRespons
 
 @api_query(ModelClass.BEATMAP_SNAPSHOT)
 @coerce_arguments(snapshot_number={"latest": -1})
-async def get(
-    request: Request, beatmap_id: int, snapshot_number: int = -1, **kwargs: Any
-) -> APIResponse:
+async def get(beatmap_id: int, snapshot_number: int = -1, **kwargs: Any) -> APIResponse:
     """Get a single beatmap snapshot by beatmap ID and snapshot number.
 
     Returns:

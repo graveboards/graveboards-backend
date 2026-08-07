@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from connexion import request
+
 from api.decorators import api_query
 from api.utils import build_pydantic_include
 from app.database.models import BeatmapsetListing, BeatmapsetSnapshot, ModelClass
 
 if TYPE_CHECKING:
-    from starlette.requests import Request
-
     from api.http_types import APIResponse
     from app.database import PostgresqlDB
 from app.database.schemas import BeatmapsetSnapshotSchema
@@ -20,7 +20,7 @@ __all__ = ["search"]
 
 
 @api_query(ModelClass.BEATMAPSET_SNAPSHOT, many=True)
-async def search(request: Request, **kwargs: Any) -> APIResponse:
+async def search(**kwargs: Any) -> APIResponse:
     """Search for beatmapset snapshots in listings.
 
     Returns:

@@ -6,6 +6,7 @@ from io import BytesIO
 from typing import TYPE_CHECKING
 
 import aiofiles
+from connexion import request
 from starlette.responses import PlainTextResponse
 
 from api.decorators import coerce_arguments
@@ -14,8 +15,6 @@ from app.database.models import BeatmapSnapshot
 from app.exceptions import NotFound
 
 if TYPE_CHECKING:
-    from starlette.requests import Request
-
     from api.http_types import APIResponse
     from app.database import PostgresqlDB
     from app.redis_client import RedisClient
@@ -24,7 +23,7 @@ __all__ = ["search"]
 
 
 @coerce_arguments(snapshot_number={"latest": -1})
-async def search(request: Request, beatmap_id: int, snapshot_number: int = -1) -> APIResponse:
+async def search(beatmap_id: int, snapshot_number: int = -1) -> APIResponse:
     """Serve the .osu file for a beatmap snapshot.
 
     Returns:

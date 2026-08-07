@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import httpx
+from connexion import request
 from connexion.problem import problem
 
 from api.decorators import api_query
@@ -15,8 +16,6 @@ from app.database.schemas import BeatmapsetSchema
 from app.exceptions import NotFound
 
 if TYPE_CHECKING:
-    from starlette.requests import Request
-
     from api.http_types import APIResponse
     from app.database import PostgresqlDB
     from app.redis_client import RedisClient
@@ -29,7 +28,7 @@ __all__ = ["get", "listings", "post", "search", "snapshots", "tags"]
 
 
 @api_query(ModelClass.BEATMAPSET, many=True)
-async def search(request: Request, **kwargs: Any) -> APIResponse:
+async def search(**kwargs: Any) -> APIResponse:
     """Search for beatmapsets.
 
     Returns:
@@ -57,7 +56,7 @@ async def search(request: Request, **kwargs: Any) -> APIResponse:
 
 
 @api_query(ModelClass.BEATMAPSET)
-async def get(request: Request, beatmapset_id: int, **kwargs: Any) -> APIResponse:
+async def get(beatmapset_id: int, **kwargs: Any) -> APIResponse:
     """Get a single beatmapset by ID.
 
     Returns:
@@ -84,7 +83,6 @@ async def get(request: Request, beatmapset_id: int, **kwargs: Any) -> APIRespons
 @api_query(ModelClass.BEATMAPSET)
 @role_authorization(RoleName.ADMIN)
 async def post(
-    request: Request,
     body: dict[str, Any],
     rc: RedisClient | None = None,
     db: PostgresqlDB | None = None,

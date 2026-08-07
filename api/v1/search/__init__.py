@@ -16,8 +16,6 @@ from api.pagination import build_pagination_response
 from api.utils import pop_auth_info
 
 if TYPE_CHECKING:
-    from starlette.requests import Request
-
     from api.http_types import APIResponse
     from app.database import PostgresqlDB
     from app.redis_client import RedisClient
@@ -97,7 +95,7 @@ async def _authenticate_for_scope(scope: Scope) -> int | None:
     return int(token_info["sub"])
 
 
-async def search(request: Request, **kwargs: Any) -> APIResponse:
+async def search(**kwargs: Any) -> APIResponse:
     """Search across multiple scopes with caching.
 
     Returns:
@@ -212,7 +210,7 @@ async def search(request: Request, **kwargs: Any) -> APIResponse:
     return page_data, status, headers
 
 
-async def post(_request: Request, body: dict[str, Any]) -> APIResponse:
+async def post(body: dict[str, Any]) -> APIResponse:
     """Create a compressed search query resource.
 
     Returns:

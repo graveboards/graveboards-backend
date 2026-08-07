@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from connexion import request
+
 from api.decorators import api_query
 from api.utils import bleach_body, build_pydantic_include
 from app.database.enums import RoleName
 from app.database.models import ModelClass, User
 
 if TYPE_CHECKING:
-    from starlette.requests import Request
-
     from api.http_types import APIResponse
     from app.database import PostgresqlDB
 from app.database.schemas import UserSchema
@@ -27,7 +27,7 @@ __all__ = ["api_key", "get", "post", "search"]
 
 @role_authorization(RoleName.ADMIN)
 @api_query(ModelClass.USER, many=True)
-async def search(request: Request, **_kwargs: Any) -> APIResponse:
+async def search(**_kwargs: Any) -> APIResponse:
     """Search for users.
 
     Returns:
@@ -53,7 +53,7 @@ async def search(request: Request, **_kwargs: Any) -> APIResponse:
 
 @role_authorization(RoleName.ADMIN, override=matching_user_id_override)
 @api_query(ModelClass.USER)
-async def get(request: Request, user_id: int, **_kwargs: Any) -> APIResponse:
+async def get(user_id: int, **_kwargs: Any) -> APIResponse:
     """Get a single user by ID.
 
     Returns:
@@ -78,7 +78,7 @@ async def get(request: Request, user_id: int, **_kwargs: Any) -> APIResponse:
 
 
 @role_authorization(RoleName.ADMIN)
-async def post(request: Request, body: dict[str, Any], **_kwargs: Any) -> APIResponse:
+async def post(body: dict[str, Any], **_kwargs: Any) -> APIResponse:
     """Create a new user.
 
     Returns:

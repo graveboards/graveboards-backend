@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from connexion import request
 from starlette.responses import StreamingResponse
 
 from api.decorators import coerce_arguments
@@ -11,8 +12,6 @@ from app.beatmaps import BeatmapManager
 from app.exceptions import NotFound
 
 if TYPE_CHECKING:
-    from starlette.requests import Request
-
     from api.http_types import APIResponse
     from app.database import PostgresqlDB
     from app.redis_client import RedisClient
@@ -22,7 +21,7 @@ __all__ = ["search"]
 
 
 @coerce_arguments(snapshot_number={"latest": -1})
-async def search(request: Request, beatmapset_id: int, snapshot_number: int = -1) -> APIResponse:
+async def search(beatmapset_id: int, snapshot_number: int = -1) -> APIResponse:
     """Serve a zip download for a beatmapset snapshot.
 
     Returns:

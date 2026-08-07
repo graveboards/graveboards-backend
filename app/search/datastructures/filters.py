@@ -31,7 +31,10 @@ if TYPE_CHECKING:
 
 from .conditions import Conditions, ConditionValue
 
-_FieldFiltersRef = ForwardRef("FieldFilters")
+if TYPE_CHECKING:
+    type _FieldFiltersRef = "FieldFilters"
+else:
+    _FieldFiltersRef = ForwardRef("FieldFilters")
 
 
 class FieldFilters(RootModel[dict[str, Conditions | _FieldFiltersRef]]):

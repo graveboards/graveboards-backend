@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from connexion import request
+
 from api.decorators import api_query
 from api.utils import bleach_body, build_pydantic_include
 
 if TYPE_CHECKING:
-    from starlette.requests import Request
-
     from api.http_types import APIResponse
     from app.database import PostgresqlDB
 from app.database.enums import RoleName
@@ -24,7 +24,7 @@ __all__ = ["get", "post", "search"]
 
 
 @api_query(ModelClass.SCORE, many=True)
-async def search(request: Request, **kwargs: Any) -> APIResponse:
+async def search(**kwargs: Any) -> APIResponse:
     """Search for scores.
 
     Returns:
@@ -51,7 +51,7 @@ async def search(request: Request, **kwargs: Any) -> APIResponse:
 
 
 @api_query(ModelClass.SCORE)
-async def get(request: Request, score_id: int, **kwargs: Any) -> APIResponse:
+async def get(score_id: int, **kwargs: Any) -> APIResponse:
     """Get a single score by ID.
 
     Returns:
@@ -77,9 +77,7 @@ async def get(request: Request, score_id: int, **kwargs: Any) -> APIResponse:
 
 @api_query(ModelClass.SCORE)
 @role_authorization(RoleName.ADMIN)
-async def post(
-    request: Request, body: dict[str, Any], db: PostgresqlDB | None = None, **_kwargs: Any
-) -> APIResponse:
+async def post(body: dict[str, Any], db: PostgresqlDB | None = None, **_kwargs: Any) -> APIResponse:
     """Create a new score.
 
     Returns:

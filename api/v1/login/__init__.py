@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from starlette.requests import Request
+from connexion import request
 
+if TYPE_CHECKING:
     from api.http_types import APIResponse
 from app.exceptions import TooManyRequests
 from app.oauth import OAuth
@@ -18,7 +18,7 @@ __all__ = ["search"]
 STATE_EXPIRES_IN = 300
 
 
-async def search(request: Request, rc: RedisClient | None = None) -> APIResponse:
+async def search(rc: RedisClient | None = None) -> APIResponse:
     """Initiate an OAuth login flow.
 
     Returns:

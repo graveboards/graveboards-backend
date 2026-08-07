@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from connexion import request
+
 from api.decorators import api_query, coerce_arguments
 from api.utils import bleach_body, build_pydantic_include
 from app.database.enums import RoleName
 
 if TYPE_CHECKING:
-    from starlette.requests import Request
-
     from api.http_types import APIResponse
     from app.database import PostgresqlDB
 from app.database.models import BeatmapSnapshot, Leaderboard, ModelClass
@@ -24,9 +24,7 @@ __all__ = ["patch", "post", "search"]
 
 @api_query(ModelClass.LEADERBOARD)
 @coerce_arguments(snapshot_number={"latest": -1})
-async def search(
-    request: Request, beatmap_id: int, snapshot_number: int = -1, **_kwargs: Any
-) -> APIResponse:
+async def search(beatmap_id: int, snapshot_number: int = -1, **_kwargs: Any) -> APIResponse:
     """Get the leaderboard for a beatmap snapshot.
 
     Returns:
@@ -78,7 +76,6 @@ async def search(
 @coerce_arguments(snapshot_number={"latest": -1})
 @role_authorization(RoleName.ADMIN)
 async def post(
-    request: Request,
     body: dict[str, Any],
     beatmap_id: int,
     snapshot_number: int = -1,
@@ -127,7 +124,6 @@ async def post(
 @coerce_arguments(snapshot_number={"latest": -1})
 @role_authorization(RoleName.ADMIN)
 async def patch(
-    request: Request,
     body: dict[str, Any],
     beatmap_id: int,
     snapshot_number: int = -1,

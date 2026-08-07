@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from connexion import request
+
 from api.decorators import api_query
 from api.utils import build_pydantic_include
 from app.database.models import Beatmap, ModelClass
 
 if TYPE_CHECKING:
-    from starlette.requests import Request
-
     from api.http_types import APIResponse
     from app.database import PostgresqlDB
 from app.database.schemas import BeatmapSchema
@@ -23,7 +23,7 @@ __all__ = ["get", "listings", "search", "snapshots", "tags"]
 
 
 @api_query(ModelClass.BEATMAP, many=True)
-async def search(request: Request, **kwargs: Any) -> APIResponse:
+async def search(**kwargs: Any) -> APIResponse:
     """Search for beatmaps.
 
     Returns:
@@ -50,7 +50,7 @@ async def search(request: Request, **kwargs: Any) -> APIResponse:
 
 
 @api_query(ModelClass.BEATMAP)
-async def get(request: Request, beatmap_id: int, **kwargs: Any) -> APIResponse:
+async def get(beatmap_id: int, **kwargs: Any) -> APIResponse:
     """Get a single beatmap by ID.
 
     Returns:

@@ -4,13 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from connexion import request
 from connexion.exceptions import Forbidden
 
 from api.utils import build_pydantic_include
 
 if TYPE_CHECKING:
-    from starlette.requests import Request
-
     from api.http_types import APIResponse
     from app.database import PostgresqlDB
 from app.database.enums import RoleName
@@ -25,7 +24,7 @@ __all__ = ["get", "search"]
 
 
 @role_authorization(RoleName.ADMIN)
-async def search(request: Request, **kwargs: Any) -> APIResponse:
+async def search(**kwargs: Any) -> APIResponse:
     """Search for handler tasks from Redis.
 
     Returns:
@@ -63,9 +62,7 @@ async def search(request: Request, **kwargs: Any) -> APIResponse:
 
 
 @with_authenticated_user_id()
-async def get(
-    request: Request, hashed_id: int, _caller_user_id: int | None = None, **kwargs: Any
-) -> APIResponse:
+async def get(hashed_id: int, _caller_user_id: int | None = None, **kwargs: Any) -> APIResponse:
     """Get a single handler task by hashed ID.
 
     Returns:

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    from starlette.requests import Request
+from connexion import request
 
+if TYPE_CHECKING:
     from api.http_types import APIResponse
     from app.database import PostgresqlDB
 from app.database.crud.rules import RuleCRUD
@@ -28,13 +28,10 @@ async def _can_view_private_rules(
 
 
 @with_authenticated_user_id()
-async def search(
-    request: Request, queue_id: int, _caller_user_id: int | None = None, **_kwargs: Any
-) -> APIResponse:
+async def search(queue_id: int, _caller_user_id: int | None = None, **_kwargs: Any) -> APIResponse:
     """List all rules for a queue.
 
     Args:
-        request: Incoming HTTP request.
         queue_id: The ID of the queue.
         _caller_user_id: The authenticated user ID.
 
@@ -68,7 +65,6 @@ async def search(
 
 @with_authenticated_user_id()
 async def get(
-    request: Request,
     queue_id: int,
     rule_id: int,
     _caller_user_id: int | None = None,
@@ -77,7 +73,6 @@ async def get(
     """Get a single rule by ID.
 
     Args:
-        request: Incoming HTTP request.
         queue_id: The ID of the queue.
         rule_id: The ID of the rule.
         _caller_user_id: The authenticated user ID.
@@ -109,13 +104,10 @@ async def get(
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def post(
-    request: Request, queue_id: int, body: dict[str, Any], **_kwargs: Any
-) -> APIResponse:
+async def post(queue_id: int, body: dict[str, Any], **_kwargs: Any) -> APIResponse:
     """Add a single rule to a queue.
 
     Args:
-        request: Incoming HTTP request.
         queue_id: The ID of the queue.
         body: The rule data to create.
 
@@ -151,13 +143,10 @@ async def post(
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def patch(
-    request: Request, queue_id: int, rule_id: int, body: dict[str, Any], **_kwargs: Any
-) -> APIResponse:
+async def patch(queue_id: int, rule_id: int, body: dict[str, Any], **_kwargs: Any) -> APIResponse:
     """Update a single rule.
 
     Args:
-        request: Incoming HTTP request.
         queue_id: The ID of the queue.
         rule_id: The ID of the rule.
         body: The rule updates.
@@ -197,11 +186,10 @@ async def patch(
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def delete(request: Request, queue_id: int, rule_id: int, **_kwargs: Any) -> APIResponse:
+async def delete(queue_id: int, rule_id: int, **_kwargs: Any) -> APIResponse:
     """Remove a single rule from a queue.
 
     Args:
-        request: Incoming HTTP request.
         queue_id: The ID of the queue.
         rule_id: The ID of the rule.
 
@@ -230,11 +218,10 @@ async def delete(request: Request, queue_id: int, rule_id: int, **_kwargs: Any) 
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def put(request: Request, queue_id: int, body: dict[str, Any], **_kwargs: Any) -> APIResponse:
+async def put(queue_id: int, body: dict[str, Any], **_kwargs: Any) -> APIResponse:
     """Replace all rules for a queue.
 
     Args:
-        request: Incoming HTTP request.
         queue_id: The ID of the queue.
         body: The new rules data (must include a 'rules' array).
 

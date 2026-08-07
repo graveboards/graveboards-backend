@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from connexion import request
 from connexion.exceptions import Forbidden
 from structlog.contextvars import get_contextvars
 
@@ -11,8 +12,6 @@ from api.decorators import api_query
 from api.utils import bleach_body, build_pydantic_include
 
 if TYPE_CHECKING:
-    from starlette.requests import Request as StarletteRequest
-
     from api.http_types import APIResponse
     from app.database import PostgresqlDB
 from app.database.enums import RoleName
@@ -52,7 +51,7 @@ logger = get_logger(__name__)
 
 
 @api_query(ModelClass.REQUEST, many=True)
-async def search(request: StarletteRequest, **_kwargs: Any) -> APIResponse:
+async def search(**_kwargs: Any) -> APIResponse:
     """Search for queue requests.
 
     Returns:
@@ -83,7 +82,7 @@ async def search(request: StarletteRequest, **_kwargs: Any) -> APIResponse:
     resource_model=Request,
 )
 @api_query(ModelClass.REQUEST)
-async def get(request: StarletteRequest, request_id: int, **_kwargs: Any) -> APIResponse:
+async def get(request_id: int, **_kwargs: Any) -> APIResponse:
     """Get a single request by ID.
 
     Returns:
@@ -109,7 +108,6 @@ async def get(request: StarletteRequest, request_id: int, **_kwargs: Any) -> API
 
 @with_authenticated_user_id()
 async def post(
-    request: StarletteRequest,
     body: dict[str, Any],
     _caller_user_id: int | None = None,
     **_kwargs: Any,
@@ -255,9 +253,7 @@ async def _run_phase1_checks(
 @role_authorization(
     RoleName.ADMIN, override=queue_manager_override, override_kwargs={"from_request": True}
 )
-async def patch(
-    request: StarletteRequest, request_id: int, body: dict[str, Any], **_kwargs: Any
-) -> APIResponse:
+async def patch(request_id: int, body: dict[str, Any], **_kwargs: Any) -> APIResponse:
     """Update the status of a request.
 
     Returns:
@@ -282,7 +278,7 @@ async def patch(
 @role_authorization(
     RoleName.ADMIN, override=queue_owner_override, override_kwargs={"from_request": True}
 )
-async def delete(request: StarletteRequest, request_id: int, **_kwargs: Any) -> APIResponse:
+async def delete(request_id: int, **_kwargs: Any) -> APIResponse:
     """Delete a request and clean up associated handler tasks.
 
     Returns:

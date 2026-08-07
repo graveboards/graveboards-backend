@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from connexion import request
 from connexion.exceptions import Forbidden
 
 from api.decorators import api_query
@@ -11,8 +12,6 @@ from api.utils import bleach_body, build_pydantic_include
 from app.database.enums import RoleName
 
 if TYPE_CHECKING:
-    from starlette.requests import Request
-
     from api.http_types import APIResponse
     from app.database import PostgresqlDB
 from app.database.models import ModelClass, Queue
@@ -36,9 +35,7 @@ def _filter_public_rules(queue_data: dict[str, Any]) -> dict[str, Any]:
 
 @with_authenticated_user_id()
 @api_query(ModelClass.QUEUE, many=True)
-async def search(
-    request: Request, _caller_user_id: int | None = None, **kwargs: Any
-) -> APIResponse:
+async def search(_caller_user_id: int | None = None, **kwargs: Any) -> APIResponse:
     """Search for queues with visibility filtering.
 
     Returns:
@@ -69,9 +66,7 @@ async def search(
 
 @with_authenticated_user_id()
 @api_query(ModelClass.QUEUE)
-async def get(
-    request: Request, queue_id: int, _caller_user_id: int | None = None, **kwargs: Any
-) -> APIResponse:
+async def get(queue_id: int, _caller_user_id: int | None = None, **kwargs: Any) -> APIResponse:
     """Get a single queue by ID.
 
     Returns:
@@ -105,7 +100,7 @@ async def get(
 
 # @role_authorization(RoleName.ADMIN, override=matching_user_id_override, override_kwargs={"resource_user_id_lookup": "body.user_id"})  # Disable regular users from adding queues for now
 @role_authorization(RoleName.ADMIN)
-async def post(request: Request, body: dict[str, Any], **_kwargs: Any) -> APIResponse:
+async def post(body: dict[str, Any], **_kwargs: Any) -> APIResponse:
     """Create a new queue.
 
     Returns:
@@ -127,9 +122,7 @@ async def post(request: Request, body: dict[str, Any], **_kwargs: Any) -> APIRes
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def patch(
-    request: Request, queue_id: int, body: dict[str, Any], **_kwargs: Any
-) -> APIResponse:
+async def patch(queue_id: int, body: dict[str, Any], **_kwargs: Any) -> APIResponse:
     """Update an existing queue.
 
     Returns:

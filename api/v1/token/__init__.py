@@ -5,11 +5,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from authlib.integrations.base_client.errors import OAuthError
+from connexion import request
 from jwt.exceptions import ExpiredSignatureError, InvalidIssuerError, InvalidTokenError
 
 if TYPE_CHECKING:
-    from starlette.requests import Request
-
     from api.http_types import APIResponse
     from app.database import PostgresqlDB
 from app.database.models import OAuthToken, ScoreFetcherTask, User
@@ -25,7 +24,7 @@ from app.utils import aware_utcnow
 __all__ = ["post", "search"]
 
 
-async def search(request: Request, token: str, rc: RedisClient | None = None) -> APIResponse:
+async def search(token: str, rc: RedisClient | None = None) -> APIResponse:
     """Validate and return JWT claims.
 
     Returns:
@@ -52,7 +51,6 @@ async def search(request: Request, token: str, rc: RedisClient | None = None) ->
 
 
 async def post(
-    request: Request,
     body: dict[str, Any],
     oauth: OAuth | None = None,
     osu_api_client: OsuAPIClient | None = None,

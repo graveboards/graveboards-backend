@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from connexion import request
+
 from api.decorators import api_query
 from api.utils import build_pydantic_include
 from app.database.models import ModelClass, Profile
 
 if TYPE_CHECKING:
-    from starlette.requests import Request
-
     from api.http_types import APIResponse
     from app.database import PostgresqlDB
 from app.database.schemas import ProfileSchema
@@ -22,7 +22,7 @@ __all__ = ["get", "search"]
 
 
 @api_query(ModelClass.PROFILE, many=True)
-async def search(request: Request, **kwargs: Any) -> APIResponse:
+async def search(**kwargs: Any) -> APIResponse:
     """Search for profiles.
 
     Returns:
@@ -50,7 +50,7 @@ async def search(request: Request, **kwargs: Any) -> APIResponse:
 
 @api_query(ModelClass.PROFILE)
 @ownership_authorization()
-async def get(request: Request, user_id: int, **kwargs: Any) -> APIResponse:
+async def get(user_id: int, **kwargs: Any) -> APIResponse:
     """Get a single profile by user ID.
 
     Returns:
