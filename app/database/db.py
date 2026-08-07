@@ -31,6 +31,7 @@ from app.observability.metrics.db import (
 )
 
 from .crud import CRUD
+from . import events  # noqa: F401 (register SQLAlchemy model event listeners)
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
