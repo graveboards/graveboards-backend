@@ -160,9 +160,9 @@ class BeatmapSeeder(Seeder):
         """Generate BeatmapsetSnapshot using schema validation (following BeatmapManager)."""
         beatmapset_id = beatmapset_entry["id"]
 
-        # Map id -> beatmapset_id (following BeatmapManager pattern)
+        # Map id -> beatmapset_id (keep both: schema requires `id`, model uses `beatmapset_id`)
         snapshot_data = beatmapset_entry.copy()
-        snapshot_data["beatmapset_id"] = snapshot_data.pop("id")
+        snapshot_data["beatmapset_id"] = snapshot_data["id"]
 
         # Generate checksum from beatmaps (using their checksums if available)
         beatmaps = beatmapset_entry.get("beatmaps", [])
@@ -300,9 +300,9 @@ class BeatmapSeeder(Seeder):
             )
             return {"id": bm_snapshot.id}
 
-        # Map id -> beatmap_id (following BeatmapManager pattern)
+        # Map id -> beatmap_id (keep both: schema requires `id`, model uses `beatmap_id`)
         snapshot_data = beatmap_entry.copy()
-        snapshot_data["beatmap_id"] = snapshot_data.pop("id")
+        snapshot_data["beatmap_id"] = snapshot_data["id"]
 
         # Use schema to validate
         try:

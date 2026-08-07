@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING, Any, override
 
 from app.database.crud import db_session_resolver, session_manager
 from app.database.models import User
-from app.database.seeding.target import SeederTarget
 from app.database.seeding.event import SeedEvent
+from app.database.seeding.target import SeederTarget
 
 from .base import Seeder
 
