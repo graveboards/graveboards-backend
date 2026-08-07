@@ -34,3 +34,5 @@ async def cmd_reset(
     if seed_target:
         await cmd_seed(db, seed_target)
         logger.info(f"(3/{steps}) Database seeded")
+
+    await db.reset_sequences()

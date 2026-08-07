@@ -194,3 +194,7 @@ async def cmd_seed(
 
         panel.title = "Seeding Completed"
         panel.border_style = "dim green"
+
+    # Realign owned sequences with max(id). Seeders no longer insert explicit
+    # primary keys, but this is a cheap safety net for any rows already present.
+    await db.reset_sequences()

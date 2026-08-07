@@ -30,8 +30,8 @@ from app.observability.metrics.db import (
     db_query_duration_seconds,
 )
 
-from .crud import CRUD
 from . import events  # noqa: F401 (register SQLAlchemy model event listeners)
+from .crud import CRUD
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator

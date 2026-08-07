@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, override
 
 from app.database.crud import db_session_resolver, session_manager
-from app.database.models import BeatmapsetSnapshot, Request
+from app.database.models import BeatmapsetSnapshot, Queue, Request
 from app.database.seeding.event import SeedEvent
 from app.database.seeding.target import SeederTarget
 
@@ -36,10 +36,24 @@ class RequestSeeder(Seeder):
     async def _seed_request(self, request_entry: dict[str, Any]) -> None:
         beatmapset_id = request_entry["beatmapset_id"]
 
+        queue = await self.db.get(
+            Queue,
+            user_id=request_entry["queue_user_id"],
+            name=request_entry["queue_name"],
+            session=self.session,
+        )
+        if queue is None:
+            self.logger.warning(
+                f"Skipping request for beatmapset {beatmapset_id}: "
+                f"no Queue found for user_id={request_entry['queue_user_id']} "
+                f"name={request_entry['queue_name']}"
+            )
+            return
+
         if not await self.db.get(
             Request,
             beatmapset_id=beatmapset_id,
-            queue_id=request_entry["queue_id"],
+            queue_id=queue.id,
             session=self.session,
         ):
             beatmapset_snapshot = await self.db.get(
@@ -50,9 +64,14 @@ class RequestSeeder(Seeder):
             )
             if beatmapset_snapshot is None:
                 self.logger.warning(
-                    f"Skipping request {request_entry['id']}: "
+                    f"Skipping request for beatmapset {beatmapset_id}: "
                     f"no BeatmapsetSnapshot for beatmapset {beatmapset_id}"
                 )
                 return
-            request_entry["beatmapset_snapshot_id"] = beatmapset_snapshot.id
-            await self.db.add(Request, **request_entry, session=self.session)
+
+            request_data = {
+                k: v for k, v in request_entry.items() if k not in {"queue_user_id", "queue_name"}
+            }
+            request_data["queue_id"] = queue.id
+            request_data["beatmapset_snapshot_id"] = beatmapset_snapshot.id
+            await self.db.add(Request, **request_data, session=self.session)

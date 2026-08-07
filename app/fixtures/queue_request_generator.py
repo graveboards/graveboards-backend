@@ -12,6 +12,10 @@ Request generation uses a pair-shuffling algorithm to ensure no duplicate
 (queue_id, beatmapset_id) combinations, respecting the database's unique
 constraint on those columns. Each request's user_id is set to the owner
 of the requested beatmapset.
+
+Queue and request local primary keys are deliberately omitted so the
+database assigns them; requests reference their queue by its natural key
+(``user_id`` + ``name``) instead of by id.
 """
 
 from __future__ import annotations
@@ -46,12 +50,9 @@ class QueueRequestFixtureGenerator:
         self,
         user_ids: list[int] | None = None,
         beatmapset_ids: list[int] | None = None,
-        queue_ids: list[int] | None = None,
     ):
         self.user_ids = user_ids or self._load_existing_user_ids()
         self.beatmapset_ids = beatmapset_ids or self._load_existing_beatmapset_ids()
-        self.queue_ids = queue_ids or self._load_existing_queue_ids()
-        self._next_queue_id = max(self.queue_ids) + 1 if self.queue_ids else 1
         self._beatmapset_owners: dict[int, int] = self._load_beatmapset_owners()
 
     def _load_existing_user_ids(self) -> list[int]:
@@ -80,18 +81,6 @@ class QueueRequestFixtureGenerator:
                     pass
         return bms_ids
 
-    def _load_existing_queue_ids(self) -> list[int]:
-        q_path = PROJECT_ROOT / "instance" / "fixtures" / "queues"
-        q_ids = []
-        if q_path.exists():
-            for f in q_path.glob("queue_*.json"):
-                try:
-                    qid = int(f.stem.split("_")[1])
-                    q_ids.append(qid)
-                except IndexError, ValueError:
-                    pass
-        return q_ids
-
     def _load_beatmapset_owners(self) -> dict[int, int]:
         """Load beatmapset data to build a mapping of beatmapset_id -> owner_user_id."""
         bms_path = PROJECT_ROOT / "instance" / "fixtures" / "beatmapsets"
@@ -116,8 +105,7 @@ class QueueRequestFixtureGenerator:
         queues = []
         used_names: set[str] = set()
 
-        for i in range(count):
-            queue_id = self._next_queue_id + i
+        for _ in range(count):
             name = self._choose_name(used_names)
             used_names.add(name)
 
@@ -126,7 +114,6 @@ class QueueRequestFixtureGenerator:
             visibility = random.choice([0, 1, 2])
 
             queue = {
-                "id": queue_id,
                 "user_id": user_id,
                 "name": name,
                 "description": random.choice(QUEUE_DESCRIPTIONS),
@@ -174,7 +161,7 @@ class QueueRequestFixtureGenerator:
         selected_pairs = pairs[:count]
 
         requests = []
-        for i, (queue, beatmapset_id) in enumerate(selected_pairs, start=1):
+        for queue, beatmapset_id in selected_pairs:
             owner_id = self._beatmapset_owners.get(beatmapset_id, queue["user_id"])
 
             status = random.choice(REQUEST_STATUSES)
@@ -185,10 +172,10 @@ class QueueRequestFixtureGenerator:
                 comment = random.choice(REQUEST_COMMENTS)
 
             request = {
-                "id": i,
+                "queue_user_id": queue["user_id"],
+                "queue_name": queue["name"],
                 "user_id": owner_id,
                 "beatmapset_id": beatmapset_id,
-                "queue_id": queue["id"],
                 "comment": comment,
                 "mv_checked": mv_checked,
                 "status": status,
@@ -203,8 +190,8 @@ class QueueRequestFixtureGenerator:
         """Save queue fixtures to instance fixtures."""
         QUEUE_FIXTURES_PATH.mkdir(parents=True, exist_ok=True)
 
-        for queue in queues:
-            filepath = QUEUE_FIXTURES_PATH / f"queue_{queue['id']}.json"
+        for index, queue in enumerate(queues):
+            filepath = QUEUE_FIXTURES_PATH / f"queue_{index}.json"
             serializable_queue = {
                 k: v.isoformat() if isinstance(v, datetime) else v for k, v in queue.items()
             }
@@ -222,8 +209,8 @@ class QueueRequestFixtureGenerator:
         """Save request fixtures to instance fixtures."""
         REQUEST_FIXTURES_PATH.mkdir(parents=True, exist_ok=True)
 
-        for request in requests:
-            filepath = REQUEST_FIXTURES_PATH / f"request_{request['id']}.json"
+        for index, request in enumerate(requests):
+            filepath = REQUEST_FIXTURES_PATH / f"request_{index}.json"
             serializable_request = {
                 k: v.isoformat() if isinstance(v, datetime) else v for k, v in request.items()
             }
