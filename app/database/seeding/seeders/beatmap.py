@@ -24,8 +24,8 @@ from app.database.schemas import (
     BeatmapSnapshotSchema,
     ProfileSchema,
 )
-from app.database.seeding import SeederTarget
 from app.database.seeding.event import SeedEvent
+from app.database.seeding.target import SeederTarget
 
 from .base import Seeder
 

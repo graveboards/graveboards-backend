@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, override
 
 from app.database.crud import db_session_resolver, session_manager
 from app.database.models import BeatmapsetSnapshot, Request
-from app.database.seeding import SeederTarget
+from app.database.seeding.target import SeederTarget
 from app.database.seeding.event import SeedEvent
 
 from .base import Seeder
