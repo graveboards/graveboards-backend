@@ -10,13 +10,13 @@ from pydantic.fields import Field
 
 from .base_model_extra import BaseModelExtra
 from .sub_schemas import BeatmapOsuApiSchema
+from .sub_schemas.beatmap_osu_api_schema import Owner
 
 if TYPE_CHECKING:
     from .beatmap_tag import BeatmapTagSchema
     from .beatmapset_snapshot import BeatmapsetSnapshotSchema
     from .leaderboard import LeaderboardSchema
     from .profile import ProfileSchema
-    from .sub_schemas.beatmap_osu_api_schema import Owner
 
 
 class BeatmapSnapshotSchema(BeatmapOsuApiSchema, BaseModelExtra):

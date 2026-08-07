@@ -449,3 +449,10 @@ async def main() -> None:
         console.print(f"\n[red]❌ Error:[/red] {e}")
         console.print(f"[dim]{traceback.format_exc()}[/dim]")
         raise SystemExit(1) from None
+
+
+def cli_main() -> None:
+    """Synchronous entry point for the graveboards-manage console script."""
+    import asyncio
+
+    asyncio.run(main())

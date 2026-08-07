@@ -29,5 +29,25 @@ api/v1/spec/.spec_cache.pkl
 # pytest
 .pytest_cache/
 
-# egg-info
-**/*.egg-info
+# mypy / ruff caches
+.mypy_cache/
+.ruff_cache/
+
+# egg-info / dist / build
+**/*.egg-info/
+dist/
+build/
+
+# Python bytecode
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# OS / editor
+.DS_Store
+*.swp
+*.swo
+
+# Logs
+*.log

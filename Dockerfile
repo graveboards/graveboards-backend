@@ -4,12 +4,16 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /build
 
-COPY requirements.txt .
-
 # Remove once psycopg2 publishes a 3.14 wheel
 RUN apt-get update && apt-get install -y --no-install-recommends libpq-dev build-essential && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir --prefix=/usr/local --root-user-action=ignore -r requirements.txt
+COPY pyproject.toml .
+COPY app/version.py app/version.py
+COPY README.md .
+COPY LICENSE .
+
+RUN pip install --no-cache-dir --prefix=/usr/local --root-user-action=ignore hatchling && \
+    pip install --no-cache-dir --prefix=/usr/local --root-user-action=ignore .
 
 FROM python:3.14-slim AS test-builder
 
@@ -17,13 +21,16 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /build
 
-COPY requirements.txt .
-COPY requirements-dev.txt .
-
 # Remove once psycopg2 publishes a 3.14 wheel
 RUN apt-get update && apt-get install -y --no-install-recommends libpq-dev build-essential && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir --prefix=/usr/local --root-user-action=ignore -r requirements.txt -r requirements-dev.txt
+COPY pyproject.toml .
+COPY app/version.py app/version.py
+COPY README.md .
+COPY LICENSE .
+
+RUN pip install --no-cache-dir --prefix=/usr/local --root-user-action=ignore hatchling && \
+    pip install --no-cache-dir --prefix=/usr/local --root-user-action=ignore ".[dev]"
 
 FROM python:3.14-slim AS runner
 

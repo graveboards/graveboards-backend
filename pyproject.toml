@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
 
 [project]
 name = "graveboards-backend"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Backend service for Graveboards"
 readme = "README.md"
 requires-python = ">=3.14"
@@ -29,10 +29,15 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
+    "aiofiles>=24.1",
     "alembic>=1.18.0",
+    "authlib>=1.6.0",
+    "brotli>=1.1",
     "connexion[swagger-ui,uvicorn]>=3.3.0",
     "cryptography>=46.0.0",
+    "numpy>=2.0",
     "psycopg2-binary>=2.9.0",
+    "PyJWT>=2.10.0",
     "sqlalchemy>=2.0.0",
     "asyncpg>=0.29.0",
     "redis>=5.0.0",
@@ -47,24 +52,35 @@ dependencies = [
     "prometheus_client>=0.20.0",
 ]
 
-[project.urls]
-Homepage = "https://github.com/graveboards/graveboards"
-Issues = "https://github.com/graveboards/graveboards/issues"
-
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
-    "pytest-cov>=6",
-    "ruff>=0.16",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.16.1",
     "mypy>=2.3.0",
     "types-PyYAML",
     "types-Authlib",
     "types-aiofiles",
 ]
+test = [
+    "factory-boy>=3.3.1",
+    "pytest-mock>=3.14.0",
+    "pytest-env>=0.8.2",
+]
 
-[tool.setuptools.packages.find]
-where = ["."]
+[project.urls]
+Homepage = "https://github.com/graveboards/graveboards"
+Issues = "https://github.com/graveboards/graveboards/issues"
+
+[project.scripts]
+graveboards-manage = "app.manage:cli_main"
+
+[tool.hatch.version]
+path = "app/version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app", "api"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -78,6 +94,12 @@ addopts = [
     "--cov=api",
     "--cov-report=term-missing",
     "--cov-report=html",
+    "--cov-fail-under=70",
+]
+filterwarnings = [
+    "ignore:.*jsonschema.*RefResolver is deprecated::connexion",
+    "ignore:.*jsonschema.*RefResolutionError is deprecated::connexion",
+    "ignore:.*iscoroutinefunction.*is deprecated",
 ]
 markers = [
     "unit: fast tests that do not need network, Redis, or PostgreSQL",
@@ -86,6 +108,19 @@ markers = [
     "security: tests for auth, authorization, token, API-key, or regex safety behavior",
     "slow: tests that are intentionally slower than the default suite",
     "search: tests that exercise the search engine with queries",
+]
+
+[tool.coverage.run]
+source = ["app", "api"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 70
+show_missing = true
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "@overload",
 ]
 
 [tool.ruff]
@@ -168,23 +203,11 @@ section-order = ["future", "standard-library", "third-party", "first-party", "lo
 python_version = "3.14"
 files = ["app", "api"]
 mypy_path = "app"
-warn_return_any = true
+strict = true
 warn_unused_configs = true
-disallow_incomplete_defs = true
-disallow_untyped_defs = true
-disallow_untyped_calls = true
 disallow_untyped_decorators = false
 no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-show_error_codes = true
-strict_equality = true
-enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 exclude = ["pyproject.toml", "alembic"]
-
-[[tool.mypy.overrides]]
-module = ["alembic.*"]
-ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = ["connexion.*"]
@@ -211,9 +234,7 @@ module = ["aiofiles"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-# Bodies are still checked (check_untyped_defs, inherited from strict) but
-# tests aren't required to annotate every `def test_...(): ...`.
-module = ["tests.*"]
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
-disallow_untyped_calls = false
+# Subclasses untyped third-party types (authlib, connexion); misc errors from
+# inability to verify subclass compatibility with Any-typed parents.
+module = ["app.oauth", "app.exceptions", "app.patches.*"]
+disable_error_code = "misc"

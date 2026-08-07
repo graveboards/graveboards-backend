@@ -5,9 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from .types import TaskFactory  # noqa: TC001
+
 if TYPE_CHECKING:
     from .retry import TaskRetryPolicy
-    from .types import TaskFactory
 
 
 @dataclass(frozen=True, slots=True)
