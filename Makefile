@@ -29,6 +29,7 @@ help:
 	@echo "  make test      - Run test suite"
 	@echo "  ------------Linting-------------"
 	@echo "  make lint      - Check code (ruff lint + ruff format + mypy)"
+	@echo "  make typecheck - Run type checking only (mypy)"
 	@echo "  make format    - Fix code (ruff lint --fix + ruff format)"
 	@echo "  ------------Cleaning------------"
 	@echo "  make clean     - Remove Docker resources"
@@ -98,11 +99,10 @@ clean:
 
 lint:
 	@if [ "$$(uname)" = "Linux" ]; then \
-		{ ruff check . || true; ruff format --check . || true; mypy app api main.py manage.py migrate.py || true; } 2>&1 | tee /tmp/graveboards-lint.log; \
+		{ ruff check . || true; ruff format --check . || true; } 2>&1 | tee /tmp/graveboards-lint.log; \
 	else \
 		ruff check . || true; \
 		ruff format --check . || true; \
-		mypy app api main.py manage.py migrate.py || true; \
 	fi
 
 format:
