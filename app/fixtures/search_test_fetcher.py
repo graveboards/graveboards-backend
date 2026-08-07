@@ -42,7 +42,7 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
     def __init__(
         self,
         rc: RedisClient,
-        id_ranges: dict | None = None,
+        id_ranges: dict[str, Any] | None = None,
         force_fetch: bool = False,
         id_source: IDSource | None = None,
         fixtures_dir: Path | None = None,
@@ -65,7 +65,7 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
         # Load coverage state from metadata
         self._load_coverage_from_metadata()
 
-    def _classify_beatmap(self, beatmap_data: dict, beatmap_id: int) -> dict[str, Any]:
+    def _classify_beatmap(self, beatmap_data: dict[str, Any], beatmap_id: int) -> dict[str, Any]:
         """Classify a beatmap into all applicable coverage buckets.
 
         Uses CoverageRegistry for classification.
@@ -73,7 +73,7 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
         """
         return self.coverage.classify(beatmap_data, "beatmap", beatmap_id)
 
-    def _classify_beatmapset(self, bs_data: dict, bs_id: int) -> dict[str, Any]:
+    def _classify_beatmapset(self, bs_data: dict[str, Any], bs_id: int) -> dict[str, Any]:
         """Classify a beatmapset into all applicable coverage buckets.
 
         Uses CoverageRegistry for classification.
@@ -81,7 +81,7 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
         """
         return self.coverage.classify(bs_data, "beatmapset", bs_id)
 
-    def _classify_user(self, user_data: dict, user_id: int) -> dict[str, Any]:
+    def _classify_user(self, user_data: dict[str, Any], user_id: int) -> dict[str, Any]:
         """Classify a user into all applicable coverage buckets.
 
         Uses CoverageRegistry for classification.
@@ -201,7 +201,7 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
         min_per_category: int = 1,
         max_total: int = 500,
         skip_covered: bool = False,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Ensure all search test coverage buckets are populated.
 
         Uses CoverageRegistry for coverage tracking and the adaptive fetch loop.
@@ -222,7 +222,7 @@ class SearchTestFixtureFetcher(FixtureDataFetcher):
     # Coverage report
     # ------------------------------------------------------------------
 
-    def get_coverage_report(self) -> dict:
+    def get_coverage_report(self) -> dict[str, Any]:
         """Get current search test coverage status using CoverageRegistry."""
         return self.coverage.get_coverage_report()
 

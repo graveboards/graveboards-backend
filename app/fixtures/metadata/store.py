@@ -109,7 +109,7 @@ class MetadataStore:
         """Access ID ranges section."""
         return self.data.id_ranges
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Get the full metadata as a dictionary (backward compatibility).
 
         Returns:
@@ -126,7 +126,7 @@ class FixtureMetadataManager:
     and provides the old API for backward compatibility.
     """
 
-    def __init__(self, metadata: dict | None = None, fixture_dir: Path | None = None):
+    def __init__(self, metadata: dict[str, Any] | None = None, fixture_dir: Path | None = None):
         self._store = MetadataStore(fixtures_dir=fixture_dir)
         if metadata is not None:
             self.metadata = metadata
@@ -146,7 +146,9 @@ class FixtureMetadataManager:
         """Get current UTC timestamp in ISO format."""
         return datetime.now(UTC).isoformat()
 
-    async def refresh_category_metadata(self, category: str, dry_run: bool = False) -> list[dict]:
+    async def refresh_category_metadata(
+        self, category: str, dry_run: bool = False
+    ) -> list[dict[str, Any]]:
         """Refresh metadata for a category to match disk state."""
         changes = []
         metadata = self.metadata.get("promoted_fixtures", {})
@@ -221,8 +223,8 @@ class FixtureMetadataManager:
 
     def ensure_coverage(
         self,
-        targets: dict,
-    ) -> dict:
+        targets: dict[str, Any],
+    ) -> dict[str, Any]:
         """Ensure minimum coverage, fetch if needed."""
         coverage = self.get_coverage_report()
         gaps = {}

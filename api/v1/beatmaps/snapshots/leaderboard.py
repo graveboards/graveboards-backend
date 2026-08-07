@@ -78,7 +78,11 @@ async def search(
 @coerce_arguments(snapshot_number={"latest": -1})
 @role_authorization(RoleName.ADMIN)
 async def post(
-    request: Request, body: dict, beatmap_id: int, snapshot_number: int = -1, **_kwargs: Any
+    request: Request,
+    body: dict[str, Any],
+    beatmap_id: int,
+    snapshot_number: int = -1,
+    **_kwargs: Any,
 ) -> APIResponse:
     """Create a new leaderboard for a beatmap snapshot.
 
@@ -123,7 +127,11 @@ async def post(
 @coerce_arguments(snapshot_number={"latest": -1})
 @role_authorization(RoleName.ADMIN)
 async def patch(
-    request: Request, body: dict, beatmap_id: int, snapshot_number: int = -1, **_kwargs: Any
+    request: Request,
+    body: dict[str, Any],
+    beatmap_id: int,
+    snapshot_number: int = -1,
+    **_kwargs: Any,
 ) -> APIResponse:
     """Update an existing leaderboard for a beatmap snapshot.
 

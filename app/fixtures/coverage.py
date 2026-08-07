@@ -7,12 +7,10 @@ one entry instead of adding 3+ attributes and updating 5+ methods.
 
 from __future__ import annotations
 
+from collections.abc import Callable  # noqa: TC003
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
+from typing import Any
 
 
 class BucketType(Enum):
@@ -38,7 +36,7 @@ class Bucket:
 
     name: str
     bucket_type: BucketType
-    categorize: Callable | None = None
+    categorize: Callable[..., Any] | None = None
     rarity_weight: float = 1.0
     min_coverage: int = 1
 
@@ -134,7 +132,7 @@ class CoverageRegistry:
             elif bucket.bucket_type == BucketType.BOOL:
                 self._data[bucket.name] = False
 
-    def classify(self, data: dict, data_type: str, item_id: int) -> dict[str, set[int]]:
+    def classify(self, data: dict[str, Any], data_type: str, item_id: int) -> dict[str, set[int]]:
         """Classify data into coverage buckets.
 
         Args:
@@ -159,7 +157,7 @@ class CoverageRegistry:
         return newly_filled
 
     def _classify_beatmap(
-        self, data: dict, item_id: int, newly_filled: dict[str, set[int]]
+        self, data: dict[str, Any], item_id: int, newly_filled: dict[str, set[int]]
     ) -> None:
         """Classify beatmap data into buckets."""
         # mode
@@ -261,7 +259,7 @@ class CoverageRegistry:
             self._add_to_set_bucket("fetched_beatmap_versions", version, item_id, newly_filled)
 
     def _classify_beatmapset(
-        self, data: dict, item_id: int, newly_filled: dict[str, set[int]]
+        self, data: dict[str, Any], item_id: int, newly_filled: dict[str, set[int]]
     ) -> None:
         """Classify beatmapset data into buckets."""
         # genre
@@ -400,7 +398,9 @@ class CoverageRegistry:
         if has_hit_lengths:
             self._set_bool_bucket("fetched_beatmapset_hit_lengths", True, newly_filled, item_id)
 
-    def _classify_user(self, data: dict, item_id: int, newly_filled: dict[str, set[int]]) -> None:
+    def _classify_user(
+        self, data: dict[str, Any], item_id: int, newly_filled: dict[str, set[int]]
+    ) -> None:
         """Classify user data into buckets."""
         # country_code
         cc = data.get("country_code")
@@ -559,14 +559,14 @@ class CoverageRegistry:
         count, _ = self.total_uncovered()
         return count == 0
 
-    def get_status(self) -> dict[str, dict]:
+    def get_status(self) -> dict[str, dict[str, bool]]:
         """Get current coverage status for all buckets.
 
         Returns:
         -------
             Dictionary of {bucket_name: {category: bool}}
         """
-        status: dict[str, dict] = {}
+        status: dict[str, dict[str, Any]] = {}
 
         for bucket_name, bucket in self._buckets.items():
             data = self._data.get(bucket_name, {})
@@ -582,7 +582,7 @@ class CoverageRegistry:
 
         return status
 
-    def get_coverage_report(self) -> dict:
+    def get_coverage_report(self) -> dict[str, Any]:
         """Get full coverage report with counts and IDs.
 
         Returns:
@@ -591,7 +591,7 @@ class CoverageRegistry:
         """
         from .constants import BEATMAP_MODE_NAMES, BEATMAP_STATUS_NAMES, GENRE_NAMES, LANGUAGE_NAMES
 
-        report: dict[str, list | dict | bool] = {}
+        report: dict[str, list[Any] | dict[str, Any] | bool] = {}
 
         for bucket_name, bucket in self._buckets.items():
             data = self._data.get(bucket_name, {})

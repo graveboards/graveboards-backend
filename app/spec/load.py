@@ -81,7 +81,7 @@ def _build_spec() -> dict[str, Any]:
     return spec
 
 
-def _apply_mutations(spec: dict) -> None:
+def _apply_mutations(spec: dict[str, Any]) -> None:
     """Apply post-processing mutations to the OpenAPI specification.
 
     This includes expanding shallow schema references and optionally removing security
@@ -101,7 +101,7 @@ def _apply_mutations(spec: dict) -> None:
                 method.pop("security", None)
 
 
-def _current_build_options() -> dict:
+def _current_build_options() -> dict[str, Any]:
     """Return the current build options affecting spec generation.
 
     These options are embedded in the cache payload and used to determine whether a

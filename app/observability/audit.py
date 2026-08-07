@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
-_audit_buffer: list[dict] = []
+_audit_buffer: list[dict[str, Any]] = []
 _BUFFER_SIZE = 50
 _FLUSH_INTERVAL = 5
 

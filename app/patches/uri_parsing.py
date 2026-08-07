@@ -160,7 +160,7 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
 
     @staticmethod
     def coerce_include(
-        param: dict, value: Any, _parameter_type: str, _parameter_name: str | None = None
+        param: dict[str, Any], value: Any, _parameter_type: str, _parameter_name: str | None = None
     ) -> bool | str | dict[str, Any] | list[Any]:
         """Recursively coerce deep-object include parameters.
 
@@ -255,7 +255,10 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
 
     @staticmethod
     def coerce_sorting(
-        _param: dict, value: list[str], _parameter_type: str, _parameter_name: str | None = None
+        _param: dict[str, Any],
+        value: list[str],
+        _parameter_type: str,
+        _parameter_name: str | None = None,
     ) -> list[dict[str, str]]:
         """Coerce sorting parameters from JSON-encoded strings.
 
@@ -308,7 +311,10 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
 
     @staticmethod
     def coerce_filters(
-        _param: dict, value: list[str], _parameter_type: str, _parameter_name: str | None = None
+        _param: dict[str, Any],
+        value: list[str],
+        _parameter_type: str,
+        _parameter_name: str | None = None,
     ) -> str | bool | datetime | float | int:
         """Recursively coerce deep-object filter parameters.
 

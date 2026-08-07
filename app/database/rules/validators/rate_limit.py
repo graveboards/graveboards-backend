@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
-from typing import TYPE_CHECKING, ClassVar, override
+from typing import TYPE_CHECKING, Any, ClassVar, override
 
 from connexion.exceptions import Forbidden
 
@@ -56,7 +56,7 @@ def _period_duration_seconds(period: str) -> int:
         return 604800
 
 
-def _is_target_match(config: dict, user_id: int) -> bool:
+def _is_target_match(config: dict[str, Any], user_id: int) -> bool:
     target = config.get("target")
     if target is None or not target:
         return True
@@ -70,17 +70,17 @@ class RateLimitRestriction(RestrictionBase):
     config_schema = RateLimitConfig
     supported_versions: ClassVar[set[str]] = {"1.0", "1.1"}
 
-    def _applies(self, config: dict, user_id: int) -> bool:
+    def _applies(self, config: dict[str, Any], user_id: int) -> bool:
         return _is_target_match(config, user_id) and config.get("scope", "user") == "user"
 
-    def _redis_key(self, context: ExecutionContext, config: dict) -> str:
+    def _redis_key(self, context: ExecutionContext, config: dict[str, Any]) -> str:
         period = config.get("period", "week")
         period_bucket = _truncate_to_period(datetime.now(UTC), period)
         return Namespace.QUEUE_RULE_RATE_LIMIT.hash_name(
             f"{context.queue_id}:{context.user_id}:{config_fingerprint(config)}:{period_bucket}"
         )
 
-    async def _limit_error(self, context: ExecutionContext, config: dict) -> Forbidden:
+    async def _limit_error(self, context: ExecutionContext, config: dict[str, Any]) -> Forbidden:
         max_requests = config.get("max_requests")
         period = config.get("period", "week")
         if context.db is None:
@@ -122,7 +122,7 @@ class RateLimitRestriction(RestrictionBase):
             raise await self._limit_error(context, config)
 
     @override
-    async def reserve(self, context: ExecutionContext, config: dict) -> str | None:
+    async def reserve(self, context: ExecutionContext, config: dict[str, Any]) -> str | None:
         if not self._applies(config, context.user_id):
             return None
 

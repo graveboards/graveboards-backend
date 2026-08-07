@@ -131,7 +131,7 @@ class BeatmapsetSnapshot(Base):
         return bool(self.availability["download_disabled"])
 
     @availability_download_disabled.inplace.expression
-    def _availability_download_disabled_expr(self) -> ColumnElement:
+    def _availability_download_disabled_expr(self) -> ColumnElement[Any]:
         from app.database.ctes.bms_ss.availability import availability_download_disabled_cte
 
         return (
@@ -147,7 +147,7 @@ class BeatmapsetSnapshot(Base):
         return value if value is None else str(value)
 
     @availability_more_information.inplace.expression
-    def _availability_more_information_expr(self) -> ColumnElement:
+    def _availability_more_information_expr(self) -> ColumnElement[Any]:
         from app.database.ctes.bms_ss.availability import availability_more_information_cte
 
         return (
@@ -162,7 +162,7 @@ class BeatmapsetSnapshot(Base):
         return str(self.description["description"])
 
     @description_description.inplace.expression
-    def _description_description_expr(self) -> ColumnElement:
+    def _description_description_expr(self) -> ColumnElement[Any]:
         from app.database.ctes.bms_ss.description import description_description_cte
 
         return (
@@ -180,7 +180,7 @@ class BeatmapsetSnapshot(Base):
         return None
 
     @genre_id.inplace.expression
-    def _genre_id_expr(self) -> ColumnElement:
+    def _genre_id_expr(self) -> ColumnElement[Any]:
         from app.database.ctes.bms_ss.genre import genre_id_cte
 
         return (
@@ -198,7 +198,7 @@ class BeatmapsetSnapshot(Base):
         return None
 
     @genre_name.inplace.expression
-    def _genre_name_expr(self) -> ColumnElement:
+    def _genre_name_expr(self) -> ColumnElement[Any]:
         from app.database.ctes.bms_ss.genre import genre_name_cte
 
         return (
@@ -216,7 +216,7 @@ class BeatmapsetSnapshot(Base):
         return None
 
     @hype_current.inplace.expression
-    def _hype_current_expr(self) -> ColumnElement:
+    def _hype_current_expr(self) -> ColumnElement[Any]:
         from app.database.ctes.bms_ss.hype import hype_current_cte
 
         return (
@@ -234,7 +234,7 @@ class BeatmapsetSnapshot(Base):
         return None
 
     @hype_required.inplace.expression
-    def _hype_required_expr(self) -> ColumnElement:
+    def _hype_required_expr(self) -> ColumnElement[Any]:
         from app.database.ctes.bms_ss.hype import hype_required_cte
 
         return (
@@ -252,7 +252,7 @@ class BeatmapsetSnapshot(Base):
         return None
 
     @language_id.inplace.expression
-    def _language_id_expr(self) -> ColumnElement:
+    def _language_id_expr(self) -> ColumnElement[Any]:
         from app.database.ctes.bms_ss.language import language_id_cte
 
         return (
@@ -270,7 +270,7 @@ class BeatmapsetSnapshot(Base):
         return None
 
     @language_name.inplace.expression
-    def _language_name_expr(self) -> ColumnElement:
+    def _language_name_expr(self) -> ColumnElement[Any]:
         from app.database.ctes.bms_ss.language import language_name_cte
 
         return (
@@ -299,7 +299,7 @@ class BeatmapsetSnapshot(Base):
         return int(self.nominations_summary["current"])
 
     @nominations_summary_current.inplace.expression
-    def _nominations_summary_current_expr(self) -> ColumnElement:
+    def _nominations_summary_current_expr(self) -> ColumnElement[Any]:
         from app.database.ctes.bms_ss.nominations_summary import nominations_summary_current_cte
 
         return (
@@ -314,7 +314,7 @@ class BeatmapsetSnapshot(Base):
         return int(self.nominations_summary["required_meta"]["main_ruleset"])
 
     @nominations_summary_required_meta_main_ruleset.inplace.expression
-    def _nominations_summary_required_meta_main_ruleset_expr(self) -> ColumnElement:
+    def _nominations_summary_required_meta_main_ruleset_expr(self) -> ColumnElement[Any]:
         from app.database.ctes.bms_ss.nominations_summary import (
             nominations_summary_required_meta_main_ruleset_cte,
         )
@@ -334,7 +334,7 @@ class BeatmapsetSnapshot(Base):
         return int(self.nominations_summary["required_meta"]["non_main_ruleset"])
 
     @nominations_summary_required_meta_non_main_ruleset.inplace.expression
-    def _nominations_summary_required_meta_non_main_ruleset_expr(self) -> ColumnElement:
+    def _nominations_summary_required_meta_non_main_ruleset_expr(self) -> ColumnElement[Any]:
         from app.database.ctes.bms_ss.nominations_summary import (
             nominations_summary_required_meta_non_main_ruleset_cte,
         )
@@ -354,7 +354,7 @@ class BeatmapsetSnapshot(Base):
         return len(self.beatmap_snapshots)
 
     @num_difficulties.inplace.expression
-    def _num_difficulties_expr(self) -> ColumnElement:
+    def _num_difficulties_expr(self) -> ColumnElement[Any]:
         from app.database.ctes.bms_ss.num_difficulties import num_difficulties_cte
 
         return (
@@ -375,7 +375,7 @@ class BeatmapsetSnapshot(Base):
         return diffs if len(ratings) > 1 else []
 
     @sr_gaps.inplace.expression
-    def _sr_gaps_expr(self) -> ColumnElement:
+    def _sr_gaps_expr(self) -> ColumnElement[Any]:
         from app.database.ctes.bms_ss.sr_gap import sr_gap_agg_cte
 
         return (
@@ -390,7 +390,7 @@ class BeatmapsetSnapshot(Base):
         return float(min(self.sr_gaps))
 
     @sr_gaps_min.inplace.expression
-    def _sr_gaps_min_expr(self) -> ColumnElement:
+    def _sr_gaps_min_expr(self) -> ColumnElement[Any]:
         from app.database.ctes.bms_ss.sr_gap import min_sr_gap_cte
 
         return (
@@ -405,7 +405,7 @@ class BeatmapsetSnapshot(Base):
         return float(max(self.sr_gaps))
 
     @sr_gaps_max.inplace.expression
-    def _sr_gaps_max_expr(self) -> ColumnElement:
+    def _sr_gaps_max_expr(self) -> ColumnElement[Any]:
         from app.database.ctes.bms_ss.sr_gap import max_sr_gap_cte
 
         return (
@@ -420,7 +420,7 @@ class BeatmapsetSnapshot(Base):
         return round(float(sum(self.sr_gaps) / len(self.sr_gaps)), 2)
 
     @sr_gaps_avg.inplace.expression
-    def _sr_gaps_avg_expr(self) -> ColumnElement:
+    def _sr_gaps_avg_expr(self) -> ColumnElement[Any]:
         from app.database.ctes.bms_ss.sr_gap import avg_sr_gap_cte
 
         return (
@@ -438,7 +438,7 @@ class BeatmapsetSnapshot(Base):
         return [snapshot.hit_length for snapshot in self.beatmap_snapshots]
 
     @hit_lengths.inplace.expression
-    def _hit_lengths_expr(self) -> ColumnElement:
+    def _hit_lengths_expr(self) -> ColumnElement[Any]:
         from app.database.ctes.bms_ss.hit_length import hit_length_agg_cte
 
         return (
@@ -453,7 +453,7 @@ class BeatmapsetSnapshot(Base):
         return int(min(self.hit_lengths))
 
     @hit_lengths_min.inplace.expression
-    def _hit_lengths_min_expr(self) -> ColumnElement:
+    def _hit_lengths_min_expr(self) -> ColumnElement[Any]:
         from app.database.ctes.bms_ss.hit_length import min_hit_length_cte
 
         return (
@@ -468,7 +468,7 @@ class BeatmapsetSnapshot(Base):
         return int(max(self.hit_lengths))
 
     @hit_lengths_max.inplace.expression
-    def _hit_lengths_max_expr(self) -> ColumnElement:
+    def _hit_lengths_max_expr(self) -> ColumnElement[Any]:
         from app.database.ctes.bms_ss.hit_length import max_hit_length_cte
 
         return (
@@ -483,7 +483,7 @@ class BeatmapsetSnapshot(Base):
         return round(float(sum(self.hit_lengths) / len(self.hit_lengths)), 2)
 
     @hit_lengths_avg.inplace.expression
-    def _hit_lengths_avg_expr(self) -> ColumnElement:
+    def _hit_lengths_avg_expr(self) -> ColumnElement[Any]:
         from app.database.ctes.bms_ss.hit_length import avg_hit_length_cte
 
         return (

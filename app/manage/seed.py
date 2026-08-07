@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from typing import Any, cast
 
 from rich.live import Live
 from rich.panel import Panel
@@ -88,7 +89,8 @@ async def cmd_seed(
             from app.database.seeding.fixture_loader import check_fixtures
 
             fixture_status = check_fixtures(internal_targets)
-            if fixture_status["counts"].get("queues", 0) == 0:
+            counts = fixture_status["counts"]
+            if isinstance(counts, dict) and counts.get("queues", 0) == 0:
                 queue_count = DEFAULT_QUEUE_COUNT
                 request_count = DEFAULT_REQUEST_COUNT
             else:
@@ -138,13 +140,14 @@ async def cmd_seed(
     logger.info(f"Seed execution order: {execution_order_string}")
 
     # Inject loaded data into seeders
-    seeding_data_any: dict = seeding_data
     for seed_target, seeder in orchestrator.seeders.items():
         if seed_target in seeding_data:
             seeder.set_data(seeding_data[seed_target])
             # BeatmapSeeder needs beatmap tags separately
             if seed_target == SeederTarget.BEATMAP:
-                beatmap_tags = seeding_data_any.get("beatmap_tags", [])
+                beatmap_tags: list[dict[str, Any]] = cast(dict[str, Any], seeding_data).get(
+                    "beatmap_tags", []
+                )
                 if beatmap_tags is not None:
                     from app.database.seeding.seeders.beatmap import BeatmapSeeder
 

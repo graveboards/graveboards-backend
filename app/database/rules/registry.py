@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from app.database.rules.validators.beatmap.ar_range import ARRangeRestriction
 from app.database.rules.validators.beatmap.bpm import BPMRestriction
@@ -107,7 +107,7 @@ def get_validator_tier(type_: str) -> int | None:
     return RULE_TIERS.get(type_)
 
 
-def effective_rule_tier(rule_type: str, config: dict) -> int:
+def effective_rule_tier(rule_type: str, config: dict[str, Any]) -> int:
     """Return the phase/tier a rule should execute in, accounting for composites.
 
     A composite's execution tier is the max tier of its descendants, so a

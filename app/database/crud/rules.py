@@ -40,7 +40,7 @@ def _validate_rule_version(rule_type: str, version: str) -> None:
         )
 
 
-def _normalize_config(config: dict) -> str:
+def _normalize_config(config: dict[str, Any]) -> str:
     """Normalize a config dict to a canonical string for comparison.
 
     Sorts keys recursively and serializes to JSON so that two configs with the same
@@ -87,7 +87,7 @@ class RuleCRUD:
     async def upsert_rules(
         self,
         queue_id: int,
-        rules_data: list[dict],
+        rules_data: list[dict[str, Any]],
         session: AsyncSession | None = None,
     ) -> list[QueueRule]:
         """Replace all rules for a queue with the provided list.
@@ -151,7 +151,7 @@ class RuleCRUD:
         self,
         rule_id: int,
         queue_id: int,
-        updates: dict,
+        updates: dict[str, Any],
         session: AsyncSession | None = None,
     ) -> QueueRule | None:
         """Update a specific rule by ID.
@@ -250,7 +250,7 @@ class RuleCRUD:
     async def create_rule(
         self,
         queue_id: int,
-        rule_data: dict,
+        rule_data: dict[str, Any],
         session: AsyncSession | None = None,
     ) -> QueueRule:
         """Create a single rule and append it to the queue's existing rules."""

@@ -5,7 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from .types import TaskFactory  # noqa: TC001
+from .types import TaskFactory
+
+__all__ = ["TaskFactory", "TaskSpec"]
 
 if TYPE_CHECKING:
     from .retry import TaskRetryPolicy

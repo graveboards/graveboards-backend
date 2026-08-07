@@ -43,9 +43,9 @@ QUERY_MAX_LIMIT = 100
 QUERY_DEFAULT_LIMIT = 50
 SearchMode = Literal["simple", "engine"]
 
-type JoinTarget = type[Base] | tuple[type[Base], BinaryExpression]
+type JoinTarget = type[Base] | tuple[type[Base], BinaryExpression[Any]]
 type JoinTargets = JoinTarget | Iterable[JoinTarget]
-type WhereClause = BinaryExpression | Iterable[BinaryExpression]
+type WhereClause = BinaryExpression[Any] | Iterable[BinaryExpression[Any]]
 
 MODEL_SCOPE_MAPPING: dict[ModelClass[Any], Scope] = {
     model_class: scope
@@ -284,7 +284,7 @@ class _R:
         _search_relevance: bool = False,
         _include: Include | None = None,
         **kwargs: Any,
-    ) -> Select:
+    ) -> Select[tuple[Any, ...]]:
         """Construct a SQLAlchemy ``Select`` statement from query parameters.
 
         This method orchestrates projection, joins, sorting, filtering, relationship
@@ -362,7 +362,9 @@ class _R:
         return select_stmt
 
     @staticmethod
-    def _apply_select(model_class: ModelClass[Any], select_: str | Iterable[str]) -> Select:
+    def _apply_select(
+        model_class: ModelClass[Any], select_: str | Iterable[str]
+    ) -> Select[tuple[Any, ...]]:
         """Apply projection to a ``Select`` statement.
 
         Validates requested attribute names against the model metadata and restricts
@@ -416,9 +418,9 @@ class _R:
 
     @staticmethod
     def _apply_join(
-        select_stmt: Select,
+        select_stmt: Select[tuple[Any, ...]],
         join: JoinTargets,
-    ) -> tuple[Select, dict[str, type[Base]]]:
+    ) -> tuple[Select[tuple[Any, ...]], dict[str, type[Base]]]:
         """Apply one or more JOIN clauses to a ``Select`` statement.
 
         Accepts model classes or (model, condition) tuples. Input is normalized into an
@@ -444,7 +446,7 @@ class _R:
         def is_base(t: Any) -> TypeGuard[type[Base]]:
             return isinstance(t, type) and issubclass(t, Base)
 
-        def is_tuple(t: Any) -> TypeGuard[tuple[type[Base], BinaryExpression]]:
+        def is_tuple(t: Any) -> TypeGuard[tuple[type[Base], BinaryExpression[Any]]]:
             return (
                 isinstance(t, tuple)
                 and len(t) == 2
@@ -454,7 +456,7 @@ class _R:
 
         def normalize(
             t: Any, index: int | None = None
-        ) -> tuple[type[Base], BinaryExpression | None]:
+        ) -> tuple[type[Base], BinaryExpression[Any] | None]:
             if is_base(t):
                 return t, None
             if is_tuple(t):
@@ -463,7 +465,7 @@ class _R:
             location = f"index={index}, " if index is not None else ""
             raise TypeError(f"Invalid input for join: {location}value={t}")
 
-        join_targets: list[tuple[type[Base], BinaryExpression | None]]
+        join_targets: list[tuple[type[Base], BinaryExpression[Any] | None]]
 
         if is_base(join) or is_tuple(join):
             join_targets = [normalize(join)]
@@ -483,7 +485,9 @@ class _R:
         return select_stmt, joined_models
 
     @staticmethod
-    def _apply_where(select_stmt: Select, where: WhereClause) -> Select:
+    def _apply_where(
+        select_stmt: Select[tuple[Any, ...]], where: WhereClause
+    ) -> Select[tuple[Any, ...]]:
         """Apply WHERE clause expressions to a ``Select`` statement.
 
         Args:
@@ -503,11 +507,11 @@ class _R:
 
     @staticmethod
     def _apply_sorting(
-        select_stmt: Select,
+        select_stmt: Select[tuple[Any, ...]],
         model_class: ModelClass[Any],
         sorting: Sorting,
         joined_models: dict[str, type[Base]] | None = None,
-    ) -> Select:
+    ) -> Select[tuple[Any, ...]]:
         """Apply validated sorting clauses to a ``Select`` statement.
 
         Only model columns and hybrid properties are sortable. Sorting by fields on
@@ -592,10 +596,10 @@ class _R:
 
     @staticmethod
     def _apply_filters(
-        select_stmt: Select,
+        select_stmt: Select[tuple[Any, ...]],
         model_class: ModelClass[Any],
         filters: Filters,
-    ) -> Select:
+    ) -> Select[tuple[Any, ...]]:
         """Apply validated filter clauses to a ``Select`` statement.
 
         Supports both column-level conditions and nested relationship filtering.
@@ -683,12 +687,12 @@ class _R:
 
     @staticmethod
     def _apply_search(
-        select_stmt: Select,
+        select_stmt: Select[tuple[Any, ...]],
         model_class: ModelClass[Any],
         search: str,
         mode: SearchMode = "simple",
         relevance: bool = False,
-    ) -> Select:
+    ) -> Select[tuple[Any, ...]]:
         """Apply search to a ``Select`` statement.
 
         Modes:
@@ -725,11 +729,11 @@ class _R:
 
     @staticmethod
     def _apply_search_engine(
-        select_stmt: Select,
+        select_stmt: Select[tuple[Any, ...]],
         model_class: ModelClass[Any],
         search: str,
         relevance: bool = False,
-    ) -> Select | None:
+    ) -> Select[tuple[Any, ...]] | None:
         """Apply scope-aware search term filtering using the main search mappings."""
         scope: Scope | None = MODEL_SCOPE_MAPPING.get(model_class)
 
@@ -748,8 +752,8 @@ class _R:
 
     @staticmethod
     def _apply_search_engine_relevance(
-        select_stmt: Select, scope: Scope, search_terms: SearchTermsSchema
-    ) -> Select:
+        select_stmt: Select[tuple[Any, ...]], scope: Scope, search_terms: SearchTermsSchema
+    ) -> Select[tuple[Any, ...]]:
         """Apply relevance-based ordering for engine searches."""
         category_score_ctes = search_terms_scored_ctes_factory(scope, search_terms)
         handler = SCOPE_RELEVANCE_HANDLERS.get(scope)
@@ -761,10 +765,10 @@ class _R:
 
     @staticmethod
     def _apply_search_simple(
-        select_stmt: Select,
+        select_stmt: Select[tuple[Any, ...]],
         model_class: ModelClass[Any],
         search: str,
-    ) -> Select:
+    ) -> Select[tuple[Any, ...]]:
         """Apply full-text + substring search to a ``Select`` statement."""
         model = model_class.value
 
@@ -805,8 +809,8 @@ class _R:
 
     @staticmethod
     def _apply_include(
-        select_stmt: Select, model_class: ModelClass[Any], include: Include
-    ) -> Select:
+        select_stmt: Select[tuple[Any, ...]], model_class: ModelClass[Any], include: Include
+    ) -> Select[tuple[Any, ...]]:
         """Apply eager-loading options based on a nested include specification.
 
         Supports nested relationship loading using `joinedload` or `selectinload`,
@@ -827,8 +831,8 @@ class _R:
         """
 
         def parse_node(
-            attr: QueryableAttribute,
-            rel_info: RelationshipProperty,
+            attr: QueryableAttribute[Any],
+            rel_info: RelationshipProperty[Any],
             target_model_class: ModelClass[Any],
             value: bool | Include,
             path: str,
@@ -877,8 +881,8 @@ class _R:
 
     @staticmethod
     def _apply_exclude_lazy(
-        select_stmt: Select, model_class: ModelClass[Any], include: Include | None
-    ) -> Select:
+        select_stmt: Select[tuple[Any, ...]], model_class: ModelClass[Any], include: Include | None
+    ) -> Select[tuple[Any, ...]]:
         """Prevent unintended lazy-loading of relationships.
 
         Any relationship not explicitly included is configured with `noload` to avoid
@@ -900,7 +904,7 @@ class _R:
         if include is None:
             include = {}
 
-        def is_lazy(rel: RelationshipProperty) -> bool:
+        def is_lazy(rel: RelationshipProperty[Any]) -> bool:
             return rel.lazy in {True, "select", "dynamic"}
 
         def exclude_unincluded(

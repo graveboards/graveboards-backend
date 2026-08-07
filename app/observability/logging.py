@@ -52,7 +52,7 @@ def _drop_color_message(
     return event_dict
 
 
-def _build_shared_processors() -> list:
+def _build_shared_processors() -> list[Any]:
     """Processors applied to *both* native structlog and foreign stdlib records.
 
     Foreign records (uvicorn, sqlalchemy) run these via the ProcessorFormatter's
@@ -124,7 +124,7 @@ def setup_logging(
     _configure_stdlib_bridge(shared_processors)
 
 
-def _build_handlers(shared_processors: list) -> list[logging.Handler]:
+def _build_handlers(shared_processors: list[Any]) -> list[logging.Handler]:
     """Two independent sinks fed by the same log records.
 
     Console: human-readable, always on, whatever runs `docker compose logs`
@@ -163,7 +163,7 @@ def _build_handlers(shared_processors: list) -> list[logging.Handler]:
     return [console_handler, json_handler]
 
 
-def _configure_stdlib_bridge(shared_processors: list) -> None:
+def _configure_stdlib_bridge(shared_processors: list[Any]) -> None:
     handlers = _build_handlers(shared_processors)
 
     root = logging.getLogger()

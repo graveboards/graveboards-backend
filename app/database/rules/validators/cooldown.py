@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, Any, override
 
 from connexion.exceptions import Forbidden
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from app.database.rules.context import ExecutionContext
 
 
-def _is_target_match(config: dict, user_id: int) -> bool:
+def _is_target_match(config: dict[str, Any], user_id: int) -> bool:
     target = config.get("target")
     if target is None or not target:
         return True
@@ -30,10 +30,10 @@ class CooldownRestriction(RestrictionBase):
     type = "cooldown"
     config_schema = CooldownConfig
 
-    def _applies(self, config: dict, user_id: int) -> bool:
+    def _applies(self, config: dict[str, Any], user_id: int) -> bool:
         return _is_target_match(config, user_id) and config.get("scope", "user") == "user"
 
-    def _redis_key(self, context: ExecutionContext, config: dict) -> str:
+    def _redis_key(self, context: ExecutionContext, config: dict[str, Any]) -> str:
         return Namespace.QUEUE_RULE_COOLDOWN.hash_name(
             f"{context.queue_id}:{context.user_id}:{config_fingerprint(config)}"
         )
@@ -88,7 +88,7 @@ class CooldownRestriction(RestrictionBase):
                 raise await self._cooldown_error(context, remaining)
 
     @override
-    async def reserve(self, context: ExecutionContext, config: dict) -> str | None:
+    async def reserve(self, context: ExecutionContext, config: dict[str, Any]) -> str | None:
         if not self._applies(config, context.user_id):
             return None
 

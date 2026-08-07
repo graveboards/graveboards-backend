@@ -5,6 +5,7 @@ import json
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from httpx import HTTPStatusError
 
@@ -29,7 +30,7 @@ async def migrate(input_path: str = "requests.json") -> None:
     logger.info("Starting migration...")
 
     with Path(input_path).open() as file:
-        rows: list[dict] = sorted(json.load(file), key=lambda r: r["id"])
+        rows: list[dict[str, Any]] = sorted(json.load(file), key=lambda r: r["id"])
         total_rows = len(rows)
 
     rc = RedisClient()

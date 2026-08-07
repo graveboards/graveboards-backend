@@ -31,7 +31,7 @@ disabled_nested_obj = {
 }
 
 
-def populate_shallow_refs(openapi_spec: dict) -> None:
+def populate_shallow_refs(openapi_spec: dict[str, Any]) -> None:
     """Expand shallow schema references and prevent recursive cycles.
 
     For schemas listed in ``SCHEMAS_WITH_SHALLOW_REFS``, this function:
@@ -55,7 +55,7 @@ def populate_shallow_refs(openapi_spec: dict) -> None:
     def is_include(title: str) -> bool:
         return title.endswith("Include")
 
-    def resolve_schema(schema: dict, stack: tuple[str, ...]) -> dict | None:
+    def resolve_schema(schema: dict[str, Any], stack: tuple[str, ...]) -> dict[str, Any] | None:
         schema = copy.deepcopy(schema)
         title = schema.get("title")
 
@@ -86,7 +86,7 @@ def populate_shallow_refs(openapi_spec: dict) -> None:
 
         return schema
 
-    def resolve_property(prop: dict, stack: tuple[str, ...]) -> dict | None:
+    def resolve_property(prop: dict[str, Any], stack: tuple[str, ...]) -> dict[str, Any] | None:
         # Object
         if prop.get("type") == "object":
             title = prop.get("title")
@@ -159,7 +159,7 @@ def populate_shallow_refs(openapi_spec: dict) -> None:
     _propagate_to_parameters(openapi_spec, schemas)
 
 
-def _propagate_to_parameters(openapi_spec: dict, schemas: dict) -> None:
+def _propagate_to_parameters(openapi_spec: dict[str, Any], schemas: dict[str, Any]) -> None:
     """Copy resolved schemas back over inlined path parameter copies.
 
     ``resolve_refs`` dereferences every ``$ref`` into an independent copy, so the

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from authlib.integrations.base_client.errors import OAuthError
 from jwt.exceptions import ExpiredSignatureError, InvalidIssuerError, InvalidTokenError
@@ -53,7 +53,7 @@ async def search(request: Request, token: str, rc: RedisClient | None = None) ->
 
 async def post(
     request: Request,
-    body: dict,
+    body: dict[str, Any],
     oauth: OAuth | None = None,
     osu_api_client: OsuAPIClient | None = None,
     db: PostgresqlDB | None = None,

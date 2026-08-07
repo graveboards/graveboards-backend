@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy.sql import select
 from sqlalchemy.sql.functions import func
@@ -30,9 +30,9 @@ if TYPE_CHECKING:
 
 def bm_ss_filtering_cte_factory(
     scope: Scope,
-    target: ColumnElement,
+    target: ColumnElement[Any],
     aggregated_conditions: Iterable[
-        BinaryExpression | BindParameter | CollectionAggregate | ColumnElement[bool]
+        BinaryExpression[Any] | BindParameter[Any] | CollectionAggregate[Any] | ColumnElement[bool]
     ]
     | None = None,
 ) -> CTE:

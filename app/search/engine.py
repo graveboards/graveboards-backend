@@ -154,7 +154,7 @@ class SearchEngine:
         else:
             raise TypeError(f"filters must be FiltersSchema or dict, got {type(filters).__name__}")
 
-        self.query: Select | None = None
+        self.query: Select[tuple[Any, ...]] | None = None
         self._compose_query()
 
     async def search(
@@ -185,9 +185,9 @@ class SearchEngine:
             TypeError:
                 If ``limit`` or ``offset`` are not non-negative integers.
         """
-        if not isinstance(limit, int) or isinstance(limit, bool):  # type: ignore[redundant-expr]
+        if not isinstance(limit, int) or isinstance(limit, bool):
             raise TypeError("limit must be a non-negative integer")
-        if not isinstance(offset, int) or isinstance(offset, bool):  # type: ignore[redundant-expr]
+        if not isinstance(offset, int) or isinstance(offset, bool):
             raise TypeError("offset must be a non-negative integer")
         if limit < 0 or offset < 0:
             raise TypeError("Both limit and offset must be a non-negative integer")
@@ -584,7 +584,7 @@ class SearchEngine:
                     cte = request_sorting_cte_factory(self.scope, sorting_option)
                     query = apply_sorting_cte(cte, query, target)
 
-        sorting_clauses: list[ColumnElement] = []
+        sorting_clauses: list[ColumnElement[Any]] = []
 
         for sorting_option in self.sorting.root:
             category = SearchableFieldCategory.from_model_class(sorting_option.field.model_class)
@@ -613,7 +613,10 @@ class SearchEngine:
             target: InstrumentedAttribute[Any] | ColumnClause[Any] | ColumnElement[Any],
             is_aggregated: bool = False,
         ) -> Generator[
-            BinaryExpression | BindParameter | CollectionAggregate | ColumnElement[bool]
+            BinaryExpression[Any]
+            | BindParameter[Any]
+            | CollectionAggregate[Any]
+            | ColumnElement[bool]
         ]:
             for op_str, value in conditions.model_dump(exclude_unset=True, by_alias=True).items():
                 filter_operator = FilterOperator.from_name(op_str)
@@ -666,7 +669,10 @@ class SearchEngine:
                     return query.join(cte, cte.c.id == self.model_class.value.id)
 
         filtering_clauses: list[
-            BinaryExpression | BindParameter | CollectionAggregate | ColumnElement[bool]
+            BinaryExpression[Any]
+            | BindParameter[Any]
+            | CollectionAggregate[Any]
+            | ColumnElement[bool]
         ] = []
 
         for category_name, field_filters in self.filters:
@@ -686,7 +692,9 @@ class SearchEngine:
 
         self.query = query
 
-    def dump(self, page: ResultsType, include: dict | None = None) -> list[dict[str, Any]]:
+    def dump(
+        self, page: ResultsType, include: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
         """Serialize ORM results using the scope-specific schema.
 
         Args:

@@ -142,7 +142,9 @@ class FixtureOrchestrator:
         results = self.fetcher.last_fetch_results
         return FetchReport(criteria=self.criteria.criteria, results=results)
 
-    async def _execute_concurrent(self, sample_counts: dict, progress: ProgressBar) -> None:
+    async def _execute_concurrent(
+        self, sample_counts: dict[str, Any], progress: ProgressBar
+    ) -> None:
         """Execute fetches concurrently for independent categories."""
         import asyncio
 

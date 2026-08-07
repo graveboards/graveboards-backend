@@ -23,6 +23,7 @@ from __future__ import annotations
 import contextlib
 import json
 from datetime import datetime
+from typing import Any
 
 from app.config import PROJECT_ROOT
 from app.database.seeding.target import SeederTarget
@@ -35,7 +36,7 @@ FIXTURES_DIR = PROJECT_ROOT / "instance" / "fixtures"
 # ---------------------------------------------------------------------------
 
 
-def check_fixtures(targets: set[SeederTarget]) -> dict:
+def check_fixtures(targets: set[SeederTarget]) -> dict[str, str | dict[str, int] | list[str]]:
     """Check whether instance/fixtures/ has enough data for *targets*.
 
     Returns a dict with keys:
@@ -86,13 +87,13 @@ def check_fixtures(targets: set[SeederTarget]) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def load_seeding_data(targets: set[SeederTarget]) -> dict[SeederTarget, list[dict]]:
+def load_seeding_data(targets: set[SeederTarget]) -> dict[SeederTarget, list[dict[str, Any]]]:
     """Load fixture data from instance/fixtures/ and adapt it for seeders.
 
     Returns a dict mapping each requested SeederTarget to a list of
     prepared data dicts ready to be passed to ``db.add(Model, **entry)``.
     """
-    data: dict[SeederTarget, list[dict]] = {}
+    data: dict[SeederTarget, list[dict[str, Any]]] = {}
 
     if SeederTarget.USER in targets:
         data[SeederTarget.USER] = _load_users()
@@ -109,7 +110,7 @@ def load_seeding_data(targets: set[SeederTarget]) -> dict[SeederTarget, list[dic
     return data
 
 
-def _load_users() -> list[dict]:
+def _load_users() -> list[dict[str, Any]]:
     """Load users from instance/fixtures/users/{ruleset}/user_*.json.
 
     Adapts the flat osu! API user response into the format seeders expect:
@@ -122,7 +123,7 @@ def _load_users() -> list[dict]:
     # DateTime columns in Profile model that need conversion
     datetime_columns = {"join_date", "last_visit", "updated_at"}
 
-    users: list[dict] = []
+    users: list[dict[str, Any]] = []
     for ruleset_dir in sorted(users_path.iterdir()):
         if not ruleset_dir.is_dir():
             continue
@@ -151,7 +152,7 @@ def _load_users() -> list[dict]:
     return users
 
 
-def _load_beatmaps() -> list[dict]:
+def _load_beatmaps() -> list[dict[str, Any]]:
     """Load beatmapsets from instance/fixtures/beatmapsets/beatmapset_*.json.
 
     Adapts the osu! API response (which uses ``maps``) into the format
@@ -161,7 +162,7 @@ def _load_beatmaps() -> list[dict]:
     if not bms_path.exists():
         return []
 
-    beatmapsets: list[dict] = []
+    beatmapsets: list[dict[str, Any]] = []
     for f in sorted(bms_path.glob("beatmapset_*.json")):
         with f.open() as fh:
             api_data = json.load(fh)
@@ -178,13 +179,13 @@ def _load_beatmaps() -> list[dict]:
     return beatmapsets
 
 
-def _load_queues() -> list[dict]:
+def _load_queues() -> list[dict[str, Any]]:
     """Load queues from instance/fixtures/queues/queue_*.json."""
     queues_path = FIXTURES_DIR / "queues"
     if not queues_path.exists():
         return []
 
-    queues: list[dict] = []
+    queues: list[dict[str, Any]] = []
     for f in sorted(queues_path.glob("queue_*.json")):
         with f.open() as fh:
             queue_data = json.load(fh)
@@ -200,13 +201,13 @@ def _load_queues() -> list[dict]:
     return queues
 
 
-def _load_requests() -> list[dict]:
+def _load_requests() -> list[dict[str, Any]]:
     """Load requests from instance/fixtures/requests/request_*.json."""
     requests_path = FIXTURES_DIR / "requests"
     if not requests_path.exists():
         return []
 
-    requests: list[dict] = []
+    requests: list[dict[str, Any]] = []
     for f in sorted(requests_path.glob("request_*.json")):
         with f.open() as fh:
             request_data = json.load(fh)

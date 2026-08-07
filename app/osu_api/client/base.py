@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, Any, Self
 
 import httpx
 from pydantic import ValidationError
@@ -218,7 +218,7 @@ class OsuAPIClientBase:
         await self.close()
 
     @staticmethod
-    def format_query_parameters(query_parameters: dict) -> str:
+    def format_query_parameters(query_parameters: dict[str, Any]) -> str:
         """Format query parameters as a URL query string.
 
         Args:

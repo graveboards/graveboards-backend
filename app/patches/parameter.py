@@ -29,7 +29,7 @@ class ParameterValidatorPatched(ParameterValidator):
 
     def __init__(
         self,
-        parameters: list[dict],
+        parameters: list[dict[str, Any]],
         uri_parser: Any,
         strict_validation: bool = False,
         security_query_params: list[str] | None = None,
@@ -52,7 +52,7 @@ class ParameterValidatorPatched(ParameterValidator):
             strict_validation=strict_validation,
             security_query_params=security_query_params,
         )
-        self.request_scopes: dict[ConnexionRequest, dict] = {}
+        self.request_scopes: dict[ConnexionRequest, dict[str, Any]] = {}
 
     def validate_query_parameter(
         self, param: dict[str, Any], request: ConnexionRequest

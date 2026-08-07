@@ -82,7 +82,7 @@ class SearchCache:
 
     async def get(
         self, scope: Scope, search_terms: str, sorting: str, filters: str, limit: int, offset: int
-    ) -> dict | None:
+    ) -> dict[str, Any] | None:
         """Retrieve cached search results.
 
         Args:

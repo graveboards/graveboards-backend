@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import logging
 import traceback
+from typing import Any
 from typing import cast as typing_cast
 
 from app.observability.logging import setup_logging
@@ -25,7 +26,7 @@ from .seed import cmd_seed
 from .status import cmd_status
 
 
-def build_status_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def build_status_parser(subparsers: argparse._SubParsersAction[Any]) -> argparse.ArgumentParser:
     p = subparsers.add_parser("status", help="View database status")
     p.add_argument(
         "target",
@@ -37,7 +38,7 @@ def build_status_parser(subparsers: argparse._SubParsersAction) -> argparse.Argu
     return typing_cast("argparse.ArgumentParser", p)
 
 
-def build_reset_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def build_reset_parser(subparsers: argparse._SubParsersAction[Any]) -> argparse.ArgumentParser:
     p = subparsers.add_parser("reset", help="Reset database")
     p.add_argument(
         "seed_target",
@@ -49,7 +50,7 @@ def build_reset_parser(subparsers: argparse._SubParsersAction) -> argparse.Argum
     return typing_cast("argparse.ArgumentParser", p)
 
 
-def build_seed_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def build_seed_parser(subparsers: argparse._SubParsersAction[Any]) -> argparse.ArgumentParser:
     p = subparsers.add_parser("seed", help="Seed database")
     p.add_argument("target", help="Seed target (all, users, beatmaps, queues, requests)")
     p.add_argument(
@@ -60,7 +61,7 @@ def build_seed_parser(subparsers: argparse._SubParsersAction) -> argparse.Argume
 
 
 def build_generate_api_key_parser(
-    subparsers: argparse._SubParsersAction,
+    subparsers: argparse._SubParsersAction[Any],
 ) -> argparse.ArgumentParser:
     p = subparsers.add_parser("generate-api-key", help="Generate a new API key for a user")
     p.add_argument("user_id", type=int, help="osu! user ID")
@@ -70,7 +71,7 @@ def build_generate_api_key_parser(
     return typing_cast("argparse.ArgumentParser", p)
 
 
-def build_migrate_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def build_migrate_parser(subparsers: argparse._SubParsersAction[Any]) -> argparse.ArgumentParser:
     p: argparse.ArgumentParser = subparsers.add_parser(
         "migrate", help="Database migration commands"
     )
@@ -104,7 +105,7 @@ def build_migrate_parser(subparsers: argparse._SubParsersAction) -> argparse.Arg
     return p
 
 
-def build_fixtures_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def build_fixtures_parser(subparsers: argparse._SubParsersAction[Any]) -> argparse.ArgumentParser:
     p = subparsers.add_parser("fixtures", help="Manage test fixtures")
     fixture_subparsers = p.add_subparsers(dest="fixture_command", required=True)
 

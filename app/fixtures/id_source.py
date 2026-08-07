@@ -15,7 +15,7 @@ from __future__ import annotations
 import asyncio
 import random
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from app.fixtures.archives import (
     ArchiveIndex,
@@ -63,7 +63,9 @@ class RandomIDSource(IDSource):
 
     name = "random"
 
-    def __init__(self, id_ranges: dict | None = None, failed_id_store: FailedIdStore | None = None):
+    def __init__(
+        self, id_ranges: dict[str, Any] | None = None, failed_id_store: FailedIdStore | None = None
+    ):
         self.id_ranges = id_ranges or ID_RANGES
         self.failed_id_store = failed_id_store
         self._failed_cache: dict[str, set[int]] = {}
@@ -83,8 +85,12 @@ class RandomIDSource(IDSource):
         range_config = self.id_ranges.get(
             category, self.id_ranges.get(key.split(".")[0], {"min": 1, "max": 1000000})
         )
-        min_id = range_config.get("min", 1)
-        max_id = range_config.get("max", 1000000)
+        if not isinstance(range_config, dict):
+            min_id = 1
+            max_id = 1000000
+        else:
+            min_id = range_config.get("min", 1)
+            max_id = range_config.get("max", 1000000)
 
         for _ in range(100):
             candidate = random.randint(min_id, max_id)
@@ -310,7 +316,7 @@ class AutoIDSource(IDSource):
     def __init__(
         self,
         rc: RedisClient | None = None,
-        id_ranges: dict | None = None,
+        id_ranges: dict[str, Any] | None = None,
         failed_id_store: FailedIdStore | None = None,
     ):
         self.sources: list[IDSource] = []
@@ -372,7 +378,7 @@ class AutoIDSource(IDSource):
 def create_id_source(
     source_type: str,
     rc: RedisClient | None = None,
-    id_ranges: dict | None = None,
+    id_ranges: dict[str, Any] | None = None,
     failed_id_store: FailedIdStore | None = None,
 ) -> IDSource:
     """Create an ID source by name and configuration."""

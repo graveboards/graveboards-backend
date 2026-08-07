@@ -153,7 +153,7 @@ class BeatmapManager:
 
     async def archive(
         self, beatmapset_id: int, download: bool = True
-    ) -> dict[str, dict | list[dict] | str | None]:
+    ) -> dict[str, dict[str, Any] | list[dict[str, Any]] | str | None]:
         """Archive or update a beatmapset and its beatmaps.
 
         Fetches the latest beatmapset from the osu! API and determines whether a new
@@ -210,7 +210,7 @@ class BeatmapManager:
         finally:
             self._reset_changelog()
 
-    async def _snapshot_beatmapset(self, beatmapset_dict: dict) -> None:
+    async def _snapshot_beatmapset(self, beatmapset_dict: dict[str, Any]) -> None:
         """Create a new ``BeatmapsetSnapshot`` and associated relationships.
 
         Snapshots:
@@ -243,7 +243,9 @@ class BeatmapManager:
         self._changelog["snapshotted_beatmapset"] = info
         logger.debug(f"Snapshotted beatmapset: {info}")
 
-    async def _snapshot_beatmaps(self, beatmap_dicts: list[dict]) -> list[BeatmapSnapshot]:
+    async def _snapshot_beatmaps(
+        self, beatmap_dicts: list[dict[str, Any]]
+    ) -> list[BeatmapSnapshot]:
         """Create ``BeatmapSnapshot`` records for new beatmaps.
 
         Existing snapshots (matched by checksum) are reused.
@@ -299,7 +301,7 @@ class BeatmapManager:
 
         return beatmap_snapshots
 
-    async def _update_beatmapset(self, beatmapset_dict: dict) -> None:
+    async def _update_beatmapset(self, beatmapset_dict: dict[str, Any]) -> None:
         """Apply field-level updates to the latest ``BeatmapsetSnapshot``.
 
         Computes a delta against UPDATABLE_FIELDS and persists only changed values.
@@ -338,7 +340,7 @@ class BeatmapManager:
             }
             logger.debug(f"Updated beatmapset: {info}")
 
-    async def _update_beatmaps(self, beatmap_dicts: list[dict]) -> None:
+    async def _update_beatmaps(self, beatmap_dicts: list[dict[str, Any]]) -> None:
         """Apply field-level updates to existing BeatmapSnapshot records.
 
         Also refreshes many-to-many relationships for beatmap tags and owner profiles.
@@ -388,7 +390,7 @@ class BeatmapManager:
                 self._changelog["updated_beatmaps"].append(info)
                 logger.debug(f"Updated beatmap: {info}")
 
-    async def _populate_beatmapset(self, beatmapset_dict: dict) -> None:
+    async def _populate_beatmapset(self, beatmapset_dict: dict[str, Any]) -> None:
         """Ensure ``Beatmapset`` and related ``Beatmap`` records exist.
 
         Populates users, profile, the beatmapset, and child beatmaps.
@@ -426,7 +428,7 @@ class BeatmapManager:
             for beatmap_dict in beatmapset_dict["beatmaps"]:
                 await self._populate_beatmap(beatmap_dict)
 
-    async def _populate_beatmap(self, beatmap_dict: dict) -> None:
+    async def _populate_beatmap(self, beatmap_dict: dict[str, Any]) -> None:
         """Ensure a Beatmap record exists and user ownership is resolved."""
         beatmap_id = beatmap_dict["id"]
         beatmapset_id = beatmap_dict["beatmapset_id"]
@@ -473,7 +475,10 @@ class BeatmapManager:
         return typing_cast("User", user)
 
     async def _populate_profile(
-        self, user_id: int, restricted_user_dict: dict | None = None, is_restricted: bool = False
+        self,
+        user_id: int,
+        restricted_user_dict: dict[str, Any] | None = None,
+        is_restricted: bool = False,
     ) -> Profile:
         """Create or update a Profile with distributed locking.
 
@@ -554,7 +559,7 @@ class BeatmapManager:
         except RedisLockTimeoutError:
             raise
 
-    async def _populate_owner_profiles(self, owners: list[dict]) -> list[Profile]:
+    async def _populate_owner_profiles(self, owners: list[dict[str, Any]]) -> list[Profile]:
         """Resolve and populate ``Profile`` instances for beatmap owners.
 
         Returns:

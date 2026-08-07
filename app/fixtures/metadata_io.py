@@ -45,7 +45,7 @@ def load_metadata(fixtures_dir: Path | None = None) -> dict[str, Any]:
     return create_empty_metadata()
 
 
-def save_metadata(metadata: dict, fixtures_dir: Path | None = None) -> None:
+def save_metadata(metadata: dict[str, Any], fixtures_dir: Path | None = None) -> None:
     """Save metadata to disk.
 
     Args:
@@ -86,7 +86,7 @@ def save_metadata(metadata: dict, fixtures_dir: Path | None = None) -> None:
         json.dump(metadata, f, indent=2)
 
 
-def create_empty_metadata() -> dict:
+def create_empty_metadata() -> dict[str, Any]:
     """Create empty metadata structure.
 
     Returns:
@@ -131,7 +131,7 @@ def create_empty_metadata() -> dict:
     }
 
 
-def create_empty_samples() -> dict:
+def create_empty_samples() -> dict[str, Any]:
     """Create empty samples structure.
 
     Returns:
@@ -150,7 +150,7 @@ def create_empty_samples() -> dict:
     }
 
 
-def create_empty_promoted_fixtures() -> dict:
+def create_empty_promoted_fixtures() -> dict[str, Any]:
     """Create empty promoted fixtures structure.
 
     Returns:
@@ -291,7 +291,7 @@ def get_all_fixture_files(
     return fixtures
 
 
-def create_targeted_metadata() -> dict:
+def create_targeted_metadata() -> dict[str, Any]:
     """Create the standard targeted fixtures metadata structure.
 
     Returns:

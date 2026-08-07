@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy.sql.elements import literal_column
 from sqlalchemy.sql.functions import func
@@ -23,8 +23,10 @@ if TYPE_CHECKING:
 
 
 def _apply_beatmaps_relevance(
-    select_stmt: Select, category_score_ctes: dict[SearchableFieldCategory, CTE], _search_terms: str
-) -> Select:
+    select_stmt: Select[tuple[Any, ...]],
+    category_score_ctes: dict[SearchableFieldCategory, CTE],
+    _search_terms: str,
+) -> Select[tuple[Any, ...]]:
     """Apply relevance ordering for BEATMAPS scope."""
     beatmap_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAP)
     beatmapset_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAPSET)
@@ -64,8 +66,10 @@ def _apply_beatmaps_relevance(
 
 
 def _apply_beatmapsets_relevance(
-    select_stmt: Select, category_score_ctes: dict[SearchableFieldCategory, CTE], _search_terms: str
-) -> Select:
+    select_stmt: Select[tuple[Any, ...]],
+    category_score_ctes: dict[SearchableFieldCategory, CTE],
+    _search_terms: str,
+) -> Select[tuple[Any, ...]]:
     """Apply relevance ordering for BEATMAPSETS scope."""
     beatmap_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAP)
     beatmapset_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAPSET)
@@ -109,8 +113,10 @@ def _apply_beatmapsets_relevance(
 
 
 def _apply_queues_relevance(
-    select_stmt: Select, category_score_ctes: dict[SearchableFieldCategory, CTE], _search_terms: str
-) -> Select:
+    select_stmt: Select[tuple[Any, ...]],
+    category_score_ctes: dict[SearchableFieldCategory, CTE],
+    _search_terms: str,
+) -> Select[tuple[Any, ...]]:
     """Apply relevance ordering for QUEUES scope."""
     beatmap_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAP)
     beatmapset_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAPSET)
@@ -208,8 +214,10 @@ def _apply_queues_relevance(
 
 
 def _apply_requests_relevance(
-    select_stmt: Select, category_score_ctes: dict[SearchableFieldCategory, CTE], _search_terms: str
-) -> Select:
+    select_stmt: Select[tuple[Any, ...]],
+    category_score_ctes: dict[SearchableFieldCategory, CTE],
+    _search_terms: str,
+) -> Select[tuple[Any, ...]]:
     """Apply relevance ordering for REQUESTS scope."""
     beatmap_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAP)
     beatmapset_cte = category_score_ctes.get(SearchableFieldCategory.BEATMAPSET)

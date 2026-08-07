@@ -85,7 +85,7 @@ def validate_filters(
         validate_value(value, prop_schema, current_path)
 
 
-def validate_value(value: Any, schema: dict, path: list[str]) -> None:
+def validate_value(value: Any, schema: dict[str, Any], path: list[str]) -> None:
     """Validate a value against an OpenAPI schema definition.
 
     Supports validation of:

@@ -330,14 +330,14 @@ async def extract_sql_from_archive(
         return None
 
 
-def parse_performance_sql(sql_path: Path) -> dict[str, list[dict]]:
+def parse_performance_sql(sql_path: Path) -> dict[str, list[list[Any]]]:
     """Parse SQL files to extract data."""
     data = {}
 
     try:
         tables: dict[str, list[Any]] = {}
         current_table = None
-        current_rows: list[dict] = []
+        current_rows: list[list[Any]] = []
 
         with sql_path.open() as f:
             for line in f:

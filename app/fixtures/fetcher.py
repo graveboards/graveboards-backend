@@ -56,7 +56,7 @@ class FixtureDataFetcher:
     def __init__(
         self,
         rc: RedisClient,
-        id_ranges: dict | None = None,
+        id_ranges: dict[str, Any] | None = None,
         force_fetch: bool = False,
         id_source: IDSource | None = None,
         fixtures_dir: Path | None = None,
@@ -149,7 +149,7 @@ class FixtureDataFetcher:
         """Reset the consecutive error counter on a successful fetch."""
         self._consecutive_errors = 0
 
-    def _atomic_write(self, filepath: Path, data: dict, data_type: str = "") -> None:
+    def _atomic_write(self, filepath: Path, data: dict[str, Any], data_type: str = "") -> None:
         """Write data to filepath atomically using tmp file + os.replace.
 
         Validates data if data_type is provided. Logs warning if invalid but still writes.
@@ -167,12 +167,12 @@ class FixtureDataFetcher:
     def _make_fetch_config(
         self,
         category: str,
-        api_call_factory: Callable,
-        path_builder: Callable,
+        api_call_factory: Callable[..., Any],
+        path_builder: Callable[[int], Path],
         data_type: str,
         max_retries: int | None = None,
         max_attempts: int | None = None,
-        data_validator: Callable | None = None,
+        data_validator: Callable[[dict[str, Any]], bool] | None = None,
         on_empty_data_limit: int | None = None,
     ) -> FetchConfig:
         """Create a FetchConfig for the given category."""
@@ -764,7 +764,7 @@ class FixtureDataFetcher:
         """Reload the top player IDs from the on-disk metadata."""
         self.top_player_ids = self.metadata.get("top_player_ids", {r: [] for r in RULESETS})
 
-    async def fetch_all(self, sample_counts: dict) -> AsyncIterator[FetchEvent]:
+    async def fetch_all(self, sample_counts: dict[str, Any]) -> AsyncIterator[FetchEvent]:
         """Fetch all requested fixture categories and yield progress events.
 
         Parameters
@@ -1007,13 +1007,13 @@ class FixtureDataFetcher:
     # TODO: Implement search coverage tracking methods in subclasses.
     fetched_restricted_users: ClassVar[dict[bool, set[int]]] = {}
 
-    def _classify_beatmapset(self, data: dict, beatmapset_id: int) -> dict[str, Any]:
+    def _classify_beatmapset(self, data: dict[str, Any], beatmapset_id: int) -> dict[str, Any]:
         raise NotImplementedError
 
-    def _classify_beatmap(self, data: dict, beatmap_id: int) -> dict[str, Any]:
+    def _classify_beatmap(self, data: dict[str, Any], beatmap_id: int) -> dict[str, Any]:
         raise NotImplementedError
 
-    def _classify_user(self, data: dict, user_id: int) -> dict[str, Any]:
+    def _classify_user(self, data: dict[str, Any], user_id: int) -> dict[str, Any]:
         raise NotImplementedError
 
     async def _adaptive_fetch_beatmapsets(self) -> None:

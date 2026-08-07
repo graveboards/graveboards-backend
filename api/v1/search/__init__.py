@@ -212,7 +212,7 @@ async def search(request: Request, **kwargs: Any) -> APIResponse:
     return page_data, status, headers
 
 
-async def post(_request: Request, body: dict) -> APIResponse:
+async def post(_request: Request, body: dict[str, Any]) -> APIResponse:
     """Create a compressed search query resource.
 
     Returns:

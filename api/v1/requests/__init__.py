@@ -109,7 +109,10 @@ async def get(request: StarletteRequest, request_id: int, **_kwargs: Any) -> API
 
 @with_authenticated_user_id()
 async def post(
-    request: StarletteRequest, body: dict, _caller_user_id: int | None = None, **_kwargs: Any
+    request: StarletteRequest,
+    body: dict[str, Any],
+    _caller_user_id: int | None = None,
+    **_kwargs: Any,
 ) -> APIResponse:
     """Submit a new request to a queue.
 
@@ -213,10 +216,10 @@ async def post(
 async def _run_phase1_checks(
     queue_id: int,
     user_id: int,
-    beatmapset: dict,
+    beatmapset: dict[str, Any],
     db: PostgresqlDB,
     rc: RedisClient,
-) -> tuple[list, ExecutionContext]:
+) -> tuple[list[Any], ExecutionContext]:
     """Run pure Phase-1 eligibility checks and return the active rules and context.
 
     The returned rules/context are reused by the caller to reserve stateful rule state
@@ -253,7 +256,7 @@ async def _run_phase1_checks(
     RoleName.ADMIN, override=queue_manager_override, override_kwargs={"from_request": True}
 )
 async def patch(
-    request: StarletteRequest, request_id: int, body: dict, **_kwargs: Any
+    request: StarletteRequest, request_id: int, body: dict[str, Any], **_kwargs: Any
 ) -> APIResponse:
     """Update the status of a request.
 

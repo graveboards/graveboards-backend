@@ -110,7 +110,7 @@ class FetchCriteria:
         """Whether the standard criteria is selected."""
         return self.criteria == Criteria.STANDARD
 
-    def resolve_sample_counts(self) -> dict:
+    def resolve_sample_counts(self) -> dict[str, Any]:
         """Convert criteria into the sample_counts format expected by fetchers."""
         # Minimal: 1 of each type (unless explicitly overridden)
         if self.is_minimal:
@@ -160,7 +160,7 @@ class FetchReport:
     coverage: dict[str, Any] | None = None
     errors: list[str] = field(default_factory=list)
 
-    def summary(self) -> dict:
+    def summary(self) -> dict[str, Any]:
         """Return a compact summary of the fetch results."""
         return {
             "criteria": self.criteria,

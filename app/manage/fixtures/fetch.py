@@ -156,7 +156,7 @@ def _print_coverage_gaps(fetcher: Any) -> None:
     print_coverage_gaps(fetcher)
 
 
-def _print_coverage_report(coverage: dict) -> None:
+def _print_coverage_report(coverage: dict[str, Any]) -> None:
     """Print the full coverage report as a table (delegated to display module)."""
     from app.fixtures.display import print_coverage_report
 

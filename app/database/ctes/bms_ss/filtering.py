@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy.sql import select
 
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from sqlalchemy.sql.selectable import CTE
 
 
-def bms_ss_filtering_cte_factory(scope: Scope, target: ColumnElement) -> CTE:
+def bms_ss_filtering_cte_factory(scope: Scope, target: ColumnElement[Any]) -> CTE:
     """Build a beatmapset-derived filtering CTE for the given scope.
 
     Projects a beatmapset-level field into the active scope, joining through

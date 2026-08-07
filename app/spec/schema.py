@@ -26,7 +26,7 @@ def _get_spec_cached() -> dict[str, Any]:
 def get_filter_schema(
     model_class: ModelClass[Any] | None = None,
     schema_name: str | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """Retrieve a Filter schema from the OpenAPI specification.
 
     Exactly one of ``model_class`` or ``schema_name`` must be provided.
@@ -58,7 +58,7 @@ def get_filter_schema(
 def get_include_schema(
     model_class: ModelClass[Any] | None = None,
     schema_name: str | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """Retrieve an Include schema from the OpenAPI specification.
 
     Exactly one of ``model_class`` or ``schema_name`` must be provided.
@@ -92,7 +92,7 @@ def _get_schema_by_suffix(
     *,
     model_class: ModelClass[Any] | None = None,
     schema_name: str | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """Retrieve a schema from the OpenAPI spec using a suffix convention.
 
     Exactly one of ``model_class`` or ``schema_name`` must be provided.

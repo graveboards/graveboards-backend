@@ -189,8 +189,10 @@ def coerce_value(value: Any, annotation: Any, param_name: str) -> Any | None:
 
 
 def build_pydantic_include(
-    obj: BaseType | BaseModel, include_schema: dict, request_include: dict | None = None
-) -> dict:
+    obj: BaseType | BaseModel,
+    include_schema: dict[str, Any],
+    request_include: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Build a Pydantic-compatible include tree from an OpenAPI schema.
 
     Merges schema defaults with client-provided include overrides and formats the result
@@ -213,7 +215,7 @@ def build_pydantic_include(
     return _format_include(obj, merged)
 
 
-def _extract_default_include(include_schema: dict) -> dict:
+def _extract_default_include(include_schema: dict[str, Any]) -> dict[str, Any]:
     """Extract default include configuration from an Include schema.
 
     Raises:
@@ -251,7 +253,9 @@ def _extract_default_include(include_schema: dict) -> dict:
     return result
 
 
-def _merge_include(defaults: dict, overrides: dict | None = None) -> dict:
+def _merge_include(
+    defaults: dict[str, Any], overrides: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Merge client include overrides into schema defaults recursively.
 
     Returns:
@@ -298,12 +302,12 @@ def _is_collection(obj: BaseType | BaseModel, attr: str) -> bool:
     return isinstance(value, Iterable) and not isinstance(value, (str, bytes, dict))
 
 
-def _format_include(obj: BaseType | BaseModel, include_tree: dict) -> dict:
+def _format_include(obj: BaseType | BaseModel, include_tree: dict[str, Any]) -> dict[str, Any]:
     """Convert internal include tree metadata into Pydantic include format.
 
     Handles nested objects and collections using ``"__all__"`` for lists.
     """
-    result: dict[str, bool | dict[str, dict] | dict[str, Any]] = {}
+    result: dict[str, bool | dict[str, dict[str, Any]] | dict[str, Any]] = {}
 
     for field, meta in include_tree.items():
         if not meta["__enabled__"]:

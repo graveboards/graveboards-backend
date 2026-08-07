@@ -78,7 +78,7 @@ async def get(request: Request, user_id: int, **_kwargs: Any) -> APIResponse:
 
 
 @role_authorization(RoleName.ADMIN)
-async def post(request: Request, body: dict, **_kwargs: Any) -> APIResponse:
+async def post(request: Request, body: dict[str, Any], **_kwargs: Any) -> APIResponse:
     """Create a new user.
 
     Returns:

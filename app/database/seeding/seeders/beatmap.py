@@ -44,15 +44,15 @@ class BeatmapSeeder(Seeder):
 
     def __init__(self, db: PostgresqlDB):
         super().__init__(db)
-        self._beatmap_tags: list[dict] = []
+        self._beatmap_tags: list[dict[str, Any]] = []
         self._new_beatmap_ids: list[int] = []
 
-    def set_data(self, data: list[dict]) -> None:
+    def set_data(self, data: list[dict[str, Any]]) -> None:
         """Inject fixture data loaded by the fixture loader."""
         super().set_data(data)
         self.total = len([bm for bs in self.data for bm in bs.get("beatmaps", [])])
 
-    def set_beatmap_tags(self, tags: list[dict]) -> None:
+    def set_beatmap_tags(self, tags: list[dict[str, Any]]) -> None:
         """Inject beatmap tag data loaded by the fixture loader."""
         self._beatmap_tags = tags
 
@@ -96,7 +96,7 @@ class BeatmapSeeder(Seeder):
             await self.db.add(Beatmapset, id=beatmapset_id, user_id=user_id, session=self.session)
 
         # 3. Seed beatmaps and collect their snapshots
-        bms_bm_mapping: dict[int, list[dict]] = {}
+        bms_bm_mapping: dict[int, list[dict[str, Any]]] = {}
         beatmaps = beatmapset_entry.get("beatmaps", [])
 
         if not beatmaps:
@@ -202,7 +202,7 @@ class BeatmapSeeder(Seeder):
         if not await self.db.get(BeatmapsetSnapshot, checksum=checksum, session=self.session):
             await self.db.add(BeatmapsetSnapshot, **snapshot_dict, session=self.session)
 
-    def _build_snapshot_fallback(self, beatmapset_entry: dict) -> dict:
+    def _build_snapshot_fallback(self, beatmapset_entry: dict[str, Any]) -> dict[str, Any]:
         """Fallback snapshot construction if schema validation fails."""
         # Valid BeatmapsetSnapshot columns from the model
         valid_columns = {
@@ -265,7 +265,7 @@ class BeatmapSeeder(Seeder):
                 Beatmap, id=beatmap_id, beatmapset_id=beatmapset_id, session=self.session
             )
 
-        added_bm_dicts: list[dict] = []
+        added_bm_dicts: list[dict[str, Any]] = []
 
         # Check if beatmap has snapshot data in fixtures
         snapshots = beatmap_entry.get("snapshots", [])

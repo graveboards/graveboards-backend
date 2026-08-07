@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio.session import AsyncSession
 
 
-async def get_summary_status(session: AsyncSession) -> dict:
+async def get_summary_status(session: AsyncSession) -> dict[str, int | str]:
     """Return a row count per model keyed by table name."""
     models = (User, Beatmap, Beatmapset, Queue, Request)
     status: dict[str, int | str] = {"target": "summary"}

@@ -109,7 +109,9 @@ async def get(
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def post(request: Request, queue_id: int, body: dict, **_kwargs: Any) -> APIResponse:
+async def post(
+    request: Request, queue_id: int, body: dict[str, Any], **_kwargs: Any
+) -> APIResponse:
     """Add a single rule to a queue.
 
     Args:
@@ -150,7 +152,7 @@ async def post(request: Request, queue_id: int, body: dict, **_kwargs: Any) -> A
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
 async def patch(
-    request: Request, queue_id: int, rule_id: int, body: dict, **_kwargs: Any
+    request: Request, queue_id: int, rule_id: int, body: dict[str, Any], **_kwargs: Any
 ) -> APIResponse:
     """Update a single rule.
 
@@ -228,7 +230,7 @@ async def delete(request: Request, queue_id: int, rule_id: int, **_kwargs: Any) 
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def put(request: Request, queue_id: int, body: dict, **_kwargs: Any) -> APIResponse:
+async def put(request: Request, queue_id: int, body: dict[str, Any], **_kwargs: Any) -> APIResponse:
     """Replace all rules for a queue.
 
     Args:

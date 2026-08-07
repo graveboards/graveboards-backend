@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,7 +47,7 @@ class Samples:
     queues: SampleCount = field(default_factory=SampleCount)
     requests: SampleCount = field(default_factory=SampleCount)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary format for JSON serialization."""
         return {
             "beatmaps": {"count": self.beatmaps.count, "last_fetched": self.beatmaps.last_fetched},
@@ -77,7 +78,7 @@ class Samples:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> Samples:
+    def from_dict(cls, data: dict[str, Any]) -> Samples:
         """Create from dictionary format."""
         if not data:
             return cls()
@@ -134,7 +135,7 @@ class PromotedFixtures:
     queues: PromotedFixture = field(default_factory=PromotedFixture)
     requests: PromotedFixture = field(default_factory=PromotedFixture)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary format for JSON serialization."""
         return {
             "beatmaps": {
@@ -171,7 +172,7 @@ class PromotedFixtures:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> PromotedFixtures:
+    def from_dict(cls, data: dict[str, Any]) -> PromotedFixtures:
         """Create from dictionary format."""
         if not data:
             return cls()
@@ -210,7 +211,7 @@ class TargetedFileMetadata:
 class TargetedMetadata:
     """Targeted fixture metadata with coverage tracking."""
 
-    beatmaps: dict = field(
+    beatmaps: dict[str, dict[str, Any]] = field(
         default_factory=lambda: {
             "by_status": {},
             "by_ruleset": {},
@@ -219,21 +220,23 @@ class TargetedMetadata:
             "file_metadata": {},
         }
     )
-    beatmapsets: dict = field(default_factory=lambda: {"by_status": {}, "file_metadata": {}})
-    users: dict = field(
+    beatmapsets: dict[str, dict[str, Any]] = field(
+        default_factory=lambda: {"by_status": {}, "file_metadata": {}}
+    )
+    users: dict[str, dict[str, Any]] = field(
         default_factory=lambda: {"by_activity": {}, "per_ruleset": {}, "file_metadata": {}}
     )
-    scores: dict = field(
+    scores: dict[str, dict[str, Any]] = field(
         default_factory=lambda: {"by_rank": {}, "by_mods": {}, "file_metadata": {}}
     )
-    queues: dict = field(
+    queues: dict[str, dict[str, Any]] = field(
         default_factory=lambda: {"by_visibility": {}, "by_is_open": {}, "file_metadata": {}}
     )
-    requests: dict = field(
+    requests: dict[str, dict[str, Any]] = field(
         default_factory=lambda: {"by_status": {}, "by_mv_checked": {}, "file_metadata": {}}
     )
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary format."""
         return {
             "beatmaps": self.beatmaps,
@@ -245,7 +248,7 @@ class TargetedMetadata:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> TargetedMetadata:
+    def from_dict(cls, data: dict[str, Any]) -> TargetedMetadata:
         """Create from dictionary format."""
         if not data:
             return cls()
@@ -291,7 +294,7 @@ class SearchTestCoverage:
     )
     last_updated: str | None = None
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary format."""
         return {
             "beatmapset_genres": self.beatmapset_genres,
@@ -322,7 +325,7 @@ class SearchTestCoverage:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> SearchTestCoverage:
+    def from_dict(cls, data: dict[str, Any]) -> SearchTestCoverage:
         """Create from dictionary format."""
         if not data:
             return cls()
@@ -364,7 +367,7 @@ class Metadata:
     promoted_fixtures: PromotedFixtures = field(default_factory=PromotedFixtures)
     targeted: TargetedMetadata = field(default_factory=TargetedMetadata)
     search_test_coverage: SearchTestCoverage = field(default_factory=SearchTestCoverage)
-    failed_ids: dict = field(
+    failed_ids: dict[str, list[int] | dict[str, list[int]]] = field(
         default_factory=lambda: {
             "beatmaps": [],
             "beatmapsets": [],
@@ -374,7 +377,7 @@ class Metadata:
     top_player_ids: dict[str, list[int]] = field(
         default_factory=lambda: {"osu": [], "taiko": [], "fruits": [], "mania": []}
     )
-    id_ranges: dict = field(
+    id_ranges: dict[str, dict[str, int]] = field(
         default_factory=lambda: {
             "beatmaps": {"min": 1, "max": 5800000},
             "beatmapsets": {"min": 1, "max": 2600000},
@@ -384,7 +387,7 @@ class Metadata:
     rulesets: list[str] = field(default_factory=lambda: ["osu", "taiko", "fruits", "mania"])
     source: str = "osu.ppy.sh/api/v2"
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary format for JSON serialization."""
         return {
             "last_updated": self.last_updated,
@@ -400,7 +403,7 @@ class Metadata:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> Metadata:
+    def from_dict(cls, data: dict[str, Any]) -> Metadata:
         """Create from dictionary format."""
         if not data:
             return cls()

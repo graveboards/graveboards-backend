@@ -19,7 +19,8 @@ from .constants import (
     TARGETED_BEATMAPSETS_COUNT,
     TARGETED_USERS_COUNT,
 )
-from .fetcher import FetchEvent, FixtureDataFetcher
+from .fetch_loop import FetchEvent
+from .fetcher import FixtureDataFetcher
 from .metadata_io import (
     create_targeted_metadata,
     load_metadata,
@@ -52,7 +53,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
     def __init__(
         self,
         rc: RedisClient,
-        id_ranges: dict | None = None,
+        id_ranges: dict[str, Any] | None = None,
         force_fetch: bool = False,
         id_source: IDSource | None = None,
         fixtures_dir: Path | None = None,
@@ -372,7 +373,7 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
 
     async def fetch_all_targeted(
         self,
-        counts: dict,
+        counts: dict[str, Any],
     ) -> AsyncIterator[FetchEvent]:
         """Fetch fixtures with targeted coverage."""
         self.last_fetch_results = {}
@@ -447,15 +448,23 @@ class TargetedFixtureFetcher(FixtureDataFetcher):
 
         self.metadata = load_metadata()
         results: dict[str, Any] = {}
-        results["beatmaps"] = typing_cast("dict", self._current_session_results["beatmaps"])
-        results["beatmapsets"] = typing_cast("dict", self._current_session_results["beatmapsets"])
-        results["users"] = typing_cast("dict", self._current_session_results["users"]).copy()
-        results["scores"] = typing_cast("dict", self._current_session_results["scores"]).copy()
+        results["beatmaps"] = typing_cast(
+            "dict[str, Any]", self._current_session_results["beatmaps"]
+        )
+        results["beatmapsets"] = typing_cast(
+            "dict[str, Any]", self._current_session_results["beatmapsets"]
+        )
+        results["users"] = typing_cast(
+            "dict[str, Any]", self._current_session_results["users"]
+        ).copy()
+        results["scores"] = typing_cast(
+            "dict[str, Any]", self._current_session_results["scores"]
+        ).copy()
         results["beatmap_scores"] = typing_cast(
-            "dict", self._current_session_results["beatmap_scores"]
+            "dict[str, Any]", self._current_session_results["beatmap_scores"]
         )
         results["beatmap_attributes"] = typing_cast(
-            "dict", self._current_session_results["beatmap_attributes"]
+            "dict[str, Any]", self._current_session_results["beatmap_attributes"]
         )
 
         self.last_fetch_results = results

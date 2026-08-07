@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from rich.console import Console
 from rich.table import Table
@@ -114,7 +114,7 @@ def print_coverage_gaps(fetcher: FixtureDataFetcher) -> None:
         console.print("\n  [green]All major buckets covered![/green]")
 
 
-def print_coverage_report(coverage: dict) -> None:
+def print_coverage_report(coverage: dict[str, Any]) -> None:
     """Print the full coverage report as a table."""
     console.print("\n[bold]Search test fixture coverage:[/bold]")
 

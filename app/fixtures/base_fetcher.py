@@ -10,7 +10,7 @@ import asyncio
 import contextlib
 import json
 import random
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from app.osu_api.client.osu_api_client import OsuAPIClient
 
@@ -37,7 +37,7 @@ class BaseFetcher:
     def __init__(
         self,
         rc: RedisClient,
-        id_ranges: dict | None = None,
+        id_ranges: dict[str, Any] | None = None,
         id_source: IDSource | None = None,
         fixtures_dir: Path | None = None,
         failed_id_store: FailedIdStore | None = None,
@@ -113,7 +113,7 @@ class BaseFetcher:
         """Reset the consecutive error counter on a successful fetch."""
         self._consecutive_errors = 0
 
-    def _atomic_write(self, filepath: Path, data: dict, data_type: str = "") -> None:
+    def _atomic_write(self, filepath: Path, data: dict[str, Any], data_type: str = "") -> None:
         """Write data to filepath atomically using tmp file + os.replace."""
         if data_type:
             is_valid, error_msg = validate_data(data, data_type)
@@ -153,8 +153,9 @@ class BaseFetcher:
                     else:
                         return random.choice(top_ids)
 
-        range_config = self.id_ranges.get(
-            category, self.id_ranges.get(category.split(".")[0], {"min": 1, "max": 1000000})
+        id_ranges = self.id_ranges if self.id_ranges is not None else ID_RANGES
+        range_config = id_ranges.get(
+            category, id_ranges.get(category.split(".")[0], {"min": 1, "max": 1000000})
         )
         min_id = range_config.get("min", 1)
         max_id = range_config.get("max", 1000000)

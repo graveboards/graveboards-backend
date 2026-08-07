@@ -53,7 +53,7 @@ def _patch_connexion_request_injection() -> None:
         files: dict[str, Any],
         arguments: list[str],
         has_kwargs: bool,
-        sanitize: Callable,
+        sanitize: Callable[..., Any],
     ) -> dict[str, Any]:
         kwargs: dict[str, Any] = original_prep_kwargs(
             request,
@@ -190,7 +190,7 @@ def get_debug_api_key() -> str:
     return str(__import__("hashlib").sha256(seed.encode()).hexdigest()[:32])
 
 
-class TestBearerSecurityHandler(BearerSecurityHandler):
+class TestBearerSecurityHandler(BearerSecurityHandler):  # type: ignore[misc]
     """No-op Bearer security handler for tests.
 
     Accepts any Bearer token without validation.
@@ -203,7 +203,7 @@ class TestBearerSecurityHandler(BearerSecurityHandler):
         return wrapper
 
 
-class TestApiKeySecurityHandler(ApiKeySecurityHandler):
+class TestApiKeySecurityHandler(ApiKeySecurityHandler):  # type: ignore[misc]
     """No-op API key security handler for tests.
 
     Accepts any API key without validation.

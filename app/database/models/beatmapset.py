@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import mapped_column, relationship
@@ -53,7 +53,7 @@ class Beatmapset(Base):
         return len(self.snapshots)
 
     @num_snapshots.inplace.expression
-    def _num_snapshots_expr(self) -> ColumnElement:
+    def _num_snapshots_expr(self) -> ColumnElement[Any]:
         return (
             select(func.count(BeatmapsetSnapshot.id))
             .where(BeatmapsetSnapshot.beatmapset_id == self.id)

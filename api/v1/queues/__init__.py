@@ -26,7 +26,7 @@ from app.spec import get_include_schema
 __all__ = ["get", "patch", "post", "search"]
 
 
-def _filter_public_rules(queue_data: dict) -> dict:
+def _filter_public_rules(queue_data: dict[str, Any]) -> dict[str, Any]:
     """Strip non-public rules from a serialized queue's nested ``rules`` include."""
     rules = queue_data.get("rules")
     if isinstance(rules, list):
@@ -105,7 +105,7 @@ async def get(
 
 # @role_authorization(RoleName.ADMIN, override=matching_user_id_override, override_kwargs={"resource_user_id_lookup": "body.user_id"})  # Disable regular users from adding queues for now
 @role_authorization(RoleName.ADMIN)
-async def post(request: Request, body: dict, **_kwargs: Any) -> APIResponse:
+async def post(request: Request, body: dict[str, Any], **_kwargs: Any) -> APIResponse:
     """Create a new queue.
 
     Returns:
@@ -127,7 +127,9 @@ async def post(request: Request, body: dict, **_kwargs: Any) -> APIResponse:
 
 
 @role_authorization(RoleName.ADMIN, override=queue_owner_override)
-async def patch(request: Request, queue_id: int, body: dict, **_kwargs: Any) -> APIResponse:
+async def patch(
+    request: Request, queue_id: int, body: dict[str, Any], **_kwargs: Any
+) -> APIResponse:
     """Update an existing queue.
 
     Returns:

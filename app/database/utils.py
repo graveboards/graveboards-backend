@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 
     from app.database.ctes.hashable_cte import HashableCTE
 
-__all__ = ["extract_inner_types", "get_filter_condition", "validate_type"]
+__all__ = ["extract_inner_types", "get_filter_condition", "resolve_annotation", "validate_type"]
 
 
 def extract_inner_types(annotated_type: Any) -> type | tuple[type, ...]:
@@ -163,10 +163,14 @@ def validate_type(expected_type: Any, value: Any) -> None:
 
 def get_filter_condition(
     filter_operator: FilterOperator,
-    target: InstrumentedAttribute | ColumnClause | HashableCTE | ScalarSelect | ColumnElement,
+    target: InstrumentedAttribute[Any]
+    | ColumnClause[Any]
+    | HashableCTE
+    | ScalarSelect[Any]
+    | ColumnElement[Any],
     value: Any,
     is_aggregated: bool = False,
-) -> BinaryExpression | BindParameter | CollectionAggregate | ColumnElement[bool]:
+) -> BinaryExpression[Any] | BindParameter[Any] | CollectionAggregate[Any] | ColumnElement[bool]:
     """Construct a SQLAlchemy filter condition dynamically.
 
     For non-aggregated columns, delegates directly to the operator's bound method.

@@ -93,7 +93,7 @@ def _redact(value: Any) -> Any:
     return value
 
 
-def _get_query_params(request: Request) -> dict:
+def _get_query_params(request: Request) -> dict[str, Any]:
     params = {}
     for key in request.query_params:
         values = request.query_params.getlist(key)
@@ -103,7 +103,7 @@ def _get_query_params(request: Request) -> dict:
     return typing_cast("dict[Any, Any]", _redact(params))
 
 
-def _reconstruct_nested_params(params: dict) -> dict:
+def _reconstruct_nested_params(params: dict[str, Any]) -> dict[str, Any]:
     """Rebuild flat bracket-notation query params into nested dicts for clean access logs.
 
     Keys that don't match the bracket pattern are left untouched. Duplicate
@@ -142,7 +142,7 @@ def _reconstruct_nested_params(params: dict) -> dict:
     return nested
 
 
-def _try_parse_sorting(params: dict) -> dict:
+def _try_parse_sorting(params: dict[str, Any]) -> dict[str, Any]:
     r"""Parse frontend-serialized JSON sort items back into proper objects for access logs.
 
     If parsing fails for any reason the original string is kept as fallback.
@@ -269,7 +269,7 @@ class MetricsMiddleware:
         http_requests_in_flight.labels(method=method, endpoint=endpoint).inc()
 
         start_time = time.perf_counter()
-        status_code_ref: dict = {"value": None}
+        status_code_ref: dict[str, Any] = {"value": None}
 
         async def wrapped_send(message: MutableMapping[str, Any]) -> None:
             if message["type"] == "http.response.start":
@@ -342,7 +342,7 @@ class MetricsMiddleware:
             client_port = request.client.port if request.client else "-"
             user_id, auth_scheme = _get_auth_info(scope, request)
 
-            extra_fields: dict = {"user_id": user_id, "auth_scheme": auth_scheme}
+            extra_fields: dict[str, Any] = {"user_id": user_id, "auth_scheme": auth_scheme}
 
             query_params = _get_query_params(request)
             if query_params:

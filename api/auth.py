@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from connexion.lifecycle import ConnexionRequest
@@ -15,7 +15,7 @@ from app.database.models import ApiKey
 from app.security import hash_api_key, validate_api_key, validate_token
 
 
-async def api_key_info(key: str, request: ConnexionRequest) -> dict | None:
+async def api_key_info(key: str, request: ConnexionRequest) -> dict[str, Any] | None:
     """Validate and return API key metadata.
 
     Args:
@@ -37,7 +37,7 @@ async def api_key_info(key: str, request: ConnexionRequest) -> dict | None:
         return None
 
 
-async def bearer_info(token: str, _request: ConnexionRequest) -> dict | None:
+async def bearer_info(token: str, _request: ConnexionRequest) -> dict[str, Any] | None:
     """Validate and decode a bearer JWT token.
 
     Args:

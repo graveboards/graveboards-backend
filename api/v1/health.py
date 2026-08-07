@@ -16,7 +16,7 @@ from app.version import __version__
 __all__ = ["health_check"]
 
 
-async def health_check() -> dict:
+async def health_check() -> dict[str, Any]:
     """Health check endpoint for Graveboards services.
 
     Returns the health status of all Graveboards services including PostgreSQL, Redis,
@@ -28,7 +28,7 @@ async def health_check() -> dict:
     """
     start_time = aware_utcnow()
 
-    checks: dict[str, dict[str, str | float | int | dict]] = {
+    checks: dict[str, dict[str, str | float | int | dict[str, Any]]] = {
         "database": {"status": "ok", "response_time_ms": 0, "message": "Connected"},
         "redis": {"status": "ok", "response_time_ms": 0, "message": "Connected"},
         "osu_api": {"status": "ok", "response_time_ms": 0, "message": "Connected"},

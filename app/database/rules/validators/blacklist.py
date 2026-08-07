@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, Any, override
 
 from connexion.exceptions import Forbidden
 
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from app.database.rules.context import ExecutionContext
 
 
-def _is_target_match(config: dict, user_id: int) -> bool:
+def _is_target_match(config: dict[str, Any], user_id: int) -> bool:
     target = config.get("target")
     if target is None or not target:
         return True

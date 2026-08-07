@@ -9,14 +9,12 @@ from __future__ import annotations
 
 import asyncio
 import json
+from collections.abc import AsyncIterator, Callable, Coroutine  # noqa: TC003
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from pathlib import Path  # noqa: TC003
+from typing import Any
 
 import httpx
-
-if TYPE_CHECKING:
-    from collections.abc import AsyncIterator, Callable, Coroutine
-    from pathlib import Path
 
 
 class FetchEvent:
@@ -32,7 +30,7 @@ class FetchEvent:
 class FetchConfig:
     """Configuration for a single fetch operation."""
 
-    api_call: Callable[[int], Coroutine]
+    api_call: Callable[[int], Coroutine[Any, Any, Any]]
     id_generator: Callable[[], Coroutine[Any, Any, int]]
     path_builder: Callable[[int], Path]
     data_type: str
@@ -42,7 +40,7 @@ class FetchConfig:
     max_retries: int = 10
     max_attempts: int = 100
     on_error: Callable[[Exception], None] | None = None
-    data_validator: Callable[[dict], bool] | None = None
+    data_validator: Callable[[dict[str, Any]], bool] | None = None
     on_empty_data: Callable[[int], None] | None = None
     on_empty_data_limit: int | None = None
 
@@ -126,7 +124,7 @@ class FetchLoop:
                     if retries < self.config.max_retries:
                         beatmap_id = await self.config.id_generator()
 
-    def _atomic_write(self, filepath: Path, data: dict, data_type: str) -> None:
+    def _atomic_write(self, filepath: Path, data: dict[str, Any], data_type: str) -> None:
         """Write data to filepath atomically."""
         from .validation import validate_data
 

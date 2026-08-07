@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy.sql import cast, select, union_all
 from sqlalchemy.sql.elements import literal
@@ -53,7 +53,9 @@ def search_terms_scored_ctes_factory(
     -------
         A mapping of category to aggregated scoring CTE.
     """
-    category_score_stmts: dict[SearchableFieldCategory, list[Select]] = defaultdict(list)
+    category_score_stmts: dict[SearchableFieldCategory, list[Select[tuple[Any, ...]]]] = (
+        defaultdict(list)
+    )
 
     for category, score_stmt in _generate_term_score_stmts(scope, search_terms):
         category_score_stmts[category].append(score_stmt)
@@ -93,7 +95,7 @@ def search_terms_scored_ctes_factory(
 
 def _generate_term_score_stmts(
     scope: Scope, search_terms: SearchTermsSchema
-) -> Generator[tuple[SearchableFieldCategory, Select]]:
+) -> Generator[tuple[SearchableFieldCategory, Select[tuple[Any, ...]]]]:
     """Yield weighted scoring SELECT statements for each term and field.
 
     For every searchable field in scope, generates pattern-based match queries using
@@ -180,10 +182,10 @@ def _generate_term_score_stmts(
 
 
 def _process_field_groups(
-    base_query: CompoundSelect,
+    base_query: CompoundSelect[tuple[Any, ...]],
     category: SearchableFieldCategory,
     field_groups_config: dict[SearchableFieldCategory, dict[str, set[str]]],
-) -> CompoundSelect:
+) -> CompoundSelect[tuple[Any, ...]]:
     """Apply field grouping rules to a unioned scoring query.
 
     Fields configured in the same group are collapsed into a synthetic group field. For

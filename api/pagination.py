@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 
 def build_pagination_response(
-    data: list,
+    data: list[Any],
     total: int,
     limit: int,
     offset: int,
     request_url: str,
-) -> tuple[list, int, dict]:
+) -> tuple[list[Any], int, dict[str, str]]:
     """Build a paginated response with headers.
 
     Returns: (data, status_code, headers)

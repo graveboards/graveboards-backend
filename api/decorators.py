@@ -29,7 +29,7 @@ def _resolve_annotation(annotation: Any, func_globals: dict[str, Any]) -> Any:
 
 
 def api_query(
-    _model_class: ModelClass, many: bool = False
+    _model_class: ModelClass[Any], many: bool = False
 ) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Decorator for normalizing API query handlers.
 
@@ -70,7 +70,7 @@ def api_query(
 
 
 def coerce_arguments(
-    *params: str, **param_mappings: dict
+    *params: str, **param_mappings: dict[str, Any]
 ) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Decorator for runtime coercion of handler arguments.
 

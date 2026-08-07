@@ -78,7 +78,7 @@ async def get(request: Request, score_id: int, **kwargs: Any) -> APIResponse:
 @api_query(ModelClass.SCORE)
 @role_authorization(RoleName.ADMIN)
 async def post(
-    request: Request, body: dict, db: PostgresqlDB | None = None, **_kwargs: Any
+    request: Request, body: dict[str, Any], db: PostgresqlDB | None = None, **_kwargs: Any
 ) -> APIResponse:
     """Create a new score.
 

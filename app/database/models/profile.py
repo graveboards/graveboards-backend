@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy.dialects.postgresql.json import JSONB
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -126,7 +126,7 @@ class Profile(Base):
         )
 
     @total_maps.inplace.expression
-    def _total_maps_expr(self) -> ColumnElement:
+    def _total_maps_expr(self) -> ColumnElement[Any]:
         return (
             func.coalesce(self.graveyard_beatmapset_count, 0)
             + func.coalesce(self.loved_beatmapset_count, 0)
@@ -140,5 +140,5 @@ class Profile(Base):
         return self.kudosu.get("total", 0) if self.kudosu else 0
 
     @total_kudosu.inplace.expression
-    def _total_kudosu_expr(self) -> ColumnElement:
+    def _total_kudosu_expr(self) -> ColumnElement[Any]:
         return func.coalesce(cast(self.kudosu["total"].astext, Integer), 0)  # type: ignore[index, union-attr]

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy.sql import or_, true
 
@@ -15,7 +15,9 @@ if TYPE_CHECKING:
     from app.database import PostgresqlDB
 
 
-async def queue_visibility_where(db: PostgresqlDB, caller_user_id: int | None) -> ColumnElement:
+async def queue_visibility_where(
+    db: PostgresqlDB, caller_user_id: int | None
+) -> ColumnElement[Any]:
     """Build a WHERE condition restricting queues to what a caller may see in a listing.
 
     Queue.visibility: 0 = public (everyone), 1 = unlisted (excluded from listings/

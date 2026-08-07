@@ -5,6 +5,7 @@ import os
 import tempfile
 from pathlib import Path
 from shutil import rmtree
+from typing import Any
 
 from rich.console import Console
 
@@ -22,7 +23,7 @@ from app.redis_client import RedisClient
 console = Console()
 
 
-def _atomic_save_metadata(metadata: dict, metadata_path: Path) -> None:
+def _atomic_save_metadata(metadata: dict[str, Any], metadata_path: Path) -> None:
     """Save metadata atomically by writing to a temp file then renaming."""
     fd, tmp_path = tempfile.mkstemp(dir=metadata_path.parent, suffix=".tmp")
     try:

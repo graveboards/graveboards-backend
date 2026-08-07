@@ -20,7 +20,7 @@ import json
 import random
 from datetime import UTC, datetime, timedelta
 from itertools import product
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from app.config import PROJECT_ROOT
 from app.fixtures.bn_queue_comments import BN_QUEUE_COMMENTS as REQUEST_COMMENTS
@@ -111,7 +111,7 @@ class QueueRequestFixtureGenerator:
 
         return owners
 
-    def generate_queues(self, count: int = 10) -> list[dict]:
+    def generate_queues(self, count: int = 10) -> list[dict[str, Any]]:
         """Generate diverse queue fixtures."""
         queues = []
         used_names: set[str] = set()
@@ -141,9 +141,9 @@ class QueueRequestFixtureGenerator:
 
     def generate_requests(
         self,
-        queues: list[dict],
+        queues: list[dict[str, Any]],
         count: int = 100,
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         """Generate diverse request fixtures linked to queues and beatmapsets.
 
         Uses a pair-shuffling algorithm to ensure no duplicate (queue_id,
@@ -199,7 +199,7 @@ class QueueRequestFixtureGenerator:
 
         return requests
 
-    def save_queues(self, queues: list[dict]) -> Path:
+    def save_queues(self, queues: list[dict[str, Any]]) -> Path:
         """Save queue fixtures to instance fixtures."""
         QUEUE_FIXTURES_PATH.mkdir(parents=True, exist_ok=True)
 
@@ -218,7 +218,7 @@ class QueueRequestFixtureGenerator:
 
         return QUEUE_FIXTURES_PATH
 
-    def save_requests(self, requests: list[dict]) -> Path:
+    def save_requests(self, requests: list[dict[str, Any]]) -> Path:
         """Save request fixtures to instance fixtures."""
         REQUEST_FIXTURES_PATH.mkdir(parents=True, exist_ok=True)
 
@@ -237,7 +237,7 @@ class QueueRequestFixtureGenerator:
 
         return REQUEST_FIXTURES_PATH
 
-    def _choose_name(self, used_names: set) -> str:
+    def _choose_name(self, used_names: set[str]) -> str:
         """Choose a queue name not already used."""
         available = [n for n in QUEUE_NAMES if n not in used_names]
         if not available:
@@ -248,7 +248,7 @@ class QueueRequestFixtureGenerator:
         self,
         queue_count: int = 10,
         request_count: int = 100,
-    ) -> tuple[list[dict], list[dict]]:
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
         """Generate both queues and requests with cross-entity relationships."""
         queues = self.generate_queues(queue_count)
         requests = self.generate_requests(queues, request_count)

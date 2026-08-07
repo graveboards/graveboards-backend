@@ -22,14 +22,14 @@ class Seeder(ABC):
 
     def __init__(self, db: PostgresqlDB):
         self.db = db
-        self.data: list[dict] = []
+        self.data: list[dict[str, Any]] = []
         self.progress: int = 0
         self.total: int = 0
-        self.queue: asyncio.Queue | None = None
+        self.queue: asyncio.Queue[Any] | None = None
         self.session: AsyncSession | None = None
         self.logger = get_logger(self.__class__.__name__)
 
-    def set_data(self, data: list[dict]) -> None:
+    def set_data(self, data: list[dict[str, Any]]) -> None:
         """Inject fixture data loaded by the fixture loader."""
         self.data = data
         self.total = len(self.data)

@@ -128,7 +128,7 @@ def ownership_filter(
 
             if isinstance(data, dict):
                 if get_value(data, resource_user_id_lookup) == user_id:
-                    filtered_data: dict | list = data
+                    filtered_data: dict[str, Any] | list[Any] = data
                 else:
                     filtered_data = {}
             else:

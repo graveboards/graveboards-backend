@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 def extract_cte_target_scalar(
     cte: CTE, model_class: ModelClass[Any], id_column_label: str = "id", use_alias: bool = False
-) -> ScalarSelect:
+) -> ScalarSelect[Any]:
     """Extract a correlated scalar subquery from a (id, target) CTE.
 
     Converts a projection-style CTE into a scalar value usable as a field target in

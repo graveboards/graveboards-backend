@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, ClassVar, override
+from typing import TYPE_CHECKING, Any, ClassVar, override
 
 from httpx import ConnectTimeout
 from structlog.contextvars import bind_contextvars, clear_contextvars
@@ -187,7 +187,7 @@ class RuleValidationService(ScheduledService):
         return await crud.get_rules(queue_id, only_active=True, session=session)
 
     @staticmethod
-    def _rules_from_snapshot(rules_snapshot: str) -> list | None:
+    def _rules_from_snapshot(rules_snapshot: str) -> list[Any] | None:
         """Reconstruct rule objects from the submission-time snapshot.
 
         Returns ``None`` when the task has no snapshot (legacy tasks), so the caller

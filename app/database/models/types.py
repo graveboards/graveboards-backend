@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from sqlalchemy.engine.interfaces import Dialect
 
 
-class AwareDateTime(TypeDecorator):
+class AwareDateTime(TypeDecorator[datetime]):
     """Stores timezone-aware datetimes, coercing naive/ISO input."""
 
     impl = DateTime(timezone=True)

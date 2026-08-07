@@ -63,7 +63,7 @@ class Service:
         self._tg: asyncio.TaskGroup | None = None
         self._task_specs: dict[str, TaskSpec] = {}
         self._ephemeral_tg: asyncio.TaskGroup | None = None
-        self._ephemeral_tasks: set[asyncio.Task] = set()
+        self._ephemeral_tasks: set[asyncio.Task[Any]] = set()
         self._lock = asyncio.Lock()
         self._service_name = self.__class__.__name__
 

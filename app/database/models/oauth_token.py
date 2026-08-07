@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import mapped_column
@@ -48,7 +48,7 @@ class OAuthToken(Base):
         return decrypt_token(self.access_token_enc)
 
     @access_token.inplace.expression
-    def _access_token_expr(self) -> ColumnElement:
+    def _access_token_expr(self) -> ColumnElement[Any]:
         return literal(None)
 
     @hybrid_property

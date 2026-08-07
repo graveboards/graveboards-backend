@@ -93,7 +93,7 @@ class SortingOption(BaseModel):
         return cls(field=field, order=order), offset
 
 
-class SortingSchema(RootModel):
+class SortingSchema(RootModel[list[SortingOption]]):
     """Ordered collection of sorting options.
 
     Preserves priority order of field-based sorting rules and supports compact binary

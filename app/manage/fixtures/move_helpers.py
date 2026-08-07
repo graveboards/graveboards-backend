@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 from shutil import copy2, rmtree
+from typing import Any
 
 from rich.console import Console
 
@@ -19,7 +20,7 @@ console = Console()
 
 
 def _accumulate_sub_metadata(
-    metadata: dict,
+    metadata: dict[str, Any],
     category: str,
     sub_name: str,
     count: int,
@@ -46,7 +47,7 @@ def _move_fixture_files(
     categories: list[str],
     src_base: str,
     dst_base: str,
-    metadata: dict,
+    metadata: dict[str, Any],
 ) -> tuple[int, int]:
     """Move fixture files between directories with proper metadata tracking.
 

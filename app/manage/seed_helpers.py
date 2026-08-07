@@ -62,7 +62,7 @@ async def ensure_fixtures_async(logger: Any, profile: SeedProfile) -> bool:
         try:
             # Extract owner user IDs from beatmapset fixtures
             owner_ids: set[int] = set()
-            owner_data: dict[int, dict] = {}
+            owner_data: dict[int, dict[str, Any]] = {}
             for f in sorted(bms_path.glob("beatmapset_*.json")):
                 try:
                     with Path(f).open() as fh:

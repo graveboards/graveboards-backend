@@ -129,7 +129,7 @@ class Conditions(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def normalize_shorthand(cls, value: Any) -> Conditions | dict:
+    def normalize_shorthand(cls, value: Any) -> Conditions | dict[str, Any]:
         """Normalize shorthand condition inputs into canonical form.
 
         Shorthand behavior:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from sqlalchemy.sql import and_, exists, select, true, union_all
 
@@ -106,10 +106,10 @@ def search_terms_filtered_cte_factory(scope: Scope, search_terms: SearchTermsSch
 def get_filter_stmt(
     scope: Scope,
     category: SearchableFieldCategory,
-    target: InstrumentedAttribute | HashableCTE | ScalarSelect | ColumnClause,
+    target: InstrumentedAttribute[Any] | HashableCTE | ScalarSelect[Any] | ColumnClause[Any],
     like_operator: Literal["like", "ilike"],
     pattern: str,
-) -> Select:
+) -> Select[tuple[Any, ...]]:
     """Construct a scope-aware SELECT statement for filtering by a pattern.
 
     Produces a DISTINCT ID query for the given scope and searchable category, joining

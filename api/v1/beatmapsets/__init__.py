@@ -85,7 +85,7 @@ async def get(request: Request, beatmapset_id: int, **kwargs: Any) -> APIRespons
 @role_authorization(RoleName.ADMIN)
 async def post(
     request: Request,
-    body: dict,
+    body: dict[str, Any],
     rc: RedisClient | None = None,
     db: PostgresqlDB | None = None,
     bm: Any = None,

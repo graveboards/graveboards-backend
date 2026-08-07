@@ -19,31 +19,31 @@ logger = get_logger(__name__)
 class FixtureReader:
     """Fixture abstraction layer that decouples tests from raw fixture files."""
 
-    def __init__(self, fixture_dir: Path | None = None, metadata: dict | None = None):
+    def __init__(self, fixture_dir: Path | None = None, metadata: dict[str, Any] | None = None):
         self.fixture_dir = fixture_dir or PROJECT_ROOT / "tests" / "fixtures" / "osu"
         self.metadata = metadata or load_metadata()
         self.metadata_manager = FixtureMetadataManager(self.metadata, self.fixture_dir)
         self.metadata_manager.init_metadata()
 
-    def get_beatmap_by_id(self, beatmap_id: int) -> dict | None:
+    def get_beatmap_by_id(self, beatmap_id: int) -> dict[str, Any] | None:
         """Get a specific beatmap by ID."""
         return self._get_fixture_by_id("beatmaps", beatmap_id)
 
-    def get_beatmapset_by_id(self, beatmapset_id: int) -> dict | None:
+    def get_beatmapset_by_id(self, beatmapset_id: int) -> dict[str, Any] | None:
         """Get a specific beatmapset by ID."""
         return self._get_fixture_by_id("beatmapsets", beatmapset_id)
 
-    def get_user_by_id(self, user_id: int, ruleset: str) -> dict | None:
+    def get_user_by_id(self, user_id: int, ruleset: str) -> dict[str, Any] | None:
         """Get a specific user by ID."""
         return self._get_fixture_by_id(
             f"users.{ruleset}", user_id, prefix=f"user_{user_id}_{ruleset}"
         )
 
-    def get_beatmap_scores_by_beatmap(self, beatmap_id: int) -> dict | None:
+    def get_beatmap_scores_by_beatmap(self, beatmap_id: int) -> dict[str, Any] | None:
         """Get beatmap scores by beatmap ID."""
         return self._get_fixture_by_id("beatmap_scores", beatmap_id, prefix=f"scores_{beatmap_id}")
 
-    def get_beatmap_attributes_by_beatmap(self, beatmap_id: int) -> dict | None:
+    def get_beatmap_attributes_by_beatmap(self, beatmap_id: int) -> dict[str, Any] | None:
         """Get beatmap attributes by beatmap ID."""
         return self._get_fixture_by_id(
             "beatmap_attributes", beatmap_id, prefix=f"beatmap_attrs_{beatmap_id}"
@@ -57,7 +57,7 @@ class FixtureReader:
         by_ruleset: str | None = None,
         by_difficulty: str | None = None,
         by_playcount: str | None = None,
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         """Get beatmap fixtures by preference."""
         preferences = {
             "by_status": by_status,
@@ -71,7 +71,7 @@ class FixtureReader:
         self,
         count: int = 1,
         by_status: list[str] | None = None,
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         """Get beatmapset fixtures by preference."""
         preferences = {"by_status": by_status}
         return self._get_fixtures("beatmapsets", count, preferences)
@@ -81,7 +81,7 @@ class FixtureReader:
         ruleset: str,
         count: int = 1,
         activity_level: str | None = None,
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         """Get user fixtures by preference."""
         preferences = {"activity_level": activity_level}
         return self._get_fixtures(f"users.{ruleset}", count, preferences)
@@ -92,7 +92,7 @@ class FixtureReader:
         count: int = 1,
         rank_coverage: list[str] | None = None,
         mod_coverage: list[str] | None = None,
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         """Get score fixtures by preference."""
         preferences = {
             "rank_coverage": rank_coverage,
@@ -104,7 +104,7 @@ class FixtureReader:
         self,
         beatmap_id: int | None = None,
         count: int = 1,
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         """Get beatmap score fixtures."""
         preferences = {"beatmap_id": beatmap_id}
         return self._get_fixtures("beatmap_scores", count, preferences)
@@ -113,17 +113,17 @@ class FixtureReader:
         self,
         beatmap_id: int | None = None,
         mods: list[int] | None = None,
-    ) -> dict | None:
+    ) -> dict[str, Any] | None:
         """Get beatmap attribute fixtures."""
         preferences = {"beatmap_id": beatmap_id, "mods": mods}
         fixtures = self._get_fixtures("beatmap_attributes", 1, preferences)
         return fixtures[0] if fixtures else None
 
-    def get_queue_by_id(self, queue_id: int) -> dict | None:
+    def get_queue_by_id(self, queue_id: int) -> dict[str, Any] | None:
         """Get a specific queue by ID."""
         return self._get_fixture_by_id("queues", queue_id)
 
-    def get_request_by_id(self, request_id: int) -> dict | None:
+    def get_request_by_id(self, request_id: int) -> dict[str, Any] | None:
         """Get a specific request by ID."""
         return self._get_fixture_by_id("requests", request_id)
 
@@ -132,7 +132,7 @@ class FixtureReader:
         count: int = 1,
         by_visibility: int | None = None,
         by_is_open: bool | None = None,
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         """Get queue fixtures by preference."""
         preferences = {"by_visibility": by_visibility, "by_is_open": by_is_open}
         return self._get_fixtures("queues", count, preferences)
@@ -142,7 +142,7 @@ class FixtureReader:
         count: int = 1,
         by_status: int | None = None,
         by_mv_checked: bool | None = None,
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         """Get request fixtures by preference."""
         preferences = {"by_status": by_status, "by_mv_checked": by_mv_checked}
         return self._get_fixtures("requests", count, preferences)
@@ -151,8 +151,8 @@ class FixtureReader:
         self,
         category: str,
         count: int,
-        preferences: dict,
-    ) -> list[dict]:
+        preferences: dict[str, Any],
+    ) -> list[dict[str, Any]]:
         """Resolve preferences to fixture files and load them."""
         fixture_files = self._resolve_preference(category, preferences)
 
@@ -173,7 +173,7 @@ class FixtureReader:
     def _resolve_preference(
         self,
         category: str,
-        preferences: dict,
+        preferences: dict[str, Any],
     ) -> list[Path]:
         """Resolve preferences to list of fixture file paths."""
         targeted_metadata = self.metadata.get("targeted", {})
@@ -214,8 +214,8 @@ class FixtureReader:
 
     def _matches_preferences(
         self,
-        metadata: dict,
-        preferences: dict,
+        metadata: dict[str, Any],
+        preferences: dict[str, Any],
         category: str = "",
     ) -> bool:
         """Check if fixture metadata matches preferences."""
@@ -296,7 +296,7 @@ class FixtureReader:
     def _in_list(
         self,
         value: Any,
-        allowed_values: list,
+        allowed_values: list[Any],
     ) -> bool:
         """Check if value is in list of allowed values."""
         if value is None:
@@ -341,7 +341,7 @@ class FixtureReader:
         category: str,
         fixture_id: int,
         prefix: str | None = None,
-    ) -> dict | None:
+    ) -> dict[str, Any] | None:
         """Get a specific fixture by ID."""
         file_metadata = self.metadata.get("targeted", {}).get(category, {}).get("file_metadata", {})
 
@@ -363,7 +363,7 @@ class FixtureReader:
         self,
         _category: str,
         file_path: Path,
-    ) -> dict | None:
+    ) -> dict[str, Any] | None:
         """Load fixture from file."""
         try:
             with file_path.open() as f:
@@ -431,17 +431,19 @@ class FixtureReader:
 
         return None
 
-    async def refresh_category_metadata(self, category: str, dry_run: bool = False) -> list[dict]:
+    async def refresh_category_metadata(
+        self, category: str, dry_run: bool = False
+    ) -> list[dict[str, Any]]:
         """Refresh metadata for a category to match disk state."""
         return await self.metadata_manager.refresh_category_metadata(category, dry_run)
 
-    def get_coverage_report(self) -> dict:
+    def get_coverage_report(self) -> dict[str, Any]:
         """Get current fixture coverage."""
         return self.metadata_manager.get_coverage_report()
 
     def ensure_coverage(
         self,
-        targets: dict,
-    ) -> dict:
+        targets: dict[str, Any],
+    ) -> dict[str, Any]:
         """Ensure minimum coverage, fetch if needed."""
         return self.metadata_manager.ensure_coverage(targets)

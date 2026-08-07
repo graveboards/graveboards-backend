@@ -6,7 +6,7 @@ Defines roles, request statuses, and SQL filter operators.
 from __future__ import annotations
 
 from enum import Enum, IntEnum, StrEnum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy.sql import operators
 
@@ -50,7 +50,7 @@ class FilterOperator(Enum):
     REGEX = "regex", staticmethod(lambda col, val: col.op("~")(val))
     NOT_REGEX = "not_regex", staticmethod(lambda col, val: col.op("!~")(val))
 
-    def __init__(self, value: str, method: Callable):
+    def __init__(self, value: str, method: Callable[..., Any]):
         self._operator_value: str = value
         self.method = method
 

@@ -10,7 +10,7 @@ async def safe_compile_regex(
     pattern: str,
     timeout: float = 0.1,
     sample: str = "a" * 100,
-) -> re.Pattern | None:
+) -> re.Pattern[str] | None:
     """Safely compile a regular expression with timeout protection.
 
     Uses asyncio.to_thread to run blocking regex operations in a thread pool,

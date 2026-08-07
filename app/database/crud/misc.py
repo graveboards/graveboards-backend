@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from app.database.status import StatusTarget, get_summary_status
 
@@ -18,7 +18,7 @@ class Misc:
     @session_manager()
     async def status(
         self, target: StatusTarget = "summary", session: AsyncSession | None = None
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Return database status for ``target``."""
         if target == "summary":
             assert session is not None

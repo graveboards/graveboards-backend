@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ForwardRef
 
 from pydantic.functional_validators import model_validator
 from pydantic.main import BaseModel
@@ -31,8 +31,10 @@ if TYPE_CHECKING:
 
 from .conditions import Conditions, ConditionValue
 
+_FieldFiltersRef = ForwardRef("FieldFilters")
 
-class FieldFilters(RootModel):
+
+class FieldFilters(RootModel[dict[str, Conditions | _FieldFiltersRef]]):
     """Field-level filtering conditions for a single category.
 
     Wraps a mapping of field names to ``Conditions`` objects and provides SQLAlchemy
