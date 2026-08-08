@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from app.osu_api.client.osu_api_client import OsuAPIClient
+from tests._helpers.mocks import MockLockCtx
 
 
 @pytest.fixture(autouse=True)
@@ -26,13 +27,6 @@ def api_client() -> Generator[tuple[OsuAPIClient, MagicMock]]:
     mock_redis.hset = AsyncMock(return_value=None)
     mock_redis.expire = AsyncMock(return_value=None)
     mock_redis.incr = AsyncMock(return_value=1)
-
-    class MockLockCtx:
-        async def __aenter__(self) -> None:
-            return None
-
-        async def __aexit__(self, *args: Any) -> None:
-            pass
 
     mock_redis.lock_ctx = MagicMock(return_value=MockLockCtx())
 

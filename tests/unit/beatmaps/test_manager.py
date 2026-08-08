@@ -481,7 +481,7 @@ class TestBeatmapManager:
 
         with (
             patch("app.beatmaps.manager.aiofiles") as mock_aiofiles,
-            patch("app.beatmaps.manager.os.path.exists") as mock_exists,
+            patch("app.beatmaps.manager.Path.exists") as mock_exists,
         ):
             mock_exists.return_value = True
             mock_file = MagicMock()
@@ -495,7 +495,7 @@ class TestBeatmapManager:
 
     async def test_get_beatmap_path(self, manager: BeatmapManager) -> None:
         """Test get beatmap path."""
-        with patch("app.beatmaps.manager.os.path.exists") as mock_exists:
+        with patch("app.beatmaps.manager.Path.exists") as mock_exists:
             mock_exists.return_value = True
 
             result = BeatmapManager.get_path(123, 1)

@@ -9,65 +9,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-
-def _full_beatmapset_dict() -> dict[str, Any]:
-    return {
-        "id": 11111,
-        "user_id": 67890,
-        "title": "Test Song",
-        "title_unicode": "Test Song",
-        "artist": "Test Artist",
-        "artist_unicode": "Test Artist",
-        "bpm": 180.0,
-        "status": "wip",
-        "ranked": 0,
-        "rating": 4.5,
-        "source": "",
-        "tags": "test tag",
-        "pack_tags": [],
-        "storyboard": False,
-        "spotlight": False,
-        "video": False,
-        "nsfw": False,
-        "can_be_hyped": True,
-        "discussion_enabled": True,
-        "discussion_locked": False,
-        "is_scoreable": True,
-        "favourite_count": 100,
-        "play_count": 5000,
-        "offset": 0,
-        "track_id": None,
-        "preview_url": "https://example.com/pre.mp3",
-        "legacy_thread_url": None,
-        "deleted_at": None,
-        "ranked_date": None,
-        "creator": "TestCreator",
-        "beatmaps": [],
-        "availability": {"download_disabled": False, "more_information": None},
-        "covers": {
-            "cover": "x100",
-            "cover_2x": "x200",
-            "card": "x100",
-            "card_2x": "x200",
-            "list": "x100",
-            "list_2x": "x200",
-            "slimcover": "x100",
-            "slimcover_2x": "x200",
-        },
-        "current_nominations": [],
-        "description": {"description": ""},
-        "genre": None,
-        "hype": {"current": 0, "required": 2},
-        "language": None,
-        "nominations_summary": {
-            "current": 0,
-            "eligible_main_rulesets": None,
-            "required_meta": {"main_ruleset": 0, "non_main_ruleset": 0},
-        },
-        "ratings": [],
-        "last_updated": "2024-06-15T12:00:00+00:00",
-        "submitted_date": "2024-01-01T00:00:00+00:00",
-    }
+from tests._helpers.data import full_beatmapset_dict
+from tests._helpers.mocks import MockLockCtx, MockSession
 
 
 class TestRequestsPostIntegration:
@@ -128,14 +71,8 @@ class TestRequestsPostIntegration:
         mock_result = MagicMock()
         mock_result.scalars.return_value.all.return_value = []
 
-        class MockSession:
-            async def __aenter__(self) -> MockSession:
-                sess = AsyncMock()
-                sess.execute = AsyncMock(return_value=mock_result)
-                return sess
-
-            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-                pass
+        mock_sess = AsyncMock()
+        mock_sess.execute = AsyncMock(return_value=mock_result)
 
         mock_db = AsyncMock()
         mock_db.get.side_effect = [
@@ -144,7 +81,7 @@ class TestRequestsPostIntegration:
             None,
         ]
         mock_db.add = AsyncMock()
-        mock_db.session = MockSession
+        mock_db.session = MockSession(session=mock_sess)
 
         mock_rc = AsyncMock()
         mock_rc.incr = AsyncMock(return_value=1)
@@ -154,17 +91,10 @@ class TestRequestsPostIntegration:
         mock_rc.publish = AsyncMock(return_value=True)
         mock_rc.hgetall = AsyncMock(return_value=None)
 
-        class MockLockCtx:
-            async def __aenter__(self) -> None:
-                return None
-
-            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-                pass
-
         mock_rc.lock_ctx = MagicMock(return_value=MockLockCtx())
 
         async def mock_get_beatmapset_wip(*args: Any, **kwargs: Any) -> dict[str, Any]:
-            beatmapset = _full_beatmapset_dict()
+            beatmapset = full_beatmapset_dict()
             beatmapset["id"] = self.TEST_BEATMAPSET_ID
             return beatmapset
 
@@ -273,14 +203,8 @@ class TestRequestsPostIntegration:
         mock_user = MagicMock()
         mock_user.roles = [non_admin_role]
 
-        class MockSession:
-            async def __aenter__(self) -> MockSession:
-                sess = AsyncMock()
-                sess.execute = AsyncMock(return_value=MagicMock())
-                return sess
-
-            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-                pass
+        mock_sess = AsyncMock()
+        mock_sess.execute = AsyncMock(return_value=MagicMock())
 
         mock_db = AsyncMock()
         mock_db.get.side_effect = [
@@ -289,7 +213,7 @@ class TestRequestsPostIntegration:
             mock_existing_request,
         ]
         mock_db.add = AsyncMock()
-        mock_db.session = MockSession
+        mock_db.session = MockSession(session=mock_sess)
 
         mock_rc = AsyncMock()
         mock_rc.exists = AsyncMock(return_value=False)
@@ -327,14 +251,8 @@ class TestRequestsPostIntegration:
         mock_queue.name = "test_queue"
         mock_queue.is_open = True
 
-        class MockSession:
-            async def __aenter__(self) -> MockSession:
-                sess = AsyncMock()
-                sess.execute = AsyncMock(return_value=MagicMock())
-                return sess
-
-            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-                pass
+        mock_sess = AsyncMock()
+        mock_sess.execute = AsyncMock(return_value=MagicMock())
 
         mock_db = AsyncMock()
         mock_db.get.side_effect = [
@@ -343,7 +261,7 @@ class TestRequestsPostIntegration:
             None,
         ]
         mock_db.add = AsyncMock()
-        mock_db.session = MockSession
+        mock_db.session = MockSession(session=mock_sess)
 
         mock_rc = AsyncMock()
         mock_rc.incr = AsyncMock(return_value=2)
@@ -363,13 +281,6 @@ class TestRequestsPostIntegration:
         mock_rc.hset = AsyncMock(return_value=True)
         mock_rc.publish = AsyncMock(return_value=True)
 
-        class MockLockCtx:
-            async def __aenter__(self) -> None:
-                return None
-
-            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-                pass
-
         mock_rc.lock_ctx = MagicMock(return_value=MockLockCtx())
 
         QueueRequestHandlerTask(
@@ -384,7 +295,7 @@ class TestRequestsPostIntegration:
         mock_osu_client.rc = mock_rc
 
         async def mock_get_beatmapset_wip(*args: Any, **kwargs: Any) -> dict[str, Any]:
-            beatmapset = _full_beatmapset_dict()
+            beatmapset = full_beatmapset_dict()
             beatmapset["id"] = self.TEST_BEATMAPSET_ID
             return beatmapset
 
@@ -422,14 +333,8 @@ class TestRequestsPostIntegration:
         mock_queue.name = "test_queue"
         mock_queue.is_open = True
 
-        class MockSession:
-            async def __aenter__(self) -> MockSession:
-                sess = AsyncMock()
-                sess.execute = AsyncMock(return_value=MagicMock())
-                return sess
-
-            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-                pass
+        mock_sess = AsyncMock()
+        mock_sess.execute = AsyncMock(return_value=MagicMock())
 
         mock_db = AsyncMock()
         mock_db.get.side_effect = [
@@ -438,7 +343,7 @@ class TestRequestsPostIntegration:
             None,
         ]
         mock_db.add = AsyncMock()
-        mock_db.session = MockSession
+        mock_db.session = MockSession(session=mock_sess)
 
         mock_rc = AsyncMock()
         mock_rc.incr = AsyncMock(return_value=2)
@@ -459,19 +364,12 @@ class TestRequestsPostIntegration:
         mock_rc.hset = AsyncMock(return_value=True)
         mock_rc.publish = AsyncMock(return_value=True)
 
-        class MockLockCtx:
-            async def __aenter__(self) -> None:
-                return None
-
-            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-                pass
-
         mock_rc.lock_ctx = MagicMock(return_value=MockLockCtx())
 
         mock_osu_client.rc = mock_rc
 
         async def mock_get_beatmapset_wip(*args: Any, **kwargs: Any) -> dict[str, Any]:
-            beatmapset = _full_beatmapset_dict()
+            beatmapset = full_beatmapset_dict()
             beatmapset["id"] = self.TEST_BEATMAPSET_ID
             return beatmapset
 
@@ -506,14 +404,8 @@ class TestRequestsPostIntegration:
         mock_queue.name = "test_queue"
         mock_queue.is_open = True
 
-        class MockSession:
-            async def __aenter__(self) -> MockSession:
-                sess = AsyncMock()
-                sess.execute = AsyncMock(return_value=MagicMock())
-                return sess
-
-            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-                pass
+        mock_sess = AsyncMock()
+        mock_sess.execute = AsyncMock(return_value=MagicMock())
 
         mock_db = AsyncMock()
         mock_db.get.side_effect = [
@@ -522,7 +414,7 @@ class TestRequestsPostIntegration:
             None,
         ]
         mock_db.add = AsyncMock()
-        mock_db.session = MockSession
+        mock_db.session = MockSession(session=mock_sess)
 
         mock_rc = AsyncMock()
         mock_rc.incr = AsyncMock(return_value=1)
@@ -532,19 +424,12 @@ class TestRequestsPostIntegration:
         mock_rc.publish = AsyncMock(return_value=True)
         mock_rc.hgetall = AsyncMock(return_value=None)
 
-        class MockLockCtx:
-            async def __aenter__(self) -> None:
-                return None
-
-            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-                pass
-
         mock_rc.lock_ctx = MagicMock(return_value=MockLockCtx())
 
         mock_osu_client.rc = mock_rc
 
         async def mock_get_beatmapset_wip(*args: Any, **kwargs: Any) -> dict[str, Any]:
-            beatmapset = _full_beatmapset_dict()
+            beatmapset = full_beatmapset_dict()
             beatmapset["id"] = self.TEST_BEATMAPSET_ID
             return beatmapset
 

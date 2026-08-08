@@ -6,7 +6,7 @@ Tests token exchange logic with mocked dependencies.
 
 from datetime import UTC, datetime, timedelta
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -92,15 +92,14 @@ class TestTokenPostEndpoint:
 
     async def _call_post_token(self, body: dict[str, Any], **kwargs: Any) -> Any:
         """Call the post token function with dependencies."""
-        from starlette.requests import Request
-
         from api.v1.token import post
 
-        mock_request = MagicMock(spec=Request)
+        mock_request = MagicMock()
+        mock_request.client.host = "127.0.0.1"
         mock_request.state.rc = kwargs.get("rc")
         mock_request.state.db = kwargs.get("db")
-
-        return await post(mock_request, body=body, **kwargs)
+        with patch("api.v1.token.request", mock_request):
+            return await post(body, **kwargs)
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -139,15 +138,16 @@ class TestTokenPostEndpoint:
         mock_rc = await self._create_mock_redis()
         mock_db = await self._create_mock_db()
 
-        with pytest.raises(BadRequest, match="Missing code"):
-            await post(
-                MagicMock(),
-                body={"state": self.TEST_STATE},
-                oauth=mock_oauth,
-                osu_api_client=mock_osu_client,
-                rc=mock_rc,
-                db=mock_db,
-            )
+        with patch("api.v1.token.request", MagicMock()) as mock_req:
+            mock_req.client.host = "127.0.0.1"
+            with pytest.raises(BadRequest, match="Missing code"):
+                await post(
+                    body={"state": self.TEST_STATE},
+                    oauth=mock_oauth,
+                    osu_api_client=mock_osu_client,
+                    rc=mock_rc,
+                    db=mock_db,
+                )
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -161,15 +161,16 @@ class TestTokenPostEndpoint:
         mock_rc = await self._create_mock_redis()
         mock_db = await self._create_mock_db()
 
-        with pytest.raises(BadRequest, match="Missing state"):
-            await post(
-                MagicMock(),
-                body={"code": "test_code"},
-                oauth=mock_oauth,
-                osu_api_client=mock_osu_client,
-                rc=mock_rc,
-                db=mock_db,
-            )
+        with patch("api.v1.token.request", MagicMock()) as mock_req:
+            mock_req.client.host = "127.0.0.1"
+            with pytest.raises(BadRequest, match="Missing state"):
+                await post(
+                    body={"code": "test_code"},
+                    oauth=mock_oauth,
+                    osu_api_client=mock_osu_client,
+                    rc=mock_rc,
+                    db=mock_db,
+                )
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -184,15 +185,16 @@ class TestTokenPostEndpoint:
         mock_rc.getdel = AsyncMock(return_value=None)
         mock_db = await self._create_mock_db()
 
-        with pytest.raises(BadRequest, match="Invalid or expired state"):
-            await post(
-                MagicMock(),
-                body={"code": "test_code", "state": "invalid_state"},
-                oauth=mock_oauth,
-                osu_api_client=mock_osu_client,
-                rc=mock_rc,
-                db=mock_db,
-            )
+        with patch("api.v1.token.request", MagicMock()) as mock_req:
+            mock_req.client.host = "127.0.0.1"
+            with pytest.raises(BadRequest, match="Invalid or expired state"):
+                await post(
+                    body={"code": "test_code", "state": "invalid_state"},
+                    oauth=mock_oauth,
+                    osu_api_client=mock_osu_client,
+                    rc=mock_rc,
+                    db=mock_db,
+                )
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -213,14 +215,15 @@ class TestTokenPostEndpoint:
         mock_db = await self._create_mock_db()
 
         try:
-            await post(
-                MagicMock(),
-                body={"code": "expired_code", "state": self.TEST_STATE},
-                oauth=mock_oauth,
-                osu_api_client=mock_osu_client,
-                rc=mock_rc,
-                db=mock_db,
-            )
+            with patch("api.v1.token.request", MagicMock()) as mock_req:
+                mock_req.client.host = "127.0.0.1"
+                await post(
+                    body={"code": "expired_code", "state": self.TEST_STATE},
+                    oauth=mock_oauth,
+                    osu_api_client=mock_osu_client,
+                    rc=mock_rc,
+                    db=mock_db,
+                )
             raise AssertionError("Expected OsuOAuthError exception")
         except OsuOAuthError:
             pass

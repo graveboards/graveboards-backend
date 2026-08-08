@@ -10,6 +10,8 @@ results match expected behavior.
 Run with: pytest tests/integration/search/test_search_integration.py -m integration
 """
 
+from __future__ import annotations
+
 import json
 from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
@@ -18,24 +20,44 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 
-from app.database.models import (
-    Beatmap,
-    Beatmapset,
-    BeatmapsetSnapshot,
-    BeatmapSnapshot,
-    User,
-)
 from app.fixtures.paths import FIXTURES_DIR
 from app.search.datastructures import SearchTermsSchema
-from app.search.engine import SearchEngine
 from app.search.enums import ModelField, Scope, SortingOrder
 
 if TYPE_CHECKING:
+    from app.database.models import BeatmapsetSnapshot
     from app.fixtures.search_test_fetcher import SearchTestFixtureFetcher
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
+_SearchEngine: type | None = None
+
+
+def _get_search_engine_cls() -> type:
+    """Lazy-import SearchEngine to avoid paying the cost during collection."""
+    global _SearchEngine
+    if _SearchEngine is None:
+        from app.search.engine import SearchEngine
+
+        _SearchEngine = SearchEngine
+    return _SearchEngine
+
+
+@pytest.fixture(scope="session")
+def search_coverage() -> dict[str, Any]:
+    """Load search fixture coverage data once per session.
+
+    Reads metadata.json to determine which fixture categories have data.
+    This avoids re-creating RedisClient and re-parsing the metadata on
+    every test.
+    """
+    metadata_path = Path(FIXTURES_DIR) / "metadata.json"
+    if metadata_path.exists():
+        with metadata_path.open() as f:
+            return json.load(f)
+    return {}
 
 
 @pytest.fixture
@@ -80,6 +102,14 @@ class SearchFixtureSeeder:
 
     async def seed_beatmapset_from_coverage(self, bs_id: int) -> BeatmapsetSnapshot | None:
         """Seed a single beatmapset from fetched JSON data."""
+        from app.database.models import (
+            Beatmap,
+            Beatmapset,
+            BeatmapsetSnapshot,
+            BeatmapSnapshot,
+            User,
+        )
+
         bs_data = self._load_json("beatmapsets", f"beatmapset_{bs_id}.json")
         if bs_data is None:
             return None
@@ -326,6 +356,19 @@ async def search_fixture_seeder(
 # ---------------------------------------------------------------------------
 
 
+def _require_coverage(cov: dict[str, Any], key: str, value: str | None = None) -> None:
+    """Skip the calling test if ``cov`` lacks coverage for ``key`` (or ``value`` under ``key``).
+
+    Call at the top of each test so the skip is visible in ``-rs`` output and
+    bound to the test nodeid.
+    """
+    if value is None:
+        if not _has_coverage(cov, key):
+            pytest.skip(f"No {key} coverage available")
+    elif not _has_coverage(cov, key, value):
+        pytest.skip(f"No {key} for {value}")
+
+
 def _has_coverage(coverage: dict, bucket: str, category: str | None = None) -> bool:
     """Check if a coverage bucket has data available."""
     if bucket not in coverage:
@@ -384,7 +427,7 @@ class TestSearchBeatmapsets:
         await seeder.seed_beatmapset_from_coverage(bs_ids[0])
         await db_transaction.commit()
 
-        engine = SearchEngine(
+        engine = _get_search_engine_cls()(
             scope=Scope.BEATMAPSETS,
             filters={"beatmapset": {"genre_id": genre_id}},
         )
@@ -409,7 +452,7 @@ class TestSearchBeatmapsets:
         await seeder.seed_beatmapset_from_coverage(bs_ids[0])
         await db_transaction.commit()
 
-        engine = SearchEngine(
+        engine = _get_search_engine_cls()(
             scope=Scope.BEATMAPSETS,
             filters={"beatmapset": {"language_id": lang_id}},
         )
@@ -434,13 +477,13 @@ class TestSearchBeatmapsets:
         await seeder.seed_beatmapset_from_coverage(false_ids[0])
         await db_transaction.commit()
 
-        engine_nsfw = SearchEngine(
+        engine_nsfw = _get_search_engine_cls()(
             scope=Scope.BEATMAPSETS,
             filters={"beatmapset": {"nsfw": True}},
         )
         results_nsfw = await engine_nsfw.search(db_transaction, limit=10)
 
-        engine_sfw = SearchEngine(
+        engine_sfw = _get_search_engine_cls()(
             scope=Scope.BEATMAPSETS,
             filters={"beatmapset": {"nsfw": False}},
         )
@@ -466,7 +509,7 @@ class TestSearchBeatmapsets:
             await db_transaction.commit()
 
         # Just verify the engine can be created with status filter
-        engine = SearchEngine(
+        engine = _get_search_engine_cls()(
             scope=Scope.BEATMAPSETS,
             filters={"beatmapset": {"status": "ranked"}},
         )
@@ -488,7 +531,7 @@ class TestSearchBeatmapsets:
             await db_transaction.commit()
 
         title = coverage["beatmapset_titles"][0] if coverage["beatmapset_titles"] else "test"
-        engine = SearchEngine(
+        engine = _get_search_engine_cls()(
             scope=Scope.BEATMAPSETS,
             search_terms=SearchTermsSchema(terms=[title]),
         )
@@ -510,7 +553,7 @@ class TestSearchBeatmapsets:
             await seeder.seed_beatmapset_from_coverage(bs_ids[0])
             await db_transaction.commit()
 
-        engine = SearchEngine(
+        engine = _get_search_engine_cls()(
             scope=Scope.BEATMAPSETS,
             search_terms=SearchTermsSchema(terms=["artist"]),
         )
@@ -543,7 +586,7 @@ class TestSearchBeatmapsets:
                 {"field": ModelField.BEATMAPSETSNAPSHOT__RATING, "order": SortingOrder.DESCENDING},
             ]
         )
-        engine = SearchEngine(
+        engine = _get_search_engine_cls()(
             scope=Scope.BEATMAPSETS,
             sorting=sorting,
         )
@@ -577,7 +620,7 @@ class TestSearchBeatmapsets:
                 },
             ]
         )
-        engine = SearchEngine(
+        engine = _get_search_engine_cls()(
             scope=Scope.BEATMAPSETS,
             sorting=sorting,
         )
@@ -613,7 +656,7 @@ class TestSearchBeatmaps:
             await seeder.seed_beatmapset_from_coverage(bs_ids[0])
             await db_transaction.commit()
 
-        engine = SearchEngine(
+        engine = _get_search_engine_cls()(
             scope=Scope.BEATMAPS,
             filters={"beatmap": {"mode_int": mode_int}},
         )
@@ -639,7 +682,7 @@ class TestSearchBeatmaps:
             await seeder.seed_beatmapset_from_coverage(bs_ids[0])
             await db_transaction.commit()
 
-        engine = SearchEngine(
+        engine = _get_search_engine_cls()(
             scope=Scope.BEATMAPS,
             filters={"beatmap": {"difficulty_rating": 5.0}},
         )
@@ -663,7 +706,7 @@ class TestSearchBeatmaps:
             await seeder.seed_beatmapset_from_coverage(bs_ids[0])
             await db_transaction.commit()
 
-        engine = SearchEngine(
+        engine = _get_search_engine_cls()(
             scope=Scope.BEATMAPS,
             filters={"beatmap": {"playcount": 500}},
         )
@@ -685,7 +728,7 @@ class TestSearchBeatmaps:
             await seeder.seed_beatmapset_from_coverage(bs_ids[0])
             await db_transaction.commit()
 
-        engine = SearchEngine(
+        engine = _get_search_engine_cls()(
             scope=Scope.BEATMAPS,
             search_terms=SearchTermsSchema(terms=["version"]),
         )
@@ -721,7 +764,7 @@ class TestSearchUsers:
             pytest.skip(f"Could not load user data for country {cc}")
         await db_transaction.commit()
 
-        engine = SearchEngine(
+        engine = _get_search_engine_cls()(
             scope=Scope.BEATMAPS,  # Users search via profile scope
             filters={"beatmap": {"mode_int": 0}},  # Basic filter to test engine
         )
@@ -745,7 +788,7 @@ class TestSearchUsers:
         await db_transaction.commit()
 
         # Verify engine can be created with restricted filter
-        engine = SearchEngine(
+        engine = _get_search_engine_cls()(
             scope=Scope.BEATMAPS,
             filters={"beatmap": {"mode_int": 0}},
         )

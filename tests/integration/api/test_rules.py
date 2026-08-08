@@ -10,6 +10,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from tests._helpers.mocks import MockLockCtx, MockSession
+
 
 class TestRestrictionsOnRequestSubmission:
     """Integration tests for rule enforcement on POST /api/v1/requests."""
@@ -35,6 +37,7 @@ class TestRestrictionsOnRequestSubmission:
         test_client_with_mocks: Any,
         valid_request_body: dict[str, Any],
         security_disabled: Any,
+        authenticated_user_id: Any,
     ) -> None:
         """Test request succeeds when queue has no rules."""
 
@@ -43,14 +46,8 @@ class TestRestrictionsOnRequestSubmission:
         mock_queue.name = "test_queue"
         mock_queue.is_open = True
 
-        class MockSession:
-            async def __aenter__(self) -> MockSession:
-                sess = AsyncMock()
-                sess.execute = AsyncMock(return_value=MagicMock())
-                return sess
-
-            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-                pass
+        mock_sess = AsyncMock()
+        mock_sess.execute = AsyncMock(return_value=MagicMock())
 
         from app.database.enums import RoleName
 
@@ -70,7 +67,7 @@ class TestRestrictionsOnRequestSubmission:
             None,
         ]
         mock_db.add = AsyncMock()
-        mock_db.session = MockSession
+        mock_db.session = MockSession(session=mock_sess)
 
         mock_rc = AsyncMock()
         mock_rc.incr = AsyncMock(return_value=1)
@@ -81,13 +78,6 @@ class TestRestrictionsOnRequestSubmission:
         mock_rc.hgetall = AsyncMock(return_value=None)
         mock_rc.get = AsyncMock(return_value=None)
         mock_rc.set = AsyncMock(return_value=True)
-
-        class MockLockCtx:
-            async def __aenter__(self) -> None:
-                return None
-
-            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-                pass
 
         mock_rc.lock_ctx = MagicMock(return_value=MockLockCtx())
 
@@ -158,26 +148,7 @@ class TestRestrictionsOnRequestSubmission:
 
         with (
             patch("api.v1.requests.OsuAPIClient", return_value=mock_osu_client),
-            patch(
-                "app.security.decorators.role_authorization.get_authenticated_user_id",
-                return_value=self.TEST_USER_ID,
-            ),
-            patch(
-                "app.security.decorators.auth_context.get_authenticated_user_id",
-                return_value=self.TEST_USER_ID,
-            ),
-            patch(
-                "app.security.decorators.ownership_authorization.get_authenticated_user_id",
-                return_value=self.TEST_USER_ID,
-            ),
-            patch(
-                "app.security.decorators.ownership_filter.get_authenticated_user_id",
-                return_value=self.TEST_USER_ID,
-            ),
-            patch(
-                "app.security.decorators.utils.get_authenticated_user_id",
-                return_value=self.TEST_USER_ID,
-            ),
+            authenticated_user_id(self.TEST_USER_ID),
         ):
             response = test_client.post("/api/v1/requests", json=valid_request_body)
 
@@ -213,14 +184,8 @@ class TestRestrictionsOnRequestSubmission:
         mock_result = MagicMock()
         mock_result.scalars.return_value.all.return_value = [mock_rule]
 
-        class MockSession:
-            async def __aenter__(self) -> MockSession:
-                sess = AsyncMock()
-                sess.execute = AsyncMock(return_value=mock_result)
-                return sess
-
-            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-                pass
+        mock_sess = AsyncMock()
+        mock_sess.execute = AsyncMock(return_value=mock_result)
 
         from app.database.enums import RoleName
 
@@ -241,7 +206,7 @@ class TestRestrictionsOnRequestSubmission:
             mock_queue,
         ]
         mock_db.add = AsyncMock()
-        mock_db.session = MockSession
+        mock_db.session = MockSession(session=mock_sess)
 
         mock_rc = AsyncMock()
         mock_rc.incr = AsyncMock(return_value=2)
@@ -250,13 +215,6 @@ class TestRestrictionsOnRequestSubmission:
         mock_rc.hset = AsyncMock(return_value=True)
         mock_rc.publish = AsyncMock(return_value=True)
         mock_rc.hgetall = AsyncMock(return_value=None)
-
-        class MockLockCtx:
-            async def __aenter__(self) -> None:
-                return None
-
-            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-                pass
 
         mock_rc.lock_ctx = MagicMock(return_value=MockLockCtx())
 
@@ -362,14 +320,8 @@ class TestRestrictionsOnRequestSubmission:
         mock_result = MagicMock()
         mock_result.scalars.return_value.all.return_value = [mock_rule]
 
-        class MockSession:
-            async def __aenter__(self) -> MockSession:
-                sess = AsyncMock()
-                sess.execute = AsyncMock(return_value=mock_result)
-                return sess
-
-            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-                pass
+        mock_sess = AsyncMock()
+        mock_sess.execute = AsyncMock(return_value=mock_result)
 
         from app.database.enums import RoleName
 
@@ -390,7 +342,7 @@ class TestRestrictionsOnRequestSubmission:
             mock_queue,
         ]
         mock_db.add = AsyncMock()
-        mock_db.session = MockSession
+        mock_db.session = MockSession(session=mock_sess)
 
         now = datetime.now(UTC)
         thirty_minutes_ago = int((now - timedelta(minutes=30)).timestamp())
@@ -404,13 +356,6 @@ class TestRestrictionsOnRequestSubmission:
         mock_rc.hgetall = AsyncMock(return_value=None)
         mock_rc.get = AsyncMock(return_value=str(thirty_minutes_ago))
         mock_rc.set = AsyncMock(return_value=False)
-
-        class MockLockCtx:
-            async def __aenter__(self) -> None:
-                return None
-
-            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-                pass
 
         mock_rc.lock_ctx = MagicMock(return_value=MockLockCtx())
 
@@ -515,14 +460,8 @@ class TestRestrictionsOnRequestSubmission:
         mock_result = MagicMock()
         mock_result.scalars.return_value.all.return_value = [mock_rule]
 
-        class MockSession:
-            async def __aenter__(self) -> MockSession:
-                sess = AsyncMock()
-                sess.execute = AsyncMock(return_value=mock_result)
-                return sess
-
-            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-                pass
+        mock_sess = AsyncMock()
+        mock_sess.execute = AsyncMock(return_value=mock_result)
 
         from app.database.enums import RoleName
 
@@ -543,7 +482,7 @@ class TestRestrictionsOnRequestSubmission:
             mock_queue,
         ]
         mock_db.add = AsyncMock()
-        mock_db.session = MockSession
+        mock_db.session = MockSession(session=mock_sess)
 
         mock_rc = AsyncMock()
         mock_rc.incr = AsyncMock(return_value=1)
@@ -552,13 +491,6 @@ class TestRestrictionsOnRequestSubmission:
         mock_rc.hset = AsyncMock(return_value=True)
         mock_rc.publish = AsyncMock(return_value=True)
         mock_rc.hgetall = AsyncMock(return_value=None)
-
-        class MockLockCtx:
-            async def __aenter__(self) -> None:
-                return None
-
-            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-                pass
 
         mock_rc.lock_ctx = MagicMock(return_value=MockLockCtx())
 
@@ -641,6 +573,7 @@ class TestRestrictionsOnRequestSubmission:
         test_client_with_mocks: Any,
         valid_request_body: dict[str, Any],
         security_disabled: Any,
+        authenticated_user_id: Any,
     ) -> None:
         """Test request succeeds when rule exists but is inactive."""
 
@@ -649,14 +582,8 @@ class TestRestrictionsOnRequestSubmission:
         mock_queue.name = "test_queue"
         mock_queue.is_open = True
 
-        class MockSession:
-            async def __aenter__(self) -> MockSession:
-                sess = AsyncMock()
-                sess.execute = AsyncMock(return_value=MagicMock())
-                return sess
-
-            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-                pass
+        mock_sess = AsyncMock()
+        mock_sess.execute = AsyncMock(return_value=MagicMock())
 
         from app.database.enums import RoleName
 
@@ -676,7 +603,7 @@ class TestRestrictionsOnRequestSubmission:
             None,
         ]
         mock_db.add = AsyncMock()
-        mock_db.session = MockSession
+        mock_db.session = MockSession(session=mock_sess)
 
         mock_rc = AsyncMock()
         mock_rc.incr = AsyncMock(return_value=1)
@@ -687,13 +614,6 @@ class TestRestrictionsOnRequestSubmission:
         mock_rc.hgetall = AsyncMock(return_value=None)
         mock_rc.get = AsyncMock(return_value=None)
         mock_rc.set = AsyncMock(return_value=True)
-
-        class MockLockCtx:
-            async def __aenter__(self) -> None:
-                return None
-
-            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-                pass
 
         mock_rc.lock_ctx = MagicMock(return_value=MockLockCtx())
 
@@ -764,26 +684,7 @@ class TestRestrictionsOnRequestSubmission:
 
         with (
             patch("api.v1.requests.OsuAPIClient", return_value=mock_osu_client),
-            patch(
-                "app.security.decorators.role_authorization.get_authenticated_user_id",
-                return_value=self.TEST_USER_ID,
-            ),
-            patch(
-                "app.security.decorators.auth_context.get_authenticated_user_id",
-                return_value=self.TEST_USER_ID,
-            ),
-            patch(
-                "app.security.decorators.ownership_authorization.get_authenticated_user_id",
-                return_value=self.TEST_USER_ID,
-            ),
-            patch(
-                "app.security.decorators.ownership_filter.get_authenticated_user_id",
-                return_value=self.TEST_USER_ID,
-            ),
-            patch(
-                "app.security.decorators.utils.get_authenticated_user_id",
-                return_value=self.TEST_USER_ID,
-            ),
+            authenticated_user_id(self.TEST_USER_ID),
         ):
             response = test_client.post("/api/v1/requests", json=valid_request_body)
 
@@ -792,7 +693,7 @@ class TestRestrictionsOnRequestSubmission:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_request_passes_when_user_not_in_target(
-        self, test_client_with_mocks: Any, security_disabled: Any
+        self, test_client_with_mocks: Any, security_disabled: Any, authenticated_user_id: Any
     ) -> None:
         """Test request succeeds when user is not in rule target list."""
 
@@ -810,14 +711,8 @@ class TestRestrictionsOnRequestSubmission:
         mock_queue.name = "test_queue"
         mock_queue.is_open = True
 
-        class MockSession:
-            async def __aenter__(self) -> MockSession:
-                sess = AsyncMock()
-                sess.execute = AsyncMock(return_value=MagicMock())
-                return sess
-
-            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-                pass
+        mock_sess = AsyncMock()
+        mock_sess.execute = AsyncMock(return_value=MagicMock())
 
         from app.database.enums import RoleName
 
@@ -837,7 +732,7 @@ class TestRestrictionsOnRequestSubmission:
             None,
         ]
         mock_db.add = AsyncMock()
-        mock_db.session = MockSession
+        mock_db.session = MockSession(session=mock_sess)
 
         mock_rule = MagicMock()
         mock_rule.id = 1
@@ -857,13 +752,6 @@ class TestRestrictionsOnRequestSubmission:
         mock_rc.publish = AsyncMock(return_value=True)
         mock_rc.hgetall = AsyncMock(return_value=None)
 
-        class MockLockCtx:
-            async def __aenter__(self) -> None:
-                return None
-
-            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-                pass
-
         mock_rc.lock_ctx = MagicMock(return_value=MockLockCtx())
 
         async def mock_get_beatmapset_wip(*args: Any, **kwargs: Any) -> dict[str, Any]:
@@ -933,26 +821,7 @@ class TestRestrictionsOnRequestSubmission:
 
         with (
             patch("api.v1.requests.OsuAPIClient", return_value=mock_osu_client),
-            patch(
-                "app.security.decorators.role_authorization.get_authenticated_user_id",
-                return_value=different_user,
-            ),
-            patch(
-                "app.security.decorators.auth_context.get_authenticated_user_id",
-                return_value=different_user,
-            ),
-            patch(
-                "app.security.decorators.ownership_authorization.get_authenticated_user_id",
-                return_value=different_user,
-            ),
-            patch(
-                "app.security.decorators.ownership_filter.get_authenticated_user_id",
-                return_value=different_user,
-            ),
-            patch(
-                "app.security.decorators.utils.get_authenticated_user_id",
-                return_value=different_user,
-            ),
+            authenticated_user_id(different_user),
         ):
             response = test_client.post("/api/v1/requests", json=body)
 
@@ -967,7 +836,7 @@ class TestQueueRulesPatch:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_admin_can_set_rules(
-        self, test_client_with_mocks: Any, admin_user_token: str
+        self, test_client_with_mocks: Any, admin_user_token: str, authenticated_user_id: Any
     ) -> None:
         """Test admin can set rules via PATCH."""
         from app.database.models import Queue
@@ -991,41 +860,17 @@ class TestQueueRulesPatch:
                 return mock_queue
             return mock_user
 
-        class MockSession:
-            async def __aenter__(self) -> MockSession:
-                sess = AsyncMock()
-                sess.execute = AsyncMock(return_value=MagicMock())
-                return sess
-
-            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-                pass
+        mock_sess = AsyncMock()
+        mock_sess.execute = AsyncMock(return_value=MagicMock())
 
         mock_db = AsyncMock()
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.update = AsyncMock()
-        mock_db.session = MockSession
+        mock_db.session = MockSession(session=mock_sess)
 
         test_client = test_client_with_mocks(mock_db=mock_db)
 
-        with (
-            patch(
-                "app.security.decorators.role_authorization.get_authenticated_user_id",
-                return_value=11111111,
-            ),
-            patch(
-                "app.security.decorators.auth_context.get_authenticated_user_id",
-                return_value=11111111,
-            ),
-            patch(
-                "app.security.decorators.ownership_authorization.get_authenticated_user_id",
-                return_value=11111111,
-            ),
-            patch(
-                "app.security.decorators.ownership_filter.get_authenticated_user_id",
-                return_value=11111111,
-            ),
-            patch("app.security.decorators.utils.get_authenticated_user_id", return_value=11111111),
-        ):
+        with authenticated_user_id(11111111):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.patch(
                 f"/api/v1/queues/{self.TEST_QUEUE_ID}",
@@ -1051,7 +896,7 @@ class TestQueueRulesPatch:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_queue_owner_can_set_rules(
-        self, test_client_with_mocks: Any, admin_user_token: str
+        self, test_client_with_mocks: Any, admin_user_token: str, authenticated_user_id: Any
     ) -> None:
         """Test queue owner can set rules via PATCH."""
         from app.database.models import Queue
@@ -1075,41 +920,17 @@ class TestQueueRulesPatch:
                 return mock_queue
             return mock_user
 
-        class MockSession:
-            async def __aenter__(self) -> MockSession:
-                sess = AsyncMock()
-                sess.execute = AsyncMock(return_value=MagicMock())
-                return sess
-
-            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-                pass
+        mock_sess = AsyncMock()
+        mock_sess.execute = AsyncMock(return_value=MagicMock())
 
         mock_db = AsyncMock()
         mock_db.get = AsyncMock(side_effect=mock_get)
         mock_db.update = AsyncMock()
-        mock_db.session = MockSession
+        mock_db.session = MockSession(session=mock_sess)
 
         test_client = test_client_with_mocks(mock_db=mock_db)
 
-        with (
-            patch(
-                "app.security.decorators.role_authorization.get_authenticated_user_id",
-                return_value=owner_id,
-            ),
-            patch(
-                "app.security.decorators.auth_context.get_authenticated_user_id",
-                return_value=owner_id,
-            ),
-            patch(
-                "app.security.decorators.ownership_authorization.get_authenticated_user_id",
-                return_value=owner_id,
-            ),
-            patch(
-                "app.security.decorators.ownership_filter.get_authenticated_user_id",
-                return_value=owner_id,
-            ),
-            patch("app.security.decorators.utils.get_authenticated_user_id", return_value=owner_id),
-        ):
+        with authenticated_user_id(owner_id):
             headers = {"Authorization": f"Bearer {admin_user_token}"}
             response = test_client.patch(
                 f"/api/v1/queues/{self.TEST_QUEUE_ID}",
@@ -1134,7 +955,7 @@ class TestQueueRulesPatch:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_non_admin_cannot_set_rules(
-        self, test_client_with_mocks: Any, admin_user_token: str
+        self, test_client_with_mocks: Any, admin_user_token: str, authenticated_user_id: Any
     ) -> None:
         """Test non-admin non-owner gets 403 when trying to set rules."""
         from app.security import generate_token
@@ -1156,25 +977,7 @@ class TestQueueRulesPatch:
 
         test_client = test_client_with_mocks(mock_db=mock_db)
 
-        with (
-            patch(
-                "app.security.decorators.role_authorization.get_authenticated_user_id",
-                return_value=88888888,
-            ),
-            patch(
-                "app.security.decorators.auth_context.get_authenticated_user_id",
-                return_value=88888888,
-            ),
-            patch(
-                "app.security.decorators.ownership_authorization.get_authenticated_user_id",
-                return_value=88888888,
-            ),
-            patch(
-                "app.security.decorators.ownership_filter.get_authenticated_user_id",
-                return_value=88888888,
-            ),
-            patch("app.security.decorators.utils.get_authenticated_user_id", return_value=88888888),
-        ):
+        with authenticated_user_id(88888888):
             headers = {"Authorization": f"Bearer {generate_token(88888888)}"}
             response = test_client.patch(
                 f"/api/v1/queues/{self.TEST_QUEUE_ID}",

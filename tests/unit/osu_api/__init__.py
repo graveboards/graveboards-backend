@@ -1,4 +1,4 @@
-from tests.unit.osu_api.test_helpers import (
+from tests._helpers.osu_api_helpers import (
     _get_beatmap_attributes_with_fallback,
     _get_beatmap_scores_with_fallback,
     _get_beatmap_with_fallback,
@@ -6,7 +6,7 @@ from tests.unit.osu_api.test_helpers import (
     _get_scores_with_fallback,
     _get_user_with_fallback,
 )
-from tests.unit.osu_api.test_utils import (
+from tests._helpers.osu_api_utils import (
     _create_mock_beatmap,
     _create_mock_beatmap_attributes,
     _create_mock_beatmap_scores,

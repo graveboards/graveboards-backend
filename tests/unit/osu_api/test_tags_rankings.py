@@ -4,9 +4,9 @@ import pytest
 
 from app.fixtures.reader import FixtureReader
 from app.osu_api.client.osu_api_client import OsuAPIClient
+from tests._helpers.osu_api_helpers import _get_user_with_fallback
+from tests._helpers.osu_api_utils import _create_mock_rankings_user, _create_mock_tags
 from tests.unit.osu_api.conftest import MockResponse
-from tests.unit.osu_api.test_helpers import _get_user_with_fallback
-from tests.unit.osu_api.test_utils import _create_mock_rankings_user, _create_mock_tags
 
 
 @pytest.mark.asyncio

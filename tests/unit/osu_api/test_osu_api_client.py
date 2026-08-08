@@ -7,11 +7,11 @@ import pytest
 from app.fixtures.reader import FixtureReader
 from app.osu_api.client.osu_api_client import OsuAPIClient
 from app.osu_api.enums import Ruleset, ScoreType
-from tests.unit.osu_api.conftest import MockResponse
-from tests.unit.osu_api.test_helpers import (
+from tests._helpers.osu_api_helpers import (
     _get_beatmap_with_fallback,
     _get_beatmapset_with_fallback,
 )
+from tests.unit.osu_api.conftest import MockResponse
 
 
 @pytest.fixture(autouse=True)

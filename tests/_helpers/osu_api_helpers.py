@@ -1,6 +1,6 @@
 from typing import Any
 
-from tests.unit.osu_api.test_utils import (
+from tests._helpers.osu_api_utils import (
     _create_mock_beatmap,
     _create_mock_beatmap_attributes,
     _create_mock_beatmap_scores,
