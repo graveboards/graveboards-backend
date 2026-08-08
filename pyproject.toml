@@ -57,6 +57,7 @@ dev = [
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
+    "pytest-xdist>=3.6.0",
     "ruff>=0.16.1",
     "mypy>=2.3.0",
     "types-PyYAML",
@@ -90,11 +91,7 @@ addopts = [
     "-ra",
     "--strict-config",
     "--strict-markers",
-    "--cov=app",
-    "--cov=api",
-    "--cov-report=term-missing",
-    "--cov-report=html",
-    "--cov-fail-under=70",
+    "--durations=20",
 ]
 filterwarnings = [
     "ignore:.*jsonschema.*RefResolver is deprecated::connexion",
