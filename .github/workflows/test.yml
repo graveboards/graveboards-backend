@@ -6,6 +6,28 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# `.env.test` is gitignored, so these values are not available in CI unless we
+# define them here. They mirror `.env.test` exactly and are non-sensitive
+# test-only defaults (a throwaway JWT key, dummy osu! client creds, localhost
+# infra). app.config.Config requires JWT_SECRET_KEY at import time.
+env:
+  ENV: test
+  DEBUG: "true"
+  DISABLE_SECURITY: "false"
+  BASE_URL: http://localhost:3000
+  JWT_SECRET_KEY: kNHbFZhuWsVyOAITKBUbJCMtDUs4ODFx
+  JWT_ALGORITHM: HS256
+  OSU_CLIENT_ID: test-client-id
+  OSU_CLIENT_SECRET: test-client-secret
+  POSTGRESQL_HOST: localhost
+  POSTGRESQL_PORT: 5432
+  POSTGRESQL_USERNAME: postgres
+  POSTGRESQL_PASSWORD: postgres
+  POSTGRESQL_DATABASE: graveboards_test
+  REDIS_HOST: localhost
+  REDIS_PORT: 6379
+  REDIS_DB: "15"
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -56,15 +78,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    env:
-      POSTGRESQL_HOST: localhost
-      POSTGRESQL_PORT: 5432
-      POSTGRESQL_USERNAME: postgres
-      POSTGRESQL_PASSWORD: postgres
-      POSTGRESQL_DATABASE: graveboards_test
-      REDIS_HOST: localhost
-      REDIS_PORT: 6379
-      REDIS_DB: 15
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -95,15 +108,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    env:
-      POSTGRESQL_HOST: localhost
-      POSTGRESQL_PORT: 5432
-      POSTGRESQL_USERNAME: postgres
-      POSTGRESQL_PASSWORD: postgres
-      POSTGRESQL_DATABASE: graveboards_test
-      REDIS_HOST: localhost
-      REDIS_PORT: 6379
-      REDIS_DB: 15
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
