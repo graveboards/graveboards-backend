@@ -28,6 +28,7 @@ convenient during development but needs companion services running.
 
 from __future__ import annotations
 
+import asyncio
 import os
 import time
 from collections.abc import Callable
@@ -46,6 +47,7 @@ if TYPE_CHECKING:
 # ---------------------------------------------------------------------------
 
 _engine: AsyncEngine | None = None
+_engine_loop: asyncio.AbstractEventLoop | None = None
 _tables_ready: bool = False
 
 # ---------------------------------------------------------------------------
@@ -249,20 +251,30 @@ def pytest_terminal_summary(
 
 
 async def _ensure_engine() -> AsyncEngine:
-    """Lazily create the engine, create_all tables, return the engine."""
-    global _engine, _tables_ready
+    """Lazily create the engine, create_all tables, return the engine.
 
-    if _engine is None:
-        from sqlalchemy.ext.asyncio import create_async_engine
+    The engine is bound to the event loop that created it: asyncpg connections
+    cannot migrate between loops, and with ``asyncio_default_fixture_loop_scope
+    = "function"`` every async test runs on its own loop. So whenever the running
+    loop changes the engine is rebuilt with a ``NullPool`` (no connections are
+    carried across loops). Tables are created only once per process — they live
+    in the shared test database regardless of which engine/loop created them.
+    """
+    global _engine, _engine_loop, _tables_ready
 
-        from app.database.db import DATABASE_URI
+    from sqlalchemy.ext.asyncio import create_async_engine
+    from sqlalchemy.pool import NullPool
 
-        _engine = create_async_engine(
-            DATABASE_URI,
-            pool_size=10,
-            max_overflow=0,
-            pool_pre_ping=False,
-        )
+    from app.database.db import DATABASE_URI
+
+    loop = asyncio.get_running_loop()
+
+    if _engine is None or _engine_loop is not loop:
+        # The previous engine belongs to a now-dead loop. NullPool never retains
+        # connections (each ``conn.close()`` disposes immediately), so dropping
+        # the reference is clean — no cross-loop connections to close.
+        _engine = create_async_engine(DATABASE_URI, poolclass=NullPool)
+        _engine_loop = loop
 
     if not _tables_ready:
         from sqlalchemy.exc import IntegrityError, OperationalError
@@ -286,7 +298,7 @@ async def _teardown_engine() -> None:
     not hang at session exit when a ``db_session``-using test already
     created the engine object but failed to connect.
     """
-    global _engine, _tables_ready
+    global _engine, _engine_loop, _tables_ready
     if _engine is not None:
         try:
             from app.database.models import Base
@@ -298,6 +310,7 @@ async def _teardown_engine() -> None:
         with suppress(Exception):
             await _engine.dispose()
         _engine = None
+        _engine_loop = None
         _tables_ready = False
 
 

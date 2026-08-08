@@ -1,6 +1,7 @@
 from typing import Any
 
 import pytest
+from sqlalchemy.exc import IntegrityError
 
 from app.database.db import PostgresqlDB
 from app.database.models import Profile, User
@@ -125,19 +126,22 @@ async def test_transaction_deadlock_scenario(db_session: Any) -> None:
 
 @pytest.mark.asyncio
 async def test_transaction_constraint_violation_rollback(db_session: Any) -> None:
-    """Test that constraint violations properly rollback."""
+    """Test that constraint violations properly rollback without losing prior commits."""
     db = PostgresqlDB()
 
     await db.add(User, session=db_session, id=90601)
     await db_session.commit()
 
-    try:
-        await db.add(User, session=db_session, id=90601)
-        await db_session.commit()
-        pytest.fail("Should have raised an error")
-    except Exception:
-        await db_session.rollback()
-        await db_session.commit()
+    # ``db.add()`` resolves-or-creates, so re-adding the same primary key would
+    # just return the existing row instead of violating the constraint. Stage a
+    # duplicate directly on the session and flush to force a genuine PK
+    # violation, then confirm the session recovers and the earlier commit stays.
+    db_session.add(User(id=90601))
+    with pytest.raises(IntegrityError):
+        await db_session.flush()
+
+    await db_session.rollback()
+    await db_session.commit()
 
     result = await db.get(User, session=db_session, id=90601)
     assert result is not None
