@@ -7,12 +7,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen --all-extras
+      - run: uv run ruff check --output-format=github .
+      - run: uv run ruff format --check .
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen --all-extras
+      - run: uv run mypy app api main.py manage.py migrate.py
+
   unit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - run: uv sync --frozen
+      - run: uv sync --frozen --all-extras
       - run: ENV=test uv run pytest -m unit -n auto --no-cov -q
 
   integration:
@@ -51,7 +68,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - run: uv sync --frozen
+      - run: uv sync --frozen --all-extras
       - run: ENV=test GRAVEBOARDS_CLEAR_SPEC_CACHE=1 uv run pytest -m integration -n 4 --no-cov -q
 
   coverage:
@@ -90,7 +107,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - run: uv sync --frozen
+      - run: uv sync --frozen --all-extras
       - run: ENV=test GRAVEBOARDS_CLEAR_SPEC_CACHE=1 uv run pytest -m "unit or integration" --cov=app --cov=api --cov-report=xml --cov-fail-under=70 -q
       - uses: actions/upload-artifact@v4
         with:
