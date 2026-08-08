@@ -1,6 +1,7 @@
 COMPOSE=docker compose
+UV_RUN=uv run
 
-.PHONY: help up down build logs shell status reset seed fresh test clean lint format typecheck migrate-upgrade migrate-downgrade migrate-history migrate-current migrate-stamp migrate-stamp-head migrate-stamp-purge-head
+.PHONY: help up down build logs shell status reset seed fresh test test-all test-int test-e2e test-cov test-docker test-timing clean lint format typecheck migrate-upgrade migrate-downgrade migrate-history migrate-current migrate-stamp migrate-stamp-head migrate-stamp-purge-head sync
 
 help:
 	@echo "Available commands:"
@@ -26,13 +27,26 @@ help:
 	@echo "                                         (use when alembic_version points at a revision"
 	@echo "                                         file that no longer exists, e.g. after a squash)"
 	@echo "  ------------Testing-------------"
-	@echo "  make test      - Run test suite"
+	@echo "  make test           - Fast feedback: unit tests, parallel, no coverage"
+	@echo "  make test-all       - Everything except coverage (needs PG + Redis up)"
+	@echo "  make test-int       - Integration layer only (needs PG + Redis)"
+	@echo "  make test-e2e       - E2E layer only (needs PG + Redis + full app)"
+	@echo "  make test-cov       - Coverage run (slow; CI-only)"
+	@echo "  make test-docker    - Full suite inside Docker (CI parity)"
+	@echo "  make test-timing    - Full suite with per-test timing report"
+	@echo "  ------------Setup-------------"
+	@echo "  make sync      - Sync virtualenv with uv (install all deps)"
 	@echo "  ------------Linting-------------"
 	@echo "  make lint      - Check code (ruff lint + ruff format + mypy)"
 	@echo "  make typecheck - Run type checking only (mypy)"
 	@echo "  make format    - Fix code (ruff lint --fix + ruff format)"
 	@echo "  ------------Cleaning------------"
 	@echo "  make clean     - Remove Docker resources"
+
+sync:
+	@echo "=== Syncing virtualenv with uv ==="
+	uv sync --frozen
+	@echo "Virtualenv is ready.  Run 'uv run python' to use it."
 
 up:
 	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml up -d
@@ -76,12 +90,38 @@ fresh:
 	$(COMPOSE) -f ../graveboards-deploy/docker-compose.yml exec backend python -m manage reset --seed all
 
 test:
+	@echo "=== Fast feedback: unit tests ==="
+	ENV=test $(UV_RUN) pytest -m unit -n auto --no-cov -q
+
+test-all:
+	@echo "=== Everything except coverage (needs PG + Redis up) ==="
+	ENV=test GRAVEBOARDS_CLEAR_SPEC_CACHE=1 $(UV_RUN) pytest -n auto --no-cov -q
+
+test-int:
+	@echo "=== Integration layer only (needs PG + Redis) ==="
+	ENV=test GRAVEBOARDS_CLEAR_SPEC_CACHE=1 $(UV_RUN) pytest -m integration -n 4 --no-cov -q
+
+test-e2e:
+	@echo "=== E2E layer only (needs PG + Redis + full app) ==="
+	ENV=test GRAVEBOARDS_CLEAR_SPEC_CACHE=1 $(UV_RUN) pytest -m e2e --no-cov -q
+
+test-cov:
+	@echo "=== Coverage run (slow; CI-only) ==="
+	ENV=test GRAVEBOARDS_CLEAR_SPEC_CACHE=1 $(UV_RUN) pytest -m "unit or integration" --cov=app --cov=api \
+	    --cov-report=term-missing --cov-report=html --cov-fail-under=70 -q
+
+test-docker:
 	@echo "Starting test services (PostgreSQL, Redis, and backend)..."
 	$(COMPOSE) -f ../graveboards-deploy/docker-compose.test.yml --profile test up --build -d
 	@echo "Waiting for backend test container to complete..."
 	$(COMPOSE) -f ../graveboards-deploy/docker-compose.test.yml logs -f backend
 	@echo "Test completed, cleaning up..."
 	$(COMPOSE) -f ../graveboards-deploy/docker-compose.test.yml down -v --remove-orphans
+
+test-timing:
+	@echo "=== Full suite with timing instrumentation ==="
+	@echo "Requires: PostgreSQL and Redis running locally"
+	ENV=test GRAVEBOARDS_TEST_TIMING=1 $(UV_RUN) pytest -v --no-cov
 
 clean:
 	@printf "This operation will wipe the database and redis containers. Continue? [y/N] "
@@ -99,20 +139,20 @@ clean:
 
 lint:
 	@if [ "$$(uname)" = "Linux" ]; then \
-		{ ruff check . || true; ruff format --check . || true; } 2>&1 | tee /tmp/graveboards-lint.log; \
+		{ $(UV_RUN) ruff check . || true; $(UV_RUN) ruff format --check . || true; } 2>&1 | tee /tmp/graveboards-lint.log; \
 	else \
-		ruff check . || true; \
-		ruff format --check . || true; \
+		$(UV_RUN) ruff check . || true; \
+		$(UV_RUN) ruff format --check . || true; \
 	fi
 
 format:
-	ruff check --fix . || true
-	ruff format .
+	$(UV_RUN) ruff check --fix . || true
+	$(UV_RUN) ruff format .
 
 # ---------- Typechecking ----------
 
 typecheck:
-	mypy app api main.py manage.py migrate.py
+	$(UV_RUN) mypy app api main.py manage.py migrate.py
 
 # ---------- Migrations ----------
 
