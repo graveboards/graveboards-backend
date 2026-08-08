@@ -1,7 +1,7 @@
 COMPOSE=docker compose
 UV_RUN=uv run
 
-.PHONY: help up down build logs shell status reset seed fresh test test-all test-int test-e2e test-cov test-docker test-timing clean lint format typecheck migrate-upgrade migrate-downgrade migrate-history migrate-current migrate-stamp migrate-stamp-head migrate-stamp-purge-head sync
+.PHONY: help up down build logs shell status reset seed fresh test test-all test-int test-e2e test-cov test-docker test-timing test-up test-down clean lint format typecheck migrate-upgrade migrate-downgrade migrate-history migrate-current migrate-stamp migrate-stamp-head migrate-stamp-purge-head sync
 
 help:
 	@echo "Available commands:"
@@ -34,6 +34,8 @@ help:
 	@echo "  make test-cov       - Coverage run (slow; CI-only)"
 	@echo "  make test-docker    - Full suite inside Docker (CI parity)"
 	@echo "  make test-timing    - Full suite with per-test timing report"
+	@echo "  make test-up        - Start PG + Redis for the local test targets"
+	@echo "  make test-down      - Stop PG + Redis test services"
 	@echo "  ------------Setup-------------"
 	@echo "  make sync      - Sync virtualenv with uv (install all deps)"
 	@echo "  ------------Linting-------------"
@@ -96,6 +98,18 @@ test:
 test-all:
 	@echo "=== Everything except coverage (needs PG + Redis up) ==="
 	ENV=test GRAVEBOARDS_CLEAR_SPEC_CACHE=1 $(UV_RUN) pytest -n auto --no-cov -q
+
+test-up:
+	@echo "=== Starting PostgreSQL + Redis (test services) ==="
+	$(COMPOSE) -f ../graveboards-deploy/docker-compose.test.yml up -d postgresql redis
+	@echo "Waiting for services to be healthy..."
+	@$(COMPOSE) -f ../graveboards-deploy/docker-compose.test.yml exec -T postgresql pg_isready -U $${POSTGRESQL_USERNAME:-postgres} >/dev/null
+	@echo "PostgreSQL is ready."
+	@$(COMPOSE) -f ../graveboards-deploy/docker-compose.test.yml ps
+
+test-down:
+	@echo "=== Stopping test services (PostgreSQL + Redis) ==="
+	$(COMPOSE) -f ../graveboards-deploy/docker-compose.test.yml down
 
 test-int:
 	@echo "=== Integration layer only (needs PG + Redis) ==="
