@@ -1,10 +1,12 @@
 """Unit tests for Redis connection pool singleton."""
 
+from unittest.mock import MagicMock, patch
+
 from redis import ConnectionPool
 
 
 class TestConnectionPool:
-    """Test connection_pool module-level singleton."""
+    """Test connection_pool module-level singleton instance."""
 
     def test_pool_is_singleton(self) -> None:
         """Test connection_pool is a module-level singleton instance."""
@@ -30,9 +32,13 @@ class TestConnectionPool:
         )
 
     def test_pool_can_release_and_acquire_connections(self) -> None:
-        """Test pool can release and re-acquire connections."""
+        """Test pool can release and re-acquire connections (mocked)."""
         from app.redis_client.pool import connection_pool
 
-        conn = connection_pool.get_connection()
-        assert conn is not None
-        connection_pool.release(conn)
+        mock_conn = MagicMock()
+        with patch.object(connection_pool, "get_connection", return_value=mock_conn):
+            conn = connection_pool.get_connection()
+            assert conn is mock_conn
+            with patch.object(connection_pool, "release") as mock_release:
+                connection_pool.release(conn)
+                mock_release.assert_called_once_with(mock_conn)

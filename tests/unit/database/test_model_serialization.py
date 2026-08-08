@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import cast
 
 import pytest
 from sqlalchemy import column
@@ -116,69 +116,69 @@ class TestValidateType:
 
 
 class TestGetFilterCondition:
-    def test_eq_operator_on_column(self, db_session: Any) -> None:
+    def test_eq_operator_on_column(self) -> None:
         from app.database.models import User
 
         condition = get_filter_condition(FilterOperator.EQ, User.id, 123)
 
         assert condition is not None
 
-    def test_eq_operator_on_clause(self, db_session: Any) -> None:
+    def test_eq_operator_on_clause(self) -> None:
         condition = get_filter_condition(FilterOperator.EQ, column("test_column"), 123)
 
         assert condition is not None
 
-    def test_neq_operator(self, db_session: Any) -> None:
+    def test_neq_operator(self) -> None:
         condition = get_filter_condition(FilterOperator.NEQ, column("test_column"), 123)
 
         assert condition is not None
 
-    def test_gt_operator(self, db_session: Any) -> None:
+    def test_gt_operator(self) -> None:
         condition = get_filter_condition(FilterOperator.GT, column("test_column"), 100)
 
         assert condition is not None
 
-    def test_lt_operator(self, db_session: Any) -> None:
+    def test_lt_operator(self) -> None:
         condition = get_filter_condition(FilterOperator.LT, column("test_column"), 100)
 
         assert condition is not None
 
-    def test_gte_operator(self, db_session: Any) -> None:
+    def test_gte_operator(self) -> None:
         condition = get_filter_condition(FilterOperator.GTE, column("test_column"), 100)
 
         assert condition is not None
 
-    def test_lte_operator(self, db_session: Any) -> None:
+    def test_lte_operator(self) -> None:
         condition = get_filter_condition(FilterOperator.LTE, column("test_column"), 100)
 
         assert condition is not None
 
-    def test_in_operator(self, db_session: Any) -> None:
+    def test_in_operator(self) -> None:
         condition = get_filter_condition(FilterOperator.IN, column("test_column"), [1, 2, 3])
 
         assert condition is not None
 
-    def test_not_in_operator(self, db_session: Any) -> None:
+    def test_not_in_operator(self) -> None:
         condition = get_filter_condition(FilterOperator.NOT_IN, column("test_column"), [1, 2, 3])
 
         assert condition is not None
 
-    def test_is_null_operator(self, db_session: Any) -> None:
+    def test_is_null_operator(self) -> None:
         condition = get_filter_condition(FilterOperator.IS_NULL, column("test_column"), None)
 
         assert condition is not None
 
-    def test_regex_operator(self, db_session: Any) -> None:
+    def test_regex_operator(self) -> None:
         condition = get_filter_condition(FilterOperator.REGEX, column("test_column"), "pattern")
 
         assert condition is not None
 
-    def test_not_regex_operator(self, db_session: Any) -> None:
+    def test_not_regex_operator(self) -> None:
         condition = get_filter_condition(FilterOperator.NOT_REGEX, column("test_column"), "pattern")
 
         assert condition is not None
 
-    def test_invalid_operator_raises_value_error(self, db_session: Any) -> None:
+    def test_invalid_operator_raises_value_error(self) -> None:
 
         class FakeOperator:
             def method(self, x: int, y: int) -> None:
@@ -188,77 +188,77 @@ class TestGetFilterCondition:
         with pytest.raises(ValueError):
             get_filter_condition(cast("FilterOperator", fake_op), column("test"), 1)
 
-    def test_aggregated_eq_operator(self, db_session: Any) -> None:
+    def test_aggregated_eq_operator(self) -> None:
         condition = get_filter_condition(
             FilterOperator.EQ, column("test_column"), 123, is_aggregated=True
         )
 
         assert condition is not None
 
-    def test_aggregated_neq_operator(self, db_session: Any) -> None:
+    def test_aggregated_neq_operator(self) -> None:
         condition = get_filter_condition(
             FilterOperator.NEQ, column("test_column"), 123, is_aggregated=True
         )
 
         assert condition is not None
 
-    def test_aggregated_gt_operator(self, db_session: Any) -> None:
+    def test_aggregated_gt_operator(self) -> None:
         condition = get_filter_condition(
             FilterOperator.GT, column("test_column"), 100, is_aggregated=True
         )
 
         assert condition is not None
 
-    def test_aggregated_lt_operator(self, db_session: Any) -> None:
+    def test_aggregated_lt_operator(self) -> None:
         condition = get_filter_condition(
             FilterOperator.LT, column("test_column"), 100, is_aggregated=True
         )
 
         assert condition is not None
 
-    def test_aggregated_gte_operator(self, db_session: Any) -> None:
+    def test_aggregated_gte_operator(self) -> None:
         condition = get_filter_condition(
             FilterOperator.GTE, column("test_column"), 100, is_aggregated=True
         )
 
         assert condition is not None
 
-    def test_aggregated_lte_operator(self, db_session: Any) -> None:
+    def test_aggregated_lte_operator(self) -> None:
         condition = get_filter_condition(
             FilterOperator.LTE, column("test_column"), 100, is_aggregated=True
         )
 
         assert condition is not None
 
-    def test_aggregated_in_operator(self, db_session: Any) -> None:
+    def test_aggregated_in_operator(self) -> None:
         condition = get_filter_condition(
             FilterOperator.IN, column("test_column"), [1, 2, 3], is_aggregated=True
         )
 
         assert condition is not None
 
-    def test_aggregated_not_in_operator(self, db_session: Any) -> None:
+    def test_aggregated_not_in_operator(self) -> None:
         condition = get_filter_condition(
             FilterOperator.NOT_IN, column("test_column"), [1, 2, 3], is_aggregated=True
         )
 
         assert condition is not None
 
-    def test_aggregated_is_null_operator(self, db_session: Any) -> None:
+    def test_aggregated_is_null_operator(self) -> None:
         condition = get_filter_condition(
             FilterOperator.IS_NULL, column("test_column"), None, is_aggregated=True
         )
 
         assert condition is not None
 
-    def test_aggregated_regex_operator(self, db_session: Any) -> None:
+    def test_aggregated_regex_operator(self) -> None:
         condition = get_filter_condition(
             FilterOperator.REGEX, column("test_column"), "pattern", is_aggregated=True
         )
 
         assert condition is not None
 
-    def test_aggregated_not_regex_operator(self, db_session: Any) -> None:
+    def test_aggregated_not_regex_operator(self) -> None:
         condition = get_filter_condition(
             FilterOperator.NOT_REGEX, column("test_column"), "pattern", is_aggregated=True
         )

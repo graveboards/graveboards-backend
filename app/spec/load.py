@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import os
 import pickle
 from pathlib import Path
+from pickle import PickleError as _PickleError
 from typing import Any
 from typing import cast as typing_cast
 
@@ -33,18 +33,23 @@ def load_spec() -> dict[str, Any]:
     -------
         dict: The fully built and mutation-applied OpenAPI specification.
     """
-    cache_exists = Path(CACHE_FILE).exists()
+    cache_path = Path(CACHE_FILE)
+    cache_exists = cache_path.exists()
 
     if not cache_exists:
         return _build_spec()
 
-    with Path(CACHE_FILE).open("rb") as f:
-        payload: dict[str, Any] = pickle.load(f)
+    try:
+        with cache_path.open("rb") as f:
+            payload: dict[str, Any] = pickle.load(f)
+    except (EOFError, _PickleError, OSError):  # fmt: skip
+        logger.warning("Spec cache at %s is corrupt — rebuilding", CACHE_FILE)
+        return _build_spec()
 
     if ENV.value == Env.PROD.value:
         return typing_cast("dict[str, Any]", payload["spec"])
 
-    cache_mtime = Path(CACHE_FILE).stat().st_mtime
+    cache_mtime = cache_path.stat().st_mtime
     latest_spec_mtime = _get_latest_spec_mtime()
 
     cached_options = payload.get("build_options", {})
@@ -75,8 +80,8 @@ def _build_spec() -> dict[str, Any]:
     try:
         with Path(CACHE_FILE).open("wb") as f:
             pickle.dump(cache_payload, f)
-    except OSError, PermissionError:
-        logger.warning(f"Could not write spec cache to {CACHE_FILE}, continuing without caching")
+    except (OSError, PermissionError):  # fmt: skip
+        logger.warning("Could not write spec cache to %s, continuing without caching", CACHE_FILE)
 
     return spec
 
@@ -126,10 +131,8 @@ def _get_latest_spec_mtime() -> float:
     """
     latest = 0.0
 
-    for root, _, files in os.walk(SPEC_DIR):
-        for file in files:
-            if file.endswith((".yaml", ".yml")):
-                path = Path(root) / file
-                latest = max(latest, Path(path).stat().st_mtime)
+    for path in Path(SPEC_DIR).rglob("*"):
+        if path.suffix in (".yaml", ".yml"):
+            latest = max(latest, path.stat().st_mtime)
 
     return latest

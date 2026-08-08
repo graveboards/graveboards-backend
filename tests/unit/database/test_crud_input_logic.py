@@ -183,8 +183,14 @@ class TestUpdateInputValidation:
 
 
 class TestDeleteInputValidation:
-    """Test CRUD delete operation input validation."""
+    """CRUD delete operation tests — require a live database session.
 
+    These are integration tests that live under tests/unit/ for historical
+    reasons. They are explicitly marked ``integration`` so ``make test``
+    (unit-only) skips them.
+    """
+
+    @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_delete_with_valid_id(self, db_session: Any) -> None:
         """Test delete with valid primary key."""
@@ -205,6 +211,7 @@ class TestDeleteInputValidation:
         fetched = await db.get(Beatmapset, session=db_session, id=created.id)
         assert fetched is None
 
+    @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_delete_rejects_invalid_id_type(self, db_session: Any) -> None:
         """Test delete raises ValueError for non-existent record."""

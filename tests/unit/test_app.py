@@ -1,10 +1,24 @@
 """Tests for the test infrastructure itself: create_test_app, middleware, and fixtures."""
 
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from connexion import AsyncApp
 from starlette.testclient import TestClient
+
+
+@pytest.fixture(autouse=True)
+def _mock_load_spec() -> Any:
+    """Mock load_spec so create_test_app doesn't touch the filesystem."""
+    mock_spec = {
+        "openapi": "3.0.0",
+        "info": {"title": "test", "version": "1.0.0"},
+        "paths": {},
+        "components": {"schemas": {}},
+    }
+    with patch("app.test_app.load_spec", return_value=mock_spec):
+        yield
 
 
 class TestCreateTestApp:
