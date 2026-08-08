@@ -85,7 +85,7 @@ async def _authenticate_for_scope(scope: Scope) -> int | None:
     token_info = None
 
     if auth_header.lower().startswith("bearer "):
-        token_info = await bearer_info(auth_header[len("bearer ") :].strip(), request)
+        token_info = await bearer_info(auth_header[len("bearer ") :].strip())
     elif api_key_header:
         token_info = await api_key_info(api_key_header, request)
 
