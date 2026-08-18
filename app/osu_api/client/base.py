@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Any, Self, cast
 
 import httpx
 from pydantic import ValidationError
 
-from app.exceptions import RedisLockTimeoutError
+from app.exceptions import RateLimitExceededError, RedisLockTimeoutError
 from app.oauth import OAuth
 from app.observability.logging import get_logger
 from app.observability.metrics.osu import (
@@ -30,6 +30,29 @@ logger = get_logger(__name__)
 def _get_osu_endpoint(path: str) -> str:
     parts = path.strip("/").split("/")
     return "/".join("{id}" if p.isdigit() else p for p in parts)
+
+
+def is_rate_limit_response(payload: dict[str, Any]) -> bool:
+    """Detect an upstream rate-limit response body.
+
+    osu!'s CDN (Cloudflare) answers with HTTP 429 and a JSON body that omits the
+    standard OAuth ``error`` field (e.g. ``error_code: 1015``), so authlib parses
+    it as a successful token response. This detects those bodies so callers can
+    back off instead of treating them as tokens.
+
+    Args:
+        payload:
+            A parsed JSON response body.
+
+    Returns:
+        ``True`` if the response indicates an upstream rate limit.
+    """
+    return (
+        payload.get("status") == 429
+        or payload.get("error_code") is not None
+        or payload.get("error_name") == "rate_limited"
+        or payload.get("cloudflare_error") is True
+    )
 
 
 class OsuAPIMetricsTransport(httpx.AsyncBaseTransport):
@@ -169,12 +192,40 @@ class OsuAPIClientBase:
         Raises:
             TimeoutError:
                 If token refresh fails after all retries.
+            RateLimitExceededError:
+                If osu! keeps rate-limiting the client after all retries.
         """
         for attempt in range(MAX_TOKEN_FETCH_RETRIES):
             try:
                 token_dict = await self._oauth.fetch_token(
                     grant_type="client_credentials", scope="public"
                 )
+                if not isinstance(token_dict, dict) or "access_token" not in token_dict:
+                    if is_rate_limit_response(token_dict):
+                        payload = cast("dict[str, Any]", token_dict)
+                        retry_after = int(payload.get("retry_after") or 30)
+                        if attempt < MAX_TOKEN_FETCH_RETRIES - 1:
+                            logger.warning(
+                                f"osu! is rate limiting this client (attempt {attempt + 1}/"
+                                f"{MAX_TOKEN_FETCH_RETRIES}); retrying in {retry_after}s"
+                            )
+                            await asyncio.sleep(retry_after)
+                            continue
+
+                        raise RateLimitExceededError from None
+
+                    logger.warning(
+                        f"Unexpected osu! token response without access_token: "
+                        f"{sorted(token_dict)[:6]}"
+                    )
+                    if attempt < MAX_TOKEN_FETCH_RETRIES - 1:
+                        await asyncio.sleep(2**attempt)
+                        continue
+
+                    raise RuntimeError(
+                        "Failed to refresh osu! client token: unexpected response"
+                    ) from None
+
                 token = OsuClientOAuthToken.model_validate(token_dict)
                 await self.rc.hset(
                     Namespace.OSU_CLIENT_OAUTH_TOKEN.value, mapping=token.serialize()

@@ -75,8 +75,12 @@ async def health_check() -> dict[str, Any]:
             api_start = time.time()
             try:
                 async with OsuAPIClient(rc) as client:
-                    # Test API connectivity by fetching client credentials token
-                    await client.refresh_token()
+                    # Use the cached client-credentials token rather than forcing a
+                    # token refresh on every health check. The Docker healthcheck hits
+                    # this endpoint every 60s; unconditionally POSTing to the osu! token
+                    # endpoint each time both wastes osu!'s rate-limit budget and can
+                    # keep an upstream (Cloudflare 1015) block perpetually re-armed.
+                    await client.get_token()
                     checks["osu_api"]["response_time_ms"] = round(
                         (time.time() - api_start) * 1000, 2
                     )

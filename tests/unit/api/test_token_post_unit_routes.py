@@ -198,6 +198,63 @@ class TestTokenPostEndpoint:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
+    async def test_post_token_rate_limited_response(self) -> None:
+        """Cloudflare 1015-style bodies must surface as 429, not a KeyError 500."""
+        from api.v1.token import post
+        from app.exceptions import TooManyRequests
+
+        cloudflare_body = {
+            "type": "https://developers.cloudflare.com/support/.../error-1015/",
+            "title": "Error 1015: You are being rate limited",
+            "status": 429,
+            "error_code": 1015,
+            "error_name": "rate_limited",
+            "cloudflare_error": True,
+            "retry_after": 30,
+        }
+        mock_oauth = MagicMock()
+        mock_oauth.fetch_token = AsyncMock(return_value=cloudflare_body)
+        mock_osu_client = await self._create_mock_osu_api_client()
+        mock_rc = await self._create_mock_redis()
+        mock_db = await self._create_mock_db()
+
+        with patch("api.v1.token.request", MagicMock()) as mock_req:
+            mock_req.client.host = "127.0.0.1"
+            with pytest.raises(TooManyRequests):
+                await post(
+                    body={"code": "test_code", "state": self.TEST_STATE},
+                    oauth=mock_oauth,
+                    osu_api_client=mock_osu_client,
+                    rc=mock_rc,
+                    db=mock_db,
+                )
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_post_token_malformed_response_without_access_token(self) -> None:
+        """A non-OAuth JSON body without access_token must not raise KeyError."""
+        from api.v1.token import post
+        from app.exceptions import OsuOAuthError
+
+        mock_oauth = MagicMock()
+        mock_oauth.fetch_token = AsyncMock(return_value={"some": "unexpected", "field": 1})
+        mock_osu_client = await self._create_mock_osu_api_client()
+        mock_rc = await self._create_mock_redis()
+        mock_db = await self._create_mock_db()
+
+        with patch("api.v1.token.request", MagicMock()) as mock_req:
+            mock_req.client.host = "127.0.0.1"
+            with pytest.raises(OsuOAuthError):
+                await post(
+                    body={"code": "test_code", "state": self.TEST_STATE},
+                    oauth=mock_oauth,
+                    osu_api_client=mock_osu_client,
+                    rc=mock_rc,
+                    db=mock_db,
+                )
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
     async def test_post_token_oauth_error(self, valid_user_data: dict[str, Any]) -> None:
         """Test POST /api/v1/token with OAuth error."""
         from authlib.integrations.base_client.errors import OAuthError

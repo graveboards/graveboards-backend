@@ -168,6 +168,96 @@ async def test_refresh_token_success(mock_redis_client: MagicMock) -> None:
 
 
 @pytest.mark.asyncio
+async def test_is_rate_limit_response() -> None:
+    from app.osu_api.client.base import is_rate_limit_response
+
+    assert is_rate_limit_response({"status": 429, "error_code": 1015})
+    assert is_rate_limit_response({"error_name": "rate_limited"})
+    assert is_rate_limit_response({"cloudflare_error": True})
+    assert not is_rate_limit_response(
+        {"access_token": "tok", "token_type": "Bearer", "expires_in": 3600}
+    )
+    assert not is_rate_limit_response({"error": "invalid_grant"})
+
+
+@pytest.mark.asyncio
+async def test_refresh_token_rate_limited_raises(mock_redis_client: MagicMock) -> None:
+    from app.osu_api.client.base import OsuAPIClientBase
+
+    client = OsuAPIClientBase(mock_redis_client)
+    cloudflare_body = {
+        "status": 429,
+        "error_code": 1015,
+        "error_name": "rate_limited",
+        "cloudflare_error": True,
+        "retry_after": 1,
+    }
+
+    with patch.object(client, "_oauth") as mock_oauth:
+        mock_oauth.fetch_token = AsyncMock(return_value=cloudflare_body)
+        with patch("app.osu_api.client.base.asyncio.sleep", AsyncMock()) as mock_sleep:
+            with pytest.raises(Exception) as excinfo:
+                await client.refresh_token()
+
+    assert type(excinfo.value).__name__ == "RateLimitExceededError"
+    assert mock_oauth.fetch_token.await_count == 3
+    assert mock_sleep.await_count == 2
+    mock_redis_client.hset.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_refresh_token_rate_limited_then_succeeds(mock_redis_client: MagicMock) -> None:
+    from app.osu_api.client.base import OsuAPIClientBase
+
+    client = OsuAPIClientBase(mock_redis_client)
+    current_time = int(time.time())
+    cloudflare_body = {"status": 429, "error_code": 1015, "retry_after": 1}
+    valid_body = {
+        "access_token": "new_token",
+        "token_type": "Bearer",
+        "expires_in": 3600,
+        "expires_at": str(current_time + 3600),
+    }
+
+    with patch.object(client, "_oauth") as mock_oauth:
+        mock_oauth.fetch_token = AsyncMock(side_effect=[cloudflare_body, valid_body])
+        with patch("app.osu_api.client.base.asyncio.sleep", AsyncMock()):
+            with patch("app.osu_api.client.base.OsuClientOAuthToken") as mock_token_class:
+                mock_token_obj = MagicMock()
+                mock_token_obj.access_token = "new_token"
+                mock_token_obj.expires_at = current_time + 3600
+                mock_token_obj.model_validate.return_value = mock_token_obj
+                mock_token_obj.serialize.return_value = {
+                    "access_token": "new_token",
+                    "token_type": "Bearer",
+                    "expires_in": "3600",
+                    "expires_at": str(current_time + 3600),
+                }
+                mock_token_class.model_validate.return_value = mock_token_obj
+
+                await client.refresh_token()
+
+    assert client._token.access_token == "new_token"
+    assert mock_oauth.fetch_token.await_count == 2
+    mock_redis_client.hset.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_refresh_token_unexpected_response_raises(mock_redis_client: MagicMock) -> None:
+    from app.osu_api.client.base import OsuAPIClientBase
+
+    client = OsuAPIClientBase(mock_redis_client)
+
+    with patch.object(client, "_oauth") as mock_oauth:
+        mock_oauth.fetch_token = AsyncMock(return_value={"unexpected": "payload"})
+        with patch("app.osu_api.client.base.asyncio.sleep", AsyncMock()):
+            with pytest.raises(RuntimeError, match="unexpected response"):
+                await client.refresh_token()
+
+    mock_redis_client.hset.assert_not_called()
+
+
+@pytest.mark.asyncio
 async def test_get_auth_headers(mock_redis_client: MagicMock) -> None:
     from app.osu_api.client.base import OsuAPIClientBase
 

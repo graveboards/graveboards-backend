@@ -15,6 +15,7 @@ from app.database.models import OAuthToken, ScoreFetcherTask, User
 from app.exceptions import BadRequest, OsuOAuthError, TooManyRequests
 from app.oauth import OAuth
 from app.osu_api import OsuAPIClient
+from app.osu_api.client.base import is_rate_limit_response
 from app.redis_client import Namespace, RedisClient
 from app.security import create_token_payload, encode_token, validate_token
 from app.security.auth_rate_limit import AuthRateLimiter
@@ -22,6 +23,21 @@ from app.security.oauth_encryption import encrypt_token
 from app.utils import aware_utcnow
 
 __all__ = ["post", "search"]
+
+
+def _raise_for_invalid_token_response(token: dict[str, Any]) -> None:
+    """Raise a descriptive error for a token response without ``access_token``."""
+    if is_rate_limit_response(token):
+        raise TooManyRequests(
+            "osu! is rate limiting this application. Please try again in a few minutes."
+        )
+
+    raise OsuOAuthError(
+        OAuthError(
+            error="invalid_response",
+            description="osu! returned an unexpected token response",
+        )
+    )
 
 
 async def search(token: str, rc: RedisClient | None = None) -> APIResponse:
@@ -96,6 +112,10 @@ async def post(
         token = await oauth.fetch_token(
             grant_type="authorization_code", scope="public identify", code=code
         )
+        if not isinstance(token, dict) or "access_token" not in token:
+            # authlib returns upstream error bodies (e.g. Cloudflare 1015) verbatim
+            # when they lack an OAuth "error" field; fail with a descriptive error.
+            _raise_for_invalid_token_response(token)
         access_token = token["access_token"]
         refresh_token = token["refresh_token"]
     except OAuthError as e:
