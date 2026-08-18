@@ -26,6 +26,10 @@ class BootstrapConfig:
     initial_roles: list[str]
     setup_steps: list[str]
 
+class ServiceSettings:
+    enabled: bool
+    interval_hours: float | None
+
 class Config:
     ENV: Env
     DEBUG: bool
@@ -33,6 +37,7 @@ class Config:
     DEBUG_API_KEY: str | None
     DEV_ADMIN_USER_ID: int
     DEV_USER_ID: int
+    SERVICES: dict[str, ServiceSettings]
     PROJECT_ROOT: Path
     SPEC_DIR: str
     OPENAPI_ENTRYPOINT: str
@@ -58,6 +63,7 @@ DISABLE_SECURITY: bool
 DEBUG_API_KEY: str | None
 DEV_ADMIN_USER_ID: int
 DEV_USER_ID: int
+SERVICES: dict[str, ServiceSettings]
 PROJECT_ROOT: Path
 SPEC_DIR: str
 OPENAPI_ENTRYPOINT: str

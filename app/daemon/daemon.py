@@ -4,30 +4,48 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
+from app.config import CONFIG, ServiceSettings
 from app.observability.logging import get_logger
 
-from .services import ProfileFetcher, QueueRequestHandler, RuleValidationService, ScoreFetcher
+from .services import (
+    ProfileFetcher,
+    QueueRequestHandler,
+    RuleValidationService,
+    ScoreFetcher,
+    ServiceFactory,
+)
+from .services.service.scheduled_fetcher import DEFAULT_FETCH_INTERVAL_HOURS
 from .supervisor import ServiceSupervisor
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Mapping
+
     from app.database import PostgresqlDB
     from app.observability.logging import Logger
     from app.redis_client import RedisClient
+
+    from .services import Service
+
+    _ServiceFactory = Callable[[ServiceSettings], "Service"]
 
 
 class Daemon(ServiceSupervisor):
     """Supervisor for the app's required background services.
 
-    Registers and runs the following services:
-        - ``ProfileFetcher``
-        - ``QueueRequestHandler``
-        - ``ScoreFetcher``
-        - ``RuleValidationService``
+    Services are configured through a per-service ``ServiceSettings`` mapping.
+    Disabled services are skipped entirely; interval-driven services (the
+    fetchers) are scheduled using their configured interval in hours.
     """
 
     LOGGER: ClassVar[Logger] = get_logger(__name__)
 
-    def __init__(self, rc: RedisClient, db: PostgresqlDB):
+    def __init__(
+        self,
+        rc: RedisClient,
+        db: PostgresqlDB,
+        *,
+        services: Mapping[str, ServiceSettings] | None = None,
+    ) -> None:
         """Initialize the daemon.
 
         Args:
@@ -36,21 +54,71 @@ class Daemon(ServiceSupervisor):
                 synchronization.
             db:
                 PostgreSQL database interface used for managing persistent data.
+            services:
+                Per-service configuration keyed by service name. Defaults to
+                ``CONFIG.SERVICES``.
         """
         super().__init__()
         self._rc = rc
         self._db = db
+        self._service_settings = dict(services) if services is not None else dict(CONFIG.SERVICES)
+        self._service_factories: dict[str, _ServiceFactory] = {
+            "profile_fetcher": lambda settings: ProfileFetcher(
+                self._rc,
+                self._db,
+                fetch_interval_hours=settings.interval_hours or DEFAULT_FETCH_INTERVAL_HOURS,
+            ),
+            "score_fetcher": lambda settings: ScoreFetcher(
+                self._rc,
+                self._db,
+                fetch_interval_hours=settings.interval_hours or DEFAULT_FETCH_INTERVAL_HOURS,
+            ),
+            "queue_request_handler": lambda _settings: QueueRequestHandler(self._rc, self._db),
+            "rule_validation": lambda _settings: RuleValidationService(self._rc, self._db),
+        }
+
+    def _build_service(self, name: str) -> Service:
+        """Build a service instance for the given service name.
+
+        Args:
+            name:
+                Unique identifier for the service.
+
+        Returns:
+            A configured service instance.
+        """
+        settings = self._service_settings[name]
+        return self._service_factories[name](settings)
+
+    def _make_factory(self, name: str) -> ServiceFactory:
+        """Create a zero-argument factory for the given service name.
+
+        Args:
+            name:
+                Unique identifier for the service.
+
+        Returns:
+            A factory that builds the configured service instance.
+        """
+
+        def factory() -> Service:
+            return self._build_service(name)
+
+        return factory
 
     async def _on_start(self) -> None:
         """Set up the daemon."""
-        await self.register_service("profile_fetcher", lambda: ProfileFetcher(self._rc, self._db))
-        await self.register_service(
-            "queue_request_handler", lambda: QueueRequestHandler(self._rc, self._db)
-        )
-        await self.register_service("score_fetcher", lambda: ScoreFetcher(self._rc, self._db))
-        await self.register_service(
-            "rule_validation", lambda: RuleValidationService(self._rc, self._db)
-        )
+        for name, settings in self._service_settings.items():
+            if not settings.enabled:
+                self.logger.info(f"Skipping {name}: disabled by configuration")
+                continue
+
+            if name not in self._service_factories:
+                self.logger.warning(f"Skipping {name}: no factory registered for service")
+                continue
+
+            await self.register_service(name, self._make_factory(name))
+
         self.logger.info(f"Starting up daemon: loading registered services ({len(self._services)})")
 
     async def _on_started(self) -> None:

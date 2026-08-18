@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from contextlib import contextmanager
 from contextvars import ContextVar
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -22,6 +23,60 @@ _SECURITY_ENABLED_OVERRIDE: ContextVar[bool | None] = ContextVar(
 )
 
 _bootstrap_yaml_file: str = "config/bootstrap.yaml"
+
+
+@dataclass(frozen=True)
+class ServiceSettings:
+    """Runtime configuration for a daemon service.
+
+    Attributes:
+        enabled:
+            Whether the service should be registered and run by the daemon.
+        interval_hours:
+            Interval between successive job executions for interval-driven
+            services, in hours. ``None`` for event-driven services that run
+            on demand rather than on a fixed schedule.
+    """
+
+    enabled: bool = True
+    interval_hours: float | None = None
+
+
+def _parse_bool_env(name: str, default: bool) -> bool:
+    """Parse a boolean environment variable.
+
+    Args:
+        name:
+            Environment variable name.
+        default:
+            Fallback value when the variable is unset.
+
+    Returns:
+        The parsed boolean value.
+    """
+    return os.getenv(name, "true" if default else "false").lower() in ("true", "1", "yes")
+
+
+def _parse_float_env(name: str, default: float) -> float:
+    """Parse a float environment variable.
+
+    Args:
+        name:
+            Environment variable name.
+        default:
+            Fallback value when the variable is unset.
+
+    Returns:
+        The parsed float value.
+
+    Raises:
+        ValueError: If the variable cannot be parsed as a number.
+    """
+    raw = os.getenv(name, str(default))
+    try:
+        return float(raw)
+    except ValueError:
+        raise ValueError(f"{name} must be a number, got {raw!r}") from None
 
 
 class QueueConfig(BaseSettings):
@@ -147,6 +202,23 @@ class Config:
         self.DEV_ADMIN_USER_ID = int(os.getenv("DEV_ADMIN_USER_ID", "1"))
         self.DEV_USER_ID = int(os.getenv("DEV_USER_ID", "2"))
 
+        self.SERVICES = {
+            "profile_fetcher": ServiceSettings(
+                enabled=_parse_bool_env("SERVICES_PROFILE_FETCHER_ENABLED", True),
+                interval_hours=_parse_float_env("SERVICES_PROFILE_FETCHER_INTERVAL_HOURS", 168.0),
+            ),
+            "score_fetcher": ServiceSettings(
+                enabled=_parse_bool_env("SERVICES_SCORE_FETCHER_ENABLED", True),
+                interval_hours=_parse_float_env("SERVICES_SCORE_FETCHER_INTERVAL_HOURS", 24.0),
+            ),
+            "queue_request_handler": ServiceSettings(
+                enabled=_parse_bool_env("SERVICES_QUEUE_REQUEST_HANDLER_ENABLED", True),
+            ),
+            "rule_validation": ServiceSettings(
+                enabled=_parse_bool_env("SERVICES_RULE_VALIDATION_ENABLED", True),
+            ),
+        }
+
         self.PROJECT_ROOT = Path(__file__).resolve().parents[1]
         self.SPEC_DIR = str(Path("api/v1/spec").resolve())
         self.OPENAPI_ENTRYPOINT = Path(self.SPEC_DIR) / "openapi.yaml"
@@ -254,6 +326,7 @@ DISABLE_SECURITY = CONFIG.DISABLE_SECURITY
 DEBUG_API_KEY = CONFIG.DEBUG_API_KEY
 DEV_ADMIN_USER_ID = CONFIG.DEV_ADMIN_USER_ID
 DEV_USER_ID = CONFIG.DEV_USER_ID
+SERVICES = CONFIG.SERVICES
 PROJECT_ROOT = CONFIG.PROJECT_ROOT
 SPEC_DIR = CONFIG.SPEC_DIR
 OPENAPI_ENTRYPOINT = CONFIG.OPENAPI_ENTRYPOINT

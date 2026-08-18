@@ -55,7 +55,7 @@ async def lifespan(_app: ConnexionMiddleware) -> AsyncGenerator[dict[str, Any]]:
     cleanup_runner = SetupRunner(CONFIG.bootstrap, rc=rc)
     await cleanup_runner.cleanup_stale_tasks()
 
-    daemon_app = Daemon(rc, db)
+    daemon_app = Daemon(rc, db, services=CONFIG.SERVICES)
     await daemon_app.start()
     daemon_task = asyncio.create_task(daemon_app.serve_forever(), name="Daemon Task")
 

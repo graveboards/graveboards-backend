@@ -103,3 +103,12 @@ class TestProfileFetcher:
         """Test that _execute_job has auto_retry decorator."""
 
         assert hasattr(service._execute_job, "__wrapped__")
+
+    async def test_fetch_interval_hours_threads_into_job_interval(self) -> None:
+        """Test that fetch_interval_hours is threaded into the job interval."""
+        rc = MagicMock()
+        db = MagicMock()
+
+        service = ProfileFetcher(rc, db, fetch_interval_hours=168.0)
+
+        assert service._job_interval_hours == 168.0
