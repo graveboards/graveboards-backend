@@ -14,6 +14,7 @@ from app.oauth import OAuth
 from app.observability.logging import get_logger
 from app.observability.metrics.osu import (
     osu_api_errors_total,
+    osu_api_rate_limited_total,
     osu_api_request_duration_seconds,
     osu_api_requests_total,
 )
@@ -91,7 +92,12 @@ class OsuAPIMetricsTransport(httpx.AsyncBaseTransport):
 
             osu_api_request_duration_seconds.labels(endpoint=endpoint).observe(duration)
 
-            if response.is_error:
+            if response.status_code == 429:
+                # Upstream rate limiting is a throttling signal, not a failure:
+                # track it separately so it can't inflate the structured-error
+                # ratio or fire OsuApiErrorTypeRatioHigh while the app backs off.
+                osu_api_rate_limited_total.labels(endpoint=endpoint).inc()
+            elif response.is_error:
                 # Callers raise_for_status() well after the transport returns, so a
                 # 4xx/5xx from osu! itself never reaches the `except` clause below.
                 # Record it here, using the same error_type that raise_for_status()

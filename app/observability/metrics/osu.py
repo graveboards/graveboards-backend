@@ -22,3 +22,9 @@ osu_api_errors_total = Counter(
     "Total number of osu! API errors.",
     ["endpoint", "error_type"],
 )
+
+osu_api_rate_limited_total = Counter(
+    "osu_api_rate_limited_total",
+    "Total number of osu! API responses rate-limited upstream (HTTP 429).",
+    ["endpoint"],
+)
