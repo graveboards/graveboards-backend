@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from app.observability.metrics.auth import (
     auth_lockouts_total,
@@ -12,6 +12,29 @@ from app.observability.metrics.auth import (
 
 if TYPE_CHECKING:
     from app.redis_client import RedisClient
+
+
+def extract_client_ip(request: Any) -> str:
+    """Resolve the real client IP for auth rate limiting.
+
+    Reads the ``X-Real-IP`` header forwarded by the frontend (which derives it
+    from Traefik's ``X-Forwarded-For``). Without this, every login would be
+    keyed on the frontend container's IP because the frontend reaches the
+    backend via container-to-container networking, collapsing all users into a
+    single rate-limit bucket. The header is only settable by containers on the
+    internal ``app`` network, so it is trusted. Falls back to the direct peer.
+
+    Args:
+        request:
+            The active Connexion/Starlette request.
+
+    Returns:
+        The client IP address to key rate limiting on.
+    """
+    forwarded = request.headers.get("X-Real-IP")
+    if forwarded:
+        return str(forwarded.split(",")[-1].strip())
+    return str(request.client.host) if request.client is not None else "unknown"
 
 
 class AuthRateLimiter:

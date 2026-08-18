@@ -18,7 +18,7 @@ from app.osu_api import OsuAPIClient
 from app.osu_api.client.base import is_rate_limit_response
 from app.redis_client import Namespace, RedisClient
 from app.security import create_token_payload, encode_token, validate_token
-from app.security.auth_rate_limit import AuthRateLimiter
+from app.security.auth_rate_limit import AuthRateLimiter, extract_client_ip
 from app.security.oauth_encryption import encrypt_token
 from app.utils import aware_utcnow
 
@@ -49,7 +49,7 @@ async def search(token: str, rc: RedisClient | None = None) -> APIResponse:
     if rc is None:
         rc = request.state.rc
 
-    client_ip = request.client.host if request.client is not None else "unknown"
+    client_ip = extract_client_ip(request)
     limiter = AuthRateLimiter(rc)
     allowed, retry_after = await limiter.check(client_ip)
     if not allowed:
@@ -83,7 +83,7 @@ async def post(
     if db is None:
         db = request.state.db
 
-    client_ip = request.client.host if request.client is not None else "unknown"
+    client_ip = extract_client_ip(request)
     limiter = AuthRateLimiter(rc)
     allowed, retry_after = await limiter.check(client_ip)
     if not allowed:

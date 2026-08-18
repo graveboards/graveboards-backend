@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 from app.exceptions import TooManyRequests
 from app.oauth import OAuth
 from app.redis_client import Namespace, RedisClient
-from app.security.auth_rate_limit import AuthRateLimiter
+from app.security.auth_rate_limit import AuthRateLimiter, extract_client_ip
 
 __all__ = ["search"]
 
@@ -27,7 +27,7 @@ async def search(rc: RedisClient | None = None) -> APIResponse:
     if rc is None:
         rc = request.state.rc
 
-    client_ip = request.client.host if request.client is not None else "unknown"
+    client_ip = extract_client_ip(request)
     limiter = AuthRateLimiter(rc)
     allowed, retry_after = await limiter.check(client_ip)
     if not allowed:
