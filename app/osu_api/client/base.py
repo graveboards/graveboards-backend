@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, Self, cast
 import httpx
 from pydantic import ValidationError
 
+from app.config import CONFIG
 from app.exceptions import RateLimitExceededError, RedisLockTimeoutError
 from app.oauth import OAuth
 from app.observability.logging import get_logger
@@ -26,6 +27,32 @@ if TYPE_CHECKING:
 
 MAX_TOKEN_FETCH_RETRIES = 3
 logger = get_logger(__name__)
+
+
+# --- Global outbound osu! API rate gate -------------------------------------
+# Every request to osu.ppy.sh flows through OsuAPIMetricsTransport
+# (the API client, the OAuth token refresh transport, and .osu downloads), so a
+# single in-process gate here enforces a hard minimum interval between any two
+# osu! API requests regardless of caller. This is the backstop that keeps
+# concurrent services (health checks, daemons, web requests) from piling up.
+
+_osu_api_gate_lock = asyncio.Lock()
+_osu_api_last_request_monotonic: float = 0.0
+
+
+async def _enforce_osu_api_global_interval() -> None:
+    """Sleep so consecutive osu! API requests are spaced >= CONFIG's minimum."""
+    min_interval = CONFIG.OSU_API_MIN_INTERVAL_SECONDS
+    if min_interval <= 0:
+        return
+
+    global _osu_api_last_request_monotonic
+    async with _osu_api_gate_lock:
+        now = time.monotonic()
+        wait = _osu_api_last_request_monotonic + min_interval - now
+        if wait > 0:
+            await asyncio.sleep(wait)
+        _osu_api_last_request_monotonic = time.monotonic()
 
 
 def _get_osu_endpoint(path: str) -> str:
@@ -80,6 +107,10 @@ class OsuAPIMetricsTransport(httpx.AsyncBaseTransport):
         """
         endpoint = _get_osu_endpoint(request.url.path)
         start = time.perf_counter()
+
+        # Global spacing gate: cap osu! API request throughput across all
+        # transports/callers in this process (see _enforce_osu_api_global_interval).
+        await _enforce_osu_api_global_interval()
 
         try:
             response = await self._transport.handle_async_request(request)

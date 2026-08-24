@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+import httpx
 from authlib.integrations.base_client.errors import OAuthError
 from connexion import request
 from jwt.exceptions import ExpiredSignatureError, InvalidIssuerError, InvalidTokenError
@@ -15,7 +16,7 @@ from app.database.models import OAuthToken, ScoreFetcherTask, User
 from app.exceptions import BadRequest, OsuOAuthError, TooManyRequests
 from app.oauth import OAuth
 from app.osu_api import OsuAPIClient
-from app.osu_api.client.base import is_rate_limit_response
+from app.osu_api.client.base import OsuAPIMetricsTransport, is_rate_limit_response
 from app.redis_client import Namespace, RedisClient
 from app.security import create_token_payload, encode_token, validate_token
 from app.security.auth_rate_limit import AuthRateLimiter, extract_client_ip
@@ -108,7 +109,10 @@ async def post(
 
     try:
         if oauth is None:
-            oauth = OAuth()
+            # Use the instrumented transport so the authorization-code token
+            # exchange is subject to the same global osu! API rate gate as every
+            # other outbound request.
+            oauth = OAuth(transport=OsuAPIMetricsTransport(httpx.AsyncHTTPTransport()))
         token = await oauth.fetch_token(
             grant_type="authorization_code", scope="public identify", code=code
         )
