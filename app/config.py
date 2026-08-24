@@ -40,6 +40,8 @@ class ServiceSettings:
 
     enabled: bool = True
     interval_hours: float | None = None
+    request_spacing_seconds: float | None = None
+    fetch_concurrency: int | None = None
 
 
 def _parse_bool_env(name: str, default: bool) -> bool:
@@ -77,6 +79,28 @@ def _parse_float_env(name: str, default: float) -> float:
         return float(raw)
     except ValueError:
         raise ValueError(f"{name} must be a number, got {raw!r}") from None
+
+
+def _parse_int_env(name: str, default: int) -> int:
+    """Parse an integer environment variable.
+
+    Args:
+        name:
+            Environment variable name.
+        default:
+            Fallback value when the variable is unset.
+
+    Returns:
+        The parsed integer value.
+
+    Raises:
+        ValueError: If the variable cannot be parsed as an integer.
+    """
+    raw = os.getenv(name, str(default))
+    try:
+        return int(raw)
+    except ValueError:
+        raise ValueError(f"{name} must be an integer, got {raw!r}") from None
 
 
 class QueueConfig(BaseSettings):
@@ -189,6 +213,9 @@ class BootstrapConfig(BaseSettings):
 class Config:
     """Application configuration loaded from environment variables."""
 
+    # Global minimum seconds between any two outbound osu! API requests.
+    OSU_API_MIN_INTERVAL_SECONDS: float = 2.0
+
     def __init__(self) -> None:
         load_dotenv()
         self.ENV = Env(os.getenv("ENV", "prod").lower())
@@ -202,10 +229,21 @@ class Config:
         self.DEV_ADMIN_USER_ID = int(os.getenv("DEV_ADMIN_USER_ID", "1"))
         self.DEV_USER_ID = int(os.getenv("DEV_USER_ID", "2"))
 
+        # Global minimum seconds between any two outbound osu! API requests,
+        # enforced across every OsuAPIClient/transport instance in-process.
+        # Defaults to 1 request per 2 seconds.
+        self.OSU_API_MIN_INTERVAL_SECONDS = _parse_float_env(
+            "OSU_API_MIN_INTERVAL_SECONDS", self.OSU_API_MIN_INTERVAL_SECONDS
+        )
+
         self.SERVICES = {
             "profile_fetcher": ServiceSettings(
                 enabled=_parse_bool_env("SERVICES_PROFILE_FETCHER_ENABLED", True),
                 interval_hours=_parse_float_env("SERVICES_PROFILE_FETCHER_INTERVAL_HOURS", 168.0),
+                request_spacing_seconds=_parse_float_env(
+                    "SERVICES_PROFILE_FETCHER_REQUEST_SPACING_SECONDS", 60.0
+                ),
+                fetch_concurrency=_parse_int_env("SERVICES_PROFILE_FETCHER_FETCH_CONCURRENCY", 1),
             ),
             "score_fetcher": ServiceSettings(
                 enabled=_parse_bool_env("SERVICES_SCORE_FETCHER_ENABLED", True),

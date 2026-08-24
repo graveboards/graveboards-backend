@@ -14,7 +14,11 @@ from .services import (
     ScoreFetcher,
     ServiceFactory,
 )
-from .services.service.scheduled_fetcher import DEFAULT_FETCH_INTERVAL_HOURS
+from .services.service.scheduled_fetcher import (
+    DEFAULT_FETCH_CONCURRENCY,
+    DEFAULT_FETCH_DISTRIBUTED_SPACING_SECONDS,
+    DEFAULT_FETCH_INTERVAL_HOURS,
+)
 from .supervisor import ServiceSupervisor
 
 if TYPE_CHECKING:
@@ -66,7 +70,10 @@ class Daemon(ServiceSupervisor):
             "profile_fetcher": lambda settings: ProfileFetcher(
                 self._rc,
                 self._db,
+                fetch_concurrency=settings.fetch_concurrency or DEFAULT_FETCH_CONCURRENCY,
                 fetch_interval_hours=settings.interval_hours or DEFAULT_FETCH_INTERVAL_HOURS,
+                fetch_distributed_spacing_seconds=settings.request_spacing_seconds
+                or DEFAULT_FETCH_DISTRIBUTED_SPACING_SECONDS,
             ),
             "score_fetcher": lambda settings: ScoreFetcher(
                 self._rc,

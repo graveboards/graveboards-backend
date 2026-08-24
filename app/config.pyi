@@ -29,6 +29,8 @@ class BootstrapConfig:
 class ServiceSettings:
     enabled: bool
     interval_hours: float | None
+    request_spacing_seconds: float | None
+    fetch_concurrency: int | None
 
 class Config:
     ENV: Env
@@ -37,6 +39,7 @@ class Config:
     DEBUG_API_KEY: str | None
     DEV_ADMIN_USER_ID: int
     DEV_USER_ID: int
+    OSU_API_MIN_INTERVAL_SECONDS: float
     SERVICES: dict[str, ServiceSettings]
     PROJECT_ROOT: Path
     SPEC_DIR: str
@@ -63,6 +66,7 @@ DISABLE_SECURITY: bool
 DEBUG_API_KEY: str | None
 DEV_ADMIN_USER_ID: int
 DEV_USER_ID: int
+OSU_API_MIN_INTERVAL_SECONDS: float
 SERVICES: dict[str, ServiceSettings]
 PROJECT_ROOT: Path
 SPEC_DIR: str

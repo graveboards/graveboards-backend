@@ -11,6 +11,8 @@ class TestServiceConfig:
         for name in (
             "SERVICES_PROFILE_FETCHER_ENABLED",
             "SERVICES_PROFILE_FETCHER_INTERVAL_HOURS",
+            "SERVICES_PROFILE_FETCHER_REQUEST_SPACING_SECONDS",
+            "SERVICES_PROFILE_FETCHER_FETCH_CONCURRENCY",
             "SERVICES_SCORE_FETCHER_ENABLED",
             "SERVICES_SCORE_FETCHER_INTERVAL_HOURS",
             "SERVICES_QUEUE_REQUEST_HANDLER_ENABLED",
@@ -21,7 +23,7 @@ class TestServiceConfig:
         config = Config()
 
         assert config.SERVICES["profile_fetcher"] == ServiceSettings(
-            enabled=True, interval_hours=168.0
+            enabled=True, interval_hours=168.0, request_spacing_seconds=60.0, fetch_concurrency=1
         )
         assert config.SERVICES["score_fetcher"] == ServiceSettings(
             enabled=True, interval_hours=24.0
@@ -33,6 +35,8 @@ class TestServiceConfig:
         """Test that service settings reflect explicitly set environment variables."""
         monkeypatch.setenv("SERVICES_PROFILE_FETCHER_ENABLED", "false")
         monkeypatch.setenv("SERVICES_PROFILE_FETCHER_INTERVAL_HOURS", "72.5")
+        monkeypatch.setenv("SERVICES_PROFILE_FETCHER_REQUEST_SPACING_SECONDS", "30")
+        monkeypatch.setenv("SERVICES_PROFILE_FETCHER_FETCH_CONCURRENCY", "3")
         monkeypatch.setenv("SERVICES_SCORE_FETCHER_ENABLED", "false")
         monkeypatch.setenv("SERVICES_SCORE_FETCHER_INTERVAL_HOURS", "6")
         monkeypatch.setenv("SERVICES_QUEUE_REQUEST_HANDLER_ENABLED", "0")
@@ -41,7 +45,10 @@ class TestServiceConfig:
         config = Config()
 
         assert config.SERVICES["profile_fetcher"] == ServiceSettings(
-            enabled=False, interval_hours=72.5
+            enabled=False,
+            interval_hours=72.5,
+            request_spacing_seconds=30.0,
+            fetch_concurrency=3,
         )
         assert config.SERVICES["score_fetcher"] == ServiceSettings(
             enabled=False, interval_hours=6.0
@@ -54,4 +61,18 @@ class TestServiceConfig:
         monkeypatch.setenv("SERVICES_PROFILE_FETCHER_INTERVAL_HOURS", "not-a-number")
 
         with pytest.raises(ValueError, match="SERVICES_PROFILE_FETCHER_INTERVAL_HOURS"):
+            Config()
+
+    def test_invalid_request_spacing_raises_value_error(self, monkeypatch) -> None:
+        """Test that an invalid request spacing raises a clear error."""
+        monkeypatch.setenv("SERVICES_PROFILE_FETCHER_REQUEST_SPACING_SECONDS", "not-a-number")
+
+        with pytest.raises(ValueError, match="SERVICES_PROFILE_FETCHER_REQUEST_SPACING_SECONDS"):
+            Config()
+
+    def test_invalid_fetch_concurrency_raises_value_error(self, monkeypatch) -> None:
+        """Test that an invalid fetch concurrency raises a clear error."""
+        monkeypatch.setenv("SERVICES_PROFILE_FETCHER_FETCH_CONCURRENCY", "not-a-number")
+
+        with pytest.raises(ValueError, match="SERVICES_PROFILE_FETCHER_FETCH_CONCURRENCY"):
             Config()
