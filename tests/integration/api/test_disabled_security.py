@@ -183,6 +183,93 @@ class TestSecurityConfiguration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
+    async def test_security_disabled_bearer_token_sets_dev_identity(
+        self,
+        test_client_with_mocks: Any,
+        security_disabled: Any,
+    ) -> None:
+        """When security is disabled, a Bearer token's ``sub`` is honored as the
+        dev identity (decoded without signature verification) so dev behaves like
+        prod: the caller follows whoever the frontend logged in as. Here a
+        non-admin token for user 12345678 reaches their own user record via the
+        ``matching_user_id_override`` - which would 403 if the identity fell back
+        to ``DEV_ADMIN_USER_ID`` (1) instead.
+        """
+        from app.database.models import User
+        from app.security import generate_token
+
+        mock_db = AsyncMock()
+
+        non_admin_user = MagicMock()
+        non_admin_user.roles = []
+
+        target_user: dict[str, Any] = {"id": 12345678, "profile": None, "roles": []}
+
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
+            if model == User and kwargs.get("_include", {}).get("roles"):
+                return non_admin_user
+            return target_user
+
+        mock_db.get = AsyncMock(side_effect=mock_get)
+        mock_db.update = AsyncMock()
+
+        test_client = test_client_with_mocks(mock_db=mock_db)
+
+        response = test_client.get(
+            "/api/v1/users/12345678",
+            headers={"Authorization": f"Bearer {generate_token(12345678)}"},
+        )
+
+        assert response.status_code == 200
+        assert response.json()["id"] == 12345678
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    async def test_security_disabled_malformed_bearer_falls_back_to_admin(
+        self,
+        test_client_with_mocks: Any,
+        security_disabled: Any,
+    ) -> None:
+        """A malformed/unsigned Bearer value is ignored and resolution falls
+        through to ``DEV_ADMIN_USER_ID``, preserving the "just works" dev
+        experience for unauthenticated-style requests.
+        """
+        from app.database.enums import RoleName
+        from app.database.models import Queue
+
+        mock_db = AsyncMock()
+
+        admin_role = MagicMock()
+        admin_role.name = RoleName.ADMIN.value
+
+        mock_user = MagicMock()
+        mock_user.roles = [admin_role]
+
+        mock_queue = MagicMock()
+        mock_queue.id = 1
+        mock_queue.user_id = 99999999
+        mock_queue.name = "Test Queue"
+
+        async def mock_get(model: Any, **kwargs: Any) -> Any:
+            if model == Queue:
+                return mock_queue
+            return mock_user
+
+        mock_db.get = AsyncMock(side_effect=mock_get)
+        mock_db.update = AsyncMock()
+
+        test_client = test_client_with_mocks(mock_db=mock_db)
+
+        response = test_client.patch(
+            "/api/v1/queues/1",
+            json={"name": "Updated"},
+            headers={"Authorization": "Bearer not-a-jwt"},
+        )
+
+        assert response.status_code == 200
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
     async def test_security_enabled_enforces_auth(
         self,
         test_client_with_mocks: Any,
