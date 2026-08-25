@@ -64,7 +64,7 @@ async def get(beatmapset_id: int, **kwargs: Any) -> APIResponse:
     """
     db: PostgresqlDB = request.state.db
 
-    beatmapset = await db.get(Beatmapset, **kwargs)
+    beatmapset = await db.get(Beatmapset, id=beatmapset_id, **kwargs)
 
     if not beatmapset:
         raise NotFound(f"Beatmapset with beatmapset_id '{beatmapset_id}' not found")
