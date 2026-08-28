@@ -753,7 +753,7 @@ class BeatmapManager:
             beatmapset_snapshot = await self.db.get(
                 BeatmapsetSnapshot,
                 beatmapset_id=beatmapset_id,
-                _order_by=BeatmapsetSnapshot.snapshot_number.desc(),
+                _sorting=[{"field": "BeatmapsetSnapshot.snapshot_number", "order": "desc"}],
                 _include={"beatmap_snapshots": True},
                 _offset=offset,
             )

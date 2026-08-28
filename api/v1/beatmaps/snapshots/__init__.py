@@ -66,7 +66,7 @@ async def get(beatmap_id: int, snapshot_number: int = -1, **kwargs: Any) -> APIR
         beatmap_snapshot = await db.get(
             BeatmapSnapshot,
             beatmap_id=beatmap_id,
-            _order_by=BeatmapSnapshot.snapshot_number.desc(),
+            _sorting=[{"field": "BeatmapSnapshot.snapshot_number", "order": "desc"}],
             _offset=offset,
             **kwargs,
         )

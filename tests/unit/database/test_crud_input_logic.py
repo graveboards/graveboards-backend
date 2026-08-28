@@ -4,6 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from app.database.crud.types import Filters, Include, Sorting
+from app.database.models import ModelClass
 from app.exceptions import DeepObjectValidationError
 
 
@@ -299,3 +300,50 @@ class TestComplexValidationScenarios:
         filters_dict: dict[str, Any] = dict(filters)
         assert cast("dict", filters_dict["deleted_at"])["is_null"] is True
         assert cast("dict", filters_dict["scheduled_end"])["is_null"] is False
+
+
+class TestReadStatementConstruction:
+    """Test read statement construction for the "latest snapshot" lookup pattern.
+
+    Regression: the snapshot endpoints used to pass an unsupported ``_order_by``
+    kwarg which leaked into ``filter_by()`` and raised
+    ``InvalidRequestError: Entity namespace ... has no property "_order_by"``.
+    The supported interface is ``_sorting``.
+    """
+
+    @staticmethod
+    def _construct(model_class: ModelClass[Any], **kwargs: Any) -> str:
+        from app.database.crud.r import _R
+
+        select_stmt = _R._construct_stmt(model_class, **kwargs)
+        return str(select_stmt.compile(compile_kwargs={"literal_binds": True}))
+
+    def test_sorting_desc_compiles_for_latest_snapshot_lookup(self) -> None:
+        """Test _sorting orders by snapshot_number descending without leaking kwargs."""
+        sql = self._construct(
+            ModelClass.BEATMAPSET_SNAPSHOT,
+            _sorting=[{"field": "BeatmapsetSnapshot.snapshot_number", "order": "desc"}],
+            beatmapset_id=2358595,
+        )
+
+        assert "ORDER BY beatmapset_snapshots.snapshot_number DESC" in sql
+        assert "WHERE beatmapset_snapshots.beatmapset_id = 2358595" in sql
+        assert "_order_by" not in sql
+
+    def test_sorting_desc_compiles_for_beatmap_snapshot(self) -> None:
+        """Test _sorting on BeatmapSnapshot compiles for the offset lookup pattern."""
+        sql = self._construct(
+            ModelClass.BEATMAP_SNAPSHOT,
+            _sorting=[{"field": "BeatmapSnapshot.snapshot_number", "order": "desc"}],
+            beatmap_id=123,
+        )
+
+        assert "ORDER BY beatmap_snapshots.snapshot_number DESC" in sql
+        assert "WHERE beatmap_snapshots.beatmap_id = 123" in sql
+
+    def test_default_primary_key_ordering_without_sorting(self) -> None:
+        """Test statement falls back to primary key ordering when _sorting is omitted."""
+        sql = self._construct(ModelClass.BEATMAPSET_SNAPSHOT, beatmapset_id=1)
+
+        assert "ORDER BY" in sql
+        assert "snapshot_number DESC" not in sql
