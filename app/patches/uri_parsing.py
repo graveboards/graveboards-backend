@@ -8,6 +8,7 @@ import re
 from datetime import datetime
 from typing import Any
 from typing import cast as typing_cast
+from urllib.parse import unquote
 
 from connexion.uri_parsing import OpenAPIURIParser
 from connexion.utils import TypeValidationError, coerce_type
@@ -40,6 +41,17 @@ class OpenAPIURIParserPatched(OpenAPIURIParser):
         Returns the root key wrapped in a list to support Connexion's parser merge
         behavior for repeated parameters.
         """
+        # Some clients (e.g. JS URLSearchParams) percent-encode the deepObject
+        # brackets. ASGI frameworks decode the query string once, so any surviving
+        # `%5B`/`%5D` sequences indicate a double-encoded key. Decode the key until
+        # stable so bracket parsing behaves the same for raw and percent-encoded
+        # forms alike.
+        while True:
+            decoded = unquote(k)
+            if decoded == k:
+                break
+            k = decoded
+
         if not isinstance(v, list):
             v = [v]
 
