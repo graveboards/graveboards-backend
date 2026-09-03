@@ -19,7 +19,7 @@ async def test_get_beatmapset_parses_response(api_client: tuple[OsuAPIClient, Ma
     mock_redis.expire = AsyncMock(return_value=None)
 
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     with patch("app.osu_api.client.osu_api_client.Beatmapset") as mock_beatmapset:
         mock_beatmapset.model_validate.return_value = MagicMock()

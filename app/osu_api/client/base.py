@@ -278,6 +278,16 @@ class OsuAPIClientBase:
                     f"Failed to fetch token after {MAX_TOKEN_FETCH_RETRIES} retries due to ReadTimeout"
                 ) from None
 
+    async def invalidate_token(self) -> None:
+        """Evict the cached client token from memory and Redis.
+
+        Called when osu! rejects the token with 401 so the next request mints a
+        fresh one. osu! can revoke outstanding tokens server-side (e.g. when
+        the OAuth client is rotated) long before their locally recorded expiry.
+        """
+        self._token = None
+        await self.rc.delete(Namespace.OSU_CLIENT_OAUTH_TOKEN.value)
+
     async def get_auth_headers(self, access_token: str | None = None) -> dict[str, str]:
         """Build authorization headers with a valid access token.
 
@@ -289,6 +299,66 @@ class OsuAPIClientBase:
             Dictionary with the Authorization header.
         """
         return {"Authorization": f"Bearer {access_token or await self.get_token()}"}
+
+    async def _authorized_request(
+        self,
+        method: str,
+        url: str,
+        *,
+        access_token: str | None = None,
+        **kwargs: Any,
+    ) -> httpx.Response:
+        """Send an authenticated osu! API request.
+
+        When the default client-credentials token is rejected with 401, the
+        cached token is evicted (memory + Redis) and the request is retried
+        once with a freshly minted token. Without this, a token that was
+        revoked server-side while still unexpired locally (e.g. after the
+        OAuth client was rotated) poisons every request until the cache
+        expires.
+
+        Explicit tokens (the user OAuth flow) are never retried: a 401 there
+        means the user must re-authorize, refreshing the client token cannot
+        help.
+
+        Args:
+            method:
+                HTTP method.
+            url:
+                Target URL.
+            access_token:
+                Optional explicit token to use instead of the client token.
+            **kwargs:
+                Forwarded to the HTTP client (e.g. ``json`` for POST bodies).
+
+        Returns:
+            The HTTP response.
+        """
+        request_headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            **await self.get_auth_headers(access_token),
+        }
+
+        response = await self._http_client.request(method, url, headers=request_headers, **kwargs)
+
+        if access_token is None and response.status_code == 401:
+            logger.warning(
+                "osu! API rejected the client token with 401; "
+                "evicting cached token and retrying once with a fresh one"
+            )
+            await self.invalidate_token()
+
+            request_headers = {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                **await self.get_auth_headers(),
+            }
+            response = await self._http_client.request(
+                method, url, headers=request_headers, **kwargs
+            )
+
+        return response
 
     async def close(self) -> None:
         """Close the underlying HTTP client."""

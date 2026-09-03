@@ -19,7 +19,7 @@ async def test_get_user_parses_response(api_client: tuple[OsuAPIClient, MagicMoc
     mock_redis.expire = AsyncMock(return_value=None)
 
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     result = await api_client_obj.get_user(mock_data["id"], mode=None)
 
@@ -40,7 +40,7 @@ async def test_get_user_scores(api_client: tuple[OsuAPIClient, MagicMock]) -> No
     mock_redis.expire = AsyncMock(return_value=None)
 
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     result = await api_client_obj.get_user_scores(
         mock_data[0]["user_id"], ScoreType.BEST, mode=Ruleset.OSU, limit=50
@@ -62,7 +62,7 @@ async def test_get_user_scores_recent(api_client: tuple[OsuAPIClient, MagicMock]
     mock_redis.expire = AsyncMock(return_value=None)
 
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     result = await api_client_obj.get_user_scores(
         mock_data[0]["user_id"], ScoreType.RECENT, mode=Ruleset.OSU
@@ -85,7 +85,7 @@ async def test_get_user_scores_firsts(api_client: tuple[OsuAPIClient, MagicMock]
     mock_redis.expire = AsyncMock(return_value=None)
 
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     result = await api_client_obj.get_user_scores(
         mock_data[0]["user_id"], ScoreType.FIRSTS, mode=Ruleset.OSU

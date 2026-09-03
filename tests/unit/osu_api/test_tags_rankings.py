@@ -19,7 +19,7 @@ async def test_get_tags(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     mock_redis.expire = AsyncMock(return_value=None)
 
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     result = await api_client_obj.get_tags()
 
@@ -42,7 +42,7 @@ async def test_get_rankings(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     mock_redis.expire = AsyncMock(return_value=None)
 
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     result = await api_client_obj.get_rankings(Ruleset.OSU, "performance", limit=50)
 
@@ -63,7 +63,7 @@ async def test_get_rankings_with_country_mode(api_client: tuple[OsuAPIClient, Ma
     mock_redis.hgetall.return_value = None
 
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     result = await api_client_obj.get_rankings(Ruleset.OSU, "country", limit=50)
 
@@ -84,9 +84,9 @@ async def test_get_rankings_includes_limit_and_offset(
     mock_redis.hgetall.return_value = None
 
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     await api_client_obj.get_rankings(Ruleset.OSU, "performance", limit=100, offset=50)
-    called_url = str(api_client_obj._http_client.get.call_args[0][0])
+    called_url = str(api_client_obj._http_client.request.call_args[0][1])
     assert "limit=100" in called_url
     assert "offset=50" in called_url

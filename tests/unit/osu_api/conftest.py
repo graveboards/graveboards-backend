@@ -32,8 +32,7 @@ def api_client() -> Generator[tuple[OsuAPIClient, MagicMock]]:
 
     # Create a mock httpx client
     mock_http_client = MagicMock()
-    mock_http_client.get = AsyncMock()
-    mock_http_client.post = AsyncMock()
+    mock_http_client.request = AsyncMock()
 
     # Patch httpx.AsyncClient to return our mock before creating OsuAPIClient
     with patch("httpx.AsyncClient", return_value=mock_http_client):
@@ -58,6 +57,10 @@ class MockResponse:
     def __init__(self, data: Any, status_code: int = 200) -> None:
         self._data = data
         self._status_code = status_code
+
+    @property
+    def status_code(self) -> int:
+        return self._status_code
 
     def json(self) -> Any:
         return self._data

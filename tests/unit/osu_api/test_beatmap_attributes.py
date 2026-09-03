@@ -19,7 +19,7 @@ async def test_get_beatmap_attributes(api_client: tuple[OsuAPIClient, MagicMock]
     mock_redis.expire = AsyncMock(return_value=None)
 
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.post = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     result = await api_client_obj.get_beatmap_attributes(mock_data["attributes"]["beatmap_id"], [1])
 
@@ -37,7 +37,7 @@ async def test_get_beatmap_attributes_all_mods(api_client: tuple[OsuAPIClient, M
     mock_redis.expire = AsyncMock(return_value=None)
 
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.post = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     test_attributes = await api_client_obj.get_beatmap_attributes(
         mock_data["attributes"]["beatmap_id"], [16, 64, 128, 256, 512, 1024, 2048, 4096]
@@ -57,10 +57,10 @@ async def test_get_beatmap_attributes_verifies_mods_in_body(
     mock_redis.hgetall.return_value = None
 
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.post = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     mods = [16, 64]
     await api_client_obj.get_beatmap_attributes(mock_data["attributes"]["beatmap_id"], mods)
 
-    post_call = api_client_obj._http_client.post.call_args
+    post_call = api_client_obj._http_client.request.call_args
     assert post_call[1]["json"]["mods"] == mods

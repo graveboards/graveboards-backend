@@ -1,5 +1,6 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import httpx
 import pytest
 
 from app.daemon.services.profile_fetcher import ProfileFetcher
@@ -17,6 +18,21 @@ class TestProfileFetcher:
         service = ProfileFetcher(rc, db)
         object.__setattr__(service, "_load_job", AsyncMock())
         return service
+
+    @staticmethod
+    def _http_status_error(status_code: int) -> httpx.HTTPStatusError:
+        request = httpx.Request("GET", "https://osu.ppy.sh/api/v2/users/123")
+        response = httpx.Response(status_code, request=request)
+        return httpx.HTTPStatusError(
+            f"Client error '{status_code}'", request=request, response=response
+        )
+
+    def _locked_service(self, service: ProfileFetcher, task: ProfileFetcherTask) -> None:
+        service._db.get = AsyncMock(return_value=task)
+        service._db.update = AsyncMock()
+        service._rc.set = AsyncMock(return_value=True)
+        object.__setattr__(service._rc, "lock_ctx", MagicMock())
+        object.__setattr__(service, "_respect_rate_limit", AsyncMock())
 
     async def test_preload_jobs_skips_disabled_tasks(self, service: ProfileFetcher) -> None:
         """Test that disabled tasks are skipped during preload."""
@@ -98,6 +114,26 @@ class TestProfileFetcher:
             await service._execute_job(123)
 
         service._db.add.assert_awaited_once()
+
+    async def test_execute_job_disables_task_on_404(self, service: ProfileFetcher) -> None:
+        """Test that a 404 (restricted/deleted user) still disables the task."""
+        task = ProfileFetcherTask(id=1, user_id=123, enabled=True)
+        self._locked_service(service, task)
+        service._oac.get_user = AsyncMock(side_effect=self._http_status_error(404))
+
+        await service._execute_job(123)
+
+        service._db.update.assert_awaited_once_with(ProfileFetcherTask, 123, enabled=False)
+
+    async def test_execute_job_keeps_task_enabled_on_401(self, service: ProfileFetcher) -> None:
+        """Test that a 401 does not disable the task (self-heals with a fresh token)."""
+        task = ProfileFetcherTask(id=1, user_id=123, enabled=True)
+        self._locked_service(service, task)
+        service._oac.get_user = AsyncMock(side_effect=self._http_status_error(401))
+
+        await service._execute_job(123)
+
+        service._db.update.assert_not_awaited()
 
     async def test_auto_retry_decorator_applied(self, service: ProfileFetcher) -> None:
         """Test that _execute_job has auto_retry decorator."""

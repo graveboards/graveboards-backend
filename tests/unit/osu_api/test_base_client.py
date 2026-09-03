@@ -1,6 +1,7 @@
 import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import httpx
 import pytest
 
 
@@ -11,10 +12,17 @@ def mock_redis_client() -> MagicMock:
     mock_redis.hset = AsyncMock(return_value=None)
     mock_redis.expire = AsyncMock(return_value=None)
     mock_redis.incr = AsyncMock(return_value=1)
+    mock_redis.delete = AsyncMock(return_value=1)
     mock_redis.lock_ctx = MagicMock()
     mock_redis.lock_ctx.__aenter__ = AsyncMock(return_value=None)
     mock_redis.lock_ctx.__aexit__ = AsyncMock(return_value=None)
     return mock_redis
+
+
+def _mock_response(
+    status_code: int, url: str = "https://osu.ppy.sh/api/v2/users/123"
+) -> httpx.Response:
+    return httpx.Response(status_code, request=httpx.Request("GET", url))
 
 
 @pytest.mark.asyncio
@@ -289,3 +297,146 @@ async def test_format_query_parameters(mock_redis_client: MagicMock) -> None:
     query_string = client.format_query_parameters(params)
 
     assert query_string == "?page=1&limit=50&mode=osu"
+
+
+def _future_expires_at() -> int:
+    return int(time.time()) + 3600
+
+
+@pytest.mark.asyncio
+async def test_invalidate_token_clears_memory_and_redis(mock_redis_client: MagicMock) -> None:
+    from app.osu_api.client.base import OsuAPIClientBase
+    from app.redis_client import Namespace
+    from app.redis_client.models import OsuClientOAuthToken
+
+    client = OsuAPIClientBase(mock_redis_client)
+    client._token = OsuClientOAuthToken(
+        access_token="stale_token",
+        token_type="Bearer",
+        expires_in=3600,
+        expires_at=_future_expires_at(),
+    )
+
+    await client.invalidate_token()
+
+    assert client._token is None
+    mock_redis_client.delete.assert_awaited_once_with(Namespace.OSU_CLIENT_OAUTH_TOKEN.value)
+
+
+@pytest.mark.asyncio
+async def test_authorized_request_retries_once_on_401(mock_redis_client: MagicMock) -> None:
+    from app.osu_api.client.base import OsuAPIClientBase
+    from app.redis_client.models import OsuClientOAuthToken
+
+    client = OsuAPIClientBase(mock_redis_client)
+    client._token = OsuClientOAuthToken(
+        access_token="stale_token",
+        token_type="Bearer",
+        expires_in=3600,
+        expires_at=_future_expires_at(),
+    )
+    client._http_client = MagicMock()
+    client._http_client.request = AsyncMock(side_effect=[_mock_response(401), _mock_response(200)])
+
+    url = "https://osu.ppy.sh/api/v2/users/123"
+    with patch.object(client, "_oauth") as mock_oauth:
+        mock_oauth.fetch_token = AsyncMock(
+            return_value={
+                "access_token": "fresh_token",
+                "token_type": "Bearer",
+                "expires_in": 3600,
+                "expires_at": str(_future_expires_at()),
+            }
+        )
+        response = await client._authorized_request("GET", url)
+
+    assert response.status_code == 200
+    assert client._http_client.request.await_count == 2
+    assert client._token is not None
+    assert client._token.access_token == "fresh_token"
+
+    first_call, retry_call = client._http_client.request.await_args_list
+    assert first_call.kwargs["headers"]["Authorization"] == "Bearer stale_token"
+    assert retry_call.kwargs["headers"]["Authorization"] == "Bearer fresh_token"
+
+    mock_oauth.fetch_token.assert_awaited_once()
+    mock_redis_client.delete.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_authorized_request_does_not_retry_on_other_status(
+    mock_redis_client: MagicMock,
+) -> None:
+    from app.osu_api.client.base import OsuAPIClientBase
+    from app.redis_client.models import OsuClientOAuthToken
+
+    client = OsuAPIClientBase(mock_redis_client)
+    client._token = OsuClientOAuthToken(
+        access_token="valid_token",
+        token_type="Bearer",
+        expires_in=3600,
+        expires_at=_future_expires_at(),
+    )
+    client._http_client = MagicMock()
+    client._http_client.request = AsyncMock(return_value=_mock_response(404))
+
+    with patch.object(client, "_oauth") as mock_oauth:
+        mock_oauth.fetch_token = AsyncMock(side_effect=Exception("Should not be called"))
+        response = await client._authorized_request("GET", "https://osu.ppy.sh/api/v2/users/123")
+
+    assert response.status_code == 404
+    client._http_client.request.assert_awaited_once()
+    mock_redis_client.delete.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_authorized_request_stops_after_single_retry(mock_redis_client: MagicMock) -> None:
+    from app.osu_api.client.base import OsuAPIClientBase
+    from app.redis_client.models import OsuClientOAuthToken
+
+    client = OsuAPIClientBase(mock_redis_client)
+    client._token = OsuClientOAuthToken(
+        access_token="stale_token",
+        token_type="Bearer",
+        expires_in=3600,
+        expires_at=_future_expires_at(),
+    )
+    client._http_client = MagicMock()
+    client._http_client.request = AsyncMock(side_effect=[_mock_response(401), _mock_response(401)])
+
+    with patch.object(client, "_oauth") as mock_oauth:
+        mock_oauth.fetch_token = AsyncMock(
+            return_value={
+                "access_token": "fresh_token",
+                "token_type": "Bearer",
+                "expires_in": 3600,
+                "expires_at": str(_future_expires_at()),
+            }
+        )
+        response = await client._authorized_request("GET", "https://osu.ppy.sh/api/v2/users/123")
+
+    assert response.status_code == 401
+    assert client._http_client.request.await_count == 2
+    mock_oauth.fetch_token.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_authorized_request_with_explicit_token_does_not_retry_on_401(
+    mock_redis_client: MagicMock,
+) -> None:
+    from app.osu_api.client.base import OsuAPIClientBase
+
+    client = OsuAPIClientBase(mock_redis_client)
+    client._http_client = MagicMock()
+    client._http_client.request = AsyncMock(return_value=_mock_response(401))
+
+    response = await client._authorized_request(
+        "GET", "https://osu.ppy.sh/api/v2/me", access_token="user_token"
+    )
+
+    assert response.status_code == 401
+    client._http_client.request.assert_awaited_once()
+    mock_redis_client.delete.assert_not_awaited()
+
+    request_headers = client._http_client.request.await_args.kwargs["headers"]
+    assert request_headers["Authorization"] == "Bearer user_token"

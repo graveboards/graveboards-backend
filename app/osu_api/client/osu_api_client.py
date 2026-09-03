@@ -54,13 +54,7 @@ class OsuAPIClient(OsuAPIClientBase):
 
         url = APIEndpoint.BEATMAP.format(beatmap=str(beatmap_id))
 
-        headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            **await self.get_auth_headers(),
-        }
-
-        response = await self._http_client.get(url, headers=headers)
+        response = await self._authorized_request("GET", url)
 
         response.raise_for_status()
         beatmap_data: dict[str, Any] = response.json()
@@ -88,12 +82,6 @@ class OsuAPIClient(OsuAPIClientBase):
         """
         url = APIEndpoint.BEATMAP_SCORES.format(beatmap=str(beatmap_id))
 
-        headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            **await self.get_auth_headers(),
-        }
-
         query_parameters: dict[str, int] = {}
 
         if limit is not None:
@@ -104,7 +92,7 @@ class OsuAPIClient(OsuAPIClientBase):
 
         url += self.format_query_parameters(query_parameters)
 
-        response = await self._http_client.get(url, headers=headers)
+        response = await self._authorized_request("GET", url)
 
         response.raise_for_status()
         result: dict[str, Any] = response.json()
@@ -124,14 +112,9 @@ class OsuAPIClient(OsuAPIClientBase):
         """
         url = APIEndpoint.BEATMAP_ATTRIBUTES.format(beatmap=str(beatmap_id))
 
-        headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            **await self.get_auth_headers(),
-        }
         body = {"mods": mods}
 
-        response = await self._http_client.post(url, headers=headers, json=body)
+        response = await self._authorized_request("POST", url, json=body)
 
         response.raise_for_status()
         result: dict[str, Any] = response.json()
@@ -170,13 +153,7 @@ class OsuAPIClient(OsuAPIClientBase):
 
         url = APIEndpoint.BEATMAPSET.format(beatmapset=str(beatmapset_id))
 
-        headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            **await self.get_auth_headers(),
-        }
-
-        response = await self._http_client.get(url, headers=headers)
+        response = await self._authorized_request("GET", url)
 
         response.raise_for_status()
         beatmapset_data: dict[str, Any] = response.json()
@@ -207,12 +184,6 @@ class OsuAPIClient(OsuAPIClientBase):
         """
         url = APIEndpoint.BEATMAPSET_DISCUSSIONS.format()
 
-        headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            **await self.get_auth_headers(),
-        }
-
         query_parameters: dict[str, int | str] = {
             "beatmapset_status": beatmapset_status,
             "cursor[page]": page,
@@ -221,7 +192,7 @@ class OsuAPIClient(OsuAPIClientBase):
 
         url += self.format_query_parameters(query_parameters)
 
-        response = await self._http_client.get(url, headers=headers)
+        response = await self._authorized_request("GET", url)
 
         response.raise_for_status()
         result: dict[str, Any] = response.json()
@@ -246,12 +217,6 @@ class OsuAPIClient(OsuAPIClientBase):
         """
         url = APIEndpoint.BEATMAPSET_SEARCH.format()
 
-        headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            **await self.get_auth_headers(),
-        }
-
         query_parameters: dict[str, int | str] = {}
 
         if query is not None:
@@ -273,7 +238,7 @@ class OsuAPIClient(OsuAPIClientBase):
 
         url += self.format_query_parameters(query_parameters)
 
-        response = await self._http_client.get(url, headers=headers)
+        response = await self._authorized_request("GET", url)
 
         response.raise_for_status()
         result: dict[str, Any] = response.json()
@@ -292,13 +257,7 @@ class OsuAPIClient(OsuAPIClientBase):
         """
         url = APIEndpoint.ME.value
 
-        headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            **await self.get_auth_headers(access_token),
-        }
-
-        response = await self._http_client.get(url, headers=headers)
+        response = await self._authorized_request("GET", url, access_token=access_token)
 
         response.raise_for_status()
         result: dict[str, Any] = response.json()
@@ -332,12 +291,6 @@ class OsuAPIClient(OsuAPIClientBase):
         """
         url = APIEndpoint.SCORES.format(user=str(user_id), type=score_type.value)
 
-        headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            **await self.get_auth_headers(),
-        }
-
         query_parameters: dict[str, int | str] = {
             "legacy_only": legacy_only,
             "include_fails": include_fails,
@@ -354,7 +307,7 @@ class OsuAPIClient(OsuAPIClientBase):
 
         url += self.format_query_parameters(query_parameters)
 
-        response = await self._http_client.get(url, headers=headers)
+        response = await self._authorized_request("GET", url)
 
         response.raise_for_status()
         result: list[dict[str, Any]] = response.json()
@@ -375,13 +328,7 @@ class OsuAPIClient(OsuAPIClientBase):
         mode_str = mode.value if mode is not None else ""
         url = APIEndpoint.USER.format(user=str(user_id), mode=mode_str)
 
-        headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            **await self.get_auth_headers(),
-        }
-
-        response = await self._http_client.get(url, headers=headers)
+        response = await self._authorized_request("GET", url)
 
         response.raise_for_status()
         user_data: dict[str, Any] = response.json()
@@ -397,13 +344,7 @@ class OsuAPIClient(OsuAPIClientBase):
         """
         url = APIEndpoint.TAGS.value
 
-        headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            **await self.get_auth_headers(),
-        }
-
-        response = await self._http_client.get(url, headers=headers)
+        response = await self._authorized_request("GET", url)
 
         response.raise_for_status()
         result: dict[str, list[dict[str, int | str]]] = response.json()
@@ -433,12 +374,6 @@ class OsuAPIClient(OsuAPIClientBase):
         """
         url = APIEndpoint.RANKINGS.format(ruleset=ruleset.value, mode=mode)
 
-        headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            **await self.get_auth_headers(),
-        }
-
         query_parameters: dict[str, int | str] = {}
 
         if limit is not None:
@@ -452,7 +387,7 @@ class OsuAPIClient(OsuAPIClientBase):
 
         url += self.format_query_parameters(query_parameters)
 
-        response = await self._http_client.get(url, headers=headers)
+        response = await self._authorized_request("GET", url)
 
         response.raise_for_status()
         result: dict[str, Any] = response.json()

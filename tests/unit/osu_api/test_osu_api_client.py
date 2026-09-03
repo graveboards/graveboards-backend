@@ -41,7 +41,7 @@ async def test_get_beatmap_from_redis_cache(api_client: tuple[OsuAPIClient, Magi
     mock_redis.hgetall = AsyncMock(side_effect=mock_hgetall)
 
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     result = await api_client_obj.get_beatmap(mock_data["id"])
 
@@ -57,7 +57,7 @@ async def test_get_beatmap_from_api(api_client: tuple[OsuAPIClient, MagicMock]) 
     mock_redis.hgetall.return_value = None
 
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     with patch("app.osu_api.client.osu_api_client.Beatmap") as mock_beatmap:
         mock_beatmap.model_validate.return_value = MagicMock()
@@ -79,7 +79,7 @@ async def test_get_beatmap_caches_response(api_client: tuple[OsuAPIClient, Magic
     mock_redis.hgetall.return_value = None
 
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     with patch("app.osu_api.client.osu_api_client.Beatmap") as mock_beatmap:
         mock_beatmap_instance = MagicMock()
@@ -106,7 +106,7 @@ async def test_get_beatmap_scores(api_client: tuple[OsuAPIClient, MagicMock]) ->
     mock_redis.hgetall.return_value = None
 
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     result = await api_client_obj.get_beatmap_scores(123, limit=10, offset=5)
 
@@ -123,7 +123,7 @@ async def test_get_beatmap_attributes(api_client: tuple[OsuAPIClient, MagicMock]
     mock_redis.hgetall.return_value = None
 
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.post = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     result = await api_client_obj.get_beatmap_attributes(123, mods=[32])
 
@@ -152,7 +152,7 @@ async def test_get_beatmapset_from_redis_cache(api_client: tuple[OsuAPIClient, M
 
     # Mock httpx to avoid real API calls
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     result = await api_client_obj.get_beatmapset(mock_data["id"])
 
@@ -168,7 +168,7 @@ async def test_get_beatmapset_from_api(api_client: tuple[OsuAPIClient, MagicMock
     mock_redis.hgetall.return_value = None
 
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     with patch("app.osu_api.client.osu_api_client.Beatmapset") as mock_beatmapset:
         mock_beatmapset_instance = MagicMock()
@@ -196,7 +196,7 @@ async def test_get_user(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     mock_redis.hgetall.return_value = None
 
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     result = await api_client_obj.get_user(123, mode=Ruleset.OSU)
 
@@ -213,7 +213,7 @@ async def test_get_user_scores(api_client: tuple[OsuAPIClient, MagicMock]) -> No
     mock_redis.hgetall.return_value = None
 
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     result = await api_client_obj.get_user_scores(123, score_type=ScoreType.BEST, limit=10)
 
@@ -229,7 +229,7 @@ async def test_get_tags(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     mock_redis.hgetall.return_value = None
 
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     result = await api_client_obj.get_tags()
 
@@ -252,7 +252,7 @@ async def test_get_rankings(api_client: tuple[OsuAPIClient, MagicMock]) -> None:
     mock_redis.hgetall.return_value = None
 
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     result = await api_client_obj.get_rankings(
         ruleset=Ruleset.OSU, mode="std", limit=50, cursor_page=1
@@ -275,7 +275,7 @@ async def test_get_beatmapset_discussions(api_client: tuple[OsuAPIClient, MagicM
     mock_redis.hgetall.return_value = None
 
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     result = await api_client_obj.get_beatmapset_discussions(
         beatmapset_status="ranked", page=1, limit=50

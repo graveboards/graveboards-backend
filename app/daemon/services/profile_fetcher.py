@@ -130,6 +130,11 @@ class ProfileFetcher(ScheduledFetcherService):
                 f"HTTP error while fetching profile for user {user_id} - "
                 f"Status: {e.response.status_code}, URL: '{e.request.url}', Detail: {e}"
             )
-            await self._db.update(ProfileFetcherTask, record_id, enabled=False)
+            # A 401 means the osu! client token was rejected server-side (e.g. the
+            # OAuth client was rotated). That is environmental and self-heals once
+            # a fresh token is minted, so the task must survive it; other status
+            # codes (404 for restricted/deleted users) legitimately disable the task.
+            if e.response.status_code != 401:
+                await self._db.update(ProfileFetcherTask, record_id, enabled=False)
         except ReadTimeout as e:
             self.logger.warning(f"Read timeout while fetching profile for user {user_id}: {e}")

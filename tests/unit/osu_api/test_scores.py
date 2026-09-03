@@ -19,7 +19,7 @@ async def test_get_beatmap_scores(api_client: tuple[OsuAPIClient, MagicMock]) ->
     mock_redis.expire = AsyncMock(return_value=None)
 
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     result = await api_client_obj.get_beatmap_scores(mock_data["scores"][0]["beatmap_id"], limit=50)
 
@@ -36,10 +36,10 @@ async def test_get_beatmap_scores_with_offset(api_client: tuple[OsuAPIClient, Ma
     mock_redis.hgetall.return_value = None
 
     mock_response = MockResponse(mock_data)
-    api_client_obj._http_client.get = AsyncMock(return_value=mock_response)
+    api_client_obj._http_client.request = AsyncMock(return_value=mock_response)
 
     await api_client_obj.get_beatmap_scores(
         mock_data["scores"][0]["beatmap_id"], limit=50, offset=10
     )
-    called_url = str(api_client_obj._http_client.get.call_args[0][0])
+    called_url = str(api_client_obj._http_client.request.call_args[0][1])
     assert "offset=10" in called_url
