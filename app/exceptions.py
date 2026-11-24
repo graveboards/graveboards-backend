@@ -24,6 +24,7 @@ __all__ = [
     "FieldConditionValidationError",
     "FieldNotSupportedError",
     "FieldValidationError",
+    "JobAbortedError",
     "NotFound",
     "OsuOAuthError",
     "RateLimitExceededError",
@@ -244,6 +245,14 @@ class RateLimitExceededError(Exception):
         if self.next_window is None:
             return 0.0
         return (self.next_window - aware_utcnow()).total_seconds()
+
+
+class JobAbortedError(Exception):
+    """Signal that a scheduled job can never succeed and must not be retried.
+
+    Raised when a job's backing record no longer exists, so the scheduler drops
+    the job instead of rescheduling it.
+    """
 
 
 class RedisLockTimeoutError(TimeoutError):

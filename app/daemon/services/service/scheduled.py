@@ -9,6 +9,7 @@ from abc import ABC, abstractmethod
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, ClassVar
 
+from app.exceptions import JobAbortedError
 from app.observability.metrics.daemon import (
     daemon_active_jobs,
     daemon_job_duration_seconds,
@@ -246,7 +247,8 @@ class ScheduledService(Service, ABC):
     async def _handle_job(self, job_id: int, execution_time: datetime) -> None:
         """Execute a scheduled job.
 
-        Waits until the scheduled execution time, executes the job, and reschedules it.
+        Waits until the scheduled execution time, executes the job, and reschedules it
+        unless it raised :class:`JobAbortedError` or the service is one-off.
 
         Args:
             job_id:
@@ -267,12 +269,18 @@ class ScheduledService(Service, ABC):
 
         service_name = self.__class__.__name__
         start = time.perf_counter()
+        reschedule = self._should_reschedule
         daemon_active_jobs.labels(service=service_name).inc()
 
         try:
             self.logger.debug(f"Executing job {job_id}")
             async with self._job_semaphore:
                 await self._execute_job(job_id)
+        except JobAbortedError as exc:
+            # Retrying cannot succeed, so the job is dropped rather than failed.
+            reschedule = False
+            self.logger.warning(f"{service_name} aborted {job_id=}: {exc}")
+            daemon_jobs_total.labels(service=service_name, status="aborted").inc()
         except Exception as exc:
             duration = time.perf_counter() - start
             self.logger.exception(
@@ -292,11 +300,11 @@ class ScheduledService(Service, ABC):
             daemon_active_jobs.labels(service=service_name).dec()
 
         self.logger.debug(
-            f"Job {job_id} finished: should_reschedule={self._should_reschedule}, "
+            f"Job {job_id} finished: should_reschedule={reschedule}, "
             f"active_before={len(self._active_job_ids)}"
         )
 
-        if self._should_reschedule:
+        if reschedule:
             next_execution_time = aware_utcnow() + timedelta(hours=self._job_interval_hours)
 
             async with self._job_condition:

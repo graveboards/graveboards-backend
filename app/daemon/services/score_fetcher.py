@@ -8,6 +8,7 @@ from httpx import ConnectTimeout
 
 from app.database.models import BeatmapSnapshot, Leaderboard, Score, ScoreFetcherTask
 from app.database.schemas import ScoreSchema
+from app.exceptions import JobAbortedError
 from app.observability.logging import Logger, get_logger
 from app.osu_api.enums import ScoreType
 from app.redis_client import ChannelName
@@ -65,10 +66,10 @@ class ScoreFetcher(ScheduledFetcherService):
 
         Raises:
         ------
-            ValueError: If the record does not exist.
+            JobAbortedError: If the record does not exist.
         """
         if not (record := await self._db.get(ScoreFetcherTask, id=record_id)):
-            raise ValueError(f"ScoreFetcherTask with ID '{record_id}' not found")
+            raise JobAbortedError(f"ScoreFetcherTask with ID '{record_id}' not found")
 
         user_id = record.user_id
         await self._respect_rate_limit()

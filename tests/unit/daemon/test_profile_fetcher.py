@@ -5,6 +5,7 @@ import pytest
 
 from app.daemon.services.profile_fetcher import ProfileFetcher
 from app.database.models import ProfileFetcherTask
+from app.exceptions import JobAbortedError
 
 
 class TestProfileFetcher:
@@ -45,13 +46,11 @@ class TestProfileFetcher:
 
         assert service._load_job.call_count == 1  # type: ignore[attr-defined]
 
-    async def test_execute_job_raises_value_error_when_record_not_found(
-        self, service: ProfileFetcher
-    ) -> None:
-        """Test that _execute_job raises ValueError when task not found."""
+    async def test_execute_job_aborts_when_record_not_found(self, service: ProfileFetcher) -> None:
+        """Test that _execute_job signals a permanent abort when the task is gone."""
         service._db.get = AsyncMock(return_value=None)
 
-        with pytest.raises(ValueError, match="not found"):
+        with pytest.raises(JobAbortedError, match="not found"):
             await service._execute_job(123)
 
     async def test_execute_job_skips_when_lock_not_acquired(self, service: ProfileFetcher) -> None:

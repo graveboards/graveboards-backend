@@ -8,7 +8,7 @@ from httpx import ConnectTimeout, HTTPStatusError, ReadTimeout
 
 from app.database.models import Base, Profile, ProfileFetcherTask, User
 from app.database.schemas import ProfileSchema
-from app.exceptions import RedisLockTimeoutError
+from app.exceptions import JobAbortedError, RedisLockTimeoutError
 from app.observability.logging import Logger, get_logger
 from app.redis_client import LOCK_EXPIRY, ChannelName, Namespace
 from app.utils import aware_utcnow
@@ -73,10 +73,10 @@ class ProfileFetcher(ScheduledFetcherService):
 
         Raises:
         ------
-            ValueError: If the record does not exist.
+            JobAbortedError: If the record does not exist.
         """
         if not (record := await self._db.get(ProfileFetcherTask, id=record_id)):
-            raise ValueError(f"ProfileFetcherTask with ID '{record_id}' not found")
+            raise JobAbortedError(f"ProfileFetcherTask with ID '{record_id}' not found")
 
         user_id = record.user_id
         lock_hash_name = Namespace.LOCK.hash_name(Namespace.OSU_USER_PROFILE.hash_name(user_id))
