@@ -12,6 +12,7 @@ from app.beatmaps import BeatmapManager
 from app.database.crud.rules import RuleCRUD
 from app.database.models import Request
 from app.database.schemas import RequestSchema
+from app.exceptions import JobAbortedError
 from app.observability.logging import Logger, get_logger
 from app.redis_client import ChannelName, Namespace
 from app.redis_client.models import QueueRequestHandlerTask, QueueRequestValidationTask
@@ -58,7 +59,7 @@ class QueueRequestHandler(ScheduledService):
 
         Raises:
         ------
-            ValueError: If the record does not exist.
+            JobAbortedError: If the record does not exist.
         """
         hash_name = Namespace.QUEUE_REQUEST_HANDLER_TASK.hash_name(record_id)
         self.logger.debug(
@@ -69,10 +70,9 @@ class QueueRequestHandler(ScheduledService):
             serialized_record = await self._rc.hgetall(hash_name)
 
             if not serialized_record:
-                self.logger.error(
-                    f"QueueRequestHandlerTask with hashed ID '{record_id}' not found at {hash_name}"
+                raise JobAbortedError(
+                    f"QueueRequestHandlerTask with hashed ID '{record_id}' not found"
                 )
-                raise ValueError(f"QueueRequestHandlerTask with hashed ID '{record_id}' not found")
 
             self.logger.debug(
                 f"Found serialized record for {record_id}: keys={list(serialized_record.keys())}"
@@ -111,6 +111,8 @@ class QueueRequestHandler(ScheduledService):
             finally:
                 if record.http_request_id:
                     clear_contextvars()
+        except JobAbortedError:
+            raise
         except Exception:
             self.logger.exception(f"Failed to execute QueueRequestHandler job {record_id}")
             await self._rc.hset(hash_name, "failed_at", aware_utcnow().isoformat())

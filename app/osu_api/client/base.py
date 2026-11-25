@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import random
 import time
 from typing import TYPE_CHECKING, Any, Self, cast
 
@@ -18,6 +19,7 @@ from app.observability.metrics.osu import (
     osu_api_rate_limited_total,
     osu_api_request_duration_seconds,
     osu_api_requests_total,
+    osu_api_transport_retries_total,
 )
 from app.redis_client import Namespace, RedisClient
 from app.redis_client.models import OsuClientOAuthToken
@@ -26,7 +28,26 @@ if TYPE_CHECKING:
     from types import TracebackType
 
 MAX_TOKEN_FETCH_RETRIES = 3
+
+# Only failures that fail fast are retried: a ReadTimeout would cost another full
+# 10s timeout per attempt, which is too much for request-path callers.
+OSU_API_TRANSPORT_RETRY_EXCEPTIONS: tuple[type[Exception], ...] = (
+    httpx.ConnectError,
+    httpx.ReadError,
+    httpx.WriteError,
+    httpx.PoolTimeout,
+)
+MAX_TRANSPORT_RETRIES = 2
+TRANSPORT_RETRY_BASE_DELAY_SECONDS = 0.25
+TRANSPORT_RETRY_MAX_JITTER_SECONDS = 0.1
 logger = get_logger(__name__)
+
+
+def _transport_retry_delay(attempt: int) -> float:
+    """Back off linearly, with jitter so concurrent callers don't retry in lockstep."""
+    return TRANSPORT_RETRY_BASE_DELAY_SECONDS * attempt + random.uniform(
+        0, TRANSPORT_RETRY_MAX_JITTER_SECONDS
+    )
 
 
 # --- Global outbound osu! API rate gate -------------------------------------
@@ -98,6 +119,9 @@ class OsuAPIMetricsTransport(httpx.AsyncBaseTransport):
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
         """Handle an HTTP request with metrics instrumentation.
 
+        Transport failures that fail fast are retried for ``GET`` requests, because
+        a dropped connection would otherwise surface as a permanent job failure.
+
         Args:
             request:
                 The HTTP request.
@@ -112,8 +136,39 @@ class OsuAPIMetricsTransport(httpx.AsyncBaseTransport):
         # transports/callers in this process (see _enforce_osu_api_global_interval).
         await _enforce_osu_api_global_interval()
 
-        try:
-            response = await self._transport.handle_async_request(request)
+        max_retries = MAX_TRANSPORT_RETRIES if request.method == "GET" else 0
+
+        for attempt in range(max_retries + 1):
+            try:
+                response = await self._transport.handle_async_request(request)
+            except OSU_API_TRANSPORT_RETRY_EXCEPTIONS as exc:
+                if attempt >= max_retries:
+                    osu_api_errors_total.labels(
+                        endpoint=endpoint,
+                        error_type=type(exc).__name__,
+                    ).inc()
+                    raise
+
+                osu_api_transport_retries_total.labels(
+                    endpoint=endpoint,
+                    error_type=type(exc).__name__,
+                ).inc()
+                delay = _transport_retry_delay(attempt)
+                logger.warning(
+                    f"osu! API transport error on {request.method} {endpoint} "
+                    f"({type(exc).__name__}), retrying in {delay:.2f}s "
+                    f"(attempt {attempt + 1}/{max_retries})"
+                )
+                await asyncio.sleep(delay)
+                await _enforce_osu_api_global_interval()
+                continue
+            except Exception as exc:
+                osu_api_errors_total.labels(
+                    endpoint=endpoint,
+                    error_type=type(exc).__name__,
+                ).inc()
+                raise
+
             duration = time.perf_counter() - start
 
             osu_api_requests_total.labels(
@@ -130,7 +185,7 @@ class OsuAPIMetricsTransport(httpx.AsyncBaseTransport):
                 osu_api_rate_limited_total.labels(endpoint=endpoint).inc()
             elif response.is_error:
                 # Callers raise_for_status() well after the transport returns, so a
-                # 4xx/5xx from osu! itself never reaches the `except` clause below.
+                # 4xx/5xx from osu! itself never reaches the `except` clause above.
                 # Record it here, using the same error_type that raise_for_status()
                 # would itself raise, so this lines up with the transport-exception case.
                 osu_api_errors_total.labels(
@@ -139,13 +194,8 @@ class OsuAPIMetricsTransport(httpx.AsyncBaseTransport):
                 ).inc()
 
             return response
-        except Exception as exc:
-            duration = time.perf_counter() - start
-            osu_api_errors_total.labels(
-                endpoint=endpoint,
-                error_type=type(exc).__name__,
-            ).inc()
-            raise
+
+        raise AssertionError("unreachable: retry loop always returns or raises")
 
 
 class OsuAPIClientBase:

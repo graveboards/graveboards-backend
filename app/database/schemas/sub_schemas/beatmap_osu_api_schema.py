@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from copy import copy
 from datetime import datetime
-from typing import Any, ClassVar, Literal, TypedDict
+from typing import Any, ClassVar, Literal, NotRequired, TypedDict
 
 from pydantic.functional_validators import field_validator, model_validator
 from pydantic.main import BaseModel
@@ -20,10 +20,14 @@ from .failtimes import FailtimesSchema
 
 
 class Owner(TypedDict):
-    """Identifier and username for a beatmap owner."""
+    """Identifier and username for a beatmap owner.
+
+    ``username`` is null for owners whose accounts were deleted or restricted, and
+    ``Profile.username`` is nullable for the same reason.
+    """
 
     id: int
-    username: str
+    username: NotRequired[str | None]
 
 
 class BeatmapOsuApiSchema(BaseModel):

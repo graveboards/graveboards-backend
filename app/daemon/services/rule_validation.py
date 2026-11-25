@@ -21,6 +21,7 @@ from app.database.rules.validators.metadata import (
     DurationProvider,
     SongIdentityProvider,
 )
+from app.exceptions import JobAbortedError
 from app.observability.logging import Logger, get_logger
 from app.osu_api.client import OsuAPIClient
 from app.redis_client import ChannelName, Namespace
@@ -72,10 +73,7 @@ class RuleValidationService(ScheduledService):
             serialized_record = await self._rc.hgetall(hash_name)
 
             if not serialized_record:
-                self.logger.error(
-                    f"QueueRequestValidationTask with hashed ID '{record_id}' not found at {hash_name}"
-                )
-                raise ValueError(
+                raise JobAbortedError(
                     f"QueueRequestValidationTask with hashed ID '{record_id}' not found"
                 )
 
@@ -109,6 +107,8 @@ class RuleValidationService(ScheduledService):
             finally:
                 if record.http_request_id:
                     clear_contextvars()
+        except JobAbortedError:
+            raise
         except Exception:
             self.logger.exception(f"Failed to execute RuleValidation job {record_id}")
             await self._rc.hset(hash_name, "failed_at", aware_utcnow().isoformat())

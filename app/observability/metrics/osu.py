@@ -28,3 +28,9 @@ osu_api_rate_limited_total = Counter(
     "Total number of osu! API responses rate-limited upstream (HTTP 429).",
     ["endpoint"],
 )
+
+osu_api_transport_retries_total = Counter(
+    "osu_api_transport_retries_total",
+    "Total number of osu! API transport-level retries.",
+    ["endpoint", "error_type"],
+)

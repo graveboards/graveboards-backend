@@ -440,3 +440,96 @@ async def test_authorized_request_with_explicit_token_does_not_retry_on_401(
 
     request_headers = client._http_client.request.await_args.kwargs["headers"]
     assert request_headers["Authorization"] == "Bearer user_token"
+
+
+class TestOsuAPIMetricsTransportRetry:
+    """Transport-level retry for failures that would otherwise be permanent."""
+
+    @staticmethod
+    def _transport(inner: MagicMock):
+        from app.osu_api.client.base import OsuAPIMetricsTransport
+
+        return OsuAPIMetricsTransport(inner)
+
+    @staticmethod
+    def _inner() -> MagicMock:
+        inner = MagicMock()
+        inner.handle_async_request = AsyncMock()
+        return inner
+
+    @staticmethod
+    def _patched_transport():
+        return patch.multiple(
+            "app.osu_api.client.base",
+            _enforce_osu_api_global_interval=AsyncMock(),
+            _transport_retry_delay=MagicMock(return_value=0.0),
+        )
+
+    @pytest.mark.asyncio
+    async def test_get_retries_on_read_error(self) -> None:
+        inner = self._inner()
+        request = httpx.Request("GET", "https://osu.ppy.sh/api/v2/users/123")
+        response = httpx.Response(200, request=request)
+        inner.handle_async_request.side_effect = [httpx.ReadError("dropped"), response]
+
+        with self._patched_transport():
+            result = await self._transport(inner).handle_async_request(request)
+
+        assert result is response
+        assert inner.handle_async_request.await_count == 2
+
+    @pytest.mark.asyncio
+    async def test_get_gives_up_after_max_retries(self) -> None:
+        from app.osu_api.client.base import MAX_TRANSPORT_RETRIES
+
+        inner = self._inner()
+        request = httpx.Request("GET", "https://osu.ppy.sh/api/v2/users/123")
+        inner.handle_async_request.side_effect = httpx.ReadError("dropped")
+
+        with self._patched_transport(), pytest.raises(httpx.ReadError):
+            await self._transport(inner).handle_async_request(request)
+
+        assert inner.handle_async_request.await_count == MAX_TRANSPORT_RETRIES + 1
+
+    @pytest.mark.asyncio
+    async def test_post_is_not_retried(self) -> None:
+        inner = self._inner()
+        request = httpx.Request("POST", "https://osu.ppy.sh/oauth/token")
+        inner.handle_async_request.side_effect = httpx.ReadError("dropped")
+
+        with self._patched_transport(), pytest.raises(httpx.ReadError):
+            await self._transport(inner).handle_async_request(request)
+
+        assert inner.handle_async_request.await_count == 1
+
+    @pytest.mark.asyncio
+    async def test_read_timeout_is_not_retried(self) -> None:
+        """A timeout already cost a full 10s; retrying it is too expensive."""
+        inner = self._inner()
+        request = httpx.Request("GET", "https://osu.ppy.sh/api/v2/users/123")
+        inner.handle_async_request.side_effect = httpx.ReadTimeout("slow")
+
+        with self._patched_transport(), pytest.raises(httpx.ReadTimeout):
+            await self._transport(inner).handle_async_request(request)
+
+        assert inner.handle_async_request.await_count == 1
+
+    @pytest.mark.asyncio
+    async def test_retry_is_counted(self) -> None:
+        from app.observability.metrics.osu import osu_api_transport_retries_total
+        from app.osu_api.client.base import _get_osu_endpoint
+
+        inner = self._inner()
+        request = httpx.Request("GET", "https://osu.ppy.sh/api/v2/users/123")
+        response = httpx.Response(200, request=request)
+        inner.handle_async_request.side_effect = [httpx.ReadError("dropped"), response]
+
+        counter = osu_api_transport_retries_total.labels(
+            endpoint=_get_osu_endpoint(request.url.path), error_type="ReadError"
+        )
+        before = counter._value.get()
+
+        with self._patched_transport():
+            await self._transport(inner).handle_async_request(request)
+
+        assert counter._value.get() == before + 1

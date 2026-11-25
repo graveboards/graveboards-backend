@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from app.daemon.services.queue_request_handler import QueueRequestHandler
+from app.exceptions import JobAbortedError
 from app.redis_client.models import QueueRequestHandlerTask
 
 
@@ -30,14 +31,16 @@ class TestQueueRequestHandler:
         assert instruction is not None
         assert instruction.execution_time is not None
 
-    async def test_execute_job_raises_value_error_when_record_not_found(
+    async def test_execute_job_aborts_when_record_not_found(
         self, service: QueueRequestHandler
     ) -> None:
-        """Test that _execute_job raises ValueError when task not found in Redis."""
+        """Test that a missing task aborts the job without marking it failed."""
         service._rc.hgetall.return_value = None
 
-        with pytest.raises(ValueError, match="not found"):
+        with pytest.raises(JobAbortedError, match="not found"):
             await service._execute_job(123)
+
+        service._rc.hset.assert_not_awaited()
 
     async def test_execute_job_successfully_processes_task(
         self, service: QueueRequestHandler
