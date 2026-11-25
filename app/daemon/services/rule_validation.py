@@ -24,7 +24,7 @@ from app.database.rules.validators.metadata import (
 from app.exceptions import JobAbortedError
 from app.observability.logging import Logger, get_logger
 from app.osu_api.client import OsuAPIClient
-from app.redis_client import ChannelName, Namespace
+from app.redis_client import TASK_RETENTION_SECONDS, ChannelName, Namespace
 from app.redis_client.models import QueueRequestValidationTask
 from app.utils import aware_utcnow
 
@@ -103,6 +103,7 @@ class RuleValidationService(ScheduledService):
                     self.logger.debug(f"Validation complete for request {record.request_id}")
 
                 await self._rc.hset(hash_name, "completed_at", aware_utcnow().isoformat())
+                await self._rc.expire(hash_name, TASK_RETENTION_SECONDS)
                 self.logger.debug(f"Marked {hash_name} as completed_at")
             finally:
                 if record.http_request_id:
@@ -112,6 +113,7 @@ class RuleValidationService(ScheduledService):
         except Exception:
             self.logger.exception(f"Failed to execute RuleValidation job {record_id}")
             await self._rc.hset(hash_name, "failed_at", aware_utcnow().isoformat())
+            await self._rc.expire(hash_name, TASK_RETENTION_SECONDS)
             raise
 
     async def _run_validation(

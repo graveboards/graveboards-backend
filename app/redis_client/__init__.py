@@ -13,6 +13,7 @@ __all__ = [
     "LOCK_ACQUISITION_RETRY_INTERVAL",
     "LOCK_ACQUISITION_TIMEOUT",
     "LOCK_EXPIRY",
+    "TASK_RETENTION_SECONDS",
     "ChannelName",
     "Namespace",
     "RedisClient",
